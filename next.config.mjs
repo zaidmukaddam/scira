@@ -10,6 +10,7 @@ jiti.import('./env/client')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     transpilePackages: ["geist"],
+    output: 'standalone',
     async headers() {
         return [
             {
