@@ -25,7 +25,7 @@ const config = {
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', ...fontFamily.sans],
-        serif: ['var(--font-serif)', ...fontFamily.serif],
+        syne: ['var(--font-syne)'],
         mono: ['var(--font-geist-mono)', ...fontFamily.mono],
       },
       colors: {

@@ -2,13 +2,13 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Globe, Book, YoutubeIcon, Pen } from 'lucide-react'
-import { Brain, XLogo } from '@phosphor-icons/react'
+import { Brain, Code, XLogo } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export type SearchGroupId = 'web' | 'academic'  | 'youtube' | 'x';
+export type SearchGroupId = 'web' | 'academic'  | 'youtube' | 'x' | 'analysis' | 'fun' ;
 
 export const searchGroups = [
   {
@@ -22,6 +22,18 @@ export const searchGroups = [
     name: 'X',
     description: 'Search X(Twitter) posts and content',
     icon: XLogo,
+  },
+  {
+    id: 'analysis' as const,
+    name: 'Analysis',
+    description: 'Code, stock and currency stuff',
+    icon: Code,
+  },
+  {
+    id: 'fun' as const,
+    name: 'Fun',
+    description: 'Talk to Grok like a digital friend',
+    icon: Pen,
   },
   {
     id: 'academic' as const,

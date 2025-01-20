@@ -6,21 +6,21 @@
         "name": "Zaid Mukaddam",
         "email": "hey@zaidmukaddam.com",
         "phone": "",
-        "description": "I built MiniPerplx, a minimalistic open source AI Powered Search Engine.",
+        "description": "I built Scira, a minimalistic open source AI Powered Search Engine.",
         "webpageUrl": {
-            "url": "https://github.com/zaidmukaddam/miniperplx"
+            "url": "https://github.com/zaidmukaddam/scira"
         }
     },
     "projects": [
         {
-            "guid": "miniperplx",
-            "name": "MiniPerplx",
-            "description": "MiniPerplx is a minimalistic open source AI Powered Search Engine.",
+            "guid": "scira",
+            "name": "Scira",
+            "description": "Scira is a minimalistic open source AI Powered Search Engine.",
             "webpageUrl": {
-                "url": "https://github.com/zaidmukaddam/miniperplx"
+                "url": "https://github.com/zaidmukaddam/scira"
             },
             "repositoryUrl": {
-                "url": "https://github.com/zaidmukaddam/miniperplx"
+                "url": "https://github.com/zaidmukaddam/scira"
             },
             "licenses": [
                 "spdx:MIT"

@@ -99,7 +99,7 @@ export function InstallPrompt() {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <h3 className="font-medium text-xl text-neutral-900 dark:text-neutral-100">
-                  Install MiniPerplx
+                  Install Scira
                 </h3>
                 {getInstructions()}
               </div>

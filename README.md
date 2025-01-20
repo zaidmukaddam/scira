@@ -1,14 +1,19 @@
-# MiniPerplx
+# Scira
 
-![MiniPerplx](/app/opengraph-image.png)
+![Scira](/app/opengraph-image.png)
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
-## ProductHunt Launch
+## Special Thanks
 
-Upvote MiniPerplx on ProductHunt to show your support!
+<div align="center" markdown="1">
 
-<a href="https://www.producthunt.com/posts/miniperplx?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-miniperplx" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=481378&theme=light" alt="MiniPerplx - A&#0032;minimalistic&#0032;AI&#0045;powered&#0032;search&#0032;engine&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+  [![Warp](https://github.com/user-attachments/assets/2bda420d-4211-4900-a37e-e3c7056d799c)](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
+  ### **[Warp, the intelligent terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)**<br>
+  [Available for MacOS and Linux](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
+  [Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)
+
+</div>
 
 ## Features
 
@@ -18,10 +23,8 @@ Upvote MiniPerplx on ProductHunt to show your support!
 - **Weather**: Get the current weather for any location using OpenWeather's API.
 - **Programming**: Run code snippets in multiple languages using E2B's API.
 - **Maps**: Get the location of any place using Google Maps API, Mapbox API, and TripAdvisor API.
-- **Translation**: Translate text to different languages using Microsoft's Translator API.
 - **YouTube Search**: Search for videos on YouTube and get timestamps and transcripts.
 - **Academic Search**: Search for academic papers.
-- **Product Search**: Search for products on Amazon.
 - **X Posts Search**: Search for posts on X.com.
 - **Flight Tracker**: Track flights using AviationStack's API.
 - **Trending Movies and TV Shows**: Get information about trending movies and TV shows.
@@ -41,15 +44,14 @@ Upvote MiniPerplx on ProductHunt to show your support!
 - [Google Maps](https://developers.google.com/maps)
 - [Mapbox](https://www.mapbox.com/)
 - [TripAdvisor](https://www.tripadvisor.com/)
-- [Microsoft Translator](https://www.microsoft.com/en-us/translator)
 - [Exa.AI](https://exa.ai/)
 - [AviationStack](https://aviationstack.com/)
 
 ### Deploy your own
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fminiperplx&env=XAI_API_KEY,GROQ_API_KEY,TAVILY_API_KEY,OPENWEATHER_API_KEY,E2B_API_KEY&envDescription=API%20keys%20needed%20for%20application)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,AVIATION_STACK_API_KEY,SANDBOX_TEMPLATE_ID,TMDB_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,YT_ENDPOINT,EXA_API_KEY,TRIPADVISOR_API_KEY,BLOB_READ_WRITE_TOKEN,MAPBOX_ACCESS_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,FIRECRAWL_API_KEY,TAVILY_API_KEY,OPENWEATHER_API_KEY,E2B_API_KEY,GOOGLE_MAPS_API_KEY,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=All%20environment%20variables%20needed%20for%20application)
 
-## Set MiniPerplx as your default search engine
+## Set Scira as your default search engine
 
 1. **Open the Chrome browser settings**:
    - Click on the three vertical dots in the upper right corner of the browser.
@@ -63,19 +65,19 @@ Upvote MiniPerplx on ProductHunt to show your support!
    - Click on "Add" next to "Site search."
 
 4. **Set the search engine name**:
-   - Enter `MiniPerplx` in the "Search engine" field.
+   - Enter `Scira` in the "Search engine" field.
 
 5. **Set the search engine URL**:
-   - Enter `https://mplx.run?q=%s` in the "URL with %s in place of query" field.
+   - Enter `https://scira.how?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
-   - Enter `mp` in the "Shortcut" field.
+   - Enter `sh` in the "Shortcut" field.
 
 7. **Set Default**:
    - Click on the three dots next to the search engine you just added.
    - Select "Make default" from the dropdown menu.
 
-After completing these steps, you should be able to use MiniPerplx as your default search engine in Chrome.
+After completing these steps, you should be able to use Scira as your default search engine in Chrome.
 
 ### Local development
 

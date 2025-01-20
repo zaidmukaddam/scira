@@ -72,7 +72,7 @@ async function fetchRedditQuestions(): Promise<TrendingQuery[]> {
       'https://www.reddit.com/r/askreddit/hot.json?limit=100',
       {
         headers: {
-          'User-Agent': 'MiniPerplx/1.0'
+          'User-Agent': 'Scira/1.0'
         }
       }
     );

@@ -1,14 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
 import React, { useState, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card"
 import useWindowSize from '@/hooks/use-window-size';
-import { X, Zap, ChevronDown, ScanEye } from 'lucide-react';
+import { X, Zap, ScanEye } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,7 +16,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
-import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -55,7 +54,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <DropdownMenu onOpenChange={setIsOpen}>
+        <DropdownMenu onOpenChange={setIsOpen} modal={false}>
             <DropdownMenuTrigger
                 className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300",
@@ -67,7 +66,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
             >
                 <selectedModelData.icon className="w-4 h-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[220px] p-1 !font-sans rounded-md shadow-md bg-white dark:bg-neutral-800 ml-4 !mt-0 sm:m-auto !z-[52]">
+            <DropdownMenuContent className="w-[220px] p-1 !font-sans rounded-md bg-white dark:bg-neutral-800 ml-4 !mt-0 sm:m-auto !z-[52]">
                 {models.map((model) => (
                     <DropdownMenuItem
                         key={model.value}
@@ -287,290 +286,143 @@ interface FormComponentProps {
     setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
 }
 
-// Add this component either in a new file or in your form component
 interface GroupSelectorProps {
     selectedGroup: SearchGroupId;
     onGroupSelect: (group: SearchGroup) => void;
 }
 
-const themeColors: Record<SearchGroupId, {
-    bg: string,
-    bgHover: string,
-    bgSelected: string,
-    text: string,
-    description: string
-    focus?: string
-}> = {
-    web: {
-        bg: '!bg-white hover:!bg-cyan-50 dark:!bg-neutral-900/40 dark:hover:!bg-cyan-950/40',
-        bgHover: 'hover:!border-cyan-200 dark:hover:!border-cyan-500/30',
-        bgSelected: '!bg-cyan-50 dark:!bg-cyan-950/40 !border-cyan-500 dark:!border-cyan-400',
-        text: '!text-cyan-600 dark:!text-cyan-400',
-        description: '!text-neutral-600 dark:!text-neutral-500',
-        focus: 'focus:!ring-cyan-500 dark:focus:!ring-cyan-400'
-    },
-    academic: {
-        bg: '!bg-white hover:!bg-violet-50 dark:!bg-neutral-900/40 dark:hover:!bg-violet-950/40',
-        bgHover: 'hover:!border-violet-200 dark:hover:!border-violet-500/30',
-        bgSelected: '!bg-violet-50 dark:!bg-violet-950/40 !border-violet-500 dark:!border-violet-400',
-        text: '!text-violet-600 dark:!text-violet-400',
-        description: '!text-neutral-600 dark:!text-neutral-500',
-        focus: 'focus:!ring-violet-500 dark:focus:!ring-violet-400'
-    },
-    youtube: {
-        bg: '!bg-white hover:!bg-red-50 dark:!bg-neutral-900/40 dark:hover:!bg-red-950/40',
-        bgHover: 'hover:!border-red-200 dark:hover:!border-red-500/30',
-        bgSelected: '!bg-red-50 dark:!bg-red-950/40 !border-red-500 dark:!border-red-400',
-        text: '!text-red-600 dark:!text-red-400',
-        description: '!text-neutral-600 dark:!text-neutral-500',
-        focus: 'focus:!ring-red-500 dark:focus:!ring-red-400'
-    },
-    x: {
-        bg: '!bg-white hover:!bg-neutral-50 dark:!bg-neutral-900/40 dark:hover:!bg-neutral-800/40',
-        bgHover: 'hover:!border-neutral-300 dark:hover:!border-neutral-600/30',
-        bgSelected: '!bg-neutral-50 dark:!bg-neutral-800/40 !border-neutral-500 dark:!border-neutral-400',
-        text: '!text-neutral-900 dark:!text-neutral-100',
-        description: '!text-neutral-600 dark:!text-neutral-500',
-        focus: 'focus:!ring-neutral-500 dark:focus:!ring-neutral-400'
-    },
-};
+interface ToolbarButtonProps {
+    group: SearchGroup;
+    isSelected: boolean;
+    onClick: () => void;
+}
 
-const DrawerSelectionContent = ({
-    selectedGroup,
-    onGroupSelect
-}: {
-    selectedGroup: SearchGroupId,
-    onGroupSelect: (group: SearchGroup) => void
-}) => (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 p-0.5">
-        {searchGroups.map((group) => {
-            const Icon = group.icon;
-            const isSelected = selectedGroup === group.id;
-            const groupColors = themeColors[group.id];
-
-            return (
-                <div key={group.id}>
-                    <button
-                        onClick={() => onGroupSelect(group)}
-                        className={cn(
-                            "w-full flex flex-col gap-2 p-4 rounded-lg cursor-pointer font-sans group/item",
-                            "transition-all duration-200 relative overflow-hidden",
-                            "border dark:border-neutral-800 border-neutral-200",
-                            groupColors.bg,
-                            groupColors.bgHover,
-                            isSelected && cn(
-                                "ring-1 dark:ring-white/20 ring-black/10",
-                                "shadow-lg",
-                                groupColors.bgSelected,
-                                groupColors.focus
-                            ),
-                            groupColors.focus
-                        )}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Icon className={cn(
-                                "h-5 w-5 transition-transform duration-200",
-                                groupColors.text,
-                                "group-hover/item:scale-110"
-                            )} />
-                            <span className="text-base font-medium transition-colors duration-200 text-neutral-900 dark:text-white">
-                                {group.name}
-                            </span>
-                        </div>
-                        <p className={cn(
-                            "text-sm leading-snug text-left",
-                            groupColors.description
-                        )}>
-                            {group.description}
-                        </p>
-                        <div className={cn(
-                            "absolute inset-0 opacity-0 group-hover/item:opacity-100",
-                            "transition-opacity duration-200 pointer-events-none",
-                            "bg-gradient-to-br from-transparent via-black/[0.02] dark:via-white/[0.02] to-transparent"
-                        )} />
-                    </button>
-                </div>
-            );
-        })}
-    </div>
-);
-
-const DropdownSelectionContent = ({
-    selectedGroup,
-    onGroupSelect
-}: {
-    selectedGroup: SearchGroupId,
-    onGroupSelect: (group: SearchGroup) => void
-}) => (
-    <div className="grid grid-cols-2 gap-1.5 p-0.5">
-        {searchGroups.map((group) => {
-            const Icon = group.icon;
-            const isSelected = selectedGroup === group.id;
-            const groupColors = themeColors[group.id];
-
-            return (
-                <DropdownMenuItem
-                    key={group.id}
-                    onSelect={() => onGroupSelect(group)}
-                    className={cn(
-                        "flex flex-col gap-2 p-4 rounded-lg cursor-pointer font-sans group/item",
-                        "transition-all duration-200 relative overflow-hidden",
-                        !isSelected && "border dark:border-neutral-800 border-neutral-200",
-                        groupColors.bg,
-                        groupColors.bgHover,
-                        isSelected && cn(
-                            "ring-1 dark:ring-white/20 ring-black/10",
-                            "shadow-lg",
-                            groupColors.bgSelected
-                        )
-                    )}
-                >
-                    <div className="flex items-center gap-2">
-                        <Icon className={cn(
-                            "h-5 w-5 transition-transform duration-200",
-                            groupColors.text,
-                            "group-hover/item:scale-110"
-                        )} />
-                        <span className="text-base font-medium transition-colors duration-200 text-neutral-900 dark:text-white">
-                            {group.name}
-                        </span>
-                    </div>
-                    <p className={cn(
-                        "text-sm leading-snug text-left",
-                        groupColors.description
-                    )}>
-                        {group.description}
-                    </p>
-                    <div className={cn(
-                        "absolute inset-0 opacity-0 group-hover/item:opacity-100",
-                        "transition-opacity duration-200 pointer-events-none",
-                        "bg-gradient-to-br from-transparent via-black/[0.02] dark:via-white/[0.02] to-transparent"
-                    )} />
-                </DropdownMenuItem>
-            );
-        })}
-    </div>
-);
-
-const TriggerContent = ({
-    selectedGroup,
-    isOpen
-}: {
-    selectedGroup: SearchGroupId,
-    isOpen: boolean
-}) => {
-    const selectedGroupDetails = searchGroups.find(g => g.id === selectedGroup);
-    const Icon = selectedGroupDetails?.icon;
-    const colors = themeColors[selectedGroup];
+const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
+    const Icon = group.icon;
 
     return (
-        <div className="flex items-center gap-2 relative z-10">
-            {Icon && (
-                <Icon className={cn(
-                    "h-4 w-4 transition-transform duration-200",
-                    colors.text,
-                    "group-hover:scale-110"
-                )} />
+        <HoverCard openDelay={100} closeDelay={50}>
+            <HoverCardTrigger asChild>
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClick}
+                    className={cn(
+                        "relative flex items-center justify-center",
+                        "size-8",
+                        "rounded-full",
+                        "transition-colors duration-300",
+                        isSelected
+                            ? "bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300"
+                            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80"
+                    )}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                    <Icon className="size-4" />
+                </motion.button>
+            </HoverCardTrigger>
+            <HoverCardContent
+                side="bottom"
+                align="center"
+                sideOffset={6}
+                className={cn(
+                    "z-[100]",
+                    "w-44 p-2 rounded-lg",
+                    "border border-neutral-200 dark:border-neutral-700",
+                    "bg-white dark:bg-neutral-800 shadow-md",
+                    "transition-opacity duration-300"
+                )}
+            >
+                <div className="space-y-0.5">
+                    <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {group.name}
+                    </h4>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
+                        {group.description}
+                    </p>
+                </div>
+            </HoverCardContent>
+        </HoverCard>
+    );
+};
+
+const SelectionContent = ({ ...props }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <motion.div
+            layout
+            initial={false}
+            animate={{
+                width: isExpanded ? "auto" : "30px",
+                gap: isExpanded ? "0.5rem" : 0,
+                paddingRight: isExpanded ? "0.5rem" : 0,
+            }}
+            transition={{
+                layout: { duration: 0.4 },
+                duration: 0.4,
+                ease: [0.4, 0.0, 0.2, 1],
+                width: { type: "spring", stiffness: 300, damping: 30 },
+                gap: { type: "spring", stiffness: 300, damping: 30 },
+                paddingRight: { type: "spring", stiffness: 300, damping: 30 }
+            }}
+            style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start"
+            }}
+            className={cn(
+                "inline-flex items-center",
+                "min-w-[38px]",
+                "p-0.5",
+                "rounded-full border border-neutral-200 dark:border-neutral-800",
+                "bg-white dark:bg-neutral-900",
+                "shadow-sm overflow-visible",
+                "relative z-10"
             )}
-            <span className="!text-sm !font-sans !font-medium relative">
-                {selectedGroupDetails?.name}
-                <span className={cn(
-                    "absolute inset-x-0 -bottom-px h-px transition-all duration-200",
-                    isOpen ? "scale-x-100" : "scale-x-0",
-                    "bg-neutral-400 dark:bg-white/30",
-                    "group-hover:scale-x-100"
-                )} />
-            </span>
-            <ChevronDown className={cn(
-                "h-3 w-3 opacity-50 transition-transform duration-200",
-                isOpen && "transform rotate-180",
-                "group-hover:opacity-100"
-            )} />
-        </div>
+            onMouseEnter={() => setIsExpanded(true)}
+            onMouseLeave={() => setIsExpanded(false)}
+        >
+            <AnimatePresence>
+                {searchGroups.map((group, index) => {
+                    const showItem = isExpanded || props.selectedGroup === group.id;
+                    return (
+                        <motion.div
+                            key={group.id}
+                            animate={{
+                                width: showItem ? "28px" : 0,
+                                opacity: showItem ? 1 : 0,
+                                x: showItem ? 0 : -10
+                            }}
+                            exit={{ opacity: 1, x: 0, transition: { duration: 0 } }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                                delay: index * 0.05,
+                                opacity: { duration: 0.2, delay: showItem ? index * 0.05 : 0 }
+                            }}
+                            style={{ margin: 0 }}
+                        >
+                            <ToolbarButton
+                                group={group}
+                                isSelected={props.selectedGroup === group.id}
+                                onClick={() => props.onGroupSelect(group)}
+                            />
+                        </motion.div>
+                    );
+                })}
+            </AnimatePresence>
+        </motion.div>
     );
 };
 
 const GroupSelector = ({ selectedGroup, onGroupSelect }: GroupSelectorProps) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-
-    const handleGroupSelection = (group: SearchGroup) => {
-        onGroupSelect(group);
-        setIsOpen(false);
-    };
-
-    if (!isDesktop) {
-        return (
-            <Drawer
-                open={isOpen}
-                onOpenChange={setIsOpen}
-            >
-                <DrawerTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        className={cn(
-                            "h-8 px-3 gap-2 group",
-                            "transition-all duration-200 font-sans relative",
-                            "bg-white hover:bg-neutral-50 dark:bg-neutral-900/40 dark:hover:bg-neutral-800/60",
-                            "border border-neutral-200 dark:border-neutral-800",
-                            "text-neutral-800 dark:text-white",
-                            "z-[60]"
-                        )}
-                    >
-                        <TriggerContent selectedGroup={selectedGroup} isOpen={isOpen} />
-                    </Button>
-                </DrawerTrigger>
-                <DrawerContent className="z-[60]">
-                    <DrawerHeader>
-                        <DrawerTitle className="text-center font-sans">
-                            Select Search Type
-                        </DrawerTitle>
-                    </DrawerHeader>
-                    <div className="p-4">
-                        <DrawerSelectionContent
-                            selectedGroup={selectedGroup}
-                            onGroupSelect={handleGroupSelection}
-                        />
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-
     return (
-        <DropdownMenu onOpenChange={setIsOpen}>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    className={cn(
-                        "h-8 px-3 gap-2 group",
-                        "transition-all duration-200 font-sans relative",
-                        "bg-white hover:bg-neutral-50 dark:bg-neutral-900/40 dark:hover:bg-neutral-800/60",
-                        "border border-neutral-200 dark:border-neutral-800",
-                        "text-neutral-800 dark:text-white",
-                        "z-[60]"
-                    )}
-                >
-                    <TriggerContent selectedGroup={selectedGroup} isOpen={isOpen} />
-                </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-                align="start"
-                sideOffset={8}
-                className={cn(
-                    "w-[420px] font-sans z-[60] -ml-2 mt-1",
-                    "border border-neutral-200 dark:border-neutral-800",
-                    "bg-white dark:bg-neutral-900",
-                    "shadow-lg rounded-lg"
-                )}
-            >
-                <DropdownSelectionContent
-                    selectedGroup={selectedGroup}
-                    onGroupSelect={handleGroupSelection}
-                />
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <SelectionContent
+            selectedGroup={selectedGroup}
+            onGroupSelect={onGroupSelect}
+        />
     );
 };
 
@@ -606,7 +458,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const autoResizeInput = (target: HTMLTextAreaElement) => {
         if (!target) return;
         requestAnimationFrame(() => {
-            target.style.height = 'auto'; // reset
+            target.style.height = 'auto';
             let newHeight = target.scrollHeight;
             newHeight = Math.min(Math.max(newHeight, MIN_HEIGHT), MAX_HEIGHT);
             target.style.height = `${newHeight}px`;
@@ -694,7 +546,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (input.trim() || attachments.length > 0) {
             setHasSubmitted(true);
             lastSubmittedQueryRef.current = input.trim();
-            // track("search input", { query: input.trim() });
 
             handleSubmit(event, {
                 experimental_attachments: attachments,
@@ -730,6 +581,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
             fileInputRef.current?.click();
         }
     }, [attachments.length, hasSubmitted, fileInputRef]);
+
+    const handleTouchStart = useCallback((event: React.TouchEvent<HTMLTextAreaElement>) => {
+        event.preventDefault();
+        event.currentTarget.focus();
+    }, []);
 
     return (
 
@@ -779,6 +635,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     disabled={isLoading}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
+                    onTouchStart={handleTouchStart}
                     className={cn(
                         "min-h-[56px] max-h-[400px] w-full resize-none rounded-lg",
                         "overflow-x-hidden",
@@ -791,6 +648,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         "px-4 pt-3 pb-5"
                     )}
                     rows={3}
+                    autoFocus
                     onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                             event.preventDefault();
@@ -847,6 +705,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     stop();
                                 }}
                                 variant="destructive"
+                                disabled={!isLoading}
                             >
                                 <StopIcon size={14} />
                             </Button>

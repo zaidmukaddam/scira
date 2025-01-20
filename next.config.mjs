@@ -31,6 +31,15 @@ const nextConfig = {
             },
         ]
     },
+    async redirects() {
+        return [
+            {
+                source: '/ph',
+                destination: 'https://www.producthunt.com/posts/scira',
+                permanent: true,
+            },
+        ]
+    },
     images: {
         dangerouslyAllowSVG: true,
         remotePatterns: [

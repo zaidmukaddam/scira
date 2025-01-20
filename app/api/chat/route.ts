@@ -5,9 +5,6 @@ import { xai } from '@ai-sdk/xai';
 import CodeInterpreter from "@e2b/code-interpreter";
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
-import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
-import { Redis } from "@upstash/redis"; // see below for cloudflare and fastly adapters
-import { BlobRequestAbortedError, put } from '@vercel/blob';
 import {
   convertToCoreMessages,
   smoothStream,
@@ -117,40 +114,120 @@ async function isValidImageUrl(url: string): Promise<boolean> {
   }
 }
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(100, "1 d"),
-  analytics: true,
-  prefix: "mplx",
-});
-
 export async function POST(req: Request) {
   const { messages, model, group } = await req.json();
   const { tools: activeTools, systemPrompt } = await getGroupConfig(group);
-
-  // const identifier = ipAddress(req) || "api";
-  // const { success } = await ratelimit.limit(identifier);
-
-  // if (!success) {
-  //   return new Response("Rate limit exceeded for 100 searches a day.", { status: 429 });
-  // }
 
   const result = streamText({
     model: xai(model),
     messages: convertToCoreMessages(messages),
     experimental_transform: smoothStream({
+      chunking: 'word',
       delayInMs: 15,
     }),
+    temperature: 0,
     experimental_activeTools: [...activeTools],
     system: systemPrompt,
     tools: {
-      thinking_canvas: tool({
-        description: "Write your plan of action in a canvas based on the user's input.",
+      stock_chart: tool({
+        description: "Write and execute Python code to find stock data and generate a stock chart.",
         parameters: z.object({
-          title: z.string().describe("The title of the canvas."),
-          content: z.array(z.string()).describe("The content of the canvas."),
+          title: z.string().describe("The title of the chart."),
+          code: z.string().describe("The Python code to execute."),
+          icon: z.enum(["stock", "date", "calculation", "default"]).describe("The icon to display for the chart."),
         }),
-        execute: async ({ title, content }: { title: string, content: string[] }) => { return { title, content }; },
+        execute: async ({ code, title, icon }: { code: string, title: string, icon: string }) => {
+          console.log("Code:", code);
+          console.log("Title:", title);
+          console.log("Icon:", icon);
+
+          const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
+          const execution = await sandbox.runCode(code);
+          let message = "";
+
+          if (execution.results.length > 0) {
+            for (const result of execution.results) {
+              if (result.isMainResult) {
+                message += `${result.text}\n`;
+              } else {
+                message += `${result.text}\n`;
+              }
+            }
+          }
+
+          if (execution.logs.stdout.length > 0 || execution.logs.stderr.length > 0) {
+            if (execution.logs.stdout.length > 0) {
+              message += `${execution.logs.stdout.join("\n")}\n`;
+            }
+            if (execution.logs.stderr.length > 0) {
+              message += `${execution.logs.stderr.join("\n")}\n`;
+            }
+          }
+
+          if (execution.error) {
+            message += `Error: ${execution.error}\n`;
+            console.log("Error: ", execution.error);
+          }
+
+          console.log(execution.results)
+          if (execution.results[0].chart) {
+            execution.results[0].chart.elements.map((element: any) => {
+              console.log(element.points)
+            })
+          }
+
+          return { message: message.trim(), chart: execution.results[0].chart ?? "" };
+        }
+      }),
+      currency_converter: tool({
+        description: "Convert currency from one to another using yfinance",
+        parameters: z.object({
+          from: z.string().describe("The source currency code."),
+          to: z.string().describe("The target currency code."),
+          amount: z.number().default(1).describe("The amount to convert."),
+        }),
+        execute: async ({ from, to }: { from: string, to: string }) => {
+          const code = `
+  import yfinance as yf
+  from_currency = '${from}'
+  to_currency = '${to}'
+  currency_pair = f'{from_currency}{to_currency}=X'
+  data = yf.Ticker(currency_pair).history(period='1d')
+  latest_rate = data['Close'].iloc[-1]
+  latest_rate
+  `;
+          console.log("Currency pair:", from, to);
+
+          const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
+          const execution = await sandbox.runCode(code);
+          let message = "";
+
+          if (execution.results.length > 0) {
+            for (const result of execution.results) {
+              if (result.isMainResult) {
+                message += `${result.text}\n`;
+              } else {
+                message += `${result.text}\n`;
+              }
+            }
+          }
+
+          if (execution.logs.stdout.length > 0 || execution.logs.stderr.length > 0) {
+            if (execution.logs.stdout.length > 0) {
+              message += `${execution.logs.stdout.join("\n")}\n`;
+            }
+            if (execution.logs.stderr.length > 0) {
+              message += `${execution.logs.stderr.join("\n")}\n`;
+            }
+          }
+
+          if (execution.error) {
+            message += `Error: ${execution.error}\n`;
+            console.log("Error: ", execution.error);
+          }
+
+          return { rate: message.trim() };
+        }
       }),
       web_search: tool({
         description: "Search the web for information with multiple queries, max results and search depth.",
@@ -255,19 +332,32 @@ export async function POST(req: Request) {
         description: "Search X (formerly Twitter) posts.",
         parameters: z.object({
           query: z.string().describe("The search query"),
+          startDate: z.string().optional().describe("The start date for the search in YYYY-MM-DD format"),
+          endDate: z.string().optional().describe("The end date for the search in YYYY-MM-DD format"),
         }),
-        execute: async ({ query }: { query: string }) => {
+        execute: async ({
+          query,
+          startDate,
+          endDate
+        }: {
+          query: string,
+          startDate?: string,
+          endDate?: string
+        }) => {
           try {
             const exa = new Exa(serverEnv.EXA_API_KEY as string);
+
+            const start = startDate ? new Date(startDate).toISOString() : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            const end = endDate ? new Date(endDate).toISOString() : new Date().toISOString();
 
             const result = await exa.searchAndContents(
               query,
               {
                 type: "keyword",
                 numResults: 10,
-                includeDomains: ["x.com", "twitter.com"],
                 text: true,
-                highlights: true
+                highlights: true,
+                includeDomains: ["twitter.com", "x.com"],
               }
             );
 
@@ -633,7 +723,7 @@ export async function POST(req: Request) {
           return data;
         },
       }),
-      programming: tool({
+      code_interpreter: tool({
         description: "Write and execute Python code.",
         parameters: z.object({
           title: z.string().describe("The title of the code snippet."),
@@ -648,7 +738,6 @@ export async function POST(req: Request) {
           const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
           const execution = await sandbox.runCode(code);
           let message = "";
-          let images = [];
 
           if (execution.results.length > 0) {
             for (const result of execution.results) {
@@ -656,42 +745,6 @@ export async function POST(req: Request) {
                 message += `${result.text}\n`;
               } else {
                 message += `${result.text}\n`;
-              }
-              if (result.formats().length > 0) {
-                const formats = result.formats();
-                for (let format of formats) {
-                  if (format === "png" || format === "jpeg" || format === "svg") {
-                    const imageData = result[format];
-                    if (imageData && typeof imageData === 'string') {
-                      const abortController = new AbortController();
-                      try {
-                        const blobPromise = put(`mplx/image-${Date.now()}.${format}`, Buffer.from(imageData, 'base64'),
-                          {
-                            access: 'public',
-                            abortSignal: abortController.signal,
-                          });
-
-                        const timeout = setTimeout(() => {
-                          // Abort the request after 2 seconds
-                          abortController.abort();
-                        }, 2000);
-
-                        const blob = await blobPromise;
-
-                        clearTimeout(timeout);
-                        console.info('Blob put request completed', blob.url);
-
-                        images.push({ format, url: blob.url });
-                      } catch (error) {
-                        if (error instanceof BlobRequestAbortedError) {
-                          console.info('Canceled put request due to timeout');
-                        } else {
-                          console.error("Error saving image to Vercel Blob:", error);
-                        }
-                      }
-                    }
-                  }
-                }
               }
             }
           }
@@ -717,7 +770,7 @@ export async function POST(req: Request) {
             })
           }
 
-          return { message: message.trim(), images, chart: execution.results[0].chart ?? "" };
+          return { message: message.trim(), chart: execution.results[0].chart ?? "" };
         },
       }),
       find_place: tool({
@@ -846,37 +899,38 @@ export async function POST(req: Request) {
           };
         },
       }),
-      text_translate: tool({
-        description: "Translate text from one language to another using Microsoft Translator.",
-        parameters: z.object({
-          text: z.string().describe("The text to translate."),
-          to: z.string().describe("The language to translate to (e.g., 'fr' for French)."),
-          from: z.string().describe("The source language (optional, will be auto-detected if not provided)."),
-        }),
-        execute: async ({ text, to, from }: { text: string; to: string; from?: string }) => {
-          const key = serverEnv.AZURE_TRANSLATOR_KEY;
-          const endpoint = "https://api.cognitive.microsofttranslator.com";
-          const location = serverEnv.AZURE_TRANSLATOR_LOCATION;
+      // text_translate: tool({
+      //   description: "Translate text from one language to another using Google Translate.",
+      //   parameters: z.object({
+      //     text: z.string().describe("The text to translate."),
+      //     to: z.string().describe("The language to translate to (e.g., 'fr' for French)."),
+      //   }),
+      //   execute: async ({ text, to }: { text: string; to: string }) => {
+      //     const key = "ya29.a0ARW5m74jqLRAt7H6Y2NIXHCsslijRUCrWYEy9l0oNgk8rIq1VKLgW0-dCk3T6TFttXus1DqWLv2b-v6AxUXa7myD5m1WUOW-0Svd-OvWzFATBYYSzlTFGdSFFp8J6p-12ceKyKf1Don42LEHjof00bRRdLwcMuLTBD5snDlnVwVVMxUKPMLGVXcbcJvbda3jKhHonqXc6DTmQsV-xHmpkyRkJJofzGDAPC6vituf1CKlBH4lQjMGxx-qNfgRmcAe9slCkL-ayP-ScQfM1zWsLDUGQqFXxr0geAbvSI4s9JrvtRabg6kZkc83LaIYjg-EYTEe4reSvh1ZL1Oe7Qz62mp7SaUHgJzvouJ5OJPBv3LHTaZH0p6wDqzEJ6DHfvnXGbQ7X1RnhlCUN9s7S71gPyWQ3_Zo8eFqUyYaCgYKARYSARMSFQHGX2MihhaEsz7BJv2g1DaHcfItXQ0426";
+      //     const url = 'https://translation.googleapis.com/language/translate/v2';
 
-          const url = `${endpoint}/translate?api-version=3.0&to=${to}${from ? `&from=${from}` : ''}`;
+      //     const response = await fetch(url, {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //         'Authorization': `Bearer ${key}`,
+      //       },
+      //       body: JSON.stringify({
+      //         q: [text],
+      //         target: to,
+      //         format: 'text',
+      //         key,
+      //       }),
+      //     });
 
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Ocp-Apim-Subscription-Key': key!,
-              'Ocp-Apim-Subscription-Region': location!,
-              'Content-type': 'application/json',
-            },
-            body: JSON.stringify([{ text }]),
-          });
-
-          const data = await response.json();
-          return {
-            translatedText: data[0].translations[0].text,
-            detectedLanguage: data[0].detectedLanguage?.language,
-          };
-        },
-      }),
+      //     const data = await response.json();
+      //     console.log(data);
+      //     return {
+      //       translatedText: data.data.translations[0].translatedText,
+      //       detectedLanguage: data.data.translations[0].detectedSourceLanguage,
+      //     };
+      //   },
+      // }),
       nearby_search: tool({
         description: "Search for nearby places, such as restaurants or hotels based on the details given.",
         parameters: z.object({
