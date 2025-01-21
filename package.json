@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "knip": "knip"
   },
   "dependencies": {
     "@ai-sdk/xai": "^1.1.0",
@@ -96,6 +97,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "knip": "^5.41.1",
     "micromatch": "^4.0.8",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
