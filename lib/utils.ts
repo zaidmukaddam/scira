@@ -20,7 +20,7 @@ export const searchGroups = [
   {
     id: 'x' as const,
     name: 'X',
-    description: 'Search X(Twitter) posts and content',
+    description: 'Search X posts and content powered by Exa',
     icon: XLogo,
   },
   {
@@ -38,13 +38,13 @@ export const searchGroups = [
   {
     id: 'academic' as const,
     name: 'Academic',
-    description: 'Search academic papers and research',
+    description: 'Search academic papers and research powered by Exa',
     icon: Book,
   },
   {
     id: 'youtube' as const,
     name: 'YouTube',
-    description: 'Search YouTube videos in real-time',
+    description: 'Search YouTube videos in real-time powered by Exa',
     icon: YoutubeIcon,
   },
 ] as const;

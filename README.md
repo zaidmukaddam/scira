@@ -38,13 +38,13 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - [Shadcn/UI](https://ui.shadcn.com/)
+- [Exa.AI](https://exa.ai/)
 - [Tavily](https://tavily.com/)
 - [OpenWeather](https://openweathermap.org/)
 - [E2B](https://e2b.dev/)
 - [Google Maps](https://developers.google.com/maps)
 - [Mapbox](https://www.mapbox.com/)
 - [TripAdvisor](https://www.tripadvisor.com/)
-- [Exa.AI](https://exa.ai/)
 - [AviationStack](https://aviationstack.com/)
 
 ### Deploy your own
