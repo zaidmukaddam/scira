@@ -1,4 +1,3 @@
-// app/actions.ts
 'use server';
 
 import { serverEnv } from '@/env/server';
@@ -84,9 +83,12 @@ export async function generateSpeech(text: string, voice: 'alloy' | 'echo' | 'fa
   };
 }
 
-export async function fetchMetadata(url: string) {
+export async function fetchMetadata(url: string): Promise<{ title: string; description: string } | null> {
   try {
     const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const html = await response.text();
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);

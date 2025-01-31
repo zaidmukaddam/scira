@@ -1,4 +1,3 @@
-// /app/components/map-components.tsx
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientEnv } from "@/env/client";
 import mapboxgl from 'mapbox-gl';

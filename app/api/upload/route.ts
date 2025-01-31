@@ -1,7 +1,18 @@
 import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+interface UploadResponse {
+    name: string;
+    contentType: string;
+    url: string;
+    size: number;
+}
+
+interface ErrorResponse {
+    error: string;
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse<UploadResponse | ErrorResponse>> {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 

@@ -108,7 +108,7 @@ async function fetchRedditQuestions(): Promise<TrendingQuery[]> {
     }
 }
 
-async function fetchFromMultipleSources() {
+async function fetchFromMultipleSources(): Promise<TrendingQuery[]> {
     const [
         googleTrends,
         // redditQuestions
@@ -124,7 +124,7 @@ async function fetchFromMultipleSources() {
     return allQueries.sort(() => Math.random() - 0.5);
 }
 
-export async function GET(req: Request) {
+export async function GET(req: Request): Promise<NextResponse> {
     try {
         const trends = await fetchFromMultipleSources();
 
