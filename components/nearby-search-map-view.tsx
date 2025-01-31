@@ -5,8 +5,6 @@ import dynamic from 'next/dynamic';
 import PlaceCard from './place-card';
 import { Badge } from './ui/badge';
 
-
-
 interface Location {
   lat: number;
   lng: number;
