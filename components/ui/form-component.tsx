@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card"
 import useWindowSize from '@/hooks/use-window-size';
-import { X, Zap, ScanEye } from 'lucide-react';
+import { X } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,81 +16,237 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
+import { TextMorph } from '@/components/core/text-morph';
 
 interface ModelSwitcherProps {
     selectedModel: string;
     setSelectedModel: (value: string) => void;
     className?: string;
+    showExperimentalModels: boolean;
 }
 
+const XAIIcon = ({ className }: { className?: string }) => (
+    <svg 
+        width="440" 
+        height="483" 
+        viewBox="0 0 440 483" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <path d="M356.09 155.99L364.4 482.36H430.96L439.28 37.18L356.09 155.99Z" fill="currentColor"/>
+        <path d="M439.28 0.910004H337.72L178.35 228.53L229.13 301.05L439.28 0.910004Z" fill="currentColor"/>
+        <path d="M0.609985 482.36H102.17L152.96 409.84L102.17 337.31L0.609985 482.36Z" fill="currentColor"/>
+        <path d="M0.609985 155.99L229.13 482.36H330.69L102.17 155.99H0.609985Z" fill="currentColor"/>
+    </svg>
+);
+
+const AnthropicIcon = ({ className }: { className?: string }) => (
+    <svg 
+        role="img" 
+        viewBox="0 0 24 24" 
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <title>Anthropic</title>
+        <path fill="currentColor" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+    </svg>
+);
+
+const OpenAIIcon = ({ className }: { className?: string }) => (
+    <svg 
+        role="img" 
+        viewBox="0 0 24 24" 
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <title>OpenAI</title>
+        <path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+    </svg>
+);
+
 const models = [
-    { value: "grok-2-1212", label: "Grok 2.0", icon: Zap, description: "Most intelligent text model", color: "glossyblack", vision: false },
-    { value: "grok-2-vision-1212", icon: ScanEye, label: "Grok 2.0 Vision", description: "Most intelligent vision model", color: "offgray", vision: true },
+    { value: "scira-default", label: "Grok 2.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 model", color: "glossyblack", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-grok-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-sonnet", label: "Claude 3.5 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-llama", label: "Llama 3.3 70B", icon: "/cerebras.png", iconClass: "!text-neutral-900 dark:!text-white", description: "Meta's Llama model by Cerebras", color: "offgray", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-r1", label: "DeepSeek R1 Distilled", icon: "/groq.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "DeepSeek R1 model by Groq", color: "sapphire", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-o3-mini", label: "OpenAI o3-mini", icon: OpenAIIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "OpenAI's reasoning model", color: "bronze", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
     const baseClasses = "transition-colors duration-200";
-    const selectedClasses = isSelected ? "!bg-opacity-90 dark:!bg-opacity-90" : "";
+    const selectedClasses = isSelected ? "!bg-opacity-100 dark:!bg-opacity-100" : "";
 
     switch (color) {
         case 'glossyblack':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#2D2D2D] dark:!bg-[#333333] !text-white hover:!text-white hover:!bg-[#1a1a1a] dark:hover:!bg-[#444444]`
-                : `${baseClasses} !text-[#4A4A4A] dark:!text-[#F0F0F0] hover:!text-white hover:!bg-[#1a1a1a] dark:hover:!bg-[#333333]`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#4D4D4D] dark:!bg-[#3A3A3A] !text-white hover:!bg-[#3D3D3D] dark:hover:!bg-[#434343] !border-[#4D4D4D] dark:!border-[#3A3A3A] !ring-[#4D4D4D] dark:!ring-[#3A3A3A] focus:!ring-[#4D4D4D] dark:focus:!ring-[#3A3A3A]`
+                : `${baseClasses} !text-[#4D4D4D] dark:!text-[#E5E5E5] hover:!bg-[#4D4D4D] hover:!text-white dark:hover:!bg-[#3A3A3A] dark:hover:!text-white`;
+        case 'steel':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#4B82B8] dark:!bg-[#4A7CAD] !text-white hover:!bg-[#3B6C9D] dark:hover:!bg-[#3A6C9D] !border-[#4B82B8] dark:!border-[#4A7CAD] !ring-[#4B82B8] dark:!ring-[#4A7CAD] focus:!ring-[#4B82B8] dark:focus:!ring-[#4A7CAD]`
+                : `${baseClasses} !text-[#4B82B8] dark:!text-[#A7C5E2] hover:!bg-[#4B82B8] hover:!text-white dark:hover:!bg-[#4A7CAD] dark:hover:!text-white`;
         case 'offgray':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#4B5457] dark:!bg-[#707677] !text-white hover:!text-white hover:!bg-[#707677] dark:hover:!bg-[#4B5457]`
-                : `${baseClasses} !text-[#5C6366] dark:!text-[#D1D5D6] hover:!text-white hover:!bg-[#707677] dark:hover:!bg-[#4B5457]`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#505050] dark:!bg-[#505050] !text-white hover:!bg-[#404040] dark:hover:!bg-[#404040] !border-[#505050] dark:!border-[#505050] !ring-[#505050] dark:!ring-[#505050] focus:!ring-[#505050] dark:focus:!ring-[#505050]`
+                : `${baseClasses} !text-[#505050] dark:!text-[#D0D0D0] hover:!bg-[#505050] hover:!text-white dark:hover:!bg-[#505050] dark:hover:!text-white`;
+        case 'purple':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#6366F1] dark:!bg-[#5B54E5] !text-white hover:!bg-[#4F46E5] dark:hover:!bg-[#4B44D5] !border-[#6366F1] dark:!border-[#5B54E5] !ring-[#6366F1] dark:!ring-[#5B54E5] focus:!ring-[#6366F1] dark:focus:!ring-[#5B54E5]`
+                : `${baseClasses} !text-[#6366F1] dark:!text-[#A5A0FF] hover:!bg-[#6366F1] hover:!text-white dark:hover:!bg-[#5B54E5] dark:hover:!text-white`;
+        case 'sapphire':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#2E4A5C] dark:!bg-[#2E4A5C] !text-white hover:!bg-[#1E3A4C] dark:hover:!bg-[#1E3A4C] !border-[#2E4A5C] dark:!border-[#2E4A5C] !ring-[#2E4A5C] dark:!ring-[#2E4A5C] focus:!ring-[#2E4A5C] dark:focus:!ring-[#2E4A5C]`
+                : `${baseClasses} !text-[#2E4A5C] dark:!text-[#89B4D4] hover:!bg-[#2E4A5C] hover:!text-white dark:hover:!bg-[#2E4A5C] dark:hover:!text-white`;
+        case 'bronze':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#9B6E4C] dark:!bg-[#9B6E4C] !text-white hover:!bg-[#8B5E3C] dark:hover:!bg-[#8B5E3C] !border-[#9B6E4C] dark:!border-[#9B6E4C] !ring-[#9B6E4C] dark:!ring-[#9B6E4C] focus:!ring-[#9B6E4C] dark:focus:!ring-[#9B6E4C]`
+                : `${baseClasses} !text-[#9B6E4C] dark:!text-[#D4B594] hover:!bg-[#9B6E4C] hover:!text-white dark:hover:!bg-[#9B6E4C] dark:hover:!text-white`;
         default:
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-600 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-700`
-                : `${baseClasses} !text-neutral-700 dark:!text-neutral-300 hover:!bg-neutral-200 dark:hover:!bg-neutral-800/70`;
+                ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
+                : `${baseClasses} !text-neutral-600 dark:!text-neutral-300 hover:!bg-neutral-500 hover:!text-white dark:hover:!bg-neutral-700 dark:hover:!text-white`;
     }
 }
 
-
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className }) => {
-    const selectedModelData = models.find(model => model.value === selectedModel) || models[0];
+// Update the ModelSwitcher component's dropdown content
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels }) => {
+    const selectedModelData = models.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
+
+    // Filter models based on showExperimentalModels prop
+    const filteredModels = models.filter(model => 
+        showExperimentalModels ? true : !model.experimental
+    );
+
+    // Group filtered models by category
+    const groupedModels = filteredModels.reduce((acc, model) => {
+        const category = model.category;
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(model);
+        return acc;
+    }, {} as Record<string, typeof models>);
 
     return (
         <DropdownMenu onOpenChange={setIsOpen} modal={false}>
             <DropdownMenuTrigger
                 className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300",
-                    getColorClasses(selectedModelData.color, true),
-                    "focus:outline-none focus:ring-2 focus:ring-opacity-50",
-                    `!focus:ring-${selectedModelData.color}-500`,
+                    "flex items-center gap-2 p-2 sm:px-3 h-8",
+                    "rounded-full transition-all duration-300",
+                    "border border-neutral-200 dark:border-neutral-800",
+                    "hover:shadow-md",
+                    getColorClasses(selectedModelData?.color || "neutral", true),
                     className
                 )}
             >
-                <selectedModelData.icon className="w-4 h-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[220px] p-1 !font-sans rounded-md bg-white dark:bg-neutral-800 ml-4 !mt-0 sm:m-auto !z-[52]">
-                {models.map((model) => (
-                    <DropdownMenuItem
-                        key={model.value}
-                        onSelect={() => setSelectedModel(model.value)}
-                        className={cn(
-                            "flex items-start gap-2 px-2 py-1.5 rounded-md text-xs mb-1 last:mb-0",
-                            getColorClasses(model.color, selectedModel === model.value)
-                        )}
+                {selectedModelData && (
+                    typeof selectedModelData.icon === 'string' ? (
+                        <img 
+                            src={selectedModelData.icon} 
+                            alt={selectedModelData.label}
+                            className={cn(
+                                "w-3.5 h-3.5 object-contain",
+                                selectedModelData.iconClass
+                            )}
+                        />
+                    ) : (
+                        <selectedModelData.icon 
+                            className={cn(
+                                "w-3.5 h-3.5",
+                                selectedModelData.iconClass
+                            )}
+                        />
+                    )
+                )}
+                <span className="hidden sm:block text-xs font-medium overflow-hidden">
+                    <TextMorph
+                        variants={{
+                            initial: { opacity: 0, y: 10 },
+                            animate: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: -10 }
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30,
+                            mass: 0.5
+                        }}
                     >
-                        <model.icon className={cn(
-                            "w-4 h-4 mt-0.5",
-                            selectedModel === model.value ? "text-white" : `text-${model.color}-500 dark:text-${model.color}-400`
-                        )} />
-                        <div>
-                            <div className="font-bold">{model.label}</div>
-                            <div className="text-xs opacity-70">{model.description}</div>
+                        {selectedModelData?.label || ""}
+                    </TextMorph>
+                </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                className="w-[220px] p-1 !font-sans rounded-lg bg-white dark:bg-neutral-900 sm:ml-4 !mt-1.5 sm:m-auto !z-[52] shadow-lg border border-neutral-200 dark:border-neutral-800"
+                align="start"
+                sideOffset={8}
+            >
+                {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+                    <div key={category} className={cn(
+                        categoryIndex > 0 && "mt-1"
+                    )}>
+                        <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none">
+                            {category}
                         </div>
-                    </DropdownMenuItem>
+                        <div className="space-y-0.5">
+                            {categoryModels.map((model) => (
+                                <DropdownMenuItem
+                                    key={model.value}
+                                    onSelect={() => {
+                                        console.log("Selected model:", model.value);
+                                        setSelectedModel(model.value.trim());
+                                    }}
+                                    className={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
+                                        "transition-all duration-200",
+                                        "hover:shadow-sm",
+                                        getColorClasses(model.color, selectedModel === model.value)
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "p-1.5 rounded-md",
+                                        selectedModel === model.value
+                                            ? "bg-black/10 dark:bg-white/10"
+                                            : "bg-black/5 dark:bg-white/5",
+                                        "group-hover:bg-black/10 dark:group-hover:bg-white/10"
+                                    )}>
+                                        {typeof model.icon === 'string' ? (
+                                            <img 
+                                                src={model.icon}
+                                                alt={model.label}
+                                                className={cn(
+                                                    "w-3 h-3 object-contain",
+                                                    model.iconClass
+                                                )}
+                                            />
+                                        ) : (
+                                            <model.icon 
+                                                className={cn(
+                                                    "w-3 h-3",
+                                                    model.iconClass
+                                                )}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-px min-w-0">
+                                        <div className="font-medium truncate">{model.label}</div>
+                                        <div className="text-[10px] opacity-80 truncate leading-tight">{model.description}</div>
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                        </div>
+                        {showExperimentalModels && category === "Stable" && (
+                            <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
+                        )}
+                    </div>
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
-    )
-}
-
+    );
+};
 
 interface Attachment {
     name: string;
@@ -284,6 +440,7 @@ interface FormComponentProps {
     lastSubmittedQueryRef: React.MutableRefObject<string>;
     selectedGroup: SearchGroupId;
     setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
+    showExperimentalModels: boolean;
 }
 
 interface GroupSelectorProps {
@@ -299,27 +456,54 @@ interface ToolbarButtonProps {
 
 const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     const Icon = group.icon;
+    const { width } = useWindowSize();
+    const isMobile = width ? width < 768 : false;
+
+    const commonClassNames = cn(
+        "relative flex items-center justify-center",
+        "size-8",
+        "rounded-full",
+        "transition-colors duration-300",
+        isSelected
+            ? "bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300"
+            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80"
+    );
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+    };
+
+    // Use regular button for mobile
+    if (isMobile) {
+        return (
+            <button
+                onClick={handleClick}
+                className={commonClassNames}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+                <Icon className="size-4" />
+            </button>
+        );
+    }
+
+    // Use motion.button for desktop
+    const button = (
+        <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleClick}
+            className={commonClassNames}
+        >
+            <Icon className="size-4" />
+        </motion.button>
+    );
 
     return (
         <HoverCard openDelay={100} closeDelay={50}>
             <HoverCardTrigger asChild>
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onClick}
-                    className={cn(
-                        "relative flex items-center justify-center",
-                        "size-8",
-                        "rounded-full",
-                        "transition-colors duration-300",
-                        isSelected
-                            ? "bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300"
-                            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80"
-                    )}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
-                    <Icon className="size-4" />
-                </motion.button>
+                {button}
             </HoverCardTrigger>
             <HoverCardContent
                 side="bottom"
@@ -351,7 +535,7 @@ const SelectionContent = ({ ...props }) => {
 
     return (
         <motion.div
-            layout
+            layout={false}
             initial={false}
             animate={{
                 width: isExpanded ? "auto" : "30px",
@@ -359,12 +543,8 @@ const SelectionContent = ({ ...props }) => {
                 paddingRight: isExpanded ? "0.5rem" : 0,
             }}
             transition={{
-                layout: { duration: 0.4 },
-                duration: 0.4,
-                ease: [0.4, 0.0, 0.2, 1],
-                width: { type: "spring", stiffness: 300, damping: 30 },
-                gap: { type: "spring", stiffness: 300, damping: 30 },
-                paddingRight: { type: "spring", stiffness: 300, damping: 30 }
+                duration: 0.2,
+                ease: "easeInOut",
             }}
             style={{
                 display: "flex",
@@ -383,24 +563,20 @@ const SelectionContent = ({ ...props }) => {
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
                 {searchGroups.map((group, index) => {
                     const showItem = isExpanded || props.selectedGroup === group.id;
                     return (
                         <motion.div
                             key={group.id}
+                            layout={false}
                             animate={{
                                 width: showItem ? "28px" : 0,
-                                opacity: showItem ? 1 : 0,
-                                x: showItem ? 0 : -10
+                                opacity: showItem ? 1 : 0
                             }}
-                            exit={{ opacity: 1, x: 0, transition: { duration: 0 } }}
                             transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                                delay: index * 0.05,
-                                opacity: { duration: 0.2, delay: showItem ? index * 0.05 : 0 }
+                                duration: 0.15,
+                                ease: "easeInOut"
                             }}
                             style={{ margin: 0 }}
                         >
@@ -438,31 +614,29 @@ const FormComponent: React.FC<FormComponentProps> = ({
     fileInputRef,
     inputRef,
     stop,
-    messages,
-    append,
     selectedModel,
     setSelectedModel,
     resetSuggestedQuestions,
     lastSubmittedQueryRef,
     selectedGroup,
     setSelectedGroup,
+    showExperimentalModels,
 }) => {
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+    const isMounted = useRef(true);
     const { width } = useWindowSize();
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
 
-    const MIN_HEIGHT = 56;
+    const MIN_HEIGHT = 72;
     const MAX_HEIGHT = 400;
 
     const autoResizeInput = (target: HTMLTextAreaElement) => {
         if (!target) return;
         requestAnimationFrame(() => {
             target.style.height = 'auto';
-            let newHeight = target.scrollHeight;
-            newHeight = Math.min(Math.max(newHeight, MIN_HEIGHT), MAX_HEIGHT);
+            const newHeight = Math.min(Math.max(target.scrollHeight, MIN_HEIGHT), MAX_HEIGHT);
             target.style.height = `${newHeight}px`;
-            target.style.overflowY = newHeight >= MAX_HEIGHT ? 'auto' : 'hidden';
         });
     };
 
@@ -539,6 +713,22 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
+
+    useEffect(() => {
+        if (!isLoading && hasSubmitted && inputRef.current) {
+            const focusTimeout = setTimeout(() => {
+                if (isMounted.current && inputRef.current) {
+                    inputRef.current.focus({
+                        preventScroll: true
+                    });
+                }
+            }, 300);
+
+            return () => clearTimeout(focusTimeout);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, hasSubmitted]);
+
     const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         event.stopPropagation();
@@ -582,11 +772,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
     }, [attachments.length, hasSubmitted, fileInputRef]);
 
-    const handleTouchStart = useCallback((event: React.TouchEvent<HTMLTextAreaElement>) => {
-        event.preventDefault();
-        event.currentTarget.focus();
-    }, []);
-
     return (
 
         <div className={cn(
@@ -600,7 +785,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
 
             {(attachments.length > 0 || uploadQueue.length > 0) && (
-                <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10">
+                <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10 px-1">
                     {/* Existing attachment previews */}
                     {attachments.map((attachment, index) => (
                         <AttachmentPreview
@@ -635,19 +820,26 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     disabled={isLoading}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    onTouchStart={handleTouchStart}
+                    onTouchStart={(e) => {
+                        e.stopPropagation();
+                        inputRef.current?.focus();
+                    }}
                     className={cn(
-                        "min-h-[56px] max-h-[400px] w-full resize-none rounded-lg",
-                        "overflow-x-hidden",
+                        "min-h-[72px] w-full resize-none rounded-lg",
                         "text-base leading-relaxed",
                         "bg-neutral-100 dark:bg-neutral-900",
-                        "border border-neutral-200 dark:border-neutral-700",
-                        "focus:border-neutral-300 dark:focus:border-neutral-600",
+                        "border !border-neutral-200 dark:!border-neutral-700",
+                        "focus:!border-neutral-300 dark:focus:!border-neutral-600",
+                        isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                         "text-neutral-900 dark:text-neutral-100",
                         "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
-                        "px-4 pt-3 pb-5"
+                        "px-4 pt-4 pb-16",
+                        "overflow-y-auto",
                     )}
-                    rows={3}
+                    style={{
+                        maxHeight: `${MAX_HEIGHT}px`,
+                    }}
+                    rows={1}
                     autoFocus
                     onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
@@ -656,20 +848,23 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 toast.error("Please wait for the response to complete!");
                             } else {
                                 submitForm();
+                                setTimeout(() => {
+                                    inputRef.current?.focus();
+                                }, 100);
                             }
                         }
                     }}
                 />
 
                 <div className={cn(
-                    "absolute bottom-0 inset-x-0 flex justify-between items-center rounded-b-lg p-2",
+                    "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
                     "bg-neutral-100 dark:bg-neutral-900",
                     "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
                     isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                     isLoading ? "!opacity-20 !cursor-not-allowed" : ""
                 )}>
                     <div className="flex items-center gap-2">
-                        {!hasSubmitted ?
+                        {!hasSubmitted && selectedModel !== "scira-o3-mini" ?
                             <GroupSelector
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
@@ -679,6 +874,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <ModelSwitcher
                             selectedModel={selectedModel}
                             setSelectedModel={setSelectedModel}
+                            showExperimentalModels={showExperimentalModels}
                         />
                     </div>
 

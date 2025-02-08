@@ -27,29 +27,6 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-    Drawer,
-    DrawerClose,
-    DrawerContent,
-    DrawerFooter,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger,
-} from "@/components/ui/drawer";
-import FormComponent from '@/components/ui/form-component';
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
@@ -62,7 +39,7 @@ import { Wave } from "@foobar404/wave";
 import { CheckCircle, CurrencyDollar, Flag, GithubLogo, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
-import { useChat } from 'ai/react';
+import { useChat, UseChatOptions } from 'ai/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GeistMono } from 'geist/font/mono';
 import {
@@ -136,8 +113,32 @@ import {
 import { TrendingQuery } from './api/trending/route';
 import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
+import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart } from '@ai-sdk/ui-utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
+} from "@/components/ui/drawer";
+import FormComponent from '@/components/ui/form-component';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 interface Attachment {
     name: string;
@@ -676,7 +677,8 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 const HomeContent = () => {
     const [query] = useQueryState('query', parseAsString.withDefault(''))
     const [q] = useQueryState('q', parseAsString.withDefault(''))
-    const [model] = useQueryState('model', parseAsString.withDefault('grok-2-1212'))
+    const [model] = useQueryState('model', parseAsString.withDefault('scira-default'))
+
 
 
     const initialState = useMemo(() => ({
@@ -723,20 +725,26 @@ const HomeContent = () => {
         return parsedCache;
     };
 
-    const { theme } = useTheme();
+    useEffect(() => {
+        console.log("selectedModel", selectedModel);
+    }, [selectedModel]);
 
     const [trendingQueries, setTrendingQueries] = useState<TrendingQuery[]>([]);
 
-    const { isLoading, input, messages, setInput, append, handleSubmit, setMessages, reload, stop } = useChat({
-        maxSteps: 8,
+    const chatOptions: UseChatOptions = useMemo(() => ({
+        maxSteps: 5,
+        experimental_throttle: 500,
         body: {
             model: selectedModel,
             group: selectedGroup,
         },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);
-            if (message.content && finishReason === 'stop' || finishReason === 'length') {
-                const newHistory = [...messages, { role: "user", content: lastSubmittedQueryRef.current }, { role: "assistant", content: message.content }];
+            if (message.content && (finishReason === 'stop' || finishReason === 'length')) {
+                const newHistory = [
+                    { role: "user", content: lastSubmittedQueryRef.current },
+                    { role: "assistant", content: message.content },
+                ];
                 const { questions } = await suggestQuestions(newHistory);
                 setSuggestedQuestions(questions);
             }
@@ -747,7 +755,9 @@ const HomeContent = () => {
                 description: `Oops! An error occurred while processing your request. ${error.message}`,
             });
         },
-    });
+    }), [selectedModel, selectedGroup]);
+
+    const { isLoading, input, messages, setInput, append, handleSubmit, setMessages, reload, stop } = useChat(chatOptions);
 
     useEffect(() => {
         if (!initializedRef.current && initialState.query && !messages.length) {
@@ -835,36 +845,6 @@ const HomeContent = () => {
             </Button>
         );
     };
-
-    type Changelog = {
-        id: string;
-        images: string[];
-        content: string;
-        title: string;
-    };
-
-    const changelogs: Changelog[] = [
-        {
-            id: "1",
-            title: "The Unexpected Collab",
-            images: [
-                "https://metwm7frkvew6tn1.public.blob.vercel-storage.com/mplx-changelogs/mplx-collab.jpeg",
-            ],
-            content: `
-## **Scira x Vercel x xAI Collab**
-
-Excited to annouce that Scira has partnered with Vercel and xAI to bring you the best of AI search experience.
-Grok 2 models are now available for you to try out.
-`
-        }
-    ];
-
-    interface TableData {
-        title: string;
-        content: string;
-    }
-
-    
 
     interface MarkdownRendererProps {
         content: string;
@@ -1192,137 +1172,39 @@ Grok 2 models are now available for you to try out.
     const handleMessageUpdate = useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (input.trim()) {
-            const updatedMessages = [...messages];
-            updatedMessages[editingMessageIndex] = { ...updatedMessages[editingMessageIndex], content: input.trim() };
-            setMessages(updatedMessages);
+            // Create new messages array up to the edited message
+            const newMessages = messages.slice(0, editingMessageIndex + 1);
+            // Update the edited message
+            newMessages[editingMessageIndex] = { ...newMessages[editingMessageIndex], content: input.trim() };
+            // Set the new messages array
+            setMessages(newMessages);
+            // Reset editing state
             setIsEditingMessage(false);
             setEditingMessageIndex(-1);
-            handleSubmit(e);
+            // Store the edited message for reference
+            lastSubmittedQueryRef.current = input.trim();
+            // Clear input
+            setInput('');
+            // Reset suggested questions
+            setSuggestedQuestions([]);
+            // Trigger a new chat completion without appending
+            reload();
         } else {
             toast.error("Please enter a valid message.");
         }
-    }, [input, messages, editingMessageIndex, setMessages, handleSubmit]);
+    }, [input, messages, editingMessageIndex, setMessages, reload]);
 
-    const AboutContent = () => {
-        return (
-            <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8 p-1">
-                <section className="space-y-4 font-syne">
-                    <h2 className="text-2xl font-medium mt-2">Welcome to Scira</h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                        Scira (Formerly MiniPerplx) is an minimalistic AI-powered search engine that combines multiple data sources to provide comprehensive answers. The name &lsquo;Scira&rsquo; is derived from the Latin word &lsquo;scire&rsquo;, meaning &lsquo;to know&rsquo; - reflecting our mission to make knowledge accessible and intuitive.
-                    </p>
-                    <div className="flex flex-row items-center gap-2 h-8">
-                        <Link
-                            href="https://git.new/scira"
-                            className="inline-flex h-8 items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors no-underline"
-                        >
-                            <GithubLogo className="h-3.5 w-3.5" />
-                            <span className="font-medium">View on GitHub</span>
-                        </Link>
-                        <Link
-                            href="https://x.com/sciraai"
-                            className="inline-flex h-8 items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors no-underline"
-                        >
-                            <XLogo className="h-3.5 w-3.5" />
-                            <span className="font-medium">Follow on X</span>
-                        </Link>
-                        <a
-                            href="https://www.producthunt.com/posts/scira?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-scira"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:opacity-90 transition-opacity"
-                        >
-                            <img
-                                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=776449&theme=light&t=1736847508935"
-                                alt="Scira - A minimalistic open-source AI-powered search engine | Product Hunt"
-                                className="h-8"
-                            />
-                        </a>
-                    </div>
-                </section>
-
-                <Separator className="bg-neutral-200 dark:bg-neutral-800" />
-
-                <section className="space-y-4">
-                    <h3 className="text-xl font-semibold">Core Features</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                            { icon: Search, text: "Multi-source search integration" },
-                            { icon: Zap, text: "Real-time data processing" },
-                            { icon: GraduationCap, text: "Academic paper analysis" },
-                            { icon: Share2, text: "Social media insights" },
-                            { icon: Cloud, text: "Weather and location services" },
-                        ].map((feature, i) => (
-                            <div
-                                key={i}
-                                className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
-                            >
-                                <feature.icon className="h-5 w-5 text-primary" />
-                                <span className="text-sm text-neutral-600 dark:text-neutral-400">{feature.text}</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <Separator className="bg-neutral-200 dark:bg-neutral-800" />
-
-                <section className="space-y-4">
-                    <h3 className="text-xl font-semibold">Technology</h3>
-                    <div className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-primary">→</span>
-                            Built with Next.js, Vercel AI SDK, and Powered by xAI&apos;s Grok 2.0
-                        </div>
-                    </div>
-                </section>
-            </div>
-        );
-    };
     const AboutButton = () => {
-        const [isOpen, setIsOpen] = useState(false);
-        const isDesktop = useMediaQuery("(min-width: 768px)");
-
-        if (isDesktop) {
-            return (
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="rounded-full w-8 h-8 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
-                        >
-                            <Info className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[725px] z-[100] max-h-[80vh] overflow-y-auto">
-                        <AboutContent />
-                    </DialogContent>
-                </Dialog>
-            );
-        }
-
         return (
-            <Drawer open={isOpen} onOpenChange={setIsOpen}>
-                <DrawerTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-full w-8 h-8 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
-                    >
-                        <Info className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-                    </Button>
-                </DrawerTrigger>
-                <DrawerContent className="z-[100]">
-                    <div className="px-4 my-0 h-[75vh] overflow-y-auto">
-                        <AboutContent />
-                    </div>
-                    <DrawerFooter className="pt-2 border-t">
-                        <DrawerClose asChild>
-                            <Button variant="outline">Close</Button>
-                        </DrawerClose>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+            <Link href="/about">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full w-8 h-8 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
+                >
+                    <Info className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                </Button>
+            </Link>
         );
     };
 
@@ -1330,18 +1212,17 @@ Grok 2 models are now available for you to try out.
 
     const Navbar: React.FC<NavbarProps> = () => {
         return (
-            <div className="fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4 
-                bg-white/30 dark:bg-neutral-950/30 
-                backdrop-blur-lg backdrop-saturate-150
-                border-b border-neutral-200/20 dark:border-neutral-800/20
-                supports-[backdrop-filter]:bg-white/30 supports-[backdrop-filter]:dark:bg-neutral-950/30
-                font-sans">
+            <div className={cn(
+                "fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4",
+                // Add opaque background only after submit
+                hasSubmitted ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" : "bg-background",
+            )}>
                 <div className="flex items-center gap-4">
                     <Link href="/new">
                         <Button
                             type="button"
                             variant={'secondary'}
-                            className="rounded-full bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm group transition-all hover:scale-105 pointer-events-auto"
+                            className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-sm group transition-all hover:scale-105 pointer-events-auto"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-all" />
                             <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
@@ -1353,10 +1234,10 @@ Grok 2 models are now available for you to try out.
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,AVIATION_STACK_API_KEY,SANDBOX_TEMPLATE_ID,TMDB_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,YT_ENDPOINT,EXA_API_KEY,TRIPADVISOR_API_KEY,BLOB_READ_WRITE_TOKEN,ELEVENLABS_API_KEY,AZURE_TRANSLATOR_LOCATION,AZURE_TRANSLATOR_KEY,AZURE_RESOURCE_NAME,AZURE_API_KEY,MAPBOX_ACCESS_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,FIRECRAWL_API_KEY,TAVILY_API_KEY,OPENWEATHER_API_KEY,E2B_API_KEY,GOOGLE_MAPS_API_KEY,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=All%20environment%20variables%20needed%20for%20application"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,AZURE_RESOURCE_NAME,AZURE_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
-                            bg-white/70 hover:bg-white/90 dark:bg-neutral-800/70 dark:hover:bg-neutral-800/90
-                            backdrop-blur-sm text-neutral-950 dark:text-zinc-50 shadow-sm text-sm
+                            bg-accent hover:bg-accent/80
+                            backdrop-blur-sm text-foreground shadow-sm text-sm
                             transition-all duration-200"
                     >
                         <VercelIcon size={14} />
@@ -1470,14 +1351,17 @@ Grok 2 models are now available for you to try out.
                 className="mt-4 relative"
             >
                 <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10" />
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10" />
+                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-[8]" />
+                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-[8]" />
 
                     <div
                         ref={scrollRef}
                         className="flex gap-2 overflow-x-auto pb-2 px-2 scroll-smooth no-scrollbar"
                         onTouchStart={() => setIsPaused(true)}
-                        onTouchEnd={() => setIsPaused(false)}
+                        onTouchEnd={() => {
+                            // Add a small delay before resuming animation on mobile
+                            setTimeout(() => setIsPaused(false), 1000);
+                        }}
                         onMouseEnter={() => setIsPaused(true)}
                         onMouseLeave={() => setIsPaused(false)}
                     >
@@ -1486,13 +1370,19 @@ Grok 2 models are now available for you to try out.
                                 key={`${index}-${query.text}`}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ delay: index * 0.03 }}
+                                transition={{
+                                    duration: 0.2,
+                                    delay: Math.min(index * 0.02, 0.5), // Cap the maximum delay
+                                    ease: "easeOut"
+                                }}
                                 onClick={() => handleExampleClick(query)}
                                 className="group flex-shrink-0 w-[120px] h-12 bg-neutral-50/80 dark:bg-neutral-800/80
                                          backdrop-blur-sm rounded-lg
                                          hover:bg-white dark:hover:bg-neutral-700/70
-                                         transition-colors duration-200
+                                         active:scale-95
+                                         transition-all duration-200
                                          border border-neutral-200/50 dark:border-neutral-700/50"
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                                 <div className="flex items-start gap-1.5 h-full p-2">
                                     <div className="w-5 h-5 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center mt-0.5">
@@ -1524,7 +1414,30 @@ Grok 2 models are now available for you to try out.
     }, []);
 
 
-    const memoizedMessages = useMemo(() => messages, [messages]);
+    const memoizedMessages = useMemo(() => {
+        // Create a shallow copy
+        const msgs = [...messages];
+
+        return msgs.filter((message) => {
+            // Keep all user messages
+            if (message.role === 'user') return true;
+
+            // For assistant messages
+            if (message.role === 'assistant') {
+                // Keep messages that have tool invocations
+                if (message.parts?.some(part => part.type === 'tool-invocation')) {
+                    return true;
+                }
+                // Keep messages that have text parts but no tool invocations
+                if (message.parts?.some(part => part.type === 'text') ||
+                    !message.parts?.some(part => part.type === 'tool-invocation')) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        });
+    }, [messages]);
 
     const memoizedSuggestionCards = useMemo(() => (
         <SuggestionCards
@@ -1533,6 +1446,118 @@ Grok 2 models are now available for you to try out.
         />
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [trendingQueries]);
+
+    // Track visibility state for each reasoning section using messageIndex-partIndex as key
+    const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
+
+    const renderPart = (
+        part: TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
+        messageIndex: number,
+        partIndex: number,
+        parts: (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[]
+    ) => {
+        if (part.type === "text" && partIndex === 0 &&
+            parts.some((p, i) => i > partIndex && p.type === 'tool-invocation')) {
+            return null;
+        }
+
+        switch (part.type) {
+            case "text":
+                return (
+                    <div key={`${messageIndex}-${partIndex}-text`}>
+                        <div className="flex items-center justify-between mt-5 mb-2">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="size-5 text-primary" />
+                                <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
+                                    Answer
+                                </h2>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <CopyButton text={part.text} />
+                            </div>
+                        </div>
+                        <MarkdownRenderer content={part.text} />
+                    </div>
+                );
+            case "reasoning": {
+                const sectionKey = `${messageIndex}-${partIndex}`;
+                const isComplete = parts[partIndex + 1]?.type === "text";
+                
+                // Auto-expand completed reasoning sections if not manually toggled
+                if (isComplete && reasoningVisibilityMap[sectionKey] === undefined) {
+                    setReasoningVisibilityMap(prev => ({
+                        ...prev,
+                        [sectionKey]: true
+                    }));
+                }
+
+                return (
+                    <motion.div
+                        key={`${messageIndex}-${partIndex}-reasoning`}
+                        id={`reasoning-${messageIndex}`}
+                        className="mb-4"
+                    >
+                        <button
+                            onClick={() => setReasoningVisibilityMap(prev => ({
+                                ...prev,
+                                [sectionKey]: !prev[sectionKey]
+                            }))}
+                            className="flex items-center justify-between w-full group text-left px-4 py-2 
+                                hover:bg-neutral-50 dark:hover:bg-neutral-800/50 
+                                border border-neutral-200 dark:border-neutral-800 
+                                rounded-lg transition-all duration-200
+                                bg-neutral-50/50 dark:bg-neutral-900/50"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                </div>
+                                <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                                    {isComplete
+                                        ? "Reasoned" 
+                                        : "Reasoning"}
+                                </span>
+                            </div>
+                            <ChevronDown
+                                className={cn(
+                                    "h-4 w-4 text-neutral-500 transition-transform duration-200",
+                                    reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
+                                )}
+                            />
+                        </button>
+
+                        <AnimatePresence>
+                            {reasoningVisibilityMap[sectionKey] && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="relative pl-4 mt-2">
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
+                                        <div className="text-sm italic text-neutral-600 dark:text-neutral-400">
+                                            <MarkdownRenderer content={part.reasoning} />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                );
+            }
+            case "tool-invocation":
+                return (
+                    <ToolInvocationListView
+                        key={`${messageIndex}-${partIndex}-tool`}
+                        toolInvocations={[part.toolInvocation]}
+                    />
+                );
+            default:
+                return null;
+        }
+    };
 
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
@@ -1546,7 +1571,7 @@ Grok 2 models are now available for you to try out.
                     {!hasSubmitted && (
                         <div className="text-center !font-sans">
                             <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
-                                What do you want to search?
+                                What do you want to explore?
                             </h1>
                         </div>
                     )}
@@ -1578,6 +1603,7 @@ Grok 2 models are now available for you to try out.
                                     lastSubmittedQueryRef={lastSubmittedQueryRef}
                                     selectedGroup={selectedGroup}
                                     setSelectedGroup={setSelectedGroup}
+                                    showExperimentalModels={true}
                                 />
                                 {memoizedSuggestionCards}
                             </motion.div>
@@ -1592,94 +1618,93 @@ Grok 2 models are now available for you to try out.
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.5 }}
-                                        className="flex items-start space-x-2 mb-4"
+                                        className="flex items-start gap-2 mb-4 px-2 sm:px-0"
                                     >
-                                        <User2 className="size-5 text-primary flex-shrink-0 mt-1" />
+                                        <User2 className="size-4 sm:size-5 text-primary flex-shrink-0 mt-0.5" />
                                         <div className="flex-grow min-w-0">
                                             {isEditingMessage && editingMessageIndex === index ? (
-                                                <form onSubmit={handleMessageUpdate} className="flex items-center space-x-2">
-                                                    <Input
-                                                        value={input}
-                                                        onChange={(e) => setInput(e.target.value)}
-                                                        className="flex-grow bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                                                    />
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="sm"
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setIsEditingMessage(false)
-                                                            setEditingMessageIndex(-1)
-                                                            setInput('')
-                                                        }}
-                                                        disabled={isLoading}
-                                                        className="bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
-                                                    >
-                                                        <X size={16} />
-                                                    </Button>
-                                                    <Button type="submit" size="sm" className="bg-primary text-white">
-                                                        <ArrowRight size={16} />
-                                                    </Button>
+                                                <form onSubmit={handleMessageUpdate} className="w-full">
+                                                    <div className="relative flex items-center">
+                                                        <Input
+                                                            value={input}
+                                                            onChange={(e) => setInput(e.target.value)}
+                                                            className="pr-20 h-8 text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                                            placeholder="Edit your message..."
+                                                        />
+                                                        <div className="absolute right-1 flex items-center gap-1">
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    setIsEditingMessage(false);
+                                                                    setEditingMessageIndex(-1);
+                                                                    setInput('');
+                                                                }}
+                                                                className="h-6 w-6"
+                                                                disabled={isLoading}
+                                                            >
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6 text-primary hover:text-primary/80"
+                                                                disabled={isLoading}
+                                                            >
+                                                                <ArrowRight className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </form>
                                             ) : (
-                                                <div>
-                                                    <p className="text-base sm:text-xl font-medium font-sans break-words text-neutral-800 dark:text-neutral-200">
-                                                        {message.content}
-                                                    </p>
-                                                    <div className='flex flex-row gap-2'>
-                                                        {message.experimental_attachments?.map((attachment, attachmentIndex) => (
-                                                            <div key={attachmentIndex} className="mt-2">
-                                                                {attachment.contentType!.startsWith('image/') && (
-                                                                    <img
-                                                                        src={attachment.url}
-                                                                        alt={attachment.name || `Attachment ${attachmentIndex + 1}`}
-                                                                        className="max-w-full h-32 object-fill rounded-lg"
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        ))}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-grow min-w-0">
+                                                        <p className="text-base sm:text-lg font-medium font-sans break-words text-neutral-800 dark:text-neutral-200">
+                                                            {message.content}
+                                                        </p>
+                                                        <div className='flex flex-row gap-2'>
+                                                            {message.experimental_attachments?.map((attachment, attachmentIndex) => (
+                                                                <div key={attachmentIndex} className="mt-2">
+                                                                    {attachment.contentType!.startsWith('image/') && (
+                                                                        <img
+                                                                            src={attachment.url}
+                                                                            alt={attachment.name || `Attachment ${attachmentIndex + 1}`}
+                                                                            className="max-w-full h-24 sm:h-32 object-fill rounded-lg"
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
+                                                    {!isEditingMessage && index === lastUserMessageIndex && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleMessageEdit(index)}
+                                                            className="h-6 w-6 text-neutral-500 dark:text-neutral-400 hover:text-primary flex-shrink-0"
+                                                            disabled={isLoading}
+                                                        >
+                                                            <Edit2 className="size-4 sm:size-5" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
-
-                                        {!isEditingMessage && index === lastUserMessageIndex && (
-                                            <div className="flex items-center space-x-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleMessageEdit(index)}
-                                                    className="ml-2 text-neutral-500 dark:text-neutral-400"
-                                                    disabled={isLoading}
-                                                >
-                                                    <Edit2 size={16} />
-                                                </Button>
-                                            </div>
-                                        )}
                                     </motion.div>
                                 )}
-                                {message.role === 'assistant' && message.content !== null && !message.toolInvocations && (
-                                    <div>
-                                        <div className='flex items-center justify-between mb-2'>
-                                            <div className='flex items-center gap-2'>
-                                                <Sparkles className="size-5 text-primary" />
-                                                <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">Answer</h2>
-                                            </div>
-                                            <div className='flex items-center gap-2'>
-                                                <CopyButton text={message.content} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <MarkdownRenderer content={message.content} />
-                                        </div>
-                                    </div>
-                                )}
-                                {message.toolInvocations && (
-                                    <ToolInvocationListView toolInvocations={message.toolInvocations} />
+
+                                {message.role === 'assistant' && message.parts?.map((part, partIndex) =>
+                                    renderPart(
+                                        part as TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
+                                        index,
+                                        partIndex,
+                                        message.parts as (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[]
+                                    )
                                 )}
                             </div>
                         ))}
-
                         {suggestedQuestions.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -1739,6 +1764,7 @@ Grok 2 models are now available for you to try out.
                                 lastSubmittedQueryRef={lastSubmittedQueryRef}
                                 selectedGroup={selectedGroup}
                                 setSelectedGroup={setSelectedGroup}
+                                showExperimentalModels={false}
                             />
                         </motion.div>
                     )}
@@ -1925,7 +1951,7 @@ const ToolInvocationListView = memo(
                     );
                 }
 
-                if (toolInvocation.toolName === 'tmdb_search') {
+                if (toolInvocation.toolName === 'movie_or_tv_search') {
                     if (!result) {
                         return <SearchLoadingState
                             icon={Film}
@@ -2539,135 +2565,139 @@ const ToolInvocationListView = memo(
             []
         );
 
-         const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
-        const [isPlaying, setIsPlaying] = useState(false);
-        const [audioUrl, setAudioUrl] = useState<string | null>(null);
-        const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-        const audioRef = useRef<HTMLAudioElement | null>(null);
-        const canvasRef = useRef<HTMLCanvasElement | null>(null);
-        const waveRef = useRef<Wave | null>(null);
+        const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [audioUrl, setAudioUrl] = useState<string | null>(null);
+            const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+            const audioRef = useRef<HTMLAudioElement | null>(null);
+            const canvasRef = useRef<HTMLCanvasElement | null>(null);
+            const waveRef = useRef<Wave | null>(null);
 
-        useEffect(() => {
-            const _audioRef = audioRef.current
-            return () => {
-                if (_audioRef) {
-                    _audioRef.pause();
-                    _audioRef.src = '';
+            useEffect(() => {
+                const _audioRef = audioRef.current
+                return () => {
+                    if (_audioRef) {
+                        _audioRef.pause();
+                        _audioRef.src = '';
+                    }
+                };
+            }, []);
+
+            useEffect(() => {
+                if (audioUrl && audioRef.current && canvasRef.current) {
+                    waveRef.current = new Wave(audioRef.current, canvasRef.current);
+                    waveRef.current.addAnimation(new waveRef.current.animations.Lines({
+                        lineColor: "rgb(203, 113, 93)",
+                        lineWidth: 2,
+                        mirroredY: true,
+                        count: 100,
+                    }));
+                }
+            }, [audioUrl]);
+
+            const handlePlayPause = async () => {
+                if (!audioUrl && !isGeneratingAudio) {
+                    setIsGeneratingAudio(true);
+                    try {
+                        const { audio } = await generateSpeech(result.translatedText, 'alloy');
+                        setAudioUrl(audio);
+                        setIsGeneratingAudio(false);
+                    } catch (error) {
+                        console.error("Error generating speech:", error);
+                        setIsGeneratingAudio(false);
+                    }
+                } else if (audioRef.current) {
+                    if (isPlaying) {
+                        audioRef.current.pause();
+                    } else {
+                        audioRef.current.play();
+                    }
+                    setIsPlaying(!isPlaying);
                 }
             };
-        }, []);
 
-        useEffect(() => {
-            if (audioUrl && audioRef.current && canvasRef.current) {
-                waveRef.current = new Wave(audioRef.current, canvasRef.current);
-                waveRef.current.addAnimation(new waveRef.current.animations.Lines({
-                    lineColor: "rgb(203, 113, 93)",
-                    lineWidth: 2,
-                    mirroredY: true,
-                    count: 100,
-                }));
-            }
-        }, [audioUrl]);
-
-        const handlePlayPause = async () => {
-            if (!audioUrl && !isGeneratingAudio) {
-                setIsGeneratingAudio(true);
-                try {
-                    const { audio } = await generateSpeech(result.translatedText, 'alloy');
-                    setAudioUrl(audio);
-                    setIsGeneratingAudio(false);
-                } catch (error) {
-                    console.error("Error generating speech:", error);
-                    setIsGeneratingAudio(false);
-                }
-            } else if (audioRef.current) {
-                if (isPlaying) {
+            const handleReset = () => {
+                if (audioRef.current) {
                     audioRef.current.pause();
-                } else {
-                    audioRef.current.play();
+                    audioRef.current.currentTime = 0;
+                    setIsPlaying(false);
                 }
-                setIsPlaying(!isPlaying);
-            }
-        };
+            };
 
-        const handleReset = () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-                setIsPlaying(false);
+            if (!result) {
+                return (
+                    <Card className="w-full my-4 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
+                        <CardContent className="flex items-center justify-center h-24">
+                            <div className="animate-pulse flex items-center">
+                                <div className="h-4 w-4 bg-primary rounded-full mr-2"></div>
+                                <div className="h-4 w-32 bg-primary rounded"></div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
             }
-        };
 
-        if (!result) {
             return (
-                <Card className="w-full my-4 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                    <CardContent className="flex items-center justify-center h-24">
-                        <div className="animate-pulse flex items-center">
-                            <div className="h-4 w-4 bg-primary rounded-full mr-2"></div>
-                            <div className="h-4 w-32 bg-primary rounded"></div>
+                <Card className="w-full my-4 shadow-none bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
+                    <CardContent className="p-6">
+                        <div className="space-y-4">
+                            <div className="w-full h-24 bg-neutral-100 dark:bg-neutral-700 rounded-lg overflow-hidden">
+                                <canvas ref={canvasRef} width="800" height="200" className="w-full h-full" />
+                            </div>
+                            <div className="flex text-left gap-3 items-center justify-center text-pretty">
+                                <div className="flex justify-center space-x-2">
+                                    <Button
+                                        onClick={handlePlayPause}
+                                        disabled={isGeneratingAudio}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs sm:text-sm w-24 bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
+                                    >
+                                        {isGeneratingAudio ? (
+                                            "Generating..."
+                                        ) : isPlaying ? (
+                                            <><Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pause</>
+                                        ) : (
+                                            <><Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Play</>
+                                        )}
+                                    </Button>
+                                </div>
+                                <div className='text-sm text-neutral-800 dark:text-neutral-200'>
+                                    The phrase <span className='font-semibold'>{toolInvocation.args.text}</span> translates from <span className='font-semibold'>{result.detectedLanguage}</span> to <span className='font-semibold'>{toolInvocation.args.to}</span> as <span className='font-semibold'>{result.translatedText}</span> in <span className='font-semibold'>{toolInvocation.args.to}</span>.
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
+                    {audioUrl && (
+                        <audio
+                            ref={audioRef}
+                            src={audioUrl}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onEnded={() => { setIsPlaying(false); handleReset(); }}
+                        />
+                    )}
                 </Card>
             );
-        }
+        };
 
         return (
-            <Card className="w-full my-4 shadow-none bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                <CardContent className="p-6">
-                    <div className="space-y-4">
-                        <div className="w-full h-24 bg-neutral-100 dark:bg-neutral-700 rounded-lg overflow-hidden">
-                            <canvas ref={canvasRef} width="800" height="200" className="w-full h-full" />
+            <>
+                {toolInvocations.map(
+                    (toolInvocation: ToolInvocation, toolIndex: number) => (
+                        <div key={`tool-${toolIndex}`}>
+                            {renderToolInvocation(toolInvocation, toolIndex)}
                         </div>
-                        <div className="flex text-left gap-3 items-center justify-center text-pretty">
-                            <div className="flex justify-center space-x-2">
-                                <Button
-                                    onClick={handlePlayPause}
-                                    disabled={isGeneratingAudio}
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs sm:text-sm w-24 bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
-                                >
-                                    {isGeneratingAudio ? (
-                                        "Generating..."
-                                    ) : isPlaying ? (
-                                        <><Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pause</>
-                                    ) : (
-                                        <><Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Play</>
-                                    )}
-                                </Button>
-                            </div>
-                            <div className='text-sm text-neutral-800 dark:text-neutral-200'>
-                                The phrase <span className='font-semibold'>{toolInvocation.args.text}</span> translates from <span className='font-semibold'>{result.detectedLanguage}</span> to <span className='font-semibold'>{toolInvocation.args.to}</span> as <span className='font-semibold'>{result.translatedText}</span> in <span className='font-semibold'>{toolInvocation.args.to}</span>.
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-                {audioUrl && (
-                    <audio
-                        ref={audioRef}
-                        src={audioUrl}
-                        onPlay={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
-                        onEnded={() => { setIsPlaying(false); handleReset(); }}
-                    />
+                    )
                 )}
-            </Card>
-        );
-    };
-
-        return toolInvocations.map(
-            (toolInvocation: ToolInvocation, toolIndex: number) => (
-                <div key={`tool-${toolIndex}`}>
-                    {renderToolInvocation(toolInvocation, toolIndex)}
-                </div>
-            )
+            </>
         );
     },
     (prevProps, nextProps) => {
         return prevProps.toolInvocations === nextProps.toolInvocations;
     }
 );
-  
+
 ToolInvocationListView.displayName = 'ToolInvocationListView';
 
 const Home = () => {

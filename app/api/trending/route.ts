@@ -52,7 +52,7 @@ async function fetchGoogleTrends(): Promise<TrendingQuery[]> {
             const itemsWithCategoryAndIcon = await Promise.all(
                 items.map(async (item) => {
                     const { object } = await generateObject({
-                        model: xai('grok-beta'),
+                        model: xai("grok-beta"),
                         prompt: `Give the category for the topic from the existing values only in lowercase only: ${item.replace(
                             /<\/?title>/g,
                             '',

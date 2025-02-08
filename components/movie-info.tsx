@@ -67,88 +67,137 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
     };
 
     const DetailContent = () => (
-        <div className="flex flex-col max-h-[80vh] bg-white dark:bg-neutral-950">
+        <div className="flex flex-col max-h-[80vh] bg-black">
+            {/* Hero Section with Backdrop */}
             <div className="relative w-full aspect-[16/9] sm:aspect-[21/9]">
                 {media.backdrop_path ? (
-                    <Image
-                        src={media.backdrop_path}
-                        alt={media.title || media.name || ''}
-                        fill
-                        className="object-cover opacity-40 sm:opacity-60"
-                        priority
-                        unoptimized
-                    />
+                    <>
+                        <Image
+                            src={media.backdrop_path}
+                            alt={media.title || media.name || ''}
+                            fill
+                            className="object-cover"
+                            priority
+                            unoptimized
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                    </>
                 ) : (
-                    <div className="w-full h-full bg-neutral-200 dark:bg-neutral-800" />
+                    <div className="w-full h-full bg-neutral-900" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-white/70 dark:from-neutral-950 dark:via-neutral-950/90 dark:to-neutral-950/70" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-6">
-                    <h2 className="text-xl sm:text-3xl font-bold text-black dark:text-white mb-1.5 sm:mb-2">
-                        {media.title || media.name}
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-3 text-black/90 dark:text-white/90">
-                        <div className="flex items-center gap-2">
-                            <Star className="w-4 h-4 text-yellow-400" />
-                            <span>{media.vote_average.toFixed(1)}</span>
+
+                {/* Content Box */}
+                <div className="absolute bottom-0 left-0 right-0">
+                    <div className="relative p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-end">
+                        {/* Poster */}
+                        <div className="relative w-[120px] sm:w-[160px] aspect-[2/3] rounded-lg overflow-hidden shadow-2xl hidden sm:block">
+                            {media.poster_path ? (
+                                <Image
+                                    src={media.poster_path}
+                                    alt={media.title || media.name || ''}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                                    {media.media_type === 'movie' ? (
+                                        <Film className="w-12 h-12 text-neutral-400" />
+                                    ) : (
+                                        <Tv className="w-12 h-12 text-neutral-400" />
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        {(media.release_date || media.first_air_date) && (
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                <span>{formatDate(media.release_date || media.first_air_date || '')}</span>
+
+                        {/* Title and Metadata */}
+                        <div className="flex-1 text-white">
+                            <h2 className="text-3xl sm:text-5xl font-bold mb-4 text-white">
+                                {media.title || media.name}
+                            </h2>
+                            <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base">
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-yellow-500 text-black font-medium">
+                                    <Star className="w-4 h-4 fill-current" />
+                                    <span>{media.vote_average.toFixed(1)}</span>
+                                </div>
+                                {(media.release_date || media.first_air_date) && (
+                                    <div className="flex items-center gap-1.5">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>{formatDate(media.release_date || media.first_air_date || '')}</span>
+                                    </div>
+                                )}
+                                {(media.runtime || media.episode_run_time?.[0]) && (
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className="w-4 h-4" />
+                                        <span>{formatRuntime(media.runtime || media.episode_run_time?.[0] || 0)}</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                        {(media.runtime || media.episode_run_time?.[0]) && (
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                <span>{formatRuntime(media.runtime || media.episode_run_time?.[0] || 0)}</span>
-                            </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-                <div className="p-4 sm:p-6 space-y-6">
+            {/* Content Section */}
+            <div className="flex-1 overflow-y-auto bg-black">
+                <div className="relative p-4 sm:p-6 space-y-8">
+                    {/* Genres */}
                     <div className="flex flex-wrap gap-2">
                         {media.genres.map(genre => (
                             <span
                                 key={genre.id}
-                                className="px-3 py-1 text-sm rounded-full bg-neutral-100 text-black dark:bg-neutral-900 dark:text-white"
+                                className="px-3 py-1 text-sm rounded-full border border-neutral-800 
+                                         bg-neutral-900/50 text-neutral-200
+                                         hover:bg-neutral-800 transition-colors"
                             >
                                 {genre.name}
                             </span>
                         ))}
                     </div>
 
-                    <p className="text-black/80 dark:text-white/80 text-base sm:text-lg leading-relaxed">
-                        {media.overview}
-                    </p>
+                    {/* Overview */}
+                    <div className="space-y-3 max-w-3xl">
+                        <h3 className="text-lg font-semibold text-white">Overview</h3>
+                        <p className="text-neutral-300 text-base sm:text-lg leading-relaxed">
+                            {media.overview}
+                        </p>
+                    </div>
 
+                    {/* Cast Section */}
                     {media.credits?.cast && media.credits.cast.length > 0 && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-black/90 dark:text-white/90">Cast</h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <h3 className="text-lg font-semibold text-white">Cast</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {media.credits.cast.slice(0, media.credits.cast.length).map(person => (
                                     <div
                                         key={person.id}
-                                        className="bg-neutral-100 dark:bg-neutral-900 rounded-lg p-2 space-y-2"
+                                        className="group relative bg-neutral-900 rounded-lg overflow-hidden
+                                                 border border-neutral-800 hover:border-neutral-700 
+                                                 transition-all duration-300"
                                     >
-                                        {person.profile_path ? (
-                                            <Image
-                                                src={person.profile_path}
-                                                alt={person.name}
-                                                width={185}
-                                                height={185}
-                                                className="w-full aspect-square rounded-lg object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full aspect-square rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
-                                                <Users className="w-8 h-8 text-neutral-600 dark:text-neutral-400" />
-                                            </div>
-                                        )}
-                                        <div>
-                                            <p className="text-black dark:text-white font-medium truncate">{person.name}</p>
-                                            <p className="text-black/60 dark:text-white/60 text-sm truncate">{person.character}</p>
+                                        <div className="aspect-[2/3] relative overflow-hidden">
+                                            {person.profile_path ? (
+                                                <>
+                                                    <Image
+                                                        src={person.profile_path}
+                                                        alt={person.name}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </>
+                                            ) : (
+                                                <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                                                    <Users className="w-8 h-8 text-neutral-700" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-2">
+                                            <p className="font-medium text-white truncate text-sm">
+                                                {person.name}
+                                            </p>
+                                            <p className="text-xs text-neutral-400 truncate">
+                                                {person.character}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
@@ -165,11 +214,11 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
             <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="bg-neutral-100 dark:bg-neutral-900 rounded-xl overflow-hidden cursor-pointer"
+                className="relative group rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-neutral-100 via-white to-neutral-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 border border-neutral-200/50 dark:border-neutral-800/50 backdrop-blur-sm"
                 onClick={() => setShowDetails(true)}
             >
-                <div className="flex flex-col sm:flex-row gap-3 p-3 sm:p-4">
-                    <div className="w-[120px] sm:w-40 mx-auto sm:mx-0 aspect-[2/3] relative rounded-lg overflow-hidden">
+                <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5">
+                    <div className="relative w-[140px] sm:w-[160px] mx-auto sm:mx-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                         {media.poster_path ? (
                             <Image
                                 src={media.poster_path}
@@ -186,31 +235,44 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                                 )}
                             </div>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
-                    <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex-1 min-w-0 space-y-3">
                         <div>
-                            <h3 className="text-lg sm:text-xl font-bold text-black dark:text-white mb-1.5">
+                            <h3 className="text-xl sm:text-2xl font-bold text-black dark:text-white mb-2 leading-tight">
                                 {media.title || media.name}
                             </h3>
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-black/80 dark:text-white/80">
-                                <span className="capitalize">{media.media_type}</span>
-                                <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 text-yellow-400" />
-                                    <span>{media.vote_average.toFixed(1)}</span>
+                            <div className="flex flex-wrap items-center gap-3 text-sm">
+                                <span className="px-2.5 py-1 rounded-md bg-primary/10 text-primary capitalize">
+                                    {media.media_type}
+                                </span>
+                                <div className="flex items-center gap-1.5 text-yellow-500">
+                                    <Star className="w-4 h-4 fill-current" />
+                                    <span className="font-medium">{media.vote_average.toFixed(1)}</span>
                                 </div>
+                                {(media.release_date || media.first_air_date) && (
+                                    <span className="text-black/60 dark:text-white/60">
+                                        {formatDate(media.release_date || media.first_air_date || '')}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
-                        <p className="text-sm sm:text-base text-black/70 dark:text-white/70 line-clamp-2 sm:line-clamp-3">
+                        <p className="text-sm sm:text-base text-black/70 dark:text-white/70 line-clamp-2 sm:line-clamp-3 leading-relaxed">
                             {media.overview}
                         </p>
 
                         {media.credits?.cast && (
-                            <p className="text-xs sm:text-sm text-black/60 dark:text-white/60">
-                                <span className="font-medium">Cast: </span>
-                                {media.credits.cast.slice(0, 3).map(person => person.name).join(', ')}
-                            </p>
+                            <div className="pt-2">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-black/60 dark:text-white/60">
+                                    <Users className="w-4 h-4" />
+                                    <p className="truncate">
+                                        <span className="font-medium">Cast: </span>
+                                        {media.credits.cast.slice(0, 3).map(person => person.name).join(', ')}
+                                    </p>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>

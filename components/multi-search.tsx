@@ -185,51 +185,53 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     const hasMore = images.length > PREVIEW_IMAGE_COUNT;
 
     const ImageViewer = () => (
-        <div className="relative w-full h-full rounded-xl">
-            <div className="absolute right-4 top-4 z-50 flex items-center gap-2 rounded-xl">
-                <span className="px-2 py-1 rounded-md bg-black/20 backdrop-blur-sm text-xs text-white">
-                    {selectedImage + 1} / {images.length}
-                </span>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40"
-                    onClick={() => setIsOpen(false)}
-                >
-                    <X className="h-4 w-4" />
-                </Button>
+        <div className="relative bg-black/95 w-full h-full">
+            {/* Header */}
+            <div className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/40 to-transparent z-50">
+                <div className="flex items-center justify-between">
+                    <div className="text-white">
+                        <h2 className="text-xl font-semibold">Search Images</h2>
+                        <p className="text-sm text-neutral-400">
+                            {selectedImage + 1} of {images.length}
+                        </p>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-white hover:bg-white/20"
+                        onClick={() => setIsOpen(false)}
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
+                </div>
             </div>
 
-            <img
-                src={images[selectedImage].url}
-                alt={images[selectedImage].description}
-                className="w-full h-full object-contain rounded-lg"
-            />
-
-            <div className="absolute inset-y-0 left-0 flex items-center px-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40"
-                    onClick={() => setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1)}
-                >
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
+            {/* Main Image */}
+            <div className="absolute inset-0 flex items-center justify-center p-12 mt-[60px] mb-[60px]">
+                <img
+                    src={images[selectedImage].url}
+                    alt={images[selectedImage].description}
+                    className="w-full h-full object-contain"
+                />
             </div>
 
-            <div className="absolute inset-y-0 right-0 flex items-center px-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40"
-                    onClick={() => setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1)}
-                >
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-            </div>
+            {/* Navigation Arrows */}
+            <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                onClick={() => setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1)}
+            >
+                <ChevronLeft className="h-6 w-6" />
+            </button>
+            <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                onClick={() => setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1)}
+            >
+                <ChevronRight className="h-6 w-6" />
+            </button>
 
+            {/* Description */}
             {images[selectedImage].description && (
-                <div className="absolute rounded-xl inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 via-black/40 to-transparent">
+                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/60 via-black/40 to-transparent">
                     <p className="text-sm text-white">
                         {images[selectedImage].description}
                     </p>
@@ -238,37 +240,10 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
         </div>
     );
 
-    {
-        isDesktop ? (
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="max-w-4xl max-h-[85vh] p-0 rounded-xl overflow-hidden">
-                    <DialogHeader className="sr-only">
-                        <DialogTitle>Image Gallery</DialogTitle>
-                    </DialogHeader>
-                    <div className="rounded-xl overflow-hidden">
-                        <ImageViewer />
-                    </div>
-                </DialogContent>
-            </Dialog>
-        ) : (
-            <Drawer open={isOpen} onOpenChange={setIsOpen}>
-                <DrawerContent className="p-0 rounded-t-xl overflow-hidden">
-                    <DrawerHeader className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 to-transparent rounded-t-xl">
-                        <DrawerTitle className="text-white">Image Gallery</DrawerTitle>
-                    </DrawerHeader>
-                    <div className="h-[calc(100vh-4rem)] rounded-t-xl overflow-hidden">
-                        <ImageViewer />
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        )
-    }
-
     return (
         <div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                 {displayImages.map((image, index) => (
-                    // Update ImageGrid image container styles
                     <motion.button
                         key={index}
                         className="relative aspect-square rounded-lg overflow-hidden group hover:ring-2 hover:ring-neutral-400 hover:ring-offset-2 transition-all"
@@ -301,22 +276,14 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
             {isDesktop ? (
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogContent className="max-w-4xl max-h-[85vh] p-0">
-                        <DialogHeader className="sr-only">
-                            <DialogTitle>Image Gallery</DialogTitle>
-                        </DialogHeader>
+                    <DialogContent className="max-w-5xl h-[80vh] p-0 !rounded-none border-0">
                         <ImageViewer />
                     </DialogContent>
                 </Dialog>
             ) : (
                 <Drawer open={isOpen} onOpenChange={setIsOpen}>
-                    <DrawerContent>
-                        <DrawerHeader>
-                            <DrawerTitle>Image Gallery</DrawerTitle>
-                        </DrawerHeader>
-                        <div className="p-4">
-                            <ImageViewer />
-                        </div>
+                    <DrawerContent className="p-0 h-[80vh]">
+                        <ImageViewer />
                     </DrawerContent>
                 </Drawer>
             )}
@@ -337,6 +304,8 @@ const MultiSearch: React.FC<{ result: MultiSearchResponse | null; args: MultiSea
         return [...acc, ...search.images];
     }, []);
 
+    const totalResults = result.searches.reduce((sum, search) => sum + search.results.length, 0);
+
     return (
         <div className="w-full space-y-4">
             <Accordion type="single" collapsible defaultValue="search" className="w-full">
@@ -347,12 +316,21 @@ const MultiSearch: React.FC<{ result: MultiSearchResponse | null; args: MultiSea
                             "[&[data-state=open]]:rounded-b-none"
                         )}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                                <Globe className="h-4 w-4 text-neutral-500" />
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                                    <Globe className="h-4 w-4 text-neutral-500" />
+                                </div>
+                                <h2 className="font-medium text-left">Sources Found</h2>
                             </div>
-                            <div>
-                                <h2 className="font-medium text-left">Web Search</h2>
+                            <div className="flex items-center gap-2 mr-2">
+                                <Badge
+                                    variant="secondary"
+                                    className="rounded-full px-3 py-1 bg-neutral-100 dark:bg-neutral-800"
+                                >
+                                    <Search className="h-3 w-3 mr-1.5" />
+                                    {totalResults} Results
+                                </Badge>
                             </div>
                         </div>
                     </AccordionTrigger>

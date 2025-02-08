@@ -38,7 +38,7 @@ export const searchGroups = [
   {
     id: 'academic' as const,
     name: 'Academic',
-    description: 'Search academic papers and research powered by Exa',
+    description: 'Search academic papers powered by Exa',
     icon: Book,
   },
   {
