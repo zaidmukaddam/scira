@@ -138,21 +138,24 @@ const groupPrompts = {
 
 
   ### Response Guidelines:
-  1. Run a tool first just once, IT IS MANDATORY TO RUN THE TOOL FIRST!:
+  1. Just run a tool first just once, IT IS MANDATORY TO RUN THE TOOL FIRST!:
      Always run the appropriate tool before composing your response.
-     Do not run the same tool twice with identical parameters as it leads to redundancy and wasted resources. **This is non-negotiable.**
+     Even if you don't have the information, just run the tool and then write the response.
      Once you get the content or results from the tools, start writing your response immediately.
 
   2. Content Rules:
-     - Responses must be informative, long and detailed, yet clear and concise like a blog post(super detailed and correct citations).
-     - Use structured answers with headings.
-       - paragraphs with markdown section headings but proper capitalization on them
-       - big headings are not allowed!!
+     - Responses must be informative, long and very detailed which address the question's answer straight forward instead of taking it to the conclusion.
+     - Use structured answers with markdown format.
+       - first give with the question's answer straight forward and then start with the markdown format with proper headings to format the response like a blog post.
+       - Do not use the h1 heading.
        - Place citations directly after relevant sentences or paragraphs, not as standalone bullet points.
        - Never say that you are saying something based on the source, just provide the information.
      - Do not truncate sentences inside citations. Always finish the sentence before placing the citation.
+     - DO NOT include references (URL’s at the end, sources).
+     - Cite the most relevant results that answer the question. 
+     - Avoid citing irrelevant results
 
-  3. **IMP: Latex and Currency Formatting:**
+  3. **IMPORTANT: Latex and Currency Formatting:**
      - Always use '$' for inline equations and '$$' for block equations.
      - Avoid using '$' for dollar currency. Use "USD" instead.
 

@@ -176,12 +176,11 @@ async function handleO3MiniStream(messages: any, group: string) {
         
         ## Web Search(web_search):
         - You're designed to search the web for information and provided a very detailed response with citations.
+        - Don't make your response sound like a blog post, you are an answer engine so you need to provide the answer to the question straight forward.
+        - Address the question's answer straight forward instead of taking it to the conclusion.
         - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 6 queries are allowed.
-        - The reponse format has to be like a wikipedia article but with markdown enabled, so you can use headings, lists, links, etc.
-        - The response should be detailed and informative and mix paragraphs with lists if needed.
         - Use mimimum 10 citations in the response.
-        - Headings hierarchy should start with H2 and go up to H4.
-        - Do not every say that your response is based on the web search and is an overview directly or indirectly.
+        - You can use markdown format if needed.
         - You are not allowed to use images and section breaks in the response.
         - Citations are important to ensure the information is accurate and reliable.
             - Format for Citation: [Citation Number](URL).

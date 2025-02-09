@@ -754,6 +754,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setIsDragging(false);
     }, []);
 
+    const getFirstVisionModel = useCallback(() => {
+        return models.find(model => model.vision)?.value || selectedModel;
+    }, [selectedModel]);
+
     const handleDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -797,7 +801,51 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } finally {
             setUploadQueue([]);
         }
-    }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel]);
+    }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
+
+    const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+        const items = Array.from(e.clipboardData.items);
+        const imageItems = items.filter(item => item.type.startsWith('image/'));
+        
+        if (imageItems.length === 0) return;
+        
+        // Prevent default paste behavior if there are images
+        e.preventDefault();
+        
+        const totalAttachments = attachments.length + imageItems.length;
+        if (totalAttachments > MAX_IMAGES) {
+            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+            return;
+        }
+
+        // Switch to vision model if needed
+        const currentModel = models.find(m => m.value === selectedModel);
+        if (!currentModel?.vision) {
+            const visionModel = getFirstVisionModel();
+            setSelectedModel(visionModel);
+            toast.success(`Switched to ${models.find(m => m.value === visionModel)?.label} for image support`);
+        }
+
+        setUploadQueue(imageItems.map((_, i) => `Pasted Image ${i + 1}`));
+
+        try {
+            const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
+            const uploadPromises = files.map(file => uploadFile(file));
+            const uploadedAttachments = await Promise.all(uploadPromises);
+            
+            setAttachments(currentAttachments => [
+                ...currentAttachments,
+                ...uploadedAttachments,
+            ]);
+            
+            toast.success('Image pasted successfully');
+        } catch (error) {
+            console.error("Error uploading pasted files!", error);
+            toast.error("Failed to upload pasted image. Please try again.");
+        } finally {
+            setUploadQueue([]);
+        }
+    }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
 
     useEffect(() => {
         if (!isLoading && hasSubmitted && inputRef.current) {
@@ -872,10 +920,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
             }
         }
     };
-
-    const getFirstVisionModel = useCallback(() => {
-        return models.find(model => model.vision)?.value || selectedModel;
-    }, [selectedModel]);
 
     return (
         <div 
@@ -976,6 +1020,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     rows={1}
                     autoFocus={width ? width > 768 : true}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                 />
 
                 <div className={cn(
