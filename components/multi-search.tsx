@@ -46,7 +46,7 @@ type MultiSearchArgs = {
     searchDepth: ("basic" | "advanced")[];
 };
 
-const PREVIEW_IMAGE_COUNT = 4;
+const PREVIEW_IMAGE_COUNT = 3;
 
 // Loading state component
 const SearchLoadingState = ({ queries }: { queries: string[] }) => (
@@ -181,8 +181,8 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     const [selectedImage, setSelectedImage] = React.useState(0);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
-    const displayImages = showAll ? images : images.slice(0, PREVIEW_IMAGE_COUNT);
-    const hasMore = images.length > PREVIEW_IMAGE_COUNT;
+    const displayImages = showAll ? images : images.slice(0, isDesktop ? 5 : PREVIEW_IMAGE_COUNT);
+    const hasMore = images.length > (isDesktop ? 5 : PREVIEW_IMAGE_COUNT);
 
     const ImageViewer = () => (
         <div className="relative bg-black/95 w-full h-full">
@@ -242,11 +242,17 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
     return (
         <div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 auto-rows-[60px] sm:auto-rows-[80px] gap-1 sm:gap-2 mt-1.5 sm:mt-2">
                 {displayImages.map((image, index) => (
                     <motion.button
                         key={index}
-                        className="relative aspect-square rounded-lg overflow-hidden group hover:ring-2 hover:ring-neutral-400 hover:ring-offset-2 transition-all"
+                        className={cn(
+                            "relative rounded-md overflow-hidden group hover:ring-1 hover:ring-neutral-400 hover:ring-offset-1 transition-all",
+                            // Make first image larger but with reduced span on mobile
+                            index === 0 ? "col-span-2 row-span-2" : "",
+                            // Lighter shadow
+                            "shadow-xs"
+                        )}
                         onClick={() => {
                             setSelectedImage(index);
                             setIsOpen(true);
@@ -258,16 +264,16 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                         <img
                             src={image.url}
                             alt={image.description}
-                            className="w-full h-full object-cover rounded-lg"
+                            className="w-full h-full object-cover"
                         />
                         {image.description && (
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-3">
-                                <p className="text-xs text-white line-clamp-3">{image.description}</p>
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1">
+                                <p className="text-[9px] sm:text-[10px] text-white line-clamp-2">{image.description}</p>
                             </div>
                         )}
-                        {!showAll && index === PREVIEW_IMAGE_COUNT - 1 && hasMore && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
-                                <span className="text-xl font-medium text-white">+{images.length - PREVIEW_IMAGE_COUNT}</span>
+                        {!showAll && index === (isDesktop ? 3 : 2) && hasMore && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                                <span className="text-xs sm:text-sm font-medium text-white">+{images.length - (isDesktop ? 5 : 3)}</span>
                             </div>
                         )}
                     </motion.button>
