@@ -641,6 +641,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     };
 
     const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        event.preventDefault();
         setInput(event.target.value);
         autoResizeInput(event.target);
     };
@@ -772,6 +773,22 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
     }, [attachments.length, hasSubmitted, fileInputRef]);
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            if (isLoading) {
+                toast.error("Please wait for the response to complete!");
+            } else {
+                submitForm();
+                if (width && width > 768) {
+                    setTimeout(() => {
+                        inputRef.current?.focus();
+                    }, 100);
+                }
+            }
+        }
+    };
+
     return (
 
         <div className={cn(
@@ -820,10 +837,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     disabled={isLoading}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    onTouchStart={(e) => {
-                        e.stopPropagation();
-                        inputRef.current?.focus();
-                    }}
                     className={cn(
                         "min-h-[72px] w-full resize-none rounded-lg",
                         "text-base leading-relaxed",
@@ -835,25 +848,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
                         "px-4 pt-4 pb-16",
                         "overflow-y-auto",
+                        "touch-manipulation",
                     )}
                     style={{
                         maxHeight: `${MAX_HEIGHT}px`,
+                        WebkitUserSelect: 'text',
+                        WebkitTouchCallout: 'none',
                     }}
                     rows={1}
-                    autoFocus
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
-                            event.preventDefault();
-                            if (isLoading) {
-                                toast.error("Please wait for the response to complete!");
-                            } else {
-                                submitForm();
-                                setTimeout(() => {
-                                    inputRef.current?.focus();
-                                }, 100);
-                            }
-                        }
-                    }}
+                    autoFocus={width ? width > 768 : true}
+                    onKeyDown={handleKeyDown}
                 />
 
                 <div className={cn(

@@ -2174,7 +2174,7 @@ const ToolInvocationListView = memo(
                                 </div>
                             </CardHeader>
                             <div className="px-4 pb-2">
-                                <div className="flex overflow-x-auto gap-4 no-scrollbar">
+                                <div className="flex overflow-x-auto gap-4 no-scrollbar hover:overflow-x-scroll">
                                     {result.results.map((paper: AcademicResult, index: number) => (
                                         <motion.div
                                             key={paper.url || index}
@@ -2183,7 +2183,7 @@ const ToolInvocationListView = memo(
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3, delay: index * 0.1 }}
                                         >
-                                            <div className="h-[300px] relative group">
+                                            <div className="h-[300px] relative group overflow-y-auto">
                                                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/20 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                                                 <div className="h-full relative backdrop-blur-sm bg-background/95 dark:bg-neutral-900/95 border border-neutral-200/50 dark:border-neutral-800/50 rounded-xl p-4 flex flex-col transition-all duration-500 group-hover:border-violet-500/20">
