@@ -6,8 +6,8 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ## Powered By
 
-[![Vercel AI SDK](public/one.svg)](https://sdk.vercel.ai/docs)
-[![Tavily AI](public/four_dark.svg)](https://tavily.com)
+[![Vercel AI SDK](/public/one.svg)](https://sdk.vercel.ai/docs)
+[![Tavily AI](/public/four_dark.svg)](https://tavily.com)
 
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - For AI model integration and streaming
 - [Tavily AI](https://tavily.com) - For search grounding and web search capabilities
