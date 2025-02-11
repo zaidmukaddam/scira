@@ -9,10 +9,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
 <div align="center">
   <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0;">
     <a href="https://sdk.vercel.ai/docs">
-      <img src="public/one.svg" alt="Vercel AI SDK" height="40" />
+      <img src="/public/one.svg" alt="Vercel AI SDK" height="40" />
     </a>
     <a href="https://tavily.com">
-      <img src="public/four_dark.svg" alt="Tavily AI" height="40" />
+      <img src="/public/four_dark.svg" alt="Tavily AI" height="40" />
     </a>
   </div>
 </div>
