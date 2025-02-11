@@ -19,6 +19,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { VercelLogo } from '@/components/logos/vercel-logo';
+import { TavilyLogo } from '@/components/logos/tavily-logo';
 
 const container = {
     hidden: { opacity: 0 },
@@ -240,6 +242,38 @@ export default function AboutPage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Powered By Section */}
+            <div className="py-24 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
+                <motion.div 
+                    className="container max-w-5xl mx-auto space-y-16"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                >
+                    <div className="text-center space-y-4">
+                        <h2 className="text-3xl font-bold">Powered By</h2>
+                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
+                            Built with cutting-edge technology from industry leaders
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-4">
+                            <VercelLogo />
+                            <p className="text-neutral-600 dark:text-neutral-400 text-center">
+                                Powered by Vercel&apos;s AI SDK
+                            </p>
+                        </div>
+                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-4">
+                            <TavilyLogo />
+                            <p className="text-neutral-600 dark:text-neutral-400 text-center">
+                                Search grounding powered by Tavily AI
+                            </p>
                         </div>
                     </div>
                 </motion.div>
@@ -501,25 +535,7 @@ export default function AboutPage() {
                 </motion.div>
             </div>
 
-            {/* Enhanced CTA Section */}
-            <div className="py-24 px-4 bg-gradient-to-b from-neutral-100 to-white dark:from-black dark:to-neutral-900">
-                <motion.div className="container max-w-5xl mx-auto text-center space-y-8">
-                    <h2 className="text-3xl font-bold">Try the Future of Search Today</h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                        Join over 100,000 users who&apos;ve discovered a more intelligent way to search. Try Scira today - it&apos;s free to start.
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <Link 
-                            href="/" 
-                            className="inline-flex h-12 items-center gap-2 px-8 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-all duration-300"
-                        >
-                            <span className="font-medium">Get Started Free</span>
-                        </Link>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* New Footer Section */}
+            {/* Footer Section */}
             <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black">
                 <div className="mx-auto max-w-5xl px-4 py-12">
                     <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">

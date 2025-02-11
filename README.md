@@ -4,6 +4,22 @@
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
+## Powered By
+
+<div align="center">
+  <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0;">
+    <a href="https://sdk.vercel.ai/docs">
+      <img src="public/one.svg" alt="Vercel AI SDK" height="40" />
+    </a>
+    <a href="https://tavily.com">
+      <img src="public/four_dark.svg" alt="Tavily AI" height="40" />
+    </a>
+  </div>
+</div>
+
+- [Vercel AI SDK](https://sdk.vercel.ai/docs) - For AI model integration and streaming
+- [Tavily AI](https://tavily.com) - For search grounding and web search capabilities
+
 ## Special Thanks
 
 <div align="center" markdown="1">
