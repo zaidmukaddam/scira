@@ -137,6 +137,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import ReasonSearch from '@/components/reason-search';
+import type { StreamUpdate } from '@/components/reason-search';
 
 export const maxDuration = 120;
 
@@ -699,6 +701,7 @@ const HomeContent = () => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
+    const [researchUpdates, setResearchUpdates] = useState<StreamUpdate[]>([]);
 
     const CACHE_KEY = 'trendingQueriesCache';
     const CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
@@ -757,7 +760,7 @@ const HomeContent = () => {
         },
     }), [selectedModel, selectedGroup]);
 
-    const { isLoading, input, messages, setInput, append, handleSubmit, setMessages, reload, stop } = useChat(chatOptions);
+    const { isLoading, input, messages, setInput, append, handleSubmit, setMessages, reload, stop, data, setData } = useChat(chatOptions);
 
     useEffect(() => {
         if (!initializedRef.current && initialState.query && !messages.length) {
@@ -1454,7 +1457,9 @@ const HomeContent = () => {
         part: TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
         messageIndex: number,
         partIndex: number,
-        parts: (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[]
+        parts: (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[],
+        message: any,
+        data?: any[]
     ) => {
         if (part.type === "text" && partIndex === 0 &&
             parts.some((p, i) => i > partIndex && p.type === 'tool-invocation')) {
@@ -1552,6 +1557,8 @@ const HomeContent = () => {
                     <ToolInvocationListView
                         key={`${messageIndex}-${partIndex}-tool`}
                         toolInvocations={[part.toolInvocation]}
+                        message={message}
+                        data={data}
                     />
                 );
             default:
@@ -1700,7 +1707,9 @@ const HomeContent = () => {
                                         part as TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
                                         index,
                                         partIndex,
-                                        message.parts as (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[]
+                                        message.parts as (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[],
+                                        message,
+                                        data
                                     )
                                 )}
                             </div>
@@ -1815,7 +1824,11 @@ const LoadingFallback = () => (
 );
 
 const ToolInvocationListView = memo(
-    ({ toolInvocations }: { toolInvocations: ToolInvocation[] }) => {
+    ({ toolInvocations, message, data }: { 
+        toolInvocations: ToolInvocation[], 
+        message: any,
+        data?: any[]
+    }) => {
 
         const renderToolInvocation = useCallback(
             (toolInvocation: ToolInvocation, index: number) => {
@@ -2428,10 +2441,23 @@ const ToolInvocationListView = memo(
                     );
                 }
 
+                if (toolInvocation.toolName === 'reason_search') {
+                    const updates = message?.annotations?.filter((a: any) => 
+                        a.type === 'research_update'
+                    ).map((a: any) => a.data);
+                    return <ReasonSearch updates={updates || []} />;
+                }
+
                 if (toolInvocation.toolName === 'web_search') {
                     return (
                         <div className="mt-4">
-                            <MultiSearch result={result} args={args} />
+                            <MultiSearch 
+                                result={result} 
+                                args={args} 
+                                annotations={message?.annotations?.filter(
+                                    (a: any) => a.type === 'query_completion'
+                                ) || []}
+                            />
                         </div>
                     );
                 }
@@ -2562,7 +2588,7 @@ const ToolInvocationListView = memo(
 
                 return null;
             },
-            []
+            [message]
         );
 
         const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
@@ -2694,7 +2720,8 @@ const ToolInvocationListView = memo(
         );
     },
     (prevProps, nextProps) => {
-        return prevProps.toolInvocations === nextProps.toolInvocations;
+        return prevProps.toolInvocations === nextProps.toolInvocations &&
+               prevProps.message === nextProps.message;
     }
 );
 

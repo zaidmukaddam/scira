@@ -1,14 +1,14 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { Globe, Book, YoutubeIcon, Pen } from 'lucide-react'
+import { Globe, Book, YoutubeIcon, Pen, Mountain } from 'lucide-react'
 import { Brain, Code, XLogo } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export type SearchGroupId = 'web' | 'academic'  | 'youtube' | 'x' | 'analysis' | 'fun' ;
+export type SearchGroupId = 'web' | 'academic'  | 'youtube' | 'x' | 'analysis' | 'fun' | 'extreme' ;
 
 export const searchGroups = [
   {
@@ -46,6 +46,12 @@ export const searchGroups = [
     name: 'YouTube',
     description: 'Search YouTube videos in real-time powered by Exa',
     icon: YoutubeIcon,
+  },
+  {
+    id: 'extreme' as const,
+    name: 'Extreme',
+    description: 'Deep research with multiple sources and analysis',
+    icon: Mountain,
   },
 ] as const;
 
