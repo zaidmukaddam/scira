@@ -112,7 +112,7 @@ const ResearchStep = ({
                         )}
                     </div>
 
-                    <ChevronRight className="h-4 w-4 text-neutral-400 flex-shrink-0 ml-2" />
+                    <ChevronRight className={cn("h-4 w-4 text-neutral-400 flex-shrink-0 ml-2 transition-transform", isExpanded && "rotate-90")} />
                 </button>
             </motion.div>
 
