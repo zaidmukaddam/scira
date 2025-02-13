@@ -100,14 +100,31 @@ A minimalistic AI-powered search engine that helps you find information on the i
 After completing these steps, you should be able to use Scira as your default search engine in Chrome.
 
 ### Local development
+There are two ways to run Scira locally:
 
-To run the example locally you need to:
-
+#### Option 1: Using Node.js directly
 1. Sign up for accounts with the AI providers you want to use. OpenAI and Anthropic are required, Tavily is required for the web search feature.
 2. Obtain API keys for each provider.
 3. Set the required environment variables as shown in the `.env.example` file, but in a new file called `.env.local`.
 4. `pnpm install` to install the required dependencies.
 5. `pnpm dev` to launch the development server.
+
+#### Option 2: Using Docker
+1. Make sure you have Docker and Docker Compose installed on your system.
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/zaidmukaddam/scira.git
+   cd scira
+   ```
+3. Copy `.env.example` to `.env` and fill in your API keys:
+   ```bash
+   cp .env.example .env
+   ```
+4. Build and run the containers:
+   ```bash
+   docker-compose up --build
+   ```
+5. The application will be available at `http://localhost:3000`
 
 # License
 
