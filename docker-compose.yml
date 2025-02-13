@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: true
+    ports:
+      - "3000:3000"  # Map host port 3000 to container port 3000
+    volumes:
+      - ./:/app     # Mount current directory to /app in the container
+      - node_modules:/app/node_modules
+    env_file:
+      - .env
+volumes:
+  node_modules:
