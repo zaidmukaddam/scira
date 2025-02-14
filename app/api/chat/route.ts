@@ -8,15 +8,15 @@ import { groq } from '@ai-sdk/groq'
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
-import { 
-    convertToCoreMessages, 
-    smoothStream, 
-    streamText, 
-    tool, 
-    createDataStreamResponse, 
-    wrapLanguageModel, 
-    extractReasoningMiddleware, 
-    customProvider ,
+import {
+    convertToCoreMessages,
+    smoothStream,
+    streamText,
+    tool,
+    createDataStreamResponse,
+    wrapLanguageModel,
+    extractReasoningMiddleware,
+    customProvider,
     generateObject
 } from 'ai';
 import Exa from 'exa-js';
@@ -32,7 +32,7 @@ const scira = customProvider({
             model: groq('deepseek-r1-distill-llama-70b'),
             middleware: extractReasoningMiddleware({ tagName: 'think' })
         }),
-        'scira-llama-groq': groq("llama-3.3-70b-versatile"),
+        'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
     }
 })
 
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
                 model: scira.languageModel(model),
                 maxSteps: 5,
                 providerOptions: {
-                    'scira': {
+                    'groq': {
                         reasoning_format: group === "fun" ? "raw" : "parsed",
                     }
                 },
@@ -1339,7 +1339,7 @@ export async function POST(req: Request) {
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: xai("grok-beta"),
+                                model: scira.languageModel("scira-default"),
                                 temperature: 0.5,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
@@ -1377,14 +1377,14 @@ export async function POST(req: Request) {
                                     const searchType = query.source === 'academic' ? 'academic' : 'web';
                                     return [{ id: `search-${searchType}-${index}`, type: searchType, query }];
                                 });
-                                
+
                                 // Generate an array of analysis steps.
                                 const analysisSteps = plan.required_analyses.map((analysis, index) => ({
                                     id: `analysis-${index}`,
                                     type: 'analysis',
                                     analysis
                                 }));
-                                
+
                                 return {
                                     planId: 'research-plan',
                                     searchSteps,
@@ -1517,7 +1517,7 @@ export async function POST(req: Request) {
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: xai("grok-beta"),
+                                    model: scira.languageModel("scira-default"),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
