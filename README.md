@@ -101,13 +101,52 @@ After completing these steps, you should be able to use Scira as your default se
 
 ### Local development
 
-To run the example locally you need to:
+#### Run via Docker
 
-1. Sign up for accounts with the AI providers you want to use. OpenAI and Anthropic are required, Tavily is required for the web search feature.
-2. Obtain API keys for each provider.
-3. Set the required environment variables as shown in the `.env.example` file, but in a new file called `.env.local`.
-4. `pnpm install` to install the required dependencies.
-5. `pnpm dev` to launch the development server.
+The application can be run using Docker in two ways:
+
+##### Using Docker Compose (Recommended)
+
+1. Make sure you have Docker and Docker Compose installed on your system
+2. Create a `.env` file based on `.env.example` with your API keys
+3. Run the following command in the project root:
+   ```bash
+   docker compose up
+   ```
+4. The application will be available at `http://localhost:3000`
+
+##### Using Docker Directly
+
+1. Create a `.env` file based on `.env.example` with your API keys
+2. Build the Docker image:
+   ```bash
+   docker build -t scira.app .
+   ```
+3. Run the container:
+   ```bash
+   docker run --env-file .env -p 3000:3000 scira.app
+   ```
+
+The application uses a multi-stage build process to minimize the final image size and implements security best practices. The production image runs on Node.js LTS with Alpine Linux for a minimal footprint.
+
+#### Run with Node.js
+
+To run the application locally without Docker:
+
+1. Sign up for accounts with the required AI providers:
+   - OpenAI (required)
+   - Anthropic (required)
+   - Tavily (required for web search feature)
+2. Copy `.env.example` to `.env.local` and fill in your API keys
+3. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+4. Start the development server:
+   ```bash
+   pnpm dev
+   ```
+5. Open `http://localhost:3000` in your browser
 
 # License
 
