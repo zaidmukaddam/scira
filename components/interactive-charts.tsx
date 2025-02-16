@@ -66,7 +66,13 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
     }
 
     if (chart.type === 'bar') {
-      const data = Object.groupBy(chart.elements, ({ group }) => group);
+      const data = chart.elements.reduce((acc: Record<string, any[]>, item) => {
+        const key = item.group;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+      }, {});
+      
       const series = Object.entries(data).map(([group, elements]) => ({
         name: group,
         type: 'bar',

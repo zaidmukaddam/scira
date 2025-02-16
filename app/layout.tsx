@@ -19,11 +19,16 @@ export const metadata: Metadata = {
   },
   keywords: [
     "Scira",
+    "scira",
     "scira.app",
+    "scira ai",
     "scira ai app",
     "scira",
     "MiniPerplx",
     "Scira AI",
+    "open source ai search engine",
+    "minimalistic ai search engine",
+    "ai search engine",
     "Scira (Formerly MiniPerplx)",
     "AI Search Engine",
     "mplx.run",
@@ -32,9 +37,7 @@ export const metadata: Metadata = {
     "scira.how",
     "search engine",
     "AI",
-    "ai search engine",
     "perplexity",
-    "minimalistic search engine",
   ]
 };
 
@@ -44,6 +47,10 @@ export const viewport: Viewport = {
   minimumScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#171717' }
+  ],
 }
 
 const syne = Syne({ 

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card"
 import useWindowSize from '@/hooks/use-window-size';
-import { X, Zap, ScanEye } from 'lucide-react';
+import { X } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,81 +16,238 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
+import { TextMorph } from '@/components/core/text-morph';
+import { Upload } from 'lucide-react';
+import { Mountain } from "lucide-react"
 
 interface ModelSwitcherProps {
     selectedModel: string;
     setSelectedModel: (value: string) => void;
     className?: string;
+    showExperimentalModels: boolean;
+    attachments: Array<Attachment>;
+    messages: Array<Message>;
 }
 
+const XAIIcon = ({ className }: { className?: string }) => (
+    <svg 
+        width="440" 
+        height="483" 
+        viewBox="0 0 440 483" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <path d="M356.09 155.99L364.4 482.36H430.96L439.28 37.18L356.09 155.99Z" fill="currentColor"/>
+        <path d="M439.28 0.910004H337.72L178.35 228.53L229.13 301.05L439.28 0.910004Z" fill="currentColor"/>
+        <path d="M0.609985 482.36H102.17L152.96 409.84L102.17 337.31L0.609985 482.36Z" fill="currentColor"/>
+        <path d="M0.609985 155.99L229.13 482.36H330.69L102.17 155.99H0.609985Z" fill="currentColor"/>
+    </svg>
+);
+
+const AnthropicIcon = ({ className }: { className?: string }) => (
+    <svg 
+        role="img" 
+        viewBox="0 0 24 24" 
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <title>Anthropic</title>
+        <path fill="currentColor" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+    </svg>
+);
+
 const models = [
-    { value: "grok-2-1212", label: "Grok 2.0", icon: Zap, description: "Most intelligent text model", color: "glossyblack", vision: false },
-    { value: "grok-2-vision-1212", icon: ScanEye, label: "Grok 2.0 Vision", description: "Most intelligent vision model", color: "offgray", vision: true },
+    { value: "scira-default", label: "Grok 2.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 model", color: "glossyblack", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-grok-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-sonnet", label: "Claude 3.5 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-llama", label: "Llama 3.3 70B", icon: "/cerebras.png", iconClass: "!text-neutral-900 dark:!text-white", description: "Meta's Llama model by Cerebras", color: "offgray", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-r1", label: "DeepSeek R1 Distilled", icon: "/groq.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "DeepSeek R1 model by Groq", color: "sapphire", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
     const baseClasses = "transition-colors duration-200";
-    const selectedClasses = isSelected ? "!bg-opacity-90 dark:!bg-opacity-90" : "";
+    const selectedClasses = isSelected ? "!bg-opacity-100 dark:!bg-opacity-100" : "";
 
     switch (color) {
         case 'glossyblack':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#2D2D2D] dark:!bg-[#333333] !text-white hover:!text-white hover:!bg-[#1a1a1a] dark:hover:!bg-[#444444]`
-                : `${baseClasses} !text-[#4A4A4A] dark:!text-[#F0F0F0] hover:!text-white hover:!bg-[#1a1a1a] dark:hover:!bg-[#333333]`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#4D4D4D] dark:!bg-[#3A3A3A] !text-white hover:!bg-[#3D3D3D] dark:hover:!bg-[#434343] !border-[#4D4D4D] dark:!border-[#3A3A3A] !ring-[#4D4D4D] dark:!ring-[#3A3A3A] focus:!ring-[#4D4D4D] dark:focus:!ring-[#3A3A3A]`
+                : `${baseClasses} !text-[#4D4D4D] dark:!text-[#E5E5E5] hover:!bg-[#4D4D4D] hover:!text-white dark:hover:!bg-[#3A3A3A] dark:hover:!text-white`;
+        case 'steel':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#4B82B8] dark:!bg-[#4A7CAD] !text-white hover:!bg-[#3B6C9D] dark:hover:!bg-[#3A6C9D] !border-[#4B82B8] dark:!border-[#4A7CAD] !ring-[#4B82B8] dark:!ring-[#4A7CAD] focus:!ring-[#4B82B8] dark:focus:!ring-[#4A7CAD]`
+                : `${baseClasses} !text-[#4B82B8] dark:!text-[#A7C5E2] hover:!bg-[#4B82B8] hover:!text-white dark:hover:!bg-[#4A7CAD] dark:hover:!text-white`;
         case 'offgray':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#4B5457] dark:!bg-[#707677] !text-white hover:!text-white hover:!bg-[#707677] dark:hover:!bg-[#4B5457]`
-                : `${baseClasses} !text-[#5C6366] dark:!text-[#D1D5D6] hover:!text-white hover:!bg-[#707677] dark:hover:!bg-[#4B5457]`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#505050] dark:!bg-[#505050] !text-white hover:!bg-[#404040] dark:hover:!bg-[#404040] !border-[#505050] dark:!border-[#505050] !ring-[#505050] dark:!ring-[#505050] focus:!ring-[#505050] dark:focus:!ring-[#505050]`
+                : `${baseClasses} !text-[#505050] dark:!text-[#D0D0D0] hover:!bg-[#505050] hover:!text-white dark:hover:!bg-[#505050] dark:hover:!text-white`;
+        case 'purple':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#6366F1] dark:!bg-[#5B54E5] !text-white hover:!bg-[#4F46E5] dark:hover:!bg-[#4B44D5] !border-[#6366F1] dark:!border-[#5B54E5] !ring-[#6366F1] dark:!ring-[#5B54E5] focus:!ring-[#6366F1] dark:focus:!ring-[#5B54E5]`
+                : `${baseClasses} !text-[#6366F1] dark:!text-[#A5A0FF] hover:!bg-[#6366F1] hover:!text-white dark:hover:!bg-[#5B54E5] dark:hover:!text-white`;
+        case 'sapphire':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#2E4A5C] dark:!bg-[#2E4A5C] !text-white hover:!bg-[#1E3A4C] dark:hover:!bg-[#1E3A4C] !border-[#2E4A5C] dark:!border-[#2E4A5C] !ring-[#2E4A5C] dark:!ring-[#2E4A5C] focus:!ring-[#2E4A5C] dark:focus:!ring-[#2E4A5C]`
+                : `${baseClasses} !text-[#2E4A5C] dark:!text-[#89B4D4] hover:!bg-[#2E4A5C] hover:!text-white dark:hover:!bg-[#2E4A5C] dark:hover:!text-white`;
+        case 'bronze':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-[#9B6E4C] dark:!bg-[#9B6E4C] !text-white hover:!bg-[#8B5E3C] dark:hover:!bg-[#8B5E3C] !border-[#9B6E4C] dark:!border-[#9B6E4C] !ring-[#9B6E4C] dark:!ring-[#9B6E4C] focus:!ring-[#9B6E4C] dark:focus:!ring-[#9B6E4C]`
+                : `${baseClasses} !text-[#9B6E4C] dark:!text-[#D4B594] hover:!bg-[#9B6E4C] hover:!text-white dark:hover:!bg-[#9B6E4C] dark:hover:!text-white`;
         default:
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-600 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-700`
-                : `${baseClasses} !text-neutral-700 dark:!text-neutral-300 hover:!bg-neutral-200 dark:hover:!bg-neutral-800/70`;
+                ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
+                : `${baseClasses} !text-neutral-600 dark:!text-neutral-300 hover:!bg-neutral-500 hover:!text-white dark:hover:!bg-neutral-700 dark:hover:!text-white`;
     }
 }
 
-
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className }) => {
-    const selectedModelData = models.find(model => model.value === selectedModel) || models[0];
+// Update the ModelSwitcher component's dropdown content
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages }) => {
+    const selectedModelData = models.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
+
+    // Check for attachments in current and previous messages
+    const hasAttachments = attachments.length > 0 || messages.some(msg => 
+        msg.experimental_attachments && msg.experimental_attachments.length > 0
+    );
+
+    // Filter models based on attachments first, then experimental status
+    const filteredModels = hasAttachments 
+        ? models.filter(model => model.vision) 
+        : models.filter(model => showExperimentalModels ? true : !model.experimental);
+
+    // Group filtered models by category
+    const groupedModels = filteredModels.reduce((acc, model) => {
+        const category = model.category;
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(model);
+        return acc;
+    }, {} as Record<string, typeof models>);
+
+    // Only show divider if we have multiple categories and no attachments
+    const showDivider = (category: string) => {
+        return !hasAttachments && showExperimentalModels && category === "Stable";
+    };
 
     return (
         <DropdownMenu onOpenChange={setIsOpen} modal={false}>
             <DropdownMenuTrigger
                 className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300",
-                    getColorClasses(selectedModelData.color, true),
-                    "focus:outline-none focus:ring-2 focus:ring-opacity-50",
-                    `!focus:ring-${selectedModelData.color}-500`,
+                    "flex items-center gap-2 p-2 sm:px-3 h-8",
+                    "rounded-full transition-all duration-300",
+                    "border border-neutral-200 dark:border-neutral-800",
+                    "hover:shadow-md",
+                    getColorClasses(selectedModelData?.color || "neutral", true),
                     className
                 )}
             >
-                <selectedModelData.icon className="w-4 h-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[220px] p-1 !font-sans rounded-md bg-white dark:bg-neutral-800 ml-4 !mt-0 sm:m-auto !z-[52]">
-                {models.map((model) => (
-                    <DropdownMenuItem
-                        key={model.value}
-                        onSelect={() => setSelectedModel(model.value)}
-                        className={cn(
-                            "flex items-start gap-2 px-2 py-1.5 rounded-md text-xs mb-1 last:mb-0",
-                            getColorClasses(model.color, selectedModel === model.value)
-                        )}
+                {selectedModelData && (
+                    typeof selectedModelData.icon === 'string' ? (
+                        <img 
+                            src={selectedModelData.icon} 
+                            alt={selectedModelData.label}
+                            className={cn(
+                                "w-3.5 h-3.5 object-contain",
+                                selectedModelData.iconClass
+                            )}
+                        />
+                    ) : (
+                        <selectedModelData.icon 
+                            className={cn(
+                                "w-3.5 h-3.5",
+                                selectedModelData.iconClass
+                            )}
+                        />
+                    )
+                )}
+                <span className="hidden sm:block text-xs font-medium overflow-hidden">
+                    <TextMorph
+                        variants={{
+                            initial: { opacity: 0, y: 10 },
+                            animate: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: -10 }
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30,
+                            mass: 0.5
+                        }}
                     >
-                        <model.icon className={cn(
-                            "w-4 h-4 mt-0.5",
-                            selectedModel === model.value ? "text-white" : `text-${model.color}-500 dark:text-${model.color}-400`
-                        )} />
-                        <div>
-                            <div className="font-bold">{model.label}</div>
-                            <div className="text-xs opacity-70">{model.description}</div>
+                        {selectedModelData?.label || ""}
+                    </TextMorph>
+                </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                className="w-[220px] p-1 !font-sans rounded-lg bg-white dark:bg-neutral-900 sm:ml-4 !mt-1.5 sm:m-auto !z-[52] shadow-lg border border-neutral-200 dark:border-neutral-800"
+                align="start"
+                sideOffset={8}
+            >
+                {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+                    <div key={category} className={cn(
+                        categoryIndex > 0 && "mt-1"
+                    )}>
+                        <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none">
+                            {category}
                         </div>
-                    </DropdownMenuItem>
+                        <div className="space-y-0.5">
+                            {categoryModels.map((model) => (
+                                <DropdownMenuItem
+                                    key={model.value}
+                                    onSelect={() => {
+                                        console.log("Selected model:", model.value);
+                                        setSelectedModel(model.value.trim());
+                                    }}
+                                    className={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
+                                        "transition-all duration-200",
+                                        "hover:shadow-sm",
+                                        getColorClasses(model.color, selectedModel === model.value)
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "p-1.5 rounded-md",
+                                        selectedModel === model.value
+                                            ? "bg-black/10 dark:bg-white/10"
+                                            : "bg-black/5 dark:bg-white/5",
+                                        "group-hover:bg-black/10 dark:group-hover:bg-white/10"
+                                    )}>
+                                        {typeof model.icon === 'string' ? (
+                                            <img 
+                                                src={model.icon}
+                                                alt={model.label}
+                                                className={cn(
+                                                    "w-3 h-3 object-contain",
+                                                    model.iconClass
+                                                )}
+                                            />
+                                        ) : (
+                                            <model.icon 
+                                                className={cn(
+                                                    "w-3 h-3",
+                                                    model.iconClass
+                                                )}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-px min-w-0">
+                                        <div className="font-medium truncate">{model.label}</div>
+                                        <div className="text-[10px] opacity-80 truncate leading-tight">{model.description}</div>
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                        </div>
+                        {showDivider(category) && (
+                            <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
+                        )}
+                    </div>
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
-    )
-}
-
+    );
+};
 
 interface Attachment {
     name: string;
@@ -157,11 +314,18 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 };
 
 
-const MAX_IMAGES = 3;
+const MAX_IMAGES = 4;
 
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);
     return selectedModel?.vision === true
+};
+
+const truncateFilename = (filename: string, maxLength: number = 20) => {
+    if (filename.length <= maxLength) return filename;
+    const extension = filename.split('.').pop();
+    const name = filename.substring(0, maxLength - 4);
+    return `${name}...${extension}`;
 };
 
 const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment, onRemove: () => void, isUploading: boolean }> = ({ attachment, onRemove, isUploading }) => {
@@ -231,7 +395,9 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
             )}
             <div className="flex-grow min-w-0">
                 {!isUploadingAttachment(attachment) && (
-                    <p className="text-sm font-medium truncate text-neutral-800 dark:text-neutral-200">{attachment.name}</p>
+                    <p className="text-sm font-medium truncate text-neutral-800 dark:text-neutral-200">
+                        {truncateFilename(attachment.name)}
+                    </p>
                 )}
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     {isUploadingAttachment(attachment)
@@ -284,6 +450,7 @@ interface FormComponentProps {
     lastSubmittedQueryRef: React.MutableRefObject<string>;
     selectedGroup: SearchGroupId;
     setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
+    showExperimentalModels: boolean;
 }
 
 interface GroupSelectorProps {
@@ -299,27 +466,54 @@ interface ToolbarButtonProps {
 
 const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     const Icon = group.icon;
+    const { width } = useWindowSize();
+    const isMobile = width ? width < 768 : false;
+
+    const commonClassNames = cn(
+        "relative flex items-center justify-center",
+        "size-8",
+        "rounded-full",
+        "transition-colors duration-300",
+        isSelected
+            ? "bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300"
+            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80"
+    );
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+    };
+
+    // Use regular button for mobile
+    if (isMobile) {
+        return (
+            <button
+                onClick={handleClick}
+                className={commonClassNames}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+                <Icon className="size-4" />
+            </button>
+        );
+    }
+
+    // Use motion.button for desktop
+    const button = (
+        <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleClick}
+            className={commonClassNames}
+        >
+            <Icon className="size-4" />
+        </motion.button>
+    );
 
     return (
         <HoverCard openDelay={100} closeDelay={50}>
             <HoverCardTrigger asChild>
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onClick}
-                    className={cn(
-                        "relative flex items-center justify-center",
-                        "size-8",
-                        "rounded-full",
-                        "transition-colors duration-300",
-                        isSelected
-                            ? "bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300"
-                            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80"
-                    )}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
-                    <Icon className="size-4" />
-                </motion.button>
+                {button}
             </HoverCardTrigger>
             <HoverCardContent
                 side="bottom"
@@ -351,7 +545,7 @@ const SelectionContent = ({ ...props }) => {
 
     return (
         <motion.div
-            layout
+            layout={false}
             initial={false}
             animate={{
                 width: isExpanded ? "auto" : "30px",
@@ -359,12 +553,8 @@ const SelectionContent = ({ ...props }) => {
                 paddingRight: isExpanded ? "0.5rem" : 0,
             }}
             transition={{
-                layout: { duration: 0.4 },
-                duration: 0.4,
-                ease: [0.4, 0.0, 0.2, 1],
-                width: { type: "spring", stiffness: 300, damping: 30 },
-                gap: { type: "spring", stiffness: 300, damping: 30 },
-                paddingRight: { type: "spring", stiffness: 300, damping: 30 }
+                duration: 0.2,
+                ease: "easeInOut",
             }}
             style={{
                 display: "flex",
@@ -383,24 +573,20 @@ const SelectionContent = ({ ...props }) => {
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
                 {searchGroups.map((group, index) => {
                     const showItem = isExpanded || props.selectedGroup === group.id;
                     return (
                         <motion.div
                             key={group.id}
+                            layout={false}
                             animate={{
                                 width: showItem ? "28px" : 0,
-                                opacity: showItem ? 1 : 0,
-                                x: showItem ? 0 : -10
+                                opacity: showItem ? 1 : 0
                             }}
-                            exit={{ opacity: 1, x: 0, transition: { duration: 0 } }}
                             transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                                delay: index * 0.05,
-                                opacity: { duration: 0.2, delay: showItem ? index * 0.05 : 0 }
+                                duration: 0.15,
+                                ease: "easeInOut"
                             }}
                             style={{ margin: 0 }}
                         >
@@ -438,35 +624,39 @@ const FormComponent: React.FC<FormComponentProps> = ({
     fileInputRef,
     inputRef,
     stop,
-    messages,
-    append,
     selectedModel,
     setSelectedModel,
     resetSuggestedQuestions,
     lastSubmittedQueryRef,
     selectedGroup,
     setSelectedGroup,
+    showExperimentalModels,
+    messages,
 }) => {
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+    const isMounted = useRef(true);
     const { width } = useWindowSize();
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
-    const MIN_HEIGHT = 56;
+    // Add a ref to track the initial group selection
+    const initialGroupRef = useRef(selectedGroup);
+
+    const MIN_HEIGHT = 72;
     const MAX_HEIGHT = 400;
 
     const autoResizeInput = (target: HTMLTextAreaElement) => {
         if (!target) return;
         requestAnimationFrame(() => {
             target.style.height = 'auto';
-            let newHeight = target.scrollHeight;
-            newHeight = Math.min(Math.max(newHeight, MIN_HEIGHT), MAX_HEIGHT);
+            const newHeight = Math.min(Math.max(target.scrollHeight, MIN_HEIGHT), MAX_HEIGHT);
             target.style.height = `${newHeight}px`;
-            target.style.overflowY = newHeight >= MAX_HEIGHT ? 'auto' : 'hidden';
         });
     };
 
     const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        event.preventDefault();
         setInput(event.target.value);
         autoResizeInput(event.target);
     };
@@ -539,6 +729,130 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (attachments.length >= MAX_IMAGES) return;
+        
+        if (e.dataTransfer.items && e.dataTransfer.items[0].kind === "file") {
+            setIsDragging(true);
+        }
+    }, [attachments.length]);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const getFirstVisionModel = useCallback(() => {
+        return models.find(model => model.vision)?.value || selectedModel;
+    }, [selectedModel]);
+
+    const handleDrop = useCallback(async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files).filter(file => 
+            file.type.startsWith('image/')
+        );
+
+        if (files.length === 0) {
+            toast.error("Only image files are supported");
+            return;
+        }
+
+        const totalAttachments = attachments.length + files.length;
+        if (totalAttachments > MAX_IMAGES) {
+            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+            return;
+        }
+
+        // Switch to vision model if current model doesn't support vision
+        const currentModel = models.find(m => m.value === selectedModel);
+        if (!currentModel?.vision) {
+            const visionModel = getFirstVisionModel();
+            setSelectedModel(visionModel);
+            toast.success(`Switched to ${models.find(m => m.value === visionModel)?.label} for image support`);
+        }
+
+        setUploadQueue(files.map((file) => file.name));
+
+        try {
+            const uploadPromises = files.map((file) => uploadFile(file));
+            const uploadedAttachments = await Promise.all(uploadPromises);
+            setAttachments((currentAttachments) => [
+                ...currentAttachments,
+                ...uploadedAttachments,
+            ]);
+        } catch (error) {
+            console.error("Error uploading files!", error);
+            toast.error("Failed to upload one or more files. Please try again.");
+        } finally {
+            setUploadQueue([]);
+        }
+    }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
+
+    const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+        const items = Array.from(e.clipboardData.items);
+        const imageItems = items.filter(item => item.type.startsWith('image/'));
+        
+        if (imageItems.length === 0) return;
+        
+        // Prevent default paste behavior if there are images
+        e.preventDefault();
+        
+        const totalAttachments = attachments.length + imageItems.length;
+        if (totalAttachments > MAX_IMAGES) {
+            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+            return;
+        }
+
+        // Switch to vision model if needed
+        const currentModel = models.find(m => m.value === selectedModel);
+        if (!currentModel?.vision) {
+            const visionModel = getFirstVisionModel();
+            setSelectedModel(visionModel);
+            toast.success(`Switched to ${models.find(m => m.value === visionModel)?.label} for image support`);
+        }
+
+        setUploadQueue(imageItems.map((_, i) => `Pasted Image ${i + 1}`));
+
+        try {
+            const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
+            const uploadPromises = files.map(file => uploadFile(file));
+            const uploadedAttachments = await Promise.all(uploadPromises);
+            
+            setAttachments(currentAttachments => [
+                ...currentAttachments,
+                ...uploadedAttachments,
+            ]);
+            
+            toast.success('Image pasted successfully');
+        } catch (error) {
+            console.error("Error uploading pasted files!", error);
+            toast.error("Failed to upload pasted image. Please try again.");
+        } finally {
+            setUploadQueue([]);
+        }
+    }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
+
+    useEffect(() => {
+        if (!isLoading && hasSubmitted && inputRef.current) {
+            const focusTimeout = setTimeout(() => {
+                if (isMounted.current && inputRef.current) {
+                    inputRef.current.focus({
+                        preventScroll: true
+                    });
+                }
+            }, 300);
+
+            return () => clearTimeout(focusTimeout);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, hasSubmitted]);
+
     const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         event.stopPropagation();
@@ -582,25 +896,66 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
     }, [attachments.length, hasSubmitted, fileInputRef]);
 
-    const handleTouchStart = useCallback((event: React.TouchEvent<HTMLTextAreaElement>) => {
-        event.preventDefault();
-        event.currentTarget.focus();
-    }, []);
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            if (isLoading) {
+                toast.error("Please wait for the response to complete!");
+            } else {
+                submitForm();
+                if (width && width > 768) {
+                    setTimeout(() => {
+                        inputRef.current?.focus();
+                    }, 100);
+                }
+            }
+        }
+    };
 
     return (
+        <div 
+            className={cn(
+                "relative w-full flex flex-col gap-2 rounded-lg transition-all duration-300 !font-sans",
+                hasSubmitted ?? "z-[51]",
+                isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
+                attachments.length > 0 || uploadQueue.length > 0
+                    ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
+                    : "bg-transparent"
+            )}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
+            <AnimatePresence>
+                {isDragging && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
+                    >
+                        <div className="flex items-center gap-4 px-6 py-8">
+                            <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                                <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
+                            </div>
+                            <div className="space-y-1 text-center">
+                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                                    Drop images here
+                                </p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                                    Max {MAX_IMAGES} images
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-        <div className={cn(
-            "relative w-full flex flex-col gap-2 rounded-lg transition-all duration-300 !font-sans",
-            hasSubmitted ?? "z-[51]",
-            attachments.length > 0 || uploadQueue.length > 0
-                ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
-                : "bg-transparent"
-        )}>
             <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
             <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
 
             {(attachments.length > 0 || uploadQueue.length > 0) && (
-                <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10">
+                <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10 px-1">
                     {/* Existing attachment previews */}
                     {attachments.map((attachment, index) => (
                         <AttachmentPreview
@@ -635,51 +990,76 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     disabled={isLoading}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    onTouchStart={handleTouchStart}
                     className={cn(
-                        "min-h-[56px] max-h-[400px] w-full resize-none rounded-lg",
-                        "overflow-x-hidden",
+                        "min-h-[72px] w-full resize-none rounded-lg",
                         "text-base leading-relaxed",
                         "bg-neutral-100 dark:bg-neutral-900",
-                        "border border-neutral-200 dark:border-neutral-700",
-                        "focus:border-neutral-300 dark:focus:border-neutral-600",
+                        "border !border-neutral-200 dark:!border-neutral-700",
+                        "focus:!border-neutral-300 dark:focus:!border-neutral-600",
+                        isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                         "text-neutral-900 dark:text-neutral-100",
                         "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
-                        "px-4 pt-3 pb-5"
+                        "px-4 pt-4 pb-16",
+                        "overflow-y-auto",
+                        "touch-manipulation",
                     )}
-                    rows={3}
-                    autoFocus
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
-                            event.preventDefault();
-                            if (isLoading) {
-                                toast.error("Please wait for the response to complete!");
-                            } else {
-                                submitForm();
-                            }
-                        }
+                    style={{
+                        maxHeight: `${MAX_HEIGHT}px`,
+                        WebkitUserSelect: 'text',
+                        WebkitTouchCallout: 'none',
                     }}
+                    rows={1}
+                    autoFocus={width ? width > 768 : true}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                 />
 
                 <div className={cn(
-                    "absolute bottom-0 inset-x-0 flex justify-between items-center rounded-b-lg p-2",
+                    "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
                     "bg-neutral-100 dark:bg-neutral-900",
                     "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
                     isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                     isLoading ? "!opacity-20 !cursor-not-allowed" : ""
                 )}>
                     <div className="flex items-center gap-2">
-                        {!hasSubmitted ?
+                        {!hasSubmitted && selectedModel !== "scira-o3-mini" && selectedGroup !== 'extreme' ? (
                             <GroupSelector
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
                             />
-                            : null
-                        }
+                        ) : null}
                         <ModelSwitcher
                             selectedModel={selectedModel}
                             setSelectedModel={setSelectedModel}
+                            showExperimentalModels={showExperimentalModels}
+                            attachments={attachments}
+                            messages={messages}
                         />
+                        {/* Only show extreme button if not submitted, or if it was initially selected */}
+                        {(!hasSubmitted || initialGroupRef.current === 'extreme') && (
+                            <button
+                                onClick={() => {
+                                    if (!hasSubmitted || selectedGroup !== 'extreme') {
+                                        setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
+                                        resetSuggestedQuestions();
+                                    }
+                                }}
+                                disabled={hasSubmitted && selectedGroup === 'extreme'}
+                                className={cn(
+                                    "flex items-center gap-2 p-2 sm:px-3 h-8",
+                                    "rounded-full transition-all duration-300",
+                                    "border border-neutral-200 dark:border-neutral-800",
+                                    "hover:shadow-md",
+                                    selectedGroup === 'extreme' 
+                                        ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" 
+                                        : "bg-white dark:bg-neutral-900 text-neutral-500",
+                                    (hasSubmitted && selectedGroup === 'extreme') && "opacity-50 cursor-not-allowed hover:shadow-none"
+                                )}
+                            >
+                                <Mountain className="h-3.5 w-3.5" />
+                                <span className="text-xs font-medium">Extreme</span>
+                            </button>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2">
