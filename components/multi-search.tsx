@@ -90,7 +90,7 @@ const SearchLoadingState = ({
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <div className="p-2.5 rounded-xl bg-primary/5">
-                                    <Globe className="h-5 w-5 text-primary relative z-10" />
+                                    <Globe className="h-5 w-5 text-primary relative" />
                                 </div>
                                 <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-xl" />
                             </div>
