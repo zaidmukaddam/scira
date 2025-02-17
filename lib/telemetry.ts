@@ -17,8 +17,13 @@ export const otelSDK = new NodeSDK({
   ),
 });
 
-// Start the SDK
+// Start the SDK only if telemetry is enabled
 export function startTracing() {
+  if (!serverEnv.TELEMETRY_ENABLED) {
+    console.log('Telemetry is disabled');
+    return;
+  }
+
   try {
     otelSDK.start();
     console.log('Tracing initialized');
