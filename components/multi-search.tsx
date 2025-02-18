@@ -76,79 +76,38 @@ const SearchLoadingState = ({
     const totalImages = annotations.reduce((sum, a) => sum + a.data.imagesCount, 0);
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-4">
             <Accordion type="single" collapsible defaultValue="search" className="w-full">
                 <AccordionItem value="search" className="border-none">
                     <AccordionTrigger
                         className={cn(
-                            "p-6 bg-white dark:bg-neutral-900 rounded-xl hover:no-underline",
-                            "border border-neutral-200 dark:border-neutral-800",
-                            "shadow-sm hover:shadow-md transition-all duration-300",
+                            "p-4 bg-white dark:bg-neutral-900 rounded-xl hover:no-underline border border-neutral-200 dark:border-neutral-800 shadow-sm",
                             "[&[data-state=open]]:rounded-b-none"
                         )}
                     >
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <div className="p-2.5 rounded-xl bg-primary/5">
-                                    <Globe className="h-5 w-5 text-primary relative" />
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                                    <Globe className="h-4 w-4 text-neutral-500" />
                                 </div>
-                                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-xl" />
+                                <h2 className="font-medium text-left">Sources Found</h2>
                             </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                    <h2 className="font-semibold text-left">Running Web Search</h2>
-                                    {completedQueries < queries.length && (
-                                        <div className="flex gap-1">
-                                            {[...Array(3)].map((_, i) => (
-                                                <motion.div
-                                                    key={i}
-                                                    className="w-1.5 h-1.5 rounded-full bg-primary/60"
-                                                    animate={{ y: [-2, 2, -2] }}
-                                                    transition={{
-                                                        duration: 0.6,
-                                                        repeat: Infinity,
-                                                        delay: i * 0.1
-                                                    }}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                    <Badge 
-                                        variant="secondary"
-                                        className={cn(
-                                            "rounded-full transition-colors duration-300",
-                                            completedQueries === queries.length
-                                                ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-                                                : "bg-primary/10 text-primary"
-                                        )}
-                                    >
-                                        {completedQueries}/{queries.length} Queries
-                                    </Badge>
-                                    {completedQueries > 0 && (
-                                        <>
-                                            <Badge 
-                                                variant="secondary"
-                                                className="rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                            >
-                                                {totalResults} Results
-                                            </Badge>
-                                            <Badge 
-                                                variant="secondary"
-                                                className="rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
-                                            >
-                                                {totalImages} Images
-                                            </Badge>
-                                        </>
-                                    )}
-                                </div>
+                            <div className="flex items-center gap-2 mr-2">
+                                <Badge
+                                    variant="secondary"
+                                    className="rounded-full px-3 py-1 bg-neutral-100 dark:bg-neutral-800"
+                                >
+                                    <Search className="h-3 w-3 mr-1.5" />
+                                    {totalResults || '0'} Results
+                                </Badge>
                             </div>
                         </div>
                     </AccordionTrigger>
+
                     <AccordionContent className="mt-0 pt-0 border-0">
-                        <div className="py-4 px-6 bg-white dark:bg-neutral-900 rounded-b-xl border-t-0 border border-neutral-200 dark:border-neutral-800">
-                            <div className="flex overflow-x-auto gap-2 mb-4 no-scrollbar pb-2">
+                        <div className="py-3 px-4 bg-white dark:bg-neutral-900 rounded-b-xl border-t-0 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                            {/* Query badges */}
+                            <div className="flex overflow-x-auto gap-2 mb-3 no-scrollbar pb-1">
                                 {queries.map((query, i) => {
                                     const annotation = annotations.find(a => a.data.query === query);
                                     return (
@@ -156,71 +115,64 @@ const SearchLoadingState = ({
                                             key={i}
                                             variant="secondary"
                                             className={cn(
-                                                "px-3 py-1.5 rounded-full flex-shrink-0 transition-all duration-300",
+                                                "px-3 py-1.5 rounded-full flex-shrink-0 flex items-center gap-1.5",
                                                 annotation 
-                                                    ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 shadow-sm"
-                                                    : "bg-neutral-100 dark:bg-neutral-800"
+                                                    ? "bg-neutral-100 dark:bg-neutral-800" 
+                                                    : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400"
                                             )}
                                         >
-                                            <div className="flex items-center gap-2">
-                                                <div className="relative w-3.5 h-3.5">
-                                                    {annotation ? (
-                                                        <motion.div
-                                                            initial={{ scale: 0 }}
-                                                            animate={{ scale: 1 }}
-                                                            transition={{ type: "spring", duration: 0.5 }}
-                                                        >
-                                                            <Check className="h-3.5 w-3.5" />
-                                                        </motion.div>
-                                                    ) : (
-                                                        <motion.div 
-                                                            animate={{ rotate: 360 }}
-                                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                            className="w-3.5 h-3.5 border-2 border-primary/60 border-t-transparent rounded-full"
-                                                        />
-                                                    )}
-                                                </div>
-                                                {query}
-                                                {annotation && (
-                                                    <motion.span 
-                                                        initial={{ opacity: 0, scale: 0.5 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        className="px-1.5 py-0.5 text-[10px] rounded-full bg-green-100 dark:bg-green-900/40"
-                                                    >
-                                                        {annotation.data.resultsCount}
-                                                    </motion.span>
-                                                )}
-                                            </div>
+                                            {annotation ? (
+                                                <Check className="h-3 w-3" />
+                                            ) : (
+                                                <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                            )}
+                                            {query}
                                         </Badge>
                                     );
                                 })}
                             </div>
-                            <div className={cn(
-                                "grid gap-2",
-                                "grid-cols-2",
-                                "sm:grid-cols-3",
-                                "lg:grid-cols-4",
-                                "[&>*]:aspect-[4/3]",
-                                "[&>*:first-child]:row-span-1 [&>*:first-child]:col-span-1",
-                                "sm:[&>*:first-child]:row-span-2 sm:[&>*:first-child]:col-span-2"
-                            )}>
-                                {[...Array(4)].map((_, index) => (
-                                    <motion.div
-                                        key={index}
-                                        className="relative rounded-xl overflow-hidden shadow-sm"
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ duration: 0.3, delay: index * 0.1 }}
+
+                            {/* Horizontal scrolling results skeleton */}
+                            <div className="flex overflow-x-auto gap-3 no-scrollbar pb-1">
+                                {[...Array(6)].map((_, i) => (
+                                    <div 
+                                        key={i}
+                                        className="w-[300px] flex-shrink-0 bg-background rounded-xl border border-border shadow-sm"
                                     >
-                                        <div className="absolute inset-0 bg-primary/[0.02] dark:bg-primary/[0.02]" />
-                                        <div className="absolute inset-0 animate-pulse bg-primary/[0.02] dark:bg-primary/[0.02]" />
-                                    </motion.div>
+                                        <div className="p-4">
+                                            <div className="flex items-center gap-2.5 mb-3">
+                                                <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="h-4 bg-neutral-100 dark:bg-neutral-800 rounded-md animate-pulse w-3/4" />
+                                                    <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded-md animate-pulse w-1/2" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded-md animate-pulse w-full" />
+                                                <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded-md animate-pulse w-5/6" />
+                                                <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded-md animate-pulse w-4/6" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
+
+            {/* Images section skeleton */}
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                {[...Array(5)].map((_, i) => (
+                    <div
+                        key={i}
+                        className={cn(
+                            "aspect-[4/3] rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse",
+                            i === 0 && "sm:row-span-2 sm:col-span-2"
+                        )}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
@@ -229,12 +181,12 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
     const [imageLoaded, setImageLoaded] = React.useState(false);
 
     return (
-        <div className="w-[300px] flex-shrink-0 bg-white dark:bg-black rounded-xl border border-primary/10 dark:border-primary/20 shadow-sm hover:shadow-md transition-all">
+        <div className="w-[300px] flex-shrink-0 bg-background rounded-xl border border-border shadow-sm hover:shadow-md transition-all">
             <div className="p-4">
                 <div className="flex items-center gap-2.5 mb-3">
-                    <div className="relative w-10 h-10 rounded-lg bg-primary/5 dark:bg-primary/10 flex items-center justify-center overflow-hidden">
+                    <div className="relative w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                         {!imageLoaded && (
-                            <div className="absolute inset-0 animate-pulse bg-primary/10" />
+                            <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
                         )}
                         <img
                             src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(result.url).hostname}`}
@@ -256,7 +208,7 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
                             href={result.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 flex items-center gap-1"
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
                         >
                             {new URL(result.url).hostname}
                             <ExternalLink className="h-3 w-3" />
@@ -264,13 +216,13 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
                     </div>
                 </div>
 
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3 mb-3">
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
                     {result.content}
                 </p>
 
                 {result.published_date && (
-                    <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                        <time className="text-xs text-neutral-500 flex items-center gap-1.5">
+                    <div className="pt-3 border-t border-border">
+                        <time className="text-xs text-muted-foreground flex items-center gap-1.5">
                             <Calendar className="h-3 w-3" />
                             {new Date(result.published_date).toLocaleDateString()}
                         </time>
@@ -364,24 +316,24 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
             {isDesktop ? (
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogContent className="max-w-5xl h-[80vh] p-0 rounded-xl border-0">
-                        <div className="relative bg-white dark:bg-black/95 w-full h-full rounded-xl">
+                    <DialogContent className="max-w-5xl h-[80vh] p-0">
+                        <div className="relative bg-background w-full h-full rounded-lg overflow-hidden">
                             <motion.div 
-                                className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/20 dark:from-black/40 to-transparent z-50"
+                                className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/40 to-transparent z-50"
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
                             >
                                 <div className="flex items-center justify-between">
-                                    <div className="text-black dark:text-white">
-                                        <h2 className="text-xl font-semibold">Search Images</h2>
-                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                    <div className="text-white">
+                                        <h2 className="text-xl font-medium">Search Images</h2>
+                                        <p className="text-sm text-white/80">
                                             {selectedImage + 1} of {images.length}
                                         </p>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/20"
+                                        className="h-8 w-8 text-white hover:bg-white/20"
                                         onClick={() => setIsOpen(false)}
                                     >
                                         <X className="h-5 w-5" />
@@ -444,24 +396,24 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                 </Dialog>
             ) : (
                 <Drawer open={isOpen} onOpenChange={setIsOpen}>
-                    <DrawerContent className="p-0 h-[80vh] rounded-t-xl">
-                        <div className="relative bg-white dark:bg-black/95 w-full h-full rounded-t-xl">
+                    <DrawerContent className="p-0 h-[80vh] bg-background">
+                        <div className="relative w-full h-full rounded-t-lg overflow-hidden">
                             <motion.div 
-                                className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/20 dark:from-black/40 to-transparent z-50"
+                                className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/40 to-transparent z-50"
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
                             >
                                 <div className="flex items-center justify-between">
-                                    <div className="text-black dark:text-white">
-                                        <h2 className="text-xl font-semibold">Search Images</h2>
-                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                    <div className="text-white">
+                                        <h2 className="text-xl font-medium">Search Images</h2>
+                                        <p className="text-sm text-white/80">
                                             {selectedImage + 1} of {images.length}
                                         </p>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/20"
+                                        className="h-8 w-8 text-white hover:bg-white/20"
                                         onClick={() => setIsOpen(false)}
                                     >
                                         <X className="h-5 w-5" />

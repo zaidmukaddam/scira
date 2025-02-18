@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, BookA, Sparkles, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -50,28 +50,45 @@ export interface StreamUpdate {
     isComplete?: boolean;
     title?: string;
     overwrite?: boolean;
+    advancedSteps?: number;
+    gaps?: Array<{
+        topic: string;
+        reason: string;
+        additional_queries: string[];
+    }>;
+    recommendations?: Array<{
+        action: string;
+        rationale: string;
+        priority: number;
+    }>;
+    uncertainties?: string[];
 }
 
 const ResearchStep = ({ 
     update, 
     isExpanded,
-    onToggle
+    onToggle,
+    id
 }: { 
     update: StreamUpdate, 
     isExpanded: boolean,
-    onToggle: () => void
+    onToggle: () => void,
+    id: string
 }) => {
     const icons = {
         plan: Search,
         web: FileText,
         academic: BookA,
         progress: Loader2,
-        analysis: Sparkles
+        analysis: Sparkles,
+        'gap-search': Search,
     } as const;
-    const Icon = icons[update.type];
+    
+    const isGapSearch = update.id.startsWith('gap-search');
+    const Icon = isGapSearch ? icons['gap-search'] : icons[update.type];
 
     return (
-        <div className="group">
+        <div id={id} className="group">
             <motion.div 
                 className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors duration-200",
@@ -103,12 +120,21 @@ const ResearchStep = ({
                             </span>
                             {update.type === 'plan' && update.plan && (
                                 <span className="text-xs text-neutral-500 flex-shrink-0">
-                                    ({update.plan.search_queries.length} queries, {update.plan.required_analyses.length} analyses)
+                                    ({update.plan.search_queries.length} queries, {update.plan.required_analyses.length} analyses{update.advancedSteps ? `, +${update.advancedSteps} advanced` : ''})
                                 </span>
                             )}
                         </div>
                         {update.message && (
-                            <p className="text-xs text-neutral-500 truncate">{update.message}</p>
+                            <p className="text-xs text-neutral-500 truncate">
+                                {isGapSearch ? (
+                                    <span className="flex items-center gap-1">
+                                        <Search className="w-3 h-3" />
+                                        {update.message}
+                                    </span>
+                                ) : (
+                                    update.message
+                                )}
+                            </p>
                         )}
                     </div>
 
@@ -261,8 +287,8 @@ const ResearchStep = ({
 };
 
 const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
-    // Track expanded states for all steps
     const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Handle toggle for a specific step
     const handleToggle = (stepId: string) => {
@@ -277,14 +303,26 @@ const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
         });
     };
 
+    // Auto-scroll to running step
+    useEffect(() => {
+        const runningStep = updates.find(update => update.status === 'running');
+        if (runningStep) {
+            const stepElement = document.getElementById(`step-${runningStep.id}`);
+            if (stepElement && scrollContainerRef.current) {
+                stepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }, [updates]);
+
     return (
-        <div>
+        <div ref={scrollContainerRef} className="h-[300px] overflow-y-auto">
             {updates.map((update, index) => {
                 const isExpanded = update.status === 'running' || expandedSteps.has(update.id);
 
                 return (
                     <ResearchStep 
-                        key={update.id} 
+                        key={update.id}
+                        id={`step-${update.id}`}
                         update={update}
                         isExpanded={isExpanded}
                         onToggle={() => handleToggle(update.id)}
@@ -445,9 +483,20 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     const [selectedTab, setSelectedTab] = useState("web");
 
     // Get the research plan update—prefer the completed update if available
-    const planUpdate = React.useMemo(() => {
+    const planUpdateFromUpdates = React.useMemo(() => {
         return updates.find(u => u.type === 'plan' && u.status === 'completed') || updates.find(u => u.type === 'plan');
     }, [updates]);
+
+    const additionalAdvancedSteps = React.useMemo(() => {
+        return updates.filter(u => u.id === 'gap-analysis' || u.id === 'final-synthesis').length;
+    }, [updates]);
+
+    const planUpdate = React.useMemo(() => {
+        if (planUpdateFromUpdates && additionalAdvancedSteps > 0) {
+             return { ...planUpdateFromUpdates, advancedSteps: additionalAdvancedSteps };
+        }
+        return planUpdateFromUpdates;
+    }, [planUpdateFromUpdates, additionalAdvancedSteps]);
 
     const totalExpectedSteps = React.useMemo(() => {
         if (planUpdate?.totalSteps) return planUpdate.totalSteps;
@@ -460,29 +509,42 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
         // Count analysis steps
         const analysisSteps = planUpdate.plan.required_analyses.length;
 
-        return searchSteps + analysisSteps;
-    }, [planUpdate]);
+        // For gap analysis, count each gap if available, otherwise count 1.
+        // Always count final synthesis as one step.
+        const additionalSteps = updates.reduce((acc, u) => {
+            if (u.id === 'gap-analysis') {
+                return acc + (u.gaps ? u.gaps.length : 1);
+            } else if (u.id === 'final-synthesis') {
+                return acc + 1;
+            }
+            return acc;
+        }, 0);
+
+        return searchSteps + analysisSteps + additionalSteps;
+    }, [planUpdate, updates]);
 
     // Track all steps and progress in one memo
     const { completedSteps, runningSteps, totalSteps, progress, isComplete, showRunningIndicators } = React.useMemo(() => {
         const stepsById = new Map(updates.map(u => [u.id, u]));
-        // Exclude aggregated updates (plan and progress)
         const excludedIds = new Set(['research-plan', 'research-progress']);
-        const progressUpdate = updates.find(u => u.type === 'progress');
 
-        // Calculate our own step counts only on individual search/analysis steps
-        const completed = Array.from(stepsById.values())
-            .filter(u => u.status === 'completed' && !excludedIds.has(u.id)).length;
-        const running = Array.from(stepsById.values())
-            .filter(u => u.status === 'running' && !excludedIds.has(u.id)).length;
-        
-        // If we have a progress update marked as complete, use the actual completed steps as total
-        const total = progressUpdate?.status === 'completed' 
-            ? completed  // Use actual completed steps if search is complete
-            : totalExpectedSteps;  // Otherwise use expected total
+        // Filter out excluded steps and calculate total completed and running steps.
+        const allSteps = Array.from(stepsById.values()).filter(u => !excludedIds.has(u.id));
+        const completed = allSteps.filter(u => u.status === 'completed').length;
+        const running = allSteps.filter(u => u.status === 'running').length;
 
+        // Determine the total step count from final synthesis if available, fallback to totalExpectedSteps.
+        const finalSynthesis = updates.find(u => u.id === 'final-synthesis');
+        const total = finalSynthesis?.totalSteps || totalExpectedSteps;
         const currentProgress = total === 0 ? 0 : (completed / total) * 100;
-        const complete = (progressUpdate?.status === 'completed') || (completed === total && total > 0);
+
+        // Check progress update to reflect completion as well.
+        const progressUpdate = updates.find(u => u.type === 'progress');
+        // Research is considered complete if either the progress update's isComplete flag is set
+        // or if the final synthesis update indicates completion.
+        const complete = (progressUpdate?.isComplete === true) ||
+                         (finalSynthesis?.isComplete === true) ||
+                         (finalSynthesis?.status === 'completed');
 
         return {
             completedSteps: completed,
@@ -497,49 +559,32 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     // Deduplicate updates by id so that a "completed" state overwrites its running version.
     const dedupedUpdates = React.useMemo(() => {
         const updateMap = new Map<string, StreamUpdate>();
-        updates.forEach(u => {
-            if (!updateMap.has(u.id)) {
+        
+        // Sort updates by timestamp to process newer updates last
+        const sortedUpdates = [...updates].sort((a, b) => a.timestamp - b.timestamp);
+        
+        sortedUpdates.forEach(u => {
+            if (u.overwrite || !updateMap.has(u.id)) {
                 updateMap.set(u.id, u);
             } else {
                 const existing = updateMap.get(u.id)!;
-                // Special handling for the research plan update
-                if (u.id === 'research-plan') {
-                    // If we already have a running plan update, keep it over a completed one.
-                    if (existing.status === 'running' && u.status === 'completed') {
-                        // Do nothing: prefer running.
-                    } else if (existing.status === 'completed' && u.status === 'running') {
-                        updateMap.set(u.id, u);
-                    } else {
-                        // Next check the overwrite flag...
-                        if ((u as any).overwrite && !(existing as any).overwrite) {
-                            updateMap.set(u.id, u);
-                        } else if (!(u as any).overwrite && (existing as any).overwrite) {
-                            // Do nothing.
-                        } else if (u.timestamp > existing.timestamp) {
-                            updateMap.set(u.id, u);
-                        }
-                    }
-                } else {
-                    // Normal handling for non-plan updates
-                    if ((u as any).overwrite && !(existing as any).overwrite) {
-                        updateMap.set(u.id, u);
-                    } else if (!(u as any).overwrite && (existing as any).overwrite) {
-                        // Do nothing.
-                    } else if (existing.status !== 'completed' && u.status === 'completed') {
-                        updateMap.set(u.id, u);
-                    } else if (u.timestamp > existing.timestamp) {
-                        updateMap.set(u.id, u);
-                    }
+                if (u.status === 'completed' && existing.status !== 'completed') {
+                    updateMap.set(u.id, u);
                 }
             }
         });
+        
         return Array.from(updateMap.values());
     }, [updates]);
 
     // Use the deduplicated updates to generate our sorted list
     const sortedUpdates = React.useMemo(() => {
+        // Modified filtering logic: allow running gap analysis updates if analysisType==='gaps'
         const filteredUpdates = isComplete
-            ? dedupedUpdates.filter(u => (u.status === 'completed' || u.type === 'plan') && u.id !== 'research-progress')
+            ? dedupedUpdates.filter(u => (
+                  (u.status === 'completed' || u.type === 'plan' || (u.analysisType === 'gaps' && u.status === 'running'))
+                  && u.id !== 'research-progress'
+              ))
             : dedupedUpdates.filter(u => u.id !== 'research-progress');
 
         const otherUpdates = filteredUpdates
@@ -560,10 +605,13 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             .flatMap(u => u.results || []);
 
         const analysisResults = updates
-            .filter(u => u.type === 'analysis' && u.status === 'completed' && u.findings)
-            .flatMap(u => ({
+            .filter(u => u.type === 'analysis' && u.status === 'completed')
+            .map(u => ({
                 type: u.analysisType || 'Analysis',
-                findings: u.findings || []
+                findings: u.findings || [],
+                gaps: u.gaps,
+                recommendations: u.recommendations,
+                uncertainties: u.uncertainties
             }));
 
         return {
@@ -572,6 +620,18 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             analysis: analysisResults
         };
     }, [updates]);
+
+    // Check if final synthesis update is completed
+    const finalSynthesisDone = React.useMemo(() => {
+         return dedupedUpdates.some(u => u.id === 'final-synthesis' && u.status === 'completed');
+    }, [dedupedUpdates]);
+
+    // Automatically collapse (close) the main accordion once final synthesis is done
+    useEffect(() => {
+         if (finalSynthesisDone) {
+             setIsCollapsed(true);
+         }
+    }, [finalSynthesisDone]);
 
     return (
         <div className="space-y-8">
@@ -585,7 +645,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                     )}
                     onClick={() => isComplete && setIsCollapsed(!isCollapsed)}
                 >
-                    <div className="space-y-1.5">
+                    <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-medium">
                                 {isComplete 
@@ -603,19 +663,13 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                 </Badge>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Progress
-                                value={progress}
-                                className={cn(
-                                    "h-1 w-32",
-                                    showRunningIndicators && "animate-pulse"
-                                )}
-                            />
-                            <p className="text-xs text-neutral-500">
-                                {completedSteps} of {totalSteps} steps
-                                {showRunningIndicators && ` (${runningSteps} in progress)`}
-                            </p>
-                        </div>
+                        <Progress
+                            value={progress}
+                            className={cn(
+                                "h-1 w-24",
+                                showRunningIndicators && "animate-pulse"
+                            )}
+                        />
                     </div>
                     {isComplete && (
                         <ChevronDown className={cn(
@@ -640,8 +694,8 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                 </motion.div>
             </Card>
 
-            {/* Sources Section */}
-            {(sourceGroups.web.length > 0 || sourceGroups.academic.length > 0) && (
+            {/* Sources Section - Only show when complete */}
+            {finalSynthesisDone && (sourceGroups.web.length > 0 || sourceGroups.academic.length > 0 || sourceGroups.analysis.length > 0) && (
                 <div className="space-y-3">
                     <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5" />
@@ -657,14 +711,29 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                             <TabsTrigger value="web" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
                                 <FileText className="h-3 w-3" />
                                 <span>Web Sources</span>
+                                {sourceGroups.web.length > 0 && (
+                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
+                                        {sourceGroups.web.length}
+                                    </Badge>
+                                )}
                             </TabsTrigger>
                             <TabsTrigger value="academic" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
                                 <BookA className="h-3 w-3" />
                                 <span>Academic Sources</span>
+                                {sourceGroups.academic.length > 0 && (
+                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
+                                        {sourceGroups.academic.length}
+                                    </Badge>
+                                )}
                             </TabsTrigger>
                             <TabsTrigger value="analysis" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
                                 <Sparkles className="h-3 w-3" />
                                 <span>Analysis</span>
+                                {sourceGroups.analysis.length > 0 && (
+                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
+                                        {sourceGroups.analysis.length}
+                                    </Badge>
+                                )}
                             </TabsTrigger>
                         </TabsList>
                         <div className="relative">
@@ -791,9 +860,10 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                 )}
                             </AnimatedTabContent>
                             <AnimatedTabContent value="analysis" selected={selectedTab}>
-                                {sourceGroups.analysis.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {sourceGroups.analysis.map((analysis, i) => (
+                                {sourceGroups.analysis.length > 0 || updates.some(u => u.id === 'gap-analysis' && u.status === 'running') || updates.some(u => u.id === 'final-synthesis' && u.status === 'running') ? (
+                                    <div className="space-y-2">
+                                        {/* Regular Analysis Results */}
+                                        {sourceGroups.analysis.filter(a => a.type !== 'gaps' && a.type !== 'synthesis').map((analysis, i) => (
                                             <Accordion
                                                 key={i}
                                                 type="single"
@@ -801,14 +871,14 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                 className="bg-card rounded-lg border border-border"
                                             >
                                                 <AccordionItem value={`analysis-${i}`} className="border-none">
-                                                    <AccordionTrigger className="px-3 py-1.5 hover:no-underline text-xs">
+                                                    <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
                                                         <div className="flex items-center gap-1.5 text-neutral-600">
                                                             <Sparkles className="h-3 w-3" />
                                                             {analysis.type}
                                                         </div>
                                                     </AccordionTrigger>
-                                                    <AccordionContent className="px-3 pb-3">
-                                                        <div className="grid gap-2">
+                                                    <AccordionContent className="px-2 pb-2">
+                                                        <div className="grid gap-1.5">
                                                             {analysis.findings.map((finding, j) => (
                                                                 <div
                                                                     key={j}
@@ -838,6 +908,155 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                 </AccordionItem>
                                             </Accordion>
                                         ))}
+
+                                        {/* Gap Analysis Results */}
+                                        {sourceGroups.analysis.find(a => a.type === 'gaps') && (
+                                            <Accordion
+                                                type="single"
+                                                collapsible
+                                                className="bg-card rounded-lg border border-border"
+                                            >
+                                                <AccordionItem value="gaps" className="border-none">
+                                                    <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
+                                                        <div className="flex items-center gap-1.5 text-neutral-600">
+                                                            <Search className="h-3 w-3" />
+                                                            Research Gaps and Limitations
+                                                        </div>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="px-2 pb-2">
+                                                        <div className="grid gap-1.5">
+                                                            {/* Limitations */}
+                                                            {sourceGroups.analysis
+                                                                .find(a => a.type === 'gaps')
+                                                                ?.findings.map((finding, j) => (
+                                                                    <div
+                                                                        key={j}
+                                                                        className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                    >
+                                                                        <div className="flex items-start gap-2">
+                                                                            <div className="flex-shrink-0 mt-1">
+                                                                                <div className="w-1 h-1 rounded-full bg-neutral-400" />
+                                                                            </div>
+                                                                            <div className="space-y-1.5 min-w-0">
+                                                                                <p className="text-xs font-medium">{finding.insight}</p>
+                                                                                {finding.evidence.length > 0 && (
+                                                                                    <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                        {finding.evidence.map((solution, k) => (
+                                                                                            <p key={k} className="text-[11px] text-neutral-500">
+                                                                                                {solution}
+                                                                                            </p>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+
+                                                            {/* Knowledge Gaps */}
+                                                            {sourceGroups.analysis.find(a => a.type === 'gaps')?.gaps?.map((gap, j) => (
+                                                                <div
+                                                                    key={j}
+                                                                    className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                >
+                                                                    <div className="flex items-start gap-2">
+                                                                        <div className="flex-shrink-0 mt-1">
+                                                                            <div className="w-1 h-1 rounded-full bg-neutral-400" />
+                                                                        </div>
+                                                                        <div className="space-y-1.5 min-w-0">
+                                                                            <p className="text-xs font-medium">{gap.topic}</p>
+                                                                            <p className="text-[11px] text-neutral-500">{gap.reason}</p>
+                                                                            {gap.additional_queries.length > 0 && (
+                                                                                <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                    {gap.additional_queries.map((query, k) => (
+                                                                                        <p key={k} className="text-[11px] text-neutral-500">
+                                                                                            {query}
+                                                                                        </p>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        )}
+
+                                        {/* Final Synthesis Results */}
+                                        {sourceGroups.analysis.find(a => a.type === 'synthesis') && (
+                                            <Accordion
+                                                type="single"
+                                                collapsible
+                                                className="bg-card rounded-lg border border-border"
+                                            >
+                                                <AccordionItem value="synthesis" className="border-none">
+                                                    <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
+                                                        <div className="flex items-center gap-1.5 text-neutral-600">
+                                                            <Sparkles className="h-3 w-3" />
+                                                            Final Research Synthesis
+                                                        </div>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="px-2 pb-2">
+                                                        <div className="grid gap-1.5">
+                                                            {/* Key Findings */}
+                                                            <div className="space-y-2">
+                                                                <h4 className="text-xs font-medium text-neutral-600">Key Findings</h4>
+                                                                <div className="grid gap-2">
+                                                                    {sourceGroups.analysis
+                                                                        .find(a => a.type === 'synthesis')
+                                                                        ?.findings.map((finding, j) => (
+                                                                            <div
+                                                                                key={j}
+                                                                                className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                            >
+                                                                                <div className="flex items-start gap-2">
+                                                                                    <div className="flex-shrink-0 mt-1">
+                                                                                        <div className="w-1 h-1 rounded-full bg-green-500" />
+                                                                                    </div>
+                                                                                    <div className="space-y-1.5 min-w-0">
+                                                                                        <p className="text-xs font-medium">{finding.insight}</p>
+                                                                                        {finding.evidence.length > 0 && (
+                                                                                            <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                                {finding.evidence.map((evidence, k) => (
+                                                                                                    <p key={k} className="text-[11px] text-neutral-500">
+                                                                                                        {evidence}
+                                                                                                    </p>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Remaining Uncertainties */}
+                                                            {sourceGroups.analysis.find(a => a.type === 'synthesis')?.uncertainties && (
+                                                                <div className="space-y-2">
+                                                                    <h4 className="text-xs font-medium text-neutral-600">Remaining Uncertainties</h4>
+                                                                    <div className="grid gap-2">
+                                                                        {sourceGroups.analysis
+                                                                            .find(a => a.type === 'synthesis')
+                                                                            ?.uncertainties?.map((uncertainty, j) => (
+                                                                                <div
+                                                                                    key={j}
+                                                                                    className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                >
+                                                                                    <p className="text-xs text-neutral-600">{uncertainty}</p>
+                                                                                </div>
+                                                                            ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        )}
                                     </div>
                                 ) : (
                                     <EmptyState type="analysis" />

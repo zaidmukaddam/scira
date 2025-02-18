@@ -19,6 +19,7 @@ import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { TextMorph } from '@/components/core/text-morph';
 import { Upload } from 'lucide-react';
 import { Mountain } from "lucide-react"
+import { UIMessage } from '@ai-sdk/ui-utils';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -427,9 +428,6 @@ interface FormComponentProps {
     setInput: (input: string) => void;
     attachments: Array<Attachment>;
     setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
-    hasSubmitted: boolean;
-    setHasSubmitted: (value: boolean) => void;
-    isLoading: boolean;
     handleSubmit: (
         event?: {
             preventDefault?: () => void;
@@ -439,7 +437,7 @@ interface FormComponentProps {
     fileInputRef: React.RefObject<HTMLInputElement>;
     inputRef: React.RefObject<HTMLTextAreaElement>;
     stop: () => void;
-    messages: Array<Message>;
+    messages: Array<UIMessage>;
     append: (
         message: Message | CreateMessage,
         chatRequestOptions?: ChatRequestOptions,
@@ -451,6 +449,8 @@ interface FormComponentProps {
     selectedGroup: SearchGroupId;
     setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
     showExperimentalModels: boolean;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
+    setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface GroupSelectorProps {
@@ -617,9 +617,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     setInput,
     attachments,
     setAttachments,
-    hasSubmitted,
-    setHasSubmitted,
-    isLoading,
     handleSubmit,
     fileInputRef,
     inputRef,
@@ -632,6 +629,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     setSelectedGroup,
     showExperimentalModels,
     messages,
+    status,
+    setHasSubmitted,
 }) => {
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
     const isMounted = useRef(true);
@@ -839,7 +838,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
 
     useEffect(() => {
-        if (!isLoading && hasSubmitted && inputRef.current) {
+        if (status !== 'ready' && inputRef.current) {
             const focusTimeout = setTimeout(() => {
                 if (isMounted.current && inputRef.current) {
                     inputRef.current.focus({
@@ -851,11 +850,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return () => clearTimeout(focusTimeout);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoading, hasSubmitted]);
+    }, [status]);
 
     const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         event.stopPropagation();
+
+        if (status !== 'ready') {
+            toast.error("Please wait for the current response to complete!");
+            return;
+        }
 
         if (input.trim() || attachments.length > 0) {
             setHasSubmitted(true);
@@ -872,7 +876,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
             toast.error("Please enter a search query or attach an image.");
         }
-    }, [input, attachments, setHasSubmitted, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef]);
+    }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status]);
 
     const submitForm = useCallback(() => {
         onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
@@ -889,17 +893,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
-        if (hasSubmitted) {
+        if (status === 'ready') {
             postSubmitFileInputRef.current?.click();
         } else {
             fileInputRef.current?.click();
         }
-    }, [attachments.length, hasSubmitted, fileInputRef]);
+    }, [attachments.length, status, fileInputRef]);
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
-            if (isLoading) {
+            if (status === 'submitted' || status === 'streaming') {
                 toast.error("Please wait for the response to complete!");
             } else {
                 submitForm();
@@ -912,11 +916,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
     };
 
+    const isProcessing = status === 'submitted' || status === 'streaming';
+    const hasInteracted = messages.length > 0;
+
     return (
         <div 
             className={cn(
                 "relative w-full flex flex-col gap-2 rounded-lg transition-all duration-300 !font-sans",
-                hasSubmitted ?? "z-[51]",
+                hasInteracted ? "z-[51]" : "",
                 isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
                 attachments.length > 0 || uploadQueue.length > 0
                     ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
@@ -956,7 +963,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             {(attachments.length > 0 || uploadQueue.length > 0) && (
                 <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10 px-1">
-                    {/* Existing attachment previews */}
                     {attachments.map((attachment, index) => (
                         <AttachmentPreview
                             key={attachment.url}
@@ -984,10 +990,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
                 <Textarea
                     ref={inputRef}
-                    placeholder={hasSubmitted ? "Ask a new question..." : "Ask a question..."}
+                    placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
                     value={input}
                     onChange={handleInput}
-                    disabled={isLoading}
+                    disabled={isProcessing}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     className={cn(
@@ -1019,15 +1025,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     "bg-neutral-100 dark:bg-neutral-900",
                     "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
                     isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
-                    isLoading ? "!opacity-20 !cursor-not-allowed" : ""
+                    isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
                 )}>
                     <div className="flex items-center gap-2">
-                        {!hasSubmitted && selectedModel !== "scira-o3-mini" && selectedGroup !== 'extreme' ? (
+                        <div className={cn(
+                            "transition-all duration-100",
+                            (!hasInteracted && selectedModel !== "scira-o3-mini" && selectedGroup !== 'extreme')
+                                ? "opacity-100 visible w-auto"
+                                : "opacity-0 invisible w-0"
+                        )}>
                             <GroupSelector
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
                             />
-                        ) : null}
+                        </div>
+                        
                         <ModelSwitcher
                             selectedModel={selectedModel}
                             setSelectedModel={setSelectedModel}
@@ -1035,16 +1047,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             attachments={attachments}
                             messages={messages}
                         />
-                        {/* Only show extreme button if not submitted, or if it was initially selected */}
-                        {(!hasSubmitted || initialGroupRef.current === 'extreme') && (
+                        
+                        <div className={cn(
+                            "transition-all duration-300",
+                            (!hasInteracted || initialGroupRef.current === 'extreme')
+                                ? "opacity-100 visible w-auto"
+                                : "opacity-0 invisible w-0"
+                        )}>
                             <button
                                 onClick={() => {
-                                    if (!hasSubmitted || selectedGroup !== 'extreme') {
+                                    if (!hasInteracted || selectedGroup !== 'extreme') {
                                         setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
                                         resetSuggestedQuestions();
                                     }
                                 }}
-                                disabled={hasSubmitted && selectedGroup === 'extreme'}
+                                disabled={hasInteracted && selectedGroup === 'extreme'}
                                 className={cn(
                                     "flex items-center gap-2 p-2 sm:px-3 h-8",
                                     "rounded-full transition-all duration-300",
@@ -1053,13 +1070,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     selectedGroup === 'extreme' 
                                         ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" 
                                         : "bg-white dark:bg-neutral-900 text-neutral-500",
-                                    (hasSubmitted && selectedGroup === 'extreme') && "opacity-50 cursor-not-allowed hover:shadow-none"
+                                    (hasInteracted && selectedGroup === 'extreme') && "opacity-50 cursor-not-allowed hover:shadow-none"
                                 )}
                             >
                                 <Mountain className="h-3.5 w-3.5" />
                                 <span className="text-xs font-medium">Extreme</span>
                             </button>
-                        )}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1071,13 +1088,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     triggerFileInput();
                                 }}
                                 variant="outline"
-                                disabled={isLoading}
+                                disabled={isProcessing}
                             >
                                 <PaperclipIcon size={14} />
                             </Button>
                         )}
 
-                        {isLoading ? (
+                        {isProcessing ? (
                             <Button
                                 className="rounded-full p-1.5 h-8 w-8"
                                 onClick={(event) => {
@@ -1085,7 +1102,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     stop();
                                 }}
                                 variant="destructive"
-                                disabled={!isLoading}
                             >
                                 <StopIcon size={14} />
                             </Button>
@@ -1096,7 +1112,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     event.preventDefault();
                                     submitForm();
                                 }}
-                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0}
+                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
                             >
                                 <ArrowUpIcon size={14} />
                             </Button>

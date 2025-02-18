@@ -39,7 +39,7 @@ import { Wave } from "@foobar404/wave";
 import { CheckCircle, CurrencyDollar, Flag, GithubLogo, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
-import { useChat, UseChatOptions } from 'ai/react';
+import { useChat, UseChatOptions } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GeistMono } from 'geist/font/mono';
 import {
@@ -82,7 +82,9 @@ import {
     Users,
     X,
     YoutubeIcon,
-    Zap
+    Zap,
+    RotateCw,
+    RefreshCw
 } from 'lucide-react';
 import Marked, { ReactRenderer } from 'marked-react';
 import { useTheme } from 'next-themes';
@@ -113,7 +115,7 @@ import {
 import { TrendingQuery } from './api/trending/route';
 import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
-import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart } from '@ai-sdk/ui-utils';
+import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart, SourceUIPart } from '@ai-sdk/ui-utils';
 import {
     Dialog,
     DialogContent,
@@ -690,7 +692,6 @@ const HomeContent = () => {
     }), []);
 
     const lastSubmittedQueryRef = useRef(initialState.query);
-    const [hasSubmitted, setHasSubmitted] = useState(() => !!initialState.query);
     const [selectedModel, setSelectedModel] = useState(initialState.model);
     const bottomRef = useRef<HTMLDivElement>(null);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
@@ -702,6 +703,7 @@ const HomeContent = () => {
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
     const [researchUpdates, setResearchUpdates] = useState<StreamUpdate[]>([]);
+    const [hasSubmitted, setHasSubmitted] = React.useState(false);
 
     const CACHE_KEY = 'trendingQueriesCache';
     const CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
@@ -760,12 +762,23 @@ const HomeContent = () => {
         },
     }), [selectedModel, selectedGroup]);
 
-    const { isLoading, input, messages, setInput, append, handleSubmit, setMessages, reload, stop, data, setData } = useChat(chatOptions);
+    const {
+        input,
+        messages,
+        setInput,
+        append,
+        handleSubmit,
+        setMessages,
+        reload,
+        stop,
+        data,
+        setData,
+        status
+    } = useChat(chatOptions);
 
     useEffect(() => {
         if (!initializedRef.current && initialState.query && !messages.length) {
             initializedRef.current = true;
-            setHasSubmitted(true);
             console.log("[initial query]:", initialState.query);
             append({
                 content: initialState.query,
@@ -1148,7 +1161,6 @@ const HomeContent = () => {
     const handleExampleClick = async (card: TrendingQuery) => {
         const exampleText = card.text;
         lastSubmittedQueryRef.current = exampleText;
-        setHasSubmitted(true);
         setSuggestedQuestions([]);
         await append({
             content: exampleText.trim(),
@@ -1157,7 +1169,6 @@ const HomeContent = () => {
     };
 
     const handleSuggestedQuestionClick = useCallback(async (question: string) => {
-        setHasSubmitted(true);
         setSuggestedQuestions([]);
 
         await append({
@@ -1218,7 +1229,7 @@ const HomeContent = () => {
             <div className={cn(
                 "fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4",
                 // Add opaque background only after submit
-                hasSubmitted ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" : "bg-background",
+                status === 'ready' ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" : "bg-background",
             )}>
                 <div className="flex items-center gap-4">
                     <Link href="/new">
@@ -1409,8 +1420,7 @@ const HomeContent = () => {
     const handleModelChange = useCallback((newModel: string) => {
         setSelectedModel(newModel);
         setSuggestedQuestions([]);
-        reload({ body: { model: newModel } });
-    }, [reload]);
+    }, []);
 
     const resetSuggestedQuestions = useCallback(() => {
         setSuggestedQuestions([]);
@@ -1453,11 +1463,32 @@ const HomeContent = () => {
     // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
 
+    const handleRegenerate = useCallback(async () => {
+        if (status !== 'ready') {
+            toast.error("Please wait for the current response to complete!");
+            return;
+        }
+
+        const lastUserMessage = messages.findLast(m => m.role === 'user');
+        if (!lastUserMessage) return;
+
+        // Remove the last assistant message
+        const newMessages = messages.slice(0, -1);
+        setMessages(newMessages);
+
+        // Resubmit the last user message
+        await reload();
+    }, [messages, append, setMessages, status]);
+
+    // Add this type at the top with other interfaces
+    type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart;
+
+    // Update the renderPart function signature
     const renderPart = (
-        part: TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
+        part: MessagePart,
         messageIndex: number,
         partIndex: number,
-        parts: (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[],
+        parts: MessagePart[],
         message: any,
         data?: any[]
     ) => {
@@ -1477,9 +1508,19 @@ const HomeContent = () => {
                                     Answer
                                 </h2>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <CopyButton text={part.text} />
-                            </div>
+                            {status === 'ready' && messageIndex === messages.length - 1 && (
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleRegenerate()}
+                                        className="h-8 px-2 text-xs"
+                                    >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <CopyButton text={part.text} />
+                                </div>
+                            )}
                         </div>
                         <MarkdownRenderer content={part.text} />
                     </div>
@@ -1487,7 +1528,7 @@ const HomeContent = () => {
             case "reasoning": {
                 const sectionKey = `${messageIndex}-${partIndex}`;
                 const isComplete = parts[partIndex + 1]?.type === "text";
-                
+
                 // Auto-expand completed reasoning sections if not manually toggled
                 if (isComplete && reasoningVisibilityMap[sectionKey] === undefined) {
                     setReasoningVisibilityMap(prev => ({
@@ -1519,7 +1560,7 @@ const HomeContent = () => {
                                 </div>
                                 <span className="text-sm text-neutral-600 dark:text-neutral-400">
                                     {isComplete
-                                        ? "Reasoned" 
+                                        ? "Reasoned"
                                         : "Reasoning"}
                                 </span>
                             </div>
@@ -1558,7 +1599,6 @@ const HomeContent = () => {
                         key={`${messageIndex}-${partIndex}-tool`}
                         toolInvocations={[part.toolInvocation]}
                         message={message}
-                        data={data}
                     />
                 );
             default:
@@ -1570,12 +1610,12 @@ const HomeContent = () => {
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
 
-            <div className={`w-full p-2 sm:p-4 ${hasSubmitted
-                ? 'mt-20 sm:mt-16'
-                : 'flex-1 flex items-center justify-center'
+            <div className={`w-full p-2 sm:p-4 ${status === 'ready' && messages.length === 0
+                    ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
+                    : 'mt-20 sm:mt-16' // Add top margin when showing messages
                 }`}>
                 <div className={`w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
-                    {!hasSubmitted && (
+                    {status === 'ready' && messages.length === 0 && (
                         <div className="text-center !font-sans">
                             <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
                                 What do you want to explore?
@@ -1583,7 +1623,7 @@ const HomeContent = () => {
                         </div>
                     )}
                     <AnimatePresence>
-                        {!hasSubmitted && (
+                        {messages.length === 0 && (
                             <motion.div
                                 initial={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 20 }}
@@ -1595,9 +1635,6 @@ const HomeContent = () => {
                                     setInput={setInput}
                                     attachments={attachments}
                                     setAttachments={setAttachments}
-                                    hasSubmitted={hasSubmitted}
-                                    setHasSubmitted={setHasSubmitted}
-                                    isLoading={isLoading}
                                     handleSubmit={handleSubmit}
                                     fileInputRef={fileInputRef}
                                     inputRef={inputRef}
@@ -1611,6 +1648,8 @@ const HomeContent = () => {
                                     selectedGroup={selectedGroup}
                                     setSelectedGroup={setSelectedGroup}
                                     showExperimentalModels={true}
+                                    status={status}
+                                    setHasSubmitted={setHasSubmitted}
                                 />
                                 {memoizedSuggestionCards}
                             </motion.div>
@@ -1649,7 +1688,7 @@ const HomeContent = () => {
                                                                     setInput('');
                                                                 }}
                                                                 className="h-6 w-6"
-                                                                disabled={isLoading}
+                                                                disabled={status === 'ready'}
                                                             >
                                                                 <X className="h-3.5 w-3.5" />
                                                             </Button>
@@ -1658,7 +1697,7 @@ const HomeContent = () => {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="h-6 w-6 text-primary hover:text-primary/80"
-                                                                disabled={isLoading}
+                                                                disabled={status === 'ready'}
                                                             >
                                                                 <ArrowRight className="h-3.5 w-3.5" />
                                                             </Button>
@@ -1691,7 +1730,7 @@ const HomeContent = () => {
                                                             size="icon"
                                                             onClick={() => handleMessageEdit(index)}
                                                             className="h-6 w-6 text-neutral-500 dark:text-neutral-400 hover:text-primary flex-shrink-0"
-                                                            disabled={isLoading}
+                                                            disabled={status === 'ready'}
                                                         >
                                                             <Edit2 className="size-4 sm:size-5" />
                                                         </Button>
@@ -1704,10 +1743,10 @@ const HomeContent = () => {
 
                                 {message.role === 'assistant' && message.parts?.map((part, partIndex) =>
                                     renderPart(
-                                        part as TextUIPart | ReasoningUIPart | ToolInvocationUIPart,
+                                        part as MessagePart,
                                         index,
                                         partIndex,
-                                        message.parts as (TextUIPart | ReasoningUIPart | ToolInvocationUIPart)[],
+                                        message.parts as MessagePart[],
                                         message,
                                         data
                                     )
@@ -1745,7 +1784,7 @@ const HomeContent = () => {
                 </div>
 
                 <AnimatePresence>
-                    {hasSubmitted && (
+                    {messages.length > 0 || hasSubmitted ? (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -1758,9 +1797,6 @@ const HomeContent = () => {
                                 setInput={setInput}
                                 attachments={attachments}
                                 setAttachments={setAttachments}
-                                hasSubmitted={hasSubmitted}
-                                setHasSubmitted={setHasSubmitted}
-                                isLoading={isLoading}
                                 handleSubmit={handleSubmit}
                                 fileInputRef={fileInputRef}
                                 inputRef={inputRef}
@@ -1774,35 +1810,12 @@ const HomeContent = () => {
                                 selectedGroup={selectedGroup}
                                 setSelectedGroup={setSelectedGroup}
                                 showExperimentalModels={false}
+                                status={status}
+                                setHasSubmitted={setHasSubmitted}
                             />
                         </motion.div>
-                    )}
+                    ) : null}
                 </AnimatePresence>
-                {!hasSubmitted && (
-                    <footer
-                        className="flex flex-row justify-between items-center bottom-3 w-full fixed p-4 sm:p-auto"
-                    >
-                        <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                            © {new Date().getFullYear()} All rights reserved.
-                        </div>
-                        <TooltipProvider>
-                            <div className="flex items-center gap-4">
-                                <TooltipButton
-                                    href="https://peerlist.io/zaidmukaddam"
-                                    tooltip="Follow on Peerlist"
-                                >
-                                    <PeerlistLogo />
-                                </TooltipButton>
-                                <TooltipButton
-                                    href="https://x.com/zaidmukaddam"
-                                    tooltip="Follow on X"
-                                >
-                                    <XLogo className='size-5' />
-                                </TooltipButton>
-                            </div>
-                        </TooltipProvider>
-                    </footer>
-                )}
             </div>
         </div>
     );
@@ -1824,10 +1837,9 @@ const LoadingFallback = () => (
 );
 
 const ToolInvocationListView = memo(
-    ({ toolInvocations, message, data }: { 
-        toolInvocations: ToolInvocation[], 
+    ({ toolInvocations, message }: {
+        toolInvocations: ToolInvocation[],
         message: any,
-        data?: any[]
     }) => {
 
         const renderToolInvocation = useCallback(
@@ -2442,7 +2454,7 @@ const ToolInvocationListView = memo(
                 }
 
                 if (toolInvocation.toolName === 'reason_search') {
-                    const updates = message?.annotations?.filter((a: any) => 
+                    const updates = message?.annotations?.filter((a: any) =>
                         a.type === 'research_update'
                     ).map((a: any) => a.data);
                     return <ReasonSearch updates={updates || []} />;
@@ -2451,9 +2463,9 @@ const ToolInvocationListView = memo(
                 if (toolInvocation.toolName === 'web_search') {
                     return (
                         <div className="mt-4">
-                            <MultiSearch 
-                                result={result} 
-                                args={args} 
+                            <MultiSearch
+                                result={result}
+                                args={args}
                                 annotations={message?.annotations?.filter(
                                     (a: any) => a.type === 'query_completion'
                                 ) || []}
@@ -2721,7 +2733,7 @@ const ToolInvocationListView = memo(
     },
     (prevProps, nextProps) => {
         return prevProps.toolInvocations === nextProps.toolInvocations &&
-               prevProps.message === nextProps.message;
+            prevProps.message === nextProps.message;
     }
 );
 

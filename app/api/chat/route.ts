@@ -4,6 +4,7 @@ import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { cerebras } from '@ai-sdk/cerebras';
 import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google';
 import { groq } from '@ai-sdk/groq'
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
@@ -33,6 +34,7 @@ const scira = customProvider({
             middleware: extractReasoningMiddleware({ tagName: 'think' })
         }),
         'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
+        'scira-gemini-2': google('gemini-2.0-flash-001'),
     }
 })
 
@@ -1339,7 +1341,7 @@ export async function POST(req: Request) {
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: scira.languageModel("scira-default"),
+                                model: xai("grok-beta"),
                                 temperature: 0.5,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
@@ -1517,7 +1519,7 @@ export async function POST(req: Request) {
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: scira.languageModel("scira-default"),
+                                    model: scira.languageModel("scira-gemini-2"),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
@@ -1551,19 +1553,296 @@ export async function POST(req: Request) {
                                 analysisIndex++;  // Increment index
                             }
 
-                            // Before returning, ensure we mark as complete if response is done
-                            completedSteps = searchResults.reduce((acc, search) => {
-                                // Count each search result as a step
-                                return acc + (search.type === 'both' ? 2 : 1);
-                            }, 0) + researchPlan.required_analyses.length;
+                            // After all analyses are complete, send running state for gap analysis
+                            dataStream.writeMessageAnnotation({
+                                type: 'research_update',
+                                data: {
+                                    id: 'gap-analysis',
+                                    type: 'analysis',
+                                    status: 'running',
+                                    title: 'Research Gaps and Limitations',
+                                    analysisType: 'gaps',
+                                    message: 'Analyzing research gaps and limitations...',
+                                    timestamp: Date.now()
+                                }
+                            });
 
+                            // After all analyses are complete, analyze limitations and gaps
+                            const { object: gapAnalysis } = await generateObject({
+                                model: xai("grok-beta"),
+                                temperature: 0,
+                                schema: z.object({
+                                    limitations: z.array(z.object({
+                                        type: z.string(),
+                                        description: z.string(),
+                                        severity: z.number().min(2).max(10),
+                                        potential_solutions: z.array(z.string())
+                                    })),
+                                    knowledge_gaps: z.array(z.object({
+                                        topic: z.string(),
+                                        reason: z.string(),
+                                        additional_queries: z.array(z.string())
+                                    })),
+                                    recommended_followup: z.array(z.object({
+                                        action: z.string(),
+                                        rationale: z.string(),
+                                        priority: z.number().min(2).max(10)
+                                    }))
+                                }),
+                                prompt: `Analyze the research results and identify limitations, knowledge gaps, and recommended follow-up actions.
+                                        Consider:
+                                        - Quality and reliability of sources
+                                        - Missing perspectives or data
+                                        - Areas needing deeper investigation
+                                        - Potential biases or conflicts
+                                        - Severity should be between 2 and 10
+                                        - Knowledge gaps should be between 2 and 10
+                                        
+                                        Research results: ${JSON.stringify(searchResults)}
+                                        Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
+                                            type: step.analysis.type,
+                                            description: step.analysis.description,
+                                            importance: step.analysis.importance
+                                        })))}`
+                            });
+
+                            // Send gap analysis update
+                            dataStream.writeMessageAnnotation({
+                                type: 'research_update',
+                                data: {
+                                    id: 'gap-analysis',
+                                    type: 'analysis',
+                                    status: 'completed',
+                                    title: 'Research Gaps and Limitations',
+                                    analysisType: 'gaps',
+                                    findings: gapAnalysis.limitations.map(l => ({
+                                        insight: l.description,
+                                        evidence: l.potential_solutions,
+                                        confidence: (6 - l.severity) / 5
+                                    })),
+                                    gaps: gapAnalysis.knowledge_gaps,
+                                    recommendations: gapAnalysis.recommended_followup,
+                                    message: `Identified ${gapAnalysis.limitations.length} limitations and ${gapAnalysis.knowledge_gaps.length} knowledge gaps`,
+                                    timestamp: Date.now(),
+                                    overwrite: true,
+                                    completedSteps: completedSteps + 1,
+                                    totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1)
+                                }
+                            });
+
+                            let synthesis;
+
+                            // If there are significant gaps and depth is 'advanced', perform additional research
+                            if (depth === 'advanced' && gapAnalysis.knowledge_gaps.length > 0) {
+                                const additionalQueries = gapAnalysis.knowledge_gaps.flatMap(gap => 
+                                    gap.additional_queries.map(query => ({
+                                        query,
+                                        rationale: gap.reason,
+                                        source: 'both' as const,
+                                        priority: 3
+                                    }))
+                                );
+
+                                // Execute additional searches for gaps
+                                for (const query of additionalQueries) {
+                                    // Generate a unique ID for this gap search
+                                    const gapSearchId = `gap-search-${searchIndex++}`;
+                                    
+                                    // Send running annotation for this gap search
+                                    dataStream.writeMessageAnnotation({
+                                        type: 'research_update',
+                                        data: {
+                                            id: gapSearchId,
+                                            type: 'web',
+                                            status: 'running',
+                                            title: `Additional search for "${query.query}"`,
+                                            query: query.query,
+                                            message: `Searching to fill knowledge gap: ${query.rationale}`,
+                                            timestamp: Date.now()
+                                        }
+                                    });
+
+                                    // Execute web search
+                                    const webResults = await tvly.search(query.query, {
+                                        searchDepth: depth,
+                                        includeAnswer: true,
+                                        maxResults: 5
+                                    });
+
+                                    // Add to search results
+                                    searchResults.push({
+                                        type: 'web',
+                                        query: {
+                                            query: query.query,
+                                            rationale: query.rationale,
+                                            source: 'web',
+                                            priority: query.priority
+                                        },
+                                        results: webResults.results.map(r => ({
+                                            source: 'web',
+                                            title: r.title,
+                                            url: r.url,
+                                            content: r.content
+                                        }))
+                                    });
+
+                                    // Send completed annotation for web search
+                                    dataStream.writeMessageAnnotation({
+                                        type: 'research_update',
+                                        data: {
+                                            id: gapSearchId,
+                                            type: 'web',
+                                            status: 'completed',
+                                            title: `Additional web search for "${query.query}"`,
+                                            query: query.query,
+                                            results: webResults.results.map(r => ({
+                                                source: 'web',
+                                                title: r.title,
+                                                url: r.url,
+                                                content: r.content
+                                            })),
+                                            message: `Found ${webResults.results.length} results`,
+                                            timestamp: Date.now(),
+                                            overwrite: true
+                                        }
+                                    });
+
+                                    // For 'both' source type, also do academic search
+                                    if (query.source === 'both') {
+                                        const academicSearchId = `gap-search-academic-${searchIndex++}`;
+                                        
+                                        // Send running annotation for academic search
+                                        dataStream.writeMessageAnnotation({
+                                            type: 'research_update',
+                                            data: {
+                                                id: academicSearchId,
+                                                type: 'academic',
+                                                status: 'running',
+                                                title: `Additional academic search for "${query.query}"`,
+                                                query: query.query,
+                                                message: `Searching academic sources to fill knowledge gap: ${query.rationale}`,
+                                                timestamp: Date.now()
+                                            }
+                                        });
+
+                                        // Execute academic search
+                                        const academicResults = await exa.searchAndContents(query.query, {
+                                            type: 'auto',
+                                            numResults: 3,
+                                            category: 'research paper',
+                                            summary: true
+                                        });
+
+                                        // Add to search results
+                                        searchResults.push({
+                                            type: 'academic',
+                                            query: {
+                                                query: query.query,
+                                                rationale: query.rationale,
+                                                source: 'academic',
+                                                priority: query.priority
+                                            },
+                                            results: academicResults.results.map(r => ({
+                                                source: 'academic',
+                                                title: r.title || '',
+                                                url: r.url || '',
+                                                content: r.summary || ''
+                                            }))
+                                        });
+
+                                        // Send completed annotation for academic search
+                                        dataStream.writeMessageAnnotation({
+                                            type: 'research_update',
+                                            data: {
+                                                id: academicSearchId,
+                                                type: 'academic',
+                                                status: 'completed',
+                                                title: `Additional academic search for "${query.query}"`,
+                                                query: query.query,
+                                                results: academicResults.results.map(r => ({
+                                                    source: 'academic',
+                                                    title: r.title || '',
+                                                    url: r.url || '',
+                                                    content: r.summary || ''
+                                                })),
+                                                message: `Found ${academicResults.results.length} academic sources`,
+                                                timestamp: Date.now(),
+                                                overwrite: true
+                                            }
+                                        });
+                                    }
+
+                                    completedSteps++; // Increment completed steps counter
+                                }
+
+                                // Send running state for final synthesis
+                                dataStream.writeMessageAnnotation({
+                                    type: 'research_update',
+                                    data: {
+                                        id: 'final-synthesis',
+                                        type: 'analysis',
+                                        status: 'running',
+                                        title: 'Final Research Synthesis',
+                                        analysisType: 'synthesis',
+                                        message: 'Synthesizing all research findings...',
+                                        timestamp: Date.now()
+                                    }
+                                });
+
+                                // Perform final synthesis of all findings
+                                const { object: finalSynthesis } = await generateObject({
+                                    model: scira.languageModel("scira-gemini-2"),
+                                    temperature: 0,
+                                    schema: z.object({
+                                        key_findings: z.array(z.object({
+                                            finding: z.string(),
+                                            confidence: z.number().min(0).max(1),
+                                            supporting_evidence: z.array(z.string())
+                                        })),
+                                        remaining_uncertainties: z.array(z.string())
+                                    }),
+                                    prompt: `Synthesize all research findings, including gap analysis and follow-up research.
+                                            Highlight key conclusions and remaining uncertainties.
+                                            
+                                            Original results: ${JSON.stringify(searchResults)}
+                                            Gap analysis: ${JSON.stringify(gapAnalysis)}
+                                            Additional findings: ${JSON.stringify(additionalQueries)}`
+                                });
+
+                                synthesis = finalSynthesis;
+
+                                // Send final synthesis update
+                                dataStream.writeMessageAnnotation({
+                                    type: 'research_update',
+                                    data: {
+                                        id: 'final-synthesis',
+                                        type: 'analysis',
+                                        status: 'completed',
+                                        title: 'Final Research Synthesis',
+                                        analysisType: 'synthesis',
+                                        findings: finalSynthesis.key_findings.map(f => ({
+                                            insight: f.finding,
+                                            evidence: f.supporting_evidence,
+                                            confidence: f.confidence
+                                        })),
+                                        uncertainties: finalSynthesis.remaining_uncertainties,
+                                        message: `Synthesized ${finalSynthesis.key_findings.length} key findings`,
+                                        timestamp: Date.now(),
+                                        overwrite: true,
+                                        completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1) - 1,
+                                        totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1)
+                                    }
+                                });
+                            }
+
+                            // Final progress update
                             const finalProgress = {
                                 id: 'research-progress',
                                 type: 'progress' as const,
                                 status: 'completed' as const,
-                                message: `Research complete: ${completedSteps}/${totalSteps} steps finished`,
-                                completedSteps,
-                                totalSteps,
+                                message: `Research complete`,
+                                completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
+                                totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
                                 isComplete: true,
                                 timestamp: Date.now()
                             };
@@ -1578,7 +1857,8 @@ export async function POST(req: Request) {
 
                             return {
                                 plan: researchPlan,
-                                results: searchResults
+                                results: searchResults,
+                                synthesis: synthesis
                             };
                         },
                     }),
