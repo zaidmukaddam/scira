@@ -21,6 +21,7 @@ import {
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 
 const scira = customProvider({
     languageModels: {
@@ -164,6 +165,9 @@ export async function POST(req: Request) {
     const { messages, model, group } = await req.json();
     const { tools: activeTools, systemPrompt } = await getGroupConfig(group);
 
+    // Generate a session ID for tracking related requests
+    const sessionId = nanoid();
+
     console.log("Running with model: ", model.trim());
 
     return createDataStreamResponse({
@@ -184,6 +188,15 @@ export async function POST(req: Request) {
                 temperature: 0,
                 experimental_activeTools: [...activeTools],
                 system: systemPrompt,
+                // Enable telemetry with session tracking
+                experimental_telemetry: {
+                    isEnabled: true,
+                    metadata: {
+                        sessionId,
+                        modelType: model,
+                        group,
+                    }
+                },
                 tools: {
                     stock_chart: tool({
                         description: 'Write and execute Python code to find stock data and generate a stock chart.',

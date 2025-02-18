@@ -8,6 +8,11 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from './providers';
+import { startTracing } from '@/lib/telemetry';
+
+if (process.env.NODE_ENV === 'production') {
+  startTracing();
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://scira.app"),

@@ -6,11 +6,12 @@ import { SearchGroupId } from '@/lib/utils';
 import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
-
-  console.log(history);
+  
+  const sessionId = nanoid();
 
   const { object } = await generateObject({
     model: xai("grok-beta"),
@@ -31,6 +32,13 @@ Do not use pronouns like he, she, him, his, her, etc. in the questions as they b
     schema: z.object({
       questions: z.array(z.string()).describe('The generated questions based on the message history.')
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+      metadata: {
+        sessionId,
+        action: 'suggestQuestions',
+      }
+    },
   });
 
   return {
