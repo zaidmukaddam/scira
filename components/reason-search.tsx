@@ -639,13 +639,13 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             <Card className="w-full shadow-none hover:shadow-none">
                 <div
                     className={cn(
-                        "flex items-center justify-between px-6 py-4 rounded-xl",
+                        "flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-xl",
                         isComplete && "cursor-pointer",
                         isComplete && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                     )}
                     onClick={() => isComplete && setIsCollapsed(!isCollapsed)}
                 >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-medium">
                                 {isComplete 
@@ -666,14 +666,14 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                         <Progress
                             value={progress}
                             className={cn(
-                                "h-1 w-24",
+                                "h-1 w-24 sm:w-32",
                                 showRunningIndicators && "animate-pulse"
                             )}
                         />
                     </div>
                     {isComplete && (
                         <ChevronDown className={cn(
-                            "h-4 w-4 text-neutral-500 transition-transform",
+                            "h-4 w-4 text-neutral-500 transition-transform flex-shrink-0",
                             isCollapsed ? "rotate-180" : ""
                         )} />
                     )}
@@ -688,7 +688,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                 >
-                    <CardContent className="pt-4">
+                    <CardContent className="px-2 sm:px-4 pt-2 sm:pt-4">
                         <StepCarousel updates={sortedUpdates} />
                     </CardContent>
                 </motion.div>
@@ -696,47 +696,58 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
 
             {/* Sources Section - Only show when complete */}
             {finalSynthesisDone && (sourceGroups.web.length > 0 || sourceGroups.academic.length > 0 || sourceGroups.analysis.length > 0) && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5" />
                         <h3 className="text-sm font-medium">Sources</h3>
                     </div>
                     <Tabs defaultValue="web" className="w-full" onValueChange={setSelectedTab} value={selectedTab}>
-                        <TabsList className="h-8 relative mb-3">
-                            <motion.div 
-                                className="absolute h-full bg-neutral-100 dark:bg-neutral-800 rounded-md"
-                                layoutId="activeTab"
-                                transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
-                            />
-                            <TabsTrigger value="web" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
-                                <FileText className="h-3 w-3" />
-                                <span>Web Sources</span>
-                                {sourceGroups.web.length > 0 && (
-                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
-                                        {sourceGroups.web.length}
-                                    </Badge>
-                                )}
+                        <TabsList className="w-full h-10 grid grid-cols-3 bg-neutral-100/50 dark:bg-neutral-800/50 p-1 rounded-lg">
+                            <TabsTrigger 
+                                value="web" 
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <FileText className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Web</span>
+                                    {sourceGroups.web.length > 0 && (
+                                        <Badge variant="secondary" className="h-4 px-1">
+                                            {sourceGroups.web.length}
+                                        </Badge>
+                                    )}
+                                </div>
                             </TabsTrigger>
-                            <TabsTrigger value="academic" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
-                                <BookA className="h-3 w-3" />
-                                <span>Academic Sources</span>
-                                {sourceGroups.academic.length > 0 && (
-                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
-                                        {sourceGroups.academic.length}
-                                    </Badge>
-                                )}
+                            <TabsTrigger 
+                                value="academic" 
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <BookA className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Academic</span>
+                                    {sourceGroups.academic.length > 0 && (
+                                        <Badge variant="secondary" className="h-4 px-1">
+                                            {sourceGroups.academic.length}
+                                        </Badge>
+                                    )}
+                                </div>
                             </TabsTrigger>
-                            <TabsTrigger value="analysis" className="h-7 px-2.5 text-xs flex items-center gap-1.5 relative">
-                                <Sparkles className="h-3 w-3" />
-                                <span>Analysis</span>
-                                {sourceGroups.analysis.length > 0 && (
-                                    <Badge variant="secondary" className="ml-1 h-4 px-1">
-                                        {sourceGroups.analysis.length}
-                                    </Badge>
-                                )}
+                            <TabsTrigger 
+                                value="analysis" 
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <Sparkles className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Analysis</span>
+                                    {sourceGroups.analysis.length > 0 && (
+                                        <Badge variant="secondary" className="h-4 px-1">
+                                            {sourceGroups.analysis.length}
+                                        </Badge>
+                                    )}
+                                </div>
                             </TabsTrigger>
                         </TabsList>
-                        <div className="relative">
+
+                        <div className="relative mt-4">
                             <AnimatedTabContent value="web" selected={selectedTab}>
                                 {sourceGroups.web.length > 0 ? (
                                     <div className="space-y-3">
