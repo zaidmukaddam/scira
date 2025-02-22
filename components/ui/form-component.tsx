@@ -28,6 +28,7 @@ interface ModelSwitcherProps {
     showExperimentalModels: boolean;
     attachments: Array<Attachment>;
     messages: Array<Message>;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
 const XAIIcon = ({ className }: { className?: string }) => (
@@ -102,10 +103,10 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
     }
 }
 
-// Update the ModelSwitcher component's dropdown content
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages }) => {
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status }) => {
     const selectedModelData = models.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
+    const isProcessing = status === 'submitted' || status === 'streaming';
 
     // Check for attachments in current and previous messages
     const hasAttachments = attachments.length > 0 || messages.some(msg => 
@@ -133,7 +134,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
     };
 
     return (
-        <DropdownMenu onOpenChange={setIsOpen} modal={false}>
+        <DropdownMenu 
+            onOpenChange={setIsOpen} 
+            modal={false}
+            open={isOpen && !isProcessing}
+        >
             <DropdownMenuTrigger
                 className={cn(
                     "flex items-center gap-2 p-2 sm:px-3 h-8",
@@ -141,8 +146,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     "border border-neutral-200 dark:border-neutral-800",
                     "hover:shadow-md",
                     getColorClasses(selectedModelData?.color || "neutral", true),
+                    isProcessing && "opacity-50 pointer-events-none",
                     className
                 )}
+                disabled={isProcessing}
             >
                 {selectedModelData && (
                     typeof selectedModelData.icon === 'string' ? (
@@ -456,6 +463,7 @@ interface FormComponentProps {
 interface GroupSelectorProps {
     selectedGroup: SearchGroupId;
     onGroupSelect: (group: SearchGroup) => void;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
 interface ToolbarButtonProps {
@@ -542,40 +550,34 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
 
 const SelectionContent = ({ ...props }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const isProcessing = props.status === 'submitted' || props.status === 'streaming';
 
     return (
         <motion.div
             layout={false}
             initial={false}
             animate={{
-                width: isExpanded ? "auto" : "30px",
-                gap: isExpanded ? "0.5rem" : 0,
-                paddingRight: isExpanded ? "0.5rem" : 0,
+                width: isExpanded && !isProcessing ? "auto" : "30px",
+                gap: isExpanded && !isProcessing ? "0.5rem" : 0,
+                paddingRight: isExpanded && !isProcessing ? "0.5rem" : 0,
             }}
             transition={{
                 duration: 0.2,
                 ease: "easeInOut",
             }}
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start"
-            }}
             className={cn(
-                "inline-flex items-center",
-                "min-w-[38px]",
-                "p-0.5",
+                "inline-flex items-center min-w-[38px] p-0.5",
                 "rounded-full border border-neutral-200 dark:border-neutral-800",
-                "bg-white dark:bg-neutral-900",
-                "shadow-sm overflow-visible",
-                "relative z-10"
+                "bg-white dark:bg-neutral-900 shadow-sm overflow-visible",
+                "relative z-10",
+                isProcessing && "opacity-50 pointer-events-none"
             )}
-            onMouseEnter={() => setIsExpanded(true)}
-            onMouseLeave={() => setIsExpanded(false)}
+            onMouseEnter={() => !isProcessing && setIsExpanded(true)}
+            onMouseLeave={() => !isProcessing && setIsExpanded(false)}
         >
             <AnimatePresence initial={false}>
-                {searchGroups.map((group, index) => {
-                    const showItem = isExpanded || props.selectedGroup === group.id;
+                {searchGroups.filter(group => group.show).map((group) => {
+                    const showItem = (isExpanded && !isProcessing) || props.selectedGroup === group.id;
                     return (
                         <motion.div
                             key={group.id}
@@ -593,7 +595,7 @@ const SelectionContent = ({ ...props }) => {
                             <ToolbarButton
                                 group={group}
                                 isSelected={props.selectedGroup === group.id}
-                                onClick={() => props.onGroupSelect(group)}
+                                onClick={() => !isProcessing && props.onGroupSelect(group)}
                             />
                         </motion.div>
                     );
@@ -603,11 +605,12 @@ const SelectionContent = ({ ...props }) => {
     );
 };
 
-const GroupSelector = ({ selectedGroup, onGroupSelect }: GroupSelectorProps) => {
+const GroupSelector = ({ selectedGroup, onGroupSelect, status }: GroupSelectorProps) => {
     return (
         <SelectionContent
             selectedGroup={selectedGroup}
             onGroupSelect={onGroupSelect}
+            status={status}
         />
     );
 };
@@ -670,9 +673,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const handleGroupSelect = useCallback((group: SearchGroup) => {
         setSelectedGroup(group.id);
-        resetSuggestedQuestions();
         inputRef.current?.focus();
-    }, [setSelectedGroup, resetSuggestedQuestions, inputRef]);
+    }, [setSelectedGroup, inputRef]);
 
     const uploadFile = async (file: File): Promise<Attachment> => {
         const formData = new FormData();
@@ -1030,13 +1032,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             "transition-all duration-100",
-                            (!hasInteracted && selectedModel !== "scira-o3-mini" && selectedGroup !== 'extreme')
+                            (selectedGroup !== 'extreme')
                                 ? "opacity-100 visible w-auto"
                                 : "opacity-0 invisible w-0"
                         )}>
                             <GroupSelector
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
+                                status={status}
                             />
                         </div>
                         
@@ -1046,6 +1049,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             showExperimentalModels={showExperimentalModels}
                             attachments={attachments}
                             messages={messages}
+                            status={status}
                         />
                         
                         <div className={cn(
@@ -1074,7 +1078,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 )}
                             >
                                 <Mountain className="h-3.5 w-3.5" />
-                                <span className="text-xs font-medium">Extreme</span>
+                                <span className="hidden sm:block text-xs font-medium">Extreme</span>
                             </button>
                         </div>
                     </div>

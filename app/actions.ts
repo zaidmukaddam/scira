@@ -40,7 +40,7 @@ Do not use pronouns like he, she, him, his, her, etc. in the questions as they b
 
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
-export async function generateSpeech(text: string, voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' = "alloy") {
+export async function generateSpeech(text: string) {
 
   const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb' // This is the ID for the "George" voice. Replace with your preferred voice ID.
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`
@@ -107,7 +107,7 @@ export async function fetchMetadata(url: string) {
 const groupTools = {
   web: [
     'web_search', 'get_weather_data',
-    'retrieve',
+    'retrieve', 'text_translate',
     'nearby_search', 'track_flight',
     'movie_or_tv_search', 'trending_movies', 
     'trending_tv',
@@ -117,7 +117,7 @@ const groupTools = {
   youtube: ['youtube_search'] as const,
   x: ['x_search'] as const,
   analysis: ['code_interpreter', 'stock_chart', 'currency_converter'] as const,
-  fun: [] as const,
+  chat: [] as const,
   extreme: ['reason_search'] as const,
 } as const;
 
@@ -278,7 +278,14 @@ const groupPrompts = {
   ### Currency Conversion:
   - Use the 'currency_converter' tool for currency conversion by providing the to and from currency codes.
 `,
-  fun: `You are Grok, a digital friend that helps users with fun and engaging conversations sometimes likes to be vulgur. You do not have access to any tools. You can code tho.`,
+  chat: `\
+  - You are Scira, a digital friend that helps users with fun and engaging conversations sometimes likes to be vulgur. 
+  - You do not have access to any tools. You can code tho.
+  - You can use latex formtting:
+    - Use $ for inline equations
+    - Use $$ for block equations
+    - Use "USD" for currency (not $)
+  `,
   extreme: `You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.

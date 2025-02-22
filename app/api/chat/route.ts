@@ -195,12 +195,15 @@ export async function POST(req: Request) {
                             icon: z
                                 .enum(['stock', 'date', 'calculation', 'default'])
                                 .describe('The icon to display for the chart.'),
+                            stock_symbols: z.array(z.string()).describe('The stock symbols to display for the chart.'),
+                            interval: z.enum(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']).describe('The interval of the chart. default is 1y.'),
                         }),
-                        execute: async ({ code, title, icon }: { code: string; title: string; icon: string }) => {
+                        execute: async ({ code, title, icon, stock_symbols, interval }: { code: string; title: string; icon: string; stock_symbols: string[]; interval: string }) => {
                             console.log('Code:', code);
                             console.log('Title:', title);
                             console.log('Icon:', icon);
-
+                            console.log('Stock symbols:', stock_symbols);
+                            console.log('Interval:', interval);
                             const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
                             const execution = await sandbox.runCode(code);
                             let message = '';
@@ -221,6 +224,7 @@ export async function POST(req: Request) {
                                 }
                                 if (execution.logs.stderr.length > 0) {
                                     message += `${execution.logs.stderr.join('\n')}\n`;
+                                    console.log("Error: ", execution.logs.stderr);
                                 }
                             }
 
@@ -229,11 +233,15 @@ export async function POST(req: Request) {
                                 console.log('Error: ', execution.error);
                             }
 
-                            console.log(execution.results);
+                            console.log("Chart details: ", execution.results[0].chart)
                             if (execution.results[0].chart) {
                                 execution.results[0].chart.elements.map((element: any) => {
                                     console.log(element.points);
                                 });
+                            }
+
+                            if (execution.results[0].chart === null) {
+                                console.log("No chart found");
                             }
 
                             return {
@@ -290,6 +298,29 @@ export async function POST(req: Request) {
                             }
 
                             return { rate: message.trim() };
+                        },
+                    }),
+                    text_translate: tool({
+                        description: "Translate text from one language to another.",
+                        parameters: z.object({
+                            text: z.string().describe("The text to translate."),
+                            to: z.string().describe("The language to translate to (e.g., 'fr' for French)."),
+                        }),
+                        execute: async ({ text, to }: { text: string; to: string }) => {
+                            const { object: translation } = await generateObject({
+                                model: scira.languageModel(model),
+                                system: `You are a helpful assistant that translates text from one language to another.`,
+                                prompt: `Translate the following text to ${to} language: ${text}`,
+                                schema: z.object({
+                                    translatedText: z.string(),
+                                    detectedLanguage: z.string(),
+                                }),
+                            });
+                            console.log(translation);
+                            return {
+                                translatedText: translation.translatedText,
+                                detectedLanguage: translation.detectedLanguage,
+                            };
                         },
                     }),
                     web_search: tool({
@@ -1519,7 +1550,7 @@ export async function POST(req: Request) {
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: scira.languageModel("scira-gemini-2"),
+                                    model: xai("grok-beta"),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
@@ -1600,10 +1631,10 @@ export async function POST(req: Request) {
                                         
                                         Research results: ${JSON.stringify(searchResults)}
                                         Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
-                                            type: step.analysis.type,
-                                            description: step.analysis.description,
-                                            importance: step.analysis.importance
-                                        })))}`
+                                    type: step.analysis.type,
+                                    description: step.analysis.description,
+                                    importance: step.analysis.importance
+                                })))}`
                             });
 
                             // Send gap analysis update
@@ -1634,7 +1665,7 @@ export async function POST(req: Request) {
 
                             // If there are significant gaps and depth is 'advanced', perform additional research
                             if (depth === 'advanced' && gapAnalysis.knowledge_gaps.length > 0) {
-                                const additionalQueries = gapAnalysis.knowledge_gaps.flatMap(gap => 
+                                const additionalQueries = gapAnalysis.knowledge_gaps.flatMap(gap =>
                                     gap.additional_queries.map(query => ({
                                         query,
                                         rationale: gap.reason,
@@ -1647,7 +1678,7 @@ export async function POST(req: Request) {
                                 for (const query of additionalQueries) {
                                     // Generate a unique ID for this gap search
                                     const gapSearchId = `gap-search-${searchIndex++}`;
-                                    
+
                                     // Send running annotation for this gap search
                                     dataStream.writeMessageAnnotation({
                                         type: 'research_update',
@@ -1710,7 +1741,7 @@ export async function POST(req: Request) {
                                     // For 'both' source type, also do academic search
                                     if (query.source === 'both') {
                                         const academicSearchId = `gap-search-academic-${searchIndex++}`;
-                                        
+
                                         // Send running annotation for academic search
                                         dataStream.writeMessageAnnotation({
                                             type: 'research_update',
@@ -1791,7 +1822,7 @@ export async function POST(req: Request) {
 
                                 // Perform final synthesis of all findings
                                 const { object: finalSynthesis } = await generateObject({
-                                    model: scira.languageModel("scira-gemini-2"),
+                                    model: xai("grok-beta"),
                                     temperature: 0,
                                     schema: z.object({
                                         key_findings: z.array(z.object({

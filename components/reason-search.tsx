@@ -1011,28 +1011,28 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                         </div>
                                                     </AccordionTrigger>
                                                     <AccordionContent className="px-2 pb-2">
-                                                        <div className="grid gap-1.5">
+                                                        <div className="grid gap-2.5">
                                                             {/* Key Findings */}
                                                             <div className="space-y-2">
-                                                                <h4 className="text-xs font-medium text-neutral-600">Key Findings</h4>
-                                                                <div className="grid gap-2">
+                                                                <h4 className="text-[11px] font-medium text-neutral-600 px-1">Key Findings</h4>
+                                                                <div className="grid gap-1.5">
                                                                     {sourceGroups.analysis
                                                                         .find(a => a.type === 'synthesis')
                                                                         ?.findings.map((finding, j) => (
                                                                             <div
                                                                                 key={j}
-                                                                                className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
                                                                             >
-                                                                                <div className="flex items-start gap-2">
+                                                                                <div className="flex items-start gap-1.5 sm:gap-2">
                                                                                     <div className="flex-shrink-0 mt-1">
                                                                                         <div className="w-1 h-1 rounded-full bg-green-500" />
                                                                                     </div>
                                                                                     <div className="space-y-1.5 min-w-0">
-                                                                                        <p className="text-xs font-medium">{finding.insight}</p>
+                                                                                        <p className="text-[11px] sm:text-xs font-medium leading-normal">{finding.insight}</p>
                                                                                         {finding.evidence.length > 0 && (
-                                                                                            <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                            <div className="pl-2 sm:pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
                                                                                                 {finding.evidence.map((evidence, k) => (
-                                                                                                    <p key={k} className="text-[11px] text-neutral-500">
+                                                                                                    <p key={k} className="text-[10px] sm:text-[11px] text-neutral-500 leading-normal">
                                                                                                         {evidence}
                                                                                                     </p>
                                                                                                 ))}
@@ -1048,16 +1048,38 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                             {/* Remaining Uncertainties */}
                                                             {sourceGroups.analysis.find(a => a.type === 'synthesis')?.uncertainties && (
                                                                 <div className="space-y-2">
-                                                                    <h4 className="text-xs font-medium text-neutral-600">Remaining Uncertainties</h4>
-                                                                    <div className="grid gap-2">
+                                                                    <h4 className="text-[11px] font-medium text-neutral-600 px-1">Remaining Uncertainties</h4>
+                                                                    <div className="grid gap-1.5">
                                                                         {sourceGroups.analysis
                                                                             .find(a => a.type === 'synthesis')
                                                                             ?.uncertainties?.map((uncertainty, j) => (
                                                                                 <div
                                                                                     key={j}
-                                                                                    className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
                                                                                 >
-                                                                                    <p className="text-xs text-neutral-600">{uncertainty}</p>
+                                                                                    <p className="text-[11px] sm:text-xs text-neutral-600 leading-normal">{uncertainty}</p>
+                                                                                </div>
+                                                                            ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Recommendations - Add this new section */}
+                                                            {sourceGroups.analysis.find(a => a.type === 'synthesis')?.recommendations && (
+                                                                <div className="space-y-2">
+                                                                    <h4 className="text-[11px] font-medium text-neutral-600 px-1">Recommendations</h4>
+                                                                    <div className="grid gap-1.5">
+                                                                        {sourceGroups.analysis
+                                                                            .find(a => a.type === 'synthesis')
+                                                                            ?.recommendations?.map((rec, j) => (
+                                                                                <div
+                                                                                    key={j}
+                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                >
+                                                                                    <div className="space-y-1">
+                                                                                        <p className="text-[11px] sm:text-xs font-medium leading-normal">{rec.action}</p>
+                                                                                        <p className="text-[10px] sm:text-[11px] text-neutral-500 leading-normal">{rec.rationale}</p>
+                                                                                    </div>
                                                                                 </div>
                                                                             ))}
                                                                     </div>

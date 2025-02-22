@@ -51,7 +51,6 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Anthropic's Claude 3.5 Sonnet](https://www.anthropic.com/news/claude-3-5-sonnet)
 - [Meta's Llama 3.3 70B by Cerebras](https://inference-docs.cerebras.ai/introduction)
 - [Deepseek R1 Distill by Groq Inc](https://console.groq.com/docs/model/deepseek-r1-distill-llama-70b)
-- [OpenAI's o3-mini](https://openai.com/index/openai-o3-mini/)
 
 ## Built with
 - [Next.js](https://nextjs.org/)
