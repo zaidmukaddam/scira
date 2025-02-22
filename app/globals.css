@@ -69,6 +69,24 @@ h1 {
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
 }
 
+.no {
+    scrollbar-width: thin; 
+    scrollbar-color: transparent transparent;
+}
+
+.no::-webkit-scrollbar {
+    width: 6px;
+}
+
+.no::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+.no::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
