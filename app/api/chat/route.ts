@@ -180,7 +180,7 @@ export async function POST(req: Request) {
                     },
                     anthropic: {
                         thinking : {
-                            "type": "enabled",
+                            "type": group === "fun" ? "enabled" : "disabled",
                             "budget_tokens": 51200
                         }
                     }
