@@ -84,7 +84,8 @@ import {
     YoutubeIcon,
     Zap,
     RotateCw,
-    RefreshCw
+    RefreshCw,
+    Clock
 } from 'lucide-react';
 import Marked, { ReactRenderer } from 'marked-react';
 import { useTheme } from 'next-themes';
@@ -1128,6 +1129,62 @@ const HomeContent = () => {
             blockquote(children) {
                 return <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-600 pl-4 italic my-4 text-neutral-700 dark:text-neutral-300">{children}</blockquote>;
             },
+            // Add table renderer methods
+            table(children) {
+                return (
+                    <div className="w-full my-6 overflow-hidden">
+                        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                            <table className="w-full border-collapse text-sm">
+                                {children}
+                            </table>
+                        </div>
+                    </div>
+                );
+            },
+            tableRow(children) {
+                return (
+                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30">
+                        {children}
+                    </tr>
+                );
+            },
+            tableCell(children, flags) {
+                const align = flags.align ? `text-${flags.align}` : 'text-left';
+                const isHeader = flags.header;
+                
+                return isHeader ? (
+                    <th className={cn(
+                        "px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100",
+                        "bg-neutral-50/50 dark:bg-neutral-800/50",
+                        "first:pl-6 last:pr-6",
+                        align
+                    )}>
+                        {children}
+                    </th>
+                ) : (
+                    <td className={cn(
+                        "px-4 py-3 text-neutral-600 dark:text-neutral-400",
+                        "first:pl-6 last:pr-6",
+                        align
+                    )}>
+                        {children}
+                    </td>
+                );
+            },
+            tableHeader(children) {
+                return (
+                    <thead className="border-b border-neutral-200 dark:border-neutral-800">
+                        {children}
+                    </thead>
+                );
+            },
+            tableBody(children) {
+                return (
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {children}
+                    </tbody>
+                );
+            },
         };
 
         return (
@@ -1249,7 +1306,7 @@ const HomeContent = () => {
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,AZURE_RESOURCE_NAME,AZURE_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
@@ -1530,68 +1587,102 @@ const HomeContent = () => {
             case "reasoning": {
                 const sectionKey = `${messageIndex}-${partIndex}`;
                 const isComplete = parts[partIndex + 1]?.type === "text";
-
-                // Auto-expand completed reasoning sections if not manually toggled
-                if (isComplete && reasoningVisibilityMap[sectionKey] === undefined) {
-                    setReasoningVisibilityMap(prev => ({
-                        ...prev,
-                        [sectionKey]: true
-                    }));
-                }
+                const timing = reasoningTimings[sectionKey];
+                const duration = timing?.endTime ? ((timing.endTime - timing.startTime) / 1000).toFixed(1) : null;
 
                 return (
                     <motion.div
                         key={`${messageIndex}-${partIndex}-reasoning`}
                         id={`reasoning-${messageIndex}`}
-                        className="mb-4"
+                        className="my-4"
                     >
-                        <button
-                            onClick={() => setReasoningVisibilityMap(prev => ({
-                                ...prev,
-                                [sectionKey]: !prev[sectionKey]
-                            }))}
-                            className="flex items-center justify-between w-full group text-left px-4 py-2 
-                                hover:bg-neutral-50 dark:hover:bg-neutral-800/50 
-                                border border-neutral-200 dark:border-neutral-800 
-                                rounded-lg transition-all duration-200
-                                bg-neutral-50/50 dark:bg-neutral-900/50"
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                </div>
-                                <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                                    {isComplete
-                                        ? "Reasoned"
-                                        : "Reasoning"}
-                                </span>
-                            </div>
-                            <ChevronDown
+                        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                            <button
+                                onClick={() => setReasoningVisibilityMap(prev => ({
+                                    ...prev,
+                                    [sectionKey]: !prev[sectionKey]
+                                }))}
                                 className={cn(
-                                    "h-4 w-4 text-neutral-500 transition-transform duration-200",
-                                    reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
+                                    "w-full flex items-center justify-between px-4 py-3",
+                                    "bg-neutral-50 dark:bg-neutral-900",
+                                    "hover:bg-neutral-100 dark:hover:bg-neutral-800",
+                                    "transition-colors duration-200",
+                                    "group text-left"
                                 )}
-                            />
-                        </button>
-
-                        <AnimatePresence>
-                            {reasoningVisibilityMap[sectionKey] && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="relative pl-4 mt-2">
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
-                                        <div className="text-sm italic text-neutral-600 dark:text-neutral-400">
-                                            <MarkdownRenderer content={part.reasoning} />
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex items-center justify-center size-2">
+                                        <div className="relative flex items-center justify-center size-2">
+                                            {isComplete ? (
+                                                <div className="size-1.5 rounded-full bg-emerald-500" />
+                                            ) : (
+                                                <>
+                                                    <div className="size-1.5 rounded-full bg-[#007AFF]/30 animate-ping" />
+                                                    <div className="size-1.5 rounded-full bg-[#007AFF] absolute" />
+                                                </>
+                                            )}
                                         </div>
+                                        {!isComplete && (
+                                            <div className="absolute inset-0 rounded-full border-2 border-[#007AFF]/20 animate-ping" />
+                                        )}
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                            {isComplete ? "Reasoned" : "Reasoning"}
+                                        </span>
+                                        {duration && (
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                                <Clock className="size-3 text-neutral-500" />
+                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
+                                                    {duration}s
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {!isComplete && (
+                                        <div className="flex items-center gap-[3px] px-2 py-1">
+                                            {[...Array(3)].map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="size-1 rounded-full bg-primary/60 animate-pulse"
+                                                    style={{ animationDelay: `${i * 200}ms` }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <ChevronDown 
+                                        className={cn(
+                                            "size-4 text-neutral-400 transition-transform duration-200",
+                                            reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
+                                        )}
+                                    />
+                                </div>
+                            </button>
+
+                            <AnimatePresence>
+                                {reasoningVisibilityMap[sectionKey] && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden border-t border-neutral-200 dark:border-neutral-800"
+                                    >
+                                        <div className="p-4 bg-white dark:bg-neutral-900">
+                                            <div className={cn(
+                                                "text-sm text-neutral-600 dark:text-neutral-400",
+                                                "prose prose-neutral dark:prose-invert max-w-none",
+                                                "prose-p:my-2 prose-p:leading-relaxed"
+                                            )}>
+                                                <MarkdownRenderer content={part.reasoning} />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </motion.div>
                 );
             }
@@ -1607,6 +1698,40 @@ const HomeContent = () => {
                 return null;
         }
     };
+
+    // Add near other state declarations in HomeContent
+    interface ReasoningTiming {
+        startTime: number;
+        endTime?: number;
+    }
+
+    const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
+
+    useEffect(() => {
+        messages.forEach((message, messageIndex) => {
+            message.parts?.forEach((part, partIndex) => {
+                if (part.type === "reasoning") {
+                    const sectionKey = `${messageIndex}-${partIndex}`;
+                    const isComplete = message.parts[partIndex + 1]?.type === "text";
+
+                    if (!reasoningTimings[sectionKey]) {
+                        setReasoningTimings(prev => ({
+                            ...prev,
+                            [sectionKey]: { startTime: Date.now() }
+                        }));
+                    } else if (isComplete && !reasoningTimings[sectionKey].endTime) {
+                        setReasoningTimings(prev => ({
+                            ...prev,
+                            [sectionKey]: {
+                                ...prev[sectionKey],
+                                endTime: Date.now()
+                            }
+                        }));
+                    }
+                }
+            });
+        });
+    }, [messages]);
 
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
@@ -1717,11 +1842,11 @@ const HomeContent = () => {
                                             ) : (
                                                 <div className="group relative">
                                                     <div className="relative">
-                                                        <p className="text-xl font-medium font-sans break-words text-neutral-900 dark:text-neutral-100 pr-16">
+                                                        <p className="text-xl font-medium font-sans break-words text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12">
                                                             {message.content}
                                                         </p>
                                                         {!isEditingMessage && index === lastUserMessageIndex && (
-                                                            <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
+                                                            <div className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"

@@ -5,15 +5,10 @@ import { z } from 'zod'
 export const serverEnv = createEnv({
   server: {
     XAI_API_KEY: z.string().min(1),
-    AZURE_RESOURCE_NAME: z.string().min(1),
-    AZURE_API_KEY: z.string().min(1),
-    OPENAI_API_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
     CEREBRAS_API_KEY: z.string().min(1),
     GROQ_API_KEY: z.string().min(1),
     E2B_API_KEY: z.string().min(1),
-    UPSTASH_REDIS_REST_URL: z.string().min(1).url(),
-    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     ELEVENLABS_API_KEY: z.string().min(1),
     TAVILY_API_KEY: z.string().min(1),
     EXA_API_KEY: z.string().min(1),

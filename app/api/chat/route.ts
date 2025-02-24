@@ -4,7 +4,6 @@ import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { cerebras } from '@ai-sdk/cerebras';
 import { anthropic } from '@ai-sdk/anthropic'
-import { google } from '@ai-sdk/google';
 import { groq } from '@ai-sdk/groq'
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
@@ -34,7 +33,6 @@ const scira = customProvider({
             middleware: extractReasoningMiddleware({ tagName: 'think' })
         }),
         'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
-        'scira-gemini-2': google('gemini-2.0-flash-001'),
     }
 })
 

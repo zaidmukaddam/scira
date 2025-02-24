@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
+import NextImage from 'next/image';
 
 const container = {
     hidden: { opacity: 0 },
@@ -103,9 +104,9 @@ export default function AboutPage() {
                     >
                         {/* Company Name/Logo */}
                         <motion.div variants={item} className="text-center">
-                            <Link href="/" className="inline-flex items-center gap-3 text-4xl font-bold">
-                                <img src="/scira.png" alt="Scira Logo" className="h-12 w-12 invert" />
-                                <span>Scira</span>
+                            <Link href="/" className="inline-flex items-end gap-3 text-5xl font-syne font-bold">
+                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert" width={64} height={64} unoptimized quality={100}/>
+                                <span className=''>Scira</span>
                             </Link>
                         </motion.div>
 
@@ -302,7 +303,7 @@ export default function AboutPage() {
                         </div>
                         <div className="text-center space-y-2">
                             <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                4K+
+                                6.5K+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Community Stars</p>
                         </div>
