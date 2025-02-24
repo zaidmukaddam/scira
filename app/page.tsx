@@ -33,10 +33,9 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import WeatherChart from '@/components/weather-chart';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn, SearchGroupId } from '@/lib/utils';
 import { Wave } from "@foobar404/wave";
-import { CheckCircle, CurrencyDollar, Flag, GithubLogo, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
+import { CheckCircle, CurrencyDollar, Flag, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -56,12 +55,10 @@ import {
     Code,
     Copy,
     Download,
-    Edit2,
     ExternalLink,
     FileText,
     Film,
     Globe,
-    GraduationCap,
     Heart,
     Loader2,
     LucideIcon,
@@ -71,8 +68,6 @@ import {
     Plane,
     Play,
     Plus,
-    Search,
-    Share2,
     Sparkles,
     Sun,
     TrendingUp,
@@ -82,8 +77,6 @@ import {
     Users,
     X,
     YoutubeIcon,
-    Zap,
-    RotateCw,
     RefreshCw,
     Clock
 } from 'lucide-react';
@@ -99,9 +92,7 @@ import React, {
     useEffect,
     useMemo,
     useRef,
-    useState,
-    useContext
-} from 'react';
+    useState} from 'react';
 import Latex from 'react-latex-next';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -119,15 +110,8 @@ import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
 import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart, SourceUIPart } from '@ai-sdk/ui-utils';
 import {
-    Dialog,
-    DialogContent,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import {
     Drawer,
-    DrawerClose,
     DrawerContent,
-    DrawerFooter,
     DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
@@ -138,7 +122,6 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ReasonSearch from '@/components/reason-search';
@@ -306,35 +289,6 @@ interface YouTubeCardProps {
     index: number;
 }
 
-const PeerlistLogo = () => {
-    return (
-        <svg
-            width="24px"
-            height="24px"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-current"
-        >
-            <path
-                d="M8.87026 3H15.1297C18.187 3 20.7554 5.29881 21.093 8.33741L21.3037 10.2331C21.4342 11.4074 21.4342 12.5926 21.3037 13.7669L21.093 15.6626C20.7554 18.7012 18.187 21 15.1297 21H8.87026C5.81296 21 3.24458 18.7012 2.90695 15.6626L2.69632 13.7669C2.56584 12.5926 2.56584 11.4074 2.69632 10.2331L2.90695 8.33741C3.24458 5.29881 5.81296 3 8.87026 3Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M9 17L9 13M9 13L9 7L13 7C14.6569 7 16 8.34315 16 10V10C16 11.6569 14.6569 13 13 13L9 13Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-};
-
 const VercelIcon = ({ size = 16 }: { size: number }) => {
     return (
         <svg
@@ -353,52 +307,6 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
         </svg>
     );
 };
-
-const TooltipButton = ({ href, tooltip, children }: {
-    href: string;
-    tooltip: string;
-    children: React.ReactNode;
-}) => {
-    return (
-        <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-                <Link
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors text-neutral-600 dark:text-neutral-400"
-                >
-                    {children}
-                </Link>
-            </TooltipTrigger>
-            <TooltipContent
-                side="top"
-                className="bg-neutral-800 text-neutral-200 dark:bg-neutral-200 dark:text-neutral-800"
-            >
-                {tooltip}
-            </TooltipContent>
-        </Tooltip>
-    );
-};
-
-const XAIIcon = ({ size = 16 }: { size: number }) => {
-    return (
-        <svg
-            height={size}
-            strokeLinejoin="round"
-            viewBox="0 0 24 24"
-            width={size}
-            style={{ color: "currentcolor" }}
-        >
-            <path
-                d="m3.005 8.858 8.783 12.544h3.904L6.908 8.858zM6.905 15.825 3 21.402h3.907l1.951-2.788zM16.585 2l-6.75 9.64 1.953 2.79L20.492 2zM17.292 7.965v13.437h3.2V3.395z"
-                fillRule='evenodd'
-                clipRule={'evenodd'}
-                fill={'currentColor'}
-            ></path>
-        </svg>
-    );
-}
 
 const IconMapping: Record<string, LucideIcon> = {
     stock: TrendingUp,

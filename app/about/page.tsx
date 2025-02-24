@@ -367,7 +367,7 @@ export default function AboutPage() {
                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Best-in-class performance with real-time knowledge</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">Claude 3.5</h3>
+                            <h3 className="font-semibold">Claude 3.7</h3>
                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Exceptional understanding of queries and sources</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
