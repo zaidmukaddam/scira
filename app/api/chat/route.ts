@@ -27,7 +27,10 @@ const scira = customProvider({
         'scira-default': xai('grok-2-1212'),
         'scira-grok-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
-        'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
+        'scira-sonnet': wrapLanguageModel({
+            model: anthropic('claude-3-7-sonnet-20250219'),
+            middleware: extractReasoningMiddleware({ tagName: 'think' })
+        }),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
             middleware: extractReasoningMiddleware({ tagName: 'think' })
@@ -172,8 +175,14 @@ export async function POST(req: Request) {
                 model: scira.languageModel(model),
                 maxSteps: 5,
                 providerOptions: {
-                    'groq': {
+                    groq: {
                         reasoning_format: group === "fun" ? "raw" : "parsed",
+                    },
+                    anthropic: {
+                        thinking : {
+                            "type": "enabled",
+                            "budget_tokens": 51200
+                        }
                     }
                 },
                 messages: convertToCoreMessages(messages),
