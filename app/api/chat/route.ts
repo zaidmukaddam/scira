@@ -178,12 +178,12 @@ export async function POST(req: Request) {
                     groq: {
                         reasoning_format: group === "chat" ? "raw" : "parsed",
                     },
-                    anthropic: {
-                        thinking: {
-                            type: group === "chat" ? "enabled" : "disabled",
-                            budgetTokens: 51200
-                        }
-                    }
+                    // anthropic: {
+                    //     thinking: {
+                    //         type: group === "chat" ? "enabled" : "disabled",
+                    //         budgetTokens: 8000
+                    //     }
+                    // }
                 },
                 messages: convertToCoreMessages(messages),
                 experimental_transform: smoothStream({
