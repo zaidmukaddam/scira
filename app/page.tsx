@@ -1584,7 +1584,23 @@ const HomeContent = () => {
                                                 "prose prose-neutral dark:prose-invert max-w-none",
                                                 "prose-p:my-2 prose-p:leading-relaxed"
                                             )}>
-                                                <MarkdownRenderer content={part.reasoning} />
+                                                {part.details ? (
+                                                    <div className="whitespace-pre-wrap">
+                                                        {part.details.map((detail, detailIndex) => (
+                                                            <div key={detailIndex}>
+                                                                {detail.type === 'text' ? (
+                                                                    <MarkdownRenderer content={detail.text} />
+                                                                ) : (
+                                                                    '<redacted>'
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : part.reasoning ? (
+                                                    <MarkdownRenderer content={part.reasoning} />
+                                                ) : (
+                                                    <div className="text-neutral-500 italic">No reasoning details available</div>
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>
@@ -1674,7 +1690,7 @@ const HomeContent = () => {
                                     fileInputRef={fileInputRef}
                                     inputRef={inputRef}
                                     stop={stop}
-                                    messages={memoizedMessages}
+                                    messages={messages as any}
                                     append={append}
                                     selectedModel={selectedModel}
                                     setSelectedModel={handleModelChange}
@@ -1874,7 +1890,7 @@ const HomeContent = () => {
                                 fileInputRef={fileInputRef}
                                 inputRef={inputRef}
                                 stop={stop}
-                                messages={messages}
+                                messages={messages as any}
                                 append={append}
                                 selectedModel={selectedModel}
                                 setSelectedModel={handleModelChange}

@@ -176,12 +176,12 @@ export async function POST(req: Request) {
                 maxSteps: 5,
                 providerOptions: {
                     groq: {
-                        reasoning_format: group === "fun" ? "raw" : "parsed",
+                        reasoning_format: group === "chat" ? "raw" : "parsed",
                     },
                     anthropic: {
-                        thinking : {
-                            "type": group === "fun" ? "enabled" : "disabled",
-                            "budget_tokens": 51200
+                        thinking: {
+                            type: group === "chat" ? "enabled" : "disabled",
+                            budgetTokens: 51200
                         }
                     }
                 },
