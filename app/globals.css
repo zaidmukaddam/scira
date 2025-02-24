@@ -69,6 +69,13 @@ h1 {
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
 }
 
+.white-overflow-y-scrollbar {
+    overflow-y: auto;
+    scrollbar-width: 6px;
+    scrollbar-color: white transparent;
+    padding-right: 10px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
