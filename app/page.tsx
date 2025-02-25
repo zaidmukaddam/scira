@@ -78,7 +78,10 @@ import {
     X,
     YoutubeIcon,
     RefreshCw,
-    Clock
+    Clock,
+    WrapText,
+    ArrowLeftRight,
+    Mountain
 } from 'lucide-react';
 import Marked, { ReactRenderer } from 'marked-react';
 import { useTheme } from 'next-themes';
@@ -92,12 +95,12 @@ import React, {
     useEffect,
     useMemo,
     useRef,
-    useState} from 'react';
+    useState
+} from 'react';
 import Latex from 'react-latex-next';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark, vs } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { atomDark, oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Tweet } from 'react-tweet';
 import { toast } from 'sonner';
 import {
@@ -105,7 +108,6 @@ import {
     generateSpeech,
     suggestQuestions
 } from './actions';
-import { TrendingQuery } from './api/trending/route';
 import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
 import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart, SourceUIPart } from '@ai-sdk/ui-utils';
@@ -440,12 +442,39 @@ function CollapsibleSection({
                         <SyntaxHighlighter
                             language={activeTab === 'code' ? language : 'plaintext'}
                             style={theme === "dark" ? oneDark : oneLight}
-                            showLineNumbers
                             customStyle={{
                                 margin: 0,
-                                padding: "1rem",
-                                fontSize: "0.813rem",
-                                background: "transparent",
+                                padding: '0.75rem 0 0 0',
+                                backgroundColor: theme === 'dark' ? '#000000' : 'transparent',
+                                borderRadius: 0,
+                                borderBottomLeftRadius: '0.375rem',
+                                borderBottomRightRadius: '0.375rem',
+                                fontFamily: GeistMono.style.fontFamily,
+                            }}
+                            showLineNumbers={true}
+                            lineNumberStyle={{
+                                textAlign: 'right',
+                                color: '#808080',
+                                backgroundColor: 'transparent',
+                                fontStyle: 'normal',
+                                marginRight: '1em',
+                                paddingRight: '0.5em',
+                                fontFamily: GeistMono.style.fontFamily,
+                                minWidth: '2em'
+                            }}
+                            lineNumberContainerStyle={{
+                                backgroundColor: theme === 'dark' ? '#000000' : '#f5f5f5',
+                                float: 'left'
+                            }}
+                            wrapLongLines={false}
+                            codeTagProps={{
+                                style: {
+                                    fontFamily: GeistMono.style.fontFamily,
+                                    fontSize: '0.85em',
+                                    whiteSpace: 'pre',
+                                    overflowWrap: 'normal',
+                                    wordBreak: 'keep-all'
+                                }
                             }}
                         >
                             {activeTab === 'code' ? code : output || ''}
@@ -593,8 +622,6 @@ const HomeContent = () => {
     const [q] = useQueryState('q', parseAsString.withDefault(''))
     const [model] = useQueryState('model', parseAsString.withDefault('scira-default'))
 
-
-
     const initialState = useMemo(() => ({
         query: query || q,
         model: model
@@ -617,34 +644,6 @@ const HomeContent = () => {
 
     const CACHE_KEY = 'trendingQueriesCache';
     const CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-
-    interface TrendingQueriesCache {
-        data: TrendingQuery[];
-        timestamp: number;
-    }
-
-    const getTrendingQueriesFromCache = (): TrendingQueriesCache | null => {
-        if (typeof window === 'undefined') return null;
-
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!cached) return null;
-
-        const parsedCache = JSON.parse(cached) as TrendingQueriesCache;
-        const now = Date.now();
-
-        if (now - parsedCache.timestamp > CACHE_DURATION) {
-            localStorage.removeItem(CACHE_KEY);
-            return null;
-        }
-
-        return parsedCache;
-    };
-
-    useEffect(() => {
-        console.log("selectedModel", selectedModel);
-    }, [selectedModel]);
-
-    const [trendingQueries, setTrendingQueries] = useState<TrendingQuery[]>([]);
 
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
@@ -696,36 +695,6 @@ const HomeContent = () => {
             });
         }
     }, [initialState.query, append, setInput, messages.length]);
-
-    useEffect(() => {
-        const fetchTrending = async () => {
-            const cached = getTrendingQueriesFromCache();
-            if (cached) {
-                setTrendingQueries(cached.data);
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/trending');
-                if (!res.ok) throw new Error('Failed to fetch trending queries');
-                const data = await res.json();
-
-                const cacheData: TrendingQueriesCache = {
-                    data,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-
-                setTrendingQueries(data);
-            } catch (error) {
-                console.error('Error fetching trending queries:', error);
-                setTrendingQueries([]);
-            }
-        };
-
-        fetchTrending();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const ThemeToggle: React.FC = () => {
         const { theme, setTheme } = useTheme();
@@ -818,8 +787,9 @@ const HomeContent = () => {
             children: string;
         }
 
-        const CodeBlock = React.memo(({ language, children }: CodeBlockProps) => {
+        const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
             const [isCopied, setIsCopied] = useState(false);
+            const [isWrapped, setIsWrapped] = useState(false);
             const { theme } = useTheme();
 
             const handleCopy = useCallback(async () => {
@@ -828,78 +798,112 @@ const HomeContent = () => {
                 setTimeout(() => setIsCopied(false), 2000);
             }, [children]);
 
+            const toggleWrap = useCallback(() => {
+                setIsWrapped(prev => !prev);
+            }, []);
+
             return (
-                <div className="group my-3">
-                    <div className="grid grid-rows-[auto,1fr] rounded-lg border border-neutral-200 dark:border-neutral-800">
-                        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 dark:border-neutral-800">
-                            <div className="px-2 py-0.5 text-xs font-medium bg-neutral-100/80 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 rounded-md border border-neutral-200 dark:border-neutral-700">
+                <div className="group my-5 relative">
+                    <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                        <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+                            <div className="px-2 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-400">
                                 {language || 'text'}
                             </div>
-                            <button
-                                onClick={handleCopy}
-                                className={`
-                      px-2 py-1.5
-                      rounded-md text-xs
-                      transition-colors duration-200
-                      ${isCopied ? 'bg-green-500/10 text-green-500' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'}
-                      opacity-0 group-hover:opacity-100
-                      hover:bg-neutral-200 dark:hover:bg-neutral-700
-                      flex items-center gap-1.5
-                    `}
-                                aria-label={isCopied ? 'Copied!' : 'Copy code'}
-                            >
-                                {isCopied ? (
-                                    <>
-                                        <Check className="h-3.5 w-3.5" />
-                                        <span>Copied!</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Copy className="h-3.5 w-3.5" />
-                                        <span>Copy</span>
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={toggleWrap}
+                                    className={`
+                                      px-2 py-1
+                                      rounded text-xs font-medium
+                                      transition-all duration-200
+                                      ${isWrapped ? 'text-primary' : 'text-neutral-500 dark:text-neutral-400'}
+                                      hover:bg-neutral-200 dark:hover:bg-neutral-700
+                                      flex items-center gap-1.5
+                                    `}
+                                    aria-label="Toggle line wrapping"
+                                >
+                                    {isWrapped ? (
+                                        <>
+                                            <ArrowLeftRight className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Unwrap</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <WrapText className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Wrap</span>
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleCopy}
+                                    className={`
+                                      px-2 py-1
+                                      rounded text-xs font-medium
+                                      transition-all duration-200
+                                      ${isCopied ? 'text-primary dark:text-primary' : 'text-neutral-500 dark:text-neutral-400'}
+                                      hover:bg-neutral-200 dark:hover:bg-neutral-700
+                                      flex items-center gap-1.5
+                                    `}
+                                    aria-label="Copy code"
+                                >
+                                    {isCopied ? (
+                                        <>
+                                            <Check className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Copy</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
-
-                        <div className={`overflow-x-auto ${GeistMono.className}`}>
-                            <SyntaxHighlighter
-                                language={language || 'text'}
-                                style={theme === 'dark' ? atomDark : vs}
-                                showLineNumbers
-                                wrapLines
-                                customStyle={{
-                                    margin: 0,
-                                    padding: '1.5rem',
-                                    fontSize: '0.875rem',
-                                    background: theme === 'dark' ? '#171717' : '#ffffff',
-                                    lineHeight: 1.6,
-                                    borderBottomLeftRadius: '0.5rem',
-                                    borderBottomRightRadius: '0.5rem',
-                                }}
-                                lineNumberStyle={{
-                                    minWidth: '2.5em',
-                                    paddingRight: '1em',
-                                    color: theme === 'dark' ? '#404040' : '#94a3b8',
-                                    userSelect: 'none',
-                                }}
-                                codeTagProps={{
-                                    style: {
-                                        color: theme === 'dark' ? '#e5e5e5' : '#1e293b',
-                                        fontFamily: 'var(--font-mono)',
-                                    }
-                                }}
-                            >
-                                {children}
-                            </SyntaxHighlighter>
-                        </div>
+                        <SyntaxHighlighter
+                            language={language || 'text'}
+                            style={theme === 'dark' ? oneDark : oneLight}
+                            customStyle={{
+                                margin: 0,
+                                padding: '0.75rem 0 0 0',
+                                backgroundColor: theme === 'dark' ? '#000000' : 'transparent',
+                                borderRadius: 0,
+                                borderBottomLeftRadius: '0.375rem',
+                                borderBottomRightRadius: '0.375rem',
+                                fontFamily: GeistMono.style.fontFamily,
+                            }}
+                            showLineNumbers={true}
+                            lineNumberStyle={{
+                                textAlign: 'right',
+                                color: '#808080',
+                                backgroundColor: 'transparent',
+                                fontStyle: 'normal',
+                                marginRight: '1em',
+                                paddingRight: '0.5em',
+                                fontFamily: GeistMono.style.fontFamily,
+                                minWidth: '2em'
+                            }}
+                            lineNumberContainerStyle={{
+                                backgroundColor: theme === 'dark' ? '#000000' : '#f5f5f5',
+                                float: 'left'
+                            }}
+                            wrapLongLines={isWrapped}
+                            codeTagProps={{
+                                style: {
+                                    fontFamily: GeistMono.style.fontFamily,
+                                    fontSize: '0.85em',
+                                    whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+                                    overflowWrap: isWrapped ? 'break-word' : 'normal',
+                                    wordBreak: isWrapped ? 'break-word' : 'keep-all'
+                                }
+                            }}
+                        >
+                            {children}
+                        </SyntaxHighlighter>
                     </div>
                 </div>
             );
-        }, (prevProps, nextProps) =>
-            prevProps.children === nextProps.children &&
-            prevProps.language === nextProps.language
-        );
+        };
 
         CodeBlock.displayName = 'CodeBlock';
 
@@ -926,8 +930,8 @@ const HomeContent = () => {
             const domain = new URL(href).hostname;
 
             return (
-                <div className="flex flex-col space-y-2 bg-white dark:bg-neutral-800 rounded-md shadow-md overflow-hidden">
-                    <div className="flex items-center space-x-2 p-3 bg-neutral-100 dark:bg-neutral-700">
+                <div className="flex flex-col space-y-2 bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden border border-neutral-200 dark:border-neutral-700">
+                    <div className="flex items-center space-x-2 p-3 bg-neutral-50 dark:bg-neutral-850">
                         <Image
                             src={`https://www.google.com/s2/favicons?domain=${domain}&sz=256`}
                             alt="Favicon"
@@ -959,7 +963,9 @@ const HomeContent = () => {
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={isCitation ? "cursor-pointer text-sm text-primary py-0.5 px-1.5 m-0 bg-neutral-200 dark:bg-neutral-700 rounded-full no-underline" : "text-teal-600 dark:text-teal-400 no-underline hover:underline"}
+                            className={isCitation
+                                ? "cursor-pointer text-sm text-primary py-0.5 px-2 m-0 bg-primary/10 dark:bg-primary/20 rounded-full no-underline font-medium"
+                                : "text-primary dark:text-primary-light no-underline hover:underline font-medium"}
                         >
                             {text}
                         </Link>
@@ -992,7 +998,7 @@ const HomeContent = () => {
             paragraph(children) {
                 if (typeof children === 'string' && children.includes('$')) {
                     return (
-                        <p className="my-4">
+                        <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">
                             <Latex
                                 delimiters={[
                                     { left: '$$', right: '$$', display: true },
@@ -1004,7 +1010,7 @@ const HomeContent = () => {
                         </p>
                     );
                 }
-                return <p className="my-4">{children}</p>;
+                return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
             },
             code(children, language) {
                 return <CodeBlock language={language}>{String(children)}</CodeBlock>;
@@ -1020,29 +1026,48 @@ const HomeContent = () => {
                 }
                 return isValidUrl(href)
                     ? renderHoverCard(href, text)
-                    : <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline">{text}</a>;
+                    : <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">{text}</a>;
             },
             heading(children, level) {
                 const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-                const className = `text-${4 - level}xl font-bold my-4 text-neutral-800 dark:text-neutral-100`;
-                return <HeadingTag className={className}>{children}</HeadingTag>;
+                const sizeClasses = {
+                    1: "text-3xl md:text-4xl font-extrabold mt-8 mb-4",
+                    2: "text-xl md:text-2xl font-bold mt-7 mb-3",
+                    3: "text-lg md:text-xl font-semibold mt-6 mb-3",
+                    4: "text-base md:text-lg font-medium mt-5 mb-2",
+                    5: "text-sm md:text-base font-medium mt-4 mb-2",
+                    6: "text-xs md:text-sm font-medium mt-4 mb-2",
+                }[level] || "";
+
+                return (
+                    <HeadingTag className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}>
+                        {children}
+                    </HeadingTag>
+                );
             },
             list(children, ordered) {
                 const ListTag = ordered ? 'ol' : 'ul';
-                return <ListTag className="list-inside list-disc my-4 pl-4 text-neutral-800 dark:text-neutral-200">{children}</ListTag>;
+                return (
+                    <ListTag className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${ordered ? 'list-decimal' : 'list-disc'}`}>
+                        {children}
+                    </ListTag>
+                );
             },
             listItem(children) {
-                return <li className="my-2 text-neutral-800 dark:text-neutral-200">{children}</li>;
+                return <li className="pl-1 leading-relaxed">{children}</li>;
             },
             blockquote(children) {
-                return <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-600 pl-4 italic my-4 text-neutral-700 dark:text-neutral-300">{children}</blockquote>;
+                return (
+                    <blockquote className="my-6 border-l-4 border-primary/30 dark:border-primary/20 pl-4 py-1 text-neutral-700 dark:text-neutral-300 italic bg-neutral-50 dark:bg-neutral-900/50 rounded-r-md">
+                        {children}
+                    </blockquote>
+                );
             },
-            // Add table renderer methods
             table(children) {
                 return (
-                    <div className="w-full my-6 overflow-hidden">
-                        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-                            <table className="w-full border-collapse text-sm">
+                    <div className="w-full my-8 overflow-hidden">
+                        <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+                            <table className="w-full border-collapse text-sm m-0">
                                 {children}
                             </table>
                         </div>
@@ -1051,7 +1076,7 @@ const HomeContent = () => {
             },
             tableRow(children) {
                 return (
-                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30">
+                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50">
                         {children}
                     </tr>
                 );
@@ -1059,11 +1084,11 @@ const HomeContent = () => {
             tableCell(children, flags) {
                 const align = flags.align ? `text-${flags.align}` : 'text-left';
                 const isHeader = flags.header;
-                
+
                 return isHeader ? (
                     <th className={cn(
-                        "px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100",
-                        "bg-neutral-50/50 dark:bg-neutral-800/50",
+                        "px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-100",
+                        "bg-neutral-100/80 dark:bg-neutral-800/80",
                         "first:pl-6 last:pr-6",
                         align
                     )}>
@@ -1071,7 +1096,7 @@ const HomeContent = () => {
                     </th>
                 ) : (
                     <td className={cn(
-                        "px-4 py-3 text-neutral-600 dark:text-neutral-400",
+                        "px-4 py-3 text-neutral-700 dark:text-neutral-300",
                         "first:pl-6 last:pr-6",
                         align
                     )}>
@@ -1096,7 +1121,7 @@ const HomeContent = () => {
         };
 
         return (
-            <div className="markdown-body dark:text-neutral-200 font-sans">
+            <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
                 <Marked renderer={renderer}>{content}</Marked>
             </div>
         );
@@ -1123,16 +1148,6 @@ const HomeContent = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, [messages, suggestedQuestions]);
-
-    const handleExampleClick = async (card: TrendingQuery) => {
-        const exampleText = card.text;
-        lastSubmittedQueryRef.current = exampleText;
-        setSuggestedQuestions([]);
-        await append({
-            content: exampleText.trim(),
-            role: 'user',
-        });
-    };
 
     const handleSuggestedQuestionClick = useCallback(async (question: string) => {
         setSuggestedQuestions([]);
@@ -1231,158 +1246,6 @@ const HomeContent = () => {
         );
     };
 
-    const SuggestionCards: React.FC<{
-        trendingQueries: TrendingQuery[];
-        handleExampleClick: (query: TrendingQuery) => void;
-    }> = ({ trendingQueries, handleExampleClick }) => {
-        const [isLoading, setIsLoading] = useState(true);
-        const scrollRef = useRef<HTMLDivElement>(null);
-        const [isPaused, setIsPaused] = useState(false);
-        const animationFrameRef = useRef<number>();
-        const lastScrollTime = useRef<number>(0);
-
-        useEffect(() => {
-            if (trendingQueries.length > 0) {
-                setIsLoading(false);
-            }
-        }, [trendingQueries]);
-
-        useEffect(() => {
-            const animate = (timestamp: number) => {
-                if (!scrollRef.current || isPaused) {
-                    animationFrameRef.current = requestAnimationFrame(animate);
-                    return;
-                }
-
-                if (timestamp - lastScrollTime.current > 16) {
-                    const newScrollLeft = scrollRef.current.scrollLeft + 1;
-
-                    if (newScrollLeft >= scrollRef.current.scrollWidth - scrollRef.current.clientWidth) {
-                        scrollRef.current.scrollLeft = 0;
-                    } else {
-                        scrollRef.current.scrollLeft = newScrollLeft;
-                    }
-
-                    lastScrollTime.current = timestamp;
-                }
-
-                animationFrameRef.current = requestAnimationFrame(animate);
-            };
-
-            animationFrameRef.current = requestAnimationFrame(animate);
-
-            return () => {
-                if (animationFrameRef.current) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                }
-            };
-        }, [isPaused]);
-
-        const getIconForCategory = (category: string) => {
-            const iconMap = {
-                trending: <TrendingUp className="w-3 h-3" />,
-                community: <Users className="w-3 h-3" />,
-                science: <Brain className="w-3 h-3" />,
-                tech: <Code className="w-3 h-3" />,
-                travel: <Globe className="w-3 h-3" />,
-                politics: <Flag className="w-3 h-3" />,
-                health: <Heart className="w-3 h-3" />,
-                sports: <TennisBall className="w-3 h-3" />,
-                finance: <CurrencyDollar className="w-3 h-3" />,
-                football: <SoccerBall className="w-3 h-3" />,
-            };
-            return iconMap[category as keyof typeof iconMap] || <Sparkles className="w-3 h-3" />;
-        };
-
-        if (isLoading || trendingQueries.length === 0) {
-            return (
-                <div className="mt-4 relative">
-                    <div className="relative">
-                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10" />
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10" />
-
-                        <div className="flex gap-2 overflow-x-auto pb-2 px-2 scroll-smooth no-scrollbar">
-                            {[1, 2, 3, 4, 5, 6].map((_, index) => (
-                                <div
-                                    key={index}
-                                    className="flex-shrink-0 h-12 w-[120px] rounded-lg bg-neutral-50/80 dark:bg-neutral-800/80 
-                                                     border border-neutral-200/50 dark:border-neutral-700/50"
-                                >
-                                    <div className="flex items-start gap-1.5 h-full p-2">
-                                        <div className="w-4 h-4 rounded-md bg-neutral-200/50 dark:bg-neutral-700/50 
-                                                              animate-pulse mt-0.5" />
-                                        <div className="space-y-1 flex-1">
-                                            <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded animate-pulse" />
-                                            <div className="h-2 w-1/2 bg-neutral-200/50 dark:bg-neutral-700/50 rounded animate-pulse" />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4 relative"
-            >
-                <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-[8]" />
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-[8]" />
-
-                    <div
-                        ref={scrollRef}
-                        className="flex gap-2 overflow-x-auto pb-2 px-2 scroll-smooth no-scrollbar"
-                        onTouchStart={() => setIsPaused(true)}
-                        onTouchEnd={() => {
-                            // Add a small delay before resuming animation on mobile
-                            setTimeout(() => setIsPaused(false), 1000);
-                        }}
-                        onMouseEnter={() => setIsPaused(true)}
-                        onMouseLeave={() => setIsPaused(false)}
-                    >
-                        {Array(20).fill(trendingQueries).flat().map((query, index) => (
-                            <motion.button
-                                key={`${index}-${query.text}`}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{
-                                    duration: 0.2,
-                                    delay: Math.min(index * 0.02, 0.5), // Cap the maximum delay
-                                    ease: "easeOut"
-                                }}
-                                onClick={() => handleExampleClick(query)}
-                                className="group flex-shrink-0 w-[120px] h-12 bg-neutral-50/80 dark:bg-neutral-800/80
-                                         backdrop-blur-sm rounded-lg
-                                         hover:bg-white dark:hover:bg-neutral-700/70
-                                         active:scale-95
-                                         transition-all duration-200
-                                         border border-neutral-200/50 dark:border-neutral-700/50"
-                                style={{ WebkitTapHighlightColor: 'transparent' }}
-                            >
-                                <div className="flex items-start gap-1.5 h-full p-2">
-                                    <div className="w-5 h-5 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center mt-0.5">
-                                        {getIconForCategory(query.category)}
-                                    </div>
-                                    <div className="flex-1 text-left overflow-hidden">
-                                        <p className="text-xs font-medium truncate leading-tight">{query.text}</p>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 capitalize">
-                                            {query.category}
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.button>
-                        ))}
-                    </div>
-                </div>
-            </motion.div>
-        );
-    };
-
     const handleModelChange = useCallback((newModel: string) => {
         setSelectedModel(newModel);
         setSuggestedQuestions([]);
@@ -1417,14 +1280,6 @@ const HomeContent = () => {
             return false;
         });
     }, [messages]);
-
-    const memoizedSuggestionCards = useMemo(() => (
-        <SuggestionCards
-            trendingQueries={trendingQueries}
-            handleExampleClick={handleExampleClick}
-        />
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [trendingQueries]);
 
     // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
@@ -1545,6 +1400,14 @@ const HomeContent = () => {
                                                 </span>
                                             </div>
                                         )}
+                                        {!isComplete && liveElapsedTimes[sectionKey] && (
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                                <Clock className="size-3 text-neutral-500" />
+                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
+                                                    {liveElapsedTimes[sectionKey].toFixed(1)}s
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1559,7 +1422,7 @@ const HomeContent = () => {
                                             ))}
                                         </div>
                                     )}
-                                    <ChevronDown 
+                                    <ChevronDown
                                         className={cn(
                                             "size-4 text-neutral-400 transition-transform duration-200",
                                             reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
@@ -1634,6 +1497,33 @@ const HomeContent = () => {
 
     const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
 
+    // Add state for tracking live elapsed time
+    const [liveElapsedTimes, setLiveElapsedTimes] = useState<Record<string, number>>({});
+    
+    // Update live elapsed time for active reasoning sections
+    useEffect(() => {
+        const activeReasoningSections = Object.entries(reasoningTimings)
+            .filter(([_, timing]) => !timing.endTime);
+            
+        if (activeReasoningSections.length === 0) return;
+        
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const updatedTimes: Record<string, number> = {};
+            
+            activeReasoningSections.forEach(([key, timing]) => {
+                updatedTimes[key] = (now - timing.startTime) / 1000;
+            });
+            
+            setLiveElapsedTimes(prev => ({
+                ...prev,
+                ...updatedTimes
+            }));
+        }, 100);
+        
+        return () => clearInterval(interval);
+    }, [reasoningTimings]);
+
     useEffect(() => {
         messages.forEach((message, messageIndex) => {
             message.parts?.forEach((part, partIndex) => {
@@ -1660,13 +1550,62 @@ const HomeContent = () => {
         });
     }, [messages]);
 
+    const WidgetSection = () => {
+        const [currentTime, setCurrentTime] = useState(new Date());
+        
+        // Update time every minute
+        useEffect(() => {
+            setCurrentTime(new Date());
+            const timer = setInterval(() => {
+                setCurrentTime(new Date());
+            }, 60000);
+            
+            return () => clearInterval(timer);
+        }, []);
+        
+        // Format date and time
+        const formattedDate = currentTime.toLocaleDateString(undefined, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+        
+        const formattedTime = currentTime.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        return (
+            <div className="mt-6 w-full">
+                <div className="flex flex-wrap gap-2 justify-center">
+                    {/* Time Widget */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
+                        <Clock className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
+                            {formattedTime}
+                        </span>
+                    </div>
+                    
+                    {/* Date Widget */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
+                        <Calendar className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
+                            {formattedDate}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
 
             <div className={`w-full p-2 sm:p-4 ${status === 'ready' && messages.length === 0
-                    ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
-                    : 'mt-20 sm:mt-16' // Add top margin when showing messages
+                ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
+                : 'mt-20 sm:mt-16' // Add top margin when showing messages
                 }`}>
                 <div className={`w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
                     {status === 'ready' && messages.length === 0 && (
@@ -1705,10 +1644,16 @@ const HomeContent = () => {
                                     status={status}
                                     setHasSubmitted={setHasSubmitted}
                                 />
-                                {memoizedSuggestionCards}
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    
+                    {/* Add the widget section below form when no messages */}
+                    {messages.length === 0 && (
+                        <div>
+                            <WidgetSection />
+                        </div>
+                    )}
 
                     <div className="space-y-4 sm:space-y-6 mb-32">
                         {memoizedMessages.map((message, index) => (
@@ -1718,7 +1663,7 @@ const HomeContent = () => {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.5 }}
-                                        className="mb-4 px-2 sm:px-0"
+                                        className="mb-4 px-0"
                                     >
                                         <div className="flex-grow min-w-0">
                                             {isEditingMessage && editingMessageIndex === index ? (
@@ -1781,18 +1726,18 @@ const HomeContent = () => {
                                                                     className="h-7 w-7 !rounded-l-lg !rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
                                                                     disabled={status === 'submitted' || status === 'streaming'}
                                                                 >
-                                                                    <svg 
-                                                                        width="15" 
-                                                                        height="15" 
-                                                                        viewBox="0 0 15 15" 
-                                                                        fill="none" 
+                                                                    <svg
+                                                                        width="15"
+                                                                        height="15"
+                                                                        viewBox="0 0 15 15"
+                                                                        fill="none"
                                                                         xmlns="http://www.w3.org/2000/svg"
                                                                         className="h-4 w-4"
                                                                     >
-                                                                        <path 
-                                                                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z" 
-                                                                            fill="currentColor" 
-                                                                            fillRule="evenodd" 
+                                                                        <path
+                                                                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
+                                                                            fill="currentColor"
+                                                                            fillRule="evenodd"
                                                                             clipRule="evenodd"
                                                                         />
                                                                     </svg>
@@ -2803,11 +2748,11 @@ const ToolInvocationListView = memo(
                                 </Button>
 
                                 <div className="flex-1 h-8 sm:h-10 bg-neutral-100 dark:bg-neutral-900 rounded-md sm:rounded-lg overflow-hidden">
-                                    <canvas 
-                                        ref={canvasRef} 
-                                        width="800" 
-                                        height="200" 
-                                        className="w-full h-full opacity-90 dark:opacity-70" 
+                                    <canvas
+                                        ref={canvasRef}
+                                        width="800"
+                                        height="200"
+                                        className="w-full h-full opacity-90 dark:opacity-70"
                                     />
                                 </div>
                             </div>

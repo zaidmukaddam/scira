@@ -60,8 +60,7 @@ const AnthropicIcon = ({ className }: { className?: string }) => (
 );
 
 const models = [
-    { value: "scira-default", label: "Grok 2.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 model", color: "glossyblack", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-default", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
     { value: "scira-sonnet", label: "Claude 3.7 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
     { value: "scira-llama", label: "Llama 3.3 70B", icon: "/cerebras.png", iconClass: "!text-neutral-900 dark:!text-white", description: "Meta's Llama model by Cerebras", color: "offgray", vision: false, experimental: true, category: "Experimental" },
     { value: "scira-r1", label: "DeepSeek R1 Distilled", icon: "/groq.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "DeepSeek R1 model by Groq", color: "sapphire", vision: false, experimental: true, category: "Experimental" },
@@ -576,20 +575,25 @@ const SelectionContent = ({ ...props }) => {
             onMouseLeave={() => !isProcessing && setIsExpanded(false)}
         >
             <AnimatePresence initial={false}>
-                {searchGroups.filter(group => group.show).map((group) => {
+                {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
                     const showItem = (isExpanded && !isProcessing) || props.selectedGroup === group.id;
+                    const isLastItem = index === filteredGroups.length - 1;
                     return (
                         <motion.div
                             key={group.id}
                             layout={false}
                             animate={{
                                 width: showItem ? "28px" : 0,
-                                opacity: showItem ? 1 : 0
+                                opacity: showItem ? 1 : 0,
+                                marginRight: (showItem && isLastItem && isExpanded) ? "2px" : 0
                             }}
                             transition={{
                                 duration: 0.15,
                                 ease: "easeInOut"
                             }}
+                            className={cn(
+                                isLastItem && isExpanded && showItem ? "pr-0.5" : ""
+                            )}
                             style={{ margin: 0 }}
                         >
                             <ToolbarButton

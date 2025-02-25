@@ -69,6 +69,11 @@ h1 {
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
 }
 
+.linenumber {
+  font-style: normal !important;
+  font-weight: normal !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
