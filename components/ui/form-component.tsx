@@ -646,6 +646,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
 
+    useEffect(() => {
+        if (hasSubmitted) {
+            setInput(""); // Limpa o input
+            if (inputRef.current) {
+                inputRef.current.style.height = "72px"; // Define altura mínima padrão
+            }
+        }
+    }, [hasSubmitted]);
+
     // Add a ref to track the initial group selection
     const initialGroupRef = useRef(selectedGroup);
 
@@ -1019,6 +1028,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         maxHeight: `${MAX_HEIGHT}px`,
                         WebkitUserSelect: 'text',
                         WebkitTouchCallout: 'none',
+                        height: "auto",
                     }}
                     rows={1}
                     autoFocus={width ? width > 768 : true}
