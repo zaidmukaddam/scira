@@ -289,6 +289,7 @@ const groupPrompts = {
     - Use $$ for block equations
     - Use "USD" for currency (not $)
     - No need to use bold or italic formatting in tables.
+    - don't use the h1 heading in the markdown response.
   `,
   extreme: `You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!

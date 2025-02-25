@@ -27,10 +27,7 @@ const scira = customProvider({
         'scira-default': xai('grok-2-1212'),
         'scira-grok-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
-        'scira-sonnet': wrapLanguageModel({
-            model: anthropic('claude-3-7-sonnet-20250219'),
-            middleware: extractReasoningMiddleware({ tagName: 'think' })
-        }),
+        'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
             middleware: extractReasoningMiddleware({ tagName: 'think' })
@@ -178,12 +175,12 @@ export async function POST(req: Request) {
                     groq: {
                         reasoning_format: group === "chat" ? "raw" : "parsed",
                     },
-                    // anthropic: {
-                    //     thinking: {
-                    //         type: group === "chat" ? "enabled" : "disabled",
-                    //         budgetTokens: 8000
-                    //     }
-                    // }
+                    anthropic: {
+                        thinking: {
+                            type: group === "chat" ? "enabled" : "disabled",
+                            budgetTokens: 12000
+                        }
+                    }
                 },
                 messages: convertToCoreMessages(messages),
                 experimental_transform: smoothStream({
@@ -1913,6 +1910,8 @@ export async function POST(req: Request) {
                 },
                 onFinish(event) {
                     console.log('Fin reason: ', event.finishReason);
+                    console.log('Reasoning: ', event.reasoning);
+                    console.log('reasoning details: ', event.reasoningDetails);
                     console.log('Steps ', event.steps);
                     console.log('Messages: ', event.response.messages);
                 },

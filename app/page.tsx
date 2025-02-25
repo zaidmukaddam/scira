@@ -1457,7 +1457,6 @@ const HomeContent = () => {
         partIndex: number,
         parts: MessagePart[],
         message: any,
-        data?: any[]
     ) => {
         if (part.type === "text" && partIndex === 0 &&
             parts.some((p, i) => i > partIndex && p.type === 'tool-invocation')) {
@@ -1589,7 +1588,9 @@ const HomeContent = () => {
                                                         {part.details.map((detail, detailIndex) => (
                                                             <div key={detailIndex}>
                                                                 {detail.type === 'text' ? (
-                                                                    <MarkdownRenderer content={detail.text} />
+                                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
+                                                                        {detail.text}
+                                                                    </div>
                                                                 ) : (
                                                                     '<redacted>'
                                                                 )}
@@ -1597,7 +1598,9 @@ const HomeContent = () => {
                                                         ))}
                                                     </div>
                                                 ) : part.reasoning ? (
-                                                    <MarkdownRenderer content={part.reasoning} />
+                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
+                                                        {part.reasoning}
+                                                    </div>
                                                 ) : (
                                                     <div className="text-neutral-500 italic">No reasoning details available</div>
                                                 )}
@@ -1837,7 +1840,6 @@ const HomeContent = () => {
                                         partIndex,
                                         message.parts as MessagePart[],
                                         message,
-                                        data
                                     )
                                 )}
                             </div>
