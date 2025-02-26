@@ -322,6 +322,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 
 const MAX_IMAGES = 4;
+const MAX_INPUT_CHARS = 250;
 
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);
@@ -333,6 +334,65 @@ const truncateFilename = (filename: string, maxLength: number = 20) => {
     const extension = filename.split('.').pop();
     const name = filename.substring(0, maxLength - 4);
     return `${name}...${extension}`;
+};
+
+const CharacterCounter = ({ current, max }: { current: number; max: number }) => {
+    const percentage = Math.min(100, (current / max) * 100);
+    const isNearLimit = percentage >= 80 && percentage < 100;
+    const isOverLimit = percentage >= 100;
+    
+    // Twitter-like styling
+    const strokeColor = isOverLimit 
+        ? 'stroke-red-500' 
+        : isNearLimit 
+            ? 'stroke-amber-500' 
+            : 'stroke-neutral-400';
+    
+    // Smaller size for more compact look
+    const size = 16;
+    const strokeWidth = 1.5;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const dash = (percentage * circumference) / 100;
+    const gap = circumference - dash;
+    
+    // Add border to ensure visibility on all backgrounds
+    const bgColor = isOverLimit
+        ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
+        : isNearLimit
+            ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
+            : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700';
+    
+    return (
+        <div className={`relative flex items-center justify-center ${bgColor} rounded-full shadow-sm transition-all duration-200`}>
+            <svg height={size} width={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
+                {/* Only show background circle when progress is visible */}
+                {current > 0 && (
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="none"
+                        strokeWidth={strokeWidth}
+                        className="stroke-neutral-200 dark:stroke-neutral-700"
+                    />
+                )}
+                {/* Progress circle */}
+                {current > 0 && (
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="none"
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={`${dash} ${gap}`}
+                        className={`transition-all ${strokeColor}`}
+                        strokeLinecap="round"
+                    />
+                )}
+            </svg>
+        </div>
+    );
 };
 
 const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment, onRemove: () => void, isUploading: boolean }> = ({ attachment, onRemove, isUploading }) => {
@@ -665,6 +725,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [isGroupSelectorExpanded, setIsGroupSelectorExpanded] = useState(false);
+    const [isExceedingLimit, setIsExceedingLimit] = useState(false);
 
     // Add a ref to track the initial group selection
     const initialGroupRef = useRef(selectedGroup);
@@ -683,7 +744,20 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         event.preventDefault();
-        setInput(event.target.value);
+        const newValue = event.target.value;
+        
+        // Check if input exceeds character limit
+        if (newValue.length > MAX_INPUT_CHARS) {
+            setIsExceedingLimit(true);
+            // Optional: You can truncate the input here or just warn the user
+            // setInput(newValue.substring(0, MAX_INPUT_CHARS));
+            setInput(newValue);
+            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+        } else {
+            setIsExceedingLimit(false);
+            setInput(newValue);
+        }
+        
         autoResizeInput(event.target);
     };
 
@@ -887,6 +961,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
+        // Check if input exceeds character limit
+        if (input.length > MAX_INPUT_CHARS) {
+            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
+            return;
+        }
+
         if (input.trim() || attachments.length > 0) {
             setHasSubmitted(true);
             lastSubmittedQueryRef.current = input.trim();
@@ -1032,7 +1112,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                         "text-neutral-900 dark:text-neutral-100",
                         "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
-                        "px-4 pt-4 pb-16",
+                        "px-4 py-4 pb-16",
                         "overflow-y-auto",
                         "touch-manipulation",
                     )}
@@ -1046,6 +1126,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                 />
+
+                {/* Character counter with responsive positioning */}
+                {input.length > 0 && (
+                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
+                        <CharacterCounter current={input.length} max={MAX_INPUT_CHARS} />
+                    </div>
+                )}
 
                 <div className={cn(
                     "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
