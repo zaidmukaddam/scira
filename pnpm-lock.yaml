@@ -104,6 +104,9 @@ dependencies:
   '@tavily/core':
     specifier: ^0.0.2
     version: 0.0.2
+  '@types/he':
+    specifier: ^1.2.3
+    version: 1.2.3
   '@types/katex':
     specifier: ^0.16.7
     version: 0.16.7
@@ -173,6 +176,9 @@ dependencies:
   google-auth-library:
     specifier: ^9.14.1
     version: 9.14.1
+  he:
+    specifier: ^1.2.0
+    version: 1.2.0
   highlight.js:
     specifier: ^11.10.0
     version: 11.10.0
@@ -2131,6 +2137,10 @@ packages:
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
     dependencies:
       '@types/unist': 3.0.3
+    dev: false
+
+  /@types/he@1.2.3:
+    resolution: {integrity: sha512-q67/qwlxblDzEDvzHhVkwc1gzVWxaNxeyHUBF4xElrvjL11O+Ytze+1fGpBHlr/H9myiBUaUXNnNPmBHxxfAcA==}
     dev: false
 
   /@types/json5@0.0.29:
@@ -4337,6 +4347,11 @@ packages:
       hast-util-parse-selector: 4.0.0
       property-information: 6.5.0
       space-separated-tokens: 2.0.2
+    dev: false
+
+  /he@1.2.0:
+    resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
+    hasBin: true
     dev: false
 
   /highlight.js@10.7.3:

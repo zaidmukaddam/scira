@@ -60,10 +60,6 @@
   flex: 1;
 }
 
-h1 {
-  font-family: var(--font-syne);
-}
-
 .gradient-mask {
   mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);

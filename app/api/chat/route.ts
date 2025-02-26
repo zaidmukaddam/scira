@@ -24,15 +24,13 @@ import { z } from 'zod';
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-2-1212'),
-        'scira-grok-vision': xai('grok-2-vision-1212'),
+        'scira-default': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
         'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
             middleware: extractReasoningMiddleware({ tagName: 'think' })
         }),
-        'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
     }
 })
 
@@ -472,6 +470,8 @@ export async function POST(req: Request) {
                                     text: true,
                                     highlights: true,
                                     includeDomains: ['twitter.com', 'x.com'],
+                                    startDate: start,
+                                    endDate: end,
                                 });
 
                                 // Extract tweet ID from URL
@@ -1376,8 +1376,8 @@ export async function POST(req: Request) {
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: xai("grok-beta"),
-                                temperature: 0.5,
+                                model: model === "scira-sonnet" ? scira.languageModel("scira-sonnet") : xai("grok-beta"),
+                                temperature: 0,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
                                         query: z.string(),
@@ -1392,6 +1392,9 @@ export async function POST(req: Request) {
                                     })).max(8)
                                 }),
                                 prompt: `Create a focused research plan for the topic: "${topic}". 
+                                        
+                                        Today's date and day of the week: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                
                                         Keep the plan concise but comprehensive, with:
                                         - 4-12 targeted search queries (each can use web, academic, or both sources)
                                         - 2-8 key analyses to perform
@@ -1923,7 +1926,8 @@ export async function POST(req: Request) {
             result.consumeStream();
 
             return result.mergeIntoDataStream(dataStream, {
-                sendReasoning: true
+                sendReasoning: true,
+                sendSources: true
             });
         }
     })

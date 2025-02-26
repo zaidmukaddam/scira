@@ -128,6 +128,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ReasonSearch from '@/components/reason-search';
 import type { StreamUpdate } from '@/components/reason-search';
+import he from 'he';
 
 export const maxDuration = 120;
 
@@ -639,11 +640,7 @@ const HomeContent = () => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
-    const [researchUpdates, setResearchUpdates] = useState<StreamUpdate[]>([]);
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
-
-    const CACHE_KEY = 'trendingQueriesCache';
-    const CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
 
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
@@ -680,9 +677,7 @@ const HomeContent = () => {
         setMessages,
         reload,
         stop,
-        data,
-        setData,
-        status
+        status,
     } = useChat(chatOptions);
 
     useEffect(() => {
@@ -921,36 +916,34 @@ const HomeContent = () => {
 
             if (isLoading) {
                 return (
-                    <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-neutral-500 dark:text-neutral-400" />
+                    <div className="flex items-center justify-center h-8">
+                        <Loader2 className="h-3 w-3 animate-spin text-neutral-500 dark:text-neutral-400" />
                     </div>
                 );
             }
 
             const domain = new URL(href).hostname;
+            const decodedTitle = metadata?.title ? he.decode(metadata.title) : "";
 
             return (
-                <div className="flex flex-col space-y-2 bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden border border-neutral-200 dark:border-neutral-700">
-                    <div className="flex items-center space-x-2 p-3 bg-neutral-50 dark:bg-neutral-850">
+                <div className="flex flex-col bg-white dark:bg-neutral-800 text-xs m-0">
+                    <div className="flex items-center h-6 space-x-1.5 px-2 pt-1.5 text-[10px] text-neutral-500 dark:text-neutral-400">
                         <Image
-                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=256`}
-                            alt="Favicon"
-                            width={20}
-                            height={20}
+                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                            alt=""
+                            width={10}
+                            height={10}
                             className="rounded-sm"
                         />
-                        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300 truncate">{domain}</span>
+                        <span className="truncate">{domain}</span>
                     </div>
-                    <div className="px-3 pb-3">
-                        <h3 className="text-base font-semibold text-neutral-800 dark:text-neutral-200 line-clamp-2">
-                            {metadata?.title || "Untitled"}
-                        </h3>
-                        {metadata?.description && (
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
-                                {metadata.description}
-                            </p>
-                        )}
-                    </div>
+                    {decodedTitle && (
+                        <div className="px-2 pb-1.5">
+                            <h3 className="font-medium text-sm m-0 text-neutral-800 dark:text-neutral-200 line-clamp-2">
+                                {decodedTitle}
+                            </h3>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -964,7 +957,7 @@ const HomeContent = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className={isCitation
-                                ? "cursor-pointer text-sm text-primary py-0.5 px-2 m-0 bg-primary/10 dark:bg-primary/20 rounded-full no-underline font-medium"
+                                ? "cursor-pointer text-xs text-primary py-0.5 px-1.5 m-0 bg-primary/10 dark:bg-primary/20 rounded-full no-underline font-medium"
                                 : "text-primary dark:text-primary-light no-underline hover:underline font-medium"}
                         >
                             {text}
@@ -973,7 +966,8 @@ const HomeContent = () => {
                     <HoverCardContent
                         side="top"
                         align="start"
-                        className="w-80 p-0 shadow-lg"
+                        sideOffset={5}
+                        className="w-48 p-0 shadow-sm border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
                     >
                         <LinkPreview href={href} />
                     </HoverCardContent>
@@ -1031,7 +1025,7 @@ const HomeContent = () => {
             heading(children, level) {
                 const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
                 const sizeClasses = {
-                    1: "text-3xl md:text-4xl font-extrabold mt-8 mb-4",
+                    1: "text-2xl md:text-3xl font-extrabold mt-8 mb-4",
                     2: "text-xl md:text-2xl font-bold mt-7 mb-3",
                     3: "text-lg md:text-xl font-semibold mt-6 mb-3",
                     4: "text-base md:text-lg font-medium mt-5 mb-2",

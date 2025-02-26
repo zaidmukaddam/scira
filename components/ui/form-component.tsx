@@ -463,6 +463,7 @@ interface GroupSelectorProps {
     selectedGroup: SearchGroupId;
     onGroupSelect: (group: SearchGroup) => void;
     status: 'submitted' | 'streaming' | 'ready' | 'error';
+    onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface ToolbarButtonProps {
@@ -547,9 +548,26 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     );
 };
 
-const SelectionContent = ({ ...props }) => {
+interface SelectionContentProps {
+    selectedGroup: SearchGroupId;
+    onGroupSelect: (group: SearchGroup) => void;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
+    onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange }: SelectionContentProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const isProcessing = props.status === 'submitted' || props.status === 'streaming';
+    const isProcessing = status === 'submitted' || status === 'streaming';
+    const { width } = useWindowSize();
+    const isMobile = width ? width < 768 : false;
+
+    // Notify parent component when expansion state changes
+    useEffect(() => {
+        if (onExpandChange) {
+            // Only notify about expansion on mobile devices
+            onExpandChange(isMobile ? isExpanded : false);
+        }
+    }, [isExpanded, onExpandChange, isMobile]);
 
     return (
         <motion.div
@@ -576,7 +594,7 @@ const SelectionContent = ({ ...props }) => {
         >
             <AnimatePresence initial={false}>
                 {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
-                    const showItem = (isExpanded && !isProcessing) || props.selectedGroup === group.id;
+                    const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
                     const isLastItem = index === filteredGroups.length - 1;
                     return (
                         <motion.div
@@ -598,8 +616,8 @@ const SelectionContent = ({ ...props }) => {
                         >
                             <ToolbarButton
                                 group={group}
-                                isSelected={props.selectedGroup === group.id}
-                                onClick={() => !isProcessing && props.onGroupSelect(group)}
+                                isSelected={selectedGroup === group.id}
+                                onClick={() => !isProcessing && onGroupSelect(group)}
                             />
                         </motion.div>
                     );
@@ -609,12 +627,13 @@ const SelectionContent = ({ ...props }) => {
     );
 };
 
-const GroupSelector = ({ selectedGroup, onGroupSelect, status }: GroupSelectorProps) => {
+const GroupSelector = ({ selectedGroup, onGroupSelect, status, onExpandChange }: GroupSelectorProps) => {
     return (
         <SelectionContent
             selectedGroup={selectedGroup}
             onGroupSelect={onGroupSelect}
             status={status}
+            onExpandChange={onExpandChange}
         />
     );
 };
@@ -645,6 +664,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [isGroupSelectorExpanded, setIsGroupSelectorExpanded] = useState(false);
 
     // Add a ref to track the initial group selection
     const initialGroupRef = useRef(selectedGroup);
@@ -924,6 +944,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const isProcessing = status === 'submitted' || status === 'streaming';
     const hasInteracted = messages.length > 0;
+    const isMobile = width ? width < 768 : false;
 
     return (
         <div 
@@ -1033,7 +1054,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                     isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
                 )}>
-                    <div className="flex items-center gap-2">
+                    <div className={cn(
+                        "flex items-center gap-2",
+                        isMobile && "overflow-hidden"
+                    )}>
                         <div className={cn(
                             "transition-all duration-100",
                             (selectedGroup !== 'extreme')
@@ -1044,32 +1068,34 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
                                 status={status}
+                                onExpandChange={setIsGroupSelectorExpanded}
                             />
                         </div>
                         
-                        <ModelSwitcher
-                            selectedModel={selectedModel}
-                            setSelectedModel={setSelectedModel}
-                            showExperimentalModels={showExperimentalModels}
-                            attachments={attachments}
-                            messages={messages}
-                            status={status}
-                        />
+                        <div className={cn(
+                            "transition-all duration-300",
+                            (isMobile && isGroupSelectorExpanded) ? "opacity-0 w-0 invisible" : "opacity-100 visible w-auto"
+                        )}>
+                            <ModelSwitcher
+                                selectedModel={selectedModel}
+                                setSelectedModel={setSelectedModel}
+                                showExperimentalModels={showExperimentalModels}
+                                attachments={attachments}
+                                messages={messages}
+                                status={status}
+                            />
+                        </div>
                         
                         <div className={cn(
                             "transition-all duration-300",
-                            (!hasInteracted || initialGroupRef.current === 'extreme')
-                                ? "opacity-100 visible w-auto"
-                                : "opacity-0 invisible w-0"
+                            (isMobile && isGroupSelectorExpanded) 
+                                ? "opacity-0 invisible w-0"
+                                : "opacity-100 visible w-auto"
                         )}>
                             <button
                                 onClick={() => {
-                                    if (!hasInteracted || selectedGroup !== 'extreme') {
-                                        setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
-                                        resetSuggestedQuestions();
-                                    }
+                                    setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
                                 }}
-                                disabled={hasInteracted && selectedGroup === 'extreme'}
                                 className={cn(
                                     "flex items-center gap-2 p-2 sm:px-3 h-8",
                                     "rounded-full transition-all duration-300",
@@ -1078,7 +1104,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     selectedGroup === 'extreme' 
                                         ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" 
                                         : "bg-white dark:bg-neutral-900 text-neutral-500",
-                                    (hasInteracted && selectedGroup === 'extreme') && "opacity-50 cursor-not-allowed hover:shadow-none"
                                 )}
                             >
                                 <Mountain className="h-3.5 w-3.5" />
@@ -1088,7 +1113,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {hasVisionSupport(selectedModel) && (
+                        {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
                             <Button
                                 className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
                                 onClick={(event) => {
