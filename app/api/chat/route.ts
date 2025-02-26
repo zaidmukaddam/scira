@@ -459,19 +459,14 @@ export async function POST(req: Request) {
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
-                                const start = startDate
-                                    ? new Date(startDate).toISOString()
-                                    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-                                const end = endDate ? new Date(endDate).toISOString() : new Date().toISOString();
-
                                 const result = await exa.searchAndContents(query, {
                                     type: 'keyword',
                                     numResults: 15,
                                     text: true,
                                     highlights: true,
                                     includeDomains: ['twitter.com', 'x.com'],
-                                    startDate: start,
-                                    endDate: end,
+                                    startPublishedDate: startDate,
+                                    endPublishedDate: endDate,
                                 });
 
                                 // Extract tweet ID from URL
