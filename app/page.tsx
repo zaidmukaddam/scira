@@ -127,7 +127,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ReasonSearch from '@/components/reason-search';
-import type { StreamUpdate } from '@/components/reason-search';
 import he from 'he';
 
 export const maxDuration = 120;
@@ -860,8 +859,8 @@ const HomeContent = () => {
                             style={theme === 'dark' ? oneDark : oneLight}
                             customStyle={{
                                 margin: 0,
-                                padding: '0.75rem 0 0 0',
-                                backgroundColor: theme === 'dark' ? '#000000' : 'transparent',
+                                padding: '0.75rem 0.25rem 0.75rem',
+                                backgroundColor: theme === 'dark' ? '#171717' : 'transparent',
                                 borderRadius: 0,
                                 borderBottomLeftRadius: '0.375rem',
                                 borderBottomRightRadius: '0.375rem',
@@ -870,7 +869,7 @@ const HomeContent = () => {
                             showLineNumbers={true}
                             lineNumberStyle={{
                                 textAlign: 'right',
-                                color: '#808080',
+                                color: theme === 'dark' ? '#6b7280' : '#808080',
                                 backgroundColor: 'transparent',
                                 fontStyle: 'normal',
                                 marginRight: '1em',
@@ -879,7 +878,7 @@ const HomeContent = () => {
                                 minWidth: '2em'
                             }}
                             lineNumberContainerStyle={{
-                                backgroundColor: theme === 'dark' ? '#000000' : '#f5f5f5',
+                                backgroundColor: theme === 'dark' ? '#171717' : '#f5f5f5',
                                 float: 'left'
                             }}
                             wrapLongLines={isWrapped}
@@ -1544,7 +1543,7 @@ const HomeContent = () => {
         });
     }, [messages]);
 
-    const WidgetSection = () => {
+    const WidgetSection = memo(() => {
         const [currentTime, setCurrentTime] = useState(new Date());
         
         // Update time every minute
@@ -1570,29 +1569,51 @@ const HomeContent = () => {
             hour12: true
         });
         
+        const handleDateTimeClick = useCallback(() => {
+            if (status !== 'ready') return;
+            
+            append({
+                content: "What's the current date and time?",
+                role: 'user'
+            });
+            
+            lastSubmittedQueryRef.current = "What's the current date and time?";
+            setHasSubmitted(true);
+        }, [append, status, lastSubmittedQueryRef]);
+        
         return (
-            <div className="mt-6 w-full">
-                <div className="flex flex-wrap gap-2 justify-center">
+            <div className="mt-8 w-full">
+                <div className="flex flex-wrap gap-3 justify-center">
                     {/* Time Widget */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                        <Clock className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                    <Button
+                        variant="outline"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        onClick={handleDateTimeClick}
+                    >
+                        <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                         <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
                             {formattedTime}
                         </span>
-                    </div>
+                    </Button>
                     
                     {/* Date Widget */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                        <Calendar className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                    <Button
+                        variant="outline"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        onClick={handleDateTimeClick}
+                    >
+                        <Calendar className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                         <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
                             {formattedDate}
                         </span>
-                    </div>
+                    </Button>
                 </div>
             </div>
         );
-    };
+    });
     
+    WidgetSection.displayName = 'WidgetSection';
+
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
@@ -2626,6 +2647,102 @@ const ToolInvocationListView = memo(
                     return (
                         <div className="my-4">
                             <FlightTracker data={result} />
+                        </div>
+                    );
+                }
+
+                if (toolInvocation.toolName === 'datetime') {
+                    if (!result) {
+                        return (
+                            <div className="flex items-center gap-3 py-4 px-2">
+                                <div className="h-5 w-5 relative">
+                                    <div className="absolute inset-0 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-blue-500 dark:border-t-blue-400 animate-spin" />
+                                </div>
+                                <span className="text-neutral-700 dark:text-neutral-300 text-sm font-medium">
+                                    Fetching current time...
+                                </span>
+                            </div>
+                        );
+                    }
+
+                    // Live Clock component that updates every second
+                    const LiveClock = memo(() => {
+                        const [time, setTime] = useState(new Date());
+                        
+                        useEffect(() => {
+                            // Update time every second
+                            const timer = setInterval(() => {
+                                setTime(new Date());
+                            }, 1000);
+                            
+                            return () => clearInterval(timer);
+                        }, []);
+
+                        const hours = time.getHours();
+                        const minutes = time.getMinutes();
+                        const seconds = time.getSeconds();
+                        const period = hours >= 12 ? 'PM' : 'AM';
+                        const displayHours = hours % 12 || 12;
+                        
+                        return (
+                            <div className="mt-3">
+                                <div className="flex items-baseline">
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {displayHours.toString().padStart(2, '0')}
+                                    </div>
+                                    <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {minutes.toString().padStart(2, '0')}
+                                    </div>
+                                    <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {seconds.toString().padStart(2, '0')}
+                                    </div>
+                                    <div className="ml-2 sm:ml-4 text-xl sm:text-2xl font-light self-center text-neutral-400 dark:text-neutral-500">
+                                        {period}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    });
+                    
+                    LiveClock.displayName = 'LiveClock';
+
+                    return (
+                        <div className="w-full my-6">
+                            <div className="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                <div className="p-5 sm:p-6 md:p-8">
+                                    <div className="flex flex-col gap-6 sm:gap-8 md:gap-10">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
+                                                    Current Time
+                                                </h3>
+                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium">
+                                                    {new Date(result.timestamp).toLocaleDateString('en-US', {
+                                                        timeZoneName: 'short'
+                                                    }).split(',')[1].trim()}
+                                                </div>
+                                            </div>
+                                            <LiveClock />
+                                        </div>
+                                        
+                                        <div>
+                                            <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase mb-2">
+                                                Today's Date
+                                            </h3>
+                                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 md:gap-6">
+                                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-neutral-900 dark:text-white">
+                                                    {result.formatted.dateShort}
+                                                </h2>
+                                                <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-500">
+                                                    {result.formatted.date}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     );
                 }

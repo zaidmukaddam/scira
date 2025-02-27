@@ -429,7 +429,7 @@ export async function POST(req: Request) {
                                                 const sanitizedUrl = sanitizeUrl(url);
                                                 return (await isValidImageUrl(sanitizedUrl)) ? sanitizedUrl : null;
                                             }),
-                                        ).then((results) => results.filter((url): url is string => url !== null)),
+                                        ).then((results) => results.filter((url) => url !== null) as string[]),
                                 };
                             });
 
@@ -1344,6 +1344,49 @@ export async function POST(req: Request) {
                             }
                         },
                     }),
+                    datetime: tool({
+                        description: 'Get the current date and time in the user\'s timezone',
+                        parameters: z.object({}),
+                        execute: async () => {
+                            try {
+                                // Get current date and time
+                                const now = new Date();
+                                
+                                // Format date and time in different ways for the UI
+                                return {
+                                    timestamp: now.getTime(),
+                                    iso: now.toISOString(),
+                                    formatted: {
+                                        date: now.toLocaleDateString('en-US', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        }),
+                                        time: now.toLocaleTimeString('en-US', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: true
+                                        }),
+                                        dateShort: now.toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                        }),
+                                        timeShort: now.toLocaleTimeString('en-US', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true
+                                        })
+                                    }
+                                };
+                            } catch (error) {
+                                console.error('Datetime error:', error);
+                                throw error;
+                            }
+                        },
+                    }),
                     reason_search: tool({
                         description: 'Perform a reasoned web search with multiple steps and sources.',
                         parameters: z.object({
@@ -1918,11 +1961,8 @@ export async function POST(req: Request) {
                 },
             });
 
-            result.consumeStream();
-
             return result.mergeIntoDataStream(dataStream, {
-                sendReasoning: true,
-                sendSources: true
+                sendReasoning: true
             });
         }
     })

@@ -111,14 +111,14 @@ const groupTools = {
     'nearby_search', 'track_flight',
     'movie_or_tv_search', 'trending_movies', 
     'trending_tv',
-    'reason_search'
+    'reason_search', 'datetime'
   ] as const,
-  academic: ['academic_search', 'code_interpreter'] as const,
-  youtube: ['youtube_search'] as const,
-  x: ['x_search'] as const,
-  analysis: ['code_interpreter', 'stock_chart', 'currency_converter'] as const,
+  academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
+  youtube: ['youtube_search', 'datetime'] as const,
+  x: ['x_search', 'datetime'] as const,
+  analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
   chat: [] as const,
-  extreme: ['reason_search'] as const,
+  extreme: ['reason_search', 'datetime'] as const,
 } as const;
 
 const groupPrompts = {
@@ -284,6 +284,8 @@ const groupPrompts = {
 `,
   chat: `\
   - You are Scira, a digital friend that helps users with fun and engaging conversations sometimes likes to be funny but serious at the same time. 
+  - Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  - Time is ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}.
   - You do not have access to any tools. You can code tho.
   - You can use markdown formatting with tables too when needed.
   - You can use latex formtting:
