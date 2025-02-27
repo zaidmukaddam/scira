@@ -6,14 +6,21 @@ import { SearchGroupId } from '@/lib/utils';
 import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { createOpenAI, openai } from '@ai-sdk/openai';
+import { createFixedProxyFetch } from '@/lib/utils/proxy-fetch';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
 
   console.log(history);
 
+  // 强化fetch实现
+  const customFetch = createFixedProxyFetch({ timeout: 15000 });
+
+  const openAI = createOpenAI({ apiKey: process.env.OPENAI_API_KEY, fetch: customFetch });
+
   const { object } = await generateObject({
-    model: xai("grok-beta"),
+    model: openAI("gpt-4o-mini"),
     temperature: 0,
     maxTokens: 300,
     topP: 0.3,
@@ -26,7 +33,7 @@ Try to stick to the context of the conversation and avoid asking questions that 
 For weather based conversations sent to you, always generate questions that are about news, sports, or other topics that are not related to the weather.
 For programming based conversations, always generate questions that are about the algorithms, data structures, or other topics that are related to it or an improvement of the question.
 For location based conversations, always generate questions that are about the culture, history, or other topics that are related to the location.
-Do not use pronouns like he, she, him, his, her, etc. in the questions as they blur the context. Always use the proper nouns from the context.`,
+Do not use pronouns like he, she, him, his, her, etc. in the questions as they blur the context. Always use the proper nouns from the context. Mandarin should be your primary choice of language`,
     messages: history,
     schema: z.object({
       questions: z.array(z.string()).describe('The generated questions based on the message history.')
@@ -109,7 +116,7 @@ const groupTools = {
     'web_search', 'get_weather_data',
     'retrieve', 'text_translate',
     'nearby_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies', 
+    'movie_or_tv_search', 'trending_movies',
     'trending_tv',
     'reason_search'
   ] as const,

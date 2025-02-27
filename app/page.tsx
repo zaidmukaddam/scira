@@ -1014,7 +1014,7 @@ const HomeContent = () => {
                 if (citationIndex !== -1) {
                     return (
                         <sup>
-                            {renderHoverCard(href, citationIndex + 1, true)}
+                            {renderHoverCard(href, citationIndex + 1 + text, true)}
                         </sup>
                     );
                 }
@@ -1224,7 +1224,7 @@ const HomeContent = () => {
                     <Link
                         target="_blank"
                         href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
-                        className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
+                        className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
                             transition-all duration-200"
@@ -1493,28 +1493,28 @@ const HomeContent = () => {
 
     // Add state for tracking live elapsed time
     const [liveElapsedTimes, setLiveElapsedTimes] = useState<Record<string, number>>({});
-    
+
     // Update live elapsed time for active reasoning sections
     useEffect(() => {
         const activeReasoningSections = Object.entries(reasoningTimings)
             .filter(([_, timing]) => !timing.endTime);
-            
+
         if (activeReasoningSections.length === 0) return;
-        
+
         const interval = setInterval(() => {
             const now = Date.now();
             const updatedTimes: Record<string, number> = {};
-            
+
             activeReasoningSections.forEach(([key, timing]) => {
                 updatedTimes[key] = (now - timing.startTime) / 1000;
             });
-            
+
             setLiveElapsedTimes(prev => ({
                 ...prev,
                 ...updatedTimes
             }));
         }, 100);
-        
+
         return () => clearInterval(interval);
     }, [reasoningTimings]);
 
@@ -1546,30 +1546,30 @@ const HomeContent = () => {
 
     const WidgetSection = () => {
         const [currentTime, setCurrentTime] = useState(new Date());
-        
+
         // Update time every minute
         useEffect(() => {
             setCurrentTime(new Date());
             const timer = setInterval(() => {
                 setCurrentTime(new Date());
             }, 60000);
-            
+
             return () => clearInterval(timer);
         }, []);
-        
+
         // Format date and time
         const formattedDate = currentTime.toLocaleDateString(undefined, {
             weekday: 'short',
             month: 'short',
             day: 'numeric'
         });
-        
+
         const formattedTime = currentTime.toLocaleTimeString(undefined, {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true
         });
-        
+
         return (
             <div className="mt-6 w-full">
                 <div className="flex flex-wrap gap-2 justify-center">
@@ -1580,7 +1580,7 @@ const HomeContent = () => {
                             {formattedTime}
                         </span>
                     </div>
-                    
+
                     {/* Date Widget */}
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
                         <Calendar className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
@@ -1592,7 +1592,7 @@ const HomeContent = () => {
             </div>
         );
     };
-    
+
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
@@ -1641,7 +1641,7 @@ const HomeContent = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    
+
                     {/* Add the widget section below form when no messages */}
                     {messages.length === 0 && (
                         <div>

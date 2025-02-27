@@ -1,10 +1,12 @@
 // /app/api/chat/route.ts
 import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
-import { xai } from '@ai-sdk/xai';
-import { cerebras } from '@ai-sdk/cerebras';
-import { anthropic } from '@ai-sdk/anthropic'
-import { groq } from '@ai-sdk/groq'
+import { createCerebras } from '@ai-sdk/cerebras';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createFixedProxyFetch } from '@/lib/utils/proxy-fetch';
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -14,7 +16,6 @@ import {
     streamText,
     tool,
     createDataStreamResponse,
-    wrapLanguageModel,
     extractReasoningMiddleware,
     customProvider,
     generateObject
@@ -22,17 +23,36 @@ import {
 import Exa from 'exa-js';
 import { z } from 'zod';
 
+// 强化fetch实现
+const customFetch = createFixedProxyFetch({ timeout: 15000 });
+
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY, fetch: customFetch });
+// const xai = createXai({ apiKey: process.env.XAI_API_KEY, fetch: customFetch });
+const cerebras = createCerebras({ apiKey: process.env.CEREBRAS_API_KEY, fetch: customFetch });
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY, fetch: customFetch });
+const wrapLanguageModel = createGroq({ apiKey: process.env.GROQ_API_KEY, fetch: customFetch });
+const groq = createGroq({ apiKey: process.env.GROQ_API_KEY, fetch: customFetch });
+const google = createGoogleGenerativeAI({ apiKey: process.env.GROQ_API_KEY, fetch: customFetch });
+
+const vol = createOpenAI({
+    apiKey: '6e6ebae3-659e-4e15-98ac-1c0cca354caf',
+    baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
+});
+
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-2-vision-1212'),
+        'scira-default': openai('gpt-4o-mini'),
+        // 'scira-grok-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
         'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
-            middleware: extractReasoningMiddleware({ tagName: 'think' })
+            middleware: extractReasoningMiddleware({ tagName: 'think' }),
         }),
-    }
-})
+        'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
+        'ep-20250213135948-nmzhh': vol('ep-20250213135948-nmzhh'),
+    },
+});
 
 // Allow streaming responses up to 120 seconds
 export const maxDuration = 300;
@@ -1371,7 +1391,7 @@ export async function POST(req: Request) {
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: model === "scira-sonnet" ? scira.languageModel("scira-sonnet") : xai("grok-beta"),
+                                model: scira.languageModel('scira-default'),
                                 temperature: 0,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
@@ -1552,7 +1572,7 @@ export async function POST(req: Request) {
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: xai("grok-beta"),
+                                    model: scira.languageModel('scira-default'),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
@@ -1602,7 +1622,7 @@ export async function POST(req: Request) {
 
                             // After all analyses are complete, analyze limitations and gaps
                             const { object: gapAnalysis } = await generateObject({
-                                model: xai("grok-beta"),
+                                model: scira.languageModel('scira-default'),
                                 temperature: 0,
                                 schema: z.object({
                                     limitations: z.array(z.object({
@@ -1824,7 +1844,7 @@ export async function POST(req: Request) {
 
                                 // Perform final synthesis of all findings
                                 const { object: finalSynthesis } = await generateObject({
-                                    model: xai("grok-beta"),
+                                    model: scira.languageModel('scira-default'),
                                     temperature: 0,
                                     schema: z.object({
                                         key_findings: z.array(z.object({
