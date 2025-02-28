@@ -1180,7 +1180,7 @@ const HomeContent = () => {
         } else {
             toast.error("Please enter a valid message.");
         }
-    }, [input, messages, editingMessageIndex, setMessages, reload]);
+    }, [input, messages, editingMessageIndex, setMessages, setInput, reload]);
 
     const AboutButton = () => {
         return (
@@ -1293,7 +1293,7 @@ const HomeContent = () => {
 
         // Resubmit the last user message
         await reload();
-    }, [messages, append, setMessages, status]);
+    }, [status, messages, setMessages, reload]);
 
     // Add this type at the top with other interfaces
     type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart;
@@ -1541,7 +1541,7 @@ const HomeContent = () => {
                 }
             });
         });
-    }, [messages]);
+    }, [messages, reasoningTimings]);
 
     const WidgetSection = memo(() => {
         const [currentTime, setCurrentTime] = useState(new Date());
@@ -1579,7 +1579,7 @@ const HomeContent = () => {
             
             lastSubmittedQueryRef.current = "What's the current date and time?";
             setHasSubmitted(true);
-        }, [append, status, lastSubmittedQueryRef]);
+        }, []);
         
         return (
             <div className="mt-8 w-full">
@@ -2729,7 +2729,7 @@ const ToolInvocationListView = memo(
                                         
                                         <div>
                                             <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase mb-2">
-                                                Today's Date
+                                                Today&apos;s Date
                                             </h3>
                                             <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 md:gap-6">
                                                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-neutral-900 dark:text-white">
