@@ -640,6 +640,7 @@ const HomeContent = () => {
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
+    const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
@@ -1131,16 +1132,34 @@ const HomeContent = () => {
     }, [messages]);
 
     useEffect(() => {
+        if (status === 'streaming') {
+            setHasManuallyScrolled(false);
+        }
+    }, [status]);
+
+    useEffect(() => {
         const handleScroll = () => {
-            const userScrolled = window.innerHeight + window.scrollY < document.body.offsetHeight;
-            if (!userScrolled && bottomRef.current && (messages.length > 0 || suggestedQuestions.length > 0)) {
-                bottomRef.current.scrollIntoView({ behavior: "smooth" });
+            const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+            
+            if (!isAtBottom && status === 'streaming' && !hasManuallyScrolled) {
+                setHasManuallyScrolled(true);
+            }
+            
+            if (status === 'streaming' && !hasManuallyScrolled) {
+                if (bottomRef.current && (messages.length > 0 || suggestedQuestions.length > 0)) {
+                    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+                }
             }
         };
 
         window.addEventListener('scroll', handleScroll);
+        
+        if (status === 'streaming' && !hasManuallyScrolled && bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+        
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [messages, suggestedQuestions]);
+    }, [messages, suggestedQuestions, status, hasManuallyScrolled]);
 
     const handleSuggestedQuestionClick = useCallback(async (question: string) => {
         setSuggestedQuestions([]);
@@ -1322,7 +1341,7 @@ const HomeContent = () => {
                                     Answer
                                 </h2>
                             </div>
-                            {status === 'ready' && messageIndex === messages.length - 1 && (
+                            {status === 'ready' && (
                                 <div className="flex items-center gap-1">
                                     <Button
                                         variant="ghost"
@@ -1545,41 +1564,63 @@ const HomeContent = () => {
 
     const WidgetSection = memo(() => {
         const [currentTime, setCurrentTime] = useState(new Date());
+        const timerRef = useRef<NodeJS.Timeout>();
         
-        // Update time every minute
         useEffect(() => {
-            setCurrentTime(new Date());
-            const timer = setInterval(() => {
-                setCurrentTime(new Date());
-            }, 60000);
+            // Sync with the nearest second
+            const now = new Date();
+            const delay = 1000 - now.getMilliseconds();
             
-            return () => clearInterval(timer);
+            // Initial sync
+            const timeout = setTimeout(() => {
+                setCurrentTime(new Date());
+                
+                // Then start the interval
+                timerRef.current = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+            }, delay);
+
+            return () => {
+                clearTimeout(timeout);
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                }
+            };
         }, []);
         
-        // Format date and time
-        const formattedDate = currentTime.toLocaleDateString(undefined, {
+        // Get user's timezone
+        const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Format date and time with timezone
+        const dateFormatter = new Intl.DateTimeFormat('en-US', {
             weekday: 'short',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
+            timeZone: timezone
         });
         
-        const formattedTime = currentTime.toLocaleTimeString(undefined, {
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
+            timeZone: timezone
         });
+        
+        const formattedDate = dateFormatter.format(currentTime);
+        const formattedTime = timeFormatter.format(currentTime);
         
         const handleDateTimeClick = useCallback(() => {
             if (status !== 'ready') return;
             
             append({
-                content: "What's the current date and time?",
+                content: `What's the current date and time?`,
                 role: 'user'
             });
             
-            lastSubmittedQueryRef.current = "What's the current date and time?";
+            lastSubmittedQueryRef.current = `What's the current date and time?`;
             setHasSubmitted(true);
-        }, []);
+        }, [status, append, setHasSubmitted]);
         
         return (
             <div className="mt-8 w-full">
@@ -2667,39 +2708,66 @@ const ToolInvocationListView = memo(
 
                     // Live Clock component that updates every second
                     const LiveClock = memo(() => {
-                        const [time, setTime] = useState(new Date());
+                        const [time, setTime] = useState(() => new Date());
+                        const timerRef = useRef<NodeJS.Timeout>();
                         
                         useEffect(() => {
-                            // Update time every second
-                            const timer = setInterval(() => {
-                                setTime(new Date());
-                            }, 1000);
+                            // Sync with the nearest second
+                            const now = new Date();
+                            const delay = 1000 - now.getMilliseconds();
                             
-                            return () => clearInterval(timer);
+                            // Initial sync
+                            const timeout = setTimeout(() => {
+                                setTime(new Date());
+                                
+                                // Then start the interval
+                                timerRef.current = setInterval(() => {
+                                    setTime(new Date());
+                                }, 1000);
+                            }, delay);
+
+                            return () => {
+                                clearTimeout(timeout);
+                                if (timerRef.current) {
+                                    clearInterval(timerRef.current);
+                                }
+                            };
                         }, []);
 
-                        const hours = time.getHours();
-                        const minutes = time.getMinutes();
-                        const seconds = time.getSeconds();
-                        const period = hours >= 12 ? 'PM' : 'AM';
-                        const displayHours = hours % 12 || 12;
+                        // Format the time according to the specified timezone
+                        const timezone = result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
+                        const formatter = new Intl.DateTimeFormat('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            second: 'numeric',
+                            hour12: true,
+                            timeZone: timezone
+                        });
+                        
+                        const formattedParts = formatter.formatToParts(time);
+                        const timeParts = {
+                            hour: formattedParts.find(part => part.type === 'hour')?.value || '12',
+                            minute: formattedParts.find(part => part.type === 'minute')?.value || '00',
+                            second: formattedParts.find(part => part.type === 'second')?.value || '00',
+                            dayPeriod: formattedParts.find(part => part.type === 'dayPeriod')?.value || 'AM'
+                        };
                         
                         return (
                             <div className="mt-3">
                                 <div className="flex items-baseline">
                                     <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                                        {displayHours.toString().padStart(2, '0')}
+                                        {timeParts.hour.padStart(2, '0')}
                                     </div>
                                     <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
                                     <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                                        {minutes.toString().padStart(2, '0')}
+                                        {timeParts.minute.padStart(2, '0')}
                                     </div>
                                     <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
                                     <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                                        {seconds.toString().padStart(2, '0')}
+                                        {timeParts.second.padStart(2, '0')}
                                     </div>
                                     <div className="ml-2 sm:ml-4 text-xl sm:text-2xl font-light self-center text-neutral-400 dark:text-neutral-500">
-                                        {period}
+                                        {timeParts.dayPeriod}
                                     </div>
                                 </div>
                             </div>
@@ -2718,10 +2786,9 @@ const ToolInvocationListView = memo(
                                                 <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
                                                     Current Time
                                                 </h3>
-                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium">
-                                                    {new Date(result.timestamp).toLocaleDateString('en-US', {
-                                                        timeZoneName: 'short'
-                                                    }).split(',')[1].trim()}
+                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
+                                                    <Clock className="h-3 w-3 text-blue-500" />
+                                                    {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>
                                             <LiveClock />

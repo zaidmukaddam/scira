@@ -1346,38 +1346,60 @@ export async function POST(req: Request) {
                     }),
                     datetime: tool({
                         description: 'Get the current date and time in the user\'s timezone',
-                        parameters: z.object({}),
-                        execute: async () => {
+                        parameters: z.object({
+                            timezone: z.string().optional().describe('The user\'s timezone. If not provided, will use UTC.')
+                        }),
+                        execute: async ({ timezone }: { timezone?: string }) => {
                             try {
                                 // Get current date and time
                                 const now = new Date();
+                                
+                                // Validate the timezone
+                                let validTimezone = timezone || 'UTC';
+                                try {
+                                    // Test if the timezone is valid
+                                    Intl.DateTimeFormat(undefined, { timeZone: validTimezone });
+                                } catch (e) {
+                                    console.error(`Invalid timezone: ${validTimezone}, falling back to UTC`);
+                                    validTimezone = 'UTC';
+                                }
+                                
+                                // Format options with timezone
+                                const options: Intl.DateTimeFormatOptions = {
+                                    timeZone: validTimezone
+                                };
                                 
                                 // Format date and time in different ways for the UI
                                 return {
                                     timestamp: now.getTime(),
                                     iso: now.toISOString(),
+                                    timezone: validTimezone,
                                     formatted: {
-                                        date: now.toLocaleDateString('en-US', {
+                                        date: new Date().toLocaleDateString('en-US', {
                                             weekday: 'long',
                                             year: 'numeric',
                                             month: 'long',
-                                            day: 'numeric'
+                                            day: 'numeric',
+                                            ...options
                                         }),
-                                        time: now.toLocaleTimeString('en-US', {
+                                        time: new Date().toLocaleTimeString('en-US', {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             second: '2-digit',
-                                            hour12: true
+                                            hour12: true,
+                                            ...options
                                         }),
-                                        dateShort: now.toLocaleDateString('en-US', {
+                                        dateShort: new Date().toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
+                                            ...options
                                         }),
-                                        timeShort: now.toLocaleTimeString('en-US', {
+                                        timeShort: new Date().toLocaleTimeString('en-US', {
                                             hour: '2-digit',
                                             minute: '2-digit',
-                                            hour12: true
+                                            hour12: true,
+                                            ...options
                                         })
                                     }
                                 };

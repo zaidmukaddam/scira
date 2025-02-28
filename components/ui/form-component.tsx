@@ -322,7 +322,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 
 const MAX_IMAGES = 4;
-const MAX_INPUT_CHARS = 250;
+const MAX_INPUT_CHARS = 1000;
 
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);

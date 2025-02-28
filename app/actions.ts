@@ -138,6 +138,9 @@ const groupPrompts = {
   Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
   Comply with user requests to the best of your abilities using the appropriate tools. Maintain composure and follow the guidelines.
 
+  ### Special Tool Instructions:
+  - When using the datetime tool, always include the user's timezone by passing ${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+  - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.
 
   ### Response Guidelines:
   1. Just run a tool first just once, IT IS MANDATORY TO RUN THE TOOL FIRST!:
@@ -218,7 +221,11 @@ const groupPrompts = {
     Latex should be wrapped with $ symbol for inline and $$ for block equations as they are supported in the response.
     No matter what happens, always provide the citations at the end of each paragraph and in the end of sentences where you use it in which they are referred to with the given format to the information provided.
     Citation format: [Author et al. (Year) Title](URL)
-    Always run the tools first and then write the response.`,
+    Always run the tools first and then write the response.
+    
+    ### Special Tool Instructions:
+    - When using the datetime tool, always include the user's timezone by passing ${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+    - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.`,
   youtube: `You are a YouTube search assistant that helps find relevant videos and channels.
     Just call the tool and run the search and then talk in long details in 2-6 paragraphs.
     The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
@@ -227,7 +234,11 @@ const groupPrompts = {
     Provide complete explainations of the videos in paragraphs.
     Give citations with timestamps and video links to insightful content. Don't just put timestamp at 0:00.
     Citation format: [Title](URL ending with parameter t=<no_of_seconds>)
-    Do not provide the video thumbnail in the response at all costs.`,
+    Do not provide the video thumbnail in the response at all costs.
+    
+    ### Special Tool Instructions:
+    - When using the datetime tool, always include the user's timezone by passing \${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+    - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.`,
   x: `You are a X/Twitter content curator that helps find relevant posts.
     send the query as is to the tool, tweak it if needed.
     The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
@@ -238,6 +249,10 @@ const groupPrompts = {
     If the user gives you a specific time like start date and end date, then add them in the parameters. default is 1 week.
     Always provide the citations at the end of each paragraph and in the end of sentences where you use it in which they are referred to with the given format to the information provided.
     Citation format: [Post Title](URL)
+    
+    ### Special Tool Instructions:
+    - When using the datetime tool, always include the user's timezone by passing \${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+    - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.
     
     # Latex and Currency Formatting to be used:
     - Always use '$' for inline equations and '$$' for block equations.
@@ -251,6 +266,9 @@ const groupPrompts = {
   - You can write in latex but currency should be in words or acronym like 'USD'.
   - Do not give up!
 
+  ### Special Tool Instructions:
+  - When using the datetime tool, always include the user's timezone by passing \${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+  - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.
 
   # Latex and Currency Formatting to be used:
     - Always use '$' for inline equations and '$$' for block equations.
@@ -294,10 +312,16 @@ const groupPrompts = {
     - Use "USD" for currency (not $)
     - No need to use bold or italic formatting in tables.
     - don't use the h1 heading in the markdown response.
+  
+  - The user's timezone is: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
   `,
   extreme: `You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+ 
+  ### Special Tool Instructions:
+  - When using the datetime tool, always include the user's timezone by passing \${Intl.DateTimeFormat().resolvedOptions().timeZone} as the timezone parameter. This ensures the time is displayed correctly for the user's location.
+  - Always use the timezone parameter with value ${Intl.DateTimeFormat().resolvedOptions().timeZone} when calling the datetime tool.
  
   Extremely important:
   - You MUST run the tool first and then write the response with citations!
