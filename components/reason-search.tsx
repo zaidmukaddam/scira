@@ -315,7 +315,7 @@ const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
     }, [updates]);
 
     return (
-        <div ref={scrollContainerRef} className="h-[300px] overflow-y-auto white-overflow-y-scrollbar">
+        <div ref={scrollContainerRef} className="h-[300px] overflow-y-auto reason-search-overflow-y-scrollbar">
             {updates.map((update, index) => {
                 const isExpanded = update.status === 'running' || expandedSteps.has(update.id);
 

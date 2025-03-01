@@ -66,7 +66,8 @@ Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month:
 - Respond in a direct, efficient manner suitable for quick information retrieval.
 
 ### Web Search Guidelines:
-- Make multiple targeted queries (2-4) to get comprehensive results.
+- Always make multiple targeted queries (2-4) to get comprehensive results.
+- Never use the same query twice and always make more than 2 queries.
 - Specify the year or "latest" in queries to fetch recent information.
 - Place citations directly after relevant sentences or paragraphs.
 - Citation format: [Source Title](URL)

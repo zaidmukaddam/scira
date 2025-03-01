@@ -2,12 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.homeBtn {
-  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px,
-    rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset,
-    inset 0 1px 0 0 #ffffff52;
-}
-
 .markdown-body .katex {
   font-size: 1.1em;
 }
@@ -65,18 +59,16 @@
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
 }
 
-
-.white-overflow-y-scrollbar {
-    overflow-y: auto;
-    scrollbar-width: 6px;
-    scrollbar-color: gray transparent;
-    padding-right: 10px;
+.reason-search-overflow-y-scrollbar {
+  overflow-y: auto;
+  scrollbar-width: 6px;
+  scrollbar-color: gray transparent;
+  padding-right: 10px;
 }
 
 .linenumber {
   font-style: normal !important;
   font-weight: normal !important;
-
 }
 
 @layer utilities {

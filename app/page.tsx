@@ -641,7 +641,8 @@ const HomeContent = () => {
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
-
+    const isAutoScrollingRef = useRef(false);
+        
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
         experimental_throttle: 500,
@@ -1132,33 +1133,55 @@ const HomeContent = () => {
     }, [messages]);
 
     useEffect(() => {
+        // Reset manual scroll when streaming starts
         if (status === 'streaming') {
             setHasManuallyScrolled(false);
+            // Initial scroll to bottom when streaming starts
+            if (bottomRef.current) {
+                isAutoScrollingRef.current = true;
+                bottomRef.current.scrollIntoView({ behavior: "smooth" });
+            }
         }
     }, [status]);
 
     useEffect(() => {
+        let scrollTimeout: NodeJS.Timeout;
+        
         const handleScroll = () => {
-            const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
-            
-            if (!isAtBottom && status === 'streaming' && !hasManuallyScrolled) {
-                setHasManuallyScrolled(true);
+            // Clear any pending timeout
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
             }
-            
-            if (status === 'streaming' && !hasManuallyScrolled) {
-                if (bottomRef.current && (messages.length > 0 || suggestedQuestions.length > 0)) {
-                    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+
+            // If we're not auto-scrolling and we're streaming, it must be a user scroll
+            if (!isAutoScrollingRef.current && status === 'streaming') {
+                const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+                if (!isAtBottom) {
+                    setHasManuallyScrolled(true);
                 }
             }
         };
 
         window.addEventListener('scroll', handleScroll);
         
+        // Auto-scroll on new content if we haven't manually scrolled
         if (status === 'streaming' && !hasManuallyScrolled && bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+            scrollTimeout = setTimeout(() => {
+                isAutoScrollingRef.current = true;
+                bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+                // Reset auto-scroll flag after animation
+                setTimeout(() => {
+                    isAutoScrollingRef.current = false;
+                }, 100);
+            }, 100);
         }
         
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+        };
     }, [messages, suggestedQuestions, status, hasManuallyScrolled]);
 
     const handleSuggestedQuestionClick = useCallback(async (question: string) => {
@@ -1332,6 +1355,9 @@ const HomeContent = () => {
 
         switch (part.type) {
             case "text":
+                if (part.text.trim() === "" || part.text === null || part.text === undefined || !part.text) {
+                    return null;
+                }
                 return (
                     <div key={`${messageIndex}-${partIndex}-text`}>
                         <div className="flex items-center justify-between mt-5 mb-2">
