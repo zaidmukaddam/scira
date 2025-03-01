@@ -39,6 +39,11 @@ const nextConfig = {
                 destination: 'https://www.producthunt.com/posts/scira',
                 permanent: true,
             },
+            {
+                source: '/raycast',
+                destination: 'https://www.raycast.com/zaidmukaddam/scira',
+                permanent: true,
+            }
         ]
     },
     images: {

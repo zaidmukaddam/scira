@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
+import NextImage from 'next/image';
 
 const container = {
     hidden: { opacity: 0 },
@@ -103,9 +104,9 @@ export default function AboutPage() {
                     >
                         {/* Company Name/Logo */}
                         <motion.div variants={item} className="text-center">
-                            <Link href="/" className="inline-flex items-center gap-3 text-4xl font-bold">
-                                <img src="/scira.png" alt="Scira Logo" className="h-12 w-12 invert" />
-                                <span>Scira</span>
+                            <Link href="/" className="inline-flex items-end gap-3 text-5xl font-syne font-bold">
+                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert" width={64} height={64} unoptimized quality={100}/>
+                                <span className=''>Scira</span>
                             </Link>
                         </motion.div>
 
@@ -302,7 +303,7 @@ export default function AboutPage() {
                         </div>
                         <div className="text-center space-y-2">
                             <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                4K+
+                                6.5K+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Community Stars</p>
                         </div>
@@ -366,7 +367,7 @@ export default function AboutPage() {
                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Best-in-class performance with real-time knowledge</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">Claude 3.5</h3>
+                            <h3 className="font-semibold">Claude 3.7</h3>
                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Exceptional understanding of queries and sources</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">

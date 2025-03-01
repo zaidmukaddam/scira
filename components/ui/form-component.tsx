@@ -28,6 +28,7 @@ interface ModelSwitcherProps {
     showExperimentalModels: boolean;
     attachments: Array<Attachment>;
     messages: Array<Message>;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
 const XAIIcon = ({ className }: { className?: string }) => (
@@ -59,9 +60,8 @@ const AnthropicIcon = ({ className }: { className?: string }) => (
 );
 
 const models = [
-    { value: "scira-default", label: "Grok 2.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 model", color: "glossyblack", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-sonnet", label: "Claude 3.5 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-default", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-sonnet", label: "Claude 3.7 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
     { value: "scira-llama", label: "Llama 3.3 70B", icon: "/cerebras.png", iconClass: "!text-neutral-900 dark:!text-white", description: "Meta's Llama model by Cerebras", color: "offgray", vision: false, experimental: true, category: "Experimental" },
     { value: "scira-r1", label: "DeepSeek R1 Distilled", icon: "/groq.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "DeepSeek R1 model by Groq", color: "sapphire", vision: false, experimental: true, category: "Experimental" },
 ];
@@ -102,10 +102,10 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
     }
 }
 
-// Update the ModelSwitcher component's dropdown content
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages }) => {
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status }) => {
     const selectedModelData = models.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
+    const isProcessing = status === 'submitted' || status === 'streaming';
 
     // Check for attachments in current and previous messages
     const hasAttachments = attachments.length > 0 || messages.some(msg => 
@@ -133,7 +133,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
     };
 
     return (
-        <DropdownMenu onOpenChange={setIsOpen} modal={false}>
+        <DropdownMenu 
+            onOpenChange={setIsOpen} 
+            modal={false}
+            open={isOpen && !isProcessing}
+        >
             <DropdownMenuTrigger
                 className={cn(
                     "flex items-center gap-2 p-2 sm:px-3 h-8",
@@ -141,8 +145,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     "border border-neutral-200 dark:border-neutral-800",
                     "hover:shadow-md",
                     getColorClasses(selectedModelData?.color || "neutral", true),
+                    isProcessing && "opacity-50 pointer-events-none",
                     className
                 )}
+                disabled={isProcessing}
             >
                 {selectedModelData && (
                     typeof selectedModelData.icon === 'string' ? (
@@ -316,6 +322,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 
 const MAX_IMAGES = 4;
+const MAX_INPUT_CHARS = 1000;
 
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);
@@ -327,6 +334,65 @@ const truncateFilename = (filename: string, maxLength: number = 20) => {
     const extension = filename.split('.').pop();
     const name = filename.substring(0, maxLength - 4);
     return `${name}...${extension}`;
+};
+
+const CharacterCounter = ({ current, max }: { current: number; max: number }) => {
+    const percentage = Math.min(100, (current / max) * 100);
+    const isNearLimit = percentage >= 80 && percentage < 100;
+    const isOverLimit = percentage >= 100;
+    
+    // Twitter-like styling
+    const strokeColor = isOverLimit 
+        ? 'stroke-red-500' 
+        : isNearLimit 
+            ? 'stroke-amber-500' 
+            : 'stroke-neutral-400';
+    
+    // Smaller size for more compact look
+    const size = 16;
+    const strokeWidth = 1.5;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const dash = (percentage * circumference) / 100;
+    const gap = circumference - dash;
+    
+    // Add border to ensure visibility on all backgrounds
+    const bgColor = isOverLimit
+        ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
+        : isNearLimit
+            ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
+            : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700';
+    
+    return (
+        <div className={`relative flex items-center justify-center ${bgColor} rounded-full shadow-sm transition-all duration-200`}>
+            <svg height={size} width={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
+                {/* Only show background circle when progress is visible */}
+                {current > 0 && (
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="none"
+                        strokeWidth={strokeWidth}
+                        className="stroke-neutral-200 dark:stroke-neutral-700"
+                    />
+                )}
+                {/* Progress circle */}
+                {current > 0 && (
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="none"
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={`${dash} ${gap}`}
+                        className={`transition-all ${strokeColor}`}
+                        strokeLinecap="round"
+                    />
+                )}
+            </svg>
+        </div>
+    );
 };
 
 const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment, onRemove: () => void, isUploading: boolean }> = ({ attachment, onRemove, isUploading }) => {
@@ -456,6 +522,8 @@ interface FormComponentProps {
 interface GroupSelectorProps {
     selectedGroup: SearchGroupId;
     onGroupSelect: (group: SearchGroup) => void;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
+    onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface ToolbarButtonProps {
@@ -540,60 +608,76 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     );
 };
 
-const SelectionContent = ({ ...props }) => {
+interface SelectionContentProps {
+    selectedGroup: SearchGroupId;
+    onGroupSelect: (group: SearchGroup) => void;
+    status: 'submitted' | 'streaming' | 'ready' | 'error';
+    onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange }: SelectionContentProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const isProcessing = status === 'submitted' || status === 'streaming';
+    const { width } = useWindowSize();
+    const isMobile = width ? width < 768 : false;
+
+    // Notify parent component when expansion state changes
+    useEffect(() => {
+        if (onExpandChange) {
+            // Only notify about expansion on mobile devices
+            onExpandChange(isMobile ? isExpanded : false);
+        }
+    }, [isExpanded, onExpandChange, isMobile]);
 
     return (
         <motion.div
             layout={false}
             initial={false}
             animate={{
-                width: isExpanded ? "auto" : "30px",
-                gap: isExpanded ? "0.5rem" : 0,
-                paddingRight: isExpanded ? "0.5rem" : 0,
+                width: isExpanded && !isProcessing ? "auto" : "30px",
+                gap: isExpanded && !isProcessing ? "0.5rem" : 0,
+                paddingRight: isExpanded && !isProcessing ? "0.5rem" : 0,
             }}
             transition={{
                 duration: 0.2,
                 ease: "easeInOut",
             }}
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-start"
-            }}
             className={cn(
-                "inline-flex items-center",
-                "min-w-[38px]",
-                "p-0.5",
+                "inline-flex items-center min-w-[38px] p-0.5",
                 "rounded-full border border-neutral-200 dark:border-neutral-800",
-                "bg-white dark:bg-neutral-900",
-                "shadow-sm overflow-visible",
-                "relative z-10"
+                "bg-white dark:bg-neutral-900 shadow-sm overflow-visible",
+                "relative z-10",
+                isProcessing && "opacity-50 pointer-events-none"
             )}
-            onMouseEnter={() => setIsExpanded(true)}
-            onMouseLeave={() => setIsExpanded(false)}
+            onMouseEnter={() => !isProcessing && setIsExpanded(true)}
+            onMouseLeave={() => !isProcessing && setIsExpanded(false)}
         >
             <AnimatePresence initial={false}>
-                {searchGroups.map((group, index) => {
-                    const showItem = isExpanded || props.selectedGroup === group.id;
+                {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
+                    const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
+                    const isLastItem = index === filteredGroups.length - 1;
                     return (
                         <motion.div
                             key={group.id}
                             layout={false}
                             animate={{
                                 width: showItem ? "28px" : 0,
-                                opacity: showItem ? 1 : 0
+                                opacity: showItem ? 1 : 0,
+                                marginRight: (showItem && isLastItem && isExpanded) ? "2px" : 0
                             }}
                             transition={{
                                 duration: 0.15,
                                 ease: "easeInOut"
                             }}
+                            className={cn(
+                                isLastItem && isExpanded && showItem ? "pr-0.5" : ""
+                            )}
                             style={{ margin: 0 }}
                         >
                             <ToolbarButton
                                 group={group}
-                                isSelected={props.selectedGroup === group.id}
-                                onClick={() => props.onGroupSelect(group)}
+                                isSelected={selectedGroup === group.id}
+                                onClick={() => !isProcessing && onGroupSelect(group)}
                             />
                         </motion.div>
                     );
@@ -603,11 +687,13 @@ const SelectionContent = ({ ...props }) => {
     );
 };
 
-const GroupSelector = ({ selectedGroup, onGroupSelect }: GroupSelectorProps) => {
+const GroupSelector = ({ selectedGroup, onGroupSelect, status, onExpandChange }: GroupSelectorProps) => {
     return (
         <SelectionContent
             selectedGroup={selectedGroup}
             onGroupSelect={onGroupSelect}
+            status={status}
+            onExpandChange={onExpandChange}
         />
     );
 };
@@ -638,6 +724,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [isGroupSelectorExpanded, setIsGroupSelectorExpanded] = useState(false);
+    const [isExceedingLimit, setIsExceedingLimit] = useState(false);
 
     // Add a ref to track the initial group selection
     const initialGroupRef = useRef(selectedGroup);
@@ -656,7 +744,20 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         event.preventDefault();
-        setInput(event.target.value);
+        const newValue = event.target.value;
+        
+        // Check if input exceeds character limit
+        if (newValue.length > MAX_INPUT_CHARS) {
+            setIsExceedingLimit(true);
+            // Optional: You can truncate the input here or just warn the user
+            // setInput(newValue.substring(0, MAX_INPUT_CHARS));
+            setInput(newValue);
+            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+        } else {
+            setIsExceedingLimit(false);
+            setInput(newValue);
+        }
+        
         autoResizeInput(event.target);
     };
 
@@ -670,9 +771,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const handleGroupSelect = useCallback((group: SearchGroup) => {
         setSelectedGroup(group.id);
-        resetSuggestedQuestions();
         inputRef.current?.focus();
-    }, [setSelectedGroup, resetSuggestedQuestions, inputRef]);
+    }, [setSelectedGroup, inputRef]);
 
     const uploadFile = async (file: File): Promise<Attachment> => {
         const formData = new FormData();
@@ -861,6 +961,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
+        // Check if input exceeds character limit
+        if (input.length > MAX_INPUT_CHARS) {
+            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
+            return;
+        }
+
         if (input.trim() || attachments.length > 0) {
             setHasSubmitted(true);
             lastSubmittedQueryRef.current = input.trim();
@@ -918,6 +1024,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const isProcessing = status === 'submitted' || status === 'streaming';
     const hasInteracted = messages.length > 0;
+    const isMobile = width ? width < 768 : false;
 
     return (
         <div 
@@ -1005,7 +1112,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                         "text-neutral-900 dark:text-neutral-100",
                         "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
-                        "px-4 pt-4 pb-16",
+                        "px-4 py-4 pb-16",
                         "overflow-y-auto",
                         "touch-manipulation",
                     )}
@@ -1020,6 +1127,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     onPaste={handlePaste}
                 />
 
+                {/* Character counter with responsive positioning */}
+                {input.length > 0 && (
+                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
+                        <CharacterCounter current={input.length} max={MAX_INPUT_CHARS} />
+                    </div>
+                )}
+
                 <div className={cn(
                     "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
                     "bg-neutral-100 dark:bg-neutral-900",
@@ -1027,41 +1141,48 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
                     isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
                 )}>
-                    <div className="flex items-center gap-2">
+                    <div className={cn(
+                        "flex items-center gap-2",
+                        isMobile && "overflow-hidden"
+                    )}>
                         <div className={cn(
                             "transition-all duration-100",
-                            (!hasInteracted && selectedModel !== "scira-o3-mini" && selectedGroup !== 'extreme')
+                            (selectedGroup !== 'extreme')
                                 ? "opacity-100 visible w-auto"
                                 : "opacity-0 invisible w-0"
                         )}>
                             <GroupSelector
                                 selectedGroup={selectedGroup}
                                 onGroupSelect={handleGroupSelect}
+                                status={status}
+                                onExpandChange={setIsGroupSelectorExpanded}
                             />
                         </div>
                         
-                        <ModelSwitcher
-                            selectedModel={selectedModel}
-                            setSelectedModel={setSelectedModel}
-                            showExperimentalModels={showExperimentalModels}
-                            attachments={attachments}
-                            messages={messages}
-                        />
+                        <div className={cn(
+                            "transition-all duration-300",
+                            (isMobile && isGroupSelectorExpanded) ? "opacity-0 w-0 invisible" : "opacity-100 visible w-auto"
+                        )}>
+                            <ModelSwitcher
+                                selectedModel={selectedModel}
+                                setSelectedModel={setSelectedModel}
+                                showExperimentalModels={showExperimentalModels}
+                                attachments={attachments}
+                                messages={messages}
+                                status={status}
+                            />
+                        </div>
                         
                         <div className={cn(
                             "transition-all duration-300",
-                            (!hasInteracted || initialGroupRef.current === 'extreme')
-                                ? "opacity-100 visible w-auto"
-                                : "opacity-0 invisible w-0"
+                            (isMobile && isGroupSelectorExpanded) 
+                                ? "opacity-0 invisible w-0"
+                                : "opacity-100 visible w-auto"
                         )}>
                             <button
                                 onClick={() => {
-                                    if (!hasInteracted || selectedGroup !== 'extreme') {
-                                        setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
-                                        resetSuggestedQuestions();
-                                    }
+                                    setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
                                 }}
-                                disabled={hasInteracted && selectedGroup === 'extreme'}
                                 className={cn(
                                     "flex items-center gap-2 p-2 sm:px-3 h-8",
                                     "rounded-full transition-all duration-300",
@@ -1070,17 +1191,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     selectedGroup === 'extreme' 
                                         ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" 
                                         : "bg-white dark:bg-neutral-900 text-neutral-500",
-                                    (hasInteracted && selectedGroup === 'extreme') && "opacity-50 cursor-not-allowed hover:shadow-none"
                                 )}
                             >
                                 <Mountain className="h-3.5 w-3.5" />
-                                <span className="text-xs font-medium">Extreme</span>
+                                <span className="hidden sm:block text-xs font-medium">Extreme</span>
                             </button>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {hasVisionSupport(selectedModel) && (
+                        {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
                             <Button
                                 className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
                                 onClick={(event) => {

@@ -60,20 +60,23 @@
   flex: 1;
 }
 
-h1 {
-  font-family: var(--font-syne);
-}
-
 .gradient-mask {
   mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
 }
+
 
 .white-overflow-y-scrollbar {
     overflow-y: auto;
     scrollbar-width: 6px;
     scrollbar-color: gray transparent;
     padding-right: 10px;
+}
+
+.linenumber {
+  font-style: normal !important;
+  font-weight: normal !important;
+
 }
 
 @layer utilities {

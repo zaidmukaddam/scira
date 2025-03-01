@@ -33,10 +33,9 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import WeatherChart from '@/components/weather-chart';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn, SearchGroupId } from '@/lib/utils';
 import { Wave } from "@foobar404/wave";
-import { CheckCircle, CurrencyDollar, Flag, GithubLogo, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
+import { CheckCircle, CurrencyDollar, Flag, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -56,12 +55,10 @@ import {
     Code,
     Copy,
     Download,
-    Edit2,
     ExternalLink,
     FileText,
     Film,
     Globe,
-    GraduationCap,
     Heart,
     Loader2,
     LucideIcon,
@@ -71,8 +68,6 @@ import {
     Plane,
     Play,
     Plus,
-    Search,
-    Share2,
     Sparkles,
     Sun,
     TrendingUp,
@@ -82,9 +77,11 @@ import {
     Users,
     X,
     YoutubeIcon,
-    Zap,
-    RotateCw,
-    RefreshCw
+    RefreshCw,
+    Clock,
+    WrapText,
+    ArrowLeftRight,
+    Mountain
 } from 'lucide-react';
 import Marked, { ReactRenderer } from 'marked-react';
 import { useTheme } from 'next-themes';
@@ -103,8 +100,7 @@ import React, {
 import Latex from 'react-latex-next';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark, vs } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { atomDark, oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Tweet } from 'react-tweet';
 import { toast } from 'sonner';
 import {
@@ -112,20 +108,12 @@ import {
     generateSpeech,
     suggestQuestions
 } from './actions';
-import { TrendingQuery } from './api/trending/route';
 import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
 import { ReasoningUIPart, ToolInvocationUIPart, TextUIPart, SourceUIPart } from '@ai-sdk/ui-utils';
 import {
-    Dialog,
-    DialogContent,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import {
     Drawer,
-    DrawerClose,
     DrawerContent,
-    DrawerFooter,
     DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
@@ -136,11 +124,10 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ReasonSearch from '@/components/reason-search';
-import type { StreamUpdate } from '@/components/reason-search';
+import he from 'he';
 
 export const maxDuration = 120;
 
@@ -304,35 +291,6 @@ interface YouTubeCardProps {
     index: number;
 }
 
-const PeerlistLogo = () => {
-    return (
-        <svg
-            width="24px"
-            height="24px"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-current"
-        >
-            <path
-                d="M8.87026 3H15.1297C18.187 3 20.7554 5.29881 21.093 8.33741L21.3037 10.2331C21.4342 11.4074 21.4342 12.5926 21.3037 13.7669L21.093 15.6626C20.7554 18.7012 18.187 21 15.1297 21H8.87026C5.81296 21 3.24458 18.7012 2.90695 15.6626L2.69632 13.7669C2.56584 12.5926 2.56584 11.4074 2.69632 10.2331L2.90695 8.33741C3.24458 5.29881 5.81296 3 8.87026 3Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M9 17L9 13M9 13L9 7L13 7C14.6569 7 16 8.34315 16 10V10C16 11.6569 14.6569 13 13 13L9 13Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-};
-
 const VercelIcon = ({ size = 16 }: { size: number }) => {
     return (
         <svg
@@ -351,52 +309,6 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
         </svg>
     );
 };
-
-const TooltipButton = ({ href, tooltip, children }: {
-    href: string;
-    tooltip: string;
-    children: React.ReactNode;
-}) => {
-    return (
-        <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-                <Link
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors text-neutral-600 dark:text-neutral-400"
-                >
-                    {children}
-                </Link>
-            </TooltipTrigger>
-            <TooltipContent
-                side="top"
-                className="bg-neutral-800 text-neutral-200 dark:bg-neutral-200 dark:text-neutral-800"
-            >
-                {tooltip}
-            </TooltipContent>
-        </Tooltip>
-    );
-};
-
-const XAIIcon = ({ size = 16 }: { size: number }) => {
-    return (
-        <svg
-            height={size}
-            strokeLinejoin="round"
-            viewBox="0 0 24 24"
-            width={size}
-            style={{ color: "currentcolor" }}
-        >
-            <path
-                d="m3.005 8.858 8.783 12.544h3.904L6.908 8.858zM6.905 15.825 3 21.402h3.907l1.951-2.788zM16.585 2l-6.75 9.64 1.953 2.79L20.492 2zM17.292 7.965v13.437h3.2V3.395z"
-                fillRule='evenodd'
-                clipRule={'evenodd'}
-                fill={'currentColor'}
-            ></path>
-        </svg>
-    );
-}
 
 const IconMapping: Record<string, LucideIcon> = {
     stock: TrendingUp,
@@ -530,12 +442,39 @@ function CollapsibleSection({
                         <SyntaxHighlighter
                             language={activeTab === 'code' ? language : 'plaintext'}
                             style={theme === "dark" ? oneDark : oneLight}
-                            showLineNumbers
                             customStyle={{
                                 margin: 0,
-                                padding: "1rem",
-                                fontSize: "0.813rem",
-                                background: "transparent",
+                                padding: '0.75rem 0 0 0',
+                                backgroundColor: theme === 'dark' ? '#000000' : 'transparent',
+                                borderRadius: 0,
+                                borderBottomLeftRadius: '0.375rem',
+                                borderBottomRightRadius: '0.375rem',
+                                fontFamily: GeistMono.style.fontFamily,
+                            }}
+                            showLineNumbers={true}
+                            lineNumberStyle={{
+                                textAlign: 'right',
+                                color: '#808080',
+                                backgroundColor: 'transparent',
+                                fontStyle: 'normal',
+                                marginRight: '1em',
+                                paddingRight: '0.5em',
+                                fontFamily: GeistMono.style.fontFamily,
+                                minWidth: '2em'
+                            }}
+                            lineNumberContainerStyle={{
+                                backgroundColor: theme === 'dark' ? '#000000' : '#f5f5f5',
+                                float: 'left'
+                            }}
+                            wrapLongLines={false}
+                            codeTagProps={{
+                                style: {
+                                    fontFamily: GeistMono.style.fontFamily,
+                                    fontSize: '0.85em',
+                                    whiteSpace: 'pre',
+                                    overflowWrap: 'normal',
+                                    wordBreak: 'keep-all'
+                                }
                             }}
                         >
                             {activeTab === 'code' ? code : output || ''}
@@ -683,8 +622,6 @@ const HomeContent = () => {
     const [q] = useQueryState('q', parseAsString.withDefault(''))
     const [model] = useQueryState('model', parseAsString.withDefault('scira-default'))
 
-
-
     const initialState = useMemo(() => ({
         query: query || q,
         model: model
@@ -702,39 +639,8 @@ const HomeContent = () => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useState<SearchGroupId>('web');
-    const [researchUpdates, setResearchUpdates] = useState<StreamUpdate[]>([]);
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
-
-    const CACHE_KEY = 'trendingQueriesCache';
-    const CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-
-    interface TrendingQueriesCache {
-        data: TrendingQuery[];
-        timestamp: number;
-    }
-
-    const getTrendingQueriesFromCache = (): TrendingQueriesCache | null => {
-        if (typeof window === 'undefined') return null;
-
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!cached) return null;
-
-        const parsedCache = JSON.parse(cached) as TrendingQueriesCache;
-        const now = Date.now();
-
-        if (now - parsedCache.timestamp > CACHE_DURATION) {
-            localStorage.removeItem(CACHE_KEY);
-            return null;
-        }
-
-        return parsedCache;
-    };
-
-    useEffect(() => {
-        console.log("selectedModel", selectedModel);
-    }, [selectedModel]);
-
-    const [trendingQueries, setTrendingQueries] = useState<TrendingQuery[]>([]);
+    const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
@@ -771,9 +677,7 @@ const HomeContent = () => {
         setMessages,
         reload,
         stop,
-        data,
-        setData,
-        status
+        status,
     } = useChat(chatOptions);
 
     useEffect(() => {
@@ -786,36 +690,6 @@ const HomeContent = () => {
             });
         }
     }, [initialState.query, append, setInput, messages.length]);
-
-    useEffect(() => {
-        const fetchTrending = async () => {
-            const cached = getTrendingQueriesFromCache();
-            if (cached) {
-                setTrendingQueries(cached.data);
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/trending');
-                if (!res.ok) throw new Error('Failed to fetch trending queries');
-                const data = await res.json();
-
-                const cacheData: TrendingQueriesCache = {
-                    data,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-
-                setTrendingQueries(data);
-            } catch (error) {
-                console.error('Error fetching trending queries:', error);
-                setTrendingQueries([]);
-            }
-        };
-
-        fetchTrending();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const ThemeToggle: React.FC = () => {
         const { theme, setTheme } = useTheme();
@@ -908,8 +782,9 @@ const HomeContent = () => {
             children: string;
         }
 
-        const CodeBlock = React.memo(({ language, children }: CodeBlockProps) => {
+        const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
             const [isCopied, setIsCopied] = useState(false);
+            const [isWrapped, setIsWrapped] = useState(false);
             const { theme } = useTheme();
 
             const handleCopy = useCallback(async () => {
@@ -918,78 +793,112 @@ const HomeContent = () => {
                 setTimeout(() => setIsCopied(false), 2000);
             }, [children]);
 
+            const toggleWrap = useCallback(() => {
+                setIsWrapped(prev => !prev);
+            }, []);
+
             return (
-                <div className="group my-3">
-                    <div className="grid grid-rows-[auto,1fr] rounded-lg border border-neutral-200 dark:border-neutral-800">
-                        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 dark:border-neutral-800">
-                            <div className="px-2 py-0.5 text-xs font-medium bg-neutral-100/80 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 rounded-md border border-neutral-200 dark:border-neutral-700">
+                <div className="group my-5 relative">
+                    <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                        <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+                            <div className="px-2 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-400">
                                 {language || 'text'}
                             </div>
-                            <button
-                                onClick={handleCopy}
-                                className={`
-                      px-2 py-1.5
-                      rounded-md text-xs
-                      transition-colors duration-200
-                      ${isCopied ? 'bg-green-500/10 text-green-500' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'}
-                      opacity-0 group-hover:opacity-100
-                      hover:bg-neutral-200 dark:hover:bg-neutral-700
-                      flex items-center gap-1.5
-                    `}
-                                aria-label={isCopied ? 'Copied!' : 'Copy code'}
-                            >
-                                {isCopied ? (
-                                    <>
-                                        <Check className="h-3.5 w-3.5" />
-                                        <span>Copied!</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Copy className="h-3.5 w-3.5" />
-                                        <span>Copy</span>
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={toggleWrap}
+                                    className={`
+                                      px-2 py-1
+                                      rounded text-xs font-medium
+                                      transition-all duration-200
+                                      ${isWrapped ? 'text-primary' : 'text-neutral-500 dark:text-neutral-400'}
+                                      hover:bg-neutral-200 dark:hover:bg-neutral-700
+                                      flex items-center gap-1.5
+                                    `}
+                                    aria-label="Toggle line wrapping"
+                                >
+                                    {isWrapped ? (
+                                        <>
+                                            <ArrowLeftRight className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Unwrap</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <WrapText className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Wrap</span>
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleCopy}
+                                    className={`
+                                      px-2 py-1
+                                      rounded text-xs font-medium
+                                      transition-all duration-200
+                                      ${isCopied ? 'text-primary dark:text-primary' : 'text-neutral-500 dark:text-neutral-400'}
+                                      hover:bg-neutral-200 dark:hover:bg-neutral-700
+                                      flex items-center gap-1.5
+                                    `}
+                                    aria-label="Copy code"
+                                >
+                                    {isCopied ? (
+                                        <>
+                                            <Check className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="h-3 w-3" />
+                                            <span className="hidden sm:inline">Copy</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
-
-                        <div className={`overflow-x-auto ${GeistMono.className}`}>
-                            <SyntaxHighlighter
-                                language={language || 'text'}
-                                style={theme === 'dark' ? atomDark : vs}
-                                showLineNumbers
-                                wrapLines
-                                customStyle={{
-                                    margin: 0,
-                                    padding: '1.5rem',
-                                    fontSize: '0.875rem',
-                                    background: theme === 'dark' ? '#171717' : '#ffffff',
-                                    lineHeight: 1.6,
-                                    borderBottomLeftRadius: '0.5rem',
-                                    borderBottomRightRadius: '0.5rem',
-                                }}
-                                lineNumberStyle={{
-                                    minWidth: '2.5em',
-                                    paddingRight: '1em',
-                                    color: theme === 'dark' ? '#404040' : '#94a3b8',
-                                    userSelect: 'none',
-                                }}
-                                codeTagProps={{
-                                    style: {
-                                        color: theme === 'dark' ? '#e5e5e5' : '#1e293b',
-                                        fontFamily: 'var(--font-mono)',
-                                    }
-                                }}
-                            >
-                                {children}
-                            </SyntaxHighlighter>
-                        </div>
+                        <SyntaxHighlighter
+                            language={language || 'text'}
+                            style={theme === 'dark' ? oneDark : oneLight}
+                            customStyle={{
+                                margin: 0,
+                                padding: '0.75rem 0.25rem 0.75rem',
+                                backgroundColor: theme === 'dark' ? '#171717' : 'transparent',
+                                borderRadius: 0,
+                                borderBottomLeftRadius: '0.375rem',
+                                borderBottomRightRadius: '0.375rem',
+                                fontFamily: GeistMono.style.fontFamily,
+                            }}
+                            showLineNumbers={true}
+                            lineNumberStyle={{
+                                textAlign: 'right',
+                                color: theme === 'dark' ? '#6b7280' : '#808080',
+                                backgroundColor: 'transparent',
+                                fontStyle: 'normal',
+                                marginRight: '1em',
+                                paddingRight: '0.5em',
+                                fontFamily: GeistMono.style.fontFamily,
+                                minWidth: '2em'
+                            }}
+                            lineNumberContainerStyle={{
+                                backgroundColor: theme === 'dark' ? '#171717' : '#f5f5f5',
+                                float: 'left'
+                            }}
+                            wrapLongLines={isWrapped}
+                            codeTagProps={{
+                                style: {
+                                    fontFamily: GeistMono.style.fontFamily,
+                                    fontSize: '0.85em',
+                                    whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+                                    overflowWrap: isWrapped ? 'break-word' : 'normal',
+                                    wordBreak: isWrapped ? 'break-word' : 'keep-all'
+                                }
+                            }}
+                        >
+                            {children}
+                        </SyntaxHighlighter>
                     </div>
                 </div>
             );
-        }, (prevProps, nextProps) =>
-            prevProps.children === nextProps.children &&
-            prevProps.language === nextProps.language
-        );
+        };
 
         CodeBlock.displayName = 'CodeBlock';
 
@@ -1007,36 +916,34 @@ const HomeContent = () => {
 
             if (isLoading) {
                 return (
-                    <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-neutral-500 dark:text-neutral-400" />
+                    <div className="flex items-center justify-center h-8">
+                        <Loader2 className="h-3 w-3 animate-spin text-neutral-500 dark:text-neutral-400" />
                     </div>
                 );
             }
 
             const domain = new URL(href).hostname;
+            const decodedTitle = metadata?.title ? he.decode(metadata.title) : "";
 
             return (
-                <div className="flex flex-col space-y-2 bg-white dark:bg-neutral-800 rounded-md shadow-md overflow-hidden">
-                    <div className="flex items-center space-x-2 p-3 bg-neutral-100 dark:bg-neutral-700">
+                <div className="flex flex-col bg-white dark:bg-neutral-800 text-xs m-0">
+                    <div className="flex items-center h-6 space-x-1.5 px-2 pt-1.5 text-[10px] text-neutral-500 dark:text-neutral-400">
                         <Image
-                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=256`}
-                            alt="Favicon"
-                            width={20}
-                            height={20}
+                            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                            alt=""
+                            width={10}
+                            height={10}
                             className="rounded-sm"
                         />
-                        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300 truncate">{domain}</span>
+                        <span className="truncate">{domain}</span>
                     </div>
-                    <div className="px-3 pb-3">
-                        <h3 className="text-base font-semibold text-neutral-800 dark:text-neutral-200 line-clamp-2">
-                            {metadata?.title || "Untitled"}
-                        </h3>
-                        {metadata?.description && (
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
-                                {metadata.description}
-                            </p>
-                        )}
-                    </div>
+                    {decodedTitle && (
+                        <div className="px-2 pb-1.5">
+                            <h3 className="font-medium text-sm m-0 text-neutral-800 dark:text-neutral-200 line-clamp-2">
+                                {decodedTitle}
+                            </h3>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -1049,7 +956,9 @@ const HomeContent = () => {
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={isCitation ? "cursor-pointer text-sm text-primary py-0.5 px-1.5 m-0 bg-neutral-200 dark:bg-neutral-700 rounded-full no-underline" : "text-teal-600 dark:text-teal-400 no-underline hover:underline"}
+                            className={isCitation
+                                ? "cursor-pointer text-xs text-primary py-0.5 px-1.5 m-0 bg-primary/10 dark:bg-primary/20 rounded-full no-underline font-medium"
+                                : "text-primary dark:text-primary-light no-underline hover:underline font-medium"}
                         >
                             {text}
                         </Link>
@@ -1057,7 +966,8 @@ const HomeContent = () => {
                     <HoverCardContent
                         side="top"
                         align="start"
-                        className="w-80 p-0 shadow-lg"
+                        sideOffset={5}
+                        className="w-48 p-0 shadow-sm border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
                     >
                         <LinkPreview href={href} />
                     </HoverCardContent>
@@ -1082,7 +992,7 @@ const HomeContent = () => {
             paragraph(children) {
                 if (typeof children === 'string' && children.includes('$')) {
                     return (
-                        <p className="my-4">
+                        <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">
                             <Latex
                                 delimiters={[
                                     { left: '$$', right: '$$', display: true },
@@ -1094,7 +1004,7 @@ const HomeContent = () => {
                         </p>
                     );
                 }
-                return <p className="my-4">{children}</p>;
+                return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
             },
             code(children, language) {
                 return <CodeBlock language={language}>{String(children)}</CodeBlock>;
@@ -1110,27 +1020,102 @@ const HomeContent = () => {
                 }
                 return isValidUrl(href)
                     ? renderHoverCard(href, text)
-                    : <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline">{text}</a>;
+                    : <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">{text}</a>;
             },
             heading(children, level) {
                 const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-                const className = `text-${4 - level}xl font-bold my-4 text-neutral-800 dark:text-neutral-100`;
-                return <HeadingTag className={className}>{children}</HeadingTag>;
+                const sizeClasses = {
+                    1: "text-2xl md:text-3xl font-extrabold mt-8 mb-4",
+                    2: "text-xl md:text-2xl font-bold mt-7 mb-3",
+                    3: "text-lg md:text-xl font-semibold mt-6 mb-3",
+                    4: "text-base md:text-lg font-medium mt-5 mb-2",
+                    5: "text-sm md:text-base font-medium mt-4 mb-2",
+                    6: "text-xs md:text-sm font-medium mt-4 mb-2",
+                }[level] || "";
+
+                return (
+                    <HeadingTag className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}>
+                        {children}
+                    </HeadingTag>
+                );
             },
             list(children, ordered) {
                 const ListTag = ordered ? 'ol' : 'ul';
-                return <ListTag className="list-inside list-disc my-4 pl-4 text-neutral-800 dark:text-neutral-200">{children}</ListTag>;
+                return (
+                    <ListTag className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${ordered ? 'list-decimal' : 'list-disc'}`}>
+                        {children}
+                    </ListTag>
+                );
             },
             listItem(children) {
-                return <li className="my-2 text-neutral-800 dark:text-neutral-200">{children}</li>;
+                return <li className="pl-1 leading-relaxed">{children}</li>;
             },
             blockquote(children) {
-                return <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-600 pl-4 italic my-4 text-neutral-700 dark:text-neutral-300">{children}</blockquote>;
+                return (
+                    <blockquote className="my-6 border-l-4 border-primary/30 dark:border-primary/20 pl-4 py-1 text-neutral-700 dark:text-neutral-300 italic bg-neutral-50 dark:bg-neutral-900/50 rounded-r-md">
+                        {children}
+                    </blockquote>
+                );
+            },
+            table(children) {
+                return (
+                    <div className="w-full my-8 overflow-hidden">
+                        <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+                            <table className="w-full border-collapse text-sm m-0">
+                                {children}
+                            </table>
+                        </div>
+                    </div>
+                );
+            },
+            tableRow(children) {
+                return (
+                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50">
+                        {children}
+                    </tr>
+                );
+            },
+            tableCell(children, flags) {
+                const align = flags.align ? `text-${flags.align}` : 'text-left';
+                const isHeader = flags.header;
+
+                return isHeader ? (
+                    <th className={cn(
+                        "px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-100",
+                        "bg-neutral-100/80 dark:bg-neutral-800/80",
+                        "first:pl-6 last:pr-6",
+                        align
+                    )}>
+                        {children}
+                    </th>
+                ) : (
+                    <td className={cn(
+                        "px-4 py-3 text-neutral-700 dark:text-neutral-300",
+                        "first:pl-6 last:pr-6",
+                        align
+                    )}>
+                        {children}
+                    </td>
+                );
+            },
+            tableHeader(children) {
+                return (
+                    <thead className="border-b border-neutral-200 dark:border-neutral-800">
+                        {children}
+                    </thead>
+                );
+            },
+            tableBody(children) {
+                return (
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {children}
+                    </tbody>
+                );
             },
         };
 
         return (
-            <div className="markdown-body dark:text-neutral-200 font-sans">
+            <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
                 <Marked renderer={renderer}>{content}</Marked>
             </div>
         );
@@ -1147,26 +1132,34 @@ const HomeContent = () => {
     }, [messages]);
 
     useEffect(() => {
+        if (status === 'streaming') {
+            setHasManuallyScrolled(false);
+        }
+    }, [status]);
+
+    useEffect(() => {
         const handleScroll = () => {
-            const userScrolled = window.innerHeight + window.scrollY < document.body.offsetHeight;
-            if (!userScrolled && bottomRef.current && (messages.length > 0 || suggestedQuestions.length > 0)) {
-                bottomRef.current.scrollIntoView({ behavior: "smooth" });
+            const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+            
+            if (!isAtBottom && status === 'streaming' && !hasManuallyScrolled) {
+                setHasManuallyScrolled(true);
+            }
+            
+            if (status === 'streaming' && !hasManuallyScrolled) {
+                if (bottomRef.current && (messages.length > 0 || suggestedQuestions.length > 0)) {
+                    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+                }
             }
         };
 
         window.addEventListener('scroll', handleScroll);
+        
+        if (status === 'streaming' && !hasManuallyScrolled && bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+        
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [messages, suggestedQuestions]);
-
-    const handleExampleClick = async (card: TrendingQuery) => {
-        const exampleText = card.text;
-        lastSubmittedQueryRef.current = exampleText;
-        setSuggestedQuestions([]);
-        await append({
-            content: exampleText.trim(),
-            role: 'user',
-        });
-    };
+    }, [messages, suggestedQuestions, status, hasManuallyScrolled]);
 
     const handleSuggestedQuestionClick = useCallback(async (question: string) => {
         setSuggestedQuestions([]);
@@ -1206,7 +1199,7 @@ const HomeContent = () => {
         } else {
             toast.error("Please enter a valid message.");
         }
-    }, [input, messages, editingMessageIndex, setMessages, reload]);
+    }, [input, messages, editingMessageIndex, setMessages, setInput, reload]);
 
     const AboutButton = () => {
         return (
@@ -1248,7 +1241,7 @@ const HomeContent = () => {
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,AZURE_RESOURCE_NAME,AZURE_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
@@ -1262,158 +1255,6 @@ const HomeContent = () => {
                     <ThemeToggle />
                 </div>
             </div>
-        );
-    };
-
-    const SuggestionCards: React.FC<{
-        trendingQueries: TrendingQuery[];
-        handleExampleClick: (query: TrendingQuery) => void;
-    }> = ({ trendingQueries, handleExampleClick }) => {
-        const [isLoading, setIsLoading] = useState(true);
-        const scrollRef = useRef<HTMLDivElement>(null);
-        const [isPaused, setIsPaused] = useState(false);
-        const animationFrameRef = useRef<number>();
-        const lastScrollTime = useRef<number>(0);
-
-        useEffect(() => {
-            if (trendingQueries.length > 0) {
-                setIsLoading(false);
-            }
-        }, [trendingQueries]);
-
-        useEffect(() => {
-            const animate = (timestamp: number) => {
-                if (!scrollRef.current || isPaused) {
-                    animationFrameRef.current = requestAnimationFrame(animate);
-                    return;
-                }
-
-                if (timestamp - lastScrollTime.current > 16) {
-                    const newScrollLeft = scrollRef.current.scrollLeft + 1;
-
-                    if (newScrollLeft >= scrollRef.current.scrollWidth - scrollRef.current.clientWidth) {
-                        scrollRef.current.scrollLeft = 0;
-                    } else {
-                        scrollRef.current.scrollLeft = newScrollLeft;
-                    }
-
-                    lastScrollTime.current = timestamp;
-                }
-
-                animationFrameRef.current = requestAnimationFrame(animate);
-            };
-
-            animationFrameRef.current = requestAnimationFrame(animate);
-
-            return () => {
-                if (animationFrameRef.current) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                }
-            };
-        }, [isPaused]);
-
-        const getIconForCategory = (category: string) => {
-            const iconMap = {
-                trending: <TrendingUp className="w-3 h-3" />,
-                community: <Users className="w-3 h-3" />,
-                science: <Brain className="w-3 h-3" />,
-                tech: <Code className="w-3 h-3" />,
-                travel: <Globe className="w-3 h-3" />,
-                politics: <Flag className="w-3 h-3" />,
-                health: <Heart className="w-3 h-3" />,
-                sports: <TennisBall className="w-3 h-3" />,
-                finance: <CurrencyDollar className="w-3 h-3" />,
-                football: <SoccerBall className="w-3 h-3" />,
-            };
-            return iconMap[category as keyof typeof iconMap] || <Sparkles className="w-3 h-3" />;
-        };
-
-        if (isLoading || trendingQueries.length === 0) {
-            return (
-                <div className="mt-4 relative">
-                    <div className="relative">
-                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10" />
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10" />
-
-                        <div className="flex gap-2 overflow-x-auto pb-2 px-2 scroll-smooth no-scrollbar">
-                            {[1, 2, 3, 4, 5, 6].map((_, index) => (
-                                <div
-                                    key={index}
-                                    className="flex-shrink-0 h-12 w-[120px] rounded-lg bg-neutral-50/80 dark:bg-neutral-800/80 
-                                                     border border-neutral-200/50 dark:border-neutral-700/50"
-                                >
-                                    <div className="flex items-start gap-1.5 h-full p-2">
-                                        <div className="w-4 h-4 rounded-md bg-neutral-200/50 dark:bg-neutral-700/50 
-                                                              animate-pulse mt-0.5" />
-                                        <div className="space-y-1 flex-1">
-                                            <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded animate-pulse" />
-                                            <div className="h-2 w-1/2 bg-neutral-200/50 dark:bg-neutral-700/50 rounded animate-pulse" />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4 relative"
-            >
-                <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-[8]" />
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-[8]" />
-
-                    <div
-                        ref={scrollRef}
-                        className="flex gap-2 overflow-x-auto pb-2 px-2 scroll-smooth no-scrollbar"
-                        onTouchStart={() => setIsPaused(true)}
-                        onTouchEnd={() => {
-                            // Add a small delay before resuming animation on mobile
-                            setTimeout(() => setIsPaused(false), 1000);
-                        }}
-                        onMouseEnter={() => setIsPaused(true)}
-                        onMouseLeave={() => setIsPaused(false)}
-                    >
-                        {Array(20).fill(trendingQueries).flat().map((query, index) => (
-                            <motion.button
-                                key={`${index}-${query.text}`}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{
-                                    duration: 0.2,
-                                    delay: Math.min(index * 0.02, 0.5), // Cap the maximum delay
-                                    ease: "easeOut"
-                                }}
-                                onClick={() => handleExampleClick(query)}
-                                className="group flex-shrink-0 w-[120px] h-12 bg-neutral-50/80 dark:bg-neutral-800/80
-                                         backdrop-blur-sm rounded-lg
-                                         hover:bg-white dark:hover:bg-neutral-700/70
-                                         active:scale-95
-                                         transition-all duration-200
-                                         border border-neutral-200/50 dark:border-neutral-700/50"
-                                style={{ WebkitTapHighlightColor: 'transparent' }}
-                            >
-                                <div className="flex items-start gap-1.5 h-full p-2">
-                                    <div className="w-5 h-5 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center mt-0.5">
-                                        {getIconForCategory(query.category)}
-                                    </div>
-                                    <div className="flex-1 text-left overflow-hidden">
-                                        <p className="text-xs font-medium truncate leading-tight">{query.text}</p>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 capitalize">
-                                            {query.category}
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.button>
-                        ))}
-                    </div>
-                </div>
-            </motion.div>
         );
     };
 
@@ -1452,14 +1293,6 @@ const HomeContent = () => {
         });
     }, [messages]);
 
-    const memoizedSuggestionCards = useMemo(() => (
-        <SuggestionCards
-            trendingQueries={trendingQueries}
-            handleExampleClick={handleExampleClick}
-        />
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [trendingQueries]);
-
     // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
 
@@ -1475,10 +1308,11 @@ const HomeContent = () => {
         // Remove the last assistant message
         const newMessages = messages.slice(0, -1);
         setMessages(newMessages);
+        setSuggestedQuestions([]);
 
         // Resubmit the last user message
         await reload();
-    }, [messages, append, setMessages, status]);
+    }, [status, messages, setMessages, reload]);
 
     // Add this type at the top with other interfaces
     type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart;
@@ -1490,7 +1324,6 @@ const HomeContent = () => {
         partIndex: number,
         parts: MessagePart[],
         message: any,
-        data?: any[]
     ) => {
         if (part.type === "text" && partIndex === 0 &&
             parts.some((p, i) => i > partIndex && p.type === 'tool-invocation')) {
@@ -1508,13 +1341,13 @@ const HomeContent = () => {
                                     Answer
                                 </h2>
                             </div>
-                            {status === 'ready' && messageIndex === messages.length - 1 && (
-                                <div className="flex items-center gap-2">
+                            {status === 'ready' && (
+                                <div className="flex items-center gap-1">
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => handleRegenerate()}
-                                        className="h-8 px-2 text-xs"
+                                        className="h-8 px-2 text-xs rounded-full"
                                     >
                                         <RefreshCw className="h-3.5 w-3.5" />
                                     </Button>
@@ -1528,68 +1361,130 @@ const HomeContent = () => {
             case "reasoning": {
                 const sectionKey = `${messageIndex}-${partIndex}`;
                 const isComplete = parts[partIndex + 1]?.type === "text";
-
-                // Auto-expand completed reasoning sections if not manually toggled
-                if (isComplete && reasoningVisibilityMap[sectionKey] === undefined) {
-                    setReasoningVisibilityMap(prev => ({
-                        ...prev,
-                        [sectionKey]: true
-                    }));
-                }
+                const timing = reasoningTimings[sectionKey];
+                const duration = timing?.endTime ? ((timing.endTime - timing.startTime) / 1000).toFixed(1) : null;
 
                 return (
                     <motion.div
                         key={`${messageIndex}-${partIndex}-reasoning`}
                         id={`reasoning-${messageIndex}`}
-                        className="mb-4"
+                        className="my-4"
                     >
-                        <button
-                            onClick={() => setReasoningVisibilityMap(prev => ({
-                                ...prev,
-                                [sectionKey]: !prev[sectionKey]
-                            }))}
-                            className="flex items-center justify-between w-full group text-left px-4 py-2 
-                                hover:bg-neutral-50 dark:hover:bg-neutral-800/50 
-                                border border-neutral-200 dark:border-neutral-800 
-                                rounded-lg transition-all duration-200
-                                bg-neutral-50/50 dark:bg-neutral-900/50"
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                </div>
-                                <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                                    {isComplete
-                                        ? "Reasoned"
-                                        : "Reasoning"}
-                                </span>
-                            </div>
-                            <ChevronDown
+                        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                            <button
+                                onClick={() => setReasoningVisibilityMap(prev => ({
+                                    ...prev,
+                                    [sectionKey]: !prev[sectionKey]
+                                }))}
                                 className={cn(
-                                    "h-4 w-4 text-neutral-500 transition-transform duration-200",
-                                    reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
+                                    "w-full flex items-center justify-between px-4 py-3",
+                                    "bg-neutral-50 dark:bg-neutral-900",
+                                    "hover:bg-neutral-100 dark:hover:bg-neutral-800",
+                                    "transition-colors duration-200",
+                                    "group text-left"
                                 )}
-                            />
-                        </button>
-
-                        <AnimatePresence>
-                            {reasoningVisibilityMap[sectionKey] && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="relative pl-4 mt-2">
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
-                                        <div className="text-sm italic text-neutral-600 dark:text-neutral-400">
-                                            <MarkdownRenderer content={part.reasoning} />
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex items-center justify-center size-2">
+                                        <div className="relative flex items-center justify-center size-2">
+                                            {isComplete ? (
+                                                <div className="size-1.5 rounded-full bg-emerald-500" />
+                                            ) : (
+                                                <>
+                                                    <div className="size-1.5 rounded-full bg-[#007AFF]/30 animate-ping" />
+                                                    <div className="size-1.5 rounded-full bg-[#007AFF] absolute" />
+                                                </>
+                                            )}
                                         </div>
+                                        {!isComplete && (
+                                            <div className="absolute inset-0 rounded-full border-2 border-[#007AFF]/20 animate-ping" />
+                                        )}
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                            {isComplete ? "Reasoned" : "Reasoning"}
+                                        </span>
+                                        {duration && (
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                                <Clock className="size-3 text-neutral-500" />
+                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
+                                                    {duration}s
+                                                </span>
+                                            </div>
+                                        )}
+                                        {!isComplete && liveElapsedTimes[sectionKey] && (
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                                <Clock className="size-3 text-neutral-500" />
+                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
+                                                    {liveElapsedTimes[sectionKey].toFixed(1)}s
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {!isComplete && (
+                                        <div className="flex items-center gap-[3px] px-2 py-1">
+                                            {[...Array(3)].map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="size-1 rounded-full bg-primary/60 animate-pulse"
+                                                    style={{ animationDelay: `${i * 200}ms` }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <ChevronDown
+                                        className={cn(
+                                            "size-4 text-neutral-400 transition-transform duration-200",
+                                            reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
+                                        )}
+                                    />
+                                </div>
+                            </button>
+
+                            <AnimatePresence>
+                                {reasoningVisibilityMap[sectionKey] && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden border-t border-neutral-200 dark:border-neutral-800"
+                                    >
+                                        <div className="p-4 bg-white dark:bg-neutral-900">
+                                            <div className={cn(
+                                                "text-sm text-neutral-600 dark:text-neutral-400",
+                                                "prose prose-neutral dark:prose-invert max-w-none",
+                                                "prose-p:my-2 prose-p:leading-relaxed"
+                                            )}>
+                                                {part.details ? (
+                                                    <div className="whitespace-pre-wrap">
+                                                        {part.details.map((detail, detailIndex) => (
+                                                            <div key={detailIndex}>
+                                                                {detail.type === 'text' ? (
+                                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
+                                                                        {detail.text}
+                                                                    </div>
+                                                                ) : (
+                                                                    '<redacted>'
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : part.reasoning ? (
+                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
+                                                        {part.reasoning}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-neutral-500 italic">No reasoning details available</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </motion.div>
                 );
             }
@@ -1606,13 +1501,167 @@ const HomeContent = () => {
         }
     };
 
+    // Add near other state declarations in HomeContent
+    interface ReasoningTiming {
+        startTime: number;
+        endTime?: number;
+    }
+
+    const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
+
+    // Add state for tracking live elapsed time
+    const [liveElapsedTimes, setLiveElapsedTimes] = useState<Record<string, number>>({});
+    
+    // Update live elapsed time for active reasoning sections
+    useEffect(() => {
+        const activeReasoningSections = Object.entries(reasoningTimings)
+            .filter(([_, timing]) => !timing.endTime);
+            
+        if (activeReasoningSections.length === 0) return;
+        
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const updatedTimes: Record<string, number> = {};
+            
+            activeReasoningSections.forEach(([key, timing]) => {
+                updatedTimes[key] = (now - timing.startTime) / 1000;
+            });
+            
+            setLiveElapsedTimes(prev => ({
+                ...prev,
+                ...updatedTimes
+            }));
+        }, 100);
+        
+        return () => clearInterval(interval);
+    }, [reasoningTimings]);
+
+    useEffect(() => {
+        messages.forEach((message, messageIndex) => {
+            message.parts?.forEach((part, partIndex) => {
+                if (part.type === "reasoning") {
+                    const sectionKey = `${messageIndex}-${partIndex}`;
+                    const isComplete = message.parts[partIndex + 1]?.type === "text";
+
+                    if (!reasoningTimings[sectionKey]) {
+                        setReasoningTimings(prev => ({
+                            ...prev,
+                            [sectionKey]: { startTime: Date.now() }
+                        }));
+                    } else if (isComplete && !reasoningTimings[sectionKey].endTime) {
+                        setReasoningTimings(prev => ({
+                            ...prev,
+                            [sectionKey]: {
+                                ...prev[sectionKey],
+                                endTime: Date.now()
+                            }
+                        }));
+                    }
+                }
+            });
+        });
+    }, [messages, reasoningTimings]);
+
+    const WidgetSection = memo(() => {
+        const [currentTime, setCurrentTime] = useState(new Date());
+        const timerRef = useRef<NodeJS.Timeout>();
+        
+        useEffect(() => {
+            // Sync with the nearest second
+            const now = new Date();
+            const delay = 1000 - now.getMilliseconds();
+            
+            // Initial sync
+            const timeout = setTimeout(() => {
+                setCurrentTime(new Date());
+                
+                // Then start the interval
+                timerRef.current = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+            }, delay);
+
+            return () => {
+                clearTimeout(timeout);
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                }
+            };
+        }, []);
+        
+        // Get user's timezone
+        const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Format date and time with timezone
+        const dateFormatter = new Intl.DateTimeFormat('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            timeZone: timezone
+        });
+        
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: timezone
+        });
+        
+        const formattedDate = dateFormatter.format(currentTime);
+        const formattedTime = timeFormatter.format(currentTime);
+        
+        const handleDateTimeClick = useCallback(() => {
+            if (status !== 'ready') return;
+            
+            append({
+                content: `What's the current date and time?`,
+                role: 'user'
+            });
+            
+            lastSubmittedQueryRef.current = `What's the current date and time?`;
+            setHasSubmitted(true);
+        }, [status, append, setHasSubmitted]);
+        
+        return (
+            <div className="mt-8 w-full">
+                <div className="flex flex-wrap gap-3 justify-center">
+                    {/* Time Widget */}
+                    <Button
+                        variant="outline"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        onClick={handleDateTimeClick}
+                    >
+                        <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
+                            {formattedTime}
+                        </span>
+                    </Button>
+                    
+                    {/* Date Widget */}
+                    <Button
+                        variant="outline"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        onClick={handleDateTimeClick}
+                    >
+                        <Calendar className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
+                            {formattedDate}
+                        </span>
+                    </Button>
+                </div>
+            </div>
+        );
+    });
+    
+    WidgetSection.displayName = 'WidgetSection';
+
     return (
         <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
 
             <div className={`w-full p-2 sm:p-4 ${status === 'ready' && messages.length === 0
-                    ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
-                    : 'mt-20 sm:mt-16' // Add top margin when showing messages
+                ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
+                : 'mt-20 sm:mt-16' // Add top margin when showing messages
                 }`}>
                 <div className={`w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
                     {status === 'ready' && messages.length === 0 && (
@@ -1639,7 +1688,7 @@ const HomeContent = () => {
                                     fileInputRef={fileInputRef}
                                     inputRef={inputRef}
                                     stop={stop}
-                                    messages={memoizedMessages}
+                                    messages={messages as any}
                                     append={append}
                                     selectedModel={selectedModel}
                                     setSelectedModel={handleModelChange}
@@ -1651,10 +1700,16 @@ const HomeContent = () => {
                                     status={status}
                                     setHasSubmitted={setHasSubmitted}
                                 />
-                                {memoizedSuggestionCards}
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    
+                    {/* Add the widget section below form when no messages */}
+                    {messages.length === 0 && (
+                        <div>
+                            <WidgetSection />
+                        </div>
+                    )}
 
                     <div className="space-y-4 sm:space-y-6 mb-32">
                         {memoizedMessages.map((message, index) => (
@@ -1664,76 +1719,114 @@ const HomeContent = () => {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.5 }}
-                                        className="flex items-start gap-2 mb-4 px-2 sm:px-0"
+                                        className="mb-4 px-0"
                                     >
-                                        <User2 className="size-4 sm:size-5 text-primary flex-shrink-0 mt-0.5" />
                                         <div className="flex-grow min-w-0">
                                             {isEditingMessage && editingMessageIndex === index ? (
                                                 <form onSubmit={handleMessageUpdate} className="w-full">
-                                                    <div className="relative flex items-center">
-                                                        <Input
-                                                            value={input}
-                                                            onChange={(e) => setInput(e.target.value)}
-                                                            className="pr-20 h-8 text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                                                            placeholder="Edit your message..."
-                                                        />
-                                                        <div className="absolute right-1 flex items-center gap-1">
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => {
-                                                                    setIsEditingMessage(false);
-                                                                    setEditingMessageIndex(-1);
-                                                                    setInput('');
-                                                                }}
-                                                                className="h-6 w-6"
-                                                                disabled={status === 'ready'}
-                                                            >
-                                                                <X className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            <Button
-                                                                type="submit"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 text-primary hover:text-primary/80"
-                                                                disabled={status === 'ready'}
-                                                            >
-                                                                <ArrowRight className="h-3.5 w-3.5" />
-                                                            </Button>
+                                                    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
+                                                        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
+                                                            <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                                                                Edit Query
+                                                            </span>
+                                                            <div className="bg-neutral-100 dark:bg-neutral-800 rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => {
+                                                                        setIsEditingMessage(false);
+                                                                        setEditingMessageIndex(-1);
+                                                                        setInput('');
+                                                                    }}
+                                                                    className="h-7 w-7 !rounded-l-lg !rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                    disabled={status === 'submitted' || status === 'streaming'}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                                <Separator orientation="vertical" className="h-7 bg-neutral-200 dark:bg-neutral-700" />
+                                                                <Button
+                                                                    type="submit"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7 !rounded-r-lg !rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                    disabled={status === 'submitted' || status === 'streaming'}
+                                                                >
+                                                                    <ArrowRight className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-4">
+                                                            <textarea
+                                                                value={input}
+                                                                onChange={(e) => setInput(e.target.value)}
+                                                                rows={3}
+                                                                className="w-full resize-none rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-base text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                                placeholder="Edit your message..."
+                                                            />
                                                         </div>
                                                     </div>
                                                 </form>
                                             ) : (
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-grow min-w-0">
-                                                        <p className="text-base sm:text-lg font-medium font-sans break-words text-neutral-800 dark:text-neutral-200">
+                                                <div className="group relative">
+                                                    <div className="relative">
+                                                        <p className="text-xl font-medium font-sans break-words text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12">
                                                             {message.content}
                                                         </p>
-                                                        <div className='flex flex-row gap-2'>
-                                                            {message.experimental_attachments?.map((attachment, attachmentIndex) => (
-                                                                <div key={attachmentIndex} className="mt-2">
+                                                        {!isEditingMessage && index === lastUserMessageIndex && (
+                                                            <div className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => handleMessageEdit(index)}
+                                                                    className="h-7 w-7 !rounded-l-lg !rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                    disabled={status === 'submitted' || status === 'streaming'}
+                                                                >
+                                                                    <svg
+                                                                        width="15"
+                                                                        height="15"
+                                                                        viewBox="0 0 15 15"
+                                                                        fill="none"
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        className="h-4 w-4"
+                                                                    >
+                                                                        <path
+                                                                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
+                                                                            fill="currentColor"
+                                                                            fillRule="evenodd"
+                                                                            clipRule="evenodd"
+                                                                        />
+                                                                    </svg>
+                                                                </Button>
+                                                                <Separator orientation="vertical" className="h-7" />
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(message.content);
+                                                                        toast.success("Copied to clipboard");
+                                                                    }}
+                                                                    className="h-7 w-7 !rounded-r-lg !rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                >
+                                                                    <Copy className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {message.experimental_attachments && (
+                                                        <div className='flex flex-row gap-2 mt-3'>
+                                                            {message.experimental_attachments.map((attachment, attachmentIndex) => (
+                                                                <div key={attachmentIndex}>
                                                                     {attachment.contentType!.startsWith('image/') && (
                                                                         <img
                                                                             src={attachment.url}
                                                                             alt={attachment.name || `Attachment ${attachmentIndex + 1}`}
-                                                                            className="max-w-full h-24 sm:h-32 object-fill rounded-lg"
+                                                                            className="max-w-full h-32 sm:h-48 object-cover rounded-lg border border-neutral-200 dark:border-neutral-800"
                                                                         />
                                                                     )}
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                    </div>
-                                                    {!isEditingMessage && index === lastUserMessageIndex && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleMessageEdit(index)}
-                                                            className="h-6 w-6 text-neutral-500 dark:text-neutral-400 hover:text-primary flex-shrink-0"
-                                                            disabled={status === 'ready'}
-                                                        >
-                                                            <Edit2 className="size-4 sm:size-5" />
-                                                        </Button>
                                                     )}
                                                 </div>
                                             )}
@@ -1748,7 +1841,6 @@ const HomeContent = () => {
                                         partIndex,
                                         message.parts as MessagePart[],
                                         message,
-                                        data
                                     )
                                 )}
                             </div>
@@ -1801,7 +1893,7 @@ const HomeContent = () => {
                                 fileInputRef={fileInputRef}
                                 inputRef={inputRef}
                                 stop={stop}
-                                messages={messages}
+                                messages={messages as any}
                                 append={append}
                                 selectedModel={selectedModel}
                                 setSelectedModel={handleModelChange}
@@ -2425,6 +2517,8 @@ const ToolInvocationListView = memo(
                                             x_scale: 'datetime'
                                         }}
                                         data={result.chart.elements}
+                                        stock_symbols={args.stock_symbols}
+                                        interval={args.interval}
                                     />
                                 </div>
                             )}
@@ -2598,6 +2692,128 @@ const ToolInvocationListView = memo(
                     );
                 }
 
+                if (toolInvocation.toolName === 'datetime') {
+                    if (!result) {
+                        return (
+                            <div className="flex items-center gap-3 py-4 px-2">
+                                <div className="h-5 w-5 relative">
+                                    <div className="absolute inset-0 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-blue-500 dark:border-t-blue-400 animate-spin" />
+                                </div>
+                                <span className="text-neutral-700 dark:text-neutral-300 text-sm font-medium">
+                                    Fetching current time...
+                                </span>
+                            </div>
+                        );
+                    }
+
+                    // Live Clock component that updates every second
+                    const LiveClock = memo(() => {
+                        const [time, setTime] = useState(() => new Date());
+                        const timerRef = useRef<NodeJS.Timeout>();
+                        
+                        useEffect(() => {
+                            // Sync with the nearest second
+                            const now = new Date();
+                            const delay = 1000 - now.getMilliseconds();
+                            
+                            // Initial sync
+                            const timeout = setTimeout(() => {
+                                setTime(new Date());
+                                
+                                // Then start the interval
+                                timerRef.current = setInterval(() => {
+                                    setTime(new Date());
+                                }, 1000);
+                            }, delay);
+
+                            return () => {
+                                clearTimeout(timeout);
+                                if (timerRef.current) {
+                                    clearInterval(timerRef.current);
+                                }
+                            };
+                        }, []);
+
+                        // Format the time according to the specified timezone
+                        const timezone = result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
+                        const formatter = new Intl.DateTimeFormat('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            second: 'numeric',
+                            hour12: true,
+                            timeZone: timezone
+                        });
+                        
+                        const formattedParts = formatter.formatToParts(time);
+                        const timeParts = {
+                            hour: formattedParts.find(part => part.type === 'hour')?.value || '12',
+                            minute: formattedParts.find(part => part.type === 'minute')?.value || '00',
+                            second: formattedParts.find(part => part.type === 'second')?.value || '00',
+                            dayPeriod: formattedParts.find(part => part.type === 'dayPeriod')?.value || 'AM'
+                        };
+                        
+                        return (
+                            <div className="mt-3">
+                                <div className="flex items-baseline">
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {timeParts.hour.padStart(2, '0')}
+                                    </div>
+                                    <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {timeParts.minute.padStart(2, '0')}
+                                    </div>
+                                    <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">:</div>
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
+                                        {timeParts.second.padStart(2, '0')}
+                                    </div>
+                                    <div className="ml-2 sm:ml-4 text-xl sm:text-2xl font-light self-center text-neutral-400 dark:text-neutral-500">
+                                        {timeParts.dayPeriod}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    });
+                    
+                    LiveClock.displayName = 'LiveClock';
+
+                    return (
+                        <div className="w-full my-6">
+                            <div className="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                <div className="p-5 sm:p-6 md:p-8">
+                                    <div className="flex flex-col gap-6 sm:gap-8 md:gap-10">
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
+                                                    Current Time
+                                                </h3>
+                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
+                                                    <Clock className="h-3 w-3 text-blue-500" />
+                                                    {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
+                                                </div>
+                                            </div>
+                                            <LiveClock />
+                                        </div>
+                                        
+                                        <div>
+                                            <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase mb-2">
+                                                Today&apos;s Date
+                                            </h3>
+                                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 md:gap-6">
+                                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-neutral-900 dark:text-white">
+                                                    {result.formatted.dateShort}
+                                                </h2>
+                                                <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-500">
+                                                    {result.formatted.date}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
                 return null;
             },
             [message]
@@ -2625,10 +2841,10 @@ const ToolInvocationListView = memo(
                 if (audioUrl && audioRef.current && canvasRef.current) {
                     waveRef.current = new Wave(audioRef.current, canvasRef.current);
                     waveRef.current.addAnimation(new waveRef.current.animations.Lines({
-                        lineColor: "rgb(203, 113, 93)",
-                        lineWidth: 2,
+                        lineWidth: 1.5,
+                        lineColor: 'rgb(147, 51, 234)',
+                        count: 80,
                         mirroredY: true,
-                        count: 100,
                     }));
                 }
             }, [audioUrl]);
@@ -2637,9 +2853,16 @@ const ToolInvocationListView = memo(
                 if (!audioUrl && !isGeneratingAudio) {
                     setIsGeneratingAudio(true);
                     try {
-                        const { audio } = await generateSpeech(result.translatedText, 'alloy');
+                        const { audio } = await generateSpeech(result.translatedText);
                         setAudioUrl(audio);
                         setIsGeneratingAudio(false);
+                        // Autoplay after a short delay to ensure audio is loaded
+                        setTimeout(() => {
+                            if (audioRef.current) {
+                                audioRef.current.play();
+                                setIsPlaying(true);
+                            }
+                        }, 100);
                     } catch (error) {
                         console.error("Error generating speech:", error);
                         setIsGeneratingAudio(false);
@@ -2677,31 +2900,38 @@ const ToolInvocationListView = memo(
 
             return (
                 <Card className="w-full my-4 shadow-none bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                    <CardContent className="p-6">
-                        <div className="space-y-4">
-                            <div className="w-full h-24 bg-neutral-100 dark:bg-neutral-700 rounded-lg overflow-hidden">
-                                <canvas ref={canvasRef} width="800" height="200" className="w-full h-full" />
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="space-y-4 sm:space-y-6">
+                            <div>
+                                <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                    The phrase <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.text}</span> translates from <span className="font-medium text-neutral-900 dark:text-neutral-100">{result.detectedLanguage}</span> to <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.to}</span> as <span className="font-medium text-primary">{result.translatedText}</span>
+                                </p>
                             </div>
-                            <div className="flex text-left gap-3 items-center justify-center text-pretty">
-                                <div className="flex justify-center space-x-2">
-                                    <Button
-                                        onClick={handlePlayPause}
-                                        disabled={isGeneratingAudio}
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-xs sm:text-sm w-24 bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
-                                    >
-                                        {isGeneratingAudio ? (
-                                            "Generating..."
-                                        ) : isPlaying ? (
-                                            <><Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pause</>
-                                        ) : (
-                                            <><Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Play</>
-                                        )}
-                                    </Button>
-                                </div>
-                                <div className='text-sm text-neutral-800 dark:text-neutral-200'>
-                                    The phrase <span className='font-semibold'>{toolInvocation.args.text}</span> translates from <span className='font-semibold'>{result.detectedLanguage}</span> to <span className='font-semibold'>{toolInvocation.args.to}</span> as <span className='font-semibold'>{result.translatedText}</span> in <span className='font-semibold'>{toolInvocation.args.to}</span>.
+
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <Button
+                                    onClick={handlePlayPause}
+                                    disabled={isGeneratingAudio}
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex-shrink-0"
+                                >
+                                    {isGeneratingAudio ? (
+                                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                                    ) : isPlaying ? (
+                                        <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    ) : (
+                                        <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    )}
+                                </Button>
+
+                                <div className="flex-1 h-8 sm:h-10 bg-neutral-100 dark:bg-neutral-900 rounded-md sm:rounded-lg overflow-hidden">
+                                    <canvas
+                                        ref={canvasRef}
+                                        width="800"
+                                        height="200"
+                                        className="w-full h-full opacity-90 dark:opacity-70"
+                                    />
                                 </div>
                             </div>
                         </div>
