@@ -134,7 +134,7 @@ const groupPrompts = {
   - Follow formatting guidelines strictly.
   - Markdown is supported in the response and you can use it to format the response.
   - Do not use $ for currency, use USD instead always.
-  - If the user asks something other than doing the searches or responds with a feedback, just talk them in natural language.
+  - After the first message or search, if the user asks something other than doing the searches or responds with a feedback, just talk them in natural language.
 
   Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
   Comply with user requests to the best of your abilities using the appropriate tools. Maintain composure and follow the guidelines.
@@ -189,6 +189,12 @@ const groupPrompts = {
 
   #### Nearby Search:
   - Use location and radius parameters. Adding the country name improves accuracy.
+
+  ### translate tool:
+  - Use the 'translate' tool to translate text to the user's requested language.
+  - Do not use the 'translate' tool for general web searches.
+  - invoke the tool when the user mentions the word 'translate' in the query.
+  - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool.
 
   #### Image Search:
   - Analyze image details to determine tool parameters.
