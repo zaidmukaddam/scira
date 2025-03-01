@@ -72,7 +72,7 @@ h1 {
 .white-overflow-y-scrollbar {
     overflow-y: auto;
     scrollbar-width: 6px;
-    scrollbar-color: white transparent;
+    scrollbar-color: gray transparent;
     padding-right: 10px;
 }
 
