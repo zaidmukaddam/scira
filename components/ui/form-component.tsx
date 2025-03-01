@@ -636,7 +636,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             animate={{
                 width: isExpanded && !isProcessing ? "auto" : "30px",
                 gap: isExpanded && !isProcessing ? "0.5rem" : 0,
-                paddingRight: isExpanded && !isProcessing ? "0.5rem" : 0,
+                paddingRight: isExpanded && !isProcessing ? "0.25rem" : 0,
             }}
             transition={{
                 duration: 0.2,
