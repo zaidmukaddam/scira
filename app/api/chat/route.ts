@@ -26,7 +26,8 @@ import { geolocation } from '@vercel/functions';
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-2-vision-1212'),
+        'scira-default': xai('grok-2-1212'),
+        'scira-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
         'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
@@ -711,16 +712,16 @@ export async function POST(req: Request) {
                         description: 'Search YouTube videos using Exa AI and get detailed video information.',
                         parameters: z.object({
                             query: z.string().describe('The search query for YouTube videos'),
-                            no_of_results: z.number().default(5).describe('The number of results to return'),
                         }),
-                        execute: async ({ query, no_of_results }: { query: string; no_of_results: number }) => {
+                        execute: async ({ query,  }: { query: string; }) => {
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
                                 // Simple search to get YouTube URLs only
                                 const searchResult = await exa.search(query, {
-                                    type: 'keyword',
-                                    numResults: no_of_results,
+                                    type: 'neural',
+                                    useAutoprompt: true,
+                                    numResults: 10,
                                     includeDomains: ['youtube.com'],
                                 });
 
