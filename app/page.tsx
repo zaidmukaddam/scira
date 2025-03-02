@@ -1700,7 +1700,7 @@ const HomeContent = () => {
 
             lastSubmittedQueryRef.current = `What's the current date and time?`;
             setHasSubmitted(true);
-        }, [status, append, setHasSubmitted]);
+        }, []);
 
         return (
             <div className="mt-8 w-full">
@@ -2305,8 +2305,8 @@ const ToolInvocationListView = memo(
 
                     const youtubeResult = result as YouTubeSearchResponse;
                     
-                    // Create a self-contained accordion component to properly handle state
-                    const YouTubeAccordion = () => {
+                    // Create a properly structured component that follows React hooks rules
+                    const YouTubeAccordion = React.memo(() => {
                         const [isOpen, setIsOpen] = useState(true);
                         
                         // Filter out videos with no meaningful content
@@ -2314,7 +2314,11 @@ const ToolInvocationListView = memo(
                             (video.timestamps && video.timestamps.length > 0) || 
                             video.captions || 
                             video.summary
-                        ), [youtubeResult.results]);
+                        ), []);
+                        
+                        const toggleAccordion = useCallback(() => {
+                            setIsOpen(prevState => !prevState);
+                        }, []);
                         
                         // If no videos with content, show a message instead
                         if (filteredVideos.length === 0) {
@@ -2329,17 +2333,13 @@ const ToolInvocationListView = memo(
                                                 No Content Available
                                             </h2>
                                             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                                The videos found don't contain any timestamps or transcripts.
+                                                The videos found don&apos;t contain any timestamps or transcripts.
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             );
                         }
-                        
-                        const toggleAccordion = useCallback(() => {
-                            setIsOpen(prevState => !prevState);
-                        }, []);
                         
                         return (
                             <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-sm">
@@ -2419,14 +2419,13 @@ const ToolInvocationListView = memo(
                                 </AnimatePresence>
                             </div>
                         );
-                    };
+                    });
 
-                    // Memoize the YouTubeAccordion component
-                    const MemoizedYouTubeAccordion = useMemo(() => <YouTubeAccordion />, [youtubeResult]);
+                    YouTubeAccordion.displayName  = "YouTubeAccordion";
 
                     return (
                         <div className="w-full my-4">
-                            {MemoizedYouTubeAccordion}
+                            <YouTubeAccordion />
                         </div>
                     );
                 }
