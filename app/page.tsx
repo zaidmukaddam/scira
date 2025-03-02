@@ -66,7 +66,7 @@ import {
     Moon,
     Pause,
     Plane,
-    Play,
+    Play as PlayIcon,
     Plus,
     Sparkles,
     Sun,
@@ -487,48 +487,71 @@ function CollapsibleSection({
 }
 
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
-    const [timestampsExpanded, setTimestampsExpanded] = useState(false);
-    const [transcriptExpanded, setTranscriptExpanded] = useState(false);
-
+    const [isExpanded, setIsExpanded] = useState(false);
+    
     if (!video) return null;
+
+    // Format timestamp for accessibility
+    const formatTimestamp = (timestamp: string) => {
+        const match = timestamp.match(/(\d+:\d+(?::\d+)?) - (.+)/);
+        if (match) {
+            const [_, time, description] = match;
+            return { time, description };
+        }
+        return { time: "", description: timestamp };
+    };
+
+    // Prevent event propagation to allow scrolling during streaming
+    const handleScrollableAreaEvents = (e: React.UIEvent) => {
+        e.stopPropagation();
+    };
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="w-[300px] flex-shrink-0 relative rounded-xl dark:bg-neutral-800/50 bg-gray-50 overflow-hidden"
+            transition={{ duration: 0.2, delay: index * 0.05 }}
+            className="w-[280px] flex-shrink-0 rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-all duration-200"
+            onTouchStart={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
         >
             <Link
                 href={video.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative aspect-video block bg-neutral-200 dark:bg-neutral-700"
+                className="relative aspect-video block bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
+                aria-label={`Watch ${video.details?.title || 'YouTube video'}`}
             >
                 {video.details?.thumbnail_url ? (
                     <img
                         src={video.details.thumbnail_url}
-                        alt={video.details?.title || 'Video thumbnail'}
-                        className="w-full h-full object-cover"
+                        alt=""
+                        aria-hidden="true"
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                         loading="lazy"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <YoutubeIcon className="h-8 w-8 text-neutral-400" />
+                        <YoutubeIcon className="h-8 w-8 text-red-500" />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <YoutubeIcon className="h-12 w-12 text-red-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2">
+                        {video.details?.title || 'YouTube Video'}
+                    </div>
+                    <div className="rounded-full bg-white/90 p-2">
+                        <PlayIcon className="h-6 w-6 text-red-600" />
+                    </div>
                 </div>
             </Link>
 
-            <div className="p-4 flex flex-col gap-3">
-                <div className="space-y-2">
+            <div className="p-3 flex flex-col gap-2">
+                <div>
                     <Link
                         href={video.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-base font-medium line-clamp-2 hover:text-red-500 transition-colors dark:text-neutral-100"
+                        className="text-sm font-medium line-clamp-2 hover:text-red-500 transition-colors dark:text-neutral-100"
                     >
                         {video.details?.title || 'YouTube Video'}
                     </Link>
@@ -538,12 +561,13 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                             href={video.details.author_url || video.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 group w-fit"
+                            className="flex items-center gap-1.5 group mt-1.5 w-fit"
+                            aria-label={`Channel: ${video.details.author_name}`}
                         >
-                            <div className="h-6 w-6 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center flex-shrink-0">
-                                <User2 className="h-4 w-4 text-red-500" />
+                            <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center flex-shrink-0">
+                                <User2 className="h-3 w-3 text-red-500" />
                             </div>
-                            <span className="text-sm text-neutral-600 dark:text-neutral-400 group-hover:text-red-500 transition-colors truncate">
+                            <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-red-500 transition-colors truncate">
                                 {video.details.author_name}
                             </span>
                         </Link>
@@ -551,71 +575,101 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                 </div>
 
                 {(video.timestamps && video.timestamps?.length > 0 || video.captions) && (
-                    <div className="space-y-3">
-                        <Separator />
-
-                        {video.timestamps && video.timestamps.length > 0 && (
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-xs font-medium dark:text-neutral-300">Key Moments</h4>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setTimestampsExpanded(!timestampsExpanded)}
-                                        className="h-6 px-2 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                                    >
-                                        {timestampsExpanded ? 'Show Less' : `Show All (${video.timestamps.length})`}
-                                    </Button>
-                                </div>
-                                <div className={cn(
-                                    "space-y-1.5 overflow-hidden transition-all duration-300",
-                                    timestampsExpanded ? "max-h-[300px] overflow-y-auto" : "max-h-[72px]"
-                                )}>
-                                    {video.timestamps
-                                        .slice(0, timestampsExpanded ? undefined : 3)
-                                        .map((timestamp, i) => (
-                                            <div
-                                                key={i}
-                                                className="text-xs dark:text-neutral-400 text-neutral-600 line-clamp-1"
+                    <div className="mt-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsExpanded(!isExpanded);
+                            }}
+                            className="w-full flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-400 transition-colors py-1"
+                            aria-expanded={isExpanded}
+                            aria-controls={`content-${video.videoId}`}
+                        >
+                            <span>{isExpanded ? 'Hide details' : 'Show details'}</span>
+                            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")} />
+                        </button>
+                        
+                        <AnimatePresence>
+                            {isExpanded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                    id={`content-${video.videoId}`}
+                                >
+                                    {video.timestamps && video.timestamps.length > 0 && (
+                                        <div className="mt-2 space-y-1.5">
+                                            <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Key Moments</h4>
+                                            <div 
+                                                className="max-h-[120px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                                                style={{ 
+                                                    overscrollBehavior: 'contain',
+                                                    WebkitOverflowScrolling: 'touch'
+                                                }}
+                                                onScroll={handleScrollableAreaEvents}
+                                                onTouchStart={handleScrollableAreaEvents}
+                                                onMouseDown={handleScrollableAreaEvents}
                                             >
-                                                {timestamp}
+                                                {video.timestamps.map((timestamp, i) => {
+                                                    const { time, description } = formatTimestamp(timestamp);
+                                                    return (
+                                                        <Link
+                                                            key={i}
+                                                            href={`${video.url}&t=${time.split(':').reduce((acc, time, i, arr) => {
+                                                                if (arr.length === 2) { // MM:SS format
+                                                                    return i === 0 ? acc + parseInt(time) * 60 : acc + parseInt(time);
+                                                                } else { // HH:MM:SS format
+                                                                    return i === 0 ? acc + parseInt(time) * 3600 : 
+                                                                           i === 1 ? acc + parseInt(time) * 60 : 
+                                                                           acc + parseInt(time);
+                                                                }
+                                                            }, 0)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-start gap-2 py-1 px-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                                        >
+                                                            <span className="text-xs font-medium text-red-500 whitespace-nowrap">{time}</span>
+                                                            <span className="text-xs text-neutral-700 dark:text-neutral-300 line-clamp-1">{description}</span>
+                                                        </Link>
+                                                    );
+                                                })}
                                             </div>
-                                        ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {video.captions && (
-                            <>
-                                {video.timestamps && video.timestamps!.length > 0 && <Separator />}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-xs font-medium dark:text-neutral-300">Transcript</h4>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setTranscriptExpanded(!transcriptExpanded)}
-                                            className="h-6 px-2 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                                        >
-                                            {transcriptExpanded ? 'Hide' : 'Show'}
-                                        </Button>
-                                    </div>
-                                    {transcriptExpanded && (
-                                        <div className="text-xs dark:text-neutral-400 text-neutral-600 max-h-[200px] overflow-y-auto rounded-md bg-neutral-100 dark:bg-neutral-900 p-3">
-                                            <p className="whitespace-pre-wrap">
-                                                {video.captions}
-                                            </p>
                                         </div>
                                     )}
-                                </div>
-                            </>
-                        )}
+
+                                    {video.captions && (
+                                        <div className="mt-3 space-y-1.5">
+                                            <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Transcript</h4>
+                                            <div 
+                                                className="text-xs dark:text-neutral-400 text-neutral-600 max-h-[120px] overflow-y-auto rounded bg-neutral-50 dark:bg-neutral-800 p-2 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                                                style={{ 
+                                                    overscrollBehavior: 'contain',
+                                                    WebkitOverflowScrolling: 'touch'
+                                                }}
+                                                onScroll={handleScrollableAreaEvents}
+                                                onTouchStart={handleScrollableAreaEvents}
+                                                onMouseDown={handleScrollableAreaEvents}
+                                            >
+                                                <p className="whitespace-pre-wrap">
+                                                    {video.captions}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
             </div>
         </motion.div>
     );
 };
+
+// Memoize the YouTubeCard component to prevent unnecessary re-renders
+const MemoizedYouTubeCard = React.memo(YouTubeCard);
 
 const HomeContent = () => {
     const [query] = useQueryState('query', parseAsString.withDefault(''))
@@ -2250,47 +2304,130 @@ const ToolInvocationListView = memo(
                     }
 
                     const youtubeResult = result as YouTubeSearchResponse;
-
-                    return (
-                        <Accordion type="single" defaultValue="videos" collapsible className="w-full">
-                            <AccordionItem value="videos" className="border-0">
-                                <AccordionTrigger
-                                    className={cn(
-                                        "w-full dark:bg-neutral-900 bg-white rounded-xl dark:border-neutral-800 border-gray-200 border px-6 py-4 hover:no-underline transition-all",
-                                        "[&[data-state=open]]:rounded-b-none",
-                                        "[&[data-state=open]]:border-b-0"
-                                    )}
+                    
+                    // Create a self-contained accordion component to properly handle state
+                    const YouTubeAccordion = () => {
+                        const [isOpen, setIsOpen] = useState(true);
+                        
+                        // Filter out videos with no meaningful content
+                        const filteredVideos = useMemo(() => youtubeResult.results.filter(video => 
+                            (video.timestamps && video.timestamps.length > 0) || 
+                            video.captions || 
+                            video.summary
+                        ), [youtubeResult.results]);
+                        
+                        // If no videos with content, show a message instead
+                        if (filteredVideos.length === 0) {
+                            return (
+                                <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-sm p-4 text-center">
+                                    <div className="flex flex-col items-center gap-3 py-6">
+                                        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/30">
+                                            <YoutubeIcon className="h-6 w-6 text-red-600" />
+                                        </div>
+                                        <div className="text-center">
+                                            <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+                                                No Content Available
+                                            </h2>
+                                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                                The videos found don't contain any timestamps or transcripts.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        
+                        const toggleAccordion = useCallback(() => {
+                            setIsOpen(prevState => !prevState);
+                        }, []);
+                        
+                        return (
+                            <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-sm">
+                                <button 
+                                    className="w-full text-left flex items-center justify-between px-4 py-3 border-b dark:border-neutral-800 border-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                                    onClick={toggleAccordion}
+                                    aria-expanded={isOpen}
+                                    aria-controls="youtube-results-content"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-lg dark:bg-neutral-800 bg-gray-100">
-                                            <YoutubeIcon className="h-4 w-4 text-red-500" />
+                                        <div className="flex items-center justify-center h-9 w-9 rounded-full bg-red-50 dark:bg-red-950/30">
+                                            <YoutubeIcon className="h-5 w-5 text-red-600" />
                                         </div>
                                         <div>
-                                            <h2 className="dark:text-neutral-100 text-gray-900 font-medium text-left">
+                                            <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100">
                                                 YouTube Results
                                             </h2>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Badge variant="secondary" className="dark:bg-neutral-800 bg-gray-100 dark:text-neutral-300 text-gray-600">
-                                                    {youtubeResult.results.length} videos
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <Badge variant="secondary" className="px-2 py-0 h-5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                                                    {filteredVideos.length} videos with content
                                                 </Badge>
                                             </div>
                                         </div>
                                     </div>
-                                </AccordionTrigger>
+                                    
+                                    <ChevronDown 
+                                        className={cn(
+                                            "h-5 w-5 text-neutral-500 dark:text-neutral-400 transition-transform duration-200",
+                                            !isOpen && "-rotate-90"
+                                        )} 
+                                    />
+                                </button>
+                                
+                                <AnimatePresence initial={false}>
+                                    {isOpen && (
+                                        <motion.div 
+                                            id="youtube-results-content"
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="relative">
+                                                <div 
+                                                    className="flex overflow-x-auto gap-3 p-4 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                                                    style={{ 
+                                                        overscrollBehavior: 'contain',
+                                                        WebkitOverflowScrolling: 'touch'
+                                                    }}
+                                                    onTouchStart={(e) => e.stopPropagation()}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                >
+                                                    {filteredVideos.map((video, index) => (
+                                                        <MemoizedYouTubeCard
+                                                            key={video.videoId}
+                                                            video={video}
+                                                            index={index}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                
+                                                {filteredVideos.length > 3 && (
+                                                    <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
+                                                )}
+                                            </div>
+                                            
+                                            {filteredVideos.length > 3 && (
+                                                <div className="flex items-center justify-center py-2 border-t dark:border-neutral-800 border-neutral-200">
+                                                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                                                        Scroll horizontally to see more videos
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        );
+                    };
 
-                                <AccordionContent className="dark:bg-neutral-900 bg-white dark:border-neutral-800 border-gray-200 border border-t-0 rounded-b-xl">
-                                    <div className="flex overflow-x-auto gap-3 p-3 no-scrollbar">
-                                        {youtubeResult.results.map((video, index) => (
-                                            <YouTubeCard
-                                                key={video.videoId}
-                                                video={video}
-                                                index={index}
-                                            />
-                                        ))}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
+                    // Memoize the YouTubeAccordion component
+                    const MemoizedYouTubeAccordion = useMemo(() => <YouTubeAccordion />, [youtubeResult]);
+
+                    return (
+                        <div className="w-full my-4">
+                            {MemoizedYouTubeAccordion}
+                        </div>
                     );
                 }
 
@@ -2989,7 +3126,7 @@ const ToolInvocationListView = memo(
                                     ) : isPlaying ? (
                                         <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
                                     ) : (
-                                        <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        <PlayIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                                     )}
                                 </Button>
 

@@ -237,6 +237,7 @@ const groupPrompts = {
     
     ### Core Responsibilities:
     - ALWAYS run the youtube_search tool FIRST with the user's query before composing your response.
+    - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY.
     - Create in-depth, educational content that thoroughly explains concepts from the videos.
     - Structure responses like professional tutorials or educational blog posts.
     - The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
