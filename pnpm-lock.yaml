@@ -6,26 +6,23 @@ settings:
 
 dependencies:
   '@ai-sdk/anthropic':
-    specifier: ^1.1.10
-    version: 1.1.10(zod@3.24.1)
-  '@ai-sdk/azure':
-    specifier: ^1.1.0
-    version: 1.1.0(zod@3.24.1)
+    specifier: ^1.1.12
+    version: 1.1.12(zod@3.24.1)
   '@ai-sdk/cerebras':
-    specifier: ^0.1.8
-    version: 0.1.8(zod@3.24.1)
+    specifier: ^0.1.12
+    version: 0.1.12(zod@3.24.1)
   '@ai-sdk/google':
     specifier: ^1.1.10
     version: 1.1.10(zod@3.24.1)
   '@ai-sdk/groq':
-    specifier: ^1.1.8
-    version: 1.1.8(zod@3.24.1)
+    specifier: ^1.1.11
+    version: 1.1.11(zod@3.24.1)
   '@ai-sdk/openai':
     specifier: 1.1.0
     version: 1.1.0(zod@3.24.1)
   '@ai-sdk/react':
-    specifier: ^1.1.18
-    version: 1.1.18(react@18.2.0)(zod@3.24.1)
+    specifier: ^1.1.19
+    version: 1.1.19(react@18.2.0)(zod@3.24.1)
   '@ai-sdk/ui-utils':
     specifier: ^1.1.16
     version: 1.1.16(zod@3.24.1)
@@ -39,8 +36,8 @@ dependencies:
     specifier: ^2.0.5
     version: 2.0.5
   '@mendable/firecrawl-js':
-    specifier: ^1.16.0
-    version: 1.16.0(ws@8.18.0)
+    specifier: ^1.18.6
+    version: 1.18.6(ws@8.18.0)
   '@openrouter/ai-sdk-provider':
     specifier: ^0.0.6
     version: 0.0.6(zod@3.24.1)
@@ -319,8 +316,8 @@ devDependencies:
 
 packages:
 
-  /@ai-sdk/anthropic@1.1.10(zod@3.24.1):
-    resolution: {integrity: sha512-kWmqr4ONAify8APPp+dVlw2X79ygUqPxLnA8buXrt1Sv+tkWUQ4bfTrfAkaavDJ4/VPODWqRyKcYADD482TtKg==}
+  /@ai-sdk/anthropic@1.1.12(zod@3.24.1):
+    resolution: {integrity: sha512-EygyzN8Ng5r4kj5hI2ONn1HQv0Z0NJKAQqBu4U3ZE9pKotjYuU9xkvvyteJwhQiRm4qfpqCdWHeUuC99Q30grA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -330,27 +327,15 @@ packages:
       zod: 3.24.1
     dev: false
 
-  /@ai-sdk/azure@1.1.0(zod@3.24.1):
-    resolution: {integrity: sha512-h9ICuSGHHJ/I0D1JYBLxdn1yP2OlHqGNNZ99tA9EsOWsrTDMHEbsJNcDdnshyL+sogaXzSguB5jVFKxf5s+enw==}
+  /@ai-sdk/cerebras@0.1.12(zod@3.24.1):
+    resolution: {integrity: sha512-2UpPGYJLrWe7eChT7tr2e2PlGRjgttPDrG9uAaLtE8bxY1xbMUb96YiZQuys3rrNWznn46eNxoxOyVNAIGU7Rw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
     dependencies:
-      '@ai-sdk/openai': 1.1.0(zod@3.24.1)
-      '@ai-sdk/provider': 1.0.4
-      '@ai-sdk/provider-utils': 2.1.0(zod@3.24.1)
-      zod: 3.24.1
-    dev: false
-
-  /@ai-sdk/cerebras@0.1.8(zod@3.24.1):
-    resolution: {integrity: sha512-PlGIr4JhLAuefxMv58zjOjvE+zpWddDO+/DiSwpiNKtqYX0616zv8f2xrVl2dKIR3zoB/30AaTW5UEefynSupg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.0.0
-    dependencies:
-      '@ai-sdk/openai-compatible': 0.1.8(zod@3.24.1)
-      '@ai-sdk/provider': 1.0.7
-      '@ai-sdk/provider-utils': 2.1.6(zod@3.24.1)
+      '@ai-sdk/openai-compatible': 0.1.12(zod@3.24.1)
+      '@ai-sdk/provider': 1.0.9
+      '@ai-sdk/provider-utils': 2.1.10(zod@3.24.1)
       zod: 3.24.1
     dev: false
 
@@ -365,14 +350,14 @@ packages:
       zod: 3.24.1
     dev: false
 
-  /@ai-sdk/groq@1.1.8(zod@3.24.1):
-    resolution: {integrity: sha512-u4BVnx3/WKJ1ytxZEWaMH//2/5OeCv36H919wyLG2y48Jw/jLQvXPkUWuNPNRUpB3gkNWXYDxNnSMc6/4vVIMg==}
+  /@ai-sdk/groq@1.1.11(zod@3.24.1):
+    resolution: {integrity: sha512-Y5WUyWuxkQarl4AVGeIMbNSp4/XiwW/mxp9SKeagfDhflVnQHd2ggISVD6HiOBQhznusITjWYYC66DJeBn0v6A==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
     dependencies:
-      '@ai-sdk/provider': 1.0.7
-      '@ai-sdk/provider-utils': 2.1.7(zod@3.24.1)
+      '@ai-sdk/provider': 1.0.9
+      '@ai-sdk/provider-utils': 2.1.10(zod@3.24.1)
       zod: 3.24.1
     dev: false
 
@@ -384,17 +369,6 @@ packages:
     dependencies:
       '@ai-sdk/provider': 1.0.9
       '@ai-sdk/provider-utils': 2.1.10(zod@3.24.1)
-      zod: 3.24.1
-    dev: false
-
-  /@ai-sdk/openai-compatible@0.1.8(zod@3.24.1):
-    resolution: {integrity: sha512-o2WeZmkOgaaEHAIZfAdlAASotNemhWBzupUp7ql/vBKIrPDctbQS4K7XOvG7EZ1dshn0TxB+Ur7Q8HoWSeWPmA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.0.0
-    dependencies:
-      '@ai-sdk/provider': 1.0.7
-      '@ai-sdk/provider-utils': 2.1.6(zod@3.24.1)
       zod: 3.24.1
     dev: false
 
@@ -489,22 +463,6 @@ packages:
       zod: 3.24.1
     dev: false
 
-  /@ai-sdk/provider-utils@2.1.7(zod@3.24.1):
-    resolution: {integrity: sha512-5pliIKahXPlx3PZNBL3TtOBosFftoCq8bUNYdLi2M3YPBdQen9G9mR1BCrhC5hhEk4i3XTM8boqYeuRN6kLfsA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
-    dependencies:
-      '@ai-sdk/provider': 1.0.7
-      eventsource-parser: 3.0.0
-      nanoid: 3.3.8
-      secure-json-parse: 2.7.0
-      zod: 3.24.1
-    dev: false
-
   /@ai-sdk/provider@0.0.22:
     resolution: {integrity: sha512-smZ1/2jL/JSKnbhC6ama/PxI2D/psj+YAe0c0qpd5ComQCNFltg72VFf0rpUSFMmFuj1pCCNoBOCrvyl8HTZHQ==}
     engines: {node: '>=18'}
@@ -542,6 +500,26 @@ packages:
 
   /@ai-sdk/react@1.1.18(react@18.2.0)(zod@3.24.1):
     resolution: {integrity: sha512-2wlWug6NVAc8zh3pgqtvwPkSNTdA6Q4x9CmrNXCeHcXfJkJ+MuHFQz/I7Wb7mLRajf0DAxsFLIhHyBCEuTkDNw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: ^18 || ^19 || ^19.0.0-rc
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      '@ai-sdk/provider-utils': 2.1.10(zod@3.24.1)
+      '@ai-sdk/ui-utils': 1.1.16(zod@3.24.1)
+      react: 18.2.0
+      swr: 2.3.0(react@18.2.0)
+      throttleit: 2.1.0
+      zod: 3.24.1
+    dev: false
+
+  /@ai-sdk/react@1.1.19(react@18.2.0)(zod@3.24.1):
+    resolution: {integrity: sha512-zqSOWmJxpB45ZrwZ04+Q7Uo3xeGM0tva2eUYz2T4gv9Yk6MQAfOBA6+scsKg8CyIuUy4M4/C4pCY3eWQf7sfQg==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -766,8 +744,8 @@ packages:
     engines: {node: '>=6.0.0'}
     dev: false
 
-  /@mendable/firecrawl-js@1.16.0(ws@8.18.0):
-    resolution: {integrity: sha512-u5UVkgmR5yLRBVOaf8gnycAN1RyVHxqjpNkzYCeuCaqnWX7k6ad0OAUMSwf9DR8cPXuHw2/H0VPHqwMhBG/8Xw==}
+  /@mendable/firecrawl-js@1.18.6(ws@8.18.0):
+    resolution: {integrity: sha512-/VD5h3JWSAsqcrWXGaw87aXh6StKEg4wRMKrsVma1Jy/INkI4KD8ly67N77UQXkFiFAPpX+gmBJAfVdbtpByeg==}
     dependencies:
       axios: 1.7.9
       isows: 1.0.6(ws@8.18.0)

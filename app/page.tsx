@@ -642,7 +642,7 @@ const HomeContent = () => {
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
     const isAutoScrollingRef = useRef(false);
-        
+
     const chatOptions: UseChatOptions = useMemo(() => ({
         maxSteps: 5,
         experimental_throttle: 500,
@@ -1146,7 +1146,7 @@ const HomeContent = () => {
 
     useEffect(() => {
         let scrollTimeout: NodeJS.Timeout;
-        
+
         const handleScroll = () => {
             // Clear any pending timeout
             if (scrollTimeout) {
@@ -1163,7 +1163,7 @@ const HomeContent = () => {
         };
 
         window.addEventListener('scroll', handleScroll);
-        
+
         // Auto-scroll on new content if we haven't manually scrolled
         if (status === 'streaming' && !hasManuallyScrolled && bottomRef.current) {
             scrollTimeout = setTimeout(() => {
@@ -1175,7 +1175,7 @@ const HomeContent = () => {
                 }, 100);
             }, 100);
         }
-        
+
         return () => {
             window.removeEventListener('scroll', handleScroll);
             if (scrollTimeout) {
@@ -1537,28 +1537,28 @@ const HomeContent = () => {
 
     // Add state for tracking live elapsed time
     const [liveElapsedTimes, setLiveElapsedTimes] = useState<Record<string, number>>({});
-    
+
     // Update live elapsed time for active reasoning sections
     useEffect(() => {
         const activeReasoningSections = Object.entries(reasoningTimings)
             .filter(([_, timing]) => !timing.endTime);
-            
+
         if (activeReasoningSections.length === 0) return;
-        
+
         const interval = setInterval(() => {
             const now = Date.now();
             const updatedTimes: Record<string, number> = {};
-            
+
             activeReasoningSections.forEach(([key, timing]) => {
                 updatedTimes[key] = (now - timing.startTime) / 1000;
             });
-            
+
             setLiveElapsedTimes(prev => ({
                 ...prev,
                 ...updatedTimes
             }));
         }, 100);
-        
+
         return () => clearInterval(interval);
     }, [reasoningTimings]);
 
@@ -1591,16 +1591,16 @@ const HomeContent = () => {
     const WidgetSection = memo(() => {
         const [currentTime, setCurrentTime] = useState(new Date());
         const timerRef = useRef<NodeJS.Timeout>();
-        
+
         useEffect(() => {
             // Sync with the nearest second
             const now = new Date();
             const delay = 1000 - now.getMilliseconds();
-            
+
             // Initial sync
             const timeout = setTimeout(() => {
                 setCurrentTime(new Date());
-                
+
                 // Then start the interval
                 timerRef.current = setInterval(() => {
                     setCurrentTime(new Date());
@@ -1614,10 +1614,10 @@ const HomeContent = () => {
                 }
             };
         }, []);
-        
+
         // Get user's timezone
         const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-        
+
         // Format date and time with timezone
         const dateFormatter = new Intl.DateTimeFormat('en-US', {
             weekday: 'short',
@@ -1625,29 +1625,29 @@ const HomeContent = () => {
             day: 'numeric',
             timeZone: timezone
         });
-        
+
         const timeFormatter = new Intl.DateTimeFormat('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
             timeZone: timezone
         });
-        
+
         const formattedDate = dateFormatter.format(currentTime);
         const formattedTime = timeFormatter.format(currentTime);
-        
+
         const handleDateTimeClick = useCallback(() => {
             if (status !== 'ready') return;
-            
+
             append({
                 content: `What's the current date and time?`,
                 role: 'user'
             });
-            
+
             lastSubmittedQueryRef.current = `What's the current date and time?`;
             setHasSubmitted(true);
         }, [status, append, setHasSubmitted]);
-        
+
         return (
             <div className="mt-8 w-full">
                 <div className="flex flex-wrap gap-3 justify-center">
@@ -1662,7 +1662,7 @@ const HomeContent = () => {
                             {formattedTime}
                         </span>
                     </Button>
-                    
+
                     {/* Date Widget */}
                     <Button
                         variant="outline"
@@ -1678,7 +1678,7 @@ const HomeContent = () => {
             </div>
         );
     });
-    
+
     WidgetSection.displayName = 'WidgetSection';
 
     return (
@@ -1729,7 +1729,7 @@ const HomeContent = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    
+
                     {/* Add the widget section below form when no messages */}
                     {messages.length === 0 && (
                         <div>
@@ -2600,7 +2600,7 @@ const ToolInvocationListView = memo(
                             <div className="border border-neutral-200 rounded-xl my-4 p-4 dark:border-neutral-800 bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
                                 <div className="flex items-center gap-4">
                                     <div className="relative w-10 h-10">
-                                        <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-lg" />
+                                        <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
                                         <Globe className="h-5 w-5 text-primary/70 absolute inset-0 m-auto" />
                                     </div>
                                     <div className="space-y-2 flex-1">
@@ -2615,6 +2615,45 @@ const ToolInvocationListView = memo(
                         );
                     }
 
+                    // Update the error message UI with better dark mode border visibility
+                    if (result.error || (result.results && result.results[0] && result.results[0].error)) {
+                        const errorMessage = result.error || (result.results && result.results[0] && result.results[0].error);
+                        return (
+                            <div className="border border-red-200 dark:border-red-500 rounded-xl my-4 p-4 bg-red-50 dark:bg-red-950/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                                        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
+                                    </div>
+                                    <div>
+                                        <div className="text-red-700 dark:text-red-300 text-sm font-medium">
+                                            Error retrieving content
+                                        </div>
+                                        <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">
+                                            {errorMessage}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // Update the "no content" message UI with better dark mode border visibility
+                    if (!result.results || result.results.length === 0) {
+                        return (
+                            <div className="border border-amber-200 dark:border-amber-500 rounded-xl my-4 p-4 bg-amber-50 dark:bg-amber-950/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center flex-shrink-0">
+                                        <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
+                                    </div>
+                                    <div className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                                        No content available
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // Existing rendering for successful retrieval:
                     return (
                         <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
                             <div className="p-4">
@@ -2625,14 +2664,17 @@ const ToolInvocationListView = memo(
                                             className="h-5 w-5 absolute inset-0 m-auto"
                                             src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
                                             alt=""
+                                            onError={(e) => {
+                                                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.938 11h3.965a8.008 8.008 0 0 0-5.648-6.667z' fill='rgba(128,128,128,0.5)'/%3E%3C/svg%3E";
+                                            }}
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0 space-y-2">
                                         <h2 className="font-semibold text-lg text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
-                                            {result.results[0].title}
+                                            {result.results[0].title || 'Retrieved Content'}
                                         </h2>
                                         <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
-                                            {result.results[0].description}
+                                            {result.results[0].description || 'No description available'}
                                         </p>
                                         <div className="flex items-center gap-3">
                                             <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
@@ -2663,7 +2705,7 @@ const ToolInvocationListView = memo(
                                     </summary>
                                     <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50/50 dark:bg-neutral-800/30">
                                         <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                                            <ReactMarkdown>{result.results[0].content}</ReactMarkdown>
+                                            <ReactMarkdown>{result.results[0].content || 'No content available'}</ReactMarkdown>
                                         </div>
                                     </div>
                                 </details>
@@ -2736,16 +2778,16 @@ const ToolInvocationListView = memo(
                     const LiveClock = memo(() => {
                         const [time, setTime] = useState(() => new Date());
                         const timerRef = useRef<NodeJS.Timeout>();
-                        
+
                         useEffect(() => {
                             // Sync with the nearest second
                             const now = new Date();
                             const delay = 1000 - now.getMilliseconds();
-                            
+
                             // Initial sync
                             const timeout = setTimeout(() => {
                                 setTime(new Date());
-                                
+
                                 // Then start the interval
                                 timerRef.current = setInterval(() => {
                                     setTime(new Date());
@@ -2769,7 +2811,7 @@ const ToolInvocationListView = memo(
                             hour12: true,
                             timeZone: timezone
                         });
-                        
+
                         const formattedParts = formatter.formatToParts(time);
                         const timeParts = {
                             hour: formattedParts.find(part => part.type === 'hour')?.value || '12',
@@ -2777,7 +2819,7 @@ const ToolInvocationListView = memo(
                             second: formattedParts.find(part => part.type === 'second')?.value || '00',
                             dayPeriod: formattedParts.find(part => part.type === 'dayPeriod')?.value || 'AM'
                         };
-                        
+
                         return (
                             <div className="mt-3">
                                 <div className="flex items-baseline">
@@ -2799,7 +2841,7 @@ const ToolInvocationListView = memo(
                             </div>
                         );
                     });
-                    
+
                     LiveClock.displayName = 'LiveClock';
 
                     return (
@@ -2819,7 +2861,7 @@ const ToolInvocationListView = memo(
                                             </div>
                                             <LiveClock />
                                         </div>
-                                        
+
                                         <div>
                                             <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase mb-2">
                                                 Today&apos;s Date

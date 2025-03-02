@@ -812,7 +812,11 @@ export async function POST(req: Request) {
                             try {
                                 const content = await app.scrapeUrl(url);
                                 if (!content.success || !content.metadata) {
-                                    return { error: 'Failed to retrieve content' };
+                                    return {
+                                        results: [{
+                                            error: content.error
+                                        }]
+                                    };
                                 }
 
                                 // Define schema for extracting missing content
@@ -2010,8 +2014,9 @@ export async function POST(req: Request) {
                             JSON.stringify(parameterSchema(toolCall)),
                             'Please fix the arguments.',
                             'Do not use print statements stock chart tool.',
-                            `For the stock chart tool you have to generate a python code with 
-                            matplotlib and yfinance to plot the stock chart.`
+                            `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
+                            `For the web search make multiple queries to get the best results.`,
+                            `Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
                         ].join('\n'),
                     });
 

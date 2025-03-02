@@ -109,7 +109,7 @@ const groupTools = {
     'web_search', 'get_weather_data',
     'retrieve', 'text_translate',
     'nearby_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies', 
+    'movie_or_tv_search', 'trending_movies',
     'trending_tv',
     'reason_search', 'datetime'
   ] as const,
