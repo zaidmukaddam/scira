@@ -3,21 +3,28 @@ import { GeistSans } from 'geist/font/sans';
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Metadata, Viewport } from "next";
-import { Instrument_Serif, Syne } from 'next/font/google';
+import { Syne } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://scira.app"),
-  title: "Scira",
-  description: "Scira is a minimalistic AI-powered search engine that helps you find information on the internet.",
+  metadataBase: new URL("https://scira.ai"),
+  title: "Scira AI",
+  description: "Scira AI is a minimalistic AI-powered search engine that helps you find information on the internet.",
   openGraph: {
-    url: "https://scira.app",
-    siteName: "Scira",
+    url: "https://scira.ai",
+    siteName: "Scira AI",
   },
   keywords: [
+    "scira.ai",
+    "scira ai",
+    "Scira AI",
+    "scira AI",
+    "SCIRA.AI",
+    "scira github",
+    "ai search engine",
     "Scira",
     "scira",
     "scira.app",
