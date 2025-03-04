@@ -87,7 +87,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
    - Enter `Scira` in the "Search engine" field.
 
 5. **Set the search engine URL**:
-   - Enter `https://scira.app?q=%s` in the "URL with %s in place of query" field.
+   - Enter `https://scira.ai?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
    - Enter `sh` in the "Shortcut" field.
