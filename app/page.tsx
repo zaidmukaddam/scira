@@ -33,9 +33,9 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import WeatherChart from '@/components/weather-chart';
-import { cn, SearchGroupId } from '@/lib/utils';
+import { cn, getUserId, SearchGroupId } from '@/lib/utils';
 import { Wave } from "@foobar404/wave";
-import { CheckCircle, CurrencyDollar, Flag, Info, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
+import { CheckCircle, CurrencyDollar, Flag, Info, Memory, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -129,6 +129,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import ReasonSearch from '@/components/reason-search';
 import he from 'he';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import MemoryManager from '@/components/memory-manager';
 
 export const maxDuration = 120;
 
@@ -489,7 +490,7 @@ function CollapsibleSection({
 
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
+
     if (!video) return null;
 
     // Format timestamp for accessibility
@@ -596,9 +597,9 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                                                                     if (arr.length === 2) { // MM:SS format
                                                                         return i === 0 ? acc + parseInt(time) * 60 : acc + parseInt(time);
                                                                     } else { // HH:MM:SS format
-                                                                        return i === 0 ? acc + parseInt(time) * 3600 : 
-                                                                               i === 1 ? acc + parseInt(time) * 60 : 
-                                                                               acc + parseInt(time);
+                                                                        return i === 0 ? acc + parseInt(time) * 3600 :
+                                                                            i === 1 ? acc + parseInt(time) * 60 :
+                                                                                acc + parseInt(time);
                                                                     }
                                                                 }, 0)}`}
                                                                 target="_blank"
@@ -656,8 +657,7 @@ const HomeContent = () => {
     const initialState = useMemo(() => ({
         query: query || q,
         model: model
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), []);
+    }), [query, q, model]);
 
     const lastSubmittedQueryRef = useRef(initialState.query);
     const [selectedModel, setSelectedModel] = useState(initialState.model);
@@ -674,12 +674,16 @@ const HomeContent = () => {
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
     const isAutoScrollingRef = useRef(false);
 
+    // Get stored user ID
+    const userId = useMemo(() => getUserId(), []);
+
     const chatOptions: UseChatOptions = useMemo(() => ({
-        maxSteps: 5,
+        api: '/api/search',
         experimental_throttle: 500,
         body: {
             model: selectedModel,
             group: selectedGroup,
+            user_id: userId,
         },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);
@@ -698,7 +702,7 @@ const HomeContent = () => {
                 description: `Oops! An error occurred while processing your request. ${error.message}`,
             });
         },
-    }), [selectedModel, selectedGroup]);
+    }), [selectedModel, selectedGroup, userId]);
 
     const {
         input,
@@ -1295,7 +1299,7 @@ const HomeContent = () => {
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_NAME,MEM0_PROJECT_NAME&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
@@ -1770,7 +1774,12 @@ const HomeContent = () => {
 
                     <div className="space-y-4 sm:space-y-6 mb-32">
                         {memoizedMessages.map((message, index) => (
-                            <div key={index}>
+                            <div key={index} className={`${
+                                // Add border only if this is an assistant message AND there's a next message
+                                message.role === 'assistant' && index < memoizedMessages.length - 1 
+                                    ? '!mb-12 border-b border-neutral-200 dark:border-neutral-800' 
+                                    : ''
+                            }`.trim()}>
                                 {message.role === 'user' && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
@@ -1891,43 +1900,49 @@ const HomeContent = () => {
                                     </motion.div>
                                 )}
 
-                                {message.role === 'assistant' && message.parts?.map((part, partIndex) =>
-                                    renderPart(
-                                        part as MessagePart,
-                                        index,
-                                        partIndex,
-                                        message.parts as MessagePart[],
-                                        message,
-                                    )
+                                {message.role === 'assistant' && (
+                                    <>
+                                        {message.parts?.map((part, partIndex) =>
+                                            renderPart(
+                                                part as MessagePart,
+                                                index,
+                                                partIndex,
+                                                message.parts as MessagePart[],
+                                                message,
+                                            )
+                                        )}
+                                        
+                                        {/* Add suggested questions if this is the last message and it's from the assistant */}
+                                        {index === memoizedMessages.length - 1 && suggestedQuestions.length > 0 && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 20 }}
+                                                transition={{ duration: 0.5 }}
+                                                className="w-full max-w-xl sm:max-w-2xl mt-6"
+                                            >
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <AlignLeft className="w-5 h-5 text-primary" />
+                                                    <h2 className="font-semibold text-base text-neutral-800 dark:text-neutral-200">Suggested questions</h2>
+                                                </div>
+                                                <div className="space-y-2 flex flex-col">
+                                                    {suggestedQuestions.map((question, index) => (
+                                                        <Button
+                                                            key={index}
+                                                            variant="ghost"
+                                                            className="w-fit font-medium rounded-2xl p-1 justify-start text-left h-auto py-2 px-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-normal"
+                                                            onClick={() => handleSuggestedQuestionClick(question)}
+                                                        >
+                                                            {question}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         ))}
-                        {suggestedQuestions.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 20 }}
-                                transition={{ duration: 0.5 }}
-                                className="w-full max-w-xl sm:max-w-2xl"
-                            >
-                                <div className="flex items-center gap-2 mb-4">
-                                    <AlignLeft className="w-5 h-5 text-primary" />
-                                    <h2 className="font-semibold text-base text-neutral-800 dark:text-neutral-200">Suggested questions</h2>
-                                </div>
-                                <div className="space-y-2 flex flex-col">
-                                    {suggestedQuestions.map((question, index) => (
-                                        <Button
-                                            key={index}
-                                            variant="ghost"
-                                            className="w-fit font-medium rounded-2xl p-1 justify-start text-left h-auto py-2 px-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-normal"
-                                            onClick={() => handleSuggestedQuestionClick(question)}
-                                        >
-                                            {question}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
                     </div>
                     <div ref={bottomRef} />
                 </div>
@@ -1986,11 +2001,7 @@ const LoadingFallback = () => (
 );
 
 const ToolInvocationListView = memo(
-    ({ toolInvocations, message }: {
-        toolInvocations: ToolInvocation[],
-        message: any,
-    }) => {
-
+    ({ toolInvocations, message }: { toolInvocations: ToolInvocation[]; message: any }) => {
         const renderToolInvocation = useCallback(
             (toolInvocation: ToolInvocation, index: number) => {
                 const args = JSON.parse(JSON.stringify(toolInvocation.args));
@@ -2235,7 +2246,7 @@ const ToolInvocationListView = memo(
                                                     Show all {result.length} tweets
                                                 </Button>
                                             </SheetTrigger>
-                                            <SheetContent side="right" className="w-[400px] sm:w-[600px] overflow-y-auto !p-0 !z-[70]">
+                                            <SheetContent side="right" className="w-[400px] sm:w-[700px] overflow-y-auto !p-0 !z-[70]">
                                                 <SheetHeader className='!mt-5 !font-sans'>
                                                     <SheetTitle className='text-center'>All Tweets</SheetTitle>
                                                 </SheetHeader>
@@ -2281,14 +2292,14 @@ const ToolInvocationListView = memo(
                     }
 
                     const youtubeResult = result as YouTubeSearchResponse;
-                    
+
                     // Filter out videos with no meaningful content
-                    const filteredVideos = youtubeResult.results.filter(video => 
-                        (video.timestamps && video.timestamps.length > 0) || 
-                        video.captions || 
+                    const filteredVideos = youtubeResult.results.filter(video =>
+                        (video.timestamps && video.timestamps.length > 0) ||
+                        video.captions ||
                         video.summary
                     );
-                    
+
                     // If no videos with content, show a message instead
                     if (filteredVideos.length === 0) {
                         return (
@@ -2309,7 +2320,7 @@ const ToolInvocationListView = memo(
                             </div>
                         );
                     }
-                    
+
                     return (
                         <div className="w-full my-4">
                             <Accordion type="single" collapsible defaultValue="videos">
@@ -2941,6 +2952,19 @@ const ToolInvocationListView = memo(
                             </div>
                         </div>
                     );
+                }
+
+                if (toolInvocation.toolName === 'memory_manager') {
+                    if (!result) {
+                        return (
+                            <SearchLoadingState
+                                icon={Memory}
+                                text="Managing memories..."
+                                color="violet"
+                            />
+                        );
+                    }
+                    return <MemoryManager result={result} />;
                 }
 
                 return null;

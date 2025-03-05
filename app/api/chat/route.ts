@@ -23,6 +23,7 @@ import {
 import Exa from 'exa-js';
 import { z } from 'zod';
 import { geolocation } from '@vercel/functions';
+import MemoryClient from 'mem0ai';
 
 const scira = customProvider({
     languageModels: {
@@ -162,8 +163,8 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 
 // Modify the POST function to use the new handler
 export async function POST(req: Request) {
-    const { messages, model, group } = await req.json();
-    const { tools: activeTools, systemPrompt } = await getGroupConfig(group);
+    const { messages, model, group, user_id } = await req.json();
+    const { systemPrompt, tools: activeTools } = await getGroupConfig(group);
     const geo = geolocation(req);
 
     console.log("Running with model: ", model.trim());
@@ -185,11 +186,11 @@ export async function POST(req: Request) {
                     }
                 },
                 messages: convertToCoreMessages(messages),
+                temperature: 0,
                 experimental_transform: smoothStream({
                     chunking: 'word',
                     delayInMs: 15,
                 }),
-                temperature: 0,
                 experimental_activeTools: [...activeTools],
                 system: systemPrompt,
                 tools: {
@@ -713,7 +714,7 @@ export async function POST(req: Request) {
                         parameters: z.object({
                             query: z.string().describe('The search query for YouTube videos'),
                         }),
-                        execute: async ({ query,  }: { query: string; }) => {
+                        execute: async ({ query, }: { query: string; }) => {
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
@@ -1471,20 +1472,20 @@ export async function POST(req: Request) {
                                     })).max(8)
                                 }),
                                 prompt: `Create a focused research plan for the topic: "${topic}". 
-                                        
-                                        Today's date and day of the week: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                
-                                        Keep the plan concise but comprehensive, with:
-                                        - 4-12 targeted search queries (each can use web, academic, or both sources)
-                                        - 2-8 key analyses to perform
-                                        - Prioritize the most important aspects to investigate
-                                        
-                                        Do not use floating numbers, use whole numbers only in the priority field!!
-                                        Do not keep the numbers too low or high, make them reasonable in between.
-                                        Do not use 0 or 1 in the priority field, use numbers between 2 and 4.
+                                    
+                                    Today's date and day of the week: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            
+                                    Keep the plan concise but comprehensive, with:
+                                    - 4-12 targeted search queries (each can use web, academic, or both sources)
+                                    - 2-8 key analyses to perform
+                                    - Prioritize the most important aspects to investigate
+                                    
+                                    Do not use floating numbers, use whole numbers only in the priority field!!
+                                    Do not keep the numbers too low or high, make them reasonable in between.
+                                    Do not use 0 or 1 in the priority field, use numbers between 2 and 4.
 
-                                        Consider different angles and potential controversies, but maintain focus on the core aspects.
-                                        Ensure the total number of steps (searches + analyses) does not exceed 20.`
+                                    Consider different angles and potential controversies, but maintain focus on the core aspects.
+                                    Ensure the total number of steps (searches + analyses) does not exceed 20.`
                             });
 
                             // Generate IDs for all steps based on the plan
@@ -1652,8 +1653,8 @@ export async function POST(req: Request) {
                                         limitations: z.array(z.string())
                                     }),
                                     prompt: `Perform a ${step.analysis.type} analysis on the search results. ${step.analysis.description}
-                                            Consider all sources and their reliability.
-                                            Search results: ${JSON.stringify(searchResults)}`
+                                        Consider all sources and their reliability.
+                                        Search results: ${JSON.stringify(searchResults)}`
                                 });
 
                                 dataStream.writeMessageAnnotation({
@@ -1711,17 +1712,17 @@ export async function POST(req: Request) {
                                     }))
                                 }),
                                 prompt: `Analyze the research results and identify limitations, knowledge gaps, and recommended follow-up actions.
-                                        Consider:
-                                        - Quality and reliability of sources
-                                        - Missing perspectives or data
-                                        - Areas needing deeper investigation
-                                        - Potential biases or conflicts
-                                        - Severity should be between 2 and 10
-                                        - Knowledge gaps should be between 2 and 10
-                                        - Do not keep the numbers too low or high, make them reasonable in between
-                                        
-                                        Research results: ${JSON.stringify(searchResults)}
-                                        Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
+                                    Consider:
+                                    - Quality and reliability of sources
+                                    - Missing perspectives or data
+                                    - Areas needing deeper investigation
+                                    - Potential biases or conflicts
+                                    - Severity should be between 2 and 10
+                                    - Knowledge gaps should be between 2 and 10
+                                    - Do not keep the numbers too low or high, make them reasonable in between
+                                    
+                                    Research results: ${JSON.stringify(searchResults)}
+                                    Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
                                     type: step.analysis.type,
                                     description: step.analysis.description,
                                     importance: step.analysis.importance
@@ -1924,12 +1925,12 @@ export async function POST(req: Request) {
                                         remaining_uncertainties: z.array(z.string())
                                     }),
                                     prompt: `Synthesize all research findings, including gap analysis and follow-up research.
-                                            Highlight key conclusions and remaining uncertainties.
-                                            Stick to the types of the schema, do not add any other fields or types.
-                                            
-                                            Original results: ${JSON.stringify(searchResults)}
-                                            Gap analysis: ${JSON.stringify(gapAnalysis)}
-                                            Additional findings: ${JSON.stringify(additionalQueries)}`
+                                        Highlight key conclusions and remaining uncertainties.
+                                        Stick to the types of the schema, do not add any other fields or types.
+                                        
+                                        Original results: ${JSON.stringify(searchResults)}
+                                        Gap analysis: ${JSON.stringify(gapAnalysis)}
+                                        Additional findings: ${JSON.stringify(additionalQueries)}`
                                 });
 
                                 synthesis = finalSynthesis;
@@ -1983,6 +1984,134 @@ export async function POST(req: Request) {
                                 results: searchResults,
                                 synthesis: synthesis
                             };
+                        },
+                    }),
+                    memory_manager: tool({
+                        description: 'Manage personal memories with add, search, get, and delete operations.',
+                        parameters: z.object({
+                            action: z.enum(['add', 'search', 'get', 'delete']).describe('The memory operation to perform'),
+                            content: z.string().optional().describe('The memory content for add operation'),
+                            query: z.string().optional().describe('The search query for search operations'),
+                            memoryId: z.string().optional().describe('The memory ID for delete operation'),
+                            filters: z.record(z.any()).optional().describe('Additional filters for search/get operations'),
+                        }),
+                        execute: async ({ action, content, query, memoryId, filters }: {
+                            action: 'add' | 'search' | 'get' | 'delete';
+                            content?: string;
+                            query?: string;
+                            memoryId?: string;
+                            filters?: Record<string, any>;
+                        }) => {
+                            const client = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY });
+
+                            console.log("action", action);
+                            console.log("content", content);
+                            console.log("query", query);
+                            console.log("memoryId", memoryId);
+                            console.log("filters", filters);
+
+                            try {
+                                switch (action) {
+                                    case 'add': {
+                                        if (!content) throw new Error('Content is required for add operation');
+                                        const result = await client.add(content, {
+                                            user_id,
+                                        });
+                                        console.log("result", result[0]);
+                                        if (result.length === 0) {
+                                            return {
+                                                success: false,
+                                                action: 'add',
+                                                message: 'No memory added'
+                                            };
+                                        }
+                                        return {
+                                            success: true,
+                                            action: 'add',
+                                            memory: result[0]
+                                        };
+                                    }
+                                    case 'search': {
+                                        if (!query) throw new Error('Query is required for search operation');
+                                        const searchFilters = {
+                                            ...filters,
+                                            AND: [
+                                                { user_id },
+                                                ...(filters?.AND || [])
+                                            ]
+                                        };
+                                        const result = await client.search(query, {
+                                            filters: searchFilters,
+                                            api_version: 'v2'
+                                        });
+                                        return {
+                                            success: true,
+                                            action: 'search',
+                                            results: result[0]
+                                        };
+                                    }
+                                    case 'get': {
+                                        const getFilters = {
+                                            ...filters,
+                                            AND: [
+                                                { user_id },
+                                                ...(filters?.AND || [])
+                                            ]
+                                        };
+                                        const result = await client.getAll({
+                                            filters: getFilters,
+                                            api_version: 'v2'
+                                        });
+                                        return {
+                                            success: true,
+                                            action: 'get',
+                                            results: result[0]
+                                        };
+                                    }
+                                    case 'delete': {
+                                        if (!memoryId && !query) {
+                                            throw new Error('Either memoryId or query is required for delete operation');
+                                        }
+
+                                        let idToDelete = memoryId;
+
+                                        // If no direct memoryId is provided, search for it first
+                                        if (!idToDelete && query) {
+                                            const searchFilters = {
+                                                ...filters,
+                                                AND: [
+                                                    { user_id },
+                                                    ...(filters?.AND || [])
+                                                ]
+                                            };
+                                            const searchResult = await client.search(query, {
+                                                filters: searchFilters,
+                                                api_version: 'v2'
+                                            });
+
+                                            if (!searchResult[0]) {
+                                                return {
+                                                    success: false,
+                                                    action: 'delete',
+                                                    message: 'No memory found matching the search query'
+                                                };
+                                            }
+
+                                            idToDelete = searchResult[0].id;
+                                        }
+
+                                        const result = await client.delete(idToDelete!);
+                                        return {
+                                            success: true,
+                                            action: 'delete',
+                                            message: result.message
+                                        };
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Memory operation error:', error);
+                                throw error;
+                            }
                         },
                     }),
                 },
@@ -2047,8 +2176,8 @@ export async function POST(req: Request) {
                 },
             });
 
-            return result.mergeIntoDataStream(dataStream, {
-                sendReasoning: true
+            result.mergeIntoDataStream(dataStream, {
+                sendReasoning: true,
             });
         }
     })
