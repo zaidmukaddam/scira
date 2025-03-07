@@ -1450,7 +1450,7 @@ export async function POST(req: Request) {
                                         search_queries: z.array(z.object({
                                             query: z.string(),
                                             rationale: z.string(),
-                                            source: z.enum(['web', 'academic', 'both']),
+                                            source: z.enum(['web', 'academic', 'x', 'all']),
                                             priority: z.number().min(1).max(5)
                                         })).max(12),
                                         required_analyses: z.array(z.object({
@@ -1464,14 +1464,20 @@ export async function POST(req: Request) {
                                         Today's date and day of the week: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                 
                                         Keep the plan concise but comprehensive, with:
-                                        - 4-12 targeted search queries (each can use web, academic, or both sources)
+                                        - 4-12 targeted search queries (each can use web, academic, x (Twitter), or all sources)
                                         - 2-8 key analyses to perform
                                         - Prioritize the most important aspects to investigate
+                                        
+                                        Available sources:
+                                        - "web": General web search
+                                        - "academic": Academic papers and research
+                                        - "x": X/Twitter posts and discussions
+                                        - "all": Use all source types (web, academic, and X/Twitter)
                                         
                                         Do not use floating numbers, use whole numbers only in the priority field!!
                                         Do not keep the numbers too low or high, make them reasonable in between.
                                         Do not use 0 or 1 in the priority field, use numbers between 2 and 4.
-
+                                        
                                         Consider different angles and potential controversies, but maintain focus on the core aspects.
                                         Ensure the total number of steps (searches + analyses) does not exceed 20.`
                                 });
@@ -1480,11 +1486,15 @@ export async function POST(req: Request) {
                                 const generateStepIds = (plan: typeof researchPlan) => {
                                     // Generate an array of search steps.
                                     const searchSteps = plan.search_queries.flatMap((query, index) => {
-                                        if (query.source === 'both') {
+                                        if (query.source === 'all') {
                                             return [
                                                 { id: `search-web-${index}`, type: 'web', query },
-                                                { id: `search-academic-${index}`, type: 'academic', query }
+                                                { id: `search-academic-${index}`, type: 'academic', query },
+                                                { id: `search-x-${index}`, type: 'x', query }
                                             ];
+                                        }
+                                        if (query.source === 'x') {
+                                            return [{ id: `search-x-${index}`, type: 'x', query }];
                                         }
                                         const searchType = query.source === 'academic' ? 'academic' : 'web';
                                         return [{ id: `search-${searchType}-${index}`, type: searchType, query }];
@@ -1540,7 +1550,9 @@ export async function POST(req: Request) {
                                                 ? `Searching the web for "${step.query.query}"`
                                                 : step.type === 'academic'
                                                     ? `Searching academic papers for "${step.query.query}"`
-                                                    : `Analyzing ${step.query.query}`,
+                                                    : step.type === 'x'
+                                                        ? `Searching X/Twitter for "${step.query.query}"`
+                                                        : `Analyzing ${step.query.query}`,
                                             query: step.query.query,
                                             message: `Searching ${step.query.source} sources...`,
                                             timestamp: Date.now()
@@ -1584,6 +1596,40 @@ export async function POST(req: Request) {
                                             }))
                                         });
                                         completedSteps++;
+                                    } else if (step.type === 'x') {
+                                        // Extract tweet ID from URL
+                                        const extractTweetId = (url: string): string | null => {
+                                            const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+                                            return match ? match[1] : null;
+                                        };
+
+                                        const xResults = await exa.searchAndContents(step.query.query, {
+                                            type: 'neural',
+                                            useAutoprompt: true,
+                                            numResults: step.query.priority,
+                                            text: true,
+                                            highlights: true,
+                                            includeDomains: ['twitter.com', 'x.com']
+                                        });
+
+                                        // Process tweets to include tweet IDs
+                                        const processedTweets = xResults.results.map(result => {
+                                            const tweetId = extractTweetId(result.url);
+                                            return {
+                                                source: 'x' as const,
+                                                title: result.title || result.author || 'Tweet',
+                                                url: result.url,
+                                                content: result.text || '',
+                                                tweetId: tweetId || undefined
+                                            };
+                                        }).filter(tweet => tweet.tweetId); // Only include tweets with valid IDs
+
+                                        searchResults.push({
+                                            type: 'x',
+                                            query: step.query,
+                                            results: processedTweets
+                                        });
+                                        completedSteps++;
                                     }
 
                                     // Send completed annotation for the search step
@@ -1597,7 +1643,9 @@ export async function POST(req: Request) {
                                                 ? `Searched the web for "${step.query.query}"`
                                                 : step.type === 'academic'
                                                     ? `Searched academic papers for "${step.query.query}"`
-                                                    : `Analysis of ${step.query.query} complete`,
+                                                    : step.type === 'x'
+                                                        ? `Searched X/Twitter for "${step.query.query}"`
+                                                        : `Analysis of ${step.query.query} complete`,
                                             query: step.query.query,
                                             results: searchResults[searchResults.length - 1].results.map(r => {
                                                 return { ...r };
@@ -1709,6 +1757,13 @@ export async function POST(req: Request) {
                                         - Knowledge gaps should be between 2 and 10
                                         - Do not keep the numbers too low or high, make them reasonable in between
                                         
+                                        When suggesting additional_queries for knowledge gaps, keep in mind these will be used to search:
+                                        - Web sources
+                                        - Academic papers
+                                        - X/Twitter for social media perspectives and real-time information
+                                        
+                                        Design your additional_queries to work well across these different source types.
+                                        
                                         Research results: ${JSON.stringify(searchResults)}
                                         Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
                                         type: step.analysis.type,
@@ -1745,13 +1800,28 @@ export async function POST(req: Request) {
 
                                 // If there are significant gaps and depth is 'advanced', perform additional research
                                 if (depth === 'advanced' && gapAnalysis.knowledge_gaps.length > 0) {
+                                    // For important gaps, create 'all' source queries to be comprehensive
                                     const additionalQueries = gapAnalysis.knowledge_gaps.flatMap(gap =>
-                                        gap.additional_queries.map(query => ({
-                                            query,
-                                            rationale: gap.reason,
-                                            source: 'both' as const,
-                                            priority: 3
-                                        }))
+                                        gap.additional_queries.map((query, idx) => {
+                                            // For critical gaps, use 'all' sources for the first query
+                                            // Distribute others across different source types for efficiency
+                                            const sourceTypes = ['web', 'academic', 'x', 'all'] as const;
+                                            let source: 'web' | 'academic' | 'x' | 'all';
+                                            
+                                            // Use 'all' for the first query of each gap, then rotate through specific sources
+                                            if (idx === 0) {
+                                                source = 'all';
+                                            } else {
+                                                source = sourceTypes[idx % (sourceTypes.length - 1)] as 'web' | 'academic' | 'x';
+                                            }
+                                            
+                                            return {
+                                                query,
+                                                rationale: gap.reason,
+                                                source,
+                                                priority: 3
+                                            };
+                                        })
                                     );
 
                                     // Execute additional searches for gaps
@@ -1759,82 +1829,72 @@ export async function POST(req: Request) {
                                         // Generate a unique ID for this gap search
                                         const gapSearchId = `gap-search-${searchIndex++}`;
 
-                                        // Send running annotation for this gap search
-                                        dataStream.writeMessageAnnotation({
-                                            type: 'research_update',
-                                            data: {
-                                                id: gapSearchId,
+                                        // Execute search based on source type
+                                        if (query.source === 'web' || query.source === 'all') {
+                                            // Execute web search
+                                            const webResults = await tvly.search(query.query, {
+                                                searchDepth: depth,
+                                                includeAnswer: true,
+                                                maxResults: 5
+                                            });
+
+                                            // Add to search results
+                                            searchResults.push({
                                                 type: 'web',
-                                                status: 'running',
-                                                title: `Additional search for "${query.query}"`,
-                                                query: query.query,
-                                                message: `Searching to fill knowledge gap: ${query.rationale}`,
-                                                timestamp: Date.now()
-                                            }
-                                        });
-
-                                        // Execute web search
-                                        const webResults = await tvly.search(query.query, {
-                                            searchDepth: depth,
-                                            includeAnswer: true,
-                                            maxResults: 5
-                                        });
-
-                                        // Add to search results
-                                        searchResults.push({
-                                            type: 'web',
-                                            query: {
-                                                query: query.query,
-                                                rationale: query.rationale,
-                                                source: 'web',
-                                                priority: query.priority
-                                            },
-                                            results: webResults.results.map(r => ({
-                                                source: 'web',
-                                                title: r.title,
-                                                url: r.url,
-                                                content: r.content
-                                            }))
-                                        });
-
-                                        // Send completed annotation for web search
-                                        dataStream.writeMessageAnnotation({
-                                            type: 'research_update',
-                                            data: {
-                                                id: gapSearchId,
-                                                type: 'web',
-                                                status: 'completed',
-                                                title: `Additional web search for "${query.query}"`,
-                                                query: query.query,
+                                                query: {
+                                                    query: query.query,
+                                                    rationale: query.rationale,
+                                                    source: 'web',
+                                                    priority: query.priority
+                                                },
                                                 results: webResults.results.map(r => ({
                                                     source: 'web',
                                                     title: r.title,
                                                     url: r.url,
                                                     content: r.content
-                                                })),
-                                                message: `Found ${webResults.results.length} results`,
-                                                timestamp: Date.now(),
-                                                overwrite: true
-                                            }
-                                        });
+                                                }))
+                                            });
 
-                                        // For 'both' source type, also do academic search
-                                        if (query.source === 'both') {
-                                            const academicSearchId = `gap-search-academic-${searchIndex++}`;
-
-                                            // Send running annotation for academic search
+                                            // Send completed annotation for web search
                                             dataStream.writeMessageAnnotation({
                                                 type: 'research_update',
                                                 data: {
-                                                    id: academicSearchId,
-                                                    type: 'academic',
-                                                    status: 'running',
-                                                    title: `Additional academic search for "${query.query}"`,
+                                                    id: query.source === 'all' ? `gap-search-web-${searchIndex - 3}` : gapSearchId,
+                                                    type: 'web',
+                                                    status: 'completed',
+                                                    title: `Additional web search for "${query.query}"`,
                                                     query: query.query,
-                                                    message: `Searching academic sources to fill knowledge gap: ${query.rationale}`,
-                                                    timestamp: Date.now()
+                                                    results: webResults.results.map(r => ({
+                                                        source: 'web',
+                                                        title: r.title,
+                                                        url: r.url,
+                                                        content: r.content
+                                                    })),
+                                                    message: `Found ${webResults.results.length} results`,
+                                                    timestamp: Date.now(),
+                                                    overwrite: true
                                                 }
                                             });
+                                        }
+
+                                        if (query.source === 'academic' || query.source === 'all') {
+                                            const academicSearchId = query.source === 'all' ? `gap-search-academic-${searchIndex++}` : gapSearchId;
+
+                                            // Send running annotation for academic search if it's for 'all' source
+                                            if (query.source === 'all') {
+                                                dataStream.writeMessageAnnotation({
+                                                    type: 'research_update',
+                                                    data: {
+                                                        id: academicSearchId,
+                                                        type: 'academic',
+                                                        status: 'running',
+                                                        title: `Additional academic search for "${query.query}"`,
+                                                        query: query.query,
+                                                        message: `Searching academic sources to fill knowledge gap: ${query.rationale}`,
+                                                        timestamp: Date.now()
+                                                    }
+                                                });
+                                            }
 
                                             // Execute academic search
                                             const academicResults = await exa.searchAndContents(query.query, {
@@ -1876,14 +1936,93 @@ export async function POST(req: Request) {
                                                         url: r.url || '',
                                                         content: r.summary || ''
                                                     })),
-                                                    message: `Found ${academicResults.results.length} academic sources`,
+                                                    message: `Found ${academicResults.results.length} results`,
                                                     timestamp: Date.now(),
-                                                    overwrite: true
+                                                    overwrite: query.source === 'all' ? true : false
                                                 }
                                             });
                                         }
 
-                                        completedSteps++; // Increment completed steps counter
+                                        if (query.source === 'x' || query.source === 'all') {
+                                            const xSearchId = query.source === 'all' ? `gap-search-x-${searchIndex++}` : gapSearchId;
+
+                                            // Send running annotation for X search if it's for 'all' source
+                                            if (query.source === 'all') {
+                                                dataStream.writeMessageAnnotation({
+                                                    type: 'research_update',
+                                                    data: {
+                                                        id: xSearchId,
+                                                        type: 'x',
+                                                        status: 'running',
+                                                        title: `Additional X/Twitter search for "${query.query}"`,
+                                                        query: query.query,
+                                                        message: `Searching X/Twitter to fill knowledge gap: ${query.rationale}`,
+                                                        timestamp: Date.now()
+                                                    }
+                                                });
+                                            }
+
+                                            // Extract tweet ID from URL
+                                            const extractTweetId = (url: string): string | null => {
+                                                const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+                                                return match ? match[1] : null;
+                                            };
+
+                                            // Execute X/Twitter search
+                                            const xResults = await exa.searchAndContents(query.query, {
+                                                type: 'keyword',
+                                                numResults: 5,
+                                                text: true,
+                                                highlights: true,
+                                                includeDomains: ['twitter.com', 'x.com']
+                                            });
+
+                                            // Process tweets to include tweet IDs - properly handling undefined
+                                            const processedTweets = xResults.results
+                                                .map(result => {
+                                                    const tweetId = extractTweetId(result.url);
+                                                    if (!tweetId) return null; // Skip entries without valid tweet IDs
+                                                    
+                                                    return {
+                                                        source: 'x' as const,
+                                                        title: result.title || result.author || 'Tweet',
+                                                        url: result.url,
+                                                        content: result.text || '',
+                                                        tweetId // Now it's definitely string, not undefined
+                                                    };
+                                                })
+                                                .filter((tweet): tweet is { source: 'x', title: string, url: string, content: string, tweetId: string } => 
+                                                    tweet !== null
+                                                );
+
+                                            // Add to search results
+                                            searchResults.push({
+                                                type: 'x',
+                                                query: {
+                                                    query: query.query,
+                                                    rationale: query.rationale,
+                                                    source: 'x',
+                                                    priority: query.priority
+                                                },
+                                                results: processedTweets
+                                            });
+
+                                            // Send completed annotation for X search
+                                            dataStream.writeMessageAnnotation({
+                                                type: 'research_update',
+                                                data: {
+                                                    id: xSearchId,
+                                                    type: 'x',
+                                                    status: 'completed',
+                                                    title: `Additional X/Twitter search for "${query.query}"`,
+                                                    query: query.query,
+                                                    results: processedTweets,
+                                                    message: `Found ${processedTweets.length} results`,
+                                                    timestamp: Date.now(),
+                                                    overwrite: query.source === 'all' ? true : false
+                                                }
+                                            });
+                                        }
                                     }
 
                                     // Send running state for final synthesis
@@ -2045,11 +2184,6 @@ export async function POST(req: Request) {
                 const response = streamText({
                     model: scira.languageModel(model),
                     system: responseGuidelines,
-                    providerOptions: {
-                        groq: {
-                            reasoning_format: "parsed",
-                        }
-                    },
                     experimental_transform: smoothStream({
                         chunking: 'word',
                         delayInMs: 15,

@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, FileText, BookA, Sparkles, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, FileText, BookA, Sparkles, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2, Twitter } from 'lucide-react';
+import { Tweet } from 'react-tweet';
 import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { XLogo } from '@phosphor-icons/react';
 
 export interface StreamUpdate {
     id: string;
-    type: 'plan' | 'web' | 'academic' | 'analysis' | 'progress';
+    type: 'plan' | 'web' | 'academic' | 'analysis' | 'progress' | 'x';
     status: 'running' | 'completed';
     timestamp: number;
     message: string;
@@ -21,7 +23,7 @@ export interface StreamUpdate {
         search_queries: Array<{
             query: string;
             rationale: string;
-            source: 'web' | 'academic' | 'both';
+            source: 'web' | 'academic' | 'both' | 'x' | 'all';
             priority: number;
         }>;
         required_analyses: Array<{
@@ -37,7 +39,8 @@ export interface StreamUpdate {
         url: string;
         title: string;
         content: string;
-        source: 'web' | 'academic';
+        source: 'web' | 'academic' | 'x';
+        tweetId?: string;
     }>;
     findings?: Array<{
         insight: string;
@@ -82,6 +85,7 @@ const ResearchStep = ({
         progress: Loader2,
         analysis: Sparkles,
         'gap-search': Search,
+        x: XLogo
     } as const;
     
     const isGapSearch = update.id.startsWith('gap-search');
@@ -116,7 +120,7 @@ const ResearchStep = ({
                     <div className="space-y-0.5 min-w-0 flex-1">
                         <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm font-medium truncate">
-                                {update.title || (update.type === 'plan' ? 'Research Plan' : 'Analysis')}
+                                {update.title || (update.type === 'plan' ? 'Research Plan' : update.type === 'x' ? 'X Search' : 'Analysis')}
                             </span>
                             {update.type === 'plan' && update.plan && (
                                 <span className="text-xs text-neutral-500 flex-shrink-0">
@@ -179,11 +183,34 @@ const ResearchStep = ({
                                             <div className="flex items-start gap-2">
                                                 <Search className="h-3.5 w-3.5 text-neutral-500 mt-1" />
                                                 <div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-medium">{query.query}</span>
-                                                        <Badge variant="secondary" className="text-[10px]">
-                                                            {query.source}
-                                                        </Badge>
+                                                        {query.source === 'web' && (
+                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                web
+                                                            </Badge>
+                                                        )}
+                                                        {query.source === 'academic' && (
+                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                academic
+                                                            </Badge>
+                                                        )}
+                                                        {query.source === 'both' && (
+                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                web + academic
+                                                            </Badge>
+                                                        )}
+                                                        {query.source === 'x' && (
+                                                            <Badge variant="secondary" className="text-[10px] flex items-center gap-0.5">
+                                                                <XLogo className="h-2 w-2" />
+                                                                <span>X</span>
+                                                            </Badge>
+                                                        )}
+                                                        {query.source === 'all' && (
+                                                            <Badge variant="secondary" className="text-[10px] flex items-center gap-0.5">
+                                                                <span>all sources</span>
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                     <p className="text-xs text-neutral-500 mt-1">
                                                         {query.rationale}
@@ -196,50 +223,79 @@ const ResearchStep = ({
                             )}
 
                             {/* Search Results */}
-                            {(update.type === 'web' || update.type === 'academic') && update.results && (
+                            {(update.type === 'web' || update.type === 'academic' || update.type === 'x' || update.id.startsWith('gap-search')) && (
                                 <div className="space-y-2">
-                                    {update.results.map((result, idx) => (
-                                        <motion.a
-                                            key={idx}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: idx * 0.05 }}
-                                            href={result.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
-                                        >
-                                            <div className="flex-shrink-0 mt-1">
-                                                <img 
-                                                    src={`https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`}
-                                                    alt=""
-                                                    className="w-4 h-4"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.style.display = 'none';
-                                                        target.nextElementSibling?.classList.remove('hidden');
-                                                    }}
-                                                />
-                                                <div className="hidden">
-                                                    {update.type === 'web' ? 
-                                                        <FileText className="h-4 w-4 text-neutral-500" /> : 
-                                                        <BookA className="h-4 w-4 text-neutral-500" />
-                                                    }
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-medium leading-tight">
-                                                    {result.title}
-                                                </h4>
-                                                <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
-                                                    {result.content}
+                                    {update.status === 'running' && (
+                                        <div className="p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-black">
+                                            <div className="flex items-center gap-3">
+                                                <Loader2 className="w-4 h-4 text-neutral-500 animate-spin" />
+                                                <p className="text-xs text-neutral-500">
+                                                    {update.type === 'x' ? 'Searching X...' : 
+                                                     update.type === 'web' ? 'Searching the web...' : 
+                                                     update.type === 'academic' ? 'Searching academic sources...' :
+                                                     'Searching all sources...'}
                                                 </p>
                                             </div>
-                                        </motion.a>
+                                        </div>
+                                    )}
+                                    
+                                    {update.results && update.results.map((result, idx) => (
+                                        result.tweetId ? (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="p-2"
+                                            >
+                                                <Tweet id={result.tweetId} />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.a
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                href={result.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                                            >
+                                                <div className="flex-shrink-0 mt-1">
+                                                    <img 
+                                                        src={`https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`}
+                                                        alt=""
+                                                        className="w-4 h-4"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.style.display = 'none';
+                                                            target.nextElementSibling?.classList.remove('hidden');
+                                                        }}
+                                                    />
+                                                    <div className="hidden">
+                                                        {result.source === 'web' ? 
+                                                            <FileText className="h-4 w-4 text-neutral-500" /> : 
+                                                            result.source === 'academic' ?
+                                                            <BookA className="h-4 w-4 text-neutral-500" /> :
+                                                            <XLogo className="h-4 w-4 text-neutral-500" />
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-medium leading-tight">
+                                                        {result.title}
+                                                    </h4>
+                                                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
+                                                        {result.content}
+                                                    </p>
+                                                </div>
+                                            </motion.a>
+                                        )
                                     ))}
                                 </div>
                             )}
 
+                            {/* Analysis Results */}
                             {update.type === 'analysis' && update.findings && (
                                 <div className="space-y-2">
                                     {update.findings.map((finding, idx) => (
@@ -333,9 +389,43 @@ const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
     );
 };
 
-const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type: 'web' | 'academic' }) => {
+const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type: 'web' | 'academic' | 'x' }) => {
+    if (type === 'x') {
+        return (
+            <div className="space-y-4 max-w-xl mx-auto">
+                {sources?.map((source, i) => (
+                    source.tweetId ? (
+                        <div key={i} className="tweet-container">
+                            <Tweet id={source.tweetId} />
+                        </div>
+                    ) : (
+                        <a
+                            key={i}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-1">
+                                    <XLogo className="h-4 w-4 text-neutral-500" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium leading-tight">{source.title}</h4>
+                                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
+                                        {source.content}
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    )
+                ))}
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             {sources?.map((source, i) => (
                 <a
                     key={i}
@@ -351,15 +441,15 @@ const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type
                                 alt=""
                                 className="w-4 h-4"
                                 onError={(e) => {
-                                    // Fallback to type icon if favicon fails to load
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
                                     target.nextElementSibling?.classList.remove('hidden');
                                 }}
                             />
-                            {/* Fallback icon */}
                             <div className="hidden">
-                                {type === 'web' ? <FileText className="h-4 w-4 text-neutral-500" /> : <BookA className="h-4 w-4 text-neutral-500" />}
+                                {type === 'web' ? <FileText className="h-4 w-4 text-neutral-500" /> : 
+                                 type === 'academic' ? <BookA className="h-4 w-4 text-neutral-500" /> :
+                                 <XLogo className="h-4 w-4 text-neutral-500" />}
                             </div>
                         </div>
                         <div>
@@ -381,11 +471,15 @@ const AllSourcesView = ({
     id 
 }: { 
     sources: StreamUpdate['results'], 
-    type: 'web' | 'academic',
+    type: 'web' | 'academic' | 'x',
     id?: string
 }) => {
     const isDesktop = useMediaQuery("(min-width: 768px)");
-    const title = `${type === 'web' ? 'Web' : 'Academic'} Sources`;
+    const title = type === 'web' 
+        ? 'Web Sources'
+        : type === 'academic' 
+            ? 'Academic Sources' 
+            : 'X Posts';
 
     if (isDesktop) {
         return (
@@ -395,9 +489,17 @@ const AllSourcesView = ({
                         Show All
                     </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className={cn(
+                    "max-h-[80vh] overflow-y-auto",
+                    type === 'x' ? "max-w-2xl" : "max-w-4xl"
+                )}>
                     <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            {type === 'web' && <FileText className="h-4 w-4" />}
+                            {type === 'academic' && <BookA className="h-4 w-4" />}
+                            {type === 'x' && <XLogo className="h-4 w-4" />}
+                            {title}
+                        </DialogTitle>
                     </DialogHeader>
                     <SourcesList sources={sources} type={type} />
                 </DialogContent>
@@ -414,7 +516,12 @@ const AllSourcesView = ({
             </DrawerTrigger>
             <DrawerContent className="h-[85vh]">
                 <DrawerHeader>
-                    <DrawerTitle>{title}</DrawerTitle>
+                    <DrawerTitle className="flex items-center gap-2">
+                        {type === 'web' && <FileText className="h-4 w-4" />}
+                        {type === 'academic' && <BookA className="h-4 w-4" />}
+                        {type === 'x' && <XLogo className="h-4 w-4" />}
+                        {title}
+                    </DrawerTitle>
                 </DrawerHeader>
                 <div className="p-4 overflow-y-auto">
                     <SourcesList sources={sources} type={type} />
@@ -452,24 +559,32 @@ const AnimatedTabContent = ({ children, value, selected }: {
 );
 
 // Add this new component for empty states
-const EmptyState = ({ type }: { type: 'web' | 'academic' | 'analysis' }) => {
+const EmptyState = ({ type, isLoading = false }: { type: 'web' | 'academic' | 'analysis' | 'x', isLoading?: boolean }) => {
     const icons = {
         web: FileText,
         academic: BookA,
-        analysis: Sparkles
+        analysis: Sparkles,
+        x: XLogo
     } as const;
     const Icon = icons[type];
     
     const messages = {
         web: "Web sources will appear here once found",
         academic: "Academic sources will appear here once found",
-        analysis: "Analysis results will appear here once complete"
+        analysis: "Analysis results will appear here once complete",
+        x: isLoading ? "Searching X..." : "X posts will appear here once found"
     };
 
     return (
         <div className="flex flex-col items-center justify-center py-8 px-4 rounded-lg border-2 border-dashed border-neutral-200 dark:border-neutral-800">
             <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-3">
-                <Icon className="w-5 h-5 text-neutral-400" />
+                {isLoading ? (
+                    <Loader2 className="w-5 h-5 text-neutral-400 animate-spin" />
+                ) : type === 'x' ? (
+                    <XLogo className="w-5 h-5 text-neutral-400" />
+                ) : (
+                    <Icon className="w-5 h-5 text-neutral-400" />
+                )}
             </div>
             <p className="text-sm text-neutral-500 text-center">
                 {messages[type]}
@@ -604,6 +719,10 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             .filter(u => u.type === 'academic' && u.status === 'completed' && u.results)
             .flatMap(u => u.results || []);
 
+        const xSources = updates
+            .filter(u => u.type === 'x' && u.status === 'completed' && u.results)
+            .flatMap(u => u.results || []);
+
         const analysisResults = updates
             .filter(u => u.type === 'analysis' && u.status === 'completed')
             .map(u => ({
@@ -617,9 +736,13 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
         return {
             web: webSources,
             academic: academicSources,
+            x: xSources,
             analysis: analysisResults
         };
     }, [updates]);
+
+    // Simple check if any X searches are running
+    const xSearchesRunning = updates.some(u => u.type === 'x' && u.status === 'running');
 
     // Check if final synthesis update is completed
     const finalSynthesisDone = React.useMemo(() => {
@@ -695,14 +818,14 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             </Card>
 
             {/* Sources Section - Only show when complete */}
-            {finalSynthesisDone && (sourceGroups.web.length > 0 || sourceGroups.academic.length > 0 || sourceGroups.analysis.length > 0) && (
+            {finalSynthesisDone && (sourceGroups.web.length > 0 || sourceGroups.academic.length > 0 || sourceGroups.x.length > 0 || sourceGroups.analysis.length > 0) && (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5" />
                         <h3 className="text-sm font-medium">Sources</h3>
                     </div>
                     <Tabs defaultValue="web" className="w-full" onValueChange={setSelectedTab} value={selectedTab}>
-                        <TabsList className="w-full h-10 grid grid-cols-3 bg-neutral-100/50 dark:bg-neutral-800/50 p-1 rounded-lg">
+                        <TabsList className="w-full h-10 grid grid-cols-4 bg-neutral-100/50 dark:bg-neutral-800/50 p-1 rounded-lg">
                             <TabsTrigger 
                                 value="web" 
                                 className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
@@ -727,6 +850,20 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                     {sourceGroups.academic.length > 0 && (
                                         <Badge variant="secondary" className="h-4 px-1">
                                             {sourceGroups.academic.length}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="x" 
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <XLogo className="h-3 w-3" />
+                                    <span className="hidden sm:inline">X</span>
+                                    {sourceGroups.x.length > 0 && (
+                                        <Badge variant="secondary" className="h-4 px-1">
+                                            {sourceGroups.x.length}
                                         </Badge>
                                     )}
                                 </div>
@@ -870,6 +1007,79 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                     <EmptyState type="academic" />
                                 )}
                             </AnimatedTabContent>
+                            <AnimatedTabContent value="x" selected={selectedTab}>
+                                {sourceGroups.x.length > 0 ? (
+                                    <div className="space-y-3">
+                                        <div className="relative rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black">
+                                            <div className="p-4">
+                                                <div className="flex flex-nowrap overflow-x-auto gap-4 no-scrollbar max-h-[250px]">
+                                                    {sourceGroups.x.slice(0, 2).map((source, i) => (
+                                                        source.tweetId ? (
+                                                            <motion.div
+                                                                key={i}
+                                                                className="w-[min(100vw-4rem,320px)] flex-none"
+                                                                initial={{ opacity: 0, y: 10 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                transition={{ delay: i * 0.05 }}
+                                                            >
+                                                                <div className="tweet-container">
+                                                                    <Tweet id={source.tweetId} />
+                                                                </div>
+                                                            </motion.div>
+                                                        ) : (
+                                                            <motion.a
+                                                                key={i}
+                                                                href={source.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="w-[min(100vw-4rem,320px)] flex-none block p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                                                initial={{ opacity: 0, y: 10 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                transition={{ delay: i * 0.05 }}
+                                                            >
+                                                                <div className="flex items-start gap-2">
+                                                                    <div className="flex-shrink-0 mt-0.5">
+                                                                        <XLogo className="h-3.5 w-3.5 text-neutral-500" />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <h4 className="text-xs font-medium leading-snug truncate">
+                                                                            {source.title}
+                                                                        </h4>
+                                                                        <p className="text-[11px] text-neutral-500 mt-0.5 line-clamp-2">
+                                                                            {source.content}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.a>
+                                                        )
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {sourceGroups.x.length > 2 && (
+                                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-12 bg-gradient-to-t from-white via-white to-transparent dark:from-black dark:via-black rounded-b-lg">
+                                                    <button
+                                                        onClick={() => document.getElementById('show-all-x-sources')?.click()}
+                                                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group shadow-sm"
+                                                    >
+                                                        <XLogo className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-500" />
+                                                        <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300">
+                                                            Show all {sourceGroups.x.length} X posts
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {sourceGroups.x.length > 2 && (
+                                            <div className="hidden">
+                                                <AllSourcesView sources={sourceGroups.x} type="x" id="show-all-x-sources" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <EmptyState type="x" isLoading={xSearchesRunning} />
+                                )}
+                            </AnimatedTabContent>
                             <AnimatedTabContent value="analysis" selected={selectedTab}>
                                 {sourceGroups.analysis.length > 0 || updates.some(u => u.id === 'gap-analysis' && u.status === 'running') || updates.some(u => u.id === 'final-synthesis' && u.status === 'running') ? (
                                     <div className="space-y-2">
@@ -879,7 +1089,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                 key={i}
                                                 type="single"
                                                 collapsible
-                                                className="bg-card rounded-lg border border-border"
+                                                className="bg-white dark:bg-black rounded-lg border border-border"
                                             >
                                                 <AccordionItem value={`analysis-${i}`} className="border-none">
                                                     <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
@@ -893,7 +1103,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                             {analysis.findings.map((finding, j) => (
                                                                 <div
                                                                     key={j}
-                                                                    className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                    className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                 >
                                                                     <div className="flex items-start gap-2">
                                                                         <div className="flex-shrink-0 mt-1">
@@ -925,7 +1135,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                             <Accordion
                                                 type="single"
                                                 collapsible
-                                                className="bg-card rounded-lg border border-border"
+                                                className="bg-white dark:bg-black rounded-lg border border-border"
                                             >
                                                 <AccordionItem value="gaps" className="border-none">
                                                     <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
@@ -936,60 +1146,71 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                     </AccordionTrigger>
                                                     <AccordionContent className="px-2 pb-2">
                                                         <div className="grid gap-1.5">
-                                                            {/* Limitations */}
-                                                            {sourceGroups.analysis
-                                                                .find(a => a.type === 'gaps')
-                                                                ?.findings.map((finding, j) => (
-                                                                    <div
-                                                                        key={j}
-                                                                        className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
-                                                                    >
-                                                                        <div className="flex items-start gap-2">
-                                                                            <div className="flex-shrink-0 mt-1">
-                                                                                <div className="w-1 h-1 rounded-full bg-neutral-400" />
-                                                                            </div>
-                                                                            <div className="space-y-1.5 min-w-0">
-                                                                                <p className="text-xs font-medium">{finding.insight}</p>
-                                                                                {finding.evidence.length > 0 && (
-                                                                                    <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
-                                                                                        {finding.evidence.map((solution, k) => (
-                                                                                            <p key={k} className="text-[11px] text-neutral-500">
-                                                                                                {solution}
-                                                                                            </p>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-
-                                                            {/* Knowledge Gaps */}
-                                                            {sourceGroups.analysis.find(a => a.type === 'gaps')?.gaps?.map((gap, j) => (
-                                                                <div
-                                                                    key={j}
-                                                                    className="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
-                                                                >
-                                                                    <div className="flex items-start gap-2">
-                                                                        <div className="flex-shrink-0 mt-1">
-                                                                            <div className="w-1 h-1 rounded-full bg-neutral-400" />
-                                                                        </div>
-                                                                        <div className="space-y-1.5 min-w-0">
-                                                                            <p className="text-xs font-medium">{gap.topic}</p>
-                                                                            <p className="text-[11px] text-neutral-500">{gap.reason}</p>
-                                                                            {gap.additional_queries.length > 0 && (
-                                                                                <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
-                                                                                    {gap.additional_queries.map((query, k) => (
-                                                                                        <p key={k} className="text-[11px] text-neutral-500">
-                                                                                            {query}
-                                                                                        </p>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
+                                                            {updates.some(u => u.id === 'gap-analysis' && u.status === 'running') ? (
+                                                                <div className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Loader2 className="w-3.5 h-3.5 text-neutral-500 animate-spin" />
+                                                                        <p className="text-xs text-neutral-500">Analyzing research gaps...</p>
                                                                     </div>
                                                                 </div>
-                                                            ))}
+                                                            ) : (
+                                                                <>
+                                                                    {/* Limitations */}
+                                                                    {sourceGroups.analysis
+                                                                        .find(a => a.type === 'gaps')
+                                                                        ?.findings.map((finding, j) => (
+                                                                            <div
+                                                                                key={j}
+                                                                                className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
+                                                                            >
+                                                                                <div className="flex items-start gap-2">
+                                                                                    <div className="flex-shrink-0 mt-1">
+                                                                                        <div className="w-1 h-1 rounded-full bg-neutral-400" />
+                                                                                    </div>
+                                                                                    <div className="space-y-1.5 min-w-0">
+                                                                                        <p className="text-xs font-medium">{finding.insight}</p>
+                                                                                        {finding.evidence.length > 0 && (
+                                                                                            <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                                {finding.evidence.map((solution, k) => (
+                                                                                                    <p key={k} className="text-[11px] text-neutral-500">
+                                                                                                        {solution}
+                                                                                                    </p>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+
+                                                                    {/* Knowledge Gaps */}
+                                                                    {sourceGroups.analysis.find(a => a.type === 'gaps')?.gaps?.map((gap, j) => (
+                                                                        <div
+                                                                            key={j}
+                                                                            className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
+                                                                        >
+                                                                            <div className="flex items-start gap-2">
+                                                                                <div className="flex-shrink-0 mt-1">
+                                                                                    <div className="w-1 h-1 rounded-full bg-neutral-400" />
+                                                                                </div>
+                                                                                <div className="space-y-1.5 min-w-0">
+                                                                                    <p className="text-xs font-medium">{gap.topic}</p>
+                                                                                    <p className="text-[11px] text-neutral-500">{gap.reason}</p>
+                                                                                    {gap.additional_queries.length > 0 && (
+                                                                                        <div className="pl-3 border-l border-neutral-200 dark:border-neutral-700 space-y-1">
+                                                                                            {gap.additional_queries.map((query, k) => (
+                                                                                                <p key={k} className="text-[11px] text-neutral-500">
+                                                                                                    {query}
+                                                                                                </p>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </AccordionContent>
                                                 </AccordionItem>
@@ -1001,7 +1222,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                             <Accordion
                                                 type="single"
                                                 collapsible
-                                                className="bg-card rounded-lg border border-border"
+                                                className="bg-white dark:bg-black rounded-lg border border-border"
                                             >
                                                 <AccordionItem value="synthesis" className="border-none">
                                                     <AccordionTrigger className="px-2 py-1 hover:no-underline text-xs">
@@ -1021,7 +1242,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                         ?.findings.map((finding, j) => (
                                                                             <div
                                                                                 key={j}
-                                                                                className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                             >
                                                                                 <div className="flex items-start gap-1.5 sm:gap-2">
                                                                                     <div className="flex-shrink-0 mt-1">
@@ -1055,7 +1276,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                             ?.uncertainties?.map((uncertainty, j) => (
                                                                                 <div
                                                                                     key={j}
-                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                                 >
                                                                                     <p className="text-[11px] sm:text-xs text-neutral-600 leading-normal">{uncertainty}</p>
                                                                                 </div>
@@ -1074,7 +1295,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                             ?.recommendations?.map((rec, j) => (
                                                                                 <div
                                                                                     key={j}
-                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+                                                                                    className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                                 >
                                                                                     <div className="space-y-1">
                                                                                         <p className="text-[11px] sm:text-xs font-medium leading-normal">{rec.action}</p>

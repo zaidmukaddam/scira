@@ -48,10 +48,43 @@
 .tweet-container {
   display: flex;
   flex-direction: column;
+  --tweet-body-background-color: transparent !important;
+  --tweet-container-margin: 0 !important;
+  /* max-height: 250px !important; */
+  overflow-y: auto;
 }
 
-.tweet-container>div {
+.tweet-container > div {
   flex: 1;
+}
+
+.tweet-container div[data-theme] {
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.tweet-container div[data-theme="light"],
+.tweet-container div[data-theme="dark"] {
+  background: transparent !important;
+}
+
+.tweet-container::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-loading-shimmer {
+  animation: loading-shimmer 1.5s infinite;
 }
 
 .gradient-mask {

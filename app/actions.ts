@@ -479,8 +479,8 @@ const groupResponseGuidelines = {
   - Use "USD" for currency (not $)
   
   Guidelines:
-  - Provide comprehensive, well-structured responses in markdown format and tables too
-  - Include both academic and web sources
+  - Provide extremely comprehensive, well-structured responses in markdown format and tables too
+  - Include both academic, web and x (Twitter) sources
   - Citations are a MUST, do not skip them! For citations, use the format [Source](URL)
   - Focus on analysis and synthesis of information
   - Do not use Heading 1 in the response, use Heading 2 and 3 only
@@ -490,6 +490,7 @@ const groupResponseGuidelines = {
   
   Response Format:
   - The response start with a introduction and then do sections and finally a conclusion
+  - Keep it super detailed and long, do not skip any important details, be very innovative and creative.
   - It is very important to have citations to the facts you are providing in the response.
   - Present findings in a logical flow
   - Support claims with multiple sources
