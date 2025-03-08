@@ -728,13 +728,13 @@ const HomeContent = () => {
     }, [initialState.query, append, setInput, messages.length]);
 
     const ThemeToggle: React.FC = () => {
-        const { theme, setTheme } = useTheme();
+        const { resolvedTheme, setTheme } = useTheme();
 
         return (
             <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 className="bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
                 <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
