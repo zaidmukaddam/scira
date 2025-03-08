@@ -104,6 +104,20 @@
   font-weight: normal !important;
 }
 
+
+
+:is([data-theme=dark],.dark) :where(.react-tweet-theme) {
+--tweet-skeleton-gradient: linear-gradient(270deg, #15202b, #1e2732, #1e2732, #15202b) !important;
+--tweet-border: 1px solid #595959 !important;
+--tweet-font-color-secondary: #8b98a5 !important;
+--tweet-bg-color: #0c0c0c !important;
+--tweet-bg-color-hover: #000000 !important;
+--tweet-quoted-bg-color-hover: hsla(0, 0%, 100%, .03) !important;
+--tweet-color-blue-primary: #1d9bf0 !important;
+--tweet-color-blue-secondary-hover: rgb(129 129 129 / 10%) !important;
+}
+
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
