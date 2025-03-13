@@ -552,6 +552,13 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         e.preventDefault();
         e.stopPropagation();
         onClick();
+
+        // Show toast notification on mobile devices
+        if (isMobile) {
+            toast(`Switched to ${group.name}: ${group.description}`, {
+                duration: 2000,
+            });
+        }
     };
 
     // Use regular button for mobile
@@ -1183,6 +1190,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             <button
                                 onClick={() => {
                                     setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
+                                    // Show toast notification on mobile devices
+                                    if (isMobile) {
+                                        const newMode = selectedGroup === 'extreme' ? 'Web Search' : 'Extreme Mode';
+                                        const description = selectedGroup === 'extreme' 
+                                            ? 'Standard web search mode'
+                                            : 'Enhanced deep research mode';
+                                        toast(`Switched to ${newMode}: ${description}`, {
+                                            duration: 2000,
+                                        });
+                                    }
                                 }}
                                 className={cn(
                                     "flex items-center gap-2 p-2 sm:px-3 h-8",

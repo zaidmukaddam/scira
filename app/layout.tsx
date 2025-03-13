@@ -77,7 +77,7 @@ export default function RootLayout({
       <body className={`${GeistSans.variable} ${syne.variable} font-sans antialiased`}>
         <NuqsAdapter>
           <Providers>
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" richColors theme="system" />
             {children}
           </Providers>
         </NuqsAdapter>
