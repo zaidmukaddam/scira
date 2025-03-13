@@ -303,7 +303,7 @@ export default function AboutPage() {
                         </div>
                         <div className="text-center space-y-2">
                             <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                6.5K+
+                                7K+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Community Stars</p>
                         </div>
@@ -383,43 +383,43 @@ export default function AboutPage() {
             </div>
 
             {/* Testimonial Section - Add before CTA */}
-            <div className="py-24 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
+            <div className="py-20 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
                 <motion.div 
-                    className="container max-w-5xl mx-auto space-y-16"
+                    className="container max-w-5xl mx-auto space-y-12"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    <div className="text-center space-y-4">
+                    <div className="text-center space-y-3">
                         <h2 className="text-3xl font-bold">Community Recognition</h2>
                         <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
                             Join the growing community of developers and researchers using Scira.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="p-6 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <div className="flex items-center gap-4 mb-4">
-                                <img src="/Winner-Medal-Weekly.svg" alt="Award" className="h-8 w-8" />
-                                <div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
+                            <div className="flex items-center gap-4">
+                                <img src="/Winner-Medal-Weekly.svg" alt="Award" className="h-10 w-10" />
+                                <div className="space-y-1">
                                     <h3 className="font-semibold">#3 Project of the Week</h3>
                                     <p className="text-sm text-neutral-600 dark:text-neutral-400">Peerlist</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <div className="flex items-center gap-4 mb-4">
-                                <GithubLogo className="h-8 w-8" />
-                                <div>
-                                    <h3 className="font-semibold">4,000+ Stars</h3>
+                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
+                            <div className="flex items-center gap-4">
+                                <GithubLogo weight="fill" className="h-10 w-10" />
+                                <div className="space-y-1">
+                                    <h3 className="font-semibold">7,000+ Stars</h3>
                                     <p className="text-sm text-neutral-600 dark:text-neutral-400">GitHub</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <div className="flex items-center gap-4 mb-4">
-                                <Users className="h-8 w-8" />
-                                <div>
+                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
+                            <div className="flex items-center gap-4">
+                                <Users className="h-10 w-10" />
+                                <div className="space-y-1">
                                     <h3 className="font-semibold">100K+ Monthly Users</h3>
                                     <p className="text-sm text-neutral-600 dark:text-neutral-400">Active Community</p>
                                 </div>
