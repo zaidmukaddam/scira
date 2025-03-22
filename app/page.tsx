@@ -35,7 +35,7 @@ import {
 import WeatherChart from '@/components/weather-chart';
 import { cn, getUserId, SearchGroupId } from '@/lib/utils';
 import { Wave } from "@foobar404/wave";
-import { CheckCircle, CurrencyDollar, Flag, Info, Memory, RoadHorizon, SoccerBall, TennisBall, XLogo } from '@phosphor-icons/react';
+import { CheckCircle, CurrencyDollar, Flag, Info, Memory, RoadHorizon, SoccerBall, TennisBall, XLogo, Clock as PhosphorClock, CalendarBlank } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -78,7 +78,6 @@ import {
     X,
     YoutubeIcon,
     RefreshCw,
-    Clock,
     WrapText,
     ArrowLeftRight,
     Mountain
@@ -1012,6 +1011,10 @@ const HomeContent = () => {
             );
         };
 
+        const generateKey = () => {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
+
         const renderer: Partial<ReactRenderer> = {
             text(text: string) {
                 if (!text.includes('$')) return text;
@@ -1021,6 +1024,7 @@ const HomeContent = () => {
                             { left: '$$', right: '$$', display: true },
                             { left: '$', right: '$', display: false }
                         ]}
+                        key={generateKey()}
                     >
                         {text}
                     </Latex>
@@ -1035,6 +1039,7 @@ const HomeContent = () => {
                                     { left: '$$', right: '$$', display: true },
                                     { left: '$', right: '$', display: false }
                                 ]}
+                                key={generateKey()}
                             >
                                 {children}
                             </Latex>
@@ -1044,13 +1049,13 @@ const HomeContent = () => {
                 return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
             },
             code(children, language) {
-                return <CodeBlock language={language}>{String(children)}</CodeBlock>;
+                return <CodeBlock language={language} key={generateKey()}>{String(children)}</CodeBlock>;
             },
             link(href, text) {
                 const citationIndex = citationLinks.findIndex(link => link.link === href);
                 if (citationIndex !== -1) {
                     return (
-                        <sup>
+                        <sup key={generateKey()}>
                             {renderHoverCard(href, citationIndex + 1, true)}
                         </sup>
                     );
@@ -1468,7 +1473,7 @@ const HomeContent = () => {
                                         </span>
                                         {duration && (
                                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                                <Clock className="size-3 text-neutral-500" />
+                                                <PhosphorClock weight="regular" className="size-3 text-neutral-500" />
                                                 <span className="text-[10px] tabular-nums font-medium text-neutral-500">
                                                     {duration}s
                                                 </span>
@@ -1476,7 +1481,7 @@ const HomeContent = () => {
                                         )}
                                         {!isComplete && liveElapsedTimes[sectionKey] && (
                                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                                <Clock className="size-3 text-neutral-500" />
+                                                <PhosphorClock weight="regular" className="size-3 text-neutral-500" />
                                                 <span className="text-[10px] tabular-nums font-medium text-neutral-500">
                                                     {liveElapsedTimes[sectionKey].toFixed(1)}s
                                                 </span>
@@ -1690,10 +1695,10 @@ const HomeContent = () => {
                     {/* Time Widget */}
                     <Button
                         variant="outline"
-                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-sm transition-all h-auto"
                         onClick={handleDateTimeClick}
                     >
-                        <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                        <PhosphorClock weight="duotone" className="h-5 w-5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
                             {formattedTime}
                         </span>
@@ -1702,10 +1707,10 @@ const HomeContent = () => {
                     {/* Date Widget */}
                     <Button
                         variant="outline"
-                        className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all h-auto"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-sm transition-all h-auto"
                         onClick={handleDateTimeClick}
                     >
-                        <Calendar className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                        <CalendarBlank weight="duotone" className="h-5 w-5 text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
                             {formattedDate}
                         </span>
@@ -2183,17 +2188,26 @@ const ToolInvocationListView = memo(
 
                     const PREVIEW_COUNT = 3;
 
+                    // Memoized tweet component to prevent unnecessary re-renders
+                    const MemoizedTweet = memo(({ id }: { id: string }) => (
+                        <div className="w-full [&>div]:w-full [&>div]:mx-auto">
+                            <Tweet id={id} />
+                        </div>
+                    ));
+                    
+                    MemoizedTweet.displayName = 'MemoizedTweet';
+
                     const FullTweetList = memo(() => (
-                        <div className="grid gap-4 p-4 sm:max-w-[500px]">
+                        <div className="grid grid-cols-1 gap-6 p-4 w-full max-w-[550px] mx-auto">
                             {result.map((post: XResult, index: number) => (
                                 <motion.div
-                                    key={post.id}
+                                    key={post.id || post.tweetId}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    className='[&>div]:m-0'
+                                    className="w-full"
                                 >
-                                    <Tweet id={post.tweetId} />
+                                    <MemoizedTweet id={post.tweetId} />
                                 </motion.div>
                             ))}
                         </div>
@@ -2221,13 +2235,13 @@ const ToolInvocationListView = memo(
                                     <div className="flex flex-nowrap overflow-x-auto gap-4 no-scrollbar">
                                         {result.slice(0, PREVIEW_COUNT).map((post: XResult, index: number) => (
                                             <motion.div
-                                                key={post.tweetId}
-                                                className="w-[min(100vw-2rem,320px)] flex-none"
+                                                key={post.tweetId || post.id}
+                                                className="flex-none w-[320px] sm:w-[380px] max-w-[90vw]"
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3, delay: index * 0.1 }}
                                             >
-                                                <Tweet id={post.tweetId} />
+                                                <MemoizedTweet id={post.tweetId} />
                                             </motion.div>
                                         ))}
                                     </div>
@@ -2247,7 +2261,7 @@ const ToolInvocationListView = memo(
                                                     Show all {result.length} tweets
                                                 </Button>
                                             </SheetTrigger>
-                                            <SheetContent side="right" className="w-[400px] sm:w-[700px] overflow-y-auto !p-0 !z-[70]">
+                                            <SheetContent side="right" className="w-full sm:max-w-[600px] overflow-y-auto !p-0 !z-[70]">
                                                 <SheetHeader className='!mt-5 !font-sans'>
                                                     <SheetTitle className='text-center'>All Tweets</SheetTitle>
                                                 </SheetHeader>
@@ -2271,7 +2285,7 @@ const ToolInvocationListView = memo(
                                                 <DrawerHeader>
                                                     <DrawerTitle>All Tweets</DrawerTitle>
                                                 </DrawerHeader>
-                                                <div className="overflow-y-auto">
+                                                <div className="px-2 overflow-y-auto">
                                                     <FullTweetList />
                                                 </div>
                                             </DrawerContent>
@@ -2928,7 +2942,7 @@ const ToolInvocationListView = memo(
                                                     Current Time
                                                 </h3>
                                                 <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
-                                                    <Clock className="h-3 w-3 text-blue-500" />
+                                                    <PhosphorClock weight="regular" className="h-3 w-3 text-blue-500" />
                                                     {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>

@@ -444,7 +444,7 @@ export async function POST(req: Request) {
 
                                     const result = await exa.searchAndContents(query, {
                                         type: 'keyword',
-                                        numResults: 15,
+                                        numResults: 20,
                                         text: true,
                                         highlights: true,
                                         includeDomains: ['twitter.com', 'x.com'],
