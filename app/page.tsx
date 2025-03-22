@@ -684,6 +684,7 @@ const HomeContent = () => {
             model: selectedModel,
             group: selectedGroup,
             user_id: userId,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);

@@ -361,22 +361,18 @@ export default function AboutPage() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">Grok 2.0</h3>
+                            <h3 className="font-semibold">Grok 2</h3>
                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Best-in-class performance with real-time knowledge</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">Claude 3.7</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Exceptional understanding of queries and sources</p>
+                            <h3 className="font-semibold">Grok 2 Vision</h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Advanced image understanding and analysis</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">Llama 3.3</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Powerful open-source language model</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="font-semibold">DeepSeek R1</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Advanced reasoning and analysis capabilities</p>
+                            <h3 className="font-semibold">Grok 3</h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Next-generation AI (coming soon)</p>
                         </div>
                     </div>
                 </motion.div>

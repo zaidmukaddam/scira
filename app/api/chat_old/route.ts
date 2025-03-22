@@ -30,7 +30,7 @@ const scira = customProvider({
         'scira-default': xai('grok-2-1212'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
-        'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
+        // 'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
             middleware: extractReasoningMiddleware({ tagName: 'think' })

@@ -2,9 +2,7 @@
 import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
-import { cerebras } from '@ai-sdk/cerebras';
-import { anthropic } from '@ai-sdk/anthropic'
-import { groq } from '@ai-sdk/groq'
+import { cohere } from '@ai-sdk/cohere'
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -14,27 +12,19 @@ import {
     streamText,
     tool,
     createDataStreamResponse,
-    wrapLanguageModel,
-    extractReasoningMiddleware,
     customProvider,
     generateObject,
     NoSuchToolError
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
-import { geolocation } from '@vercel/functions';
 import MemoryClient from 'mem0ai';
 
 const scira = customProvider({
     languageModels: {
         'scira-default': xai('grok-2-1212'),
         'scira-vision': xai('grok-2-vision-1212'),
-        'scira-llama': cerebras('llama-3.3-70b'),
-        'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
-        'scira-r1': wrapLanguageModel({
-            model: groq('deepseek-r1-distill-llama-70b'),
-            middleware: extractReasoningMiddleware({ tagName: 'think' })
-        }),
+        'scira-cmd-a': cohere('command-a-03-2025'),
     }
 })
 
@@ -163,14 +153,14 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 
 // Modify the POST function to use the new handler
 export async function POST(req: Request) {
-    const { messages, model, group, user_id } = await req.json();
+    const { messages, model, group, user_id, timezone } = await req.json();
     const { tools: activeTools, systemPrompt, toolInstructions, responseGuidelines } = await getGroupConfig(group);
-    const geo = geolocation(req);
 
     console.log("Running with model: ", model.trim());
     console.log("Group: ", group);
+    console.log("Timezone: ", timezone);
 
-    if (group !== 'chat' && group !== 'buddy') {
+    if (group !== 'chat' && group !== 'buddy' && model.trim() !== "scira-cmd-a") {
         console.log("Running inside part 1");
         return createDataStreamResponse({
             execute: async (dataStream) => {
@@ -1346,68 +1336,41 @@ export async function POST(req: Request) {
                             parameters: z.object({}),
                             execute: async () => {
                                 try {
-                                    // Get current date and time
-                                    const now = new Date();
-
-                                    // Use geolocation to determine timezone
-                                    let userTimezone = 'UTC'; // Default to UTC
-
-                                    if (geo && geo.latitude && geo.longitude) {
-                                        try {
-                                            // Get timezone from coordinates using Google Maps API
-                                            const tzResponse = await fetch(
-                                                `https://maps.googleapis.com/maps/api/timezone/json?location=${geo.latitude},${geo.longitude}&timestamp=${Math.floor(now.getTime() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY}`
-                                            );
-
-                                            if (tzResponse.ok) {
-                                                const tzData = await tzResponse.json();
-                                                if (tzData.status === 'OK' && tzData.timeZoneId) {
-                                                    userTimezone = tzData.timeZoneId;
-                                                    console.log(`Timezone determined from coordinates: ${userTimezone}`);
-                                                } else {
-                                                    console.log(`Failed to get timezone from coordinates: ${tzData.status || 'Unknown error'}`);
-                                                }
-                                            } else {
-                                                console.log(`Timezone API request failed with status: ${tzResponse.status}`);
-                                            }
-                                        } catch (error) {
-                                            console.error('Error fetching timezone from coordinates:', error);
-                                        }
-                                    } else {
-                                        console.log('No geolocation data available, using UTC');
-                                    }
+                                    // Get current date and time with timezone
+                                    // const now = new Date();
+                                    const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
 
                                     // Format date and time using the timezone
                                     return {
                                         timestamp: now.getTime(),
                                         iso: now.toISOString(),
-                                        timezone: userTimezone,
+                                        timezone: timezone,
                                         formatted: {
                                             date: new Intl.DateTimeFormat('en-US', {
                                                 weekday: 'long',
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric',
-                                                timeZone: userTimezone
+                                                timeZone: timezone
                                             }).format(now),
                                             time: new Intl.DateTimeFormat('en-US', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
                                                 second: '2-digit',
                                                 hour12: true,
-                                                timeZone: userTimezone
+                                                timeZone: timezone
                                             }).format(now),
                                             dateShort: new Intl.DateTimeFormat('en-US', {
                                                 month: 'short',
                                                 day: 'numeric',
                                                 year: 'numeric',
-                                                timeZone: userTimezone
+                                                timeZone: timezone
                                             }).format(now),
                                             timeShort: new Intl.DateTimeFormat('en-US', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
                                                 hour12: true,
-                                                timeZone: userTimezone
+                                                timeZone: timezone
                                             }).format(now)
                                         }
                                     };
@@ -1807,14 +1770,14 @@ export async function POST(req: Request) {
                                             // Distribute others across different source types for efficiency
                                             const sourceTypes = ['web', 'academic', 'x', 'all'] as const;
                                             let source: 'web' | 'academic' | 'x' | 'all';
-                                            
+
                                             // Use 'all' for the first query of each gap, then rotate through specific sources
                                             if (idx === 0) {
                                                 source = 'all';
                                             } else {
                                                 source = sourceTypes[idx % (sourceTypes.length - 1)] as 'web' | 'academic' | 'x';
                                             }
-                                            
+
                                             return {
                                                 query,
                                                 rationale: gap.reason,
@@ -1982,7 +1945,7 @@ export async function POST(req: Request) {
                                                 .map(result => {
                                                     const tweetId = extractTweetId(result.url);
                                                     if (!tweetId) return null; // Skip entries without valid tweet IDs
-                                                    
+
                                                     return {
                                                         source: 'x' as const,
                                                         title: result.title || result.author || 'Tweet',
@@ -1991,7 +1954,7 @@ export async function POST(req: Request) {
                                                         tweetId // Now it's definitely string, not undefined
                                                     };
                                                 })
-                                                .filter((tweet): tweet is { source: 'x', title: string, url: string, content: string, tweetId: string } => 
+                                                .filter((tweet): tweet is { source: 'x', title: string, url: string, content: string, tweetId: string } =>
                                                     tweet !== null
                                                 );
 
