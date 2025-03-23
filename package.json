@@ -50,6 +50,7 @@
     "@vercel/functions": "^1.4.0",
     "ai": "^4.2.0",
     "anthropic-vertex-ai": "^1.0.0",
+    "axios": "^1.8.4",
     "cheerio": "^1.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

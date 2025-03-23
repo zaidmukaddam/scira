@@ -125,6 +125,9 @@ dependencies:
   anthropic-vertex-ai:
     specifier: ^1.0.0
     version: 1.0.0(zod@3.24.1)
+  axios:
+    specifier: ^1.8.4
+    version: 1.8.4
   cheerio:
     specifier: ^1.0.0
     version: 1.0.0
@@ -874,7 +877,7 @@ packages:
   /@mendable/firecrawl-js@1.20.1(ws@8.18.0):
     resolution: {integrity: sha512-ihUp1rwDLkCZEpVBNlBTaSTJ7+IE0FW+EUGQcg5x49Y/JvnhUIPlHT3b4MFHdmeULBeLOuxrmX7LunJq9PkTFw==}
     dependencies:
-      axios: 1.7.9
+      axios: 1.8.4
       isows: 1.0.6(ws@8.18.0)
       typescript-event-target: 1.1.1
       zod: 3.24.1
@@ -2236,7 +2239,7 @@ packages:
   /@tavily/core@0.3.3:
     resolution: {integrity: sha512-Dn1TvtVo/btPDWXnH+bhlQxj+YGW0rkM1PUNBxJeEnjHBbuhjjDsibiqoe/wObMzrF44+gBB59NJ3MNduVTjMw==}
     dependencies:
-      axios: 1.7.9
+      axios: 1.8.4
       js-tiktoken: 1.0.16
     transitivePeerDependencies:
       - debug
@@ -2919,8 +2922,8 @@ packages:
       - debug
     dev: false
 
-  /axios@1.7.9:
-    resolution: {integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==}
+  /axios@1.8.4:
+    resolution: {integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==}
     dependencies:
       follow-redirects: 1.15.9
       form-data: 4.0.1
