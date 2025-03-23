@@ -29,6 +29,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
   [Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
   [Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)
 
+  [![NinjaTools](https://bakrqvdfyriopfzffskk.supabase.co/storage/v1/object/sign/ads/Ninja%20Tools%20AD.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJhZHMvTmluamEgVG9vbHMgQUQucG5nIiwiaWF0IjoxNzQyNzExMTMwLCJleHAiOjEwMzgyNzExMTMwfQ.eTY4DXSEXe61I7-Jk0nK8rimSLAETqfp5mEO5MpsH00)](https://ninjatools.ai/?ref=scria)<br>
+  ### **[NinjaTools, the All in one AI assistant and workspace](https://ninjatools.ai/?ref=scria)**<br>
+  [Visit Ninjatools.ai to learn more](https://ninjatools.ai/?ref=scria)
+  
 </div>
 
 ## Features
