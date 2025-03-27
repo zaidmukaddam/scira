@@ -1333,7 +1333,6 @@ const HomeContent = () => {
 
     const handleModelChange = useCallback((newModel: string) => {
         setSelectedModel(newModel);
-        setSuggestedQuestions([]);
     }, []);
 
     const resetSuggestedQuestions = useCallback(() => {
