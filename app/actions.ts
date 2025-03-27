@@ -110,8 +110,7 @@ const groupTools = {
     'retrieve', 'text_translate',
     'nearby_search', 'track_flight',
     'movie_or_tv_search', 'trending_movies',
-    'trending_tv',
-    'reason_search', 'datetime'
+    'trending_tv', 'datetime'
   ] as const,
   buddy: [] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
@@ -135,6 +134,8 @@ const groupToolInstructions = {
   #### Multi Query Web Search:
   - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 6 queries are allowed.
   - Specify the year or "latest" in queries to fetch recent information.
+  - Use the "news" topic type to get the latest news and updates.
+  - Use the "finance" topic type to get the latest financial news and updates.
 
   #### Retrieve Tool:
   - Use this for extracting information from specific URLs provided.
@@ -158,9 +159,6 @@ const groupToolInstructions = {
   - Do not use the 'translate' tool for general web searches.
   - invoke the tool when the user mentions the word 'translate' in the query.
   - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool.
-
-  #### Image Search:
-  - Analyze image details to determine tool parameters.
 
   #### Movie/TV Show Queries:
   - These queries could include the words "movie" or "tv show", so use the 'movie_or_tv_search' tool for it.

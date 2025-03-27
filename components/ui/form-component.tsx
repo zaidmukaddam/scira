@@ -6,7 +6,6 @@ import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card"
 import useWindowSize from '@/hooks/use-window-size';
 import { X } from 'lucide-react';
 import {
@@ -20,6 +19,7 @@ import { TextMorph } from '@/components/core/text-morph';
 import { Upload } from 'lucide-react';
 import { Mountain } from "lucide-react"
 import { UIMessage } from '@ai-sdk/ui-utils';
+import { Image, Globe } from 'lucide-react';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -29,6 +29,7 @@ interface ModelSwitcherProps {
     attachments: Array<Attachment>;
     messages: Array<Message>;
     status: 'submitted' | 'streaming' | 'ready' | 'error';
+    onModelSelect?: (model: typeof models[0]) => void;
 }
 
 const XAIIcon = ({ className }: { className?: string }) => (
@@ -47,22 +48,37 @@ const XAIIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
-const AnthropicIcon = ({ className }: { className?: string }) => (
-    <svg
-        role="img"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-    >
-        <title>Anthropic</title>
-        <path fill="currentColor" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z" />
+const MistralIcon = ({ className }: { className?: string }) => (
+    <svg width="16" height="14.727272727272728" viewBox="0 0 176 162" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+        <rect x="15" y="1" width="32" height="32" fill="#FFCD00" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="143" y="1" width="32" height="32" fill="#FFCD00" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="15" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="47" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="111" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="143" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="15" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="47" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="79" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="111" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="143" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="15" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="79" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="143" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="15" y="129" width="32" height="32" fill="#FF0006" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect x="143" y="129" width="32" height="32" fill="#FF0006" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
+        <rect y="1" width="16" height="160" fill="black"></rect>
+        <rect x="63" y="97" width="16" height="32" fill="black"></rect>
+        <rect x="95" y="33" width="16" height="32" fill="black"></rect>
+        <rect x="127" y="1" width="16" height="32" fill="black"></rect>
+        <rect x="127" y="97" width="16" height="64" fill="black"></rect>
     </svg>
 );
 
 const models = [
     { value: "scira-default", label: "Grok 2.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 model", color: "glossyblack", vision: false, experimental: false, category: "Stable" },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
-    // { value: "scira-cmd-a", label: "Command A", icon: "/cohere.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "Cohere's Command A model", color: "purple", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-mistral", label: "Mistral Small 3.1", icon: MistralIcon, iconClass: "!text-neutral-300", description: "Mistral's Small 3.1 model", color: "orange", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-cmd-a", label: "Command A", icon: "/cohere.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "Cohere's Command A model", color: "purple", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -88,12 +104,12 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
                 : `${baseClasses} !text-[#6366F1] dark:!text-[#A5A0FF] hover:!bg-[#6366F1] hover:!text-white dark:hover:!bg-[#5B54E5] dark:hover:!text-white`;
         case 'sapphire':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#2E4A5C] dark:!bg-[#2E4A5C] !text-white hover:!bg-[#1E3A4C] dark:hover:!bg-[#1E3A4C] !border-[#2E4A5C] dark:!border-[#2E4A5C] !ring-[#2E4A5C] dark:!ring-[#2E4A5C] focus:!ring-[#2E4A5C] dark:focus:!ring-[#2E4A5C]`
-                : `${baseClasses} !text-[#2E4A5C] dark:!text-[#89B4D4] hover:!bg-[#2E4A5C] hover:!text-white dark:hover:!bg-[#2E4A5C] dark:hover:!text-white`;
-        case 'bronze':
+                ? `${baseClasses} ${selectedClasses} !bg-[#1E3A5C] dark:!bg-[#0D2A4C] !text-white hover:!bg-[#0D2A4C] dark:hover:!bg-[#001A3C] !border-[#1E3A5C] dark:!border-[#0D2A4C] !ring-[#1E3A5C] dark:!ring-[#0D2A4C] focus:!ring-[#1E3A5C] dark:focus:!ring-[#0D2A4C]`
+                : `${baseClasses} !text-[#1E3A5C] dark:!text-[#4D8BCC] hover:!bg-[#1E3A5C] hover:!text-white dark:hover:!bg-[#0D2A4C] dark:hover:!text-white`;
+        case 'orange':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#9B6E4C] dark:!bg-[#9B6E4C] !text-white hover:!bg-[#8B5E3C] dark:hover:!bg-[#8B5E3C] !border-[#9B6E4C] dark:!border-[#9B6E4C] !ring-[#9B6E4C] dark:!ring-[#9B6E4C] focus:!ring-[#9B6E4C] dark:focus:!ring-[#9B6E4C]`
-                : `${baseClasses} !text-[#9B6E4C] dark:!text-[#D4B594] hover:!bg-[#9B6E4C] hover:!text-white dark:hover:!bg-[#9B6E4C] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#E67E22] dark:!bg-[#D35400] !text-white hover:!bg-[#D35400] dark:hover:!bg-[#C44E00] !border-[#E67E22] dark:!border-[#D35400] !ring-[#E67E22] dark:!ring-[#D35400] focus:!ring-[#E67E22] dark:focus:!ring-[#D35400]`
+                : `${baseClasses} !text-[#E67E22] dark:!text-[#F39C12] hover:!bg-[#E67E22] hover:!text-white dark:hover:!bg-[#D35400] dark:hover:!text-white`;
         default:
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
@@ -101,7 +117,7 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
     }
 }
 
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status }) => {
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect }) => {
     const selectedModelData = models.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
     const isProcessing = status === 'submitted' || status === 'streaming';
@@ -145,6 +161,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     "hover:shadow-md",
                     getColorClasses(selectedModelData?.color || "neutral", true),
                     isProcessing && "opacity-50 pointer-events-none",
+                    "ring-0 outline-none",
                     className
                 )}
                 disabled={isProcessing}
@@ -196,7 +213,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                         categoryIndex > 0 && "mt-1"
                     )}>
                         <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none">
-                            Models
+                            {category}
                         </div>
                         <div className="space-y-0.5">
                             {categoryModels.map((model) => (
@@ -205,6 +222,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                     onSelect={() => {
                                         console.log("Selected model:", model.value);
                                         setSelectedModel(model.value.trim());
+
+                                        // Call onModelSelect if provided
+                                        if (onModelSelect) {
+                                            // Show additional info about image attachments for vision models
+                                            onModelSelect(model);
+                                        }
                                     }}
                                     className={cn(
                                         "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
@@ -245,9 +268,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                 </DropdownMenuItem>
                             ))}
                         </div>
-                        {/* {showDivider(category) && (
+                        {showDivider(category) && (
                             <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
-                        )} */}
+                        )}
                     </div>
                 ))}
             </DropdownMenuContent>
@@ -321,7 +344,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 
 const MAX_IMAGES = 4;
-const MAX_INPUT_CHARS = 1000;
+const MAX_INPUT_CHARS = 10000;
 
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);
@@ -333,65 +356,6 @@ const truncateFilename = (filename: string, maxLength: number = 20) => {
     const extension = filename.split('.').pop();
     const name = filename.substring(0, maxLength - 4);
     return `${name}...${extension}`;
-};
-
-const CharacterCounter = ({ current, max }: { current: number; max: number }) => {
-    const percentage = Math.min(100, (current / max) * 100);
-    const isNearLimit = percentage >= 80 && percentage < 100;
-    const isOverLimit = percentage >= 100;
-
-    // Twitter-like styling
-    const strokeColor = isOverLimit
-        ? 'stroke-red-500'
-        : isNearLimit
-            ? 'stroke-amber-500'
-            : 'stroke-neutral-400';
-
-    // Smaller size for more compact look
-    const size = 16;
-    const strokeWidth = 1.5;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const dash = (percentage * circumference) / 100;
-    const gap = circumference - dash;
-
-    // Add border to ensure visibility on all backgrounds
-    const bgColor = isOverLimit
-        ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
-        : isNearLimit
-            ? 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'
-            : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700';
-
-    return (
-        <div className={`relative flex items-center justify-center ${bgColor} rounded-full shadow-sm transition-all duration-200`}>
-            <svg height={size} width={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
-                {/* Only show background circle when progress is visible */}
-                {current > 0 && (
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        fill="none"
-                        strokeWidth={strokeWidth}
-                        className="stroke-neutral-200 dark:stroke-neutral-700"
-                    />
-                )}
-                {/* Progress circle */}
-                {current > 0 && (
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        fill="none"
-                        strokeWidth={strokeWidth}
-                        strokeDasharray={`${dash} ${gap}`}
-                        className={`transition-all ${strokeColor}`}
-                        strokeLinecap="round"
-                    />
-                )}
-            </svg>
-        </div>
-    );
 };
 
 const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment, onRemove: () => void, isUploading: boolean }> = ({ attachment, onRemove, isUploading }) => {
@@ -412,22 +376,32 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
-            className="relative flex items-center bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2 pr-8 gap-2 shadow-sm flex-shrink-0 z-0"
+            className={cn(
+                "relative flex items-center",
+                "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+                "border border-neutral-200/80 dark:border-neutral-700/80",
+                "rounded-2xl p-2 pr-8 gap-2.5",
+                "shadow-sm hover:shadow-md",
+                "flex-shrink-0 z-0",
+                "hover:bg-white dark:hover:bg-neutral-800",
+                "transition-all duration-200",
+                "group"
+            )}
         >
             {isUploading ? (
-                <div className="w-10 h-10 flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 text-neutral-500 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div className="w-8 h-8 flex items-center justify-center">
+                    <svg className="animate-spin h-4 w-4 text-neutral-500 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
             ) : isUploadingAttachment(attachment) ? (
-                <div className="w-10 h-10 flex items-center justify-center">
-                    <div className="relative w-8 h-8">
+                <div className="w-8 h-8 flex items-center justify-center">
+                    <div className="relative w-6 h-6">
                         <svg className="w-full h-full" viewBox="0 0 100 100">
                             <circle
-                                className="text-neutral-300 dark:text-neutral-600 stroke-current"
-                                strokeWidth="10"
+                                className="text-neutral-200 dark:text-neutral-700 stroke-current"
+                                strokeWidth="8"
                                 cx="50"
                                 cy="50"
                                 r="40"
@@ -435,7 +409,7 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                             ></circle>
                             <circle
                                 className="text-primary stroke-current"
-                                strokeWidth="10"
+                                strokeWidth="8"
                                 strokeLinecap="round"
                                 cx="50"
                                 cy="50"
@@ -446,26 +420,26 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                             ></circle>
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">{Math.round(attachment.progress * 100)}%</span>
+                            <span className="text-[10px] font-medium text-neutral-800 dark:text-neutral-200">{Math.round(attachment.progress * 100)}%</span>
                         </div>
                     </div>
                 </div>
             ) : (
-                <img
-                    src={(attachment as Attachment).url}
-                    alt={`Preview of ${attachment.name}`}
-                    width={40}
-                    height={40}
-                    className="rounded-lg h-10 w-10 object-cover"
-                />
+                <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex-shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
+                    <img
+                        src={(attachment as Attachment).url}
+                        alt={`Preview of ${attachment.name}`}
+                        className="h-full w-full object-cover"
+                    />
+                </div>
             )}
             <div className="flex-grow min-w-0">
                 {!isUploadingAttachment(attachment) && (
-                    <p className="text-sm font-medium truncate text-neutral-800 dark:text-neutral-200">
+                    <p className="text-xs font-medium truncate text-neutral-800 dark:text-neutral-200">
                         {truncateFilename(attachment.name)}
                     </p>
                 )}
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
                     {isUploadingAttachment(attachment)
                         ? 'Uploading...'
                         : formatFileSize((attachment as Attachment).size)}
@@ -475,9 +449,18 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                className="absolute -top-2 -right-2 p-0.5 m-0 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors z-20"
+                className={cn(
+                    "absolute -top-1.5 -right-1.5 p-0.5 m-0 rounded-full",
+                    "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+                    "border border-neutral-200/80 dark:border-neutral-700/80",
+                    "shadow-sm hover:shadow-md",
+                    "transition-all duration-200 z-20",
+                    "opacity-0 group-hover:opacity-100",
+                    "scale-75 group-hover:scale-100",
+                    "hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                )}
             >
-                <X className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                <X className="h-3 w-3 text-neutral-500 dark:text-neutral-400" />
             </motion.button>
         </motion.div>
     );
@@ -531,6 +514,100 @@ interface ToolbarButtonProps {
     onClick: () => void;
 }
 
+interface SwitchNotificationProps {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    isVisible: boolean;
+    modelColor?: string;
+    notificationType?: 'model' | 'group';
+}
+
+const SwitchNotification: React.FC<SwitchNotificationProps> = ({
+    icon,
+    title,
+    description,
+    isVisible,
+    modelColor = 'default',
+    notificationType = 'model'
+}) => {
+    // Icon color is always white for better contrast on colored backgrounds
+    const getIconColorClass = () => "text-white";
+
+    // Get background color for model notifications only
+    const getModelBgClass = (color: string) => {
+        switch (color) {
+            case 'glossyblack':
+                return 'bg-[#4D4D4D] dark:bg-[#3A3A3A] border-[#4D4D4D] dark:border-[#3A3A3A]';
+            case 'steel':
+                return 'bg-[#4B82B8] dark:bg-[#4A7CAD] border-[#4B82B8] dark:border-[#4A7CAD]';
+            case 'purple':
+                return 'bg-[#6366F1] dark:bg-[#5B54E5] border-[#6366F1] dark:border-[#5B54E5]';
+            case 'orange':
+                return 'bg-[#E67E22] dark:bg-[#D35400] border-[#E67E22] dark:border-[#D35400]';
+            case 'sapphire':
+                return 'bg-[#4D6BFE] dark:bg-[#4D6BFE] border-[#4D6BFE] dark:border-[#4D6BFE]';
+            default:
+                return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
+        }
+    };
+
+    // For model notifications, use model colors. For group notifications, use default background.
+    const useModelColor = notificationType === 'model' && modelColor !== 'default';
+    const bgColorClass = useModelColor
+        ? getModelBgClass(modelColor)
+        : "bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700";
+
+    return (
+        <AnimatePresence>
+            {isVisible && (
+                <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{
+                        opacity: { duration: 0.2 },
+                        height: { duration: 0.2 }
+                    }}
+                    className={cn(
+                        "w-[98%] max-w-2xl overflow-hidden mx-auto",
+                        "text-sm text-neutral-700 dark:text-neutral-300 -mb-1"
+                    )}
+                >
+                    <div className={cn(
+                        "flex items-center gap-2 py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-t-lg border shadow-sm backdrop-blur-sm",
+                        bgColorClass,
+                        useModelColor ? "text-white" : "text-neutral-900 dark:text-neutral-100"
+                    )}>
+                        {icon && (
+                            <span className={cn(
+                                "flex-shrink-0 size-3.5 sm:size-4",
+                                useModelColor ? getIconColorClass() : "text-primary dark:text-white"
+                            )}>
+                                {icon}
+                            </span>
+                        )}
+                        <div className="flex flex-col items-start sm:flex-row sm:items-center sm:flex-wrap gap-x-1.5 gap-y-0.5">
+                            <span className={cn(
+                                "font-semibold text-xs sm:text-sm",
+                                useModelColor ? "text-white" : "text-neutral-900 dark:text-neutral-100"
+                            )}>
+                                {title}
+                            </span>
+                            <span className={cn(
+                                "text-[10px] sm:text-xs leading-tight",
+                                useModelColor ? "text-white/80" : "text-neutral-600 dark:text-neutral-400"
+                            )}>
+                                {description}
+                            </span>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     const Icon = group.icon;
     const { width } = useWindowSize();
@@ -550,13 +627,6 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         e.preventDefault();
         e.stopPropagation();
         onClick();
-
-        // Show toast notification on mobile devices
-        if (isMobile) {
-            toast(`Switched to ${group.name}: ${group.description}`, {
-                duration: 2000,
-            });
-        }
     };
 
     // Use regular button for mobile
@@ -572,8 +642,7 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         );
     }
 
-    // Use motion.button for desktop
-    const button = (
+    return (
         <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -582,35 +651,6 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         >
             <Icon className="size-4" />
         </motion.button>
-    );
-
-    return (
-        <HoverCard openDelay={100} closeDelay={50}>
-            <HoverCardTrigger asChild>
-                {button}
-            </HoverCardTrigger>
-            <HoverCardContent
-                side="bottom"
-                align="center"
-                sideOffset={6}
-                className={cn(
-                    "z-[100]",
-                    "w-44 p-2 rounded-lg",
-                    "border border-neutral-200 dark:border-neutral-700",
-                    "bg-white dark:bg-neutral-800 shadow-md",
-                    "transition-opacity duration-300"
-                )}
-            >
-                <div className="space-y-0.5">
-                    <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                        {group.name}
-                    </h4>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
-                        {group.description}
-                    </p>
-                </div>
-            </HoverCardContent>
-        </HoverCard>
     );
 };
 
@@ -676,9 +716,9 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
                                 ease: "easeInOut"
                             }}
                             className={cn(
+                                "!m-0",
                                 isLastItem && isExpanded && showItem ? "pr-0.5" : ""
                             )}
-                            style={{ margin: 0 }}
                         >
                             <ToolbarButton
                                 group={group}
@@ -724,29 +764,107 @@ const FormComponent: React.FC<FormComponentProps> = ({
     status,
     setHasSubmitted,
 }) => {
+    const MIN_HEIGHT = 72;
+    const MAX_HEIGHT = 400;
+    
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
     const isMounted = useRef(true);
     const { width } = useWindowSize();
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
-    const [isFocused, setIsFocused] = useState(false);
+    const [isFocused, setIsFocused] = useState(true);
     const [isDragging, setIsDragging] = useState(false);
     const [isGroupSelectorExpanded, setIsGroupSelectorExpanded] = useState(false);
     const [isExceedingLimit, setIsExceedingLimit] = useState(false);
+    const [switchNotification, setSwitchNotification] = useState<{
+        show: boolean;
+        icon: React.ReactNode;
+        title: string;
+        description: string;
+        notificationType?: 'model' | 'group';
+        visibilityTimeout?: NodeJS.Timeout;
+    }>({
+        show: false,
+        icon: null,
+        title: '',
+        description: '',
+        notificationType: 'model',
+        visibilityTimeout: undefined
+    });
 
-    // Add a ref to track the initial group selection
-    const initialGroupRef = useRef(selectedGroup);
+    const showSwitchNotification = (title: string, description: string, icon?: React.ReactNode, color?: string, type: 'model' | 'group' = 'model') => {
+        // Clear any existing timeout to prevent conflicts
+        if (switchNotification.visibilityTimeout) {
+            clearTimeout(switchNotification.visibilityTimeout);
+        }
 
-    const MIN_HEIGHT = 72;
-    const MAX_HEIGHT = 400;
+        setSwitchNotification({
+            show: true,
+            icon: icon || null,
+            title,
+            description,
+            notificationType: type,
+            visibilityTimeout: undefined
+        });
+
+        // Auto hide after 3 seconds
+        const timeout = setTimeout(() => {
+            setSwitchNotification(prev => ({ ...prev, show: false }));
+        }, 3000);
+
+        // Update the timeout reference
+        setSwitchNotification(prev => ({ ...prev, visibilityTimeout: timeout }));
+    };
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (switchNotification.visibilityTimeout) {
+                clearTimeout(switchNotification.visibilityTimeout);
+            }
+        };
+    }, [switchNotification.visibilityTimeout]);
 
     const autoResizeInput = (target: HTMLTextAreaElement) => {
         if (!target) return;
-        requestAnimationFrame(() => {
-            target.style.height = 'auto';
-            const newHeight = Math.min(Math.max(target.scrollHeight, MIN_HEIGHT), MAX_HEIGHT);
-            target.style.height = `${newHeight}px`;
-        });
+        // Set height to min-height first to prevent jumping
+        target.style.height = `${MIN_HEIGHT}px`;
+        // Then calculate the actual height needed
+        const scrollHeight = target.scrollHeight;
+        if (scrollHeight > MIN_HEIGHT) {
+            requestAnimationFrame(() => {
+                target.style.height = `${Math.min(scrollHeight, MAX_HEIGHT)}px`;
+            });
+        }
     };
+
+    // Auto-resize specifically on component mount (once)
+    useEffect(() => {
+        if (inputRef.current) {
+            // Handle the initial height on mount
+            inputRef.current.style.height = `${MIN_HEIGHT}px`;
+            // Delay resize calculation slightly to ensure proper rendering
+            const mountTimeout = setTimeout(() => {
+                if (inputRef.current) {
+                    const scrollHeight = inputRef.current.scrollHeight;
+                    if (scrollHeight > MIN_HEIGHT) {
+                        inputRef.current.style.height = `${Math.min(scrollHeight, MAX_HEIGHT)}px`;
+                    }
+                }
+            }, 50);
+            return () => clearTimeout(mountTimeout);
+        }
+    }, []);
+
+    // Auto-resize on input changes
+    useEffect(() => {
+        if (inputRef.current) {
+            // Small delay to ensure the component is fully rendered
+            const timeoutId = setTimeout(() => {
+                autoResizeInput(inputRef.current!);
+            }, 10);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [input]);
 
     const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         event.preventDefault();
@@ -778,6 +896,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const handleGroupSelect = useCallback((group: SearchGroup) => {
         setSelectedGroup(group.id);
         inputRef.current?.focus();
+
+        showSwitchNotification(
+            group.name,
+            group.description,
+            <group.icon className="size-4" />,
+            group.id, // Use the group ID directly as the color code
+            'group'   // Specify this is a group notification
+        );
     }, [setSelectedGroup, inputRef]);
 
     const uploadFile = async (file: File): Promise<Attachment> => {
@@ -879,7 +1005,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (!currentModel?.vision) {
             const visionModel = getFirstVisionModel();
             setSelectedModel(visionModel);
-            toast.success(`Switched to ${models.find(m => m.value === visionModel)?.label} for image support`);
+
+            const modelData = models.find(m => m.value === visionModel);
+            if (modelData) {
+                showSwitchNotification(
+                    modelData.label,
+                    'Vision model enabled - you can now attach images',
+                    <Image className="size-4" />,
+                    modelData.color,
+                    'model'  // Explicitly mark as model notification
+                );
+            }
         }
 
         setUploadQueue(files.map((file) => file.name));
@@ -919,7 +1055,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (!currentModel?.vision) {
             const visionModel = getFirstVisionModel();
             setSelectedModel(visionModel);
-            toast.success(`Switched to ${models.find(m => m.value === visionModel)?.label} for image support`);
+
+            const modelData = models.find(m => m.value === visionModel);
+            if (modelData) {
+                showSwitchNotification(
+                    modelData.label,
+                    'Vision model enabled - you can now attach images',
+                    <Image className="size-4" />,
+                    modelData.color,
+                    'model'  // Explicitly mark as model notification
+                );
+            }
         }
 
         setUploadQueue(imageItems.map((_, i) => `Pasted Image ${i + 1}`));
@@ -1033,226 +1179,289 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const isMobile = width ? width < 768 : false;
 
     return (
-        <div
-            className={cn(
-                "relative w-full flex flex-col gap-2 rounded-lg transition-all duration-300 !font-sans",
-                hasInteracted ? "z-[51]" : "",
-                isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
-                attachments.length > 0 || uploadQueue.length > 0
-                    ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
-                    : "bg-transparent"
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-        >
-            <AnimatePresence>
-                {isDragging && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
-                    >
-                        <div className="flex items-center gap-4 px-6 py-8">
-                            <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                                <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
-                            </div>
-                            <div className="space-y-1 text-center">
-                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                    Drop images here
-                                </p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                                    Max {MAX_IMAGES} images
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
+        <div className="flex flex-col w-full">
+            <div
+                className={cn(
+                    "relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 !font-sans",
+                    hasInteracted ? "z-[51]" : "",
+                    isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
+                    attachments.length > 0 || uploadQueue.length > 0
+                        ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
+                        : "bg-transparent"
                 )}
-            </AnimatePresence>
-
-            <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
-            <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
-
-            {(attachments.length > 0 || uploadQueue.length > 0) && (
-                <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-32 z-10 px-1">
-                    {attachments.map((attachment, index) => (
-                        <AttachmentPreview
-                            key={attachment.url}
-                            attachment={attachment}
-                            onRemove={() => removeAttachment(index)}
-                            isUploading={false}
-                        />
-                    ))}
-                    {uploadQueue.map((filename) => (
-                        <AttachmentPreview
-                            key={filename}
-                            attachment={{
-                                url: "",
-                                name: filename,
-                                contentType: "",
-                                size: 0,
-                            } as Attachment}
-                            onRemove={() => { }}
-                            isUploading={true}
-                        />
-                    ))}
-                </div>
-            )}
-
-            <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
-                <Textarea
-                    ref={inputRef}
-                    placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
-                    value={input}
-                    onChange={handleInput}
-                    disabled={isProcessing}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    className={cn(
-                        "min-h-[72px] w-full resize-none rounded-lg",
-                        "text-base leading-relaxed",
-                        "bg-neutral-100 dark:bg-neutral-900",
-                        "border !border-neutral-200 dark:!border-neutral-700",
-                        "focus:!border-neutral-300 dark:focus:!border-neutral-600",
-                        isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
-                        "text-neutral-900 dark:text-neutral-100",
-                        "focus:!ring-1 focus:!ring-neutral-300 dark:focus:!ring-neutral-600",
-                        "px-4 py-4 pb-16",
-                        "overflow-y-auto",
-                        "touch-manipulation",
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                <AnimatePresence>
+                    {isDragging && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
+                        >
+                            <div className="flex items-center gap-4 px-6 py-8">
+                                <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                                    <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
+                                </div>
+                                <div className="space-y-1 text-center">
+                                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                                        Drop images here
+                                    </p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                                        Max {MAX_IMAGES} images
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
                     )}
-                    style={{
-                        maxHeight: `${MAX_HEIGHT}px`,
-                        WebkitUserSelect: 'text',
-                        WebkitTouchCallout: 'none',
-                    }}
-                    rows={1}
-                    autoFocus={width ? width > 768 : true}
-                    onKeyDown={handleKeyDown}
-                    onPaste={handlePaste}
-                />
+                </AnimatePresence>
 
-                {/* Character counter with responsive positioning */}
-                {input.length > 0 && (
-                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-10">
-                        <CharacterCounter current={input.length} max={MAX_INPUT_CHARS} />
+                <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
+                <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
+
+                {(attachments.length > 0 || uploadQueue.length > 0) && (
+                    <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                        {attachments.map((attachment, index) => (
+                            <AttachmentPreview
+                                key={attachment.url}
+                                attachment={attachment}
+                                onRemove={() => removeAttachment(index)}
+                                isUploading={false}
+                            />
+                        ))}
+                        {uploadQueue.map((filename) => (
+                            <AttachmentPreview
+                                key={filename}
+                                attachment={{
+                                    url: "",
+                                    name: filename,
+                                    contentType: "",
+                                    size: 0,
+                                } as Attachment}
+                                onRemove={() => { }}
+                                isUploading={true}
+                            />
+                        ))}
                     </div>
                 )}
 
-                <div className={cn(
-                    "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
-                    "bg-neutral-100 dark:bg-neutral-900",
-                    "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
-                    isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
-                    isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
-                )}>
-                    <div className={cn(
-                        "flex items-center gap-2",
-                        isMobile && "overflow-hidden"
-                    )}>
-                        <div className={cn(
-                            "transition-all duration-100",
-                            (selectedGroup !== 'extreme')
-                                ? "opacity-100 visible w-auto"
-                                : "opacity-0 invisible w-0"
-                        )}>
-                            <GroupSelector
-                                selectedGroup={selectedGroup}
-                                onGroupSelect={handleGroupSelect}
-                                status={status}
-                                onExpandChange={setIsGroupSelectorExpanded}
-                            />
-                        </div>
+                {/* Form container with switch notification */}
+                <div className="relative">
+                    <SwitchNotification
+                        icon={switchNotification.icon}
+                        title={switchNotification.title}
+                        description={switchNotification.description}
+                        isVisible={switchNotification.show}
+                        modelColor={switchNotification.notificationType === 'model' ?
+                            models.find(m => m.value === selectedModel)?.color :
+                            selectedGroup}
+                        notificationType={switchNotification.notificationType}
+                    />
 
-                        <div className={cn(
-                            "transition-all duration-300",
-                            (isMobile && isGroupSelectorExpanded) ? "opacity-0 w-0 invisible" : "opacity-100 visible w-auto"
-                        )}>
-                            <ModelSwitcher
-                                selectedModel={selectedModel}
-                                setSelectedModel={setSelectedModel}
-                                showExperimentalModels={showExperimentalModels}
-                                attachments={attachments}
-                                messages={messages}
-                                status={status}
-                            />
-                        </div>
+                    <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
+                        <Textarea
+                            ref={inputRef}
+                            placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
+                            value={input}
+                            onChange={handleInput}
+                            disabled={isProcessing}
+                            onFocus={handleFocus}
+                            onBlur={handleBlur}
+                            className={cn(
+                                "min-h-[72px] w-full resize-none rounded-lg",
+                                "text-base leading-relaxed",
+                                "bg-neutral-100 dark:bg-neutral-900",
+                                "border !border-neutral-200 dark:!border-neutral-700",
+                                "focus:!border-neutral-300 dark:focus:!border-neutral-600",
+                                isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
+                                "text-neutral-900 dark:text-neutral-100",
+                                "focus:!ring-0",
+                                "px-4 py-4 pb-16",
+                                "overflow-y-auto",
+                                "touch-manipulation",
+                            )}
+                            style={{
+                                minHeight: `${MIN_HEIGHT}px`,
+                                maxHeight: `${MAX_HEIGHT}px`,
+                                WebkitUserSelect: 'text',
+                                WebkitTouchCallout: 'none',
+                            }}
+                            rows={1}
+                            autoFocus={width ? width > 768 : true}
+                            onKeyDown={handleKeyDown}
+                            onPaste={handlePaste}
+                        />
 
-                        <div className={cn(
-                            "transition-all duration-300",
-                            (isMobile && isGroupSelectorExpanded)
-                                ? "opacity-0 invisible w-0"
-                                : "opacity-100 visible w-auto"
-                        )}>
-                            <button
-                                onClick={() => {
-                                    setSelectedGroup(selectedGroup === 'extreme' ? 'web' : 'extreme');
-                                    // Show toast notification on mobile devices
-                                    if (isMobile) {
-                                        const newMode = selectedGroup === 'extreme' ? 'Web Search' : 'Extreme Mode';
-                                        const description = selectedGroup === 'extreme' 
-                                            ? 'Standard web search mode'
-                                            : 'Enhanced deep research mode';
-                                        toast(`Switched to ${newMode}: ${description}`, {
-                                            duration: 2000,
-                                        });
+                        {/* Separate div for toolbar controls that won't trigger the textarea */}
+                        <div
+                            className={cn(
+                                "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
+                                "bg-neutral-100 dark:bg-neutral-900",
+                                "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
+                                isFocused ? "!border-neutral-300 dark:!border-neutral-600" : "",
+                                isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
+                            )}
+                        >
+                            {/* Toolbar controls in a touchable div that prevents keyboard */}
+                            <div
+                                className={cn(
+                                    "flex items-center gap-2",
+                                    isMobile && "overflow-hidden"
+                                )}
+                                // Use pointer-events-auto to enable interactions without affecting the textarea
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Blur the textarea on toolbar click to hide keyboard
+                                    if (isMobile && document.activeElement === inputRef.current) {
+                                        inputRef.current?.blur();
                                     }
                                 }}
-                                className={cn(
-                                    "flex items-center gap-2 p-2 sm:px-3 h-8",
-                                    "rounded-full transition-all duration-300",
-                                    "border border-neutral-200 dark:border-neutral-800",
-                                    "hover:shadow-md",
-                                    selectedGroup === 'extreme'
-                                        ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                                        : "bg-white dark:bg-neutral-900 text-neutral-500",
+                            >
+                                <div className={cn(
+                                    "transition-all duration-100",
+                                    (selectedGroup !== 'extreme')
+                                        ? "opacity-100 visible w-auto"
+                                        : "opacity-0 invisible w-0"
+                                )}>
+                                    <GroupSelector
+                                        selectedGroup={selectedGroup}
+                                        onGroupSelect={handleGroupSelect}
+                                        status={status}
+                                        onExpandChange={setIsGroupSelectorExpanded}
+                                    />
+                                </div>
+
+                                <div className={cn(
+                                    "transition-all duration-300",
+                                    (isMobile && isGroupSelectorExpanded)
+                                        ? "opacity-0 invisible w-0"
+                                        : "opacity-100 visible w-auto"
+                                )}>
+                                    <ModelSwitcher
+                                        selectedModel={selectedModel}
+                                        setSelectedModel={setSelectedModel}
+                                        showExperimentalModels={showExperimentalModels}
+                                        attachments={attachments}
+                                        messages={messages}
+                                        status={status}
+                                        onModelSelect={(model) => {
+                                            // Show additional info about image attachments for vision models
+                                            const isVisionModel = model.vision === true;
+                                            showSwitchNotification(
+                                                model.label,
+                                                isVisionModel
+                                                    ? 'Vision model enabled - you can now attach images'
+                                                    : model.description,
+                                                typeof model.icon === 'string' ?
+                                                    <img src={model.icon} alt={model.label} className="size-4 object-contain" /> :
+                                                    <model.icon className="size-4" />,
+                                                model.color,
+                                                'model'  // Explicitly mark as model notification
+                                            );
+                                        }}
+                                    />
+                                </div>
+
+                                <div className={cn(
+                                    "transition-all duration-300",
+                                    (isMobile && isGroupSelectorExpanded)
+                                        ? "opacity-0 invisible w-0"
+                                        : "opacity-100 visible w-auto"
+                                )}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
+                                            setSelectedGroup(newMode);
+
+                                            // Enhanced notification messages
+                                            const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
+                                            const description = selectedGroup === 'extreme'
+                                                ? 'Standard web search mode is now active'
+                                                : 'Enhanced deep research mode is now active';
+
+                                            // Use appropriate colors for groups that don't conflict with model colors
+                                            showSwitchNotification(
+                                                newModeText,
+                                                description,
+                                                selectedGroup === 'extreme' ? <Globe className="size-4" /> : <Mountain className="size-4" />,
+                                                newMode, // Use the new mode as the color identifier
+                                                'group'  // Specify this is a group notification
+                                            );
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-2 p-2 sm:px-3 h-8",
+                                            "rounded-full transition-all duration-300",
+                                            "border border-neutral-200 dark:border-neutral-800",
+                                            "hover:shadow-md",
+                                            selectedGroup === 'extreme'
+                                                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                                                : "bg-white dark:bg-neutral-900 text-neutral-500",
+                                        )}
+                                    >
+                                        <Mountain className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div
+                                className="flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Blur the textarea on button container click
+                                    if (isMobile && document.activeElement === inputRef.current) {
+                                        inputRef.current?.blur();
+                                    }
+                                }}
+                            >
+                                {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
+                                    <Button
+                                        className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            triggerFileInput();
+                                        }}
+                                        variant="outline"
+                                        disabled={isProcessing}
+                                    >
+                                        <PaperclipIcon size={14} />
+                                    </Button>
                                 )}
-                            >
-                                <Mountain className="h-3.5 w-3.5" />
-                                <span className="hidden sm:block text-xs font-medium">Extreme</span>
-                            </button>
+
+                                {isProcessing ? (
+                                    <Button
+                                        className="rounded-full p-1.5 h-8 w-8"
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            stop();
+                                        }}
+                                        variant="destructive"
+                                    >
+                                        <StopIcon size={14} />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        className="rounded-full p-1.5 h-8 w-8"
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            submitForm();
+                                        }}
+                                        disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
+                                    >
+                                        <ArrowUpIcon size={14} />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
-                            <Button
-                                className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    triggerFileInput();
-                                }}
-                                variant="outline"
-                                disabled={isProcessing}
-                            >
-                                <PaperclipIcon size={14} />
-                            </Button>
-                        )}
-
-                        {isProcessing ? (
-                            <Button
-                                className="rounded-full p-1.5 h-8 w-8"
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    stop();
-                                }}
-                                variant="destructive"
-                            >
-                                <StopIcon size={14} />
-                            </Button>
-                        ) : (
-                            <Button
-                                className="rounded-full p-1.5 h-8 w-8"
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    submitForm();
-                                }}
-                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
-                            >
-                                <ArrowUpIcon size={14} />
-                            </Button>
-                        )}
                     </div>
                 </div>
             </div>

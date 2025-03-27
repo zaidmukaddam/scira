@@ -103,7 +103,6 @@ import { atomDark, oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/s
 import { Tweet } from 'react-tweet';
 import { toast } from 'sonner';
 import {
-    fetchMetadata,
     generateSpeech,
     suggestQuestions
 } from './actions';
@@ -126,9 +125,11 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ReasonSearch from '@/components/reason-search';
-import he from 'he';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MemoryManager from '@/components/memory-manager';
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ImageIcon } from '@radix-ui/react-icons';
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const maxDuration = 120;
 
@@ -780,12 +781,6 @@ const HomeContent = () => {
         text: string;
         link: string;
     }
-
-    interface LinkMetadata {
-        title: string;
-        description: string;
-    }
-
     const isValidUrl = (str: string) => {
         try {
             new URL(str);
@@ -795,23 +790,51 @@ const HomeContent = () => {
         }
     };
 
+    const preprocessLaTeX = (content: string) => {
+        // First, handle escaped delimiters to prevent double processing
+        let processedContent = content
+            .replace(/\\\[/g, '___BLOCK_OPEN___')
+            .replace(/\\\]/g, '___BLOCK_CLOSE___')
+            .replace(/\\\(/g, '___INLINE_OPEN___')
+            .replace(/\\\)/g, '___INLINE_CLOSE___');
+
+        // Process block equations
+        processedContent = processedContent.replace(
+            /___BLOCK_OPEN___([\s\S]*?)___BLOCK_CLOSE___/g,
+            (_, equation) => `$$${equation.trim()}$$`
+        );
+
+        // Process inline equations
+        processedContent = processedContent.replace(
+            /___INLINE_OPEN___([\s\S]*?)___INLINE_CLOSE___/g,
+            (_, equation) => `$${equation.trim()}$`
+        );
+
+        // Handle common LaTeX expressions not wrapped in delimiters
+        processedContent = processedContent.replace(
+            /(\b[A-Z](?:_\{[^{}]+\}|\^[^{}]+|_[a-zA-Z\d]|\^[a-zA-Z\d])+)/g, 
+            (match) => `$${match}$`
+        );
+
+        // Handle any remaining escaped delimiters that weren't part of a complete pair
+        processedContent = processedContent
+            .replace(/___BLOCK_OPEN___/g, '\\[')
+            .replace(/___BLOCK_CLOSE___/g, '\\]')
+            .replace(/___INLINE_OPEN___/g, '\\(')
+            .replace(/___INLINE_CLOSE___/g, '\\)');
+
+        return processedContent;
+    };
+
     const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
-        const [metadataCache, setMetadataCache] = useState<Record<string, LinkMetadata>>({});
-
         const citationLinks = useMemo<CitationLink[]>(() => {
-            return Array.from(content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)).map(([_, text, link]) => ({ text, link }));
+            // Improved regex to better handle various markdown link formats
+            return Array.from(content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)).map(match => {
+                const text = match[1]?.trim() || '';
+                const link = match[2]?.trim() || '';
+                return { text, link };
+            });
         }, [content]);
-
-        const fetchMetadataWithCache = useCallback(async (url: string) => {
-            if (metadataCache[url]) {
-                return metadataCache[url];
-            }
-            const metadata = await fetchMetadata(url);
-            if (metadata) {
-                setMetadataCache(prev => ({ ...prev, [url]: metadata }));
-            }
-            return metadata;
-        }, [metadataCache]);
 
         interface CodeBlockProps {
             language: string | undefined;
@@ -938,45 +961,25 @@ const HomeContent = () => {
 
         CodeBlock.displayName = 'CodeBlock';
 
-        const LinkPreview = ({ href }: { href: string }) => {
-            const [metadata, setMetadata] = useState<LinkMetadata | null>(null);
-            const [isLoading, setIsLoading] = useState(false);
-
-            React.useEffect(() => {
-                setIsLoading(true);
-                fetchMetadataWithCache(href).then((data) => {
-                    setMetadata(data);
-                    setIsLoading(false);
-                });
-            }, [href]);
-
-            if (isLoading) {
-                return (
-                    <div className="flex items-center justify-center h-8">
-                        <Loader2 className="h-3 w-3 animate-spin text-neutral-500 dark:text-neutral-400" />
-                    </div>
-                );
-            }
-
+        const LinkPreview = ({ href, title }: { href: string, title?: string }) => {
             const domain = new URL(href).hostname;
-            const decodedTitle = metadata?.title ? he.decode(metadata.title) : "";
 
             return (
                 <div className="flex flex-col bg-white dark:bg-neutral-800 text-xs m-0">
-                    <div className="flex items-center h-6 space-x-1.5 px-2 pt-1.5 text-[10px] text-neutral-500 dark:text-neutral-400">
+                    <div className="flex items-center h-6 space-x-1.5 px-2 pt-2 text-xs text-neutral-600 dark:text-neutral-300">
                         <Image
                             src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
                             alt=""
-                            width={10}
-                            height={10}
+                            width={12}
+                            height={12}
                             className="rounded-sm"
                         />
-                        <span className="truncate">{domain}</span>
+                        <span className="truncate font-medium">{domain}</span>
                     </div>
-                    {decodedTitle && (
-                        <div className="px-2 pb-1.5">
-                            <h3 className="font-medium text-sm m-0 text-neutral-800 dark:text-neutral-200 line-clamp-2">
-                                {decodedTitle}
+                    {title && (
+                        <div className="px-2 pb-2 pt-1">
+                            <h3 className="font-normal text-sm m-0 text-neutral-700 dark:text-neutral-200 line-clamp-3">
+                                {title}
                             </h3>
                         </div>
                     )}
@@ -984,9 +987,11 @@ const HomeContent = () => {
             );
         };
 
-        const renderHoverCard = (href: string, text: React.ReactNode, isCitation: boolean = false) => {
+        const renderHoverCard = (href: string, text: React.ReactNode, isCitation: boolean = false, citationText?: string) => {
+            const title = citationText || (typeof text === 'string' ? text : '');
+            
             return (
-                <HoverCard>
+                <HoverCard openDelay={10}>
                     <HoverCardTrigger asChild>
                         <Link
                             href={href}
@@ -1003,9 +1008,9 @@ const HomeContent = () => {
                         side="top"
                         align="start"
                         sideOffset={5}
-                        className="w-48 p-0 shadow-sm border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
+                        className="w-56 p-0 shadow-sm border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
                     >
-                        <LinkPreview href={href} />
+                        <LinkPreview href={href} title={title} />
                     </HoverCardContent>
                 </HoverCard>
             );
@@ -1054,9 +1059,11 @@ const HomeContent = () => {
             link(href, text) {
                 const citationIndex = citationLinks.findIndex(link => link.link === href);
                 if (citationIndex !== -1) {
+                    // For citations, show the citation text in the hover card
+                    const citationText = citationLinks[citationIndex].text;
                     return (
                         <sup key={generateKey()}>
-                            {renderHoverCard(href, citationIndex + 1, true)}
+                            {renderHoverCard(href, citationIndex + 1, true, citationText)}
                         </sup>
                     );
                 }
@@ -1102,7 +1109,7 @@ const HomeContent = () => {
             table(children) {
                 return (
                     <div className="w-full my-8 overflow-hidden">
-                        <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+                        <div className="overflow-x-auto rounded-sm border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
                             <table className="w-full border-collapse text-sm m-0">
                                 {children}
                             </table>
@@ -1158,7 +1165,9 @@ const HomeContent = () => {
 
         return (
             <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
-                <Marked renderer={renderer}>{content}</Marked>
+                <Marked renderer={renderer}>
+                    {content}
+                </Marked>
             </div>
         );
     };
@@ -1305,7 +1314,7 @@ const HomeContent = () => {
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,ANTHROPIC_API_KEY,CEREBRAS_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_NAME,MEM0_PROJECT_NAME&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,MISTRAL_API_KEY,COHERE_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
@@ -1403,9 +1412,9 @@ const HomeContent = () => {
                     <div key={`${messageIndex}-${partIndex}-text`}>
                         <div className="flex items-center justify-between mt-5 mb-2">
                             <div className="flex items-center gap-2">
-                                <Sparkles className="size-5 text-primary" />
-                                <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-                                    Answer
+                                <Image src="/scira.png" alt="Scira" className='size-6 invert-0 dark:invert' width={100} height={100} unoptimized quality={100} />
+                                <h2 className="text-lg font-semibold font-syne text-neutral-800 dark:text-neutral-200">
+                                    Scira AI
                                 </h2>
                             </div>
                             {status === 'ready' && (
@@ -1422,7 +1431,7 @@ const HomeContent = () => {
                                 </div>
                             )}
                         </div>
-                        <MarkdownRenderer content={part.text} />
+                        <MarkdownRenderer content={preprocessLaTeX(part.text)} />
                     </div>
                 );
             case "reasoning": {
@@ -1739,12 +1748,12 @@ const HomeContent = () => {
                         </div>
                     )}
                     <AnimatePresence>
-                        {messages.length === 0 && (
+                        {messages.length === 0 && !hasSubmitted && (
                             <motion.div
                                 initial={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 20 }}
                                 transition={{ duration: 0.5 }}
-                                className='!mt-4'
+                                className={cn('!mt-4')}
                             >
                                 <FormComponent
                                     input={input}
@@ -1782,10 +1791,10 @@ const HomeContent = () => {
                         {memoizedMessages.map((message, index) => (
                             <div key={index} className={`${
                                 // Add border only if this is an assistant message AND there's a next message
-                                message.role === 'assistant' && index < memoizedMessages.length - 1 
-                                    ? '!mb-12 border-b border-neutral-200 dark:border-neutral-800' 
+                                message.role === 'assistant' && index < memoizedMessages.length - 1
+                                    ? '!mb-12 border-b border-neutral-200 dark:border-neutral-800'
                                     : ''
-                            }`.trim()}>
+                                }`.trim()}>
                                 {message.role === 'user' && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
@@ -1885,20 +1894,8 @@ const HomeContent = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    {message.experimental_attachments && (
-                                                        <div className='flex flex-row gap-2 mt-3'>
-                                                            {message.experimental_attachments.map((attachment, attachmentIndex) => (
-                                                                <div key={attachmentIndex}>
-                                                                    {attachment.contentType!.startsWith('image/') && (
-                                                                        <img
-                                                                            src={attachment.url}
-                                                                            alt={attachment.name || `Attachment ${attachmentIndex + 1}`}
-                                                                            className="max-w-full h-32 sm:h-48 object-cover rounded-lg border border-neutral-200 dark:border-neutral-800"
-                                                                        />
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                                    {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+                                                        <AttachmentsBadge attachments={message.experimental_attachments} />
                                                     )}
                                                 </div>
                                             )}
@@ -1954,13 +1951,13 @@ const HomeContent = () => {
                 </div>
 
                 <AnimatePresence>
-                    {messages.length > 0 || hasSubmitted ? (
+                    {(messages.length > 0 || hasSubmitted) && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 20 }}
                             transition={{ duration: 0.5 }}
-                            className="fixed bottom-4 left-0 right-0 w-full max-w-[90%] sm:max-w-2xl mx-auto"
+                            className="fixed bottom-4 left-0 right-0 w-full max-w-[90%] sm:max-w-2xl mx-auto z-20"
                         >
                             <FormComponent
                                 input={input}
@@ -1984,7 +1981,7 @@ const HomeContent = () => {
                                 setHasSubmitted={setHasSubmitted}
                             />
                         </motion.div>
-                    ) : null}
+                    )}
                 </AnimatePresence>
             </div>
         </div>
@@ -2194,7 +2191,7 @@ const ToolInvocationListView = memo(
                             <Tweet id={id} />
                         </div>
                     ));
-                    
+
                     MemoizedTweet.displayName = 'MemoizedTweet';
 
                     const FullTweetList = memo(() => (
@@ -3136,6 +3133,160 @@ const ToolInvocationListView = memo(
 );
 
 ToolInvocationListView.displayName = 'ToolInvocationListView';
+
+const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const imageAttachments = attachments.filter(att => att.contentType?.startsWith('image/'));
+    
+    if (imageAttachments.length === 0) return null;
+    
+    return (
+        <>
+            <div className="mt-2 flex flex-wrap gap-2">
+                {imageAttachments.map((attachment, i) => {
+                    // Truncate filename to 15 characters
+                    const fileName = attachment.name || `Image ${i + 1}`;
+                    const truncatedName = fileName.length > 15 
+                        ? fileName.substring(0, 12) + '...' 
+                        : fileName;
+                    
+                    return (
+                        <button 
+                            key={i}
+                            onClick={() => {
+                                setSelectedIndex(i);
+                                setIsOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-3 py-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                        >
+                            <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0">
+                                <img 
+                                    src={attachment.url} 
+                                    alt={fileName}
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                            <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                                {truncatedName}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+            
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="p-0 bg-white dark:bg-neutral-900 sm:max-w-4xl">
+                    <div className="flex flex-col h-full">
+                        <header className="p-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(imageAttachments[selectedIndex].url);
+                                        toast.success("Image URL copied to clipboard");
+                                    }}
+                                    className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
+                                    title="Copy link"
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                                
+                                <a 
+                                    href={imageAttachments[selectedIndex].url} 
+                                    download={imageAttachments[selectedIndex].name}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                                    title="Download"
+                                >
+                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                                        <path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.64251 9.99392 7.35759 9.99392 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5539 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1046 12.1059 14 11.0012 14H3.99635C2.89019 14 2 13.1046 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                    </svg>
+                                </a>
+                                
+                                <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 mr-8">
+                                    {selectedIndex + 1} of {imageAttachments.length}
+                                </Badge>
+                            </div>
+                            
+                            <div className="w-8"></div> {/* Spacer to balance the header and avoid overlap with close button */}
+                        </header>
+                        
+                        <div className="flex-1 p-4 overflow-auto flex items-center justify-center">
+                            <div className="relative max-w-full max-h-[60vh]">
+                                <img
+                                    src={imageAttachments[selectedIndex].url}
+                                    alt={imageAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                                    className="max-w-full max-h-[60vh] object-contain rounded-md"
+                                />
+                                
+                                {imageAttachments.length > 1 && (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => setSelectedIndex(prev => (prev === 0 ? imageAttachments.length - 1 : prev - 1))}
+                                            className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => setSelectedIndex(prev => (prev === imageAttachments.length - 1 ? 0 : prev + 1))}
+                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {imageAttachments.length > 1 && (
+                            <div className="border-t border-neutral-200 dark:border-neutral-800 p-3">
+                                <div className="flex items-center justify-center gap-2 overflow-x-auto py-1">
+                                    {imageAttachments.map((attachment, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setSelectedIndex(idx)}
+                                            className={`relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0 transition-all ${
+                                                selectedIndex === idx 
+                                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' 
+                                                    : 'opacity-70 hover:opacity-100'
+                                            }`}
+                                        >
+                                            <img 
+                                                src={attachment.url} 
+                                                alt={attachment.name || `Thumbnail ${idx + 1}`}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <footer className="border-t border-neutral-200 dark:border-neutral-800 p-3">
+                            <div className="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-between">
+                                <span className="truncate max-w-[80%]">
+                                    {imageAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                                </span>
+                                {imageAttachments[selectedIndex].size && (
+                                    <span>
+                                        {Math.round(imageAttachments[selectedIndex].size / 1024)} KB
+                                    </span>
+                                )}
+                            </div>
+                        </footer>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+};
 
 const Home = () => {
     return (

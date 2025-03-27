@@ -74,10 +74,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${syne.variable} font-sans antialiased`}>
+      <body className={`${GeistSans.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>
-            <Toaster position="top-center" richColors theme="system" />
+            <Toaster position="top-center" />
             {children}
           </Providers>
         </NuqsAdapter>

@@ -3,6 +3,7 @@ import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { cohere } from '@ai-sdk/cohere'
+import { mistral } from "@ai-sdk/mistral";
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -14,7 +15,8 @@ import {
     createDataStreamResponse,
     customProvider,
     generateObject,
-    NoSuchToolError
+    NoSuchToolError,
+    generateText
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
@@ -25,11 +27,9 @@ const scira = customProvider({
         'scira-default': xai('grok-2-1212'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-cmd-a': cohere('command-a-03-2025'),
+        'scira-mistral': mistral('mistral-small-latest'),
     }
 })
-
-// Allow streaming responses up to 600 seconds
-export const maxDuration = 600;
 
 interface XResult {
     id: string;
@@ -109,7 +109,7 @@ function sanitizeUrl(url: string): string {
     return url.replace(/\s+/g, '%20');
 }
 
-async function isValidImageUrl(url: string): Promise<boolean> {
+async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirectedUrl?: string }> {
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
@@ -117,13 +117,116 @@ async function isValidImageUrl(url: string): Promise<boolean> {
         const response = await fetch(url, {
             method: 'HEAD',
             signal: controller.signal,
+            headers: {
+                'Accept': 'image/*',
+                'User-Agent': 'Mozilla/5.0 (compatible; ImageValidator/1.0)'
+            },
+            redirect: 'follow' // Ensure redirects are followed
         });
 
         clearTimeout(timeout);
 
-        return response.ok && (response.headers.get('content-type')?.startsWith('image/') ?? false);
-    } catch {
-        return false;
+        // Log response details for debugging
+        console.log(`Image validation [${url}]: status=${response.status}, content-type=${response.headers.get('content-type')}`);
+
+        // Capture redirected URL if applicable
+        const redirectedUrl = response.redirected ? response.url : undefined;
+
+        // Check if we got redirected (for logging purposes)
+        if (response.redirected) {
+            console.log(`Image was redirected from ${url} to ${redirectedUrl}`);
+        }
+
+        // Handle specific response codes
+        if (response.status === 404) {
+            console.log(`Image not found (404): ${url}`);
+            return { valid: false };
+        }
+
+        if (response.status === 403) {
+            console.log(`Access forbidden (403) - likely CORS issue: ${url}`);
+
+            // Try to use proxy instead of whitelisting domains
+            try {
+                // Attempt to handle CORS blocked images by trying to access via proxy
+                const controller = new AbortController();
+                const proxyTimeout = setTimeout(() => controller.abort(), 5000);
+
+                const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`, {
+                    method: 'HEAD',
+                    signal: controller.signal
+                });
+
+                clearTimeout(proxyTimeout);
+
+                if (proxyResponse.ok) {
+                    const contentType = proxyResponse.headers.get('content-type');
+                    const proxyRedirectedUrl = proxyResponse.headers.get('x-final-url') || undefined;
+
+                    if (contentType && contentType.startsWith('image/')) {
+                        console.log(`Proxy validation successful for ${url}`);
+                        return {
+                            valid: true,
+                            redirectedUrl: proxyRedirectedUrl || redirectedUrl
+                        };
+                    }
+                }
+            } catch (proxyError) {
+                console.error(`Proxy validation failed for ${url}:`, proxyError);
+            }
+            return { valid: false };
+        }
+
+        if (response.status >= 400) {
+            console.log(`Image request failed with status ${response.status}: ${url}`);
+            return { valid: false };
+        }
+
+        // Check content type to ensure it's actually an image
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.startsWith('image/')) {
+            console.log(`Invalid content type for image: ${contentType}, url: ${url}`);
+            return { valid: false };
+        }
+
+        return { valid: true, redirectedUrl };
+    } catch (error) {
+        // Check if error is related to CORS
+        const errorMsg = error instanceof Error ? error.message : String(error);
+
+        if (errorMsg.includes('CORS') || errorMsg.includes('blocked by CORS policy')) {
+            console.error(`CORS error for ${url}:`, errorMsg);
+
+            // Try to use proxy instead of whitelisting domains
+            try {
+                // Attempt to handle CORS blocked images by trying to access via proxy
+                const controller = new AbortController();
+                const proxyTimeout = setTimeout(() => controller.abort(), 5000);
+
+                const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`, {
+                    method: 'HEAD',
+                    signal: controller.signal
+                });
+
+                clearTimeout(proxyTimeout);
+
+                if (proxyResponse.ok) {
+                    const contentType = proxyResponse.headers.get('content-type');
+                    const proxyRedirectedUrl = proxyResponse.headers.get('x-final-url') || undefined;
+
+                    if (contentType && contentType.startsWith('image/')) {
+                        console.log(`Proxy validation successful for ${url}`);
+                        return { valid: true, redirectedUrl: proxyRedirectedUrl };
+                    }
+                }
+            } catch (proxyError) {
+                console.error(`Proxy validation failed for ${url}:`, proxyError);
+            }
+        }
+
+        // Log the specific error
+        console.error(`Image validation error for ${url}:`, errorMsg);
+        return { valid: false };
     }
 }
 
@@ -160,7 +263,7 @@ export async function POST(req: Request) {
     console.log("Group: ", group);
     console.log("Timezone: ", timezone);
 
-    if (group !== 'chat' && group !== 'buddy' && model.trim() !== "scira-cmd-a") {
+    if (group !== 'chat' && group !== 'buddy') {
         console.log("Running inside part 1");
         return createDataStreamResponse({
             execute: async (dataStream) => {
@@ -171,6 +274,11 @@ export async function POST(req: Request) {
                     experimental_activeTools: [...activeTools],
                     system: toolInstructions,
                     toolChoice: 'required',
+                    providerOptions: {
+                        mistral: {
+                            parallel_tool_calls: false,
+                        }
+                    },
                     tools: {
                         stock_chart: tool({
                             description: 'Write and execute Python code to find stock data and generate a stock chart.',
@@ -309,22 +417,21 @@ export async function POST(req: Request) {
                             },
                         }),
                         web_search: tool({
-                            description: 'Search the web for information with multiple queries, max results and search depth.',
+                            description: 'Search the web for information with 5-10 queries, max results and search depth.',
                             parameters: z.object({
-                                queries: z.array(z.string().describe('Array of search queries to look up on the web.')),
+                                queries: z.array(z.string().describe('Array of search queries to look up on the web. Default is 5 to 10 queries.')),
                                 maxResults: z.array(
-                                    z.number().describe('Array of maximum number of results to return per query.').default(10),
+                                    z.number().describe('Array of maximum number of results to return per query. Default is 10.').default(10),
                                 ),
                                 topics: z.array(
-                                    z.enum(['general', 'news']).describe('Array of topic types to search for.').default('general'),
+                                    z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general.').default('general'),
                                 ),
                                 searchDepth: z.array(
-                                    z.enum(['basic', 'advanced']).describe('Array of search depths to use.').default('basic'),
+                                    z.enum(['basic', 'advanced']).describe('Array of search depths to use. Default is basic. Use advanced for more detailed results.').default('basic'),
                                 ),
                                 exclude_domains: z
                                     .array(z.string())
-                                    .describe('A list of domains to exclude from all search results.')
-                                    .default([]),
+                                    .describe('A list of domains to exclude from all search results. Default is an empty list.').default([]),
                             }),
                             execute: async ({
                                 queries,
@@ -335,7 +442,7 @@ export async function POST(req: Request) {
                             }: {
                                 queries: string[];
                                 maxResults: number[];
-                                topics: ('general' | 'news')[];
+                                topics: ('general' | 'news' | 'finance')[];
                                 searchDepth: ('basic' | 'advanced')[];
                                 exclude_domains?: string[];
                             }) => {
@@ -389,10 +496,10 @@ export async function POST(req: Request) {
                                                 deduplicateByDomainAndUrl(data.images).map(
                                                     async ({ url, description }: { url: string; description?: string }) => {
                                                         const sanitizedUrl = sanitizeUrl(url);
-                                                        const isValid = await isValidImageUrl(sanitizedUrl);
-                                                        return isValid
+                                                        const imageValidation = await isValidImageUrl(sanitizedUrl);
+                                                        return imageValidation.valid
                                                             ? {
-                                                                url: sanitizedUrl,
+                                                                url: imageValidation.redirectedUrl || sanitizedUrl,
                                                                 description: description ?? '',
                                                             }
                                                             : null;
@@ -410,7 +517,8 @@ export async function POST(req: Request) {
                                             : await Promise.all(
                                                 deduplicateByDomainAndUrl(data.images).map(async ({ url }: { url: string }) => {
                                                     const sanitizedUrl = sanitizeUrl(url);
-                                                    return (await isValidImageUrl(sanitizedUrl)) ? sanitizedUrl : null;
+                                                    const imageValidation = await isValidImageUrl(sanitizedUrl);
+                                                    return imageValidation.valid ? (imageValidation.redirectedUrl || sanitizedUrl) : null;
                                                 }),
                                             ).then((results) => results.filter((url) => url !== null) as string[]),
                                     };
@@ -1054,7 +1162,7 @@ export async function POST(req: Request) {
                                 type: z
                                     .string()
                                     .describe('The type of place to search for (restaurants, hotels, attractions, geos).'),
-                                radius: z.number().default(6000).describe('The radius in meters (max 50000, default 6000).'),
+                                radius: z.number().default(30000).describe('The radius in meters (max 50000, default 30000).'),
                             }),
                             execute: async ({
                                 location,
@@ -2226,8 +2334,8 @@ export async function POST(req: Request) {
                                             }
                                             const result = await client.add(content, {
                                                 user_id,
-                                                org_name: serverEnv.MEM0_ORG_NAME,
-                                                project_name: serverEnv.MEM0_PROJECT_NAME
+                                                org_id: serverEnv.MEM0_ORG_ID,
+                                                project_id: serverEnv.MEM0_PROJECT_ID
                                             });
                                             if (result.length === 0) {
                                                 return {

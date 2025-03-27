@@ -105,7 +105,7 @@ export default function AboutPage() {
                         {/* Company Name/Logo */}
                         <motion.div variants={item} className="text-center">
                             <Link href="/" className="inline-flex items-end gap-3 text-5xl font-syne font-bold">
-                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert" width={64} height={64} unoptimized quality={100}/>
+                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert-0 dark:invert" width={64} height={64} unoptimized quality={100}/>
                                 <span className=''>Scira</span>
                             </Link>
                         </motion.div>

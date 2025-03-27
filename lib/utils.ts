@@ -71,7 +71,7 @@ export const searchGroups = [
   {
     id: 'youtube' as const,
     name: 'YouTube',
-    description: 'Search YouTube videos in real-time powered by Exa',
+    description: 'Search YouTube videos powered by Exa',
     icon: YoutubeIcon,
     show: true,
   },
