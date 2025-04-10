@@ -768,6 +768,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
     const isMounted = useRef(true);
+    const isCompositionActive = useRef(false)
     const { width } = useWindowSize();
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(true);
@@ -1162,7 +1163,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }, [attachments.length, status, fileInputRef]);
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key === "Enter" && !event.shiftKey) {
+        if (event.key === "Enter" && !event.shiftKey && !isCompositionActive.current) {
             event.preventDefault();
             if (status === 'submitted' || status === 'streaming') {
                 toast.error("Please wait for the response to complete!");
@@ -1293,6 +1294,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             }}
                             rows={1}
                             autoFocus={width ? width > 768 : true}
+                            onCompositionStart={() => isCompositionActive.current = true}
+                            onCompositionEnd={() => isCompositionActive.current = false}
                             onKeyDown={handleKeyDown}
                             onPaste={handlePaste}
                         />
