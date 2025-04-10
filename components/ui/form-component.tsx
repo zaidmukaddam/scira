@@ -77,9 +77,9 @@ const MistralIcon = ({ className }: { className?: string }) => (
 const models = [
     { value: "scira-default", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
     { value: "scira-grok-3-mini", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "slate", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
     // { value: "scira-cmd-a", label: "Command A", icon: "/cohere.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "Cohere's most powerful model", color: "purple", vision: false, experimental: true, category: "Experimental" },
-    { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "lavender", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "violet", vision: false, experimental: false, category: "Stable" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -95,26 +95,18 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-[#4E4E4E] dark:!bg-[#4E4E4E] !text-white hover:!bg-[#3D3D3D] dark:hover:!bg-[#3D3D3D] !border-[#4E4E4E] dark:!border-[#4E4E4E]`
                 : `${baseClasses} !text-[#4E4E4E] dark:!text-[#E5E5E5] hover:!bg-[#4E4E4E] hover:!text-white dark:hover:!bg-[#4E4E4E] dark:hover:!text-white`;
-        case 'slate':
+        case 'indigo':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#475569] dark:!bg-[#475569] !text-white hover:!bg-[#3B4659] dark:hover:!bg-[#3B4659] !border-[#475569] dark:!border-[#475569]`
-                : `${baseClasses} !text-[#475569] dark:!text-[#94A3B8] hover:!bg-[#475569] hover:!text-white dark:hover:!bg-[#475569] dark:hover:!text-white`;
-        case 'blue':
+                ? `${baseClasses} ${selectedClasses} !bg-[#4F46E5] dark:!bg-[#4F46E5] !text-white hover:!bg-[#4338CA] dark:hover:!bg-[#4338CA] !border-[#4F46E5] dark:!border-[#4F46E5]`
+                : `${baseClasses} !text-[#4F46E5] dark:!text-[#6366F1] hover:!bg-[#4F46E5] hover:!text-white dark:hover:!bg-[#4F46E5] dark:hover:!text-white`;
+        case 'violet':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#0070F3] dark:!bg-[#0070F3] !text-white hover:!bg-[#0060DF] dark:hover:!bg-[#0060DF] !border-[#0070F3] dark:!border-[#0070F3]`
-                : `${baseClasses} !text-[#0070F3] dark:!text-[#0070F3] hover:!bg-[#0070F3] hover:!text-white dark:hover:!bg-[#0070F3] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} !bg-[#8B5CF6] dark:!bg-[#8B5CF6] !text-white hover:!bg-[#7C3AED] dark:hover:!bg-[#7C3AED] !border-[#8B5CF6] dark:!border-[#8B5CF6]`
+                : `${baseClasses} !text-[#8B5CF6] dark:!text-[#A78BFA] hover:!bg-[#8B5CF6] hover:!text-white dark:hover:!bg-[#8B5CF6] dark:hover:!text-white`;
         case 'purple':
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-[#5E5ADB] dark:!bg-[#5E5ADB] !text-white hover:!bg-[#4D49C9] dark:hover:!bg-[#4D49C9] !border-[#5E5ADB] dark:!border-[#5E5ADB]`
                 : `${baseClasses} !text-[#5E5ADB] dark:!text-[#5E5ADB] hover:!bg-[#5E5ADB] hover:!text-white dark:hover:!bg-[#5E5ADB] dark:hover:!text-white`;
-        case 'lavender':
-            return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#7B61FF] dark:!bg-[#6C50E0] !text-white hover:!bg-[#6A52D6] dark:hover:!bg-[#5C43C9] !border-[#7B61FF] dark:!border-[#6C50E0]`
-                : `${baseClasses} !text-[#7B61FF] dark:!text-[#8E76FF] hover:!bg-[#7B61FF] hover:!text-white dark:hover:!bg-[#6C50E0] dark:hover:!text-white`;
-        case 'teal':
-            return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#10A37F] dark:!bg-[#10A37F] !text-white hover:!bg-[#0D8E6F] dark:hover:!bg-[#0D8E6F] !border-[#10A37F] dark:!border-[#10A37F]`
-                : `${baseClasses} !text-[#10A37F] dark:!text-[#10A37F] hover:!bg-[#10A37F] hover:!text-white dark:hover:!bg-[#10A37F] dark:hover:!text-white`;
         default:
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
@@ -548,16 +540,12 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                 return 'bg-[#0F0F0F] dark:bg-[#0F0F0F] border-[#0F0F0F] dark:border-[#0F0F0F]';
             case 'gray':
                 return 'bg-[#4E4E4E] dark:bg-[#4E4E4E] border-[#4E4E4E] dark:border-[#4E4E4E]';
-            case 'slate':
-                return 'bg-[#475569] dark:bg-[#475569] border-[#475569] dark:border-[#475569]';
-            case 'blue':
-                return 'bg-[#0070F3] dark:bg-[#0070F3] border-[#0070F3] dark:border-[#0070F3]';
+            case 'indigo':
+                return 'bg-[#4F46E5] dark:bg-[#4F46E5] border-[#4F46E5] dark:border-[#4F46E5]';
+            case 'violet':
+                return 'bg-[#8B5CF6] dark:bg-[#8B5CF6] border-[#8B5CF6] dark:border-[#8B5CF6]';
             case 'purple':
                 return 'bg-[#5E5ADB] dark:bg-[#5E5ADB] border-[#5E5ADB] dark:border-[#5E5ADB]';
-            case 'lavender':
-                return 'bg-[#7B61FF] dark:bg-[#6C50E0] border-[#7B61FF] dark:border-[#6C50E0]';
-            case 'teal':
-                return 'bg-[#10A37F] dark:bg-[#10A37F] border-[#10A37F] dark:border-[#10A37F]';
             default:
                 return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
         }
@@ -1022,7 +1010,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 showSwitchNotification(
                     modelData.label,
                     'Vision model enabled - you can now attach images',
-                    <Image className="size-4" />,
+                    typeof modelData.icon === 'string' ?
+                        <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
+                        <modelData.icon className="size-4" />,
                     modelData.color,
                     'model'  // Explicitly mark as model notification
                 );
@@ -1072,7 +1062,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 showSwitchNotification(
                     modelData.label,
                     'Vision model enabled - you can now attach images',
-                    <Image className="size-4" />,
+                    typeof modelData.icon === 'string' ?
+                        <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
+                        <modelData.icon className="size-4" />,
                     modelData.color,
                     'model'  // Explicitly mark as model notification
                 );
