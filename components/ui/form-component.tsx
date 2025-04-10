@@ -48,38 +48,13 @@ const XAIIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
-const MistralIcon = ({ className }: { className?: string }) => (
-    <svg width="16" height="14.727272727272728" viewBox="0 0 176 162" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-        <rect x="15" y="1" width="32" height="32" fill="#FFCD00" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="143" y="1" width="32" height="32" fill="#FFCD00" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="15" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="47" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="111" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="143" y="33" width="32" height="32" fill="#FFA400" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="15" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="47" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="79" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="111" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="143" y="65" width="32" height="32" fill="#FF7100" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="15" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="79" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="143" y="97" width="32" height="32" fill="#FF4902" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="15" y="129" width="32" height="32" fill="#FF0006" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect x="143" y="129" width="32" height="32" fill="#FF0006" stroke="#636363" strokeOpacity="0.2" strokeWidth="0.5"></rect>
-        <rect y="1" width="16" height="160" fill="black"></rect>
-        <rect x="63" y="97" width="16" height="32" fill="black"></rect>
-        <rect x="95" y="33" width="16" height="32" fill="black"></rect>
-        <rect x="127" y="1" width="16" height="32" fill="black"></rect>
-        <rect x="127" y="97" width="16" height="64" fill="black"></rect>
-    </svg>
-);
 
 const models = [
     { value: "scira-default", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
     { value: "scira-grok-3-mini", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
     // { value: "scira-cmd-a", label: "Command A", icon: "/cohere.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "Cohere's most powerful model", color: "purple", vision: false, experimental: true, category: "Experimental" },
-    { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "violet", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "violet", vision: true, experimental: false, category: "Stable" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {

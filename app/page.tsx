@@ -12,6 +12,7 @@ import TMDBResult from '@/components/movie-info';
 import MultiSearch from '@/components/multi-search';
 import NearbySearchMapView from '@/components/nearby-search-map-view';
 import TrendingResults from '@/components/trending-tv-movies-results';
+import AcademicPapersCard from '@/components/academic-papers';
 import {
     Accordion,
     AccordionContent,
@@ -35,7 +36,7 @@ import {
 import WeatherChart from '@/components/weather-chart';
 import { cn, getUserId, SearchGroupId } from '@/lib/utils';
 import { Wave } from "@foobar404/wave";
-import { CheckCircle, CurrencyDollar, Flag, Info, Memory, RoadHorizon, SoccerBall, TennisBall, XLogo, Clock as PhosphorClock, CalendarBlank } from '@phosphor-icons/react';
+import { CheckCircle, Info, Memory, RoadHorizon, XLogo, Clock as PhosphorClock, CalendarBlank } from '@phosphor-icons/react';
 import { TextIcon } from '@radix-ui/react-icons';
 import { ToolInvocation } from 'ai';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -45,7 +46,6 @@ import {
     AlignLeft,
     ArrowRight,
     Book,
-    Brain,
     Building,
     Calculator,
     Calendar,
@@ -59,7 +59,6 @@ import {
     FileText,
     Film,
     Globe,
-    Heart,
     Loader2,
     LucideIcon,
     MapPin,
@@ -68,20 +67,16 @@ import {
     Plane,
     Play as PlayIcon,
     Plus,
-    Sparkles,
     Sun,
     TrendingUp,
     TrendingUpIcon,
     Tv,
     User2,
-    Users,
     X,
     YoutubeIcon,
     RefreshCw,
     WrapText,
-    ArrowLeftRight,
-    Mountain
-} from 'lucide-react';
+    ArrowLeftRight} from 'lucide-react';
 import Marked, { ReactRenderer } from 'marked-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
@@ -99,7 +94,7 @@ import React, {
 import Latex from 'react-latex-next';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark, oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Tweet } from 'react-tweet';
 import { toast } from 'sonner';
 import {
@@ -127,8 +122,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import ReasonSearch from '@/components/reason-search';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MemoryManager from '@/components/memory-manager';
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ImageIcon } from '@radix-ui/react-icons';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const maxDuration = 120;
@@ -680,11 +674,18 @@ const HomeContent = () => {
     const chatOptions: UseChatOptions = useMemo(() => ({
         api: '/api/search',
         experimental_throttle: 500,
+        maxSteps: 5,
         body: {
             model: selectedModel,
             group: selectedGroup,
             user_id: userId,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        onToolCall({ toolCall, }) {
+            console.log("[tool call]:", toolCall.toolName, toolCall.toolCallId, toolCall.args);
+            if ('result' in toolCall) {
+                console.log("[tool call result]:", toolCall.result);
+            }
         },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);
@@ -1109,8 +1110,8 @@ const HomeContent = () => {
             table(children) {
                 return (
                     <div className="w-full my-8 overflow-hidden">
-                        <div className="overflow-x-auto rounded-sm border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-                            <table className="w-full border-collapse text-sm m-0">
+                        <div className="w-full overflow-x-auto rounded-sm border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+                            <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
                                 {children}
                             </table>
                         </div>
@@ -1119,7 +1120,7 @@ const HomeContent = () => {
             },
             tableRow(children) {
                 return (
-                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50">
+                    <tr className="transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50">
                         {children}
                     </tr>
                 );
@@ -1130,8 +1131,8 @@ const HomeContent = () => {
 
                 return isHeader ? (
                     <th className={cn(
-                        "px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-100",
-                        "bg-neutral-100/80 dark:bg-neutral-800/80",
+                        "whitespace-nowrap px-4 py-3.5 text-sm font-medium text-neutral-900 dark:text-neutral-100",
+                        "bg-neutral-50/80 dark:bg-neutral-800/80",
                         "first:pl-6 last:pr-6",
                         align
                     )}>
@@ -1139,7 +1140,7 @@ const HomeContent = () => {
                     </th>
                 ) : (
                     <td className={cn(
-                        "px-4 py-3 text-neutral-700 dark:text-neutral-300",
+                        "whitespace-pre-wrap px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
                         "first:pl-6 last:pr-6",
                         align
                     )}>
@@ -1149,14 +1150,14 @@ const HomeContent = () => {
             },
             tableHeader(children) {
                 return (
-                    <thead className="border-b border-neutral-200 dark:border-neutral-800">
+                    <thead>
                         {children}
                     </thead>
                 );
             },
             tableBody(children) {
                 return (
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 bg-transparent">
                         {children}
                     </tbody>
                 );
@@ -1397,16 +1398,55 @@ const HomeContent = () => {
         parts: MessagePart[],
         message: any,
     ) => {
-        if (part.type === "text" && partIndex === 0 &&
-            parts.some((p, i) => i > partIndex && p.type === 'tool-invocation')) {
-            return null;
+        // First, update timing data for reasoning parts directly in the render function
+        if (part.type === "reasoning") {
+            const sectionKey = `${messageIndex}-${partIndex}`;
+            
+            // Initialize timing data if it doesn't exist
+            if (!reasoningTimings[sectionKey]) {
+                // Use a functional state update to avoid stale state issues
+                setReasoningTimings(prev => ({
+                    ...prev,
+                    [sectionKey]: { startTime: Date.now() }
+                }));
+            }
+            
+            // Check if reasoning is complete but we haven't recorded the end time
+            const isComplete = parts.some((p, i) => 
+                i > partIndex && (p.type === "text" || p.type === "tool-invocation")
+            );
+            
+            if (isComplete && reasoningTimings[sectionKey] && !reasoningTimings[sectionKey].endTime) {
+                // Set end time if reasoning is complete and it hasn't been set yet
+                setReasoningTimings(prev => ({
+                    ...prev,
+                    [sectionKey]: {
+                        ...prev[sectionKey],
+                        endTime: Date.now()
+                    }
+                }));
+            }
+        }
+        
+        // Case 1: Skip rendering text parts that should be superseded by tool invocations
+        if (part.type === "text") {
+            // Skip empty text parts entirely
+            if (!part.text || part.text.trim() === "") return null;
+            
+            // Check if this text part should be hidden because a tool invocation will show the same info
+            const hasRelatedToolInvocation = parts.some(p => 
+                p.type === 'tool-invocation'
+                // Don't need direct comparison between different types
+            );
+            
+            // If this is a summary text before/after a tool invocation, don't render it
+            if (partIndex === 0 && hasRelatedToolInvocation) {
+                return null;
+            }
         }
 
         switch (part.type) {
             case "text":
-                if (part.text.trim() === "" || part.text === null || part.text === undefined || !part.text) {
-                    return null;
-                }
                 return (
                     <div key={`${messageIndex}-${partIndex}-text`}>
                         <div className="flex items-center justify-between mt-5 mb-2">
@@ -1435,9 +1475,36 @@ const HomeContent = () => {
                 );
             case "reasoning": {
                 const sectionKey = `${messageIndex}-${partIndex}`;
-                const isComplete = parts[partIndex + 1]?.type === "text";
+                
+                // Case 2: Enhanced handling of reasoning with better parallel tracking
+                // Check if there's a tool invocation running in parallel with this reasoning
+                const hasParallelToolInvocation = parts.some(p => 
+                    p.type === 'tool-invocation'
+                );
+                
+                // Determine if reasoning is complete (has a text part or tool invocation following it)
+                const isComplete = parts.some((p, i) => 
+                    i > partIndex && (p.type === "text" || p.type === "tool-invocation")
+                );
+                
+                // Calculate timing data
                 const timing = reasoningTimings[sectionKey];
-                const duration = timing?.endTime ? ((timing.endTime - timing.startTime) / 1000).toFixed(1) : null;
+                let duration = null;
+                let liveElapsedTime = null;
+                
+                if (timing) {
+                    if (timing.endTime) {
+                        // Completed reasoning - show fixed duration
+                        duration = ((timing.endTime - timing.startTime) / 1000).toFixed(1);
+                    } else {
+                        // Ongoing reasoning - calculate live elapsed time
+                        liveElapsedTime = ((Date.now() - timing.startTime) / 1000).toFixed(1);
+                    }
+                }
+                
+                // Get the most recent tool invocation if any is running in parallel
+                const parallelTool = hasParallelToolInvocation ? 
+                    parts.find(p => p.type === 'tool-invocation')?.toolInvocation?.toolName : null;
 
                 return (
                     <motion.div
@@ -1478,6 +1545,7 @@ const HomeContent = () => {
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                                             {isComplete ? "Reasoned" : "Reasoning"}
+                                            {parallelTool && <span className="text-neutral-500 ml-1">• called {parallelTool}</span>}
                                         </span>
                                         {duration && (
                                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
@@ -1487,11 +1555,11 @@ const HomeContent = () => {
                                                 </span>
                                             </div>
                                         )}
-                                        {!isComplete && liveElapsedTimes[sectionKey] && (
+                                        {!isComplete && liveElapsedTime && (
                                             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
                                                 <PhosphorClock weight="regular" className="size-3 text-neutral-500" />
                                                 <span className="text-[10px] tabular-nums font-medium text-neutral-500">
-                                                    {liveElapsedTimes[sectionKey].toFixed(1)}s
+                                                    {liveElapsedTime}s
                                                 </span>
                                             </div>
                                         )}
@@ -1554,6 +1622,15 @@ const HomeContent = () => {
                                                 ) : (
                                                     <div className="text-neutral-500 italic">No reasoning details available</div>
                                                 )}
+                                                
+                                                {hasParallelToolInvocation && (
+                                                    <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                                                        <div className="text-xs text-neutral-500 flex items-center gap-1.5">
+                                                            <Info className="h-3 w-3" />
+                                                            <span>Using tools in parallel with reasoning</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>
@@ -1583,31 +1660,29 @@ const HomeContent = () => {
     }
 
     const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
-
-    // Add state for tracking live elapsed time
-    const [liveElapsedTimes, setLiveElapsedTimes] = useState<Record<string, number>>({});
-
-    // Update live elapsed time for active reasoning sections
+    
+    // For active reasoning sections, update timers every 100ms
     useEffect(() => {
+        // Only run this effect when reasoning is occurring
         const activeReasoningSections = Object.entries(reasoningTimings)
             .filter(([_, timing]) => !timing.endTime);
-
+            
         if (activeReasoningSections.length === 0) return;
-
-        const interval = setInterval(() => {
+        
+        // Update once immediately
+        const updateTimes = () => {
             const now = Date.now();
             const updatedTimes: Record<string, number> = {};
-
+            
             activeReasoningSections.forEach(([key, timing]) => {
                 updatedTimes[key] = (now - timing.startTime) / 1000;
             });
-
-            setLiveElapsedTimes(prev => ({
-                ...prev,
-                ...updatedTimes
-            }));
-        }, 100);
-
+        };
+        
+        updateTimes();
+        
+        // Then set up interval for updates
+        const interval = setInterval(updateTimes, 100);
         return () => clearInterval(interval);
     }, [reasoningTimings]);
 
@@ -2386,96 +2461,7 @@ const ToolInvocationListView = memo(
                         />;
                     }
 
-                    return (
-                        <Card className="w-full my-4 overflow-hidden">
-                            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/20 flex items-center justify-center backdrop-blur-sm">
-                                        <Book className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                                    </div>
-                                    <div>
-                                        <CardTitle>Academic Papers</CardTitle>
-                                        <p className="text-sm text-muted-foreground">Found {result.results.length} papers</p>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <div className="px-4 pb-2">
-                                <div className="flex overflow-x-auto gap-4 no-scrollbar hover:overflow-x-scroll">
-                                    {result.results.map((paper: AcademicResult, index: number) => (
-                                        <motion.div
-                                            key={paper.url || index}
-                                            className="w-[400px] flex-none"
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: index * 0.1 }}
-                                        >
-                                            <div className="h-[300px] relative group overflow-y-auto">
-                                                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/20 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                                                <div className="h-full relative backdrop-blur-sm bg-background/95 dark:bg-neutral-900/95 border border-neutral-200/50 dark:border-neutral-800/50 rounded-xl p-4 flex flex-col transition-all duration-500 group-hover:border-violet-500/20">
-                                                    <h3 className="font-semibold text-xl tracking-tight mb-3 line-clamp-2 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors duration-300">
-                                                        {paper.title}
-                                                    </h3>
-
-                                                    {paper.author && (
-                                                        <div className="mb-3">
-                                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-muted-foreground bg-neutral-100 dark:bg-neutral-800 rounded-md">
-                                                                <User2 className="h-3.5 w-3.5 text-violet-500" />
-                                                                <span className="line-clamp-1">
-                                                                    {paper.author.split(';')
-                                                                        .slice(0, 2)
-                                                                        .join(', ') +
-                                                                        (paper.author.split(';').length > 2 ? ' et al.' : '')
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {paper.publishedDate && (
-                                                        <div className="mb-4">
-                                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-muted-foreground bg-neutral-100 dark:bg-neutral-800 rounded-md">
-                                                                <Calendar className="h-3.5 w-3.5 text-violet-500" />
-                                                                {new Date(paper.publishedDate).toLocaleDateString()}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex-1 relative mb-4 pl-3">
-                                                        <div className="absolute -left-0 top-1 bottom-1 w-[2px] rounded-full bg-gradient-to-b from-violet-500 via-violet-400 to-transparent opacity-50" />
-                                                        <p className="text-sm text-muted-foreground line-clamp-4">
-                                                            {paper.summary}
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            onClick={() => window.open(paper.url, '_blank')}
-                                                            className="flex-1 bg-neutral-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 group/btn"
-                                                        >
-                                                            <FileText className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform duration-300" />
-                                                            View Paper
-                                                        </Button>
-
-                                                        {paper.url.includes('arxiv.org') && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                onClick={() => window.open(paper.url.replace('abs', 'pdf'), '_blank')}
-                                                                className="bg-neutral-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 group/btn"
-                                                            >
-                                                                <Download className="h-4 w-4 group-hover/btn:scale-110 transition-transform duration-300" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </div>
-                        </Card>
-                    );
+                    return <AcademicPapersCard results={result.results} />;
                 }
 
                 if (toolInvocation.toolName === 'nearby_search') {
