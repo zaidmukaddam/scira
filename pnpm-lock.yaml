@@ -8,9 +8,18 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.2.9
+        version: 1.2.9(zod@3.24.2)
+      '@ai-sdk/cerebras':
+        specifier: ^0.2.8
+        version: 0.2.8(zod@3.24.2)
       '@ai-sdk/cohere':
-        specifier: ^1.2.1
-        version: 1.2.1(zod@3.24.2)
+        specifier: ^1.2.7
+        version: 1.2.7(zod@3.24.2)
+      '@ai-sdk/groq':
+        specifier: ^1.2.7
+        version: 1.2.7(zod@3.24.2)
       '@ai-sdk/mistral':
         specifier: ^1.2.6
         version: 1.2.6(zod@3.24.2)
@@ -330,8 +339,26 @@ importers:
 
 packages:
 
-  '@ai-sdk/cohere@1.2.1':
-    resolution: {integrity: sha512-PefWCN8VlQ9bLY2dD4ZEQvHU+OP/kFpOjlGwvCM0tsq2bOzZhzmnvjBwf97bJ3QQQuMJaFulbzk2y/mulODAoQ==}
+  '@ai-sdk/anthropic@1.2.9':
+    resolution: {integrity: sha512-IsPKFt45rEhrAIeJisNr5hS1N6NPiVD/sBcS6wqJc2eKp32Q74SqDn6hmEgk4MlqxuWzpUCQ2kjsa75gAV3Hew==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
+  '@ai-sdk/cerebras@0.2.8':
+    resolution: {integrity: sha512-AlVl95QnpF1I+FB25X3AmHGcSY7CdfiQ3ikXfUsIwl+4ISVPRi+abH5jE2fn06RjWUikPjW4MCRQf68akia49w==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
+  '@ai-sdk/cohere@1.2.7':
+    resolution: {integrity: sha512-lWTfTn/RzNKi6y+X4nC7PYUS/wuwCeTAlscCkLseHgP4hj3k63r1IojCRY0o9YlBCuMT8k6+IkkZj11pxF9f2g==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
+  '@ai-sdk/groq@1.2.7':
+    resolution: {integrity: sha512-Ggb/qcSA+74T6nf3eEqF6SoqdnQrrACJsj7gj7GdkUIkAv9smcFvCIyBLo7rKWbqdBuzcgnQCI1Lo6+XuJKEGg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -4829,10 +4856,29 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/cohere@1.2.1(zod@3.24.2)':
+  '@ai-sdk/anthropic@1.2.9(zod@3.24.2)':
     dependencies:
-      '@ai-sdk/provider': 1.1.0
-      '@ai-sdk/provider-utils': 2.2.0(zod@3.24.2)
+      '@ai-sdk/provider': 1.1.2
+      '@ai-sdk/provider-utils': 2.2.6(zod@3.24.2)
+      zod: 3.24.2
+
+  '@ai-sdk/cerebras@0.2.8(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/openai-compatible': 0.2.8(zod@3.24.2)
+      '@ai-sdk/provider': 1.1.2
+      '@ai-sdk/provider-utils': 2.2.6(zod@3.24.2)
+      zod: 3.24.2
+
+  '@ai-sdk/cohere@1.2.7(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.1.2
+      '@ai-sdk/provider-utils': 2.2.6(zod@3.24.2)
+      zod: 3.24.2
+
+  '@ai-sdk/groq@1.2.7(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.1.2
+      '@ai-sdk/provider-utils': 2.2.6(zod@3.24.2)
       zod: 3.24.2
 
   '@ai-sdk/mistral@1.2.6(zod@3.24.2)':

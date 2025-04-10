@@ -3,7 +3,7 @@ import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { cohere } from '@ai-sdk/cohere'
-import { mistral } from "@ai-sdk/mistral";
+import { anthropic } from "@ai-sdk/anthropic";
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -26,8 +26,8 @@ const scira = customProvider({
         'scira-default': xai('grok-3-fast-beta'),
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
-        'scira-cmd-a': cohere('command-a-03-2025'),
-        'scira-mistral': mistral('mistral-small-latest'),
+        // 'scira-cmd-a': cohere('command-a-03-2025'),
+        'scira-claude': anthropic('claude-3-7-sonnet-20250219'),
     }
 })
 
