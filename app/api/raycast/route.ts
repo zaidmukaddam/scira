@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-2-1212'),
+        'scira-default': xai("grok-3-mini-fast-beta"),
     }
 })
 
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
                         z.number().describe('Array of maximum number of results to return per query.').default(10),
                     ),
                     topics: z.array(
-                        z.enum(['general', 'news']).describe('Array of topic types to search for.').default('general'),
+                        z.enum(['general', 'news', "finance"]).describe('Array of topic types to search for.').default('general'),
                     ),
                     searchDepth: z.array(
                         z.enum(['basic', 'advanced']).describe('Array of search depths to use.').default('basic'),
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
                 }: {
                     queries: string[];
                     maxResults: number[];
-                    topics: ('general' | 'news')[];
+                    topics: ('general' | 'news' | 'finance')[];
                     searchDepth: ('basic' | 'advanced')[];
                     exclude_domains?: string[];
                 }) => {
