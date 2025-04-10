@@ -1111,7 +1111,7 @@ const HomeContent = () => {
                 return (
                     <div className="w-full my-8 overflow-hidden">
                         <div className="w-full overflow-x-auto rounded-sm border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-                            <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
+                            <table className="w-full table-auto divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
                                 {children}
                             </table>
                         </div>
@@ -1131,26 +1131,28 @@ const HomeContent = () => {
 
                 return isHeader ? (
                     <th className={cn(
-                        "whitespace-nowrap px-4 py-3.5 text-sm font-medium text-neutral-900 dark:text-neutral-100",
+                        "px-4 py-3.5 text-sm font-medium text-neutral-900 dark:text-neutral-100",
                         "bg-neutral-50/80 dark:bg-neutral-800/80",
                         "first:pl-6 last:pr-6",
+                        "w-auto min-w-[120px]",
                         align
                     )}>
-                        {children}
+                        <div className="break-words">{children}</div>
                     </th>
                 ) : (
                     <td className={cn(
-                        "whitespace-pre-wrap px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
+                        "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
                         "first:pl-6 last:pr-6",
+                        "w-auto min-w-[120px] max-w-[300px]",
                         align
                     )}>
-                        {children}
+                        <div className="break-words">{children}</div>
                     </td>
                 );
             },
             tableHeader(children) {
                 return (
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                         {children}
                     </thead>
                 );
