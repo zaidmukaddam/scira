@@ -16,7 +16,6 @@ import {
     customProvider,
     generateObject,
     NoSuchToolError,
-    generateText
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
@@ -24,8 +23,8 @@ import MemoryClient from 'mem0ai';
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-3-mini-fast-beta'),
-        'scira-grok-3': xai('grok-3-fast-beta'),
+        'scira-default': xai('grok-3-fast-beta'),
+        'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-cmd-a': cohere('command-a-03-2025'),
         'scira-mistral': mistral('mistral-small-latest'),
