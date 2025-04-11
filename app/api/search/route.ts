@@ -2,8 +2,8 @@
 import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
-import { cohere } from '@ai-sdk/cohere'
 import { anthropic } from "@ai-sdk/anthropic";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -26,8 +26,8 @@ const scira = customProvider({
         'scira-default': xai('grok-3-fast-beta'),
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
-        // 'scira-cmd-a': cohere('command-a-03-2025'),
         'scira-claude': anthropic('claude-3-7-sonnet-20250219'),
+        'scira-optimus': openrouter('openrouter/optimus-alpha')
     }
 })
 
@@ -258,14 +258,17 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 export async function POST(req: Request) {
     const { messages, model, group, user_id, timezone } = await req.json();
     const { tools: activeTools, instructions } = await getGroupConfig(group);
-
+    
+    console.log("--------------------------------");
+    console.log("Messages: ", messages);
+    console.log("--------------------------------");
     console.log("Running with model: ", model.trim());
     console.log("Group: ", group);
     console.log("Timezone: ", timezone);
 
     return createDataStreamResponse({
         execute: async (dataStream) => {
-        const result = streamText({
+            const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
                 temperature: 0,
@@ -273,14 +276,29 @@ export async function POST(req: Request) {
                 experimental_activeTools: [...activeTools],
                 system: instructions,
                 toolChoice: 'auto',
+                experimental_transform: smoothStream({
+                    chunking: 'line',
+                    delayInMs: 30,
+                }),
                 providerOptions: {
-                    ...(model === 'scira-grok-3-mini' ? { xai: { reasoning_effort: 'low' } } : {}),
-                    anthropic: {
-                        thinking: {
-                            type: group === "chat" ? "enabled" : "disabled",
-                            budgetTokens: 12000
-                        }
+                    scira: {
+                        ...(model === 'scira-grok-3-mini' ?
+                            {
+                                reasoning_effort: 'high'
+                            }
+                            : {}
+                        ),
+                        ...(model === 'scira-claude' ? {
+                            thinking: {
+                                type: group === "chat" ? "enabled" : "disabled",
+                                budgetTokens: 12000
+                            }
+                        } : {}),
                     }
+                },
+                headers: {
+                    "HTTP-Referer": "scira.ai",
+                    "X-Title": "scira",
                 },
                 tools: {
                     stock_chart: tool({

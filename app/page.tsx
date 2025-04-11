@@ -1255,27 +1255,47 @@ const HomeContent = () => {
     const handleMessageUpdate = useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (input.trim()) {
-            // Create new messages array up to the edited message
-            const newMessages = messages.slice(0, editingMessageIndex + 1);
-            // Update the edited message
-            newMessages[editingMessageIndex] = { ...newMessages[editingMessageIndex], content: input.trim() };
-            // Set the new messages array
-            setMessages(newMessages);
+            // Get the history *before* the message being edited
+            const historyBeforeEdit = messages.slice(0, editingMessageIndex);
+            
+            // Get the original message to preserve attachments if any
+            const originalMessage = messages[editingMessageIndex];
+            
+            // Update the hook's message state to remove messages after the edited one
+            setMessages(historyBeforeEdit);
+
+            // Store the edited message content for the next step
+            const editedContent = input.trim();
+            lastSubmittedQueryRef.current = editedContent; // Update ref here
+
+            // Clear the input field immediately
+            setInput('');
+            
+            // Reset suggested questions
+            setSuggestedQuestions([]);
+            
+            // Extract attachments from the original message
+            const attachments = originalMessage?.experimental_attachments || [];
+            
+            // Append the edited message with proper attachments using chatRequestOptions format
+            append(
+                {
+                    role: 'user', // Role is always 'user' for edited messages
+                    content: editedContent,
+                },
+                {
+                    experimental_attachments: attachments
+                }
+            );
+
             // Reset editing state
             setIsEditingMessage(false);
             setEditingMessageIndex(-1);
-            // Store the edited message for reference
-            lastSubmittedQueryRef.current = input.trim();
-            // Clear input
-            setInput('');
-            // Reset suggested questions
-            setSuggestedQuestions([]);
-            // Trigger a new chat completion without appending
-            reload();
+
         } else {
             toast.error("Please enter a valid message.");
         }
-    }, [input, messages, editingMessageIndex, setMessages, setInput, reload]);
+    }, [input, messages, editingMessageIndex, setMessages, setInput, append, setSuggestedQuestions]);
 
     const AboutButton = () => {
         return (

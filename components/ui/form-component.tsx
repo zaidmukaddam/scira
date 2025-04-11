@@ -53,8 +53,8 @@ const models = [
     { value: "scira-default", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
     { value: "scira-grok-3-mini", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
-    // { value: "scira-cmd-a", label: "Command A", icon: "/cohere.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "Cohere's most powerful model", color: "purple", vision: false, experimental: true, category: "Experimental" },
     { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "violet", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-optimus", label: "Optimus Alpha", icon: "/scira.png", iconClass: "!text-neutral-300", description: "A powerful cloaked model", color: "alpha", vision: true, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -82,6 +82,11 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-[#5E5ADB] dark:!bg-[#5E5ADB] !text-white hover:!bg-[#4D49C9] dark:hover:!bg-[#4D49C9] !border-[#5E5ADB] dark:!border-[#5E5ADB]`
                 : `${baseClasses} !text-[#5E5ADB] dark:!text-[#5E5ADB] hover:!bg-[#5E5ADB] hover:!text-white dark:hover:!bg-[#5E5ADB] dark:hover:!text-white`;
+        case 'alpha':
+            // make it classic optimus prime like 
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} !bg-gradient-to-r !from-[#0b3d91] !to-[#d01012] dark:!bg-gradient-to-r dark:!from-[#0b3d91] dark:!to-[#d01012] !text-white hover:!opacity-90 !border-[#0b3d91] dark:!border-[#0b3d91]`
+                : `${baseClasses} !text-[#d01012] dark:!text-[#3f83f8] hover:!bg-gradient-to-r hover:!from-[#0b3d91] hover:!to-[#d01012] hover:!text-white dark:hover:!text-white`;
         default:
             return isSelected
                 ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
@@ -186,8 +191,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                         categoryIndex > 0 && "mt-1"
                     )}>
                         <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none sticky top-0 bg-white dark:bg-neutral-900 z-10">
-                            {/* {category} */}
-                            Models
+                            {category}
                         </div>
                         <div className="space-y-0.5">
                             {categoryModels.map((model) => (
@@ -242,9 +246,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                 </DropdownMenuItem>
                             ))}
                         </div>
-                        {/* {showDivider(category) && (
+                        {showDivider(category) && (
                             <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
-                        )} */}
+                        )}
                     </div>
                 ))}
             </DropdownMenuContent>
@@ -521,6 +525,8 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                 return 'bg-[#8B5CF6] dark:bg-[#8B5CF6] border-[#8B5CF6] dark:border-[#8B5CF6]';
             case 'purple':
                 return 'bg-[#5E5ADB] dark:bg-[#5E5ADB] border-[#5E5ADB] dark:border-[#5E5ADB]';
+            case 'alpha':
+                return 'bg-gradient-to-r from-[#0b3d91] to-[#d01012] dark:from-[#0b3d91] dark:to-[#d01012] border-[#0b3d91] dark:border-[#0b3d91]';
             default:
                 return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
         }
