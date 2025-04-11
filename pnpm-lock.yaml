@@ -173,6 +173,9 @@ importers:
       embla-carousel-react:
         specifier: ^8.3.0
         version: 8.5.2(react@18.3.1)
+      emoji-dictionary:
+        specifier: ^1.0.12
+        version: 1.0.12
       exa-js:
         specifier: ^1.5.12
         version: 1.5.12(encoding@0.1.13)
@@ -2356,11 +2359,29 @@ packages:
   embla-carousel@8.5.2:
     resolution: {integrity: sha512-xQ9oVLrun/eCG/7ru3R+I5bJ7shsD8fFwLEY7yPe27/+fDHCNj0OT5EoG5ZbFyOxOcG6yTwW8oTz/dWyFnyGpg==}
 
+  emoji-chars@1.0.13:
+    resolution: {integrity: sha512-J8q4HihHiyraR2HygZsqoDhPA7FzT42seKP67lCYu/iAwtQWSMGfj7MRqQIRZZRQ4P1plNOstMkftej6fDn2kw==}
+
+  emoji-dictionary@1.0.12:
+    resolution: {integrity: sha512-QdCfgVM0ZIXgPuUHY/sxwnqj4pcs5hWRWeKTDbsJhBoitUo6lniDRMrjgD4aQ1nX8obF4OhWPScOoZ07OhNb1A==}
+
+  emoji-name-map@1.2.9:
+    resolution: {integrity: sha512-MSM8y6koSqh/2uEMI2VoKA+Ac0qL5RkgFGP/pzL6n5FOrOJ7FOZFxgs7+uNpqA+AT+WmdbMPXkd3HnFXXdz4AA==}
+
+  emoji-names@1.0.13:
+    resolution: {integrity: sha512-HXbqj7vacBfJ0i5GHhHKPjfZS2+Wl+h8YuwZPdUK1eIOBxCz6vdfIk1dP1MTGkHchLI+vkMhQ0/KhKTQNmZ8Gg==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
+
+  emoji-unicode-map@1.1.12:
+    resolution: {integrity: sha512-YabKdJMJPLHZUWEPnvWgGdKhmTgwgLytEbpMORQ6/L+O337jATx6twvivnhYlmvVns9l4+Kt+qxgd++vnn+rnQ==}
+
+  emojilib@2.4.0:
+    resolution: {integrity: sha512-5U0rVMU5Y2n2+ykNLQqMoqklN9ICBT/KsvC1Gz6vqHbz2AXXGkG+Pm5rMWk/8Vjrr/mY9985Hi8DYzn1F09Nyw==}
 
   encoding-sniffer@0.2.0:
     resolution: {integrity: sha512-ju7Wq1kg04I3HtiYIOrUrdfdDvkyO9s5XM8QAj/bN61Yo/Vb4vgJxy5vi4Yxk01gWHbrofpPtpxM8bKger9jhg==}
@@ -3125,6 +3146,9 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  iterate-object@1.3.5:
+    resolution: {integrity: sha512-eL23u8oFooYTq6TtJKjp2RYjZnCkUYQvC0T/6fJfWykXJ3quvdDdzKZ3CEjy8b3JGOvLTjDYMEMIp5243R906A==}
+
   iterator.prototype@1.1.5:
     resolution: {integrity: sha512-H0dkQoCa3b2VEeKQBOxFph+JAbcrQdE7KC0UkqwpLmv2EC4P41QXP+rqo9wYodACiG5/WM5s9oDApTU8utwj9g==}
     engines: {node: '>= 0.4'}
@@ -3292,6 +3316,9 @@ packages:
   make-fetch-happen@9.1.0:
     resolution: {integrity: sha512-+zopwDy7DNknmwPQplem5lAZX/eCOzSvSNNcSKm5eVwTkOBzoktEfXsa9L23J/GIRhxRsaxzkPEhrJEpE2F4Gg==}
     engines: {node: '>= 10'}
+
+  map-o@2.0.11:
+    resolution: {integrity: sha512-zvSGIMfUpr+Dkccnha9JWi5XF1U08eB4CEwDJLdbT9PDx+v+O3bWu53qx6xrXzEPk2jMisNHAIXBPofcD9L31A==}
 
   mapbox-gl@3.10.0:
     resolution: {integrity: sha512-YnQxjlthuv/tidcxGYU2C8nRDVXMlAHa3qFhuOJeX4AfRP72OMRBf9ApL+M+k5VWcAXi2fcNOUVgphknjLumjA==}
@@ -6906,9 +6933,38 @@ snapshots:
 
   embla-carousel@8.5.2: {}
 
+  emoji-chars@1.0.13:
+    dependencies:
+      emoji-unicode-map: 1.1.12
+
+  emoji-dictionary@1.0.12:
+    dependencies:
+      emoji-chars: 1.0.13
+      emoji-name-map: 1.2.9
+      emoji-names: 1.0.13
+      emoji-unicode-map: 1.1.12
+      emojilib: 2.4.0
+
+  emoji-name-map@1.2.9:
+    dependencies:
+      emojilib: 2.4.0
+      iterate-object: 1.3.5
+      map-o: 2.0.11
+
+  emoji-names@1.0.13:
+    dependencies:
+      emoji-name-map: 1.2.9
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
+
+  emoji-unicode-map@1.1.12:
+    dependencies:
+      emoji-name-map: 1.2.9
+      iterate-object: 1.3.5
+
+  emojilib@2.4.0: {}
 
   encoding-sniffer@0.2.0:
     dependencies:
@@ -7049,7 +7105,7 @@ snapshots:
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.4(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1)
@@ -7079,7 +7135,7 @@ snapshots:
       stable-hash: 0.0.5
       tinyglobby: 0.2.12
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7094,7 +7150,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
@@ -7913,6 +7969,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  iterate-object@1.3.5: {}
+
   iterator.prototype@1.1.5:
     dependencies:
       define-data-property: 1.1.4
@@ -8132,6 +8190,10 @@ snapshots:
       - bluebird
       - supports-color
     optional: true
+
+  map-o@2.0.11:
+    dependencies:
+      iterate-object: 1.3.5
 
   mapbox-gl@3.10.0:
     dependencies:
