@@ -91,6 +91,7 @@ import React, {
     useRef,
     useState
 } from 'react';
+import emojiDictionary from 'emoji-dictionary';
 import Latex from 'react-latex-next';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -778,6 +779,14 @@ const HomeContent = () => {
         content: string;
     }
 
+    // Replace :shortcode: with Unicode emoji
+    function emojify(text: string): string {
+        return text.replace(/:([a-zA-Z0-9_+-]+):/g, (match, p1) => {
+            const emoji = emojiDictionary.getUnicode(p1);
+            return emoji || match;
+        });
+    }
+
     interface CitationLink {
         text: string;
         link: string;
@@ -1169,7 +1178,7 @@ const HomeContent = () => {
         return (
             <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
                 <Marked renderer={renderer}>
-                    {content}
+                    {emojify(content)}
                 </Marked>
             </div>
         );
