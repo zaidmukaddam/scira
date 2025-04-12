@@ -681,12 +681,6 @@ const HomeContent = () => {
             user_id: userId,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        onToolCall({ toolCall, }) {
-            console.log("[tool call]:", toolCall.toolName, toolCall.toolCallId, toolCall.args);
-            if ('result' in toolCall) {
-                console.log("[tool call result]:", toolCall.result);
-            }
-        },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);
             if (message.content && (finishReason === 'stop' || finishReason === 'length')) {
@@ -1109,9 +1103,9 @@ const HomeContent = () => {
             },
             table(children) {
                 return (
-                    <div className="w-full my-8 overflow-hidden">
-                        <div className="w-full overflow-x-auto rounded-sm border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-                            <table className="w-full table-auto divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
+                    <div className="w-full my-6 overflow-hidden">
+                        <div className="w-full overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-sm dark:shadow-md dark:shadow-black/10">
+                            <table className="w-full border-collapse table-fixed m-0">
                                 {children}
                             </table>
                         </div>
@@ -1120,7 +1114,7 @@ const HomeContent = () => {
             },
             tableRow(children) {
                 return (
-                    <tr className="transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50">
+                    <tr className="transition-colors border-b border-neutral-200 dark:border-neutral-800/80 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/70">
                         {children}
                     </tr>
                 );
@@ -1131,19 +1125,18 @@ const HomeContent = () => {
 
                 return isHeader ? (
                     <th className={cn(
-                        "px-4 py-3.5 text-sm font-medium text-neutral-900 dark:text-neutral-100",
-                        "bg-neutral-50/80 dark:bg-neutral-800/80",
-                        "first:pl-6 last:pr-6",
-                        "w-auto min-w-[120px]",
+                        "px-3 py-2.5 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
+                        "bg-neutral-50 dark:bg-neutral-800",
+                        "first:pl-4 last:pr-4",
+                        "w-auto", 
                         align
                     )}>
-                        <div className="break-words">{children}</div>
+                        <div className="break-words whitespace-normal">{children}</div>
                     </th>
                 ) : (
                     <td className={cn(
-                        "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
-                        "first:pl-6 last:pr-6",
-                        "w-auto min-w-[120px] max-w-[300px]",
+                        "px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200",
+                        "first:pl-4 last:pr-4",
                         align
                     )}>
                         <div className="break-words">{children}</div>
@@ -1152,14 +1145,14 @@ const HomeContent = () => {
             },
             tableHeader(children) {
                 return (
-                    <thead className="sticky top-0 z-10">
+                    <thead className="sticky top-0 z-10 bg-white dark:bg-neutral-900/95 backdrop-blur-[2px] dark:backdrop-blur-[2px]">
                         {children}
                     </thead>
                 );
             },
             tableBody(children) {
                 return (
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 bg-transparent">
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800/80 bg-transparent">
                         {children}
                     </tbody>
                 );
@@ -1473,7 +1466,7 @@ const HomeContent = () => {
                     <div key={`${messageIndex}-${partIndex}-text`}>
                         <div className="flex items-center justify-between mt-5 mb-2">
                             <div className="flex items-center gap-2">
-                                <Image src="/scira.png" alt="Scira" className='size-6 invert-0 dark:invert' width={100} height={100} unoptimized quality={100} />
+                                <Image src="/scira.png" alt="Scira" className='size-6 invert dark:invert-0' width={100} height={100} unoptimized quality={100} />
                                 <h2 className="text-lg font-semibold font-syne text-neutral-800 dark:text-neutral-200">
                                     Scira AI
                                 </h2>
@@ -1517,10 +1510,10 @@ const HomeContent = () => {
                 if (timing) {
                     if (timing.endTime) {
                         // Completed reasoning - show fixed duration
-                        duration = ((timing.endTime - timing.startTime) / 1000).toFixed(1);
+                        duration = ((timing.endTime - timing.startTime) / 1000).toFixed(3);
                     } else {
                         // Ongoing reasoning - calculate live elapsed time
-                        liveElapsedTime = ((Date.now() - timing.startTime) / 1000).toFixed(1);
+                        liveElapsedTime = ((Date.now() - timing.startTime) / 1000).toFixed(3);
                     }
                 }
                 

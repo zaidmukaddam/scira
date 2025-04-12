@@ -2,6 +2,7 @@
 import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
+import { groq } from "@ai-sdk/groq";
 import { anthropic } from "@ai-sdk/anthropic";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import CodeInterpreter from '@e2b/code-interpreter';
@@ -16,10 +17,16 @@ import {
     customProvider,
     generateObject,
     NoSuchToolError,
+    extractReasoningMiddleware,
+    wrapLanguageModel
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
+
+const middleware = extractReasoningMiddleware({
+    tagName: 'think',
+});
 
 const scira = customProvider({
     languageModels: {
@@ -27,6 +34,10 @@ const scira = customProvider({
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-claude': anthropic('claude-3-7-sonnet-20250219'),
+        'scira-qwq': wrapLanguageModel({
+            model: groq('qwen-qwq-32b'),
+            middleware,
+        }),
         'scira-optimus': openrouter('openrouter/optimus-alpha')
     }
 })
@@ -258,7 +269,7 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 export async function POST(req: Request) {
     const { messages, model, group, user_id, timezone } = await req.json();
     const { tools: activeTools, instructions } = await getGroupConfig(group);
-    
+
     console.log("--------------------------------");
     console.log("Messages: ", messages);
     console.log("--------------------------------");
@@ -277,8 +288,8 @@ export async function POST(req: Request) {
                 system: instructions,
                 toolChoice: 'auto',
                 experimental_transform: smoothStream({
-                    chunking: 'line',
-                    delayInMs: 30,
+                    chunking: 'word',
+                    delayInMs: 15,
                 }),
                 providerOptions: {
                     scira: {
@@ -1533,7 +1544,7 @@ export async function POST(req: Request) {
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: xai("grok-beta"),
+                                model: xai("grok-3-fast-beta"),
                                 temperature: 0,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
@@ -1766,7 +1777,7 @@ export async function POST(req: Request) {
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: xai("grok-beta"),
+                                    model: xai("grok-3-fast-beta"),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
@@ -1816,7 +1827,7 @@ export async function POST(req: Request) {
 
                             // After all analyses are complete, analyze limitations and gaps
                             const { object: gapAnalysis } = await generateObject({
-                                model: xai("grok-beta"),
+                                model: xai("grok-3-fast-beta"),
                                 temperature: 0,
                                 schema: z.object({
                                     limitations: z.array(z.object({
@@ -2130,7 +2141,7 @@ export async function POST(req: Request) {
 
                                 // Perform final synthesis of all findings
                                 const { object: finalSynthesis } = await generateObject({
-                                    model: xai("grok-beta"),
+                                    model: xai("grok-3-fast-beta"),
                                     temperature: 0,
                                     schema: z.object({
                                         key_findings: z.array(z.object({
@@ -2337,11 +2348,11 @@ export async function POST(req: Request) {
                     }
                 },
                 onFinish(event) {
-                    console.log('Fin reason[1]: ', event.finishReason);
-                    console.log('Reasoning[1]: ', event.reasoning);
-                    console.log('reasoning details[1]: ', event.reasoningDetails);
-                    console.log('Steps[1] ', event.steps);
-                    console.log('Messages[1]: ', event.response.messages);
+                    console.log('Fin reason: ', event.finishReason);
+                    console.log('Reasoning: ', event.reasoning);
+                    console.log('reasoning details: ', event.reasoningDetails);
+                    console.log('Steps: ', event.steps);
+                    console.log('Messages: ', event.response.messages);
                 },
                 onError(event) {
                     console.log('Error: ', event.error);

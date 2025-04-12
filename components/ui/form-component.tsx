@@ -19,7 +19,7 @@ import { TextMorph } from '@/components/core/text-morph';
 import { Upload } from 'lucide-react';
 import { Mountain } from "lucide-react"
 import { UIMessage } from '@ai-sdk/ui-utils';
-import { Image, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -55,6 +55,7 @@ const models = [
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
     { value: "scira-claude", label: "Claude 3.7 Sonnet", icon: "/anthropic.svg", iconClass: "!text-neutral-300", description: "Anthropic's most advanced model", color: "violet", vision: true, experimental: false, category: "Stable" },
     { value: "scira-optimus", label: "Optimus Alpha", icon: "/scira.png", iconClass: "!text-neutral-300", description: "A powerful cloaked model", color: "alpha", vision: true, experimental: true, category: "Experimental" },
+    { value: "scira-qwq", label: "Qwen QWQ 32B", icon: "/groq.svg", iconClass: "!text-neutral-300", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -181,16 +182,17 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                 </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-                className="w-[220px] p-1 !font-sans rounded-lg bg-white dark:bg-neutral-900 !mt-1.5 !z-[52] shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                className="w-[220px] p-1 !font-sans rounded-lg bg-white dark:bg-neutral-900 !mt-1.5 !z-[52] shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
                 align="start"
                 side="bottom"
                 sideOffset={8}
+                forceMount
             >
                 {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
                     <div key={category} className={cn(
                         categoryIndex > 0 && "mt-1"
                     )}>
-                        <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none sticky top-0 bg-white dark:bg-neutral-900 z-10">
+                        <div className="px-2 py-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 select-none bg-white dark:bg-neutral-900 z-10">
                             {category}
                         </div>
                         <div className="space-y-0.5">
@@ -227,7 +229,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                                 alt={model.label}
                                                 className={cn(
                                                     "w-3 h-3 object-contain",
-                                                    model.iconClass
+                                                    model.iconClass,
+                                                    model.value === "scira-optimus" && "invert"
                                                 )}
                                             />
                                         ) : (
@@ -562,7 +565,7 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                         {icon && (
                             <span className={cn(
                                 "flex-shrink-0 size-3.5 sm:size-4",
-                                useModelColor ? getIconColorClass() : "text-primary dark:text-white"
+                                useModelColor ? getIconColorClass() : "text-primary",
                             )}>
                                 {icon}
                             </span>

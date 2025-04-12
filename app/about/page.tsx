@@ -105,7 +105,7 @@ export default function AboutPage() {
                         {/* Company Name/Logo */}
                         <motion.div variants={item} className="text-center">
                             <Link href="/" className="inline-flex items-end gap-3 text-5xl font-syne font-bold">
-                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert-0 dark:invert" width={64} height={64} unoptimized quality={100}/>
+                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert dark:invert-0" width={64} height={64} unoptimized quality={100}/>
                                 <span className=''>Scira</span>
                             </Link>
                         </motion.div>
@@ -537,7 +537,7 @@ export default function AboutPage() {
                 <div className="mx-auto max-w-5xl px-4 py-12">
                     <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
                         <div className="flex items-center gap-3">
-                            <img src="/scira.png" alt="Scira Logo" className="h-8 w-8 invert" />
+                            <img src="/scira.png" alt="Scira Logo" className="h-8 w-8" />
                             <p className="text-sm text-neutral-600 dark:text-neutral-400">
                                 © {new Date().getFullYear()} All rights reserved.
                             </p>
