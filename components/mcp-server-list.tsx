@@ -84,7 +84,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
                         No Servers Found
                     </h3>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                        No MCP servers matching "{query}" were found.
+                        No MCP servers matching &quot;{query}&quot; were found.
                     </p>
                 </div>
             </div>

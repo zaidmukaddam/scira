@@ -364,23 +364,23 @@ export default function AboutPage() {
                     <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-6">
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
                             <h3 className="font-semibold">Grok 3.0</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI's most intelligent model</p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most intelligent model</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
                             <h3 className="font-semibold">Grok 3.0 Mini</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI's most efficient model</p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most efficient model</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
                             <h3 className="font-semibold">Grok 2.0 Vision</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI's most advanced vision model</p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most advanced vision model</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
                             <h3 className="font-semibold">OpenAI GPT 4.1 Mini</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">OpenAI's smartest mini model</p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">OpenAI&apos;s smartest mini model</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
                             <h3 className="font-semibold">Qwen QWQ 32B</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Alibaba's most advanced model</p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Alibaba&apos;s most advanced model</p>
                         </div>
                     </div>
                 </motion.div>
