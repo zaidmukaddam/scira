@@ -591,6 +591,12 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
     );
 };
 
+const Tooltip = ({children}: {children: React.ReactNode}) => {
+    return <div className="absolute bottom-full left-1/2 -translate-x-1/2 text-xs opacity-0 delay-150 group-hover:opacity-100 pointer-events-none select-none text-center border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-full px-2 py-1 transition-all">
+        {children}
+    </div> 
+}
+
 const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
     const Icon = group.icon;
     const { width } = useWindowSize();
@@ -699,10 +705,11 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
                                 ease: "easeInOut"
                             }}
                             className={cn(
-                                "!m-0",
+                                "!m-0 group relative",
                                 isLastItem && isExpanded && showItem ? "pr-0.5" : ""
                             )}
                         >
+                            <Tooltip>{group.name}</Tooltip>
                             <ToolbarButton
                                 group={group}
                                 isSelected={selectedGroup === group.id}
