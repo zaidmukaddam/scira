@@ -27,6 +27,7 @@ export const serverEnv = createEnv({
     MEM0_API_KEY: z.string().min(1),
     MEM0_ORG_ID: z.string().min(1),
     MEM0_PROJECT_ID: z.string().min(1),
+    SMITHERY_API_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: process.env,
 })

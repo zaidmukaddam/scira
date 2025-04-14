@@ -67,6 +67,7 @@ import {
     Plane,
     Play as PlayIcon,
     Plus,
+    Server,
     Sun,
     TrendingUp,
     TrendingUpIcon,
@@ -124,6 +125,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MemoryManager from '@/components/memory-manager';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import MCPServerList from '@/components/mcp-server-list';
 
 export const maxDuration = 120;
 
@@ -1103,9 +1105,9 @@ const HomeContent = () => {
             },
             table(children) {
                 return (
-                    <div className="w-full my-6 overflow-hidden">
-                        <div className="w-full overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-sm dark:shadow-md dark:shadow-black/10">
-                            <table className="w-full border-collapse table-fixed m-0">
+                    <div className="w-full my-6 overflow-hidden rounded-md">
+                        <div className="w-full overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                            <table className="w-full border-collapse min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
                                 {children}
                             </table>
                         </div>
@@ -1114,7 +1116,7 @@ const HomeContent = () => {
             },
             tableRow(children) {
                 return (
-                    <tr className="transition-colors border-b border-neutral-200 dark:border-neutral-800/80 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/70">
+                    <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0">
                         {children}
                     </tr>
                 );
@@ -1125,34 +1127,33 @@ const HomeContent = () => {
 
                 return isHeader ? (
                     <th className={cn(
-                        "px-3 py-2.5 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
-                        "bg-neutral-50 dark:bg-neutral-800",
-                        "first:pl-4 last:pr-4",
-                        "w-auto", 
+                        "px-4 py-2.5 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
+                        "bg-neutral-100 dark:bg-neutral-800/90",
+                        "whitespace-nowrap",
                         align
                     )}>
-                        <div className="break-words whitespace-normal">{children}</div>
+                        {children}
                     </th>
                 ) : (
                     <td className={cn(
-                        "px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200",
-                        "first:pl-4 last:pr-4",
+                        "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
+                        "bg-white dark:bg-neutral-900",
                         align
                     )}>
-                        <div className="break-words">{children}</div>
+                        {children}
                     </td>
                 );
             },
             tableHeader(children) {
                 return (
-                    <thead className="sticky top-0 z-10 bg-white dark:bg-neutral-900/95 backdrop-blur-[2px] dark:backdrop-blur-[2px]">
+                    <thead className="bg-neutral-100 dark:bg-neutral-800/90">
                         {children}
                     </thead>
                 );
             },
             tableBody(children) {
                 return (
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800/80 bg-transparent">
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 bg-white dark:bg-neutral-900">
                         {children}
                     </tbody>
                 );
@@ -1330,7 +1331,7 @@ const HomeContent = () => {
                 <div className='flex items-center space-x-4'>
                     <Link
                         target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,MISTRAL_API_KEY,COHERE_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function%20(including%20SMITHERY_API_KEY)"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
                             backdrop-blur-sm text-foreground shadow-sm text-sm
@@ -2977,6 +2978,45 @@ const ToolInvocationListView = memo(
                         );
                     }
                     return <MemoryManager result={result} />;
+                }
+
+                if (toolInvocation.toolName === 'mcp_search') {
+                    if (!result) {
+                        return (
+                            <SearchLoadingState
+                                icon={Server}
+                                text="Searching MCP servers..."
+                                color="blue"
+                            />
+                        );
+                    }
+
+                    return (
+                        <div className="w-full my-2">
+                            <Card className="shadow-none border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                                <CardHeader className="py-3 px-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-7 w-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                            <Server className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-base">MCP Server Results</CardTitle>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                                Search results for &quot;{result.query}&quot;
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="pt-0 px-3 pb-3">
+                                    <MCPServerList 
+                                        servers={result.servers || []} 
+                                        query={result.query} 
+                                        error={result.error}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
+                    );
                 }
 
                 return null;

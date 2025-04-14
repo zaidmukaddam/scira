@@ -3,8 +3,7 @@ import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { groq } from "@ai-sdk/groq";
-import { anthropic } from "@ai-sdk/anthropic";
-import { openrouter } from "@openrouter/ai-sdk-provider";
+import { openai } from "@ai-sdk/openai";
 import CodeInterpreter from '@e2b/code-interpreter';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
@@ -33,12 +32,11 @@ const scira = customProvider({
         'scira-default': xai('grok-3-fast-beta'),
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
-        'scira-claude': anthropic('claude-3-7-sonnet-20250219'),
+        'scira-4.1-mini': openai('gpt-4.1-mini'),
         'scira-qwq': wrapLanguageModel({
             model: groq('qwen-qwq-32b'),
             middleware,
         }),
-        'scira-optimus': openrouter('openrouter/optimus-alpha')
     }
 })
 
@@ -1514,6 +1512,71 @@ export async function POST(req: Request) {
                             } catch (error) {
                                 console.error('Datetime error:', error);
                                 throw error;
+                            }
+                        },
+                    }),
+                    mcp_search: tool({
+                        description: 'Search for mcp servers and get the information about them',
+                        parameters: z.object({
+                            query: z.string().describe('The query to search for'),
+                        }),
+                        execute: async ({ query }: { query: string }) => {
+                            try {
+                                // Call the Smithery Registry API
+                                const response = await fetch(
+                                    `https://registry.smithery.ai/servers?q=${encodeURIComponent(query)}`,
+                                    {
+                                        headers: {
+                                            'Authorization': `Bearer ${serverEnv.SMITHERY_API_KEY}`,
+                                            'Content-Type': 'application/json',
+                                        },
+                                    }
+                                );
+                                
+                                if (!response.ok) {
+                                    throw new Error(`Smithery API error: ${response.status} ${response.statusText}`);
+                                }
+                                
+                                const data = await response.json();
+                                
+                                // Get detailed information for each server
+                                const detailedServers = await Promise.all(
+                                    data.servers.map(async (server: any) => {
+                                        const detailResponse = await fetch(
+                                            `https://registry.smithery.ai/servers/${encodeURIComponent(server.qualifiedName)}`,
+                                            {
+                                                headers: {
+                                                    'Authorization': `Bearer ${serverEnv.SMITHERY_API_KEY}`,
+                                                    'Content-Type': 'application/json',
+                                                },
+                                            }
+                                        );
+                                        
+                                        if (!detailResponse.ok) {
+                                            console.warn(`Failed to fetch details for ${server.qualifiedName}`);
+                                            return server;
+                                        }
+                                        
+                                        const details = await detailResponse.json();
+                                        return {
+                                            ...server,
+                                            deploymentUrl: details.deploymentUrl,
+                                            connections: details.connections,
+                                        };
+                                    })
+                                );
+                                
+                                return {
+                                    servers: detailedServers,
+                                    pagination: data.pagination,
+                                    query: query
+                                };
+                            } catch (error) {
+                                console.error('Smithery search error:', error);
+                                return {
+                                    error: error instanceof Error ? error.message : 'Unknown error',
+                                    query: query
+                                };
                             }
                         },
                     }),
