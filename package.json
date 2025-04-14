@@ -10,12 +10,8 @@
     "knip": "knip"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.2.9",
-    "@ai-sdk/cerebras": "^0.2.8",
-    "@ai-sdk/cohere": "^1.2.7",
     "@ai-sdk/groq": "^1.2.8",
-    "@ai-sdk/mistral": "^1.2.6",
-    "@ai-sdk/openai": "^1.3.2",
+    "@ai-sdk/openai": "^1.3.12",
     "@ai-sdk/react": "^1.2.8",
     "@ai-sdk/ui-utils": "^1.2.7",
     "@ai-sdk/xai": "^1.2.13",
