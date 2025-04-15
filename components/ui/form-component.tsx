@@ -53,8 +53,8 @@ const models = [
     { value: "scira-default", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
     { value: "scira-grok-3-mini", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-4.1-mini", label: "OpenAI GPT 4.1 Mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: true, category: "Stable" },
-    { value: "scira-qwq", label: "Qwen QWQ 32B", icon: "/groq.svg", iconClass: "!text-neutral-300", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: true, category: "Stable" },
+    { value: "scira-qwq", label: "QWQ 32B", icon: "/groq.svg", iconClass: "!text-neutral-300", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
