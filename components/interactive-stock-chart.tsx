@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import ReactECharts, { EChartsOption } from 'echarts-for-react';
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from 'next-themes';
@@ -23,6 +23,7 @@ interface StockChartProps {
   title: string;
   data: any[];
   stock_symbols: string[];
+  currency_symbols: string[];
   interval: '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | '10y' | 'ytd' | 'max';
   chart: {
     type: string;
@@ -39,7 +40,7 @@ const formatStockSymbol = (symbol: string) => {
   // Common stock suffixes to remove
   const suffixes = ['.US', '.NYSE', '.NASDAQ'];
   let formatted = symbol;
-  
+
   // Remove any known suffix
   suffixes.forEach(suffix => {
     formatted = formatted.replace(suffix, '');
@@ -73,11 +74,63 @@ const getDateFormat = (interval: StockChartProps['interval'], date: Date) => {
   return date.toLocaleDateString('en-US', formats[interval]);
 };
 
-export function InteractiveStockChart({ title, data, stock_symbols, interval, chart }: StockChartProps) {
-  const { theme } = useTheme();
-  const textColor = theme === 'dark' ? '#e5e5e5' : '#171717';
-  const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-  const tooltipBg = theme === 'dark' ? '#171717' : '#ffffff';
+// Add currency symbol mapping
+const CURRENCY_SYMBOLS = {
+  USD: '$',   // US Dollar
+  EUR: '€',   // Euro
+  GBP: '£',   // British Pound
+  JPY: '¥',   // Japanese Yen
+  CNY: '¥',   // Chinese Yuan
+  INR: '₹',   // Indian Rupee
+  RUB: '₽',   // Russian Ruble
+  KRW: '₩',   // South Korean Won
+  BTC: '₿',   // Bitcoin
+  THB: '฿',   // Thai Baht
+  BRL: 'R$',  // Brazilian Real
+  PHP: '₱',   // Philippine Peso
+  ILS: '₪',   // Israeli Shekel
+  TRY: '₺',   // Turkish Lira
+  NGN: '₦',   // Nigerian Naira
+  VND: '₫',   // Vietnamese Dong
+  ARS: '$',   // Argentine Peso
+  ZAR: 'R',   // South African Rand
+  AUD: 'A$',  // Australian Dollar
+  CAD: 'C$',  // Canadian Dollar
+  SGD: 'S$',  // Singapore Dollar
+  HKD: 'HK$', // Hong Kong Dollar
+  NZD: 'NZ$', // New Zealand Dollar
+  MXN: 'Mex$' // Mexican Peso
+} as const;
+
+// Update the formatter to use currency symbols
+const formatCurrency = (value: number, currencyCode: string) => {
+  const symbol = CURRENCY_SYMBOLS[currencyCode as keyof typeof CURRENCY_SYMBOLS];
+  if (!symbol) {
+    return `${value.toFixed(2)} ${currencyCode}`;
+  }
+
+  // Special formatting for certain currencies
+  switch (currencyCode) {
+    case 'JPY':
+    case 'KRW':
+    case 'VND':
+      return `${symbol}${value.toFixed(0)}`;  // No decimals for these currencies
+    case 'BTC':
+      return `${symbol}${value.toFixed(8)}`; // 8 decimals for Bitcoin
+    case 'BRL':
+    case 'ARS':
+      return `${symbol} ${value.toFixed(2)}`; // Space after symbol
+    default:
+      return `${symbol}${value.toFixed(2)}`;
+  }
+};
+
+// Memoized stock chart component
+export const InteractiveStockChart = React.memo(({ title, data, stock_symbols, currency_symbols, interval, chart }: StockChartProps) => {
+  const { resolvedTheme } = useTheme();
+  const textColor = resolvedTheme === 'dark' ? '#e5e5e5' : '#171717';
+  const gridColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipBg = resolvedTheme === 'dark' ? '#171717' : '#ffffff';
 
   // Process the chart data
   const processedData = useMemo(() => {
@@ -87,7 +140,8 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
         return {
           date,
           value: Number(price),
-          label: stock_symbols[index]
+          label: stock_symbols[index],
+          currency: currency_symbols[index]
         };
       }).sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -95,8 +149,6 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
       const lastPrice = points[points.length - 1]?.value || 0;
       const priceChange = lastPrice - firstPrice;
       const percentChange = ((priceChange / firstPrice) * 100).toFixed(2);
-
-      // Use the dynamic color generator instead of hardcoded colors
       const seriesColor = getSeriesColor(index);
 
       return {
@@ -106,13 +158,92 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
         lastPrice,
         priceChange,
         percentChange,
-        color: seriesColor
+        color: seriesColor,
+        currency: currency_symbols[index]
       };
     });
-  }, [chart.elements, stock_symbols]);
+  }, [chart.elements, stock_symbols, currency_symbols]);
 
-  // Prepare chart options
-  const options: EChartsOption = {
+  // Memoize tooltip formatter
+  const getTooltipFormatter = useCallback((params: any[]) => {
+    if (!Array.isArray(params) || params.length === 0) return '';
+
+    const date = new Date(params[0].value[0]);
+    const formattedDate = getDateFormat(interval, date);
+
+    let tooltipHtml = `
+      <div style="
+        padding: 6px 10px;
+        border-radius: 5px;
+        border: 1px solid ${resolvedTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+        font-family: system-ui, -apple-system, sans-serif;
+        background: ${tooltipBg};
+      ">
+        <div style="font-size: 13px; color: ${resolvedTheme === 'dark' ? '#9ca3af' : '#6b7280'};">
+          ${formattedDate}
+        </div>
+    `;
+
+    params.forEach((param) => {
+      if (!param.value || param.value.length < 2) return;
+
+      const currentPrice = param.value[1];
+      const seriesName = param.seriesName;
+      const series = processedData.find(d => d.label === seriesName);
+      const lineColor = series?.color.line || '#888';
+      const currencyCode = series?.currency || 'USD';
+
+      const dataIndex = param.dataIndex;
+      let prevPrice = currentPrice;
+      let change = 0;
+      let changePercent = 0;
+
+      if (dataIndex > 0) {
+        const prevPoint = series?.points[dataIndex - 1];
+        if (prevPoint) {
+          prevPrice = prevPoint.value;
+          change = currentPrice - prevPrice;
+          changePercent = (change / prevPrice) * 100;
+        }
+      }
+
+      const isPositive = change >= 0;
+      const changeColor = isPositive ? '#22c55e' : '#ef4444';
+
+      tooltipHtml += `
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <div style="
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: ${lineColor};
+            flex-shrink: 0;
+          "></div>
+          <span style="
+            font-size: 13px;
+            font-weight: 500;
+            color: ${resolvedTheme === 'dark' ? '#f3f4f6' : '#111827'};
+          ">${seriesName}: ${formatCurrency(currentPrice, currencyCode)}</span>
+          ${dataIndex > 0 ? `
+            <span style="
+              font-size: 13px;
+              font-weight: 500;
+              color: ${changeColor};
+              display: flex;
+              align-items: center;
+              gap: 2px;
+            ">${isPositive ? '↑' : '↓'}${Math.abs(changePercent).toFixed(2)}%</span>
+          ` : ''}
+        </div>
+      `;
+    });
+
+    tooltipHtml += `</div>`;
+    return tooltipHtml;
+  }, [interval, resolvedTheme, tooltipBg, processedData]);
+
+  // Memoize chart options
+  const options = useMemo<EChartsOption>(() => ({
     backgroundColor: 'transparent',
     grid: {
       top: 20,
@@ -128,89 +259,13 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
       padding: 0,
       className: 'echarts-tooltip',
       textStyle: { color: textColor },
-      formatter: (params: any[]) => {
-        if (!Array.isArray(params) || params.length === 0) return '';
-
-        const date = new Date(params[0].value[0]);
-        const formattedDate = getDateFormat(interval, date);
-
-        let tooltipHtml = `
-          <div style="
-            padding: 6px 10px;
-            border-radius: 5px;
-            border: 1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
-            font-family: system-ui, -apple-system, sans-serif;
-            background: ${tooltipBg};
-          ">
-            <div style="font-size: 13px; color: ${theme === 'dark' ? '#9ca3af' : '#6b7280'};">
-              ${formattedDate}
-            </div>
-        `;
-
-        params.forEach((param) => {
-          if (!param.value || param.value.length < 2) return;
-
-          const currentPrice = param.value[1];
-          const seriesName = param.seriesName;
-          const series = processedData.find(d => d.label === seriesName);
-          const lineColor = series?.color.line || '#888';
-          
-          // Find previous point for percentage calculation
-          const dataIndex = param.dataIndex;
-          const seriesData = param.data;
-          let prevPrice = currentPrice;
-          let change = 0;
-          let changePercent = 0;
-
-          if (dataIndex > 0) {
-            const prevPoint = series?.points[dataIndex - 1];
-            if (prevPoint) {
-              prevPrice = prevPoint.value;
-              change = currentPrice - prevPrice;
-              changePercent = (change / prevPrice) * 100;
-            }
-          }
-
-          const isPositive = change >= 0;
-          const changeColor = isPositive ? '#22c55e' : '#ef4444';
-          
-          tooltipHtml += `
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-              <div style="
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background-color: ${lineColor};
-                flex-shrink: 0;
-              "></div>
-              <span style="
-                font-size: 13px;
-                font-weight: 500;
-                color: ${theme === 'dark' ? '#f3f4f6' : '#111827'};
-              ">${seriesName}: $${currentPrice.toFixed(2)}</span>
-              ${dataIndex > 0 ? `
-                <span style="
-                  font-size: 13px;
-                  font-weight: 500;
-                  color: ${changeColor};
-                  display: flex;
-                  align-items: center;
-                  gap: 2px;
-                ">${isPositive ? '↑' : '↓'}${Math.abs(changePercent).toFixed(2)}%</span>
-              ` : ''}
-            </div>
-          `;
-        });
-
-        tooltipHtml += `</div>`;
-        return tooltipHtml;
-      }
+      formatter: getTooltipFormatter
     },
     xAxis: {
       type: 'time',
-      axisLine: { 
-        show: true, 
-        lineStyle: { color: gridColor } 
+      axisLine: {
+        show: true,
+        lineStyle: { color: gridColor }
       },
       axisTick: { show: false },
       axisLabel: {
@@ -232,13 +287,16 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
     yAxis: {
       type: 'value',
       position: 'right',
-      axisLine: { 
-        show: true, 
+      axisLine: {
+        show: true,
         lineStyle: { color: gridColor }
       },
       axisTick: { show: false },
       axisLabel: {
-        formatter: (value: number) => `$${value.toFixed(0)}`,
+        formatter: (value: number) => {
+          const defaultCurrency = currency_symbols[0] || 'USD';
+          return formatCurrency(value, defaultCurrency);
+        },
         color: textColor,
         margin: 8,
         padding: [0, 0, 0, 0]
@@ -280,7 +338,7 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
             },
             {
               offset: 1,
-              color: theme === 'dark'
+              color: resolvedTheme === 'dark'
                 ? 'rgba(23, 23, 23, 0)'
                 : 'rgba(255, 255, 255, 0)'
             }
@@ -288,7 +346,13 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
         }
       }
     }))
-  };
+  }), [processedData, resolvedTheme, textColor, tooltipBg, gridColor, interval, currency_symbols, getTooltipFormatter]);
+
+  // Memoize chart height style
+  const chartStyle = useMemo(() => ({
+    height: window.innerWidth < 640 ? '250px' : '400px',
+    width: '100%'
+  }), []);
 
   return (
     <div className="w-full bg-neutral-50 dark:bg-neutral-900 rounded-xl">
@@ -296,14 +360,14 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
         <h3 className="text-base sm:text-lg lg:text-xl font-bold text-neutral-800 dark:text-neutral-200 mb-2 sm:mb-4 px-2">
           {title}
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-4 px-2">
           {processedData.map(series => (
-            <div 
-              key={series.label} 
+            <div
+              key={series.label}
               className="flex flex-col gap-1 p-2 sm:p-3 rounded-lg"
               style={{
-                backgroundColor: theme === 'dark' 
+                backgroundColor: resolvedTheme === 'dark'
                   ? `${series.color.line}15`
                   : `${series.color.line}40`,
               }}
@@ -313,20 +377,20 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-base sm:text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                  ${series.lastPrice.toFixed(2)}
+                  {formatCurrency(series.lastPrice, series.currency)}
                 </span>
                 <Badge
                   className={cn(
                     "rounded-full px-1.5 py-0.5 text-[10px] leading-none whitespace-nowrap",
                     series.priceChange >= 0
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50"
+                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
                   )}
                 >
                   <span className="inline-flex items-center">
                     {series.priceChange >= 0 ? '↑' : '↓'}
                     <span className="ml-0.5">
-                      {Math.abs(series.priceChange).toFixed(2)} ({series.percentChange}%)
+                      {formatCurrency(Math.abs(series.priceChange), series.currency)} ({series.percentChange}%)
                     </span>
                   </span>
                 </Badge>
@@ -338,17 +402,16 @@ export function InteractiveStockChart({ title, data, stock_symbols, interval, ch
         <div className="rounded-lg overflow-hidden">
           <ReactECharts
             option={options}
-            style={{ 
-              height: window.innerWidth < 640 ? '250px' : '400px',
-              width: '100%' 
-            }}
-            theme={theme === 'dark' ? 'dark' : undefined}
+            style={chartStyle}
+            theme={resolvedTheme === 'dark' ? 'dark' : undefined}
             notMerge={true}
           />
         </div>
       </div>
     </div>
   );
-}
+});
+
+InteractiveStockChart.displayName = 'InteractiveStockChart';
 
 export default InteractiveStockChart;

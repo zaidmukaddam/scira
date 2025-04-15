@@ -23,6 +23,34 @@ import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 
+// Add currency symbol mapping at the top of the file
+const CURRENCY_SYMBOLS = {
+  USD: '$',   // US Dollar
+  EUR: '€',   // Euro
+  GBP: '£',   // British Pound
+  JPY: '¥',   // Japanese Yen
+  CNY: '¥',   // Chinese Yuan
+  INR: '₹',   // Indian Rupee
+  RUB: '₽',   // Russian Ruble
+  KRW: '₩',   // South Korean Won
+  BTC: '₿',   // Bitcoin
+  THB: '฿',   // Thai Baht
+  BRL: 'R$',  // Brazilian Real
+  PHP: '₱',   // Philippine Peso
+  ILS: '₪',   // Israeli Shekel
+  TRY: '₺',   // Turkish Lira
+  NGN: '₦',   // Nigerian Naira
+  VND: '₫',   // Vietnamese Dong
+  ARS: '$',   // Argentine Peso
+  ZAR: 'R',   // South African Rand
+  AUD: 'A$',  // Australian Dollar
+  CAD: 'C$',  // Canadian Dollar
+  SGD: 'S$',  // Singapore Dollar
+  HKD: 'HK$', // Hong Kong Dollar
+  NZD: 'NZ$', // New Zealand Dollar
+  MXN: 'Mex$' // Mexican Peso
+} as const;
+
 const middleware = extractReasoningMiddleware({
     tagName: 'think',
 });
@@ -319,14 +347,23 @@ export async function POST(req: Request) {
                                 .enum(['stock', 'date', 'calculation', 'default'])
                                 .describe('The icon to display for the chart.'),
                             stock_symbols: z.array(z.string()).describe('The stock symbols to display for the chart.'),
+                            currency_symbols: z.array(z.string()).describe('The currency symbols for each stock/asset in the chart. Available symbols: ' + Object.keys(CURRENCY_SYMBOLS).join(', ') + '. Defaults to USD if not provided.'),
                             interval: z.enum(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']).describe('The interval of the chart. default is 1y.'),
                         }),
-                        execute: async ({ code, title, icon, stock_symbols, interval }: { code: string; title: string; icon: string; stock_symbols: string[]; interval: string }) => {
+                        execute: async ({ code, title, icon, stock_symbols, currency_symbols, interval }: { code: string; title: string; icon: string; stock_symbols: string[]; currency_symbols?: string[]; interval: string }) => {
                             console.log('Code:', code);
                             console.log('Title:', title);
                             console.log('Icon:', icon);
                             console.log('Stock symbols:', stock_symbols);
+                            console.log('Currency symbols:', currency_symbols);
                             console.log('Interval:', interval);
+
+                            // Format currency symbols with actual symbols
+                            const formattedCurrencySymbols = (currency_symbols || stock_symbols.map(() => 'USD')).map(currency => {
+                                const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS];
+                                return symbol || currency; // Fallback to currency code if symbol not found
+                            });
+
                             const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
                             const execution = await sandbox.runCode(code);
                             let message = '';
@@ -370,6 +407,8 @@ export async function POST(req: Request) {
                             return {
                                 message: message.trim(),
                                 chart: execution.results[0].chart ?? '',
+                                currency_symbols: formattedCurrencySymbols,
+                                raw_currency_codes: currency_symbols || stock_symbols.map(() => 'USD') // Keep original codes for reference
                             };
                         },
                     }),
@@ -1035,13 +1074,6 @@ export async function POST(req: Request) {
                             if (execution.error) {
                                 message += `Error: ${execution.error}\n`;
                                 console.log('Error: ', execution.error);
-                            }
-
-                            console.log(execution.results);
-                            if (execution.results[0].chart) {
-                                execution.results[0].chart.elements.map((element: any) => {
-                                    console.log(element.points);
-                                });
                             }
 
                             return {

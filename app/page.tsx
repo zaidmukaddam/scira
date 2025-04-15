@@ -2607,8 +2607,8 @@ const ToolInvocationListView = memo(
                                 className={cn(
                                     "w-fit flex items-center gap-3 px-4 py-2 rounded-full transition-colors duration-200",
                                     !result
-                                        ? "bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                        : "bg-green-50/50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
+                                        ? "bg-blue-200 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                        : "bg-green-200 dark:bg-green-900/20 text-green-600 dark:text-green-400"
                                 )}>
                                 <TrendingUpIcon className="h-4 w-4" />
                                 <span className="font-medium">{args.title}</span>
@@ -2629,6 +2629,7 @@ const ToolInvocationListView = memo(
                                         }}
                                         data={result.chart.elements}
                                         stock_symbols={args.stock_symbols}
+                                        currency_symbols={args.currency_symbols || args.stock_symbols.map(() => 'USD')} // Add currency symbols with USD fallback
                                         interval={args.interval}
                                     />
                                 </div>

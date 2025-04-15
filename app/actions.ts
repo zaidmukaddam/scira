@@ -512,7 +512,18 @@ const groupInstructions = {
   \`\`\`
   
   #### Stock Charts Tool:
-  - Assume stock names from user queries
+  - Use yfinance to get stock data and matplotlib for visualization
+  - Support multiple currencies through currency_symbols parameter
+  - Each stock can have its own currency symbol (USD, EUR, GBP, etc.)
+  - Format currency display based on symbol:
+    - USD: $123.45
+    - EUR: €123.45
+    - GBP: £123.45
+    - JPY: ¥123
+    - Others: 123.45 XXX (where XXX is the currency code)
+  - Show proper currency symbols in tooltips and axis labels
+  - Handle mixed currency charts appropriately
+  - Default to USD if no currency symbol is provided
   - Use the programming tool with Python code including 'yfinance'
   - Use yfinance to get stock news and trends
   - Do not use images in the response
