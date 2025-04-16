@@ -20,7 +20,7 @@ import { Upload } from 'lucide-react';
 import { Mountain } from "lucide-react"
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
-import { track } from '@vercel/analytics/react';
+import { track } from '@vercel/analytics';
 
 interface ModelSwitcherProps {
     selectedModel: string;
