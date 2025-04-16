@@ -20,6 +20,7 @@ import { Upload } from 'lucide-react';
 import { Mountain } from "lucide-react"
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
+import { track } from '@vercel/analytics/react';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -1112,6 +1113,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
 
         if (input.trim() || attachments.length > 0) {
+            track('model_selected', {
+                model: selectedModel,
+            });
             setHasSubmitted(true);
             lastSubmittedQueryRef.current = input.trim();
 
