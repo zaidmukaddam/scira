@@ -61,6 +61,7 @@ const scira = customProvider({
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-4.1-mini': openai('gpt-4.1-mini'),
+        'scira-o4-mini': openai('o4-mini-2025-04-16'),
         'scira-qwq': wrapLanguageModel({
             model: groq('qwen-qwq-32b'),
             middleware,
@@ -308,7 +309,7 @@ export async function POST(req: Request) {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                temperature: 0,
+                temperature: model === 'scira-o4-mini' ? 1 : 0,
                 maxSteps: 5,
                 experimental_activeTools: [...activeTools],
                 system: instructions,
@@ -332,10 +333,6 @@ export async function POST(req: Request) {
                             }
                         } : {}),
                     }
-                },
-                headers: {
-                    "HTTP-Referer": "scira.ai",
-                    "X-Title": "scira",
                 },
                 tools: {
                     stock_chart: tool({
