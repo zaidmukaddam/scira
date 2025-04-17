@@ -302,7 +302,7 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 };
 
 // Initialize Exa client
-const exa = new Exa(serverEnv.EXA_API_KEY || "fc45edf6-9d4b-456c-a62b-53621e615dba");
+const exa = new Exa(serverEnv.EXA_API_KEY);
 
 // Add interface for Exa search results
 interface ExaResult {
