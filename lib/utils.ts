@@ -1,7 +1,7 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { Globe, Book, YoutubeIcon, Mountain, Brain } from 'lucide-react'
+import { Globe, Book, YoutubeIcon, TelescopeIcon } from 'lucide-react'
 import { ChatsCircle, Code, Memory, XLogo } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
@@ -79,7 +79,7 @@ export const searchGroups = [
     id: 'extreme' as const,
     name: 'Extreme',
     description: 'Deep research with multiple sources and analysis',
-    icon: Mountain,
+    icon: TelescopeIcon,
     show: false,
   },
 ] as const;

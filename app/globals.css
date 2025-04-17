@@ -189,4 +189,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .whatsize {
+    field-sizing: content;
+    min-height: 2lh;
+    max-height: 10lh;
+  }
 }
