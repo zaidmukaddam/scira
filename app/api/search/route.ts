@@ -346,7 +346,6 @@ export async function POST(req: Request) {
                 experimental_activeTools: [...activeTools],
                 system: instructions,
                 toolChoice: 'auto',
-                maxTokens: 30000,
                 experimental_transform: smoothStream({
                     chunking: 'word',
                     delayInMs: 15,
