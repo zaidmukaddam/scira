@@ -226,6 +226,7 @@ const groupInstructions = {
      - Cite the most relevant results that answer the question
      - Avoid citing irrelevant results or generic information
      - When citing statistics or data, always include the year when available
+     - Code blocks should be formatted using the 'code' markdown syntax and should always contain the code and not response text unless requested by the user
 
      GOOD CITATION EXAMPLE:
      Large language models (LLMs) are neural networks trained on vast text corpora to generate human-like text [Large language model - Wikipedia](https://en.wikipedia.org/wiki/Large_language_model). They use transformer architectures [LLM Architecture Guide](https://example.com/architecture) and are fine-tuned for specific tasks [Training Guide](https://example.com/training).
@@ -266,6 +267,11 @@ const groupInstructions = {
      - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
      - Tables must use plain text without any formatting
      - Mathematical expressions must always be properly delimited
+     - There should be no space between the dollar sign and the equation 
+     - For example: $2 + 2$ is correct, but $ 2 + 2 $ is incorrect
+     - For block equations, there should be a blank line before and after the equation
+     - Also leave a blank space before and after the equation
+     - THESE INSTRUCTIONS ARE MANDATORY AND MUST BE FOLLOWED AT ALL COSTS
 
   ### Prohibited Actions:
   - Do not run tools multiple times, this includes the same tool with different parameters

@@ -62,12 +62,9 @@ const scira = customProvider({
         'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-4.1-mini': openai('gpt-4.1-mini', {
-            parallelToolCalls: false,
             structuredOutputs: true,
         }),
-        'scira-o4-mini': openai('o4-mini-2025-04-16', {
-            structuredOutputs: true,
-        }),
+        'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
         'scira-qwq': wrapLanguageModel({
             model: groq('qwen-qwq-32b'),
             middleware,
@@ -341,7 +338,10 @@ export async function POST(req: Request) {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                temperature: model === 'scira-o4-mini' ? 1 : 0,
+                // temperature: model === 'scira-o4-mini' ? 1 : 0,
+                ...(model !== 'scira-o4-mini' ? {
+                    temperature: 0,
+                } : {}),
                 maxSteps: 5,
                 experimental_activeTools: [...activeTools],
                 system: instructions,
@@ -359,13 +359,21 @@ export async function POST(req: Request) {
                             : {}
                         ),
                         ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'high',
+                            reasoningEffort: 'medium',
+                            reasoning: {
+                                effort: 'medium',
+                                summary: "concise"
+                            }
                         } : {}),
                     },
                     openai: {
                         ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'high',
-                        } : {}),
+                            reasoningEffort: 'medium',
+                            reasoning: {
+                                effort: 'medium',
+                                summary: "concise"
+                            },
+                        } : {})
                     },
                     xai: {
                         ...(model === 'scira-grok-3-mini' ? {
@@ -2681,6 +2689,7 @@ plt.show()`
                     console.log('reasoning details: ', event.reasoningDetails);
                     console.log('Steps: ', event.steps);
                     console.log('Messages: ', event.response.messages);
+                    console.log('Response: ', event.response);
                 },
                 onError(event) {
                     console.log('Error: ', event.error);
