@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai("grok-3-mini-fast-beta"),
+        'scira-default': xai("grok-3-beta"),
     }
 })
 

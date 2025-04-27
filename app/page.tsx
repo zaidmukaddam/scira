@@ -54,7 +54,6 @@ import {
     Cloud,
     Code,
     Copy,
-    Download,
     ExternalLink,
     FileText,
     Film,
@@ -126,6 +125,8 @@ import MemoryManager from '@/components/memory-manager';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import MCPServerList from '@/components/mcp-server-list';
+import { ReasoningPartView, ReasoningPart } from '@/components/reasoning-part';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export const maxDuration = 120;
 
@@ -145,14 +146,6 @@ interface XResult {
     text: string;
     highlights?: string[];
     tweetId: string;
-}
-
-interface AcademicResult {
-    title: string;
-    url: string;
-    author?: string | null;
-    publishedDate?: string;
-    summary: string;
 }
 
 const SearchLoadingState = ({
@@ -648,15 +641,15 @@ const MemoizedYouTubeCard = React.memo(YouTubeCard, (prevProps, nextProps) => {
 const HomeContent = () => {
     const [query] = useQueryState('query', parseAsString.withDefault(''))
     const [q] = useQueryState('q', parseAsString.withDefault(''))
-    const [model] = useQueryState('model', parseAsString.withDefault('scira-default'))
-
+    
+    // Use localStorage hook directly for model selection with a default
+    const [selectedModel, setSelectedModel] = useLocalStorage('miniperplx-selected-model', 'scira-default');
+    
     const initialState = useMemo(() => ({
         query: query || q,
-        model: model
-    }), [query, q, model]);
+    }), [query, q]);
 
     const lastSubmittedQueryRef = useRef(initialState.query);
-    const [selectedModel, setSelectedModel] = useState(initialState.model);
     const bottomRef = useRef<HTMLDivElement>(null);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
     const [isEditingMessage, setIsEditingMessage] = useState(false);
@@ -1348,9 +1341,10 @@ const HomeContent = () => {
         );
     };
 
-    const handleModelChange = useCallback((newModel: string) => {
-        setSelectedModel(newModel);
-    }, []);
+    // Define the model change handler
+    const handleModelChange = useCallback((model: string) => {
+        setSelectedModel(model);
+    }, [setSelectedModel]);
 
     const resetSuggestedQuestions = useCallback(() => {
         setSuggestedQuestions([]);
@@ -1384,6 +1378,7 @@ const HomeContent = () => {
 
     // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
+    const [reasoningFullscreenMap, setReasoningFullscreenMap] = useState<Record<string, boolean>>({});
 
     const handleRegenerate = useCallback(async () => {
         if (status !== 'ready') {
@@ -1402,6 +1397,14 @@ const HomeContent = () => {
         // Resubmit the last user message
         await reload();
     }, [status, messages, setMessages, reload]);
+
+    // Simple spinner icon component before renderPart
+    const SpinnerIcon = () => (
+        <svg className="animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    );
 
     // Add this type at the top with other interfaces
     type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart;
@@ -1491,169 +1494,38 @@ const HomeContent = () => {
                 );
             case "reasoning": {
                 const sectionKey = `${messageIndex}-${partIndex}`;
-                
-                // Case 2: Enhanced handling of reasoning with better parallel tracking
-                // Check if there's a tool invocation running in parallel with this reasoning
-                const hasParallelToolInvocation = parts.some(p => 
-                    p.type === 'tool-invocation'
-                );
-                
-                // Determine if reasoning is complete (has a text part or tool invocation following it)
-                const isComplete = parts.some((p, i) => 
-                    i > partIndex && (p.type === "text" || p.type === "tool-invocation")
-                );
-                
-                // Calculate timing data
+                const hasParallelToolInvocation = parts.some(p => p.type === 'tool-invocation');
+                const isComplete = parts.some((p, i) => i > partIndex && (p.type === "text" || p.type === "tool-invocation"));
                 const timing = reasoningTimings[sectionKey];
                 let duration = null;
-                let liveElapsedTime = null;
-                
                 if (timing) {
                     if (timing.endTime) {
-                        // Completed reasoning - show fixed duration
                         duration = ((timing.endTime - timing.startTime) / 1000).toFixed(3);
-                    } else {
-                        // Ongoing reasoning - calculate live elapsed time
-                        liveElapsedTime = ((Date.now() - timing.startTime) / 1000).toFixed(3);
                     }
                 }
+                const parallelTool = hasParallelToolInvocation ? (parts.find(p => p.type === 'tool-invocation')?.toolInvocation?.toolName ?? null) : null;
                 
-                // Get the most recent tool invocation if any is running in parallel
-                const parallelTool = hasParallelToolInvocation ? 
-                    parts.find(p => p.type === 'tool-invocation')?.toolInvocation?.toolName : null;
+                // Separate expanded and fullscreen states
+                const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
+                const isFullscreen = reasoningFullscreenMap[sectionKey] ?? false;
+                
+                // Separate setters for each state
+                const setIsExpanded = (v: boolean) => setReasoningVisibilityMap(prev => ({ ...prev, [sectionKey]: v }));
+                const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap(prev => ({ ...prev, [sectionKey]: v }));
 
                 return (
-                    <motion.div
-                        key={`${messageIndex}-${partIndex}-reasoning`}
-                        id={`reasoning-${messageIndex}`}
-                        className="my-4"
-                    >
-                        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                            <button
-                                onClick={() => setReasoningVisibilityMap(prev => ({
-                                    ...prev,
-                                    [sectionKey]: !prev[sectionKey]
-                                }))}
-                                className={cn(
-                                    "w-full flex items-center justify-between px-4 py-3",
-                                    "bg-neutral-50 dark:bg-neutral-900",
-                                    "hover:bg-neutral-100 dark:hover:bg-neutral-800",
-                                    "transition-colors duration-200",
-                                    "group text-left"
-                                )}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="relative flex items-center justify-center size-2">
-                                        <div className="relative flex items-center justify-center size-2">
-                                            {isComplete ? (
-                                                <div className="size-1.5 rounded-full bg-emerald-500" />
-                                            ) : (
-                                                <>
-                                                    <div className="size-1.5 rounded-full bg-[#007AFF]/30 animate-ping" />
-                                                    <div className="size-1.5 rounded-full bg-[#007AFF] absolute" />
-                                                </>
-                                            )}
-                                        </div>
-                                        {!isComplete && (
-                                            <div className="absolute inset-0 rounded-full border-2 border-[#007AFF]/20 animate-ping" />
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                                            {isComplete ? "Reasoned" : "Reasoning"}
-                                            {parallelTool && <span className="text-neutral-500 ml-1">• called {parallelTool}</span>}
-                                        </span>
-                                        {duration && (
-                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                                <PhosphorClock weight="regular" className="size-3 text-neutral-500" />
-                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
-                                                    {duration}s
-                                                </span>
-                                            </div>
-                                        )}
-                                        {!isComplete && liveElapsedTime && (
-                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
-                                                <PhosphorClock weight="regular" className="size-3 text-neutral-500" />
-                                                <span className="text-[10px] tabular-nums font-medium text-neutral-500">
-                                                    {liveElapsedTime}s
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {!isComplete && (
-                                        <div className="flex items-center gap-[3px] px-2 py-1">
-                                            {[...Array(3)].map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="size-1 rounded-full bg-primary/60 animate-pulse"
-                                                    style={{ animationDelay: `${i * 200}ms` }}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                    <ChevronDown
-                                        className={cn(
-                                            "size-4 text-neutral-400 transition-transform duration-200",
-                                            reasoningVisibilityMap[sectionKey] ? "rotate-180" : ""
-                                        )}
-                                    />
-                                </div>
-                            </button>
-
-                            <AnimatePresence>
-                                {reasoningVisibilityMap[sectionKey] && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="overflow-hidden border-t border-neutral-200 dark:border-neutral-800"
-                                    >
-                                        <div className="p-4 bg-white dark:bg-neutral-900">
-                                            <div className={cn(
-                                                "text-sm text-neutral-600 dark:text-neutral-400",
-                                                "prose prose-neutral dark:prose-invert max-w-none",
-                                                "prose-p:my-2 prose-p:leading-relaxed"
-                                            )}>
-                                                {part.details ? (
-                                                    <div className="whitespace-pre-wrap">
-                                                        {part.details.map((detail, detailIndex) => (
-                                                            <div key={detailIndex}>
-                                                                {detail.type === 'text' ? (
-                                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
-                                                                        {detail.text}
-                                                                    </div>
-                                                                ) : (
-                                                                    '<redacted>'
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : part.reasoning ? (
-                                                    <div className="text-sm font-sans leading-relaxed break-words whitespace-pre-wrap">
-                                                        {part.reasoning}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-neutral-500 italic">No reasoning details available</div>
-                                                )}
-                                                
-                                                {hasParallelToolInvocation && (
-                                                    <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                                                        <div className="text-xs text-neutral-500 flex items-center gap-1.5">
-                                                            <Info className="h-3 w-3" />
-                                                            <span>Using tools in parallel with reasoning</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    </motion.div>
+                    <ReasoningPartView
+                        key={sectionKey}
+                        part={part as ReasoningPart}
+                        sectionKey={sectionKey}
+                        isComplete={isComplete}
+                        duration={duration}
+                        parallelTool={parallelTool}
+                        isExpanded={isExpanded}
+                        isFullscreen={isFullscreen}
+                        setIsExpanded={setIsExpanded}
+                        setIsFullscreen={setIsFullscreen}
+                    />
                 );
             }
             case "tool-invocation":
@@ -1676,6 +1548,31 @@ const HomeContent = () => {
     }
 
     const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
+    
+    // Move the hooks from renderPart to component level
+    const reasoningScrollRef = useRef<HTMLDivElement>(null);
+    
+    // Add effect for auto-scrolling reasoning content
+    useEffect(() => {
+        // Find active reasoning parts that are not complete
+        const activeReasoning = messages.flatMap((message, messageIndex) => 
+            (message.parts || [])
+                .map((part, partIndex) => ({ part, messageIndex, partIndex }))
+                .filter(({ part }) => part.type === "reasoning")
+                .filter(({ messageIndex, partIndex }) => {
+                    const message = messages[messageIndex];
+                    // Check if reasoning is complete
+                    return !(message.parts || []).some((p, i) => 
+                        i > partIndex && (p.type === "text" || p.type === "tool-invocation")
+                    );
+                })
+        );
+        
+        // Auto-scroll when active reasoning
+        if (activeReasoning.length > 0 && reasoningScrollRef.current) {
+            reasoningScrollRef.current.scrollTop = reasoningScrollRef.current.scrollHeight;
+        }
+    }, [messages]);
     
     // For active reasoning sections, update timers every 100ms
     useEffect(() => {

@@ -58,8 +58,8 @@ const middleware = extractReasoningMiddleware({
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-3-fast-beta'),
-        'scira-grok-3-mini': xai('grok-3-mini-fast-beta'),
+        'scira-default': xai('grok-3-mini-fast-beta'),
+        'scira-grok-3': xai('grok-3-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-4.1-mini': openai('gpt-4.1-mini', {
             structuredOutputs: true,
@@ -352,31 +352,23 @@ export async function POST(req: Request) {
                 }),
                 providerOptions: {
                     scira: {
-                        ...(model === 'scira-grok-3-mini' ?
+                        ...(model === 'scira-default' ?
                             {
                                 reasoningEffort: 'high',
                             }
                             : {}
                         ),
                         ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'medium',
-                            reasoning: {
-                                effort: 'medium',
-                                summary: "concise"
-                            }
+                            reasoningEffort: 'medium'
                         } : {}),
                     },
                     openai: {
                         ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'medium',
-                            reasoning: {
-                                effort: 'medium',
-                                summary: "concise"
-                            },
+                            reasoningEffort: 'medium'
                         } : {})
                     },
                     xai: {
-                        ...(model === 'scira-grok-3-mini' ? {
+                        ...(model === 'scira-default' ? {
                             reasoningEffort: 'high',
                         } : {}),
                     },

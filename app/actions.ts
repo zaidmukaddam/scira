@@ -13,7 +13,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: xai("grok-3-fast-beta"),
+    model: xai("grok-3"),
     temperature: 0,
     maxTokens: 300,
     topP: 0.3,

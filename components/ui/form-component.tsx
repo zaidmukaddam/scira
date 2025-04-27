@@ -20,6 +20,12 @@ import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
 import { track } from '@vercel/analytics';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -50,8 +56,8 @@ const XAIIcon = ({ className }: { className?: string }) => (
 
 
 const models = [
-    { value: "scira-default", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-3-mini", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
     { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: "/google.svg", iconClass: "!text-neutral-300", description: "Google's most advanced model", color: "blue", vision: true, experimental: false, category: "Stable" },
     { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
@@ -617,7 +623,7 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         onClick();
     };
 
-    // Use regular button for mobile
+    // Use regular button for mobile without tooltip
     if (isMobile) {
         return (
             <button
@@ -630,15 +636,30 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
         );
     }
 
+    // With tooltip for desktop
     return (
-        <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleClick}
-            className={commonClassNames}
-        >
-            <Icon className="size-4" />
-        </motion.button>
+        <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleClick}
+                    className={commonClassNames}
+                >
+                    <Icon className="size-4" />
+                </motion.button>
+            </TooltipTrigger>
+            <TooltipContent 
+                side="bottom" 
+                sideOffset={6}
+                className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3 max-w-[200px]"
+            >
+                <div className="flex flex-col gap-0.5">
+                    <span className="font-medium text-[11px]">{group.name}</span>
+                    <span className="text-[10px] text-neutral-300 leading-tight">{group.description}</span>
+                </div>
+            </TooltipContent>
+        </Tooltip>
     );
 };
 
@@ -686,37 +707,39 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             onMouseEnter={() => !isProcessing && setIsExpanded(true)}
             onMouseLeave={() => !isProcessing && setIsExpanded(false)}
         >
-            <AnimatePresence initial={false}>
-                {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
-                    const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
-                    const isLastItem = index === filteredGroups.length - 1;
-                    return (
-                        <motion.div
-                            key={group.id}
-                            layout={false}
-                            animate={{
-                                width: showItem ? "28px" : 0,
-                                opacity: showItem ? 1 : 0,
-                                marginRight: (showItem && isLastItem && isExpanded) ? "2px" : 0
-                            }}
-                            transition={{
-                                duration: 0.15,
-                                ease: "easeInOut"
-                            }}
-                            className={cn(
-                                "!m-0",
-                                isLastItem && isExpanded && showItem ? "pr-0.5" : ""
-                            )}
-                        >
-                            <ToolbarButton
-                                group={group}
-                                isSelected={selectedGroup === group.id}
-                                onClick={() => !isProcessing && onGroupSelect(group)}
-                            />
-                        </motion.div>
-                    );
-                })}
-            </AnimatePresence>
+            <TooltipProvider>
+                <AnimatePresence initial={false}>
+                    {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
+                        const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
+                        const isLastItem = index === filteredGroups.length - 1;
+                        return (
+                            <motion.div
+                                key={group.id}
+                                layout={false}
+                                animate={{
+                                    width: showItem ? "28px" : 0,
+                                    opacity: showItem ? 1 : 0,
+                                    marginRight: (showItem && isLastItem && isExpanded) ? "2px" : 0
+                                }}
+                                transition={{
+                                    duration: 0.15,
+                                    ease: "easeInOut"
+                                }}
+                                className={cn(
+                                    "!m-0",
+                                    isLastItem && isExpanded && showItem ? "pr-0.5" : ""
+                                )}
+                            >
+                                <ToolbarButton
+                                    group={group}
+                                    isSelected={selectedGroup === group.id}
+                                    onClick={() => !isProcessing && onGroupSelect(group)}
+                                />
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
+            </TooltipProvider>
         </motion.div>
     );
 };
@@ -1078,7 +1101,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
             toast.error("Please enter a search query or attach an image.");
         }
-    }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status]);
+    }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status, selectedModel, setHasSubmitted]);
 
     const submitForm = useCallback(() => {
         onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
@@ -1124,291 +1147,424 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     return (
         <div className="flex flex-col w-full">
-            <div
-                className={cn(
-                    "relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 !font-sans",
-                    hasInteracted ? "z-[51]" : "",
-                    isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
-                    attachments.length > 0 || uploadQueue.length > 0
-                        ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
-                        : "bg-transparent"
-                )}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-            >
-                <AnimatePresence>
-                    {isDragging && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
-                        >
-                            <div className="flex items-center gap-4 px-6 py-8">
-                                <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                                    <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
-                                </div>
-                                <div className="space-y-1 text-center">
-                                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                        Drop images here
-                                    </p>
-                                    <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                                        Max {MAX_IMAGES} images
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
+            <TooltipProvider>
+                <div
+                    className={cn(
+                        "relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 !font-sans",
+                        hasInteracted ? "z-[51]" : "",
+                        isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
+                        attachments.length > 0 || uploadQueue.length > 0
+                            ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
+                            : "bg-transparent"
                     )}
-                </AnimatePresence>
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
+                    <AnimatePresence>
+                        {isDragging && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
+                            >
+                                <div className="flex items-center gap-4 px-6 py-8">
+                                    <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                                        <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
+                                    </div>
+                                    <div className="space-y-1 text-center">
+                                        <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                                            Drop images here
+                                        </p>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                                            Max {MAX_IMAGES} images
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
-                <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
+                    <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
+                    <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
 
-                {(attachments.length > 0 || uploadQueue.length > 0) && (
-                    <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
-                        {attachments.map((attachment, index) => (
-                            <AttachmentPreview
-                                key={attachment.url}
-                                attachment={attachment}
-                                onRemove={() => removeAttachment(index)}
-                                isUploading={false}
-                            />
-                        ))}
-                        {uploadQueue.map((filename) => (
-                            <AttachmentPreview
-                                key={filename}
-                                attachment={{
-                                    url: "",
-                                    name: filename,
-                                    contentType: "",
-                                    size: 0,
-                                } as Attachment}
-                                onRemove={() => { }}
-                                isUploading={true}
-                            />
-                        ))}
-                    </div>
-                )}
+                    {(attachments.length > 0 || uploadQueue.length > 0) && (
+                        <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                            {attachments.map((attachment, index) => (
+                                <AttachmentPreview
+                                    key={attachment.url}
+                                    attachment={attachment}
+                                    onRemove={() => removeAttachment(index)}
+                                    isUploading={false}
+                                />
+                            ))}
+                            {uploadQueue.map((filename) => (
+                                <AttachmentPreview
+                                    key={filename}
+                                    attachment={{
+                                        url: "",
+                                        name: filename,
+                                        contentType: "",
+                                        size: 0,
+                                    } as Attachment}
+                                    onRemove={() => { }}
+                                    isUploading={true}
+                                />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Form container with switch notification */}
-                <div className="relative">
-                    <SwitchNotification
-                        icon={switchNotification.icon}
-                        title={switchNotification.title}
-                        description={switchNotification.description}
-                        isVisible={switchNotification.show}
-                        modelColor={switchNotification.notificationType === 'model' ?
-                            models.find(m => m.value === selectedModel)?.color :
-                            selectedGroup}
-                        notificationType={switchNotification.notificationType}
-                    />
-
-                    <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
-                        <Textarea
-                            ref={inputRef}
-                            placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
-                            value={input}
-                            onChange={handleInput}
-                            disabled={isProcessing}
-                            onFocus={handleFocus}
-                            onBlur={handleBlur}
-                            className={cn(
-                                "w-full rounded-lg resize-none",
-                                "text-base leading-relaxed",
-                                "bg-neutral-100 dark:bg-neutral-900",
-                                "border !border-neutral-200 dark:!border-neutral-700",
-                                "focus:!border-neutral-300 dark:!focus:!border-neutral-500",
-                                isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
-                                "text-neutral-900 dark:text-neutral-100",
-                                "focus:!ring-0",
-                                "px-4 py-4 pb-16",
-                                "touch-manipulation",
-                                "whatsize"
-                            )}
-                            style={{
-                                WebkitUserSelect: 'text',
-                                WebkitTouchCallout: 'none',
-                            }}
-                            rows={1}
-                            autoFocus={width ? width > 768 : true}
-                            onCompositionStart={() => isCompositionActive.current = true}
-                            onCompositionEnd={() => isCompositionActive.current = false}
-                            onKeyDown={handleKeyDown}
-                            onPaste={handlePaste}
+                    {/* Form container with switch notification */}
+                    <div className="relative">
+                        <SwitchNotification
+                            icon={switchNotification.icon}
+                            title={switchNotification.title}
+                            description={switchNotification.description}
+                            isVisible={switchNotification.show}
+                            modelColor={switchNotification.notificationType === 'model' ?
+                                models.find(m => m.value === selectedModel)?.color :
+                                selectedGroup}
+                            notificationType={switchNotification.notificationType}
                         />
 
-                        {/* Separate div for toolbar controls that won't trigger the textarea */}
-                        <div
-                            className={cn(
-                                "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
-                                "bg-neutral-100 dark:bg-neutral-900",
-                                "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
-                                isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
-                                isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
-                            )}
-                        >
-                            {/* Toolbar controls in a touchable div that prevents keyboard */}
+                        <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
+                            <Textarea
+                                ref={inputRef}
+                                placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
+                                value={input}
+                                onChange={handleInput}
+                                disabled={isProcessing}
+                                onFocus={handleFocus}
+                                onBlur={handleBlur}
+                                className={cn(
+                                    "w-full rounded-lg resize-none",
+                                    "text-base leading-relaxed",
+                                    "bg-neutral-100 dark:bg-neutral-900",
+                                    "border !border-neutral-200 dark:!border-neutral-700",
+                                    "focus:!border-neutral-300 dark:!focus:!border-neutral-500",
+                                    isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
+                                    "text-neutral-900 dark:text-neutral-100",
+                                    "focus:!ring-0",
+                                    "px-4 py-4 pb-16",
+                                    "touch-manipulation",
+                                    "whatsize"
+                                )}
+                                style={{
+                                    WebkitUserSelect: 'text',
+                                    WebkitTouchCallout: 'none',
+                                }}
+                                rows={1}
+                                autoFocus={width ? width > 768 : true}
+                                onCompositionStart={() => isCompositionActive.current = true}
+                                onCompositionEnd={() => isCompositionActive.current = false}
+                                onKeyDown={handleKeyDown}
+                                onPaste={handlePaste}
+                            />
+
+                            {/* Separate div for toolbar controls that won't trigger the textarea */}
                             <div
                                 className={cn(
-                                    "flex items-center gap-2",
-                                    isMobile && "overflow-hidden"
+                                    "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
+                                    "bg-neutral-100 dark:bg-neutral-900",
+                                    "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
+                                    isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
+                                    isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
                                 )}
-                                // Use pointer-events-auto to enable interactions without affecting the textarea
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Blur the textarea on toolbar click to hide keyboard
-                                    if (isMobile && document.activeElement === inputRef.current) {
-                                        inputRef.current?.blur();
-                                    }
-                                }}
                             >
-                                <div className={cn(
-                                    "transition-all duration-100",
-                                    (selectedGroup !== 'extreme')
-                                        ? "opacity-100 visible w-auto"
-                                        : "opacity-0 invisible w-0"
-                                )}>
-                                    <GroupSelector
-                                        selectedGroup={selectedGroup}
-                                        onGroupSelect={handleGroupSelect}
-                                        status={status}
-                                        onExpandChange={setIsGroupSelectorExpanded}
-                                    />
-                                </div>
+                                {/* Toolbar controls in a touchable div that prevents keyboard */}
+                                <div
+                                    className={cn(
+                                        "flex items-center gap-2",
+                                        isMobile && "overflow-hidden"
+                                    )}
+                                    // Use pointer-events-auto to enable interactions without affecting the textarea
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        // Blur the textarea on toolbar click to hide keyboard
+                                        if (isMobile && document.activeElement === inputRef.current) {
+                                            inputRef.current?.blur();
+                                        }
+                                    }}
+                                >
+                                    <div className={cn(
+                                        "transition-all duration-100",
+                                        (selectedGroup !== 'extreme')
+                                            ? "opacity-100 visible w-auto"
+                                            : "opacity-0 invisible w-0"
+                                    )}>
+                                        <GroupSelector
+                                            selectedGroup={selectedGroup}
+                                            onGroupSelect={handleGroupSelect}
+                                            status={status}
+                                            onExpandChange={setIsGroupSelectorExpanded}
+                                        />
+                                    </div>
 
-                                <div className={cn(
-                                    "transition-all duration-300",
-                                    (isMobile && isGroupSelectorExpanded)
-                                        ? "opacity-0 invisible w-0"
-                                        : "opacity-100 visible w-auto"
-                                )}>
-                                    <ModelSwitcher
-                                        selectedModel={selectedModel}
-                                        setSelectedModel={setSelectedModel}
-                                        showExperimentalModels={showExperimentalModels}
-                                        attachments={attachments}
-                                        messages={messages}
-                                        status={status}
-                                        onModelSelect={(model) => {
-                                            // Show additional info about image attachments for vision models
-                                            const isVisionModel = model.vision === true;
-                                            showSwitchNotification(
-                                                model.label,
-                                                isVisionModel
-                                                    ? 'Vision model enabled - you can now attach images'
-                                                    : model.description,
-                                                typeof model.icon === 'string' ?
-                                                    <img src={model.icon} alt={model.label} className="size-4 object-contain" /> :
-                                                    <model.icon className="size-4" />,
-                                                model.color,
-                                                'model'  // Explicitly mark as model notification
-                                            );
-                                        }}
-                                    />
-                                </div>
+                                    <div className={cn(
+                                        "transition-all duration-300",
+                                        (isMobile && isGroupSelectorExpanded)
+                                            ? "opacity-0 invisible w-0"
+                                            : "opacity-100 visible w-auto"
+                                    )}>
+                                        <ModelSwitcher
+                                            selectedModel={selectedModel}
+                                            setSelectedModel={setSelectedModel}
+                                            showExperimentalModels={showExperimentalModels}
+                                            attachments={attachments}
+                                            messages={messages}
+                                            status={status}
+                                            onModelSelect={(model) => {
+                                                // Show additional info about image attachments for vision models
+                                                const isVisionModel = model.vision === true;
+                                                showSwitchNotification(
+                                                    model.label,
+                                                    isVisionModel
+                                                        ? 'Vision model enabled - you can now attach images'
+                                                        : model.description,
+                                                    typeof model.icon === 'string' ?
+                                                        <img src={model.icon} alt={model.label} className="size-4 object-contain" /> :
+                                                        <model.icon className="size-4" />,
+                                                    model.color,
+                                                    'model'  // Explicitly mark as model notification
+                                                );
+                                            }}
+                                        />
+                                    </div>
 
-                                <div className={cn(
-                                    "transition-all duration-300",
-                                    (isMobile && isGroupSelectorExpanded)
-                                        ? "opacity-0 invisible w-0"
-                                        : "opacity-100 visible w-auto"
-                                )}>
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
-                                            setSelectedGroup(newMode);
+                                    <div className={cn(
+                                        "transition-all duration-300",
+                                        (isMobile && isGroupSelectorExpanded)
+                                            ? "opacity-0 invisible w-0"
+                                            : "opacity-100 visible w-auto"
+                                    )}>
+                                        {!isMobile ? (
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
+                                                            setSelectedGroup(newMode);
 
-                                            // Enhanced notification messages
-                                            const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
-                                            const description = selectedGroup === 'extreme'
-                                                ? 'Standard web search mode is now active'
-                                                : 'Enhanced deep research mode is now active';
+                                                            // Enhanced notification messages
+                                                            const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
+                                                            const description = selectedGroup === 'extreme'
+                                                                ? 'Standard web search mode is now active'
+                                                                : 'Enhanced deep research mode is now active';
 
-                                            // Use appropriate colors for groups that don't conflict with model colors
-                                            showSwitchNotification(
-                                                newModeText,
-                                                description,
-                                                selectedGroup === 'extreme' ? <Globe className="size-4" /> : <TelescopeIcon className="size-4" />,
-                                                newMode, // Use the new mode as the color identifier
-                                                'group'  // Specify this is a group notification
-                                            );
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-2 p-2 sm:px-3 h-8",
-                                            "rounded-full transition-all duration-300",
-                                            "border border-neutral-200 dark:border-neutral-800",
-                                            "hover:shadow-md",
-                                            selectedGroup === 'extreme'
-                                                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                                                : "bg-white dark:bg-neutral-900 text-neutral-500",
+                                                            // Use appropriate colors for groups that don't conflict with model colors
+                                                            showSwitchNotification(
+                                                                newModeText,
+                                                                description,
+                                                                selectedGroup === 'extreme' ? <Globe className="size-4" /> : <TelescopeIcon className="size-4" />,
+                                                                newMode, // Use the new mode as the color identifier
+                                                                'group'  // Specify this is a group notification
+                                                            );
+                                                        }}
+                                                        className={cn(
+                                                            "flex items-center gap-2 p-2 sm:px-3 h-8",
+                                                            "rounded-full transition-all duration-300",
+                                                            "border border-neutral-200 dark:border-neutral-800",
+                                                            "hover:shadow-md",
+                                                            selectedGroup === 'extreme'
+                                                                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                                                                : "bg-white dark:bg-neutral-900 text-neutral-500",
+                                                        )}
+                                                    >
+                                                        <TelescopeIcon className="h-3.5 w-3.5" />
+                                                        <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent 
+                                                    side="bottom" 
+                                                    sideOffset={6}
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3 max-w-[200px]"
+                                                >
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="font-medium text-[11px]">Extreme Mode</span>
+                                                        <span className="text-[10px] text-neutral-300 leading-tight">Deep research with multiple sources and analysis</span>
+                                                    </div>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
+                                                    setSelectedGroup(newMode);
+
+                                                    // Enhanced notification messages
+                                                    const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
+                                                    const description = selectedGroup === 'extreme'
+                                                        ? 'Standard web search mode is now active'
+                                                        : 'Enhanced deep research mode is now active';
+
+                                                    // Use appropriate colors for groups that don't conflict with model colors
+                                                    showSwitchNotification(
+                                                        newModeText,
+                                                        description,
+                                                        selectedGroup === 'extreme' ? <Globe className="size-4" /> : <TelescopeIcon className="size-4" />,
+                                                        newMode, // Use the new mode as the color identifier
+                                                        'group'  // Specify this is a group notification
+                                                    );
+                                                }}
+                                                className={cn(
+                                                    "flex items-center gap-2 p-2 sm:px-3 h-8",
+                                                    "rounded-full transition-all duration-300",
+                                                    "border border-neutral-200 dark:border-neutral-800",
+                                                    "hover:shadow-md",
+                                                    selectedGroup === 'extreme'
+                                                        ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                                                        : "bg-white dark:bg-neutral-900 text-neutral-500",
+                                                )}
+                                            >
+                                                <TelescopeIcon className="h-3.5 w-3.5" />
+                                                <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                                            </button>
                                         )}
-                                    >
-                                        <TelescopeIcon className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:block text-xs font-medium">Extreme</span>
-                                    </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div
-                                className="flex items-center gap-2"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Blur the textarea on button container click
-                                    if (isMobile && document.activeElement === inputRef.current) {
-                                        inputRef.current?.blur();
-                                    }
-                                }}
-                            >
-                                {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
-                                    <Button
-                                        className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            triggerFileInput();
-                                        }}
-                                        variant="outline"
-                                        disabled={isProcessing}
-                                    >
-                                        <PaperclipIcon size={14} />
-                                    </Button>
-                                )}
+                                <div
+                                    className="flex items-center gap-2"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        // Blur the textarea on button container click
+                                        if (isMobile && document.activeElement === inputRef.current) {
+                                            inputRef.current?.blur();
+                                        }
+                                    }}
+                                >
+                                    {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
+                                        !isMobile ? (
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            triggerFileInput();
+                                                        }}
+                                                        variant="outline"
+                                                        disabled={isProcessing}
+                                                    >
+                                                        <PaperclipIcon size={14} />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent 
+                                                    side="bottom" 
+                                                    sideOffset={6}
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                >
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="font-medium text-[11px]">Attach Image</span>
+                                                        <span className="text-[10px] text-neutral-300 leading-tight">Upload or paste an image</span>
+                                                    </div>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <Button
+                                                className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                    triggerFileInput();
+                                                }}
+                                                variant="outline"
+                                                disabled={isProcessing}
+                                            >
+                                                <PaperclipIcon size={14} />
+                                            </Button>
+                                        )
+                                    )}
 
-                                {isProcessing ? (
-                                    <Button
-                                        className="rounded-full p-1.5 h-8 w-8"
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            stop();
-                                        }}
-                                        variant="destructive"
-                                    >
-                                        <StopIcon size={14} />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        className="rounded-full p-1.5 h-8 w-8"
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            submitForm();
-                                        }}
-                                        disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
-                                    >
-                                        <ArrowUpIcon size={14} />
-                                    </Button>
-                                )}
+                                    {isProcessing ? (
+                                        !isMobile ? (
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        className="rounded-full p-1.5 h-8 w-8"
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            stop();
+                                                        }}
+                                                        variant="destructive"
+                                                    >
+                                                        <StopIcon size={14} />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent 
+                                                    side="bottom" 
+                                                    sideOffset={6}
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                >
+                                                    <span className="font-medium text-[11px]">Stop Generation</span>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <Button
+                                                className="rounded-full p-1.5 h-8 w-8"
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                    stop();
+                                                }}
+                                                variant="destructive"
+                                            >
+                                                <StopIcon size={14} />
+                                            </Button>
+                                        )
+                                    ) : (
+                                        !isMobile ? (
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        className="rounded-full p-1.5 h-8 w-8"
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            submitForm();
+                                                        }}
+                                                        disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
+                                                    >
+                                                        <ArrowUpIcon size={14} />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent 
+                                                    side="bottom" 
+                                                    sideOffset={6}
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                >
+                                                    <span className="font-medium text-[11px]">Send Message</span>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            <Button
+                                                className="rounded-full p-1.5 h-8 w-8"
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                    submitForm();
+                                                }}
+                                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
+                                            >
+                                                <ArrowUpIcon size={14} />
+                                            </Button>
+                                        )
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </TooltipProvider>
         </div>
     );
 };
