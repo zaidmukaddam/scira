@@ -3,7 +3,7 @@
 
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { xai } from '@ai-sdk/xai';
+import { openai } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
@@ -13,7 +13,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: xai("grok-3"),
+    model: openai("gpt-4o-mini"),
     temperature: 0,
     maxTokens: 300,
     topP: 0.3,

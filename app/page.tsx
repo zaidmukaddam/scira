@@ -1223,9 +1223,9 @@ const HomeContent = () => {
                                 <div key={index} className={`${
                                     // Add border only if this is an assistant message AND there's a next message
                                     message.role === 'assistant' && index < memoizedMessages.length - 1
-                                        ? 'mb-12! border-b border-neutral-200 dark:border-neutral-800'
+                                        ? 'mb-8! pb-8 border-b border-neutral-200 dark:border-neutral-800'
                                         : ''
-                                    }`.trim()}>
+                                    }`}>
                                     {message.role === 'user' && (
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
