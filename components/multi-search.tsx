@@ -110,7 +110,7 @@ const SearchLoadingState = ({
                                             key={i}
                                             variant="secondary"
                                             className={cn(
-                                                "px-2.5 py-1 text-xs rounded-full flex-shrink-0 flex items-center gap-1.5",
+                                                "px-2.5 py-1 text-xs rounded-full shrink-0 flex items-center gap-1.5",
                                                 annotation 
                                                     ? "bg-neutral-100 dark:bg-neutral-800" 
                                                     : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400"
@@ -132,7 +132,7 @@ const SearchLoadingState = ({
                                 {[...Array(4)].map((_, i) => (
                                     <div 
                                         key={i}
-                                        className="w-[280px] flex-shrink-0 bg-background rounded-lg border border-border/50 snap-start"
+                                        className="w-[280px] shrink-0 bg-background rounded-lg border border-border/50 snap-start"
                                     >
                                         <div className="p-3">
                                             <div className="flex items-center gap-2 mb-2">
@@ -176,7 +176,7 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
     const [imageLoaded, setImageLoaded] = React.useState(false);
 
     return (
-        <div className="w-[280px] flex-shrink-0 bg-background rounded-lg border border-border/50 transition-all">
+        <div className="w-[280px] shrink-0 bg-background rounded-lg border border-border/50 transition-all">
             <div className="p-3">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="relative w-8 h-8 rounded-md bg-muted flex items-center justify-center overflow-hidden">
@@ -206,7 +206,7 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
                             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 truncate"
                         >
                             {new URL(result.url).hostname}
-                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                            <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                     </div>
                 </div>
@@ -218,7 +218,7 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
                 {result.published_date && (
                     <div className="pt-1 border-t border-border/50">
                         <time className="text-xs text-muted-foreground flex items-center gap-1.5">
-                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <Calendar className="h-3 w-3 shrink-0" />
                             {new Date(result.published_date).toLocaleDateString()}
                         </time>
                     </div>
@@ -260,7 +260,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                 // Desktop layout
                 "lg:grid-cols-4",
                 // Reduced height with aspect ratio
-                "[&>*]:aspect-video",
+                "*:aspect-video",
                 // First image larger on desktop
                 displayImages.length > 1 && "sm:[&>*:first-child]:row-span-2 sm:[&>*:first-child]:col-span-2",
                 displayImages.length === 1 && "[&>*:first-child]:col-span-full"
@@ -270,7 +270,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                         key={index}
                         className={cn(
                             "relative rounded-lg overflow-hidden group",
-                            "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+                            "focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-1",
                             "transition-all duration-200",
                             "bg-muted",
                             !imageLoaded[index] && "animate-pulse"
@@ -301,7 +301,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                             onError={() => handleImageLoad(index)}
                         />
                         {image.description && (
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 flex items-end">
+                            <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 flex items-end">
                                 <p className="text-xs text-white line-clamp-2 w-full">{image.description}</p>
                             </div>
                         )}
@@ -366,7 +366,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 className={cn(
                                     "absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full",
                                     "bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700",
-                                    "hover:bg-white hover:dark:bg-neutral-800 transition-colors"
+                                    "hover:bg-white dark:hover:bg-neutral-800 transition-colors"
                                 )}
                                 onClick={() => {
                                     setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1);
@@ -378,7 +378,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 className={cn(
                                     "absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full",
                                     "bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700",
-                                    "hover:bg-white hover:dark:bg-neutral-800 transition-colors"
+                                    "hover:bg-white dark:hover:bg-neutral-800 transition-colors"
                                 )}
                                 onClick={() => {
                                     setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1);
@@ -436,7 +436,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 className={cn(
                                     "absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full",
                                     "bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700",
-                                    "hover:bg-white hover:dark:bg-neutral-800 transition-colors"
+                                    "hover:bg-white dark:hover:bg-neutral-800 transition-colors"
                                 )}
                                 onClick={() => {
                                     setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1);
@@ -448,7 +448,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 className={cn(
                                     "absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full",
                                     "bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700",
-                                    "hover:bg-white hover:dark:bg-neutral-800 transition-colors"
+                                    "hover:bg-white dark:hover:bg-neutral-800 transition-colors"
                                 )}
                                 onClick={() => {
                                     setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1);
@@ -526,7 +526,7 @@ const MultiSearch: React.FC<{
                                     <Badge
                                         key={i}
                                         variant="secondary"
-                                        className="px-2.5 py-1 text-xs rounded-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0"
+                                        className="px-2.5 py-1 text-xs rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0"
                                     >
                                         <Search className="h-2.5 w-2.5 mr-1" />
                                         {search.query}

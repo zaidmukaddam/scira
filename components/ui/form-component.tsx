@@ -56,53 +56,53 @@ const XAIIcon = ({ className }: { className?: string }) => (
 
 
 const models = [
-    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: "/google.svg", iconClass: "!text-neutral-300", description: "Google's most advanced model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-o4-mini", label: "o4 mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's mini reasoning model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-qwq", label: "QWQ 32B", icon: "/groq.svg", iconClass: "!text-neutral-300", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: "/google.svg", iconClass: "text-neutral-300!", description: "Google's most advanced model", color: "blue", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: "/openai.svg", iconClass: "text-neutral-300!", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-o4-mini", label: "o4 mini", icon: "/openai.svg", iconClass: "text-neutral-300!", description: "OpenAI's mini reasoning model", color: "blue", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-qwq", label: "QWQ 32B", icon: "/groq.svg", iconClass: "text-neutral-300!", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
     const baseClasses = "transition-colors duration-200";
-    const selectedClasses = isSelected ? "!bg-opacity-100 dark:!bg-opacity-100" : "";
+    const selectedClasses = isSelected ? "bg-opacity-100! dark:bg-opacity-100!" : "";
 
     switch (color) {
         case 'black':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#0F0F0F] dark:!bg-[#0F0F0F] !text-white hover:!bg-[#0F0F0F] dark:hover:!bg-[#0F0F0F] !border-[#0F0F0F] dark:!border-[#0F0F0F]`
-                : `${baseClasses} !text-[#0F0F0F] dark:!text-[#E5E5E5] hover:!bg-[#0F0F0F] hover:!text-white dark:hover:!bg-[#0F0F0F] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#0F0F0F]! dark:bg-[#0F0F0F]! text-white! hover:bg-[#0F0F0F]! dark:hover:bg-[#0F0F0F]! border-[#0F0F0F]! dark:border-[#0F0F0F]!`
+                : `${baseClasses} text-[#0F0F0F]! dark:text-[#E5E5E5]! hover:bg-[#0F0F0F]! hover:text-white! dark:hover:bg-[#0F0F0F]! dark:hover:text-white!`;
         case 'gray':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#4E4E4E] dark:!bg-[#4E4E4E] !text-white hover:!bg-[#3D3D3D] dark:hover:!bg-[#3D3D3D] !border-[#4E4E4E] dark:!border-[#4E4E4E]`
-                : `${baseClasses} !text-[#4E4E4E] dark:!text-[#E5E5E5] hover:!bg-[#4E4E4E] hover:!text-white dark:hover:!bg-[#4E4E4E] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#4E4E4E]! dark:bg-[#4E4E4E]! text-white! hover:bg-[#3D3D3D]! dark:hover:bg-[#3D3D3D]! border-[#4E4E4E]! dark:border-[#4E4E4E]!`
+                : `${baseClasses} text-[#4E4E4E]! dark:text-[#E5E5E5]! hover:bg-[#4E4E4E]! hover:text-white! dark:hover:bg-[#4E4E4E]! dark:hover:text-white!`;
         case 'indigo':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#4F46E5] dark:!bg-[#4F46E5] !text-white hover:!bg-[#4338CA] dark:hover:!bg-[#4338CA] !border-[#4F46E5] dark:!border-[#4F46E5]`
-                : `${baseClasses} !text-[#4F46E5] dark:!text-[#6366F1] hover:!bg-[#4F46E5] hover:!text-white dark:hover:!bg-[#4F46E5] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#4F46E5]! dark:bg-[#4F46E5]! text-white! hover:bg-[#4338CA]! dark:hover:bg-[#4338CA]! border-[#4F46E5]! dark:border-[#4F46E5]!`
+                : `${baseClasses} text-[#4F46E5]! dark:text-[#6366F1]! hover:bg-[#4F46E5]! hover:text-white! dark:hover:bg-[#4F46E5]! dark:hover:text-white!`;
         case 'violet':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#8B5CF6] dark:!bg-[#8B5CF6] !text-white hover:!bg-[#7C3AED] dark:hover:!bg-[#7C3AED] !border-[#8B5CF6] dark:!border-[#8B5CF6]`
-                : `${baseClasses} !text-[#8B5CF6] dark:!text-[#A78BFA] hover:!bg-[#8B5CF6] hover:!text-white dark:hover:!bg-[#8B5CF6] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#8B5CF6]! dark:bg-[#8B5CF6]! text-white! hover:bg-[#7C3AED]! dark:hover:bg-[#7C3AED]! border-[#8B5CF6]! dark:border-[#8B5CF6]!`
+                : `${baseClasses} text-[#8B5CF6]! dark:text-[#A78BFA]! hover:bg-[#8B5CF6]! hover:text-white! dark:hover:bg-[#8B5CF6]! dark:hover:text-white!`;
         case 'purple':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#5E5ADB] dark:!bg-[#5E5ADB] !text-white hover:!bg-[#4D49C9] dark:hover:!bg-[#4D49C9] !border-[#5E5ADB] dark:!border-[#5E5ADB]`
-                : `${baseClasses} !text-[#5E5ADB] dark:!text-[#5E5ADB] hover:!bg-[#5E5ADB] hover:!text-white dark:hover:!bg-[#5E5ADB] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#5E5ADB]! dark:bg-[#5E5ADB]! text-white! hover:bg-[#4D49C9]! dark:hover:bg-[#4D49C9]! border-[#5E5ADB]! dark:border-[#5E5ADB]!`
+                : `${baseClasses} text-[#5E5ADB]! dark:text-[#5E5ADB]! hover:bg-[#5E5ADB]! hover:text-white! dark:hover:bg-[#5E5ADB]! dark:hover:text-white!`;
         case 'alpha':
             // make it classic optimus prime like 
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-gradient-to-r !from-[#0b3d91] !to-[#d01012] dark:!bg-gradient-to-r dark:!from-[#0b3d91] dark:!to-[#d01012] !text-white hover:!opacity-90 !border-[#0b3d91] dark:!border-[#0b3d91]`
-                : `${baseClasses} !text-[#d01012] dark:!text-[#3f83f8] hover:!bg-gradient-to-r hover:!from-[#0b3d91] hover:!to-[#d01012] hover:!text-white dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-linear-to-r! from-[#0b3d91]! to-[#d01012]! dark:bg-linear-to-r! dark:from-[#0b3d91]! dark:to-[#d01012]! text-white! hover:opacity-90! border-[#0b3d91]! dark:border-[#0b3d91]!`
+                : `${baseClasses} text-[#d01012]! dark:text-[#3f83f8]! hover:bg-linear-to-r! hover:from-[#0b3d91]! hover:to-[#d01012]! hover:text-white! dark:hover:text-white!`;
         case 'blue':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-[#2563eb] dark:!bg-[#2563eb] !text-white hover:!bg-[#1d4ed8] dark:hover:!bg-[#1d4ed8] !border-[#2563eb] dark:!border-[#2563eb]`
-                : `${baseClasses} !text-[#2563eb] dark:!text-[#60a5fa] hover:!bg-[#2563eb] hover:!text-white dark:hover:!bg-[#2563eb] dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-[#2563eb]! dark:bg-[#2563eb]! text-white! hover:bg-[#1d4ed8]! dark:hover:bg-[#1d4ed8]! border-[#2563eb]! dark:border-[#2563eb]!`
+                : `${baseClasses} text-[#2563eb]! dark:text-[#60a5fa]! hover:bg-[#2563eb]! hover:text-white! dark:hover:bg-[#2563eb]! dark:hover:text-white!`;
         default:
             return isSelected
-                ? `${baseClasses} ${selectedClasses} !bg-neutral-500 dark:!bg-neutral-700 !text-white hover:!bg-neutral-600 dark:hover:!bg-neutral-800 !border-neutral-500 dark:!border-neutral-700`
-                : `${baseClasses} !text-neutral-600 dark:!text-neutral-300 hover:!bg-neutral-500 hover:!text-white dark:hover:!bg-neutral-700 dark:hover:!text-white`;
+                ? `${baseClasses} ${selectedClasses} bg-neutral-500! dark:bg-neutral-700! text-white! hover:bg-neutral-600! dark:hover:bg-neutral-800! border-neutral-500! dark:border-neutral-700!`
+                : `${baseClasses} text-neutral-600! dark:text-neutral-300! hover:bg-neutral-500! hover:text-white! dark:hover:bg-neutral-700! dark:hover:text-white!`;
     }
 }
 
@@ -150,7 +150,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     "hover:shadow-md",
                     getColorClasses(selectedModelData?.color || "neutral", true),
                     isProcessing && "opacity-50 pointer-events-none",
-                    "ring-0 outline-none",
+                    "ring-0 outline-hidden",
                     className
                 )}
                 disabled={isProcessing}
@@ -175,7 +175,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     )
                 )}
                 <span className="hidden sm:block text-xs font-medium overflow-hidden">
-                    <TextMorph
+                    <motion.div
                         variants={{
                             initial: { opacity: 0, y: 10 },
                             animate: { opacity: 1, y: 0 },
@@ -189,11 +189,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                         }}
                     >
                         {selectedModelData?.label || ""}
-                    </TextMorph>
+                    </motion.div>
                 </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-                className="w-[200px] p-0.5 !font-sans rounded-lg bg-white dark:bg-neutral-900 !mt-1.5 !z-[52] shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[290px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                className="w-[200px] p-0.5 font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-1.5! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[290px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
                 align="start"
                 side="bottom"
                 sideOffset={8}
@@ -223,7 +223,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                     className={cn(
                                         "flex items-center gap-1.5 px-1.5 py-1 rounded-md text-xs min-h-[36px]",
                                         "transition-all duration-200",
-                                        "hover:shadow-sm",
+                                        "hover:shadow-xs",
                                         getColorClasses(model.color, selectedModel === model.value)
                                     )}
                                 >
@@ -370,11 +370,11 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
             transition={{ duration: 0.2 }}
             className={cn(
                 "relative flex items-center",
-                "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+                "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xs",
                 "border border-neutral-200/80 dark:border-neutral-700/80",
                 "rounded-2xl p-2 pr-8 gap-2.5",
-                "shadow-sm hover:shadow-md",
-                "flex-shrink-0 z-0",
+                "shadow-xs hover:shadow-md",
+                "shrink-0 z-0",
                 "hover:bg-white dark:hover:bg-neutral-800",
                 "transition-all duration-200",
                 "group"
@@ -417,7 +417,7 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                     </div>
                 </div>
             ) : (
-                <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex-shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
+                <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
                     <img
                         src={(attachment as Attachment).url}
                         alt={`Preview of ${attachment.name}`}
@@ -425,7 +425,7 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                     />
                 </div>
             )}
-            <div className="flex-grow min-w-0">
+            <div className="grow min-w-0">
                 {!isUploadingAttachment(attachment) && (
                     <p className="text-xs font-medium truncate text-neutral-800 dark:text-neutral-200">
                         {truncateFilename(attachment.name)}
@@ -443,9 +443,9 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
                 className={cn(
                     "absolute -top-1.5 -right-1.5 p-0.5 m-0 rounded-full",
-                    "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+                    "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xs",
                     "border border-neutral-200/80 dark:border-neutral-700/80",
-                    "shadow-sm hover:shadow-md",
+                    "shadow-xs hover:shadow-md",
                     "transition-all duration-200 z-20",
                     "opacity-0 group-hover:opacity-100",
                     "scale-75 group-hover:scale-100",
@@ -569,13 +569,13 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                     )}
                 >
                     <div className={cn(
-                        "flex items-center gap-2 py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-t-lg border shadow-sm backdrop-blur-sm",
+                        "flex items-center gap-2 py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-t-lg border shadow-xs backdrop-blur-xs",
                         bgColorClass,
                         useModelColor ? "text-white" : "text-neutral-900 dark:text-neutral-100"
                     )}>
                         {icon && (
                             <span className={cn(
-                                "flex-shrink-0 size-3.5 sm:size-4",
+                                "shrink-0 size-3.5 sm:size-4",
                                 useModelColor ? getIconColorClass() : "text-primary",
                             )}>
                                 {icon}
@@ -638,7 +638,7 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
 
     // With tooltip for desktop
     return (
-        <Tooltip delayDuration={300}>
+        <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
                 <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -649,14 +649,14 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
                     <Icon className="size-4" />
                 </motion.button>
             </TooltipTrigger>
-            <TooltipContent 
-                side="bottom" 
+            <TooltipContent
+                side="bottom"
                 sideOffset={6}
-                className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3 max-w-[200px]"
+                className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
             >
                 <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-[11px]">{group.name}</span>
-                    <span className="text-[10px] text-neutral-300 leading-tight">{group.description}</span>
+                    <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">{group.description}</span>
                 </div>
             </TooltipContent>
         </Tooltip>
@@ -700,7 +700,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             className={cn(
                 "inline-flex items-center min-w-[38px] p-0.5",
                 "rounded-full border border-neutral-200 dark:border-neutral-800",
-                "bg-white dark:bg-neutral-900 shadow-sm overflow-visible",
+                "bg-white dark:bg-neutral-900 shadow-xs overflow-visible",
                 "relative z-10",
                 isProcessing && "opacity-50 pointer-events-none"
             )}
@@ -726,7 +726,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
                                     ease: "easeInOut"
                                 }}
                                 className={cn(
-                                    "!m-0",
+                                    "m-0!",
                                     isLastItem && isExpanded && showItem ? "pr-0.5" : ""
                                 )}
                             >
@@ -1150,8 +1150,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <TooltipProvider>
                 <div
                     className={cn(
-                        "relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 !font-sans",
-                        hasInteracted ? "z-[51]" : "",
+                        "relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!",
+                        hasInteracted ? "z-51" : "",
                         isDragging && "ring-1 ring-neutral-300 dark:ring-neutral-700",
                         attachments.length > 0 || uploadQueue.length > 0
                             ? "bg-gray-100/70 dark:bg-neutral-800 p-1"
@@ -1170,7 +1170,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
                             >
                                 <div className="flex items-center gap-4 px-6 py-8">
-                                    <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                                    <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-xs">
                                         <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
                                     </div>
                                     <div className="space-y-1 text-center">
@@ -1241,11 +1241,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     "w-full rounded-lg resize-none",
                                     "text-base leading-relaxed",
                                     "bg-neutral-100 dark:bg-neutral-900",
-                                    "border !border-neutral-200 dark:!border-neutral-700",
-                                    "focus:!border-neutral-300 dark:!focus:!border-neutral-500",
-                                    isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
+                                    "border border-neutral-200! dark:border-neutral-700!",
+                                    "focus:border-neutral-300! dark:!focus:!border-neutral-500",
+                                    isFocused ? "border-neutral-300! dark:border-neutral-500!" : "",
                                     "text-neutral-900 dark:text-neutral-100",
-                                    "focus:!ring-0",
+                                    "focus:ring-0!",
                                     "px-4 py-4 pb-16",
                                     "touch-manipulation",
                                     "whatsize"
@@ -1267,9 +1267,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 className={cn(
                                     "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
                                     "bg-neutral-100 dark:bg-neutral-900",
-                                    "!border !border-t-0 !border-neutral-200 dark:!border-neutral-700",
-                                    isFocused ? "!border-neutral-300 dark:!border-neutral-500" : "",
-                                    isProcessing ? "!opacity-20 !cursor-not-allowed" : ""
+                                    "border-t-0 border-x border-b border-neutral-200! dark:border-neutral-700!",
+                                    isFocused ? "border-neutral-300! dark:border-neutral-500!" : "",
+                                    isProcessing ? "opacity-20! cursor-not-allowed!" : ""
                                 )}
                             >
                                 {/* Toolbar controls in a touchable div that prevents keyboard */}
@@ -1378,14 +1378,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                         <span className="hidden sm:block text-xs font-medium">Extreme</span>
                                                     </button>
                                                 </TooltipTrigger>
-                                                <TooltipContent 
-                                                    side="bottom" 
+                                                <TooltipContent
+                                                    side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3 max-w-[200px]"
+                                                    className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
                                                 >
                                                     <div className="flex flex-col gap-0.5">
                                                         <span className="font-medium text-[11px]">Extreme Mode</span>
-                                                        <span className="text-[10px] text-neutral-300 leading-tight">Deep research with multiple sources and analysis</span>
+                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">Deep research with multiple sources and analysis</span>
                                                     </div>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -1457,14 +1457,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                         <PaperclipIcon size={14} />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent 
-                                                    side="bottom" 
+                                                <TooltipContent
+                                                    side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                    className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <div className="flex flex-col gap-0.5">
                                                         <span className="font-medium text-[11px]">Attach Image</span>
-                                                        <span className="text-[10px] text-neutral-300 leading-tight">Upload or paste an image</span>
+                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">Upload or paste an image</span>
                                                     </div>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -1500,10 +1500,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                         <StopIcon size={14} />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent 
-                                                    side="bottom" 
+                                                <TooltipContent
+                                                    side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <span className="font-medium text-[11px]">Stop Generation</span>
                                                 </TooltipContent>
@@ -1537,10 +1537,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                         <ArrowUpIcon size={14} />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent 
-                                                    side="bottom" 
+                                                <TooltipContent
+                                                    side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-sm py-2 px-3"
+                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <span className="font-medium text-[11px]">Send Message</span>
                                                 </TooltipContent>

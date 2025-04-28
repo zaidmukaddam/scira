@@ -72,7 +72,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
 
     const content = (
       <div className="flex flex-col">
-        <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full">
+        <div className="relative aspect-16/9 sm:aspect-21/9 w-full">
           {selectedItem.backdrop_path ? (
             <>
               <img
@@ -80,10 +80,10 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                 alt={selectedItem.title || selectedItem.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
             </>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-neutral-900 to-neutral-800" />
+            <div className="w-full h-full bg-linear-to-br from-neutral-900 to-neutral-800" />
           )}
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
             <h2 className="text-xl sm:text-3xl font-bold text-white line-clamp-2">
@@ -181,7 +181,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
             className="group cursor-pointer"
             onClick={() => setSelectedItem(item)}
           >
-            <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+            <div className="relative aspect-2/3 rounded-lg sm:rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
               {item.poster_path ? (
                 <img
                   src={item.poster_path}
@@ -198,7 +198,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                 </div>
               )}
               <div
-                className="absolute inset-0 bg-gradient-to-t
+                className="absolute inset-0 bg-linear-to-t
                   from-black/90 via-black/40 to-transparent 
                   opacity-0 group-hover:opacity-100 
                   transition-opacity duration-300
@@ -253,7 +253,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                         setShowAll(false);
                       }}
                     >
-                      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                      <div className="relative aspect-2/3 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                         {item.poster_path ? (
                           <img
                             src={item.poster_path}
@@ -270,7 +270,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                           </div>
                         )}
                         <div
-                          className="absolute inset-0 bg-gradient-to-t
+                          className="absolute inset-0 bg-linear-to-t
                            from-black/90 via-black/40 to-transparent
                            opacity-0 group-hover:opacity-100
                            transition-opacity duration-300

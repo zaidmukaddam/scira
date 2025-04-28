@@ -26,7 +26,7 @@ interface AcademicPapersProps {
 
 const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
   return (
-    <Card className="w-full my-4 overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm">
+    <Card className="w-full my-4 overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center">
@@ -49,7 +49,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
               transition={{ duration: 0.2, delay: index * 0.05 }}
             >
               <div className="h-[300px] relative group overflow-y-auto">
-                <div className="h-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 flex flex-col transition-all duration-200 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-sm">
+                <div className="h-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 flex flex-col transition-all duration-200 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-xs">
                   <h3 className="font-semibold text-lg tracking-tight mb-2 line-clamp-2 text-neutral-900 dark:text-neutral-100">
                     {paper.title}
                   </h3>
@@ -82,7 +82,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
                         {paper.summary}
                       </p>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-neutral-900 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-white dark:from-neutral-900 to-transparent pointer-events-none" />
                   </div>
 
                   <div className="flex gap-2 mt-auto">

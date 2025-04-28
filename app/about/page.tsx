@@ -93,7 +93,7 @@ export default function AboutPage() {
 
             {/* Hero Section */}
             <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-neutral-100/40 dark:from-neutral-900/40" />
+                <div className="absolute inset-0 bg-linear-to-b from-neutral-100/40 dark:from-neutral-900/40" />
                 <div className="absolute inset-0 bg-grid-neutral-700/[0.05] dark:bg-grid-neutral-300/[0.05]" />
                 <div className="relative pt-20 pb-20 px-4">
                     <motion.div 
@@ -120,7 +120,7 @@ export default function AboutPage() {
                                     type="text"
                                     name="query"
                                     placeholder="Ask anything..."
-                                    className="w-full h-14 px-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-neutral-300 dark:focus:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all duration-300"
+                                    className="w-full h-14 px-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-neutral-300 dark:focus:border-neutral-700 focus:outline-hidden focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all duration-300"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -186,7 +186,7 @@ export default function AboutPage() {
                     <div className="relative max-w-2xl mx-auto rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-8 space-y-8">
                         {/* Query */}
                         <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-800 flex-shrink-0" />
+                            <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-800 shrink-0" />
                             <div className="flex-1 space-y-2">
                                 <p className="text-sm text-neutral-500">Query</p>
                                 <p className="text-neutral-900 dark:text-neutral-100">
@@ -197,7 +197,7 @@ export default function AboutPage() {
 
                         {/* Processing */}
                         <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 shrink-0 flex items-center justify-center">
                                 <Bot className="w-4 h-4 text-blue-500" />
                             </div>
                             <div className="flex-1 space-y-4">
@@ -229,7 +229,7 @@ export default function AboutPage() {
 
                         {/* Response Preview */}
                         <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 shrink-0 flex items-center justify-center">
                                 <Check className="w-4 h-4 text-green-500" />
                             </div>
                             <div className="flex-1 space-y-2">
@@ -290,19 +290,19 @@ export default function AboutPage() {
                 >
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
+                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
                                 1M+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Questions Answered</p>
                         </div>
                         <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
+                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
                                 100K+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Active Users</p>
                         </div>
                         <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
+                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
                                 7K+
                             </div>
                             <p className="text-neutral-600 dark:text-neutral-400">Community Stars</p>

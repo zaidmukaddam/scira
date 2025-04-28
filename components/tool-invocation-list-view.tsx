@@ -195,7 +195,7 @@ const SearchLoadingState = ({
         <Card className="relative w-full h-[100px] my-4 overflow-hidden shadow-none">
             <BorderTrail
                 className={cn(
-                    'bg-gradient-to-l',
+                    'bg-linear-to-l',
                     variant.border
                 )}
                 size={80}
@@ -209,7 +209,7 @@ const SearchLoadingState = ({
                         )}>
                             <BorderTrail
                                 className={cn(
-                                    "bg-gradient-to-l",
+                                    "bg-linear-to-l",
                                     variant.border
                                 )}
                                 size={40}
@@ -265,7 +265,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
     return (
         <div
-            className="w-[280px] flex-shrink-0 rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="w-[280px] shrink-0 rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200"
             onTouchStart={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
         >
@@ -289,7 +289,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                         <YoutubeIcon className="h-8 w-8 text-red-500" />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2">
                         {video.details?.title || 'YouTube Video'}
                     </div>
@@ -318,7 +318,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                             className="flex items-center gap-1.5 group mt-1.5 w-fit"
                             aria-label={`Channel: ${video.details.author_name}`}
                         >
-                            <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center flex-shrink-0">
+                            <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center shrink-0">
                                 <User2 className="h-3 w-3 text-red-500" />
                             </div>
                             <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-red-500 transition-colors truncate">
@@ -426,7 +426,7 @@ function CollapsibleSection({
     };
 
     return (
-        <div className="group rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-all duration-200 hover:shadow-sm">
+        <div className="group rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-all duration-200 hover:shadow-xs">
             <div 
                 className="flex items-center justify-between p-4 cursor-pointer"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -558,7 +558,7 @@ const ToolInvocationListView = memo(
                                 <div className="absolute top-4 left-4 z-10 flex gap-2">
                                     <Badge
                                         variant="secondary"
-                                        className="bg-white/90 dark:bg-black/90 backdrop-blur-sm"
+                                        className="bg-white/90 dark:bg-black/90 backdrop-blur-xs"
                                     >
                                         {features.length} Locations Found
                                     </Badge>
@@ -594,7 +594,7 @@ const ToolInvocationListView = memo(
                                             )}
                                         >
                                             <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
+                                                <div className="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
                                                     {place.feature_type === 'street_address' || place.feature_type === 'street' ? (
                                                         <RoadHorizon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                                     ) : place.feature_type === 'locality' ? (
@@ -745,7 +745,7 @@ const ToolInvocationListView = memo(
                         <Card className="w-full my-4 overflow-hidden shadow-none">
                             <CardHeader className="pb-2 flex flex-row items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center">
+                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-900! flex items-center justify-center">
                                         <XLogo className="h-4 w-4" />
                                     </div>
                                     <div>
@@ -773,9 +773,9 @@ const ToolInvocationListView = memo(
                                     </div>
                                 </div>
 
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-black pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-white dark:to-black pointer-events-none" />
 
-                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-20 bg-gradient-to-t from-white dark:from-black to-transparent">
+                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-20 bg-linear-to-t from-white dark:from-black to-transparent">
                                     <div className="hidden sm:block">
                                         <Sheet>
                                             <SheetTrigger asChild>
@@ -787,8 +787,8 @@ const ToolInvocationListView = memo(
                                                     Show all {result.length} tweets
                                                 </Button>
                                             </SheetTrigger>
-                                            <SheetContent side="right" className="w-full sm:max-w-[600px] overflow-y-auto !p-0 !z-[70]">
-                                                <SheetHeader className='!mt-5 !font-sans'>
+                                            <SheetContent side="right" className="w-full sm:max-w-[600px] overflow-y-auto p-0! z-70!">
+                                                <SheetHeader className='mt-5! font-sans!'>
                                                     <SheetTitle className='text-center'>All Tweets</SheetTitle>
                                                 </SheetHeader>
                                                 <FullTweetList />
@@ -844,7 +844,7 @@ const ToolInvocationListView = memo(
                     // If no videos with content, show a message instead
                     if (filteredVideos.length === 0) {
                         return (
-                            <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-sm p-4 text-center">
+                            <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-xs p-4 text-center">
                                 <div className="flex flex-col items-center gap-3 py-6">
                                     <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/30">
                                         <YoutubeIcon className="h-6 w-6 text-red-600" />
@@ -865,7 +865,7 @@ const ToolInvocationListView = memo(
                     return (
                         <div className="w-full my-4">
                             <Accordion type="single" collapsible defaultValue="videos">
-                                <AccordionItem value="videos" className="border dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 shadow-sm">
+                                <AccordionItem value="videos" className="border dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 shadow-xs">
                                     <AccordionTrigger className="px-4 py-3 hover:no-underline">
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center justify-center h-9 w-9 rounded-full bg-red-50 dark:bg-red-950/30">
@@ -897,7 +897,7 @@ const ToolInvocationListView = memo(
                                                 </div>
                                             </div>
                                             {filteredVideos.length > 3 && (
-                                                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
+                                                <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
                                             )}
                                         </div>
                                     </AccordionContent>
@@ -1120,7 +1120,7 @@ const ToolInvocationListView = memo(
                 if (toolInvocation.toolName === 'retrieve') {
                     if (!result) {
                         return (
-                            <div className="border border-neutral-200 rounded-xl my-4 p-4 dark:border-neutral-800 bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
+                            <div className="border border-neutral-200 rounded-xl my-4 p-4 dark:border-neutral-800 bg-linear-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
                                 <div className="flex items-center gap-4">
                                     <div className="relative w-10 h-10">
                                         <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
@@ -1144,7 +1144,7 @@ const ToolInvocationListView = memo(
                         return (
                             <div className="border border-red-200 dark:border-red-500 rounded-xl my-4 p-4 bg-red-50 dark:bg-red-950/50">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                                    <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
                                         <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
                                     </div>
                                     <div>
@@ -1165,7 +1165,7 @@ const ToolInvocationListView = memo(
                         return (
                             <div className="border border-amber-200 dark:border-amber-500 rounded-xl my-4 p-4 bg-amber-50 dark:bg-amber-950/50">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center flex-shrink-0">
+                                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                                         <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
                                     </div>
                                     <div className="text-amber-700 dark:text-amber-300 text-sm font-medium">
@@ -1178,11 +1178,11 @@ const ToolInvocationListView = memo(
 
                     // Existing rendering for successful retrieval:
                     return (
-                        <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
+                        <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-linear-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
                             <div className="p-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="relative w-10 h-10 flex-shrink-0">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-lg" />
+                                    <div className="relative w-10 h-10 shrink-0">
+                                        <div className="absolute inset-0 bg-linear-to-br from-primary/10 to-transparent rounded-lg" />
                                         <img
                                             className="h-5 w-5 absolute inset-0 m-auto"
                                             src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
@@ -1557,7 +1557,7 @@ const ToolInvocationListView = memo(
                                     disabled={isGeneratingAudio}
                                     variant="outline"
                                     size="icon"
-                                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex-shrink-0"
+                                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary shrink-0"
                                 >
                                     {isGeneratingAudio ? (
                                         <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
