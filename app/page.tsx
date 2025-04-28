@@ -91,10 +91,10 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 const HomeContent = () => {
     const [query] = useQueryState('query', parseAsString.withDefault(''))
     const [q] = useQueryState('q', parseAsString.withDefault(''))
-    
+
     // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
-    
+
     const initialState = useMemo(() => ({
         query: query || q,
     }), [query, q]);
@@ -252,7 +252,7 @@ const HomeContent = () => {
 
         // Handle common LaTeX expressions not wrapped in delimiters
         processedContent = processedContent.replace(
-            /(\b[A-Z](?:_\{[^{}]+\}|\^[^{}]+|_[a-zA-Z\d]|\^[a-zA-Z\d])+)/g, 
+            /(\b[A-Z](?:_\{[^{}]+\}|\^[^{}]+|_[a-zA-Z\d]|\^[a-zA-Z\d])+)/g,
             (match) => `$${match}$`
         );
 
@@ -298,7 +298,7 @@ const HomeContent = () => {
 
             return (
                 <div className="group my-5 relative">
-                    <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                    <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs">
                         <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
                             <div className="px-2 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-400">
                                 {language || 'text'}
@@ -429,7 +429,7 @@ const HomeContent = () => {
 
         const renderHoverCard = (href: string, text: React.ReactNode, isCitation: boolean = false, citationText?: string) => {
             const title = citationText || (typeof text === 'string' ? text : '');
-            
+
             return (
                 <HoverCard openDelay={10}>
                     <HoverCardTrigger asChild>
@@ -448,7 +448,7 @@ const HomeContent = () => {
                         side="top"
                         align="start"
                         sideOffset={5}
-                        className="w-56 p-0 shadow-sm border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
+                        className="w-56 p-0 shadow-xs border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
                     >
                         <LinkPreview href={href} title={title} />
                     </HoverCardContent>
@@ -549,8 +549,8 @@ const HomeContent = () => {
             table(children) {
                 return (
                     <div className="w-full my-6 overflow-hidden rounded-md">
-                        <div className="w-full overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                            <table className="w-full border-collapse min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0">
+                        <div className="w-full overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800 shadow-xs">
+                            <table className="w-full border-collapse min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0!">
                                 {children}
                             </table>
                         </div>
@@ -694,10 +694,10 @@ const HomeContent = () => {
         if (input.trim()) {
             // Get the history *before* the message being edited
             const historyBeforeEdit = messages.slice(0, editingMessageIndex);
-            
+
             // Get the original message to preserve attachments if any
             const originalMessage = messages[editingMessageIndex];
-            
+
             // Update the hook's message state to remove messages after the edited one
             setMessages(historyBeforeEdit);
 
@@ -707,13 +707,13 @@ const HomeContent = () => {
 
             // Clear the input field immediately
             setInput('');
-            
+
             // Reset suggested questions
             setSuggestedQuestions([]);
-            
+
             // Extract attachments from the original message
             const attachments = originalMessage?.experimental_attachments || [];
-            
+
             // Append the edited message with proper attachments using chatRequestOptions format
             append(
                 {
@@ -753,16 +753,16 @@ const HomeContent = () => {
     const Navbar: React.FC<NavbarProps> = () => {
         return (
             <div className={cn(
-                "fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4",
+                "fixed top-0 left-0 right-0 z-60 flex justify-between items-center p-4",
                 // Add opaque background only after submit
-                status === "streaming" || status === 'ready' ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" : "bg-background",
+                status === "streaming" || status === 'ready' ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60" : "bg-background",
             )}>
                 <div className="flex items-center gap-4">
                     <Link href="/new">
                         <Button
                             type="button"
                             variant={'secondary'}
-                            className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-sm group transition-all hover:scale-105 pointer-events-auto"
+                            className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-xs group transition-all hover:scale-105 pointer-events-auto"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-all" />
                             <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
@@ -777,7 +777,7 @@ const HomeContent = () => {
                         href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function%20(including%20SMITHERY_API_KEY)"
                         className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
                             bg-accent hover:bg-accent/80
-                            backdrop-blur-sm text-foreground shadow-sm text-sm
+                            backdrop-blur-xs text-foreground shadow-sm text-sm
                             transition-all duration-200"
                     >
                         <VercelIcon size={14} />
@@ -862,7 +862,7 @@ const HomeContent = () => {
         // First, update timing data for reasoning parts directly in the render function
         if (part.type === "reasoning") {
             const sectionKey = `${messageIndex}-${partIndex}`;
-            
+
             // Initialize timing data if it doesn't exist
             if (!reasoningTimings[sectionKey]) {
                 // Use a functional state update to avoid stale state issues
@@ -871,12 +871,12 @@ const HomeContent = () => {
                     [sectionKey]: { startTime: Date.now() }
                 }));
             }
-            
+
             // Check if reasoning is complete but we haven't recorded the end time
-            const isComplete = parts.some((p, i) => 
+            const isComplete = parts.some((p, i) =>
                 i > partIndex && (p.type === "text" || p.type === "tool-invocation")
             );
-            
+
             if (isComplete && reasoningTimings[sectionKey] && !reasoningTimings[sectionKey].endTime) {
                 // Set end time if reasoning is complete and it hasn't been set yet
                 setReasoningTimings(prev => ({
@@ -888,18 +888,18 @@ const HomeContent = () => {
                 }));
             }
         }
-        
+
         // Case 1: Skip rendering text parts that should be superseded by tool invocations
         if (part.type === "text") {
             // Skip empty text parts entirely
             if (!part.text || part.text.trim() === "") return null;
-            
+
             // Check if this text part should be hidden because a tool invocation will show the same info
-            const hasRelatedToolInvocation = parts.some(p => 
+            const hasRelatedToolInvocation = parts.some(p =>
                 p.type === 'tool-invocation'
                 // Don't need direct comparison between different types
             );
-            
+
             // If this is a summary text before/after a tool invocation, don't render it
             if (partIndex === 0 && hasRelatedToolInvocation) {
                 return null;
@@ -946,11 +946,11 @@ const HomeContent = () => {
                     }
                 }
                 const parallelTool = hasParallelToolInvocation ? (parts.find(p => p.type === 'tool-invocation')?.toolInvocation?.toolName ?? null) : null;
-                
+
                 // Separate expanded and fullscreen states
                 const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
                 const isFullscreen = reasoningFullscreenMap[sectionKey] ?? false;
-                
+
                 // Separate setters for each state
                 const setIsExpanded = (v: boolean) => setReasoningVisibilityMap(prev => ({ ...prev, [sectionKey]: v }));
                 const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap(prev => ({ ...prev, [sectionKey]: v }));
@@ -990,52 +990,52 @@ const HomeContent = () => {
     }
 
     const [reasoningTimings, setReasoningTimings] = useState<Record<string, ReasoningTiming>>({});
-    
+
     // Move the hooks from renderPart to component level
     const reasoningScrollRef = useRef<HTMLDivElement>(null);
-    
+
     // Add effect for auto-scrolling reasoning content
     useEffect(() => {
         // Find active reasoning parts that are not complete
-        const activeReasoning = messages.flatMap((message, messageIndex) => 
+        const activeReasoning = messages.flatMap((message, messageIndex) =>
             (message.parts || [])
                 .map((part, partIndex) => ({ part, messageIndex, partIndex }))
                 .filter(({ part }) => part.type === "reasoning")
                 .filter(({ messageIndex, partIndex }) => {
                     const message = messages[messageIndex];
                     // Check if reasoning is complete
-                    return !(message.parts || []).some((p, i) => 
+                    return !(message.parts || []).some((p, i) =>
                         i > partIndex && (p.type === "text" || p.type === "tool-invocation")
                     );
                 })
         );
-        
+
         // Auto-scroll when active reasoning
         if (activeReasoning.length > 0 && reasoningScrollRef.current) {
             reasoningScrollRef.current.scrollTop = reasoningScrollRef.current.scrollHeight;
         }
     }, [messages]);
-    
+
     // For active reasoning sections, update timers every 100ms
     useEffect(() => {
         // Only run this effect when reasoning is occurring
         const activeReasoningSections = Object.entries(reasoningTimings)
             .filter(([_, timing]) => !timing.endTime);
-            
+
         if (activeReasoningSections.length === 0) return;
-        
+
         // Update once immediately
         const updateTimes = () => {
             const now = Date.now();
             const updatedTimes: Record<string, number> = {};
-            
+
             activeReasoningSections.forEach(([key, timing]) => {
                 updatedTimes[key] = (now - timing.startTime) / 1000;
             });
         };
-        
+
         updateTimes();
-        
+
         // Then set up interval for updates
         const interval = setInterval(updateTimes, 100);
         return () => clearInterval(interval);
@@ -1133,7 +1133,7 @@ const HomeContent = () => {
                     {/* Time Widget */}
                     <Button
                         variant="outline"
-                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-sm transition-all h-auto"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-xs transition-all h-auto"
                         onClick={handleDateTimeClick}
                     >
                         <PhosphorClock weight="duotone" className="h-5 w-5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
@@ -1145,7 +1145,7 @@ const HomeContent = () => {
                     {/* Date Widget */}
                     <Button
                         variant="outline"
-                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-sm transition-all h-auto"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-xs transition-all h-auto"
                         onClick={handleDateTimeClick}
                     >
                         <CalendarBlank weight="duotone" className="h-5 w-5 text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
@@ -1161,17 +1161,17 @@ const HomeContent = () => {
     WidgetSection.displayName = 'WidgetSection';
 
     return (
-        <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
+        <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500">
             <Navbar />
 
             <div className={`w-full p-2 sm:p-4 ${status === 'ready' && messages.length === 0
-                ? 'min-h-screen flex flex-col items-center justify-center' // Center everything when no messages
-                : 'mt-20 sm:mt-16' // Add top margin when showing messages
+                ? 'min-h-screen! flex! flex-col! items-center! justify-center!' // Center everything when no messages
+                : 'mt-20! sm:mt-16!' // Add top margin when showing messages
                 }`}>
-                <div className={`w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
+                <div className={`w-full max-w-[90%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
                     {status === 'ready' && messages.length === 0 && (
-                        <div className="text-center !font-sans">
-                            <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
+                        <div className="text-center">
+                            <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne!">
                                 What do you want to explore?
                             </h1>
                         </div>
@@ -1182,7 +1182,7 @@ const HomeContent = () => {
                                 initial={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 20 }}
                                 transition={{ duration: 0.5 }}
-                                className={cn('!mt-4')}
+                                className={cn('mt-4!')}
                             >
                                 <FormComponent
                                     input={input}
@@ -1216,166 +1216,169 @@ const HomeContent = () => {
                         </div>
                     )}
 
-                    <div className="space-y-4 sm:space-y-6 mb-32">
-                        {memoizedMessages.map((message, index) => (
-                            <div key={index} className={`${
-                                // Add border only if this is an assistant message AND there's a next message
-                                message.role === 'assistant' && index < memoizedMessages.length - 1
-                                    ? '!mb-12 border-b border-neutral-200 dark:border-neutral-800'
-                                    : ''
-                                }`.trim()}>
-                                {message.role === 'user' && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.5 }}
-                                        className="mb-4 px-0"
-                                    >
-                                        <div className="flex-grow min-w-0">
-                                            {isEditingMessage && editingMessageIndex === index ? (
-                                                <form onSubmit={handleMessageUpdate} className="w-full">
-                                                    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
-                                                        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
-                                                            <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                                                Edit Query
-                                                            </span>
-                                                            <div className="bg-neutral-100 dark:bg-neutral-800 rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => {
-                                                                        setIsEditingMessage(false);
-                                                                        setEditingMessageIndex(-1);
-                                                                        setInput('');
-                                                                    }}
-                                                                    className="h-7 w-7 !rounded-l-lg !rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
-                                                                    disabled={status === 'submitted' || status === 'streaming'}
-                                                                >
-                                                                    <X className="h-4 w-4" />
-                                                                </Button>
-                                                                <Separator orientation="vertical" className="h-7 bg-neutral-200 dark:bg-neutral-700" />
-                                                                <Button
-                                                                    type="submit"
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 !rounded-r-lg !rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
-                                                                    disabled={status === 'submitted' || status === 'streaming'}
-                                                                >
-                                                                    <ArrowRight className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="p-4">
-                                                            <textarea
-                                                                value={input}
-                                                                onChange={(e) => setInput(e.target.value)}
-                                                                rows={3}
-                                                                className="w-full resize-none rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-base text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                                placeholder="Edit your message..."
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            ) : (
-                                                <div className="group relative">
-                                                    <div className="relative">
-                                                        <p className="text-xl font-medium font-sans break-words text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12">
-                                                            {message.content}
-                                                        </p>
-                                                        {!isEditingMessage && index === lastUserMessageIndex && (
-                                                            <div className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => handleMessageEdit(index)}
-                                                                    className="h-7 w-7 !rounded-l-lg !rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
-                                                                    disabled={status === 'submitted' || status === 'streaming'}
-                                                                >
-                                                                    <svg
-                                                                        width="15"
-                                                                        height="15"
-                                                                        viewBox="0 0 15 15"
-                                                                        fill="none"
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        className="h-4 w-4"
+                    {/* hide this if messages are empty */}
+                    {messages.length > 0 && (
+                        <div className="space-y-4 sm:space-y-6 mb-32">
+                            {memoizedMessages.map((message, index) => (
+                                <div key={index} className={`${
+                                    // Add border only if this is an assistant message AND there's a next message
+                                    message.role === 'assistant' && index < memoizedMessages.length - 1
+                                        ? 'mb-12! border-b border-neutral-200 dark:border-neutral-800'
+                                        : ''
+                                    }`.trim()}>
+                                    {message.role === 'user' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5 }}
+                                            className="mb-4 px-0"
+                                        >
+                                            <div className="grow min-w-0">
+                                                {isEditingMessage && editingMessageIndex === index ? (
+                                                    <form onSubmit={handleMessageUpdate} className="w-full">
+                                                        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
+                                                            <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
+                                                                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                                                                    Edit Query
+                                                                </span>
+                                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => {
+                                                                            setIsEditingMessage(false);
+                                                                            setEditingMessageIndex(-1);
+                                                                            setInput('');
+                                                                        }}
+                                                                        className="h-7 w-7 rounded-l-lg! rounded-r-none! text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                        disabled={status === 'submitted' || status === 'streaming'}
                                                                     >
-                                                                        <path
-                                                                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                                                                            fill="currentColor"
-                                                                            fillRule="evenodd"
-                                                                            clipRule="evenodd"
-                                                                        />
-                                                                    </svg>
-                                                                </Button>
-                                                                <Separator orientation="vertical" className="h-7" />
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(message.content);
-                                                                        toast.success("Copied to clipboard");
-                                                                    }}
-                                                                    className="h-7 w-7 !rounded-r-lg !rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary"
-                                                                >
-                                                                    <Copy className="h-4 w-4" />
-                                                                </Button>
+                                                                        <X className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <Separator orientation="vertical" className="h-7 bg-neutral-200 dark:bg-neutral-700" />
+                                                                    <Button
+                                                                        type="submit"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 rounded-r-lg! rounded-l-none! text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                        disabled={status === 'submitted' || status === 'streaming'}
+                                                                    >
+                                                                        <ArrowRight className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
                                                             </div>
+                                                            <div className="p-4">
+                                                                <textarea
+                                                                    value={input}
+                                                                    onChange={(e) => setInput(e.target.value)}
+                                                                    rows={3}
+                                                                    className="w-full resize-none rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-base text-neutral-900 dark:text-neutral-100 focus:outline-hidden focus:ring-2 focus:ring-primary/50"
+                                                                    placeholder="Edit your message..."
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                ) : (
+                                                    <div className="group relative">
+                                                        <div className="relative">
+                                                            <p className="text-xl font-medium font-sans break-words text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12">
+                                                                {message.content}
+                                                            </p>
+                                                            {!isEditingMessage && index === lastUserMessageIndex && (
+                                                                <div className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent rounded-[9px] border border-neutral-200 dark:border-neutral-700 flex items-center">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleMessageEdit(index)}
+                                                                        className="h-7 w-7 rounded-l-lg! rounded-r-none! text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                        disabled={status === 'submitted' || status === 'streaming'}
+                                                                    >
+                                                                        <svg
+                                                                            width="15"
+                                                                            height="15"
+                                                                            viewBox="0 0 15 15"
+                                                                            fill="none"
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            className="h-4 w-4"
+                                                                        >
+                                                                            <path
+                                                                                d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
+                                                                                fill="currentColor"
+                                                                                fillRule="evenodd"
+                                                                                clipRule="evenodd"
+                                                                            />
+                                                                        </svg>
+                                                                    </Button>
+                                                                    <Separator orientation="vertical" className="h-7" />
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => {
+                                                                            navigator.clipboard.writeText(message.content);
+                                                                            toast.success("Copied to clipboard");
+                                                                        }}
+                                                                        className="h-7 w-7 rounded-r-lg! rounded-l-none! text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                                                                    >
+                                                                        <Copy className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+                                                            <AttachmentsBadge attachments={message.experimental_attachments} />
                                                         )}
                                                     </div>
-                                                    {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                                                        <AttachmentsBadge attachments={message.experimental_attachments} />
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
 
-                                {message.role === 'assistant' && (
-                                    <>
-                                        {message.parts?.map((part, partIndex) =>
-                                            renderPart(
-                                                part as MessagePart,
-                                                index,
-                                                partIndex,
-                                                message.parts as MessagePart[],
-                                                message,
-                                            )
-                                        )}
-                                        
-                                        {/* Add suggested questions if this is the last message and it's from the assistant */}
-                                        {index === memoizedMessages.length - 1 && suggestedQuestions.length > 0 && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 20 }}
-                                                transition={{ duration: 0.5 }}
-                                                className="w-full max-w-xl sm:max-w-2xl mt-6"
-                                            >
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <AlignLeft className="w-5 h-5 text-primary" />
-                                                    <h2 className="font-semibold text-base text-neutral-800 dark:text-neutral-200">Suggested questions</h2>
-                                                </div>
-                                                <div className="space-y-2 flex flex-col">
-                                                    {suggestedQuestions.map((question, index) => (
-                                                        <Button
-                                                            key={index}
-                                                            variant="ghost"
-                                                            className="w-fit font-medium rounded-2xl p-1 justify-start text-left h-auto py-2 px-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-normal"
-                                                            onClick={() => handleSuggestedQuestionClick(question)}
-                                                        >
-                                                            {question}
-                                                        </Button>
-                                                    ))}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                    {message.role === 'assistant' && (
+                                        <>
+                                            {message.parts?.map((part, partIndex) =>
+                                                renderPart(
+                                                    part as MessagePart,
+                                                    index,
+                                                    partIndex,
+                                                    message.parts as MessagePart[],
+                                                    message,
+                                                )
+                                            )}
+
+                                            {/* Add suggested questions if this is the last message and it's from the assistant */}
+                                            {index === memoizedMessages.length - 1 && suggestedQuestions.length > 0 && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 20 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="w-full max-w-xl sm:max-w-2xl mt-6"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <AlignLeft className="w-5 h-5 text-primary" />
+                                                        <h2 className="font-semibold text-base text-neutral-800 dark:text-neutral-200">Suggested questions</h2>
+                                                    </div>
+                                                    <div className="space-y-2 flex flex-col">
+                                                        {suggestedQuestions.map((question, index) => (
+                                                            <Button
+                                                                key={index}
+                                                                variant="ghost"
+                                                                className="w-fit font-medium rounded-2xl p-1 justify-start text-left h-auto py-2 px-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-normal"
+                                                                onClick={() => handleSuggestedQuestionClick(question)}
+                                                            >
+                                                                {question}
+                                                            </Button>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <div ref={bottomRef} />
                 </div>
 
@@ -1417,102 +1420,25 @@ const HomeContent = () => {
     );
 }
 
-const LoadingFallback = () => {
-    const { resolvedTheme } = useTheme();
-    
-    return (
-        <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
-            {/* Navbar with just theme toggle */}
-            <div className="fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4 bg-background">
-                <div className="flex items-center gap-4">
-                    <Link href="/new">
-                        <Button
-                            type="button"
-                            variant={'secondary'}
-                            className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-sm group transition-all hover:scale-105 pointer-events-auto"
-                        >
-                            <Plus size={18} className="group-hover:rotate-90 transition-all" />
-                            <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
-                                New
-                            </span>
-                        </Button>
-                    </Link>
-                </div>
-                <div className='flex items-center space-x-4'>
-                    <Link
-                        target="_blank"
-                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function%20(including%20SMITHERY_API_KEY)"
-                        className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
-                            bg-accent hover:bg-accent/80
-                            backdrop-blur-sm text-foreground shadow-sm text-sm
-                            transition-all duration-200"
-                    >
-                        <VercelIcon size={14} />
-                        <span className='hidden sm:block'>Deploy with Vercel</span>
-                        <span className='sm:hidden block'>Deploy</span>
-                    </Link>
-                    <Link href="/about">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="rounded-full w-8 h-8 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
-                        >
-                            <Info className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-                        </Button>
-                    </Link>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                    >
-                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
-                </div>
-            </div>
-
-            {/* Main content area */}
-            <div className="w-full p-2 sm:p-4 min-h-screen flex flex-col items-center justify-center">
-                <div className="w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300 text-center">
-                    <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
-                        Loading...
-                    </h1>
-                    
-                    <div className="flex items-center justify-center">
-                        <div className="relative h-10 w-10">
-                            <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800" />
-                            <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
-                        </div>
-                    </div>
-                    
-                    <div className="h-96 w-full max-w-[90%] sm:max-w-xl rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm animate-pulse"></div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
 const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(0);
     const imageAttachments = attachments.filter(att => att.contentType?.startsWith('image/'));
-    
+
     if (imageAttachments.length === 0) return null;
-    
+
     return (
         <>
             <div className="mt-2 flex flex-wrap gap-2">
                 {imageAttachments.map((attachment, i) => {
                     // Truncate filename to 15 characters
                     const fileName = attachment.name || `Image ${i + 1}`;
-                    const truncatedName = fileName.length > 15 
-                        ? fileName.substring(0, 12) + '...' 
+                    const truncatedName = fileName.length > 15
+                        ? fileName.substring(0, 12) + '...'
                         : fileName;
-                    
+
                     return (
-                        <button 
+                        <button
                             key={i}
                             onClick={() => {
                                 setSelectedIndex(i);
@@ -1520,9 +1446,9 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                             }}
                             className="flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-3 py-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                         >
-                            <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0">
-                                <img 
-                                    src={attachment.url} 
+                            <div className="h-6 w-6 rounded-full overflow-hidden shrink-0">
+                                <img
+                                    src={attachment.url}
                                     alt={fileName}
                                     className="h-full w-full object-cover"
                                 />
@@ -1534,7 +1460,7 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     );
                 })}
             </div>
-            
+
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="p-0 bg-white dark:bg-neutral-900 sm:max-w-4xl">
                     <div className="flex flex-col h-full">
@@ -1552,9 +1478,9 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                 >
                                     <Copy className="h-4 w-4" />
                                 </Button>
-                                
-                                <a 
-                                    href={imageAttachments[selectedIndex].url} 
+
+                                <a
+                                    href={imageAttachments[selectedIndex].url}
                                     download={imageAttachments[selectedIndex].name}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -1562,18 +1488,18 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                     title="Download"
                                 >
                                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                                        <path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L7.81825 9.81819C7.64251 9.99392 7.35759 9.99392 7.18185 9.81819L4.18185 6.81819C4.00611 6.64245 4.00611 6.35753 4.18185 6.18179C4.35759 6.00605 4.64251 6.00605 4.81825 6.18179L7.05005 8.41359V1.49999C7.05005 1.25146 7.25152 1.04999 7.50005 1.04999ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12C3 12.5539 3.44565 13 3.99635 13H11.0012C11.5529 13 12 12.5539 12 12V10.5C12 10.2239 12.2239 10 12.5 10C12.7761 10 13 10.2239 13 10.5V12C13 13.1046 12.1059 14 11.0012 14H3.99635C2.89019 14 2 13.1046 2 12V10.5C2 10.2239 2.22386 10 2.5 10Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                        <path d="M7.50005 1.04999C7.74858 1.04999 7.95005 1.25146 7.95005 1.49999V8.41359L10.1819 6.18179C10.3576 6.00605 10.6425 6.00605 10.8182 6.18179C10.994 6.35753 10.994 6.64245 10.8182 6.81819L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
                                     </svg>
                                 </a>
-                                
+
                                 <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 mr-8">
                                     {selectedIndex + 1} of {imageAttachments.length}
                                 </Badge>
                             </div>
-                            
+
                             <div className="w-8"></div> {/* Spacer to balance the header and avoid overlap with close button */}
                         </header>
-                        
+
                         <div className="flex-1 p-4 overflow-auto flex items-center justify-center">
                             <div className="relative max-w-full max-h-[60vh]">
                                 <img
@@ -1581,14 +1507,14 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                     alt={imageAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
                                     className="max-w-full max-h-[60vh] object-contain rounded-md"
                                 />
-                                
+
                                 {imageAttachments.length > 1 && (
                                     <>
                                         <Button
                                             variant="outline"
                                             size="icon"
                                             onClick={() => setSelectedIndex(prev => (prev === 0 ? imageAttachments.length - 1 : prev - 1))}
-                                            className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                                            className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                                         >
                                             <ChevronLeft className="h-4 w-4" />
                                         </Button>
@@ -1596,7 +1522,7 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                             variant="outline"
                                             size="icon"
                                             onClick={() => setSelectedIndex(prev => (prev === imageAttachments.length - 1 ? 0 : prev + 1))}
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                                         >
                                             <ChevronRight className="h-4 w-4" />
                                         </Button>
@@ -1604,7 +1530,7 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                 )}
                             </div>
                         </div>
-                        
+
                         {imageAttachments.length > 1 && (
                             <div className="border-t border-neutral-200 dark:border-neutral-800 p-3">
                                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1">
@@ -1612,14 +1538,13 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                         <button
                                             key={idx}
                                             onClick={() => setSelectedIndex(idx)}
-                                            className={`relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0 transition-all ${
-                                                selectedIndex === idx 
-                                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' 
+                                            className={`relative h-12 w-12 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
+                                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
                                                     : 'opacity-70 hover:opacity-100'
-                                            }`}
+                                                }`}
                                         >
-                                            <img 
-                                                src={attachment.url} 
+                                            <img
+                                                src={attachment.url}
                                                 alt={attachment.name || `Thumbnail ${idx + 1}`}
                                                 className="h-full w-full object-cover"
                                             />
@@ -1628,7 +1553,7 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                                 </div>
                             </div>
                         )}
-                        
+
                         <footer className="border-t border-neutral-200 dark:border-neutral-800 p-3">
                             <div className="text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-between">
                                 <span className="truncate max-w-[80%]">
@@ -1650,10 +1575,10 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
 
 const Home = () => {
     return (
-        <Suspense fallback={<LoadingFallback />}>
+        <>
             <HomeContent />
             <InstallPrompt />
-        </Suspense>
+        </>
     );
 };
 
