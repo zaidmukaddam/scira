@@ -80,7 +80,7 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
                 )}
             >
                 <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    <Clock className="h-4 w-4 shrink-0" />
                     <span>Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span></span>
                 </div>
                 <Button
@@ -184,7 +184,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
             <div className="flex gap-3">
                 {/* Image with Price Badge */}
                 {place.photos?.[0]?.medium && (
-                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+                    <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0">
                         <img
                             src={place.photos[0].medium}
                             alt={place.name}
@@ -226,7 +226,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
                             {/* Address */}
                             {place.vicinity && (
                                 <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                    <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                                    <MapPin className="w-4 h-4 mr-1 shrink-0" />
                                     <span className="truncate">{place.vicinity}</span>
                                 </div>
                             )}
@@ -309,7 +309,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
     if (isOverlay) {
         return (
             <div
-                className="bg-white/95 dark:bg-black/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800"
+                className="bg-white/95 dark:bg-black/95 backdrop-blur-xs p-4 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800"
                 onClick={onClick}
             >
                 {cardContent}

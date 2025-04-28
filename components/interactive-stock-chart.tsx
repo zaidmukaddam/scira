@@ -439,7 +439,7 @@ export const InteractiveStockChart = React.memo(({ title, data, stock_symbols, c
   }, [processedData, interval, getTooltipFormatter, isDark, isMobile]);
 
   return (
-    <div className="w-full rounded-lg border border-border/50 overflow-hidden shadow-sm">
+    <div className="w-full rounded-lg border border-border/50 overflow-hidden shadow-xs">
       <div className="bg-card px-3 py-2 border-b border-border/40 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
@@ -519,7 +519,7 @@ export const InteractiveStockChart = React.memo(({ title, data, stock_symbols, c
                     href={news.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 flex-shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
+                    className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
                   >
                     <div className="flex items-start gap-1.5">
                       <div className="flex-1 min-w-0">
@@ -598,7 +598,7 @@ export const InteractiveStockChart = React.memo(({ title, data, stock_symbols, c
                       href={news.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 flex-shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
+                      className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
                     >
                       <div className="flex items-start gap-1.5">
                         <div className="flex-1 min-w-0">

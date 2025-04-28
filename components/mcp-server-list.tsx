@@ -58,7 +58,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
         return (
             <div className="flex overflow-x-auto pb-3 space-x-3 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex-shrink-0 w-80 h-28 rounded-md bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+                    <div key={i} className="shrink-0 w-80 h-28 rounded-md bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                 ))}
             </div>
         );
@@ -114,11 +114,11 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.2, delay: idx * 0.05 }}
-                            className="flex-shrink-0 w-80 rounded-lg border border-neutral-200 dark:border-neutral-800/60 bg-white dark:bg-neutral-900/40"
+                            className="shrink-0 w-80 rounded-lg border border-neutral-200 dark:border-neutral-800/60 bg-white dark:bg-neutral-900/40"
                         >
                             <div className="p-3.5">
                                 <div className="flex items-start space-x-3 mb-2.5">
-                                    <div className="h-9 w-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                                    <div className="h-9 w-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                                         <Server className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                                     </div>
                                     
@@ -128,7 +128,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
                                                 {server.displayName || server.qualifiedName}
                                             </h3>
                                             
-                                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                                            <div className="flex items-center gap-0.5 shrink-0">
                                                 {server.homepage && (
                                                     <Button
                                                         size="icon"
@@ -173,7 +173,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Badge 
-                                                        className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:!bg-neutral-700 hover:text-neutral-900 dark:hover:text-white border-0 px-2 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-colors duration-150"
+                                                        className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700! hover:text-neutral-900 dark:hover:text-white border-0 px-2 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-colors duration-150"
                                                         onClick={() => {
                                                             if (conn.url) {
                                                                 navigator.clipboard.writeText(conn.url);

@@ -143,7 +143,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
   };
 
   return (
-    <Card className="w-full max-w-3xl bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm border-neutral-200/50 dark:border-neutral-800/50 shadow-none">
+    <Card className="w-full max-w-3xl bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xs border-neutral-200/50 dark:border-neutral-800/50 shadow-none">
       <CardContent className="p-4 md:p-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-0 md:justify-between mb-6 pb-6 border-b border-neutral-200/50 dark:border-neutral-800/50">
@@ -235,13 +235,13 @@ export function FlightTracker({ data }: FlightTrackerProps) {
           <div className="space-y-3 max-w-full">
             {flightInfo.departure.terminal && (
               <div className="flex items-center gap-2 overflow-hidden">
-                <Terminal className="h-4 w-4 flex-shrink-0 text-neutral-500" />
+                <Terminal className="h-4 w-4 shrink-0 text-neutral-500" />
                 <span className="text-sm truncate">Terminal {flightInfo.departure.terminal}</span>
               </div>
             )}
             {flightInfo.departure.gate && (
               <div className="flex items-center gap-2 overflow-hidden">
-                <div className="h-4 w-4 flex-shrink-0 rounded bg-blue-500/10 flex items-center justify-center text-[10px] text-blue-600">G</div>
+                <div className="h-4 w-4 shrink-0 rounded bg-blue-500/10 flex items-center justify-center text-[10px] text-blue-600">G</div>
                 <span className="text-sm truncate">Gate {flightInfo.departure.gate}</span>
               </div>
             )}
@@ -251,13 +251,13 @@ export function FlightTracker({ data }: FlightTrackerProps) {
           <div className="space-y-3 max-w-full">
             {flightInfo.arrival.terminal && (
               <div className="flex items-center gap-2 overflow-hidden">
-                <Terminal className="h-4 w-4 flex-shrink-0 text-neutral-500" />
+                <Terminal className="h-4 w-4 shrink-0 text-neutral-500" />
                 <span className="text-sm truncate">Terminal {flightInfo.arrival.terminal}</span>
               </div>
             )}
             {flightInfo.arrival.gate && (
               <div className="flex items-center gap-2 overflow-hidden">
-                <div className="h-4 w-4 flex-shrink-0 rounded bg-blue-500/10 flex items-center justify-center text-[10px] text-blue-600">G</div>
+                <div className="h-4 w-4 shrink-0 rounded bg-blue-500/10 flex items-center justify-center text-[10px] text-blue-600">G</div>
                 <span className="text-sm truncate">Gate {flightInfo.arrival.gate}</span>
               </div>
             )}

@@ -93,7 +93,7 @@ export function InstallPrompt() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
-          className="fixed top-4 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-96"
+          className="fixed top-4 left-4 right-4 z-100 md:left-auto md:right-4 md:w-96"
         >
           <Card className="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg">
             <div className="flex items-start justify-between">

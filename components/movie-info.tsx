@@ -69,7 +69,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
     const DetailContent = () => (
         <div className="flex flex-col max-h-[80vh] bg-black">
             {/* Hero Section with Backdrop */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9]">
+            <div className="relative w-full aspect-16/9 sm:aspect-21/9">
                 {media.backdrop_path ? (
                     <>
                         <Image
@@ -80,7 +80,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                             priority
                             unoptimized
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
                     </>
                 ) : (
                     <div className="w-full h-full bg-neutral-900" />
@@ -90,7 +90,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                 <div className="absolute bottom-0 left-0 right-0">
                     <div className="relative p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-end">
                         {/* Poster */}
-                        <div className="relative w-[120px] sm:w-[160px] aspect-[2/3] rounded-lg overflow-hidden shadow-2xl hidden sm:block">
+                        <div className="relative w-[120px] sm:w-[160px] aspect-2/3 rounded-lg overflow-hidden shadow-2xl hidden sm:block">
                             {media.poster_path ? (
                                 <Image
                                     src={media.poster_path}
@@ -174,7 +174,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                                                  border border-neutral-800 hover:border-neutral-700 
                                                  transition-all duration-300"
                                     >
-                                        <div className="aspect-[2/3] relative overflow-hidden">
+                                        <div className="aspect-2/3 relative overflow-hidden">
                                             {person.profile_path ? (
                                                 <>
                                                     <Image
@@ -183,7 +183,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                                                         fill
                                                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </>
                                             ) : (
                                                 <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
@@ -214,11 +214,11 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
             <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative group rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-neutral-100 via-white to-neutral-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 border border-neutral-200/50 dark:border-neutral-800/50 backdrop-blur-sm"
+                className="relative group rounded-xl overflow-hidden cursor-pointer bg-linear-to-br from-neutral-100 via-white to-neutral-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 border border-neutral-200/50 dark:border-neutral-800/50 backdrop-blur-xs"
                 onClick={() => setShowDetails(true)}
             >
                 <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5">
-                    <div className="relative w-[140px] sm:w-[160px] mx-auto sm:mx-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                    <div className="relative w-[140px] sm:w-[160px] mx-auto sm:mx-0 aspect-2/3 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                         {media.poster_path ? (
                             <Image
                                 src={media.poster_path}
@@ -235,7 +235,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                                 )}
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-3">

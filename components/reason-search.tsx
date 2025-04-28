@@ -101,7 +101,7 @@ const ResearchStep = ({
                 layout
             >
                 <div className={cn(
-                    "flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors duration-300",
+                    "shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors duration-300",
                     update.status === 'completed'
                         ? "bg-neutral-900 text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900"
                         : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
@@ -123,7 +123,7 @@ const ResearchStep = ({
                                 {update.title || (update.type === 'plan' ? 'Research Plan' : update.type === 'x' ? 'X Search' : 'Analysis')}
                             </span>
                             {update.type === 'plan' && update.plan && (
-                                <span className="text-xs text-neutral-500 flex-shrink-0">
+                                <span className="text-xs text-neutral-500 shrink-0">
                                     ({update.plan.search_queries.length} queries, {update.plan.required_analyses.length} analyses{update.advancedSteps ? `, +${update.advancedSteps} advanced` : ''})
                                 </span>
                             )}
@@ -142,7 +142,7 @@ const ResearchStep = ({
                         )}
                     </div>
 
-                    <ChevronRight className={cn("h-4 w-4 text-neutral-400 flex-shrink-0 ml-2 transition-transform", isExpanded && "rotate-90")} />
+                    <ChevronRight className={cn("h-4 w-4 text-neutral-400 shrink-0 ml-2 transition-transform", isExpanded && "rotate-90")} />
                 </button>
             </motion.div>
 
@@ -261,7 +261,7 @@ const ResearchStep = ({
                                                 rel="noopener noreferrer"
                                                 className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                                             >
-                                                <div className="flex-shrink-0 mt-1">
+                                                <div className="shrink-0 mt-1">
                                                     <img 
                                                         src={`https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`}
                                                         alt=""
@@ -307,7 +307,7 @@ const ResearchStep = ({
                                             className="p-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div className="flex-shrink-0 mt-1.5">
+                                                <div className="shrink-0 mt-1.5">
                                                     <div className={cn(
                                                         "w-1.5 h-1.5 rounded-full",
                                                         finding.confidence > 0.7 
@@ -407,7 +407,7 @@ const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type
                             className="block p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                         >
                             <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0 mt-1">
+                                <div className="shrink-0 mt-1">
                                     <XLogo className="h-4 w-4 text-neutral-500" />
                                 </div>
                                 <div>
@@ -435,7 +435,7 @@ const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type
                     className="block p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 >
                     <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-1">
+                        <div className="shrink-0 mt-1">
                             <img 
                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                 alt=""
@@ -796,7 +796,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                     </div>
                     {isComplete && (
                         <ChevronDown className={cn(
-                            "h-4 w-4 text-neutral-500 transition-transform flex-shrink-0",
+                            "h-4 w-4 text-neutral-500 transition-transform shrink-0",
                             isCollapsed ? "rotate-180" : ""
                         )} />
                     )}
@@ -898,7 +898,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                     className="block p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                                                 >
                                                     <div className="flex items-start gap-2">
-                                                        <div className="flex-shrink-0 mt-0.5">
+                                                        <div className="shrink-0 mt-0.5">
                                                             <img 
                                                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                                                 alt=""
@@ -959,7 +959,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                     className="block p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                                                 >
                                                     <div className="flex items-start gap-2">
-                                                        <div className="flex-shrink-0 mt-0.5">
+                                                        <div className="shrink-0 mt-0.5">
                                                             <img 
                                                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                                                 alt=""
@@ -1038,7 +1038,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                 transition={{ delay: i * 0.05 }}
                                                             >
                                                                 <div className="flex items-start gap-2">
-                                                                    <div className="flex-shrink-0 mt-0.5">
+                                                                    <div className="shrink-0 mt-0.5">
                                                                         <XLogo className="h-3.5 w-3.5 text-neutral-500" />
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
@@ -1057,10 +1057,10 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                             </div>
 
                                             {sourceGroups.x.length > 2 && (
-                                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-12 bg-gradient-to-t from-white via-white to-transparent dark:from-black dark:via-black rounded-b-lg">
+                                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-12 bg-linear-to-t from-white via-white to-transparent dark:from-black dark:via-black rounded-b-lg">
                                                     <button
                                                         onClick={() => document.getElementById('show-all-x-sources')?.click()}
-                                                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group shadow-sm"
+                                                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group shadow-xs"
                                                     >
                                                         <XLogo className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-500" />
                                                         <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300">
@@ -1106,7 +1106,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                     className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                 >
                                                                     <div className="flex items-start gap-2">
-                                                                        <div className="flex-shrink-0 mt-1">
+                                                                        <div className="shrink-0 mt-1">
                                                                             <div className="w-1 h-1 rounded-full bg-primary/80" />
                                                                         </div>
                                                                         <div className="space-y-1.5 min-w-0">
@@ -1164,7 +1164,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                                 className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                             >
                                                                                 <div className="flex items-start gap-2">
-                                                                                    <div className="flex-shrink-0 mt-1">
+                                                                                    <div className="shrink-0 mt-1">
                                                                                         <div className="w-1 h-1 rounded-full bg-neutral-400" />
                                                                                     </div>
                                                                                     <div className="space-y-1.5 min-w-0">
@@ -1190,7 +1190,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                             className="p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                         >
                                                                             <div className="flex items-start gap-2">
-                                                                                <div className="flex-shrink-0 mt-1">
+                                                                                <div className="shrink-0 mt-1">
                                                                                     <div className="w-1 h-1 rounded-full bg-neutral-400" />
                                                                                 </div>
                                                                                 <div className="space-y-1.5 min-w-0">
@@ -1245,7 +1245,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                                                 className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700"
                                                                             >
                                                                                 <div className="flex items-start gap-1.5 sm:gap-2">
-                                                                                    <div className="flex-shrink-0 mt-1">
+                                                                                    <div className="shrink-0 mt-1">
                                                                                         <div className="w-1 h-1 rounded-full bg-green-500" />
                                                                                     </div>
                                                                                     <div className="space-y-1.5 min-w-0">

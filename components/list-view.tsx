@@ -59,12 +59,12 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
             onClick={onClick}
             className={cn(
                 "bg-black text-white rounded-lg transition-transform",
-                isOverlay ? 'bg-opacity-90 backdrop-blur-sm' : 'hover:bg-opacity-80',
+                isOverlay ? 'bg-opacity-90 backdrop-blur-xs' : 'hover:bg-opacity-80',
                 'cursor-pointer p-4'
             )}
         >
             <div className="flex gap-4">
-                <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0">
                     {place.photos?.[0]?.medium ? (
                         <img
                             src={place.photos[0].medium}
