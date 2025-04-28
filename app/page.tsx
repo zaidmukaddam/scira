@@ -1575,10 +1575,10 @@ const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
 
 const Home = () => {
     return (
-        <>
+        <Suspense>
             <HomeContent />
             <InstallPrompt />
-        </>
+        </Suspense>
     );
 };
 
