@@ -1417,20 +1417,81 @@ const HomeContent = () => {
     );
 }
 
-const LoadingFallback = () => (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
-        <div className="flex flex-col items-center gap-6 p-8">
-            <div className="relative w-12 h-12">
-                <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
+const LoadingFallback = () => {
+    const { resolvedTheme } = useTheme();
+    
+    return (
+        <div className="flex flex-col !font-sans items-center min-h-screen bg-background text-foreground transition-all duration-500">
+            {/* Navbar with just theme toggle */}
+            <div className="fixed top-0 left-0 right-0 z-[60] flex justify-between items-center p-4 bg-background">
+                <div className="flex items-center gap-4">
+                    <Link href="/new">
+                        <Button
+                            type="button"
+                            variant={'secondary'}
+                            className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-sm group transition-all hover:scale-105 pointer-events-auto"
+                        >
+                            <Plus size={18} className="group-hover:rotate-90 transition-all" />
+                            <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
+                                New
+                            </span>
+                        </Button>
+                    </Link>
+                </div>
+                <div className='flex items-center space-x-4'>
+                    <Link
+                        target="_blank"
+                        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,GROQ_API_KEY,E2B_API_KEY,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,TRIPADVISOR_API_KEY,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function%20(including%20SMITHERY_API_KEY)"
+                        className="flex flex-row gap-2 items-center py-1.5 px-2 rounded-md 
+                            bg-accent hover:bg-accent/80
+                            backdrop-blur-sm text-foreground shadow-sm text-sm
+                            transition-all duration-200"
+                    >
+                        <VercelIcon size={14} />
+                        <span className='hidden sm:block'>Deploy with Vercel</span>
+                        <span className='sm:hidden block'>Deploy</span>
+                    </Link>
+                    <Link href="/about">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full w-8 h-8 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
+                        >
+                            <Info className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                        </Button>
+                    </Link>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <span className="sr-only">Toggle theme</span>
+                    </Button>
+                </div>
             </div>
 
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 animate-pulse">
-                Loading...
-            </p>
+            {/* Main content area */}
+            <div className="w-full p-2 sm:p-4 min-h-screen flex flex-col items-center justify-center">
+                <div className="w-full max-w-[90%] !font-sans sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300 text-center">
+                    <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
+                        Loading...
+                    </h1>
+                    
+                    <div className="flex items-center justify-center">
+                        <div className="relative h-10 w-10">
+                            <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800" />
+                            <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
+                        </div>
+                    </div>
+                    
+                    <div className="h-96 w-full max-w-[90%] sm:max-w-xl rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm animate-pulse"></div>
+                </div>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
