@@ -742,10 +742,10 @@ const ToolInvocationListView = memo(
                     FullTweetList.displayName = 'FullTweetList';
 
                     return (
-                        <Card className="w-full my-4 overflow-hidden shadow-none">
+                        <Card className="w-full my-4 overflow-hidden shadow-none dark:bg-neutral-900">
                             <CardHeader className="pb-2 flex flex-row items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-900! flex items-center justify-center">
+                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-950! flex items-center justify-center">
                                         <XLogo className="h-4 w-4" />
                                     </div>
                                     <div>
@@ -1199,10 +1199,17 @@ const ToolInvocationListView = memo(
                                         <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
                                             {result.results[0].description || 'No description available'}
                                         </p>
-                                        <div className="flex items-center gap-3">
-                                            <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                                                {result.results[0].language || 'Unknown'}
-                                            </span>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            {result.results[0].language && (
+                                                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
+                                                    {result.results[0].language}
+                                                </span>
+                                            )}
+                                            {result.response_time && (
+                                                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                                                    {result.response_time.toFixed(2)}s
+                                                </span>
+                                            )}
                                             <a
                                                 href={result.results[0].url}
                                                 target="_blank"
@@ -1212,26 +1219,36 @@ const ToolInvocationListView = memo(
                                                 <ExternalLink className="h-3 w-3" />
                                                 View source
                                             </a>
+                                            {result.results.length > 1 && (
+                                                <span className="text-xs text-neutral-500">
+                                                    {result.results.length} pages retrieved
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="border-t border-neutral-200 dark:border-neutral-800">
-                                <details className="group">
-                                    <summary className="w-full px-4 py-2 cursor-pointer text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <TextIcon className="h-4 w-4 text-neutral-400" />
-                                            <span>View content</span>
-                                        </div>
-                                        <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
-                                    </summary>
-                                    <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50/50 dark:bg-neutral-800/30">
-                                        <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                                            <ReactMarkdown>{result.results[0].content || 'No content available'}</ReactMarkdown>
-                                        </div>
-                                    </div>
-                                </details>
+                                <Accordion type="single" collapsible defaultValue="content0">
+                                    {result.results.map((resultItem: { url: string; content: string }, index: number) => (
+                                        <AccordionItem value={`content${index}`} key={index} className="border-0 border-b border-neutral-200 dark:border-neutral-800 last:border-0">
+                                            <AccordionTrigger className="px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                                                <div className="flex items-center gap-2">
+                                                    <TextIcon className="h-4 w-4 text-neutral-400" />
+                                                    <span>{index === 0 ? "View content" : `Page ${index + 1}: ${resultItem.url.split('/').pop() || 'Content'}`}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50/50 dark:bg-neutral-800/30">
+                                                    <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
+                                                        <ReactMarkdown>{resultItem.content || 'No content available'}</ReactMarkdown>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
                             </div>
                         </div>
                     );
@@ -1547,7 +1564,7 @@ const ToolInvocationListView = memo(
                         <div className="space-y-4 sm:space-y-6">
                             <div>
                                 <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                                    The phrase <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.text}</span> translates from <span className="font-medium text-neutral-900 dark:text-neutral-100">{result.detectedLanguage}</span> to <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.to}</span> as <span className="font-medium text-primary">{result.translatedText}</span>
+                                    The phrase <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.text}</span> translates from <span className="font-medium text-neutral-900 dark:text-neutral-100">{result.detectedLanguage}</span> to <span className="font-medium text-primary">{result.translatedText}</span>
                                 </p>
                             </div>
 

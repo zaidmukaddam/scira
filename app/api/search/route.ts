@@ -61,7 +61,7 @@ const scira = customProvider({
         'scira-default': xai('grok-3-mini-fast-beta'),
         'scira-grok-3': xai('grok-3-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
-        'scira-4.1-mini': openai('gpt-4.1-mini', {
+        'scira-4.1-mini': openai('gpt-4.1', {
             structuredOutputs: true,
         }),
         'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
@@ -1098,8 +1098,7 @@ plt.show()`
 
                                 // Simple search to get YouTube URLs only
                                 const searchResult = await exa.search(query, {
-                                    type: 'neural',
-                                    useAutoprompt: true,
+                                    type: 'keyword',
                                     numResults: 10,
                                     includeDomains: ['youtube.com'],
                                 });
@@ -1181,70 +1180,70 @@ plt.show()`
                         },
                     }),
                     retrieve: tool({
-                        description: 'Retrieve the information from a URL using Firecrawl.',
+                        description: 'Retrieve the information from a URL using Tavily.',
                         parameters: z.object({
                             url: z.string().describe('The URL to retrieve the information from.'),
+                            query: z.string().describe('Optional query to focus the crawl on specific information.'),
+                            extract_depth: z.enum(['basic', 'advanced']).describe('Level of extraction detail, defaults to basic.'),
+                            // Careers, Blog, Documentation, About, Pricing, Community, Developers, Contact, Media
+                            categories: z.array(z.enum(["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"])).describe('The categories to crawl.'),
                         }),
-                        execute: async ({ url }: { url: string }) => {
-                            const app = new FirecrawlApp({
-                                apiKey: serverEnv.FIRECRAWL_API_KEY,
-                            });
+                        execute: async ({ 
+                            url, 
+                            query = "",
+                            extract_depth = "basic",
+                            categories = ["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"]
+                        }: { 
+                            url: string;
+                            query?: string;
+                            extract_depth?: "basic" | "advanced";
+                            categories?: string[];
+                        }) => {
                             try {
-                                const content = await app.scrapeUrl(url,
-                                    {
-                                        agent: {
-                                            model: "FIRE-1",
-                                            prompt: "Extract the page title, main content, and a brief description."
-                                        }
-                                    }
-                                );
-                                if (!content.success || !content.metadata) {
-                                    return {
-                                        results: [{
-                                            error: content.error
-                                        }]
-                                    };
-                                }
-
-                                // Define schema for extracting missing content
-                                const schema = z.object({
-                                    title: z.string(),
-                                    content: z.string(),
-                                    description: z.string()
+                                const response = await fetch('https://api.tavily.com/crawl', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${serverEnv.TAVILY_API_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        url,
+                                        max_depth: 1,
+                                        max_breadth: 1,
+                                        limit: 1,
+                                        query,
+                                        allow_external: false,
+                                        extract_depth,
+                                        categories
+                                    })
                                 });
 
-                                let title = content.metadata.title;
-                                let description = content.metadata.description;
-                                let extractedContent = content.markdown;
+                                if (!response.ok) {
+                                    const errorText = await response.text();
+                                    console.error('Tavily API error:', errorText);
+                                    return { error: 'Failed to retrieve content', results: [] };
+                                }
 
-                                // If any content is missing, use extract to get it
-                                if (!title || !description || !extractedContent) {
-                                    const extractResult = await app.extract([url], {
-                                        prompt: "Extract the page title, main content, and a brief description.",
-                                        schema: schema
-                                    });
-
-                                    if (extractResult.success && extractResult.data) {
-                                        title = title || extractResult.data.title;
-                                        description = description || extractResult.data.description;
-                                        extractedContent = extractedContent || extractResult.data.content;
-                                    }
+                                const data = await response.json();
+                                
+                                if (!data || !data.results || data.results.length === 0) {
+                                    return { results: [] };
                                 }
 
                                 return {
-                                    results: [
-                                        {
-                                            title: title || 'Untitled',
-                                            content: extractedContent || '',
-                                            url: content.metadata.sourceURL,
-                                            description: description || '',
-                                            language: content.metadata.language,
-                                        },
-                                    ],
+                                    base_url: data.base_url,
+                                    results: data.results.map((result: any) => ({
+                                        url: result.url,
+                                        content: result.raw_content,
+                                        title: result.url.split('/').pop() || 'Retrieved Content',
+                                        description: `Content retrieved from ${result.url}`,
+                                        language: 'en',
+                                    })),
+                                    response_time: data.response_time
                                 };
                             } catch (error) {
-                                console.error('Firecrawl API error:', error);
-                                return { error: 'Failed to retrieve content' };
+                                console.error('Tavily API error:', error);
+                                return { error: 'Failed to retrieve content', results: [] };
                             }
                         },
                     }),
