@@ -6,7 +6,6 @@ import { groq } from "@ai-sdk/groq";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import CodeInterpreter from '@e2b/code-interpreter';
-import FirecrawlApp from '@mendable/firecrawl-js';
 import { tavily } from '@tavily/core';
 import {
     convertToCoreMessages,
@@ -338,7 +337,6 @@ export async function POST(req: Request) {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                // temperature: model === 'scira-o4-mini' ? 1 : 0,
                 ...(model !== 'scira-o4-mini' ? {
                     temperature: 0,
                 } : {}),
@@ -361,6 +359,16 @@ export async function POST(req: Request) {
                         ...(model === 'scira-o4-mini' ? {
                             reasoningEffort: 'medium'
                         } : {}),
+                        ...(model === 'scira-google' ? {
+                            thinkingConfig: {
+                                thinkingBudget: 5000,
+                            },
+                        } : {}),
+                    },
+                    google: {
+                        thinkingConfig: {
+                            thinkingBudget: 5000,
+                        },
                     },
                     openai: {
                         ...(model === 'scira-o4-mini' ? {
@@ -727,6 +735,7 @@ plt.show()`
                             ),
                             exclude_domains: z
                                 .array(z.string())
+                                .nullish()
                                 .describe('A list of domains to exclude from all search results. Default is an empty list.'),
                         }),
                         execute: async ({
@@ -740,7 +749,7 @@ plt.show()`
                             maxResults: number[];
                             topics: ('general' | 'news' | 'finance')[];
                             searchDepth: ('basic' | 'advanced')[];
-                            exclude_domains?: string[];
+                            exclude_domains?: string[] | null;
                         }) => {
                             const apiKey = serverEnv.TAVILY_API_KEY;
                             const tvly = tavily({ apiKey });
@@ -762,7 +771,7 @@ plt.show()`
                                     includeAnswer: true,
                                     includeImages: true,
                                     includeImageDescriptions: includeImageDescriptions,
-                                    excludeDomains: exclude_domains,
+                                    excludeDomains: exclude_domains || undefined,
                                 });
 
                                 // Add annotation for query completion
@@ -1188,12 +1197,12 @@ plt.show()`
                             // Careers, Blog, Documentation, About, Pricing, Community, Developers, Contact, Media
                             categories: z.array(z.enum(["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"])).describe('The categories to crawl.'),
                         }),
-                        execute: async ({ 
-                            url, 
+                        execute: async ({
+                            url,
                             query = "",
                             extract_depth = "basic",
                             categories = ["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"]
-                        }: { 
+                        }: {
                             url: string;
                             query?: string;
                             extract_depth?: "basic" | "advanced";
@@ -1225,7 +1234,7 @@ plt.show()`
                                 }
 
                                 const data = await response.json();
-                                
+
                                 if (!data || !data.results || data.results.length === 0) {
                                     return { results: [] };
                                 }

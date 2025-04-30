@@ -8,6 +8,29 @@
 
 @plugin "@tailwindcss/typography";
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@theme {
+  --animate-accordion-down: accordion-down 300ms ease-out;
+  --animate-accordion-up: accordion-up 300ms ease-out;
+}
+
 @utility no-scrollbar {
   /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {

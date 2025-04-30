@@ -99,7 +99,7 @@ const SearchLoadingState = ({
                         </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="pt-0 mt-0 border-0 overflow-hidden">
+                    <AccordionContent className="pt-0 mt-0 border-0 overflow-hidden data-[state=open]:animate-[var(--animate-accordion-down)] data-[state=closed]:animate-[var(--animate-accordion-up)]">
                         <div className="py-3 px-4 bg-white dark:bg-neutral-900 rounded-b-lg border border-t-0 border-neutral-200 dark:border-neutral-800">
                             {/* Query badges */}
                             <div className="flex overflow-x-auto gap-1.5 mb-3 no-scrollbar pb-1">
@@ -518,7 +518,7 @@ const MultiSearch: React.FC<{
                         </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="pt-0 mt-0 border-0 overflow-hidden">
+                    <AccordionContent className="pt-0 mt-0 border-0 overflow-hidden data-[state=open]:animate-[var(--animate-accordion-down)] data-[state=closed]:animate-[var(--animate-accordion-up)]">
                         <div className="py-3 px-4 bg-white dark:bg-neutral-900 rounded-b-lg border border-t-0 border-neutral-200 dark:border-neutral-800">
                             {/* Query badges */}
                             <div className="flex overflow-x-auto gap-1.5 mb-3 no-scrollbar pb-1">

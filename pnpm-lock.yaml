@@ -9,20 +9,20 @@ importers:
   .:
     dependencies:
       '@ai-sdk/google':
-        specifier: ^1.2.11
-        version: 1.2.11(zod@3.24.2)
+        specifier: ^1.2.14
+        version: 1.2.14(zod@3.24.2)
       '@ai-sdk/groq':
         specifier: ^1.2.8
         version: 1.2.8(zod@3.24.2)
       '@ai-sdk/openai':
-        specifier: ^1.3.20
-        version: 1.3.20(zod@3.24.2)
+        specifier: ^1.3.21
+        version: 1.3.21(zod@3.24.2)
       '@ai-sdk/react':
-        specifier: ^1.2.9
-        version: 1.2.9(react@18.3.1)(zod@3.24.2)
+        specifier: ^1.2.10
+        version: 1.2.10(react@18.3.1)(zod@3.24.2)
       '@ai-sdk/ui-utils':
-        specifier: ^1.2.8
-        version: 1.2.8(zod@3.24.2)
+        specifier: ^1.2.9
+        version: 1.2.9(zod@3.24.2)
       '@ai-sdk/xai':
         specifier: ^1.2.15
         version: 1.2.15(zod@3.24.2)
@@ -120,8 +120,8 @@ importers:
         specifier: ^1.4.0
         version: 1.6.0
       ai:
-        specifier: ^4.3.10
-        version: 4.3.10(react@18.3.1)(zod@3.24.2)
+        specifier: ^4.3.12
+        version: 4.3.12(react@18.3.1)(zod@3.24.2)
       axios:
         specifier: ^1.8.4
         version: 1.8.4
@@ -198,8 +198,8 @@ importers:
         specifier: 0.3.0
         version: 0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nuqs:
-        specifier: ^2.4.1
-        version: 2.4.1(next@15.3.1(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        specifier: ^2.4.3
+        version: 2.4.3(next@15.3.1(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       posthog-js:
         specifier: ^1.236.0
         version: 1.236.0
@@ -315,8 +315,8 @@ importers:
 
 packages:
 
-  '@ai-sdk/google@1.2.11':
-    resolution: {integrity: sha512-gjGcxKcRri/Jbkujs9nVwP4qOW5GI4rYQ6vQ17uLAvGMo3qnwr26Q2KUqUWuVHQYtboXVSrxC/Kb6sm3hE5WUQ==}
+  '@ai-sdk/google@1.2.14':
+    resolution: {integrity: sha512-r3FSyyWl0KVjUlKn5o+vMl+Nk8Z/mV6xrqW+49g7fMoRVr/wkRxJZtHorrdDGRreCJubZyAk8ziSQSLpgv2H6w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -333,8 +333,8 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  '@ai-sdk/openai@1.3.20':
-    resolution: {integrity: sha512-/DflUy7ROG9k6n6YTXMBFPbujBKnbGY58f3CwvicLvDar9nDAloVnUWd3LUoOxpSVnX8vtQ7ngxF52SLWO6RwQ==}
+  '@ai-sdk/openai@1.3.21':
+    resolution: {integrity: sha512-ipAhkRKUd2YaMmn7DAklX3N7Ywx/rCsJHVyb0V/lKRqPcc612qAFVbjg+Uve8QYJlbPxgfsM4s9JmCFp6PSdYw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -349,8 +349,8 @@ packages:
     resolution: {integrity: sha512-qZMxYJ0qqX/RfnuIaab+zp8UAeJn/ygXXAffR5I4N0n1IrvA6qBsjc8hXLmBiMV2zoXlifkacF7sEFnYnjBcqg==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@1.2.9':
-    resolution: {integrity: sha512-/VYm8xifyngaqFDLXACk/1czDRCefNCdALUyp+kIX6DUIYUWTM93ISoZ+qJ8+3E+FiJAKBQz61o8lIIl+vYtzg==}
+  '@ai-sdk/react@1.2.10':
+    resolution: {integrity: sha512-iUZfApc6aftVT7f41y9b1NPk0dZFt9vRR0/gkZsKdP56ShcKtuTu44BkjtWdrBs7fcTbN2BQZtDao1AY1GxzsQ==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -359,8 +359,8 @@ packages:
       zod:
         optional: true
 
-  '@ai-sdk/ui-utils@1.2.8':
-    resolution: {integrity: sha512-nls/IJCY+ks3Uj6G/agNhXqQeLVqhNfoJbuNgCny+nX2veY5ADB91EcZUqVeQ/ionul2SeUswPY6Q/DxteY29Q==}
+  '@ai-sdk/ui-utils@1.2.9':
+    resolution: {integrity: sha512-cbiLzgXDv3+460f61UVSykn3XdKOS+SHs/EANw+pdOQKwn8JN7rZJL/ggPyMuZ7D9lO3oWOfOJ1QS+9uClfVug==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.23.8
@@ -1740,8 +1740,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@4.3.10:
-    resolution: {integrity: sha512-jw+ahNu+T4SHj9gtraIKtYhanJI6gj2IZ5BFcfEHgoyQVMln5a5beGjzl/nQSX6FxyLqJ/UBpClRa279EEKK/Q==}
+  ai@4.3.12:
+    resolution: {integrity: sha512-DWjtPI8YJVyvcJx27KW1i6PrwkbjTewflfH+qPtIuoAP0YYs6bH17cAihTt4je+itgazLXK07ZCbV019YkdYjw==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -3631,8 +3631,8 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     deprecated: This package is no longer supported.
 
-  nuqs@2.4.1:
-    resolution: {integrity: sha512-u6sngTspqDe3jWHtcmqHQg3dl35niizCZAsm5gy7PBlgG2rwl71Dp2QUv5hwBaWKI9qz0wqILZY86TsRxq66SQ==}
+  nuqs@2.4.3:
+    resolution: {integrity: sha512-BgtlYpvRwLYiJuWzxt34q2bXu/AIS66sLU1QePIMr2LWkb+XH0vKXdbLSgn9t6p7QKzwI7f38rX3Wl9llTXQ8Q==}
     peerDependencies:
       '@remix-run/react': '>=2'
       next: '>=14.2.0'
@@ -4754,7 +4754,7 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/google@1.2.11(zod@3.24.2)':
+  '@ai-sdk/google@1.2.14(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
@@ -4772,7 +4772,7 @@ snapshots:
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
       zod: 3.24.2
 
-  '@ai-sdk/openai@1.3.20(zod@3.24.2)':
+  '@ai-sdk/openai@1.3.21(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
@@ -4789,17 +4789,17 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@1.2.9(react@18.3.1)(zod@3.24.2)':
+  '@ai-sdk/react@1.2.10(react@18.3.1)(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
-      '@ai-sdk/ui-utils': 1.2.8(zod@3.24.2)
+      '@ai-sdk/ui-utils': 1.2.9(zod@3.24.2)
       react: 18.3.1
       swr: 2.3.3(react@18.3.1)
       throttleit: 2.1.0
     optionalDependencies:
       zod: 3.24.2
 
-  '@ai-sdk/ui-utils@1.2.8(zod@3.24.2)':
+  '@ai-sdk/ui-utils@1.2.9(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
@@ -6129,12 +6129,12 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@4.3.10(react@18.3.1)(zod@3.24.2):
+  ai@4.3.12(react@18.3.1)(zod@3.24.2):
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.7(zod@3.24.2)
-      '@ai-sdk/react': 1.2.9(react@18.3.1)(zod@3.24.2)
-      '@ai-sdk/ui-utils': 1.2.8(zod@3.24.2)
+      '@ai-sdk/react': 1.2.10(react@18.3.1)(zod@3.24.2)
+      '@ai-sdk/ui-utils': 1.2.9(zod@3.24.2)
       '@opentelemetry/api': 1.9.0
       jsondiffpatch: 0.6.0
       zod: 3.24.2
@@ -6829,7 +6829,7 @@ snapshots:
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.4(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1)
@@ -6859,7 +6859,7 @@ snapshots:
       stable-hash: 0.0.5
       tinyglobby: 0.2.12
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6874,7 +6874,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1)(eslint@8.57.1):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.2))(eslint-import-resolver-typescript@3.9.1(eslint-plugin-import@2.31.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
@@ -8569,7 +8569,7 @@ snapshots:
       set-blocking: 2.0.0
     optional: true
 
-  nuqs@2.4.1(next@15.3.1(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
+  nuqs@2.4.3(next@15.3.1(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
     dependencies:
       mitt: 3.0.1
       react: 18.3.1
