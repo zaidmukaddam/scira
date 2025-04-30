@@ -15,7 +15,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
-import { TextMorph } from '@/components/core/text-morph';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
@@ -228,7 +227,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                 </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-                className="w-[200px] p-0.5 font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-1.5! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[290px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                className="w-[200px]! p-0.5! font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-1.5! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[290px]! overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
                 align="start"
                 side="bottom"
                 sideOffset={8}
@@ -274,7 +273,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                                 src={model.icon}
                                                 alt={model.label}
                                                 className={cn(
-                                                    "w-2.5 h-2.5 object-contain",
+                                                    "w-2.5! h-2.5! object-contain",
                                                     model.iconClass,
                                                     model.value === "scira-optimus" && "invert"
                                                 )}
@@ -282,15 +281,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         ) : (
                                             <model.icon
                                                 className={cn(
-                                                    "w-2.5 h-2.5",
+                                                    "size-3!",
                                                     model.iconClass
                                                 )}
                                             />
                                         )}
                                     </div>
                                     <div className="flex flex-col gap-px min-w-0">
-                                        <div className="font-medium truncate text-[12px]">{model.label}</div>
-                                        <div className="text-[9px] opacity-80 truncate leading-tight">{model.description}</div>
+                                        <div className="font-medium truncate text-[12px]!">{model.label}</div>
+                                        <div className="text-[9px]! opacity-80 truncate leading-tight">{model.description}</div>
                                     </div>
                                 </DropdownMenuItem>
                             ))}
@@ -1275,7 +1274,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                                 className={cn(
-                                    "w-full rounded-lg resize-none",
+                                    "w-full rounded-lg resize-none md:text-base!",
                                     "text-base leading-relaxed",
                                     "bg-neutral-100 dark:bg-neutral-900",
                                     "border border-neutral-200! dark:border-neutral-700!",

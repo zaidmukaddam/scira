@@ -759,12 +759,12 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     return (
         <div className="space-y-8">
             {/* Progress Card */}
-            <Card className="w-full shadow-none hover:shadow-none">
+            <Card className="w-full shadow-none hover:shadow-none gap-0 py-0">
                 <div
                     className={cn(
-                        "flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-xl",
+                        "flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-xl! bg-transparent! backdrop-blur-3xl! border-none!",
                         isComplete && "cursor-pointer",
-                        isComplete && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                        isComplete && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50! transition-colors"
                     )}
                     onClick={() => isComplete && setIsCollapsed(!isCollapsed)}
                 >
@@ -811,7 +811,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                 >
-                    <CardContent className="px-2 sm:px-4 pt-2 sm:pt-4">
+                    <CardContent className="px-2 sm:px-4 py-2 sm:pt-4">
                         <StepCarousel updates={sortedUpdates} />
                     </CardContent>
                 </motion.div>
@@ -825,10 +825,10 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                         <h3 className="text-sm font-medium">Sources</h3>
                     </div>
                     <Tabs defaultValue="web" className="w-full" onValueChange={setSelectedTab} value={selectedTab}>
-                        <TabsList className="w-full h-10 grid grid-cols-4 bg-neutral-100/50 dark:bg-neutral-800/50 p-1 rounded-lg">
+                        <TabsList className="w-full h-10 grid grid-cols-4 bg-neutral-100/50! dark:bg-neutral-800/50! p-1 rounded-lg">
                             <TabsTrigger 
                                 value="web" 
-                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                                className="h-full data-[state=active]:bg-white! dark:data-[state=active]:bg-neutral-800! rounded-md border-none"
                             >
                                 <div className="flex items-center gap-1.5">
                                     <FileText className="h-3 w-3" />
@@ -842,7 +842,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="academic" 
-                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md border-none"
                             >
                                 <div className="flex items-center gap-1.5">
                                     <BookA className="h-3 w-3" />
@@ -856,7 +856,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="x" 
-                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md border-none"
                             >
                                 <div className="flex items-center gap-1.5">
                                     <XLogo className="h-3 w-3" />
@@ -870,7 +870,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="analysis" 
-                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
+                                className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md border-none"
                             >
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles className="h-3 w-3" />

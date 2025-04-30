@@ -200,7 +200,7 @@ const SearchLoadingState = ({
                 )}
                 size={80}
             />
-            <CardContent className="p-6">
+            <CardContent className="px-6!">
                 <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={cn(
@@ -742,10 +742,10 @@ const ToolInvocationListView = memo(
                     FullTweetList.displayName = 'FullTweetList';
 
                     return (
-                        <Card className="w-full my-4 overflow-hidden shadow-none dark:bg-neutral-900">
-                            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <Card className="w-full my-4 pt-6 gap-2 pb-0 overflow-hidden shadow-none dark:bg-neutral-950!">
+                            <CardHeader className="pb-2 m-0! flex flex-row items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-950! flex items-center justify-center">
+                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800! flex items-center justify-center">
                                         <XLogo className="h-4 w-4" />
                                     </div>
                                     <div>
@@ -757,7 +757,7 @@ const ToolInvocationListView = memo(
                                 </div>
                             </CardHeader>
                             <div className="relative">
-                                <div className="px-4 pb-2 h-72">
+                                <div className="px-4 pt-0! m-0! pb-2! h-72">
                                     <div className="flex flex-nowrap overflow-x-auto gap-4 no-scrollbar">
                                         {result.slice(0, PREVIEW_COUNT).map((post: XResult, index: number) => (
                                             <motion.div
@@ -781,7 +781,7 @@ const ToolInvocationListView = memo(
                                             <SheetTrigger asChild>
                                                 <Button
                                                     variant="outline"
-                                                    className="gap-2 bg-white dark:bg-black"
+                                                    className="gap-2 bg-white dark:bg-neutral-800!"
                                                 >
                                                     <XLogo className="h-4 w-4" />
                                                     Show all {result.length} tweets
