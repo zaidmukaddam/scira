@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, SVGProps } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
@@ -54,15 +54,47 @@ const XAIIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
+const GeminiIcon = ({ className }: { className?: string }) => (
+    <svg height="1em" style={{ flex: "none", lineHeight: "1" }} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className={className}>
+        <title>Gemini</title>
+        <defs>
+            <linearGradient id="lobe-icons-gemini-fill" x1="0%" x2="68.73%" y1="100%" y2="30.395%">
+                <stop offset="0%" stop-color="#1C7DFF"></stop>
+                <stop offset="52.021%" stop-color="#1C69FF"></stop>
+                <stop offset="100%" stop-color="#F0DCD6"></stop>
+            </linearGradient>
+        </defs>
+        <path d="M12 24A14.304 14.304 0 000 12 14.304 14.304 0 0012 0a14.305 14.305 0 0012 12 14.305 14.305 0 00-12 12" fill="url(#lobe-icons-gemini-fill)" fill-rule="nonzero"></path>
+    </svg>
+);
+
+const OpenAIIcon = ({ className }: { className?: string }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="256"
+        height="260"
+        preserveAspectRatio="xMidYMid"
+        viewBox="0 0 256 260"
+        className={className}
+    >
+        <path fill="currentColor" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z" />
+    </svg>
+)
+
+const QwenIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColor" fillRule="evenodd" height="1em" style={{
+  flex: "none",
+  lineHeight: 1
+}} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" {...props}><title>{"Qwen"}</title><path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z" /></svg>;
+
 
 const models = [
-    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-neutral-300!", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: "/google.svg", iconClass: "text-neutral-300!", description: "Google's most advanced model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: "/openai.svg", iconClass: "text-neutral-300!", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-o4-mini", label: "o4 mini", icon: "/openai.svg", iconClass: "text-neutral-300!", description: "OpenAI's mini reasoning model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-qwq", label: "QWQ 32B", icon: "/groq.svg", iconClass: "text-neutral-300!", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's most advanced model", color: "gemini", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's mini reasoning model", color: "blue", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -91,14 +123,17 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
                 ? `${baseClasses} ${selectedClasses} bg-[#5E5ADB]! dark:bg-[#5E5ADB]! text-white! hover:bg-[#4D49C9]! dark:hover:bg-[#4D49C9]! border-[#5E5ADB]! dark:border-[#5E5ADB]!`
                 : `${baseClasses} text-[#5E5ADB]! dark:text-[#5E5ADB]! hover:bg-[#5E5ADB]! hover:text-white! dark:hover:bg-[#5E5ADB]! dark:hover:text-white!`;
         case 'alpha':
-            // make it classic optimus prime like 
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-linear-to-r! from-[#0b3d91]! to-[#d01012]! dark:bg-linear-to-r! dark:from-[#0b3d91]! dark:to-[#d01012]! text-white! hover:opacity-90! border-[#0b3d91]! dark:border-[#0b3d91]!`
                 : `${baseClasses} text-[#d01012]! dark:text-[#3f83f8]! hover:bg-linear-to-r! hover:from-[#0b3d91]! hover:to-[#d01012]! hover:text-white! dark:hover:text-white!`;
         case 'blue':
             return isSelected
-                ? `${baseClasses} ${selectedClasses} bg-[#2563eb]! dark:bg-[#2563eb]! text-white! hover:bg-[#1d4ed8]! dark:hover:bg-[#1d4ed8]! border-[#2563eb]! dark:border-[#2563eb]!`
-                : `${baseClasses} text-[#2563eb]! dark:text-[#60a5fa]! hover:bg-[#2563eb]! hover:text-white! dark:hover:bg-[#2563eb]! dark:hover:text-white!`;
+                ? `${baseClasses} ${selectedClasses} bg-[#1C7DFF]! dark:bg-[#1C7DFF]! text-white! hover:bg-[#0A6AE9]! dark:hover:bg-[#0A6AE9]! border-[#1C7DFF]! dark:border-[#1C7DFF]!`
+                : `${baseClasses} text-[#1C7DFF]! dark:text-[#4C96FF]! hover:bg-[#1C7DFF]! hover:text-white! dark:hover:bg-[#1C7DFF]! dark:hover:text-white!`;
+        case 'gemini':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} bg-[#1EA896]! dark:bg-[#1EA896]! text-white! hover:bg-[#19967F]! dark:hover:bg-[#19967F]! border-[#1EA896]! dark:border-[#1EA896]!`
+                : `${baseClasses} text-[#1EA896]! dark:text-[#34C0AE]! hover:bg-[#1EA896]! hover:text-white! dark:hover:bg-[#1EA896]! dark:hover:text-white!`;
         default:
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-neutral-500! dark:bg-neutral-700! text-white! hover:bg-neutral-600! dark:hover:bg-neutral-800! border-neutral-500! dark:border-neutral-700!`
@@ -539,8 +574,10 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                 return 'bg-[#8B5CF6] dark:bg-[#8B5CF6] border-[#8B5CF6] dark:border-[#8B5CF6]';
             case 'purple':
                 return 'bg-[#5E5ADB] dark:bg-[#5E5ADB] border-[#5E5ADB] dark:border-[#5E5ADB]';
+            case 'gemini':
+                return 'bg-[#1EA896] dark:bg-[#1EA896] border-[#1EA896] dark:border-[#1EA896]';
             case 'blue':
-                return 'bg-[#2563eb] dark:bg-[#2563eb] border-[#2563eb] dark:border-[#2563eb]';
+                return 'bg-[#1C7DFF] dark:bg-[#1C7DFF] border-[#1C7DFF] dark:border-[#1C7DFF]';
             default:
                 return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
         }
@@ -691,7 +728,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             animate={{
                 width: isExpanded && !isProcessing ? "auto" : "30px",
                 gap: isExpanded && !isProcessing ? "0.5rem" : 0,
-                paddingRight: isExpanded && !isProcessing ? "0.25rem" : 0,
+                paddingRight: isExpanded && !isProcessing ? "0.4rem" : 0,
             }}
             transition={{
                 duration: 0.2,
