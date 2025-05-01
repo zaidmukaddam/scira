@@ -329,7 +329,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
             {isDesktop ? (
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogContent className="max-w-4xl w-[90vw] h-[65vh] p-0 overflow-hidden border-none shadow-xl [&>button]:hidden">
+                    <DialogContent className="max-w-4xl! w-[90vw]! h-[65vh]! p-0 overflow-hidden border-none shadow-xl [&>button]:hidden">
                         <div className="relative w-full h-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900">
                             <div className="absolute top-0 left-0 right-0 z-50 p-2 flex justify-between items-center">
                                 <Badge variant="secondary" className="rounded-full bg-white/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">

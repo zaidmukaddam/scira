@@ -5,6 +5,7 @@ import { xai } from '@ai-sdk/xai';
 import { groq } from "@ai-sdk/groq";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import CodeInterpreter from '@e2b/code-interpreter';
 import { tavily } from '@tavily/core';
 import {
@@ -71,6 +72,7 @@ const scira = customProvider({
         'scira-google': google('gemini-2.5-flash-preview-04-17', {
             structuredOutputs: true,
         }),
+        'scira-anthropic': anthropic('claude-3-7-sonnet-20250219'),
     }
 })
 
@@ -380,6 +382,9 @@ export async function POST(req: Request) {
                             reasoningEffort: 'high',
                         } : {}),
                     },
+                    anthropic: {
+                        thinking: { type: 'enabled', budgetTokens: 12000 },
+                    }
                 },
                 tools: {
                     stock_chart: tool({
@@ -1744,8 +1749,6 @@ plt.show()`
                         parameters: z.object({}),
                         execute: async () => {
                             try {
-                                // Get current date and time with timezone
-                                // const now = new Date();
                                 const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
 
                                 // Format date and time using the timezone
@@ -1880,7 +1883,7 @@ plt.show()`
 
                             // Now generate the research plan
                             const { object: researchPlan } = await generateObject({
-                                model: xai("grok-3-fast-beta"),
+                                model: xai("grok-3-mini-fast"),
                                 temperature: 0,
                                 schema: z.object({
                                     search_queries: z.array(z.object({
@@ -2113,7 +2116,7 @@ plt.show()`
                                 });
 
                                 const { object: analysisResult } = await generateObject({
-                                    model: xai("grok-3-fast-beta"),
+                                    model: xai("grok-3-mini-fast"),
                                     temperature: 0.5,
                                     schema: z.object({
                                         findings: z.array(z.object({
@@ -2163,7 +2166,7 @@ plt.show()`
 
                             // After all analyses are complete, analyze limitations and gaps
                             const { object: gapAnalysis } = await generateObject({
-                                model: xai("grok-3-fast-beta"),
+                                model: xai("grok-3-mini-fast"),
                                 temperature: 0,
                                 schema: z.object({
                                     limitations: z.array(z.object({
@@ -2477,7 +2480,7 @@ plt.show()`
 
                                 // Perform final synthesis of all findings
                                 const { object: finalSynthesis } = await generateObject({
-                                    model: xai("grok-3-fast-beta"),
+                                    model: xai("grok-3-mini-fast"),
                                     temperature: 0,
                                     schema: z.object({
                                         key_findings: z.array(z.object({

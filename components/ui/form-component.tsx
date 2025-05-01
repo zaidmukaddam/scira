@@ -18,6 +18,7 @@ import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
+import { BrainCircuit, EyeIcon } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import {
     Tooltip,
@@ -86,14 +87,20 @@ const QwenIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColor" fi
 }} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" {...props}><title>{"Qwen"}</title><path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z" /></svg>;
 
 
+const AnthropicIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColor" fillRule="evenodd" style={{
+  flex: "none",
+  lineHeight: 1
+}} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" height="1em" {...props}><title>{"Anthropic"}</title><path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" /></svg>;
+
 const models = [
-    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "black", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient model", color: "gray", vision: false, experimental: false, category: "Stable" },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's most advanced vision model", color: "indigo", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's most advanced model", color: "gemini", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's smartest mini model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's mini reasoning model", color: "blue", vision: true, experimental: false, category: "Stable" },
-    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's most advanced model", color: "purple", vision: false, experimental: true, category: "Experimental" },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable" },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Stable" },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable" },
+    { value: "scira-anthropic", label: "Claude 3.7 Sonnet (Reasoning)", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable" },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable" },
+    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship mini model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable" },
+    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable" },
+    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental" },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -165,9 +172,28 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
         return acc;
     }, {} as Record<string, typeof models>);
 
-    // Only show divider if we have multiple categories and no attachments
-    const showDivider = (category: string) => {
-        return !hasAttachments && showExperimentalModels && category === "Stable";
+    // Get hover color classes based on model color
+    const getHoverColorClasses = (modelColor: string) => {
+        switch(modelColor) {
+            case 'black': return 'hover:bg-black/20! dark:hover:bg-black/20!';
+            case 'gray': return 'hover:bg-gray-500/20! dark:hover:bg-gray-400/20!';
+            case 'indigo': return 'hover:bg-indigo-500/20! dark:hover:bg-indigo-400/20!';
+            case 'violet': return 'hover:bg-violet-500/20! dark:hover:bg-violet-400/20!';
+            case 'purple': return 'hover:bg-purple-500/20! dark:hover:bg-purple-400/20!';
+            case 'gemini': return 'hover:bg-teal-500/20! dark:hover:bg-teal-400/20!';
+            case 'blue': return 'hover:bg-blue-500/20! dark:hover:bg-blue-400/20!';
+            default: return 'hover:bg-neutral-500/20! dark:hover:bg-neutral-400/20!';
+        }
+    };
+
+    // Get capability icon colors
+    const getCapabilityColors = (capability: string) => {
+        if (capability === 'reasoning') {
+            return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700";
+        } else if (capability === 'vision') {
+            return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700";
+        }
+        return "";
     };
 
     return (
@@ -179,66 +205,92 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
             <DropdownMenuTrigger
                 className={cn(
                     "flex items-center gap-2 p-2 sm:px-3 h-8",
-                    "rounded-full transition-all duration-300",
+                    "rounded-full transition-all duration-200",
                     "border border-neutral-200 dark:border-neutral-800",
-                    "hover:shadow-md",
+                    "hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700",
                     getColorClasses(selectedModelData?.color || "neutral", true),
                     isProcessing && "opacity-50 pointer-events-none",
                     "ring-0 outline-hidden",
+                    "group",
                     className
                 )}
                 disabled={isProcessing}
             >
-                {selectedModelData && (
-                    typeof selectedModelData.icon === 'string' ? (
-                        <img
-                            src={selectedModelData.icon}
-                            alt={selectedModelData.label}
-                            className={cn(
-                                "w-3.5 h-3.5 object-contain",
-                                selectedModelData.iconClass
-                            )}
-                        />
-                    ) : (
-                        <selectedModelData.icon
-                            className={cn(
-                                "w-3.5 h-3.5",
-                                selectedModelData.iconClass
-                            )}
-                        />
-                    )
-                )}
-                <span className="hidden sm:block text-xs font-medium overflow-hidden">
-                    <motion.div
-                        variants={{
-                            initial: { opacity: 0, y: 10 },
-                            animate: { opacity: 1, y: 0 },
-                            exit: { opacity: 0, y: -10 }
-                        }}
-                        transition={{
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 30,
-                            mass: 0.5
-                        }}
-                    >
-                        {selectedModelData?.label || ""}
-                    </motion.div>
-                </span>
+                <div className="relative flex items-center gap-2">
+                    {selectedModelData && (
+                        typeof selectedModelData.icon === 'string' ? (
+                            <img
+                                src={selectedModelData.icon}
+                                alt={selectedModelData.label}
+                                className={cn(
+                                    "w-3.5 h-3.5 object-contain transition-all duration-300",
+                                    "group-hover:scale-110 group-hover:rotate-6",
+                                    selectedModelData.iconClass
+                                )}
+                            />
+                        ) : (
+                            <selectedModelData.icon
+                                className={cn(
+                                    "w-3.5 h-3.5 transition-all duration-300",
+                                    "group-hover:scale-110 group-hover:rotate-6",
+                                    selectedModelData.iconClass
+                                )}
+                            />
+                        )
+                    )}
+                    <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium overflow-hidden">
+                        <motion.div
+                            variants={{
+                                initial: { opacity: 0, y: 10 },
+                                animate: { opacity: 1, y: 0 },
+                                exit: { opacity: 0, y: -10 }
+                            }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30,
+                                mass: 0.5
+                            }}
+                            className="whitespace-nowrap"
+                        >
+                            {selectedModelData?.label || ""}
+                        </motion.div>
+                        <motion.div
+                            animate={{
+                                rotate: isOpen ? 180 : 0
+                            }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30
+                            }}
+                            className="opacity-60"
+                        >
+                            <svg 
+                                width="8" 
+                                height="5" 
+                                viewBox="0 0 9 6" 
+                                fill="none" 
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path d="M1 1L4.5 4.5L8 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </motion.div>
+                    </span>
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-                className="w-[200px]! p-0.5! font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-1.5! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[290px]! overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+                className="w-[260px]! p-1! font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-2! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px]! overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
                 align="start"
                 side="bottom"
-                sideOffset={8}
+                avoidCollisions={['submitted', 'streaming', 'ready', 'error'].includes(status)}
+                sideOffset={6}
                 forceMount
             >
                 {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
-                    <div key={category} className={cn(
-                        categoryIndex > 0 && "mt-1"
-                    )}>
-                        <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 select-none bg-white dark:bg-neutral-900 z-10">
-                            {category}
+                    <div key={category} className={cn("pt-0.5 pb-0.5", categoryIndex > 0 ? "mt-0.5 border-t border-neutral-200 dark:border-neutral-800" : "")}>
+                        <div className="px-1.5 py-0.5 text-xs! sm:text-[9px] font-medium text-neutral-500 dark:text-neutral-400">
+                            {category} Models
                         </div>
                         <div className="space-y-0.5">
                             {categoryModels.map((model) => (
@@ -255,25 +307,30 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         }
                                     }}
                                     className={cn(
-                                        "flex items-center gap-1.5 px-1.5 py-1 rounded-md text-xs min-h-[36px]",
+                                        "flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs",
                                         "transition-all duration-200",
-                                        "hover:shadow-xs",
-                                        getColorClasses(model.color, selectedModel === model.value)
+                                        "group/item",
+                                        selectedModel === model.value 
+                                            ? getColorClasses(model.color, true)
+                                            : getHoverColorClasses(model.color)
                                     )}
                                 >
                                     <div className={cn(
-                                        "p-1 rounded-md",
+                                        "flex items-center justify-center size-7 rounded-md",
+                                        "transition-all duration-300",
+                                        "group-hover/item:scale-110 group-hover/item:rotate-6",
                                         selectedModel === model.value
-                                            ? "bg-black/10 dark:bg-white/10"
-                                            : "bg-black/5 dark:bg-white/5",
-                                        "group-hover:bg-black/10 dark:group-hover:bg-white/10"
+                                            ? "bg-white/20 dark:bg-white/10"
+                                            : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
                                     )}>
                                         {typeof model.icon === 'string' ? (
                                             <img
                                                 src={model.icon}
                                                 alt={model.label}
                                                 className={cn(
-                                                    "w-2.5! h-2.5! object-contain",
+                                                    "w-4 h-4 object-contain",
+                                                    "transition-all duration-300",
+                                                    "group-hover/item:scale-110 group-hover/item:rotate-12",
                                                     model.iconClass,
                                                     model.value === "scira-optimus" && "invert"
                                                 )}
@@ -281,22 +338,58 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         ) : (
                                             <model.icon
                                                 className={cn(
-                                                    "size-3!",
+                                                    "size-4",
+                                                    "transition-all duration-300",
+                                                    "group-hover/item:scale-110 group-hover/item:rotate-12",
                                                     model.iconClass
                                                 )}
                                             />
                                         )}
                                     </div>
-                                    <div className="flex flex-col gap-px min-w-0">
-                                        <div className="font-medium truncate text-[12px]!">{model.label}</div>
-                                        <div className="text-[9px]! opacity-80 truncate leading-tight">{model.description}</div>
+                                    <div className="flex flex-col gap-0 min-w-0 flex-1">
+                                        <div className="font-medium truncate text-[11px] flex items-center">
+                                            {model.label}
+                                            {selectedModel === model.value && (
+                                                <span className="ml-1 inline-flex relative top-[-1px]">
+                                                    <motion.span
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        className="h-1 w-1 rounded-full bg-current"
+                                                    />
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-[9px] opacity-70 truncate leading-tight">
+                                            {model.description}
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            {(model.vision || model.reasoning) && (
+                                                <div className="flex gap-1">
+                                                    {model.vision && (
+                                                        <div className={cn(
+                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                            getCapabilityColors("vision")
+                                                        )}>
+                                                            <EyeIcon className="size-2.5" />
+                                                            <span>Vision</span>
+                                                        </div>
+                                                    )}
+                                                    {model.reasoning && (
+                                                        <div className={cn(
+                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                            getCapabilityColors("reasoning")
+                                                        )}>
+                                                            <BrainCircuit className="size-2.5" />
+                                                            <span>Reasoning</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </DropdownMenuItem>
                             ))}
                         </div>
-                        {showDivider(category) && (
-                            <div className="my-1 border-t border-neutral-200 dark:border-neutral-800" />
-                        )}
                     </div>
                 ))}
             </DropdownMenuContent>

@@ -3,9 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @plugin 'tailwind-scrollbar';
-
 @plugin 'tailwindcss-animate';
-
 @plugin "@tailwindcss/typography";
 
 @keyframes accordion-down {
@@ -24,6 +22,10 @@
   to {
     height: 0;
   }
+}
+
+::selection {
+  @apply bg-primary text-primary-foreground;
 }
 
 @theme {
@@ -168,6 +170,12 @@
     field-sizing: content;
     min-height: 2lh;
     max-height: 10lh;
+
+    /* fix for firefox */
+    @supports (-moz-appearance: none) {
+      min-height: 2lh;
+      max-height: 10lh;
+    }
   }
 }
 

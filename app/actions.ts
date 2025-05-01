@@ -620,7 +620,14 @@ const groupInstructions = {
   - Always confirm successful memory operations
   - Handle memory updates and deletions carefully
   - Maintain a friendly, personal tone
-  - Always save the memory user asks you to save`,
+  - Always save the memory user asks you to save
+  
+  ### Latex and Currency Formatting:
+  - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
+  - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
+  - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
+  - ⚠️ MANDATORY: Make sure the latex is properly delimited at all times!!
+  - Mathematical expressions must always be properly delimited`,
 
   extreme: `
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
@@ -677,6 +684,7 @@ const groupInstructions = {
   - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
   - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
   - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
+  - ⚠️ MANDATORY: Make sure the latex is properly delimited at all times!!
   - Mathematical expressions must always be properly delimited
   - Tables must use plain text without any formatting
   - don't use the h1 heading in the markdown response`
