@@ -118,6 +118,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@vercel/speed-insights",
       "sharp"
     ]
   }
