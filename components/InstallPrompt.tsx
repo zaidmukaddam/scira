@@ -1,139 +1,78 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Share, Plus, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+'use client'
+
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { Share } from 'lucide-react'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 
 export function InstallPrompt() {
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [platform, setPlatform] = useState<'ios' | 'android' | 'chrome' | 'other'>('other');
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [isDismissed, setIsDismissed] = useLocalStorage('installPromptDismissed', false)
 
   useEffect(() => {
-    const isDismissed = localStorage.getItem('installPromptDismissed');
-    if (isDismissed) return;
+    if (isDismissed) return
 
-    // Detect platform
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isIOSDevice = /ipad|iphone|ipod/.test(userAgent) && !(window as any).MSStream;
-    const isAndroid = /android/.test(userAgent);
-    const isChrome = /chrome/.test(userAgent) && /google inc/.test(navigator.vendor.toLowerCase());
-
-    if (isIOSDevice) setPlatform('ios');
-    else if (isAndroid) setPlatform('android');
-    else if (isChrome) setPlatform('chrome');
-
-    // Don't show if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-
-    // Handle PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowPrompt(true);
-    });
-
-    // Show prompt for iOS after delay
-    if (isIOSDevice) {
-      setTimeout(() => setShowPrompt(true), 2000);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+      !(navigator as any).standalone && 
+      !('MSStream' in window)
+    
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    
+    if (isIOS && !isStandalone) {
+      const timer = setTimeout(() => setShowPrompt(true), 1500)
+      return () => clearTimeout(timer)
     }
-  }, []);
+  }, [isDismissed])
 
   const handleDismiss = () => {
-    setShowPrompt(false);
-    localStorage.setItem('installPromptDismissed', 'true');
-  };
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    try {
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-
-      if (choiceResult.outcome === 'accepted') {
-        setShowPrompt(false);
-        setDeferredPrompt(null);
-      }
-    } catch (error) {
-      console.error('Install prompt error:', error);
-    }
-  };
-
-  const getInstructions = () => {
-    switch (platform) {
-      case 'ios':
-        return (
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Tap <Share className="inline h-4 w-4 mx-1" /> and then{" "}
-            <span className="whitespace-nowrap">
-              &ldquo;Add to Home Screen&rdquo; <Plus className="inline h-4 w-4 ml-1" />
-            </span>
-          </p>
-        );
-      case 'android':
-        return (
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Tap the menu <span className="font-bold">⋮</span> and select &ldquo;Install app&rdquo;
-          </p>
-        );
-      default:
-        return (
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Install our app for a better experience <Download className="inline h-4 w-4 ml-1" />
-          </p>
-        );
-    }
-  };
+    setShowPrompt(false)
+    setIsDismissed(true)
+  }
 
   return (
     <AnimatePresence>
-      {showPrompt && (
+      {showPrompt && !isDismissed && (
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className="fixed top-4 left-4 right-4 z-100 md:left-auto md:right-4 md:w-96"
+          exit={{ opacity: 0, y: -30, transition: { duration: 0.2 } }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto md:max-w-sm p-3 bg-card text-card-foreground shadow-xl rounded-lg border border-border overflow-hidden z-100"
         >
-          <Card className="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <h3 className="font-medium text-xl text-neutral-900 dark:text-neutral-100">
-                  Install Scira
-                </h3>
-                {getInstructions()}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={handleDismiss}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Dismiss</span>
-              </Button>
+          <div className="flex items-start justify-between gap-3">
+            {/* App Icon */}
+            <img src="/apple-icon.png" alt="App Icon" className="w-10 h-10 rounded-md flex-shrink-0 mt-0.5" />
+
+            <div className="flex-grow">
+              <p className="text-sm font-semibold text-foreground">
+                Install Scira on your device
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
+                Tap{' '}
+                <Share className="w-3 h-3 text-primary" />
+                {' '}
+                then "Add to Home Screen"{' '}
+                <span role="img" aria-label="plus icon" className="text-primary font-medium">
+                  ➕
+                </span>
+              </p>
             </div>
 
-            {platform !== 'ios' && (
-              <div className="mt-4 flex justify-end gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleDismiss}
-                >
-                  Maybe later
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleInstall}
-                >
-                  Install
-                </Button>
-              </div>
-            )}
-          </Card>
+            {/* Close Button */}
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleDismiss}
+              className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors flex-shrink-0 -mr-1 -mt-1"
+              aria-label="Close install prompt"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </motion.button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
+  )
+} 

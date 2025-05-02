@@ -3,7 +3,6 @@
 import 'katex/dist/katex.min.css';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { GeistMono } from 'geist/font/mono';
 import { useChat, UseChatOptions } from '@ai-sdk/react';
 import { CalendarBlank, Clock as PhosphorClock, Info } from '@phosphor-icons/react';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -14,7 +13,6 @@ import {
     Plus,
     Sun,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import React, {
     memo,
@@ -33,8 +31,6 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn, getUserId, SearchGroupId } from '@/lib/utils';
 import { suggestQuestions } from './actions';
 import Messages from '@/components/messages';
-
-export const maxDuration = 120;
 
 interface Attachment {
     name: string;

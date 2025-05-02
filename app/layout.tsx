@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { GeistSans } from 'geist/font/sans';
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -82,7 +83,7 @@ export default function RootLayout({
           </Providers>
         </NuqsAdapter>
         <Analytics />
-        <script async src="https://cdn.seline.com/seline.js" data-token={process.env.SELINE_TOKEN}></script>
+        <SpeedInsights />
       </body>
     </html>
   );
