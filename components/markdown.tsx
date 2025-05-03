@@ -69,74 +69,56 @@ const preprocessLaTeX = (content: string) => {
 };
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
-  const citationLinks = useMemo<CitationLink[]>(() => {
-    // Handle complex cases including nested parentheses in URLs or titles
+  // Preprocess content to find and normalize citation links before passing to marked
+  const [processedContent, extractedCitations] = useMemo(() => {
     const citations: CitationLink[] = [];
+    let modifiedContent = content;
     
-    // First pass: find standard markdown links
-    const basicRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let match;
+    // Process standard markdown links
+    const stdLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    modifiedContent = modifiedContent.replace(stdLinkRegex, (match, text, url) => {
+      citations.push({ text, link: url });
+      return `[${text}](${url})`;
+    });
     
-    while ((match = basicRegex.exec(content)) !== null) {
-      const text = match[1]?.trim() || '';
-      const link = match[2]?.trim() || '';
-      citations.push({ text, link });
-    }
-    
-    // Second pass: try to find links with escaped parentheses or special cases
-    // Look for patterns like [text](url with (special) chars)
-    const complexContent = content;
-    let pos = 0;
-    
-    while (pos < complexContent.length) {
-      const openBracket = complexContent.indexOf('[', pos);
-      if (openBracket === -1) break;
-      
-      const closeBracket = complexContent.indexOf(']', openBracket);
-      if (closeBracket === -1) break;
-      
-      if (complexContent[closeBracket + 1] === '(') {
-        // Found a potential markdown link
-        let openParen = closeBracket + 1;
-        let depth = 1;
-        let closeParenIndex = -1;
-        
-        // Find the matching closing parenthesis, accounting for nested ones
-        for (let i = openParen + 1; i < complexContent.length; i++) {
-          if (complexContent[i] === '(' && complexContent[i-1] !== '\\') {
-            depth++;
-          } else if (complexContent[i] === ')' && complexContent[i-1] !== '\\') {
-            depth--;
-            if (depth === 0) {
-              closeParenIndex = i;
-              break;
-            }
+    // Process malformed PDF citations: [PDF] Title](url) or similar patterns
+    const pdfLinkRegex = /\[(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+)\](?:\(([^)]+)\))?/g;
+    modifiedContent = modifiedContent.replace(pdfLinkRegex, (match, docType, text, url) => {
+      // Only process if not already a well-formed markdown link
+      if (!stdLinkRegex.test(match)) {
+        const fullText = (docType ? `[${docType}] ` : '') + text;
+        if (url) {
+          citations.push({ text: fullText, link: url });
+          return `[${fullText}](${url})`;
+        } else {
+          // Check if there's a URL following this text
+          const followingText = content.substring(content.indexOf(match) + match.length).trim();
+          const urlMatch = followingText.match(/^(?:\()?(https?:\/\/[^\s)]+)(?:\))?/);
+          if (urlMatch) {
+            const extractedUrl = urlMatch[1];
+            citations.push({ text: fullText, link: extractedUrl });
+            return `[${fullText}](${extractedUrl})`;
           }
-        }
-        
-        if (closeParenIndex !== -1) {
-          const linkText = complexContent.substring(openBracket + 1, closeBracket).trim();
-          const url = complexContent.substring(openParen + 1, closeParenIndex).trim();
-          
-          // Check if this link was already found in the basic regex
-          const alreadyExists = citations.some(
-            citation => citation.text === linkText && citation.link === url
-          );
-          
-          if (!alreadyExists) {
-            citations.push({ text: linkText, link: url });
-          }
-          
-          pos = closeParenIndex + 1;
-          continue;
         }
       }
-      
-      pos = closeBracket + 1;
-    }
+      return match;
+    });
     
-    return citations;
+    // Process raw URLs to documents
+    const rawUrlRegex = /(https?:\/\/[^\s]+\.(?:pdf|doc|docx|ppt|pptx|xls|xlsx))\b/gi;
+    modifiedContent = modifiedContent.replace(rawUrlRegex, (match, url) => {
+      const filename = url.split('/').pop() || url;
+      const alreadyLinked = citations.some(citation => citation.link === url);
+      if (!alreadyLinked) {
+        citations.push({ text: filename, link: url });
+      }
+      return match;
+    });
+    
+    return [modifiedContent, citations];
   }, [content]);
+  
+  const citationLinks = extractedCitations;
 
   interface CodeBlockProps {
     language: string | undefined;
@@ -322,6 +304,14 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
+  const renderCitation = (index: number, citationText: string, href: string) => {
+    return (
+      <span className="inline-flex items-baseline relative whitespace-normal" key={generateKey()}>
+        {renderHoverCard(href, index + 1, true, citationText)}
+      </span>
+    );
+  };
+
   const renderer: Partial<ReactRenderer> = {
     text(text: string) {
       // Simple check for any LaTeX content
@@ -364,11 +354,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       if (citationIndex !== -1) {
         // For citations, show the citation text in the hover card
         const citationText = citationLinks[citationIndex].text;
-        return (
-          <span className="inline-flex items-baseline relative whitespace-normal" key={generateKey()}>
-            {renderHoverCard(href, citationIndex + 1, true, citationText)}
-          </span>
-        );
+        return renderCitation(citationIndex, citationText, href);
       }
       return isValidUrl(href)
         ? renderHoverCard(href, text)
@@ -469,7 +455,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   return (
     <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
       <Marked renderer={renderer}>
-        {content}
+        {processedContent}
       </Marked>
     </div>
   );
