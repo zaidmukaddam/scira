@@ -115,6 +115,52 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return match;
     });
     
+    // Process plain text references like "Title - Wikipedia" or other common patterns
+    // We'll search for these and try to generate appropriate links
+    const plainTextCitationPatterns = [
+      // Match "XYZ - Wikipedia" and variations
+      {
+        regex: /([^.!?\n]+)\s+[-–—]\s+Wikipedia(?![^\s.,:;!?)])/g, 
+        urlTemplate: (title: string) => {
+          const encodedTitle = encodeURIComponent(title.trim().replace(/\s+/g, '_'));
+          return `https://en.wikipedia.org/wiki/${encodedTitle}`;
+        }
+      },
+      // Match "Website Name | Title" format
+      {
+        regex: /([^.!?\n|]+)\s+\|\s+([^.!?\n|]+)(?![^\s.,:;!?)])/g,
+        urlTemplate: (_site: string, title: string) => {
+          // Try to make a reasonable guess for the URL based on the site name and title
+          const encodedTitle = encodeURIComponent(title.trim().replace(/\s+/g, '-').toLowerCase());
+          return `https://example.com/${encodedTitle}`;
+        }
+      },
+      // Match "Title (Type)" like "Transformer (deep learning architecture)"
+      {
+        regex: /([^.!?\n(]+)\s+\(([^)]+)\)(?!\s*\[)(?![^\s.,:;!?)])/g,
+        urlTemplate: (title: string, type: string) => {
+          if (type.includes('learning') || type.includes('model') || type.includes('architecture')) {
+            const encodedTitle = encodeURIComponent(`${title.trim()}_${type.trim()}`.replace(/\s+/g, '_'));
+            return `https://en.wikipedia.org/wiki/${encodedTitle}`;
+          }
+          return null; // Skip if not a technical reference
+        }
+      }
+    ];
+    
+    // Process each pattern
+    plainTextCitationPatterns.forEach(pattern => {
+      modifiedContent = modifiedContent.replace(pattern.regex, (match, ...groups: string[]) => {
+        const url = pattern.urlTemplate(...(groups as [string, string]));
+        if (url) {
+          const text = match.trim();
+          citations.push({ text, link: url });
+          return `[${text}](${url})`;
+        }
+        return match;
+      });
+    });
+    
     return [modifiedContent, citations];
   }, [content]);
   
