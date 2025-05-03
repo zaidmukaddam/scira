@@ -46,17 +46,26 @@ const preprocessLaTeX = (content: string) => {
     .replace(/\\\(/g, '___INLINE_OPEN___')
     .replace(/\\\)/g, '___INLINE_CLOSE___');
 
-  // Process block equations (allowing for multi-line)
-  processedContent = processedContent.replace(
-    /\$\$([\s\S]*?)\$\$/g,
-    (_, equation) => `$$${equation.trim()}$$`
-  );
+  // Find and preserve complete LaTeX blocks as-is
+  // For block equations ($$...$$)
+  const blockRegex = /(\$\$[\s\S]*?\$\$)/g;
+  const blocks: string[] = [];
+  
+  processedContent = processedContent.replace(blockRegex, (match) => {
+    const id = blocks.length;
+    blocks.push(match);
+    return `___LATEX_BLOCK_${id}___`;
+  });
 
-  // Process inline equations (avoiding currency values)
-  processedContent = processedContent.replace(
-    /\$(?!\s*\d+[.,\s]*\d*\s*$)((?:\\[^$]|[^$\n\\])*?)\$/g,
-    (_, equation) => `$${equation.trim()}$`
-  );
+  // For inline equations ($...$) - avoiding currency values
+  const inlineRegex = /(\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$)/g;
+  const inlines: string[] = [];
+  
+  processedContent = processedContent.replace(inlineRegex, (match) => {
+    const id = inlines.length;
+    inlines.push(match);
+    return `___LATEX_INLINE_${id}___`;
+  });
 
   // Handle any remaining escaped delimiters that weren't part of a complete pair
   processedContent = processedContent
@@ -64,6 +73,15 @@ const preprocessLaTeX = (content: string) => {
     .replace(/___BLOCK_CLOSE___/g, '\\]')
     .replace(/___INLINE_OPEN___/g, '\\(')
     .replace(/___INLINE_CLOSE___/g, '\\)');
+
+  // Now restore the LaTeX blocks after other processing
+  processedContent = processedContent.replace(/___LATEX_BLOCK_(\d+)___/g, (_, id) => {
+    return blocks[parseInt(id)];
+  });
+
+  processedContent = processedContent.replace(/___LATEX_INLINE_(\d+)___/g, (_, id) => {
+    return inlines[parseInt(id)];
+  });
 
   return processedContent;
 };
@@ -74,9 +92,27 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     const citations: CitationLink[] = [];
     let modifiedContent = content;
     
+    // First, protect LaTeX content from citation processing
+    const latexBlocks: string[] = [];
+    const latexPlaceholder = "___LATEX_BLOCK_PLACEHOLDER___";
+    
+    // Replace block and inline LaTeX with placeholders
+    modifiedContent = modifiedContent.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+      latexBlocks.push(match);
+      return `${latexPlaceholder}${latexBlocks.length - 1}`;
+    });
+    
+    modifiedContent = modifiedContent.replace(/\$(?!\d)(?:\\.|[^$])*?\$(?!\d)/g, (match) => {
+      latexBlocks.push(match);
+      return `${latexPlaceholder}${latexBlocks.length - 1}`;
+    });
+    
     // Process standard markdown links
     const stdLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     modifiedContent = modifiedContent.replace(stdLinkRegex, (match, text, url) => {
+      // Skip if it's a LaTeX placeholder
+      if (match.includes(latexPlaceholder)) return match;
+      
       citations.push({ text, link: url });
       return `[${text}](${url})`;
     });
@@ -84,6 +120,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     // Process references followed by URLs - handles both malformed markdown and natural text references
     const refWithUrlRegex = /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
     modifiedContent = modifiedContent.replace(refWithUrlRegex, (match, docType, bracketText, plainText, url) => {
+      // Skip if it contains a LaTeX placeholder
+      if (match.includes(latexPlaceholder)) return match;
+      
       // Get the reference text - either from brackets or plain text
       const text = bracketText || plainText;
       const fullText = (docType ? `[${docType}] ` : '') + text;
@@ -95,15 +134,50 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return `[${fullText.trim()}](${cleanUrl})`;
     });
     
+    // Process quoted paper titles followed by site references like "Attention Is All You Need" Transformer - Wikipedia
+    const quotedTitleRegex = /"([^"]+)"(?:\s+([^.!?\n]+?(?:\s+[-–—]\s+(?:Wikipedia|arXiv|GitHub|(?:[A-Z][a-z]+(?:\.[a-z]+)?)))))/g;
+    modifiedContent = modifiedContent.replace(quotedTitleRegex, (match, title, source) => {
+      // Skip if it contains a LaTeX placeholder
+      if (match.includes(latexPlaceholder)) return match;
+      
+      // Determine the likely URL based on the source
+      let url = "";
+      const fullText = match;
+      
+      if (source.includes("Wikipedia")) {
+        // Format for Wikipedia
+        const searchTerm = `${title} ${source.replace(/\s+[-–—]\s+Wikipedia/, "")}`.trim();
+        url = `https://en.wikipedia.org/wiki/${encodeURIComponent(searchTerm.replace(/\s+/g, '_'))}`;
+        citations.push({ text: fullText.trim(), link: url });
+        return `[${fullText.trim()}](${url})`;
+      } else if (source.includes("arXiv")) {
+        // Skip without a specific arXiv ID
+        return match;
+      } else if (source.includes("GitHub")) {
+        // Skip without a specific GitHub URL
+        return match;
+      }
+      
+      return match;
+    });
+    
     // Process raw URLs to documents
     const rawUrlRegex = /(https?:\/\/[^\s]+\.(?:pdf|doc|docx|ppt|pptx|xls|xlsx))\b/gi;
     modifiedContent = modifiedContent.replace(rawUrlRegex, (match, url) => {
+      // Skip if it contains a LaTeX placeholder
+      if (match.includes(latexPlaceholder)) return match;
+      
       const filename = url.split('/').pop() || url;
       const alreadyLinked = citations.some(citation => citation.link === url);
       if (!alreadyLinked) {
         citations.push({ text: filename, link: url });
       }
       return match;
+    });
+    
+    // Restore LaTeX blocks
+    modifiedContent = modifiedContent.replace(new RegExp(`${latexPlaceholder}(\\d+)`, 'g'), (_, index) => {
+      return latexBlocks[parseInt(index)];
     });
     
     return [modifiedContent, citations];
@@ -307,12 +381,14 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     text(text: string) {
       // Simple check for any LaTeX content
       if (!text.includes('$')) return text;
+      
       return (
         <Latex
           delimiters={[
             { left: '$$', right: '$$', display: true },
             { left: '$', right: '$', display: false }
           ]}
+          strict={false}
           key={generateKey()}
         >
           {text}
@@ -328,6 +404,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
                 { left: '$$', right: '$$', display: true },
                 { left: '$', right: '$', display: false }
               ]}
+              strict={false}
               key={generateKey()}
             >
               {children}
