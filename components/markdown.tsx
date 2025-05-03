@@ -46,22 +46,16 @@ const preprocessLaTeX = (content: string) => {
     .replace(/\\\(/g, '___INLINE_OPEN___')
     .replace(/\\\)/g, '___INLINE_CLOSE___');
 
-  // Process block equations
+  // Process block equations (allowing for multi-line)
   processedContent = processedContent.replace(
-    /___BLOCK_OPEN___([\s\S]*?)___BLOCK_CLOSE___/g,
+    /\$\$([\s\S]*?)\$\$/g,
     (_, equation) => `$$${equation.trim()}$$`
   );
 
-  // Process inline equations
+  // Process inline equations (avoiding currency values)
   processedContent = processedContent.replace(
-    /___INLINE_OPEN___([\s\S]*?)___INLINE_CLOSE___/g,
+    /\$(?!\s*\d+[.,\s]*\d*\s*$)((?:\\[^$]|[^$\n\\])*?)\$/g,
     (_, equation) => `$${equation.trim()}$`
-  );
-
-  // Handle common LaTeX expressions not wrapped in delimiters
-  processedContent = processedContent.replace(
-    /(\b[A-Z](?:_\{[^{}]+\}|\^[^{}]+|_[a-zA-Z\d]|\^[a-zA-Z\d])+)/g,
-    (match) => `$${match}$`
   );
 
   // Handle any remaining escaped delimiters that weren't part of a complete pair
@@ -76,12 +70,72 @@ const preprocessLaTeX = (content: string) => {
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const citationLinks = useMemo<CitationLink[]>(() => {
-    // Improved regex to better handle various markdown link formats
-    return Array.from(content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)).map(match => {
+    // Handle complex cases including nested parentheses in URLs or titles
+    const citations: CitationLink[] = [];
+    
+    // First pass: find standard markdown links
+    const basicRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let match;
+    
+    while ((match = basicRegex.exec(content)) !== null) {
       const text = match[1]?.trim() || '';
       const link = match[2]?.trim() || '';
-      return { text, link };
-    });
+      citations.push({ text, link });
+    }
+    
+    // Second pass: try to find links with escaped parentheses or special cases
+    // Look for patterns like [text](url with (special) chars)
+    const complexContent = content;
+    let pos = 0;
+    
+    while (pos < complexContent.length) {
+      const openBracket = complexContent.indexOf('[', pos);
+      if (openBracket === -1) break;
+      
+      const closeBracket = complexContent.indexOf(']', openBracket);
+      if (closeBracket === -1) break;
+      
+      if (complexContent[closeBracket + 1] === '(') {
+        // Found a potential markdown link
+        let openParen = closeBracket + 1;
+        let depth = 1;
+        let closeParenIndex = -1;
+        
+        // Find the matching closing parenthesis, accounting for nested ones
+        for (let i = openParen + 1; i < complexContent.length; i++) {
+          if (complexContent[i] === '(' && complexContent[i-1] !== '\\') {
+            depth++;
+          } else if (complexContent[i] === ')' && complexContent[i-1] !== '\\') {
+            depth--;
+            if (depth === 0) {
+              closeParenIndex = i;
+              break;
+            }
+          }
+        }
+        
+        if (closeParenIndex !== -1) {
+          const linkText = complexContent.substring(openBracket + 1, closeBracket).trim();
+          const url = complexContent.substring(openParen + 1, closeParenIndex).trim();
+          
+          // Check if this link was already found in the basic regex
+          const alreadyExists = citations.some(
+            citation => citation.text === linkText && citation.link === url
+          );
+          
+          if (!alreadyExists) {
+            citations.push({ text: linkText, link: url });
+          }
+          
+          pos = closeParenIndex + 1;
+          continue;
+        }
+      }
+      
+      pos = closeBracket + 1;
+    }
+    
+    return citations;
   }, [content]);
 
   interface CodeBlockProps {
@@ -246,7 +300,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             target="_blank"
             rel="noopener noreferrer"
             className={isCitation
-              ? "cursor-pointer text-xs text-primary py-0.5 px-1.5 m-0 bg-primary/10 dark:bg-primary/20 rounded-full no-underline font-medium"
+              ? "cursor-pointer text-xs text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm no-underline font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline"
               : "text-primary dark:text-primary-light no-underline hover:underline font-medium"}
           >
             {text}
@@ -256,7 +310,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           side="top"
           align="start"
           sideOffset={5}
-          className="w-56 p-0 shadow-xs border border-neutral-200 dark:border-neutral-700 rounded-md overflow-hidden"
+          className="w-64 p-0 shadow-lg border border-[#ff8c37]/30 dark:border-[#ff9f57]/30 rounded-md overflow-hidden bg-white dark:bg-neutral-900"
         >
           <LinkPreview href={href} title={title} />
         </HoverCardContent>
@@ -270,6 +324,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   const renderer: Partial<ReactRenderer> = {
     text(text: string) {
+      // Simple check for any LaTeX content
       if (!text.includes('$')) return text;
       return (
         <Latex
@@ -310,9 +365,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         // For citations, show the citation text in the hover card
         const citationText = citationLinks[citationIndex].text;
         return (
-          <sup key={generateKey()}>
+          <span className="inline-flex items-baseline relative whitespace-normal" key={generateKey()}>
             {renderHoverCard(href, citationIndex + 1, true, citationText)}
-          </sup>
+          </span>
         );
       }
       return isValidUrl(href)

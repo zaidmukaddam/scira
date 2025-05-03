@@ -23,7 +23,7 @@ export function getUserId(): string {
   return userId;
 }
 
-export type SearchGroupId = 'web' | 'academic' | 'youtube' | 'x' | 'analysis' | 'chat' | 'extreme' | 'buddy';
+export type SearchGroupId = 'web' | 'academic' | 'youtube' | 'analysis' | 'chat' | 'extreme' | 'buddy';
 
 export const searchGroups = [
   {
@@ -38,13 +38,6 @@ export const searchGroups = [
     name: 'Buddy',
     description: 'Your personal memory companion',
     icon: Memory,
-    show: true,
-  },
-  {
-    id: 'x' as const,
-    name: 'X',
-    description: 'Search X posts and content powered by Exa',
-    icon: XLogo,
     show: true,
   },
   {

@@ -51,6 +51,18 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
+                hostname: '**',
+                port: '',
+                pathname: '**'
+            },
+            {
+                protocol: 'http',
+                hostname: '**',
+                port: '',
+                pathname: '**'
+            },
+            {
+                protocol: 'https',
                 hostname: 'www.google.com',
                 port: '',
                 pathname: '/s2/favicons',

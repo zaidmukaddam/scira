@@ -99,8 +99,8 @@ importers:
         specifier: ^0.5.13
         version: 0.5.16(tailwindcss@4.1.4)
       '@tavily/core':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.5.1
+        version: 0.5.1
       '@types/he':
         specifier: ^1.2.3
         version: 1.2.3
@@ -1423,8 +1423,8 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
 
-  '@tavily/core@0.5.0':
-    resolution: {integrity: sha512-2nDVeoA9V1eUWBWmkS4iekQ+ANcsnGNcfaa+NBdsZSCxfSNa+TTyGYBr5cSsaDL7siVkUH4I19Q6quQIoOqorA==}
+  '@tavily/core@0.5.1':
+    resolution: {integrity: sha512-E444NdA2lALDS+g8I+FIfusD94Kbph8oqinw+S4iKHgbWvgPO3Tehc3md2HzmlMtrfYRXZ40bTi3upmbzOiv7Q==}
 
   '@tootallnate/once@1.1.2':
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
@@ -5869,7 +5869,7 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.1.4
 
-  '@tavily/core@0.5.0':
+  '@tavily/core@0.5.1':
     dependencies:
       axios: 1.8.4
       https-proxy-agent: 7.0.6

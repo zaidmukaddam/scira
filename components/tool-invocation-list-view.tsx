@@ -4,10 +4,9 @@ import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ToolInvocation } from 'ai';
 import { motion } from 'framer-motion';
 import { Wave } from "@foobar404/wave";
-import { Tweet } from 'react-tweet';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { LucideIcon, User2 } from 'lucide-react';
+import { ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
@@ -34,14 +33,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Icons
@@ -65,7 +56,7 @@ import {
     Tv,
     YoutubeIcon,
 } from 'lucide-react';
-import { Memory, XLogo, Clock as PhosphorClock, RoadHorizon } from '@phosphor-icons/react';
+import { Memory, Clock as PhosphorClock, RoadHorizon } from '@phosphor-icons/react';
 
 // Components
 import { FlightTracker } from '@/components/flight-tracker';
@@ -85,6 +76,7 @@ import MCPServerList from '@/components/mcp-server-list';
 
 // Actions
 import { generateSpeech } from '@/app/actions';
+import Image from 'next/image';
 
 
 // Interfaces
@@ -118,17 +110,6 @@ interface YouTubeSearchResponse {
 interface YouTubeCardProps {
     video: VideoResult;
     index: number;
-}
-
-interface XResult {
-    id: string;
-    url: string;
-    title: string;
-    author?: string;
-    publishedDate?: string;
-    text: string;
-    highlights?: string[];
-    tweetId: string;
 }
 
 interface CollapsibleSectionProps {
@@ -703,126 +684,6 @@ const ToolInvocationListView = memo(
                     return <TrendingResults result={result} type="tv" />;
                 }
 
-                if (toolInvocation.toolName === 'x_search') {
-                    if (!result) {
-                        return <SearchLoadingState
-                            icon={XLogo}
-                            text="Searching for latest news..."
-                            color="gray"
-                        />;
-                    }
-
-                    const PREVIEW_COUNT = 3;
-
-                    // Memoized tweet component to prevent unnecessary re-renders
-                    const MemoizedTweet = memo(({ id }: { id: string }) => (
-                        <div className="w-full [&>div]:w-full [&>div]:mx-auto">
-                            <Tweet id={id} />
-                        </div>
-                    ));
-
-                    MemoizedTweet.displayName = 'MemoizedTweet';
-
-                    const FullTweetList = memo(() => (
-                        <div className="grid grid-cols-1 gap-6 p-4 w-full max-w-[550px] mx-auto">
-                            {result.map((post: XResult, index: number) => (
-                                <motion.div
-                                    key={post.id || post.tweetId}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    className="w-full"
-                                >
-                                    <MemoizedTweet id={post.tweetId} />
-                                </motion.div>
-                            ))}
-                        </div>
-                    ));
-
-                    FullTweetList.displayName = 'FullTweetList';
-
-                    return (
-                        <Card className="w-full my-4 pt-6 gap-2 pb-0 overflow-hidden shadow-none dark:bg-neutral-950!">
-                            <CardHeader className="pb-2 m-0! flex flex-row items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800! flex items-center justify-center">
-                                        <XLogo className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <CardTitle>Latest from X</CardTitle>
-                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                            {result.length} tweets found
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <div className="relative">
-                                <div className="px-4 pt-0! m-0! pb-2! h-72">
-                                    <div className="flex flex-nowrap overflow-x-auto gap-4 no-scrollbar">
-                                        {result.slice(0, PREVIEW_COUNT).map((post: XResult, index: number) => (
-                                            <motion.div
-                                                key={post.tweetId || post.id}
-                                                className="flex-none w-[320px] sm:w-[380px] max-w-[90vw]"
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                                            >
-                                                <MemoizedTweet id={post.tweetId} />
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-white dark:to-black pointer-events-none" />
-
-                                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-4 pt-20 bg-linear-to-t from-white dark:from-black to-transparent">
-                                    <div className="hidden sm:block">
-                                        <Sheet>
-                                            <SheetTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="gap-2 bg-white dark:bg-neutral-800!"
-                                                >
-                                                    <XLogo className="h-4 w-4" />
-                                                    Show all {result.length} tweets
-                                                </Button>
-                                            </SheetTrigger>
-                                            <SheetContent side="right" className="w-full sm:max-w-[600px] overflow-y-auto p-0! z-70!">
-                                                <SheetHeader className='mt-5! font-sans!'>
-                                                    <SheetTitle className='text-center'>All Tweets</SheetTitle>
-                                                </SheetHeader>
-                                                <FullTweetList />
-                                            </SheetContent>
-                                        </Sheet>
-                                    </div>
-
-                                    <div className="block sm:hidden">
-                                        <Drawer>
-                                            <DrawerTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="gap-2 bg-white dark:bg-black"
-                                                >
-                                                    <XLogo className="h-4 w-4" />
-                                                    Show all {result.length} tweets
-                                                </Button>
-                                            </DrawerTrigger>
-                                            <DrawerContent className="max-h-[85vh] font-sans">
-                                                <DrawerHeader>
-                                                    <DrawerTitle>All Tweets</DrawerTitle>
-                                                </DrawerHeader>
-                                                <div className="px-2 overflow-y-auto">
-                                                    <FullTweetList />
-                                                </div>
-                                            </DrawerContent>
-                                        </Drawer>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                    );
-                }
-
                 if (toolInvocation.toolName === 'youtube_search') {
                     if (!result) {
                         return <SearchLoadingState
@@ -1120,18 +981,38 @@ const ToolInvocationListView = memo(
                 if (toolInvocation.toolName === 'retrieve') {
                     if (!result) {
                         return (
-                            <div className="border border-neutral-200 rounded-xl my-4 p-4 dark:border-neutral-800 bg-linear-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
-                                <div className="flex items-center gap-4">
-                                    <div className="relative w-10 h-10">
-                                        <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
-                                        <Globe className="h-5 w-5 text-primary/70 absolute inset-0 m-auto" />
-                                    </div>
-                                    <div className="space-y-2 flex-1">
-                                        <div className="h-4 w-36 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-md" />
-                                        <div className="space-y-1.5">
-                                            <div className="h-3 w-full bg-neutral-100 dark:bg-neutral-800/50 animate-pulse rounded-md" />
-                                            <div className="h-3 w-2/3 bg-neutral-100 dark:bg-neutral-800/50 animate-pulse rounded-md" />
+                            <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                                <div className="h-36 bg-neutral-50 dark:bg-neutral-800/50 animate-pulse relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-black/10" />
+                                </div>
+                                <div className="p-4">
+                                    <div className="flex gap-3">
+                                        <div className="relative w-12 h-12 shrink-0 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse">
+                                            <Globe className="h-5 w-5 text-neutral-300 dark:text-neutral-700 absolute inset-0 m-auto" />
                                         </div>
+                                        <div className="flex-1 min-w-0 space-y-3">
+                                            <div className="space-y-2">
+                                                <div className="h-6 w-full bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                                                <div className="flex gap-2">
+                                                    <div className="h-4 w-24 bg-violet-100 dark:bg-violet-900/30 animate-pulse rounded-md" />
+                                                    <div className="h-4 w-32 bg-emerald-100 dark:bg-emerald-900/30 animate-pulse rounded-md" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <div className="h-3 w-full bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                                                <div className="h-3 w-4/5 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2">
+                                                <div className="h-4 w-24 bg-blue-100 dark:bg-blue-900/30 animate-pulse rounded-md" />
+                                                <div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="border-t border-neutral-200 dark:border-neutral-800">
+                                    <div className="p-3 flex items-center gap-2">
+                                        <div className="h-4 w-4 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded" />
+                                        <div className="h-4 w-28 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
                                     </div>
                                 </div>
                             </div>
@@ -1176,71 +1057,137 @@ const ToolInvocationListView = memo(
                         );
                     }
 
-                    // Existing rendering for successful retrieval:
+                    // Clean, simplified rendering for Exa AI retrieval:
                     return (
-                        <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-linear-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-900/90">
+                        <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+                            {result.results[0].image && (
+                                <div className="h-36 overflow-hidden relative">
+                                    <Image
+                                        src={result.results[0].image} 
+                                        alt={result.results[0].title || "Featured image"} 
+                                        className="w-full h-full object-cover" 
+                                        width={128}
+                                        height={128}
+                                        quality={100}
+                                        unoptimized
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
+                            )}
+
                             <div className="p-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="relative w-10 h-10 shrink-0">
-                                        <div className="absolute inset-0 bg-linear-to-br from-primary/10 to-transparent rounded-lg" />
-                                        <img
-                                            className="h-5 w-5 absolute inset-0 m-auto"
-                                            src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
-                                            alt=""
-                                            onError={(e) => {
-                                                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.938 11h3.965a8.008 8.008 0 0 0-5.648-6.667z' fill='rgba(128,128,128,0.5)'/%3E%3C/svg%3E";
-                                            }}
-                                        />
+                                <div className="flex gap-3">
+                                    <div className="relative w-12 h-12 shrink-0">
+                                        {result.results[0].favicon ? (
+                                            <Image
+                                                className="w-full h-full object-contain rounded-lg"
+                                                src={result.results[0].favicon}
+                                                alt=""
+                                                width={64}
+                                                height={64}
+                                                quality={100}
+                                                unoptimized
+                                                onError={(e) => {
+                                                    e.currentTarget.src = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`;
+                                                }}
+                                            />
+                                        ) : (
+                                            <Image
+                                                className="w-full h-full object-contain rounded-lg"
+                                                src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
+                                                alt="" 
+                                                width={64}
+                                                height={64}
+                                                quality={100}
+                                                unoptimized
+                                                onError={(e) => {
+                                                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.938 11h3.965a8.008 8.008 0 0 0-5.648-6.667z' fill='rgba(128,128,128,0.5)'/%3E%3C/svg%3E";
+                                                }}
+                                            />
+                                        )}
                                     </div>
-                                    <div className="flex-1 min-w-0 space-y-2">
-                                        <h2 className="font-semibold text-lg text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
-                                            {result.results[0].title || 'Retrieved Content'}
-                                        </h2>
-                                        <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
-                                            {result.results[0].description || 'No description available'}
-                                        </p>
-                                        <div className="flex items-center gap-3 flex-wrap">
-                                            {result.results[0].language && (
-                                                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                                                    {result.results[0].language}
-                                                </span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="group">
+                                            <h2 className="font-medium text-base text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
+                                                {result.results[0].title || 'Retrieved Content'}
+                                            </h2>
+                                            <div className="hidden group-hover:block absolute bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2 -mt-1 max-w-lg z-10 border border-neutral-200 dark:border-neutral-800">
+                                                <p className="text-sm text-neutral-900 dark:text-neutral-100">
+                                                    {result.results[0].title || 'Retrieved Content'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            {result.results[0].author && (
+                                                <Badge variant="secondary" className="rounded-md bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/30 text-violet-600 dark:text-violet-400 border-0 transition-colors">
+                                                    <User2 className="h-3 w-3 mr-1" />
+                                                    {result.results[0].author}
+                                                </Badge>
+                                            )}
+                                            {result.results[0].publishedDate && (
+                                                <Badge variant="secondary" className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 transition-colors">
+                                                    <PhosphorClock className="h-3 w-3 mr-1" />
+                                                    {new Date(result.results[0].publishedDate).toLocaleDateString()}
+                                                </Badge>
                                             )}
                                             {result.response_time && (
-                                                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                                                    {result.response_time.toFixed(2)}s
-                                                </span>
-                                            )}
-                                            <a
-                                                href={result.results[0].url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-primary transition-colors"
-                                            >
-                                                <ExternalLink className="h-3 w-3" />
-                                                View source
-                                            </a>
-                                            {result.results.length > 1 && (
-                                                <span className="text-xs text-neutral-500">
-                                                    {result.results.length} pages retrieved
-                                                </span>
+                                                <Badge variant="secondary" className="rounded-md bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30 text-sky-600 dark:text-sky-400 border-0 transition-colors">
+                                                    <Server className="h-3 w-3 mr-1" />
+                                                    {result.response_time.toFixed(1)}s
+                                                </Badge>
                                             )}
                                         </div>
                                     </div>
                                 </div>
+
+                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 line-clamp-2">
+                                    {result.results[0].description || 'No description available'}
+                                </p>
+                                
+                                <div className="mt-3 flex justify-between items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 transition-colors cursor-pointer">
+                                            <a
+                                                href={result.results[0].url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5"
+                                            >
+                                                <ArrowUpRight className="h-3 w-3" />
+                                                View source
+                                            </a>
+                                        </Badge>
+                                        
+                                        {result.results.length > 1 && (
+                                            <Badge variant="secondary" className="rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-0 transition-colors">
+                                                <TextIcon className="h-3 w-3 mr-1" />
+                                                {result.results.length} pages
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    
+                                    <Badge variant="secondary" className="rounded-md bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 border-0 transition-colors">
+                                        <Globe className="h-3 w-3 mr-1" />
+                                        {new URL(result.results[0].url).hostname.replace('www.', '')}
+                                    </Badge>
+                                </div>
                             </div>
 
                             <div className="border-t border-neutral-200 dark:border-neutral-800">
-                                <Accordion type="single" collapsible defaultValue="content0">
-                                    {result.results.map((resultItem: { url: string; content: string }, index: number) => (
-                                        <AccordionItem value={`content${index}`} key={index} className="border-0 border-b border-neutral-200 dark:border-neutral-800 last:border-0">
-                                            <AccordionTrigger className="px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                                <Accordion type="single" collapsible>
+                                    {result.results.map((resultItem: any, index: number) => (
+                                        <AccordionItem value={`content${index}`} key={index} className="border-0">
+                                            <AccordionTrigger className="group px-4 py-3 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors no-underline! rounded-t-none! data-[state=open]:rounded-b-none! data-[state=open]:bg-neutral-50 dark:data-[state=open]:bg-neutral-800/50 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-neutral-500 [&>svg]:transition-transform [&>svg]:duration-200">
                                                 <div className="flex items-center gap-2">
-                                                    <TextIcon className="h-4 w-4 text-neutral-400" />
-                                                    <span>{index === 0 ? "View content" : `Page ${index + 1}: ${resultItem.url.split('/').pop() || 'Content'}`}</span>
+                                                    <TextIcon className="h-3.5 w-3.5 text-neutral-400" />
+                                                    <span>{index === 0 ? "View full content" : `Additional content ${index + 1}`}</span>
                                                 </div>
                                             </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50/50 dark:bg-neutral-800/30">
+                                            <AccordionContent className="pb-0">
+                                                <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-200 dark:border-neutral-700">
                                                     <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
                                                         <ReactMarkdown>{resultItem.content || 'No content available'}</ReactMarkdown>
                                                     </div>
@@ -1253,6 +1200,7 @@ const ToolInvocationListView = memo(
                         </div>
                     );
                 }
+                
                 if (toolInvocation.toolName === 'text_translate') {
                     return <TranslationTool toolInvocation={toolInvocation} result={result} />;
                 }

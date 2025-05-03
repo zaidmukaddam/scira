@@ -61,7 +61,7 @@ const scira = customProvider({
         'scira-default': xai('grok-3-mini-fast-beta'),
         'scira-grok-3': xai('grok-3-fast-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
-        'scira-4.1-mini': openai('gpt-4.1', {
+        'scira-4o': openai('gpt-4o', {
             structuredOutputs: true,
         }),
         'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
@@ -738,9 +738,11 @@ plt.show()`
                             searchDepth: z.array(
                                 z.enum(['basic', 'advanced']).describe('Array of search depths to use. Default is basic. Use advanced for more detailed results.'),
                             ),
+                            include_domains: z
+                                .array(z.string())
+                                .describe('A list of domains to include in all search results. Default is an empty list.'),
                             exclude_domains: z
                                 .array(z.string())
-                                .nullish()
                                 .describe('A list of domains to exclude from all search results. Default is an empty list.'),
                         }),
                         execute: async ({
@@ -748,13 +750,15 @@ plt.show()`
                             maxResults,
                             topics,
                             searchDepth,
+                            include_domains,
                             exclude_domains,
                         }: {
                             queries: string[];
                             maxResults: number[];
                             topics: ('general' | 'news' | 'finance')[];
                             searchDepth: ('basic' | 'advanced')[];
-                            exclude_domains?: string[] | null;
+                            include_domains?: string[];
+                            exclude_domains?: string[];
                         }) => {
                             const apiKey = serverEnv.TAVILY_API_KEY;
                             const tvly = tavily({ apiKey });
@@ -764,6 +768,7 @@ plt.show()`
                             console.log('Max Results:', maxResults);
                             console.log('Topics:', topics);
                             console.log('Search Depths:', searchDepth);
+                            console.log('Include Domains:', include_domains);
                             console.log('Exclude Domains:', exclude_domains);
 
                             // Execute searches in parallel
@@ -777,6 +782,7 @@ plt.show()`
                                     includeImages: true,
                                     includeImageDescriptions: includeImageDescriptions,
                                     excludeDomains: exclude_domains || undefined,
+                                    includeDomains: include_domains || undefined,
                                 });
 
                                 // Add annotation for query completion
@@ -838,61 +844,6 @@ plt.show()`
                             return {
                                 searches: searchResults,
                             };
-                        },
-                    }),
-                    x_search: tool({
-                        description: 'Search X (formerly Twitter) posts.',
-                        parameters: z.object({
-                            query: z.string().describe('The search query, if a username is provided put in the query with @username'),
-                            startDate: z.string().optional().describe('The start date for the search in YYYY-MM-DD format'),
-                            endDate: z.string().optional().describe('The end date for the search in YYYY-MM-DD format'),
-                        }),
-                        execute: async ({
-                            query,
-                            startDate,
-                            endDate,
-                        }: {
-                            query: string;
-                            startDate?: string;
-                            endDate?: string;
-                        }) => {
-                            try {
-                                const exa = new Exa(serverEnv.EXA_API_KEY as string);
-
-                                const result = await exa.searchAndContents(query, {
-                                    type: 'keyword',
-                                    numResults: 20,
-                                    text: true,
-                                    highlights: true,
-                                    includeDomains: ['twitter.com', 'x.com'],
-                                    startPublishedDate: startDate,
-                                    endPublishedDate: endDate,
-                                });
-
-                                // Extract tweet ID from URL
-                                const extractTweetId = (url: string): string | null => {
-                                    const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
-                                    return match ? match[1] : null;
-                                };
-
-                                // Process and filter results
-                                const processedResults = result.results.reduce<Array<XResult>>((acc, post) => {
-                                    const tweetId = extractTweetId(post.url);
-                                    if (tweetId) {
-                                        acc.push({
-                                            ...post,
-                                            tweetId,
-                                            title: post.title || '',
-                                        });
-                                    }
-                                    return acc;
-                                }, []);
-
-                                return processedResults;
-                            } catch (error) {
-                                console.error('X search error:', error);
-                                throw error;
-                            }
                         },
                     }),
                     movie_or_tv_search: tool({
@@ -1194,70 +1145,65 @@ plt.show()`
                         },
                     }),
                     retrieve: tool({
-                        description: 'Retrieve the information from a URL using Tavily.',
+                        description: 'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
                         parameters: z.object({
                             url: z.string().describe('The URL to retrieve the information from.'),
-                            query: z.string().describe('Optional query to focus the crawl on specific information.'),
-                            extract_depth: z.enum(['basic', 'advanced']).describe('Level of extraction detail, defaults to basic.'),
-                            // Careers, Blog, Documentation, About, Pricing, Community, Developers, Contact, Media
-                            categories: z.array(z.enum(["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"])).describe('The categories to crawl.'),
+                            include_summary: z.boolean().describe('Whether to include a summary of the content. Default is true.'),
+                            live_crawl: z.enum(['never', 'auto', 'always']).describe('Whether to crawl the page immediately. Options: never, auto, always. Default is "always".'),
                         }),
                         execute: async ({
                             url,
-                            query = "",
-                            extract_depth = "basic",
-                            categories = ["Careers", "Blog", "Documentation", "About", "Pricing", "Community", "Developers", "Contact", "Media"]
+                            include_summary = true,
+                            live_crawl = 'always'
                         }: {
                             url: string;
-                            query?: string;
-                            extract_depth?: "basic" | "advanced";
-                            categories?: string[];
+                            include_summary?: boolean;
+                            live_crawl?: 'never' | 'auto' | 'always';
                         }) => {
-                            try {
-                                const response = await fetch('https://api.tavily.com/crawl', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${serverEnv.TAVILY_API_KEY}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        url,
-                                        max_depth: 1,
-                                        max_breadth: 1,
-                                        limit: 1,
-                                        query,
-                                        allow_external: false,
-                                        extract_depth,
-                                        categories
-                                    })
-                                });
-
-                                if (!response.ok) {
-                                    const errorText = await response.text();
-                                    console.error('Tavily API error:', errorText);
+                        try {
+                                const exa = new Exa(serverEnv.EXA_API_KEY as string);
+                                
+                                console.log(`Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`);
+                                
+                                const start = Date.now();
+                                
+                                const result = await exa.getContents(
+                                    [url],
+                                    {
+                                        text: true,
+                                        summary: include_summary ? true : undefined,
+                                        livecrawl: live_crawl
+                                    }
+                                );
+                                
+                                // Check if there are results
+                                if (!result.results || result.results.length === 0) {
+                                    console.error('Exa AI error: No content retrieved');
                                     return { error: 'Failed to retrieve content', results: [] };
                                 }
-
-                                const data = await response.json();
-
-                                if (!data || !data.results || data.results.length === 0) {
-                                    return { results: [] };
-                                }
-
+                                
                                 return {
-                                    base_url: data.base_url,
-                                    results: data.results.map((result: any) => ({
-                                        url: result.url,
-                                        content: result.raw_content,
-                                        title: result.url.split('/').pop() || 'Retrieved Content',
-                                        description: `Content retrieved from ${result.url}`,
-                                        language: 'en',
-                                    })),
-                                    response_time: data.response_time
+                                    base_url: url,
+                                    results: result.results.map((item) => {
+                                        // Type assertion to access potentially missing properties
+                                        const typedItem = item as any;
+                                        return {
+                                            url: item.url,
+                                            content: typedItem.text || typedItem.summary || '',
+                                            title: typedItem.title || item.url.split('/').pop() || 'Retrieved Content',
+                                            description: typedItem.summary || `Content retrieved from ${item.url}`,
+                                            author: typedItem.author || undefined,
+                                            publishedDate: typedItem.publishedDate || undefined,
+                                            image: typedItem.image || undefined,
+                                            favicon: typedItem.favicon || undefined,
+                                            language: 'en',
+                                        };
+                                    }),
+                                    response_time: (Date.now() - start) / 1000
                                 };
                             } catch (error) {
-                                console.error('Tavily API error:', error);
-                                return { error: 'Failed to retrieve content', results: [] };
+                                console.error('Exa AI error:', error);
+                                return { error: error instanceof Error ? error.message : 'Failed to retrieve content', results: [] };
                             }
                         },
                     }),
@@ -2556,8 +2502,8 @@ plt.show()`
                         description: 'Manage personal memories with add and search operations.',
                         parameters: z.object({
                             action: z.enum(['add', 'search']).describe('The memory operation to perform'),
-                            content: z.string().optional().describe('The memory content for add operation'),
-                            query: z.string().optional().describe('The search query for search operations'),
+                            content: z.string().describe('The memory content for add operation'),
+                            query: z.string().describe('The search query for search operations'),
                         }),
                         execute: async ({ action, content, query }: {
                             action: 'add' | 'search';

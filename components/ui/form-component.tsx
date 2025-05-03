@@ -98,7 +98,7 @@ const models = [
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable" },
     { value: "scira-anthropic", label: "Claude 3.7 Sonnet (Reasoning)", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable" },
     { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable" },
-    { value: "scira-4.1-mini", label: "GPT 4.1 Mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship mini model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable" },
+    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable" },
     { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable" },
     { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental" },
 ];
@@ -1632,7 +1632,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 <TooltipContent
                                                     side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                                                    className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <span className="font-medium text-[11px]">Stop Generation</span>
                                                 </TooltipContent>
@@ -1669,7 +1669,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 <TooltipContent
                                                     side="bottom"
                                                     sideOffset={6}
-                                                    className="bg-neutral-900 dark:bg-neutral-800 text-white border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                                                    className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <span className="font-medium text-[11px]">Send Message</span>
                                                 </TooltipContent>
