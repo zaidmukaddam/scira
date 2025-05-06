@@ -72,6 +72,9 @@ const scira = customProvider({
         'scira-google': google('gemini-2.5-flash-preview-04-17', {
             structuredOutputs: true,
         }),
+        'scira-google-pro': google('gemini-2.5-pro-preview-05-06', {
+            structuredOutputs: true,
+        }),
         'scira-anthropic': anthropic('claude-3-7-sonnet-20250219'),
     }
 })
@@ -860,7 +863,7 @@ plt.show()`
                                 const searchResponse = await fetch(
                                     `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(
                                         query,
-                                    )}&include_adult=true&language=en-US&page=1`,
+                                    )}&language=en-US&page=1`,
                                     {
                                         headers: {
                                             Authorization: `Bearer ${TMDB_API_KEY}`,
@@ -868,6 +871,12 @@ plt.show()`
                                         },
                                     },
                                 );
+
+                                // catch error if the response is not ok
+                                if (!searchResponse.ok) {
+                                    console.error('TMDB search error:', searchResponse.statusText);
+                                    return { result: null };
+                                }
 
                                 const searchResults = await searchResponse.json();
 
@@ -2578,6 +2587,75 @@ plt.show()`
                                 }
                             } catch (error) {
                                 console.error('Memory operation error:', error);
+                                throw error;
+                            }
+                        },
+                    }),
+                    reddit_search: tool({
+                        description: 'Search Reddit content using Tavily API.',
+                        parameters: z.object({
+                            query: z.string().describe('The exact search query from the user.'),
+                            maxResults: z.number().describe('Maximum number of results to return. Default is 20.'),
+                            timeRange: z.enum(['day', 'week', 'month', 'year']).describe('Time range for Reddit search.'),
+                        }),
+                        execute: async ({
+                            query, 
+                            maxResults = 20, 
+                            timeRange = 'week',
+                        }: { 
+                            query: string; 
+                            maxResults?: number;
+                            timeRange?: 'day' | 'week' | 'month' | 'year';
+                        }) => {
+                            const apiKey = serverEnv.TAVILY_API_KEY;
+                            const tvly = tavily({ apiKey });
+                            
+                            console.log('Reddit search query:', query);
+                            console.log('Max results:', maxResults);
+                            console.log('Time range:', timeRange);
+                            
+                            try {
+                                const data = await tvly.search(query, {
+                                    maxResults: maxResults,
+                                    timeRange: timeRange,
+                                    includeRawContent: true,
+                                    searchDepth: 'basic',
+                                    topic: 'general',
+                                    includeDomains: ["reddit.com"],
+                                });
+
+                                console.log("data", data);
+                                
+                                // Process results for better display
+                                const processedResults = data.results.map(result => {
+                                    // Extract Reddit post metadata
+                                    const isRedditPost = result.url.includes('/comments/');
+                                    const subreddit = isRedditPost ? 
+                                        result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown' : 
+                                        'unknown';
+                                    
+                                    // Don't attempt to parse comments - treat content as a single snippet
+                                    // The Tavily API already returns short content snippets
+                                    return {
+                                        url: result.url,
+                                        title: result.title,
+                                        content: result.content || '',
+                                        score: result.score,
+                                        published_date: result.publishedDate,
+                                        subreddit,
+                                        isRedditPost,
+                                        // Keep original content as a single comment/snippet
+                                        comments: result.content ? [result.content] : []
+                                    };
+                                });
+                                
+                                return {
+                                    query,
+                                    results: processedResults,
+                                    timeRange,
+                                };
+                            } catch (error) {
+                                console.error('Reddit search error:', error);
                                 throw error;
                             }
                         },

@@ -465,9 +465,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     },
     table(children) {
       return (
-        <div className="w-full my-6 overflow-hidden rounded-md">
-          <div className="w-full overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800 shadow-xs">
-            <table className="w-full border-collapse min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 m-0!">
+        <div className="w-full my-6 overflow-hidden">
+          <div className="w-full overflow-x-auto border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-sm">
+            <table className="table-auto border-collapse divide-y divide-neutral-200 dark:divide-neutral-800 m-0!">
               {children}
             </table>
           </div>
@@ -476,29 +476,32 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     },
     tableRow(children) {
       return (
-        <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0">
+        <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
           {children}
         </tr>
       );
     },
     tableCell(children, flags) {
-      const align = flags.align ? `text-${flags.align}` : 'text-left';
+      const alignClass = flags.align 
+        ? `text-${flags.align}` 
+        : 'text-left';
       const isHeader = flags.header;
 
       return isHeader ? (
         <th className={cn(
-          "px-4 py-2.5 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
+          "px-5 py-3 text-xs font-semibold text-neutral-900 dark:text-neutral-50",
           "bg-neutral-100 dark:bg-neutral-800/90",
-          "whitespace-nowrap",
-          align
+          "whitespace-nowrap border-b border-neutral-200 dark:border-neutral-700",
+          alignClass
         )}>
           {children}
         </th>
       ) : (
         <td className={cn(
-          "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
-          "bg-white dark:bg-neutral-900",
-          align
+          "px-5 py-4 text-xs text-neutral-700 dark:text-neutral-300",
+          "bg-white dark:bg-neutral-900 border-r border-neutral-100 dark:border-neutral-800 last:border-r-0",
+          "leading-relaxed",
+          alignClass
         )}>
           {children}
         </td>

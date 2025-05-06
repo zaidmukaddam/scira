@@ -9,6 +9,9 @@ jiti.import('./env/client')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    experimental: {
+        optimizePackageImports: ["@phosphor-icons/react"],
+    },
     transpilePackages: ["geist"],
     output: 'standalone',
     async headers() {

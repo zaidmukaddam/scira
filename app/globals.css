@@ -170,11 +170,26 @@
     field-sizing: content;
     min-height: 2lh;
     max-height: 10lh;
+    resize: none;
+    overflow-y: auto;
+
+    /* Fallback for browsers that don't support field-sizing */
+    min-height: 40px;
+    height: auto;
 
     /* fix for firefox */
     @supports (-moz-appearance: none) {
       min-height: 2lh;
       max-height: 10lh;
+    }
+  }
+
+  /* Add mobile-specific override */
+  @media (max-width: 768px) {
+    .whatsize {
+      min-height: 40px !important;
+      max-height: 200px !important;
+      overflow-y: auto !important;
     }
   }
 }

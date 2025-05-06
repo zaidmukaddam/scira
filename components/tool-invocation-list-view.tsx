@@ -56,7 +56,7 @@ import {
     Tv,
     YoutubeIcon,
 } from 'lucide-react';
-import { Memory, Clock as PhosphorClock, RoadHorizon } from '@phosphor-icons/react';
+import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon } from '@phosphor-icons/react';
 
 // Components
 import { FlightTracker } from '@/components/flight-tracker';
@@ -73,6 +73,7 @@ import { CurrencyConverter } from '@/components/currency_conv';
 import ReasonSearch from '@/components/reason-search';
 import MemoryManager from '@/components/memory-manager';
 import MCPServerList from '@/components/mcp-server-list';
+import RedditSearch from '@/components/reddit-search';
 
 // Actions
 import { generateSpeech } from '@/app/actions';
@@ -1420,6 +1421,18 @@ const ToolInvocationListView = memo(
                             </Card>
                         </div>
                     );
+                }
+
+                if (toolInvocation.toolName === 'reddit_search') {
+                    if (!result) {
+                        return <SearchLoadingState
+                            icon={RedditLogo}
+                            text="Searching Reddit..."
+                            color="orange"
+                        />;
+                    }
+                    
+                    return <RedditSearch result={result} args={args} />;
                 }
 
                 return null;

@@ -286,7 +286,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                 </Drawer>
             ) : (
                 <Dialog open={showDetails} onOpenChange={setShowDetails}>
-                    <DialogContent className="max-w-3xl p-0 overflow-hidden font-sans">
+                    <DialogContent className="max-w-3xl! p-0 overflow-hidden font-sans">
                         <DetailContent />
                     </DialogContent>
                 </Dialog>

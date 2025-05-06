@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const blob = await put(`mplx/image-${Date.now()}.${file.name.split('.').pop()}`, file, {
+        const blob = await put(`mplx/file-${Date.now()}.${file.name.split('.').pop()}`, file, {
             access: 'public',
         });
 

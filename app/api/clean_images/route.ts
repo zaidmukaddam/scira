@@ -11,12 +11,12 @@ export async function GET(req: NextRequest) {
 
     try {
         await deleteAllBlobsInFolder('mplx/');
-        return new NextResponse('All images in mplx/ folder were deleted', {
+        return new NextResponse('All files in mplx/ folder were deleted', {
             status: 200,
         });
     } catch (error) {
         console.error('An error occurred:', error);
-        return new NextResponse('An error occurred while deleting images', {
+        return new NextResponse('An error occurred while deleting files', {
             status: 500,
         });
     }

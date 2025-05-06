@@ -26,6 +26,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CheckIcon } from '@radix-ui/react-icons';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -93,14 +94,15 @@ const AnthropicIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColo
 }} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" height="1em" {...props}><title>{"Anthropic"}</title><path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" /></svg>;
 
 const models = [
-    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable" },
-    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Stable" },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable" },
-    { value: "scira-anthropic", label: "Claude 3.7 Sonnet (Reasoning)", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable" },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable" },
-    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable" },
-    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable" },
-    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental" },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-anthropic", label: "Claude 3.7 Sonnet (Reasoning)", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-google-pro", label: "Gemini 2.5 Pro (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -186,12 +188,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
         }
     };
 
-    // Get capability icon colors
+    // Update getCapabilityColors to handle PDF capability
     const getCapabilityColors = (capability: string) => {
         if (capability === 'reasoning') {
             return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700";
         } else if (capability === 'vision') {
             return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700";
+        } else if (capability === 'pdf') {
+            return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800/50";
         }
         return "";
     };
@@ -349,21 +353,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                     <div className="flex flex-col gap-0 min-w-0 flex-1">
                                         <div className="font-medium truncate text-[11px] flex items-center">
                                             {model.label}
-                                            {selectedModel === model.value && (
-                                                <span className="ml-1 inline-flex relative top-[-1px]">
-                                                    <motion.span
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
-                                                        className="h-1 w-1 rounded-full bg-current"
-                                                    />
-                                                </span>
-                                            )}
                                         </div>
                                         <div className="text-[9px] opacity-70 truncate leading-tight">
                                             {model.description}
                                         </div>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            {(model.vision || model.reasoning) && (
+                                            {(model.vision || model.reasoning || model.pdf) && (
                                                 <div className="flex gap-1">
                                                     {model.vision && (
                                                         <div className={cn(
@@ -381,6 +376,18 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                                         )}>
                                                             <BrainCircuit className="size-2.5" />
                                                             <span>Reasoning</span>
+                                                        </div>
+                                                    )}
+                                                    {model.pdf && (
+                                                        <div className={cn(
+                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                            getCapabilityColors("pdf")
+                                                        )}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="size-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                            </svg>
+                                                            <span>PDF</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -462,12 +469,28 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 };
 
 
-const MAX_IMAGES = 4;
+const MAX_FILES = 4;
 const MAX_INPUT_CHARS = 10000;
 
+// Add this helper function near the top with other utility functions
+const supportsPdfAttachments = (modelValue: string): boolean => {
+    const selectedModel = models.find(model => model.value === modelValue);
+    return selectedModel?.pdf === true;
+};
+
+// Update the hasVisionSupport function to check for PDF support
 const hasVisionSupport = (modelValue: string): boolean => {
     const selectedModel = models.find(model => model.value === modelValue);
-    return selectedModel?.vision === true
+    return selectedModel?.vision === true;
+};
+
+// Update the getAcceptFileTypes function to use pdf property
+const getAcceptFileTypes = (modelValue: string): string => {
+    const selectedModel = models.find(model => model.value === modelValue);
+    if (selectedModel?.pdf) {
+        return "image/*,.pdf";
+    }
+    return "image/*";
 };
 
 const truncateFilename = (filename: string, maxLength: number = 20) => {
@@ -486,6 +509,13 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
 
     const isUploadingAttachment = (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
         return 'progress' in attachment;
+    };
+
+    const isPdf = (attachment: Attachment | UploadingAttachment): boolean => {
+        if (isUploadingAttachment(attachment)) {
+            return attachment.file.type === 'application/pdf';
+        }
+        return (attachment as Attachment).contentType === 'application/pdf';
     };
 
     return (
@@ -544,12 +574,21 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                     </div>
                 </div>
             ) : (
-                <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
+                <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50 flex items-center justify-center">
+                    {isPdf(attachment) ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 dark:text-red-400">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <path d="M9 15v-2h6v2"></path>
+                            <path d="M12 18v-5"></path>
+                        </svg>
+                    ) : (
                     <img
                         src={(attachment as Attachment).url}
                         alt={`Preview of ${attachment.name}`}
                         className="h-full w-full object-cover"
                     />
+                    )}
                 </div>
             )}
             <div className="grow min-w-0">
@@ -995,11 +1034,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         );
     }, [setSelectedGroup, inputRef]);
 
+    // Update uploadFile function to add more error details
     const uploadFile = async (file: File): Promise<Attachment> => {
         const formData = new FormData();
         formData.append('file', file);
 
         try {
+            console.log("Uploading file:", file.name, file.type, file.size);
             const response = await fetch('/api/upload', {
                 method: 'POST',
                 body: formData,
@@ -1007,35 +1048,138 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             if (response.ok) {
                 const data = await response.json();
+                console.log("Upload successful:", data);
                 return data;
             } else {
-                throw new Error('Failed to upload file');
+                const errorText = await response.text();
+                console.error("Upload failed with status:", response.status, errorText);
+                throw new Error(`Failed to upload file: ${response.status} ${errorText}`);
             }
         } catch (error) {
             console.error("Error uploading file:", error);
-            toast.error("Failed to upload file, please try again!");
+            toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
             throw error;
         }
     };
 
+    // Fix handleFileChange to ensure it properly processes files
     const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files || []);
-        const totalAttachments = attachments.length + files.length;
+        if (files.length === 0) {
+            console.log("No files selected in file input");
+            return;
+        }
+        
+        console.log("Files selected:", files.map(f => `${f.name} (${f.type})`));
+        
+        // First, separate images and PDFs
+        const imageFiles: File[] = [];
+        const pdfFiles: File[] = [];
+        const unsupportedFiles: File[] = [];
 
-        if (totalAttachments > MAX_IMAGES) {
-            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                imageFiles.push(file);
+            } else if (file.type === 'application/pdf') {
+                pdfFiles.push(file);
+            } else {
+                unsupportedFiles.push(file);
+            }
+        });
+        
+        if (unsupportedFiles.length > 0) {
+            console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
+            toast.error(`Some files are not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+        }
+        
+        if (imageFiles.length === 0 && pdfFiles.length === 0) {
+            console.log("No supported files found");
+            event.target.value = '';
+            return;
+        }
+        
+        // Auto-switch to PDF-compatible model if PDFs are present
+        const currentModelData = models.find(m => m.value === selectedModel);
+        if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
+            console.log("PDFs detected, switching to compatible model");
+            
+            // Find first compatible model that supports PDFs and vision
+            const compatibleModel = models.find(m => m.pdf && m.vision);
+            
+            if (compatibleModel) {
+                console.log("Switching to compatible model:", compatibleModel.value);
+                setSelectedModel(compatibleModel.value);
+                showSwitchNotification(
+                    compatibleModel.label,
+                    'Switched to a model that supports PDF documents',
+                    typeof compatibleModel.icon === 'string' ?
+                        <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" /> :
+                        <compatibleModel.icon className="size-4" />,
+                    compatibleModel.color,
+                    'model'
+                );
+            } else {
+                console.warn("No PDF-compatible model found");
+                toast.error("PDFs are only supported by Gemini and Claude models");
+                // Continue with only image files
+                if (imageFiles.length === 0) {
+                    event.target.value = '';
+                    return;
+                }
+            }
+        }
+        
+        // Combine valid files
+        let validFiles: File[] = [...imageFiles];
+        if (supportsPdfAttachments(selectedModel) || pdfFiles.length > 0) {
+            validFiles = [...validFiles, ...pdfFiles];
+        }
+
+        console.log("Valid files for upload:", validFiles.map(f => f.name));
+        
+        const totalAttachments = attachments.length + validFiles.length;
+        if (totalAttachments > MAX_FILES) {
+            toast.error(`You can only attach up to ${MAX_FILES} files.`);
+            event.target.value = '';
             return;
         }
 
-        setUploadQueue(files.map((file) => file.name));
+        if (validFiles.length === 0) {
+            console.error("No valid files to upload");
+            event.target.value = '';
+            return;
+        }
+
+        setUploadQueue(validFiles.map((file) => file.name));
 
         try {
-            const uploadPromises = files.map((file) => uploadFile(file));
-            const uploadedAttachments = await Promise.all(uploadPromises);
-            setAttachments((currentAttachments) => [
+            console.log("Starting upload of", validFiles.length, "files");
+            
+            // Upload files one by one for better error handling
+            const uploadedAttachments: Attachment[] = [];
+            for (const file of validFiles) {
+                try {
+                    console.log(`Uploading file: ${file.name} (${file.type})`);
+                    const attachment = await uploadFile(file);
+                    uploadedAttachments.push(attachment);
+                    console.log(`Successfully uploaded: ${file.name}`);
+                } catch (err) {
+                    console.error(`Failed to upload ${file.name}:`, err);
+                }
+            }
+            
+            console.log("Upload completed for", uploadedAttachments.length, "files");
+            
+            if (uploadedAttachments.length > 0) {
+                setAttachments(currentAttachments => [
                 ...currentAttachments,
                 ...uploadedAttachments,
             ]);
+                
+                toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
+            } else {
+                toast.error("No files were successfully uploaded");
+            }
         } catch (error) {
             console.error("Error uploading files!", error);
             toast.error("Failed to upload one or more files. Please try again.");
@@ -1043,7 +1187,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             setUploadQueue([]);
             event.target.value = '';
         }
-    }, [attachments, setAttachments]);
+    }, [attachments, setAttachments, selectedModel, setSelectedModel]);
 
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
@@ -1052,10 +1196,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (attachments.length >= MAX_IMAGES) return;
+        
+        // Only check if we've reached the attachment limit
+        if (attachments.length >= MAX_FILES) return;
 
-        if (e.dataTransfer.items && e.dataTransfer.items[0].kind === "file") {
+        // Always show drag UI when files are dragged over
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            // Check if at least one item is a file
+            const hasFile = Array.from(e.dataTransfer.items).some(item => item.kind === "file");
+            if (hasFile) {
             setIsDragging(true);
+            }
         }
     }, [attachments.length]);
 
@@ -1069,37 +1220,128 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return models.find(model => model.vision)?.value || selectedModel;
     }, [selectedModel]);
 
+    // Fix the handleDrop function specifically to ensure uploads happen
     const handleDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
 
-        const files = Array.from(e.dataTransfer.files).filter(file =>
-            file.type.startsWith('image/')
-        );
+        // Log raw files first
+        const allFiles = Array.from(e.dataTransfer.files);
+        console.log("Raw files dropped:", allFiles.map(f => `${f.name} (${f.type})`));
 
-        if (files.length === 0) {
-            toast.error("Only image files are supported");
+        if (allFiles.length === 0) {
+            toast.error("No files detected in drop");
             return;
         }
 
-        const totalAttachments = attachments.length + files.length;
-        if (totalAttachments > MAX_IMAGES) {
-            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+        // Simple verification to ensure we're actually getting Files from the drop
+        toast.info(`Detected ${allFiles.length} dropped files`);
+
+        // First, separate images and PDFs
+        const imageFiles: File[] = [];
+        const pdfFiles: File[] = [];
+        const unsupportedFiles: File[] = [];
+
+        allFiles.forEach(file => {
+            console.log(`Processing file: ${file.name} (${file.type})`);
+            if (file.type.startsWith('image/')) {
+                imageFiles.push(file);
+            } else if (file.type === 'application/pdf') {
+                pdfFiles.push(file);
+            } else {
+                unsupportedFiles.push(file);
+            }
+        });
+        
+        console.log(`Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}`);
+        
+        if (unsupportedFiles.length > 0) {
+            console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
+            toast.error(`Some files not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+        }
+
+        // Check if we have any supported files
+        if (imageFiles.length === 0 && pdfFiles.length === 0) {
+            toast.error("Only image and PDF files are supported");
+            return;
+        }
+
+        // Auto-switch to PDF-compatible model if PDFs are present
+        const currentModelData = models.find(m => m.value === selectedModel);
+        if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
+            console.log("PDFs detected, switching to compatible model");
+            
+            // Find first compatible model that supports PDFs
+            const compatibleModel = models.find(m => m.pdf && m.vision);
+            
+            if (compatibleModel) {
+                console.log("Switching to compatible model:", compatibleModel.value);
+                setSelectedModel(compatibleModel.value);
+                toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
+                showSwitchNotification(
+                    compatibleModel.label,
+                    'Switched to a model that supports PDF documents',
+                    typeof compatibleModel.icon === 'string' ?
+                        <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" /> :
+                        <compatibleModel.icon className="size-4" />,
+                    compatibleModel.color,
+                    'model'
+                );
+            } else {
+                console.warn("No PDF-compatible model found");
+                toast.error("PDFs are only supported by Gemini and Claude models");
+                // Continue with only image files
+                if (imageFiles.length === 0) return;
+            }
+        }
+
+        // Combine valid files
+        let validFiles: File[] = [...imageFiles];
+        if (supportsPdfAttachments(selectedModel) || pdfFiles.length > 0) {
+            validFiles = [...validFiles, ...pdfFiles];
+        }
+
+        console.log("Files to upload:", validFiles.map(f => `${f.name} (${f.type})`));
+
+        // Check total attachment count
+        const totalAttachments = attachments.length + validFiles.length;
+        if (totalAttachments > MAX_FILES) {
+            toast.error(`You can only attach up to ${MAX_FILES} files.`);
+            return;
+        }
+
+        if (validFiles.length === 0) {
+            console.error("No valid files to upload after filtering");
+            toast.error("No valid files to upload");
             return;
         }
 
         // Switch to vision model if current model doesn't support vision
-        const currentModel = models.find(m => m.value === selectedModel);
-        if (!currentModel?.vision) {
-            const visionModel = getFirstVisionModel();
+        if (!currentModelData?.vision) {
+            // Find the appropriate vision model based on file types
+            let visionModel: string;
+            
+            // If we have PDFs, prioritize a PDF-compatible model
+            if (pdfFiles.length > 0) {
+                const pdfCompatibleModel = models.find(m => m.vision && m.pdf);
+                if (pdfCompatibleModel) {
+                    visionModel = pdfCompatibleModel.value;
+                } else {
+                    visionModel = getFirstVisionModel();
+                }
+            } else {
+                visionModel = getFirstVisionModel();
+            }
+            
+            console.log("Switching to vision model:", visionModel);
             setSelectedModel(visionModel);
 
             const modelData = models.find(m => m.value === visionModel);
             if (modelData) {
                 showSwitchNotification(
                     modelData.label,
-                    'Vision model enabled - you can now attach images',
+                    `Vision model enabled - you can now attach images${modelData.pdf ? ' and PDFs' : ''}`,
                     typeof modelData.icon === 'string' ?
                         <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
                         <modelData.icon className="size-4" />,
@@ -1109,26 +1351,53 @@ const FormComponent: React.FC<FormComponentProps> = ({
             }
         }
 
-        setUploadQueue(files.map((file) => file.name));
+        // Set upload queue immediately
+        setUploadQueue(validFiles.map((file) => file.name));
+        toast.info(`Starting upload of ${validFiles.length} files...`);
 
-        try {
-            const uploadPromises = files.map((file) => uploadFile(file));
-            const uploadedAttachments = await Promise.all(uploadPromises);
-            setAttachments((currentAttachments) => [
+        // Forced timeout to ensure state updates before upload starts
+        setTimeout(async () => {
+            try {
+                console.log("Beginning upload of", validFiles.length, "files");
+                
+                // Try uploading one by one instead of all at once
+                const uploadedAttachments: Attachment[] = [];
+                for (const file of validFiles) {
+                    try {
+                        console.log(`Uploading file: ${file.name} (${file.type})`);
+                        const attachment = await uploadFile(file);
+                        uploadedAttachments.push(attachment);
+                        console.log(`Successfully uploaded: ${file.name}`);
+                    } catch (err) {
+                        console.error(`Failed to upload ${file.name}:`, err);
+                    }
+                }
+                
+                console.log("Upload completed for", uploadedAttachments.length, "files");
+                
+                if (uploadedAttachments.length > 0) {
+                    setAttachments(currentAttachments => [
                 ...currentAttachments,
                 ...uploadedAttachments,
             ]);
+                    
+                    toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
+                } else {
+                    toast.error("No files were successfully uploaded");
+                }
         } catch (error) {
-            console.error("Error uploading files!", error);
-            toast.error("Failed to upload one or more files. Please try again.");
+                console.error("Error during file upload:", error);
+                toast.error("Upload failed. Please check console for details.");
         } finally {
             setUploadQueue([]);
         }
+        }, 100);
     }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
 
     const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
         const items = Array.from(e.clipboardData.items);
         const imageItems = items.filter(item => item.type.startsWith('image/'));
+        // Note: Pasting PDFs directly is typically not possible, but we're updating the code for consistency
 
         if (imageItems.length === 0) return;
 
@@ -1136,8 +1405,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
         e.preventDefault();
 
         const totalAttachments = attachments.length + imageItems.length;
-        if (totalAttachments > MAX_IMAGES) {
-            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+        if (totalAttachments > MAX_FILES) {
+            toast.error(`You can only attach up to ${MAX_FILES} files.`);
             return;
         }
 
@@ -1149,9 +1418,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             const modelData = models.find(m => m.value === visionModel);
             if (modelData) {
+                const supportsPdfs = supportsPdfAttachments(visionModel);
                 showSwitchNotification(
                     modelData.label,
-                    'Vision model enabled - you can now attach images',
+                    `Vision model enabled - you can now attach images${supportsPdfs ? ' and PDFs' : ''}`,
                     typeof modelData.icon === 'string' ?
                         <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
                         <modelData.icon className="size-4" />,
@@ -1242,8 +1512,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }, [onSubmit, resetSuggestedQuestions, width, inputRef]);
 
     const triggerFileInput = useCallback(() => {
-        if (attachments.length >= MAX_IMAGES) {
-            toast.error(`You can only attach up to ${MAX_IMAGES} images.`);
+        if (attachments.length >= MAX_FILES) {
+            toast.error(`You can only attach up to ${MAX_FILES} images.`);
             return;
         }
 
@@ -1275,7 +1545,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const isMobile = width ? width < 768 : false;
 
     return (
-        <div className="flex flex-col w-full">
+        <div className={cn(
+            "flex flex-col w-full"
+        )}>
             <TooltipProvider>
                 <div
                     className={cn(
@@ -1304,10 +1576,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     </div>
                                     <div className="space-y-1 text-center">
                                         <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                            Drop images here
+                                            Drop images or PDFs here
                                         </p>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                                            Max {MAX_IMAGES} images
+                                            Max {MAX_FILES} files
                                         </p>
                                     </div>
                                 </div>
@@ -1315,8 +1587,24 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         )}
                     </AnimatePresence>
 
-                    <input type="file" className="hidden" ref={fileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
-                    <input type="file" className="hidden" ref={postSubmitFileInputRef} multiple onChange={handleFileChange} accept="image/*" tabIndex={-1} />
+                    <input 
+                        type="file" 
+                        className="hidden" 
+                        ref={fileInputRef} 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept={getAcceptFileTypes(selectedModel)} 
+                        tabIndex={-1} 
+                    />
+                    <input 
+                        type="file" 
+                        className="hidden" 
+                        ref={postSubmitFileInputRef} 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept={getAcceptFileTypes(selectedModel)} 
+                        tabIndex={-1} 
+                    />
 
                     {(attachments.length > 0 || uploadQueue.length > 0) && (
                         <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
@@ -1366,8 +1654,23 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 disabled={isProcessing}
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
+                                onInput={(e) => {
+                                    // Auto-resize textarea based on content
+                                    const target = e.target as HTMLTextAreaElement;
+                                    if (width && width < 768) {
+                                        // For mobile, allow textarea to scroll after reaching max height
+                                        if (target.scrollHeight > 200) {
+                                            target.style.height = '200px';
+                                            target.style.overflowY = 'auto';
+                                        } else {
+                                            target.style.height = 'auto';
+                                            target.style.height = `${target.scrollHeight}px`;
+                                            target.style.overflowY = 'hidden';
+                                        }
+                                    }
+                                }}
                                 className={cn(
-                                    "w-full rounded-lg resize-none md:text-base!",
+                                    "w-full rounded-lg md:text-base!",
                                     "text-base leading-relaxed",
                                     "bg-neutral-100 dark:bg-neutral-900",
                                     "border border-neutral-200! dark:border-neutral-700!",
@@ -1382,6 +1685,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 style={{
                                     WebkitUserSelect: 'text',
                                     WebkitTouchCallout: 'none',
+                                    minHeight: width && width < 768 ? '40px' : undefined,
+                                    resize: 'none',
                                 }}
                                 rows={1}
                                 autoFocus={width ? width > 768 : true}
@@ -1450,7 +1755,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 showSwitchNotification(
                                                     model.label,
                                                     isVisionModel
-                                                        ? 'Vision model enabled - you can now attach images'
+                                                        ? 'Vision model enabled - you can now attach images and PDFs'
                                                         : model.description,
                                                     typeof model.icon === 'string' ?
                                                         <img src={model.icon} alt={model.label} className="size-4 object-contain" /> :
@@ -1592,8 +1897,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="font-medium text-[11px]">Attach Image</span>
-                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">Upload or paste an image</span>
+                                                        <span className="font-medium text-[11px]">Attach File</span>
+                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                                                            {supportsPdfAttachments(selectedModel) 
+                                                                ? "Upload an image or PDF document" 
+                                                                : "Upload an image"}
+                                                        </span>
                                                     </div>
                                                 </TooltipContent>
                                             </Tooltip>

@@ -133,7 +133,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
 
     return (
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden">{content}</DialogContent>
+        <DialogContent className="max-w-3xl! p-0 overflow-hidden">{content}</DialogContent>
       </Dialog>
     );
   };

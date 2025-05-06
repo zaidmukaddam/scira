@@ -374,14 +374,14 @@ const Messages: React.FC<MessagesProps> = ({
               </div>
             </div>
             
-            <div className="px-4 py-3 text-sm">
+            <div className="px-4 pb-2 text-sm">
               {error.cause && (
                 <div className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-md border border-neutral-200 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300 overflow-x-auto">
                   {error.cause.toString()}
                 </div>
               )}
               
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-2 flex items-center justify-between">
                 <p className="text-neutral-500 dark:text-neutral-400 text-xs">
                   You can retry your request or try a different prompt
                 </p>

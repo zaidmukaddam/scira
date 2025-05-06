@@ -80,7 +80,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                             <Line
                                 type="monotone"
                                 dataKey="minTemp"
-                                stroke="var(--color-minTemp)"
+                                stroke="oklch(0.488 0.243 264.376)"
                                 strokeWidth={2}
                                 dot={false}
                                 name="Min Temp."
@@ -88,7 +88,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                             <Line
                                 type="monotone"
                                 dataKey="maxTemp"
-                                stroke="var(--color-maxTemp)"
+                                stroke="oklch(0.696 0.17 162.48)"
                                 strokeWidth={2}
                                 dot={false}
                                 name="Max Temp."
