@@ -58,8 +58,7 @@ const middleware = extractReasoningMiddleware({
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-3-mini-fast-beta'),
-        'scira-grok-3': xai('grok-3-fast-beta'),
+        'scira-default': xai('grok-3-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-4o': openai('gpt-4o', {
             structuredOutputs: true,
@@ -76,6 +75,9 @@ const scira = customProvider({
             structuredOutputs: true,
         }),
         'scira-anthropic': anthropic('claude-3-7-sonnet-20250219'),
+        'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
+            parallelToolCalls: false,
+        }),
     }
 })
 
@@ -342,7 +344,7 @@ export async function POST(req: Request) {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                ...(model !== 'scira-o4-mini' ? {
+                ...(model !== 'scira-o4-mini' || model !== 'scira-anthropic' ? {
                     temperature: 0,
                 } : {}),
                 maxSteps: 5,
@@ -355,12 +357,12 @@ export async function POST(req: Request) {
                 }),
                 providerOptions: {
                     scira: {
-                        ...(model === 'scira-default' ?
-                            {
-                                reasoningEffort: 'high',
-                            }
-                            : {}
-                        ),
+                        // ...(model === 'scira-default' ?
+                        //     {
+                        //         reasoningEffort: 'low',
+                        //     }
+                        //     : {}
+                        // ),
                         ...(model === 'scira-o4-mini' ? {
                             reasoningEffort: 'medium'
                         } : {}),
@@ -380,11 +382,11 @@ export async function POST(req: Request) {
                             reasoningEffort: 'medium'
                         } : {})
                     },
-                    xai: {
-                        ...(model === 'scira-default' ? {
-                            reasoningEffort: 'high',
-                        } : {}),
-                    },
+                    // xai: {
+                    //     ...(model === 'scira-default' ? {
+                    //         reasoningEffort: 'low',
+                    //     } : {}),
+                    // },
                     anthropic: {
                         thinking: { type: 'enabled', budgetTokens: 12000 },
                     }
@@ -1217,18 +1219,73 @@ plt.show()`
                         },
                     }),
                     get_weather_data: tool({
-                        description: 'Get the weather data for the given coordinates.',
+                        description: 'Get the weather data for the given location name using geocoding and OpenWeather API.',
                         parameters: z.object({
-                            lat: z.number().describe('The latitude of the location.'),
-                            lon: z.number().describe('The longitude of the location.'),
+                            location: z.string().describe('The name of the location to get weather data for (e.g., "London", "New York", "Tokyo").')
                         }),
-                        execute: async ({ lat, lon }: { lat: number; lon: number }) => {
-                            const apiKey = serverEnv.OPENWEATHER_API_KEY;
-                            const response = await fetch(
-                                `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`,
-                            );
-                            const data = await response.json();
-                            return data;
+                        execute: async ({ location }: { location: string }) => {
+                            try {
+                                // Step 1: Geocode the location name using Open Meteo API
+                                const geocodingResponse = await fetch(
+                                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+                                );
+                                
+                                const geocodingData = await geocodingResponse.json();
+                                
+                                if (!geocodingData.results || geocodingData.results.length === 0) {
+                                    throw new Error(`Location '${location}' not found`);
+                                }
+                                
+                                const { latitude, longitude, name, country, timezone } = geocodingData.results[0];
+                                console.log('Latitude:', latitude);
+                                console.log('Longitude:', longitude);
+                                // Step 2: Fetch weather data using OpenWeather API with the obtained coordinates
+                                const apiKey = serverEnv.OPENWEATHER_API_KEY;
+                                const [weatherResponse, airPollutionResponse, dailyForecastResponse] = await Promise.all([
+                                    fetch(
+                                        `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                    ),
+                                    fetch(
+                                        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                    ),
+                                    fetch(
+                                        `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=16&appid=${apiKey}`
+                                    )
+                                ]);
+                                
+                                const [weatherData, airPollutionData, dailyForecastData] = await Promise.all([
+                                    weatherResponse.json(),
+                                    airPollutionResponse.json(),
+                                    dailyForecastResponse.json().catch(error => {
+                                        console.error('Daily forecast API error:', error);
+                                        return { list: [] }; // Return empty data if API fails
+                                    })
+                                ]);
+                                
+                                // Step 3: Fetch air pollution forecast
+                                const airPollutionForecastResponse = await fetch(
+                                    `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                );
+                                const airPollutionForecastData = await airPollutionForecastResponse.json();
+                                
+                                // Add geocoding information to the weather data
+                                return {
+                                    ...weatherData,
+                                    geocoding: {
+                                        latitude,
+                                        longitude,
+                                        name,
+                                        country,
+                                        timezone
+                                    },
+                                    air_pollution: airPollutionData,
+                                    air_pollution_forecast: airPollutionForecastData,
+                                    daily_forecast: dailyForecastData
+                                };
+                            } catch (error) {
+                                console.error('Weather data error:', error);
+                                throw error;
+                            }
                         },
                     }),
                     code_interpreter: tool({

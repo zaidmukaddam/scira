@@ -29,6 +29,64 @@ interface CitationLink {
   link: string;
 }
 
+// Citation source configuration
+interface CitationSourceConfig {
+  name: string;
+  pattern: RegExp;
+  urlGenerator: (title: string, source: string) => string | null;
+}
+
+const citationSources: CitationSourceConfig[] = [
+  {
+    name: 'Wikipedia',
+    pattern: /Wikipedia/i,
+    urlGenerator: (title: string, source: string) => {
+      const searchTerm = `${title} ${source.replace(/\s+[-–—]\s+Wikipedia/i, '')}`.trim();
+      return `https://en.wikipedia.org/wiki/${encodeURIComponent(searchTerm.replace(/\s+/g, '_'))}`;
+    }
+  },
+  {
+    name: 'arXiv',
+    pattern: /arXiv:(\d+\.\d+)/i,
+    urlGenerator: (title: string, source: string) => {
+      const match = source.match(/arXiv:(\d+\.\d+)/i);
+      return match ? `https://arxiv.org/abs/${match[1]}` : null;
+    }
+  },
+  {
+    name: 'GitHub',
+    pattern: /github\.com\/[^\/]+\/[^\/\s]+/i,
+    urlGenerator: (title: string, source: string) => {
+      const match = source.match(/(https?:\/\/github\.com\/[^\/]+\/[^\/\s]+)/i);
+      return match ? match[1] : null;
+    }
+  },
+  {
+    name: 'DOI',
+    pattern: /doi:(\S+)/i,
+    urlGenerator: (title: string, source: string) => {
+      const match = source.match(/doi:(\S+)/i);
+      return match ? `https://doi.org/${match[1]}` : null;
+    }
+  }
+];
+
+// Helper function to process citations
+const processCitation = (title: string, source: string): { text: string, url: string } | null => {
+  for (const citationSource of citationSources) {
+    if (citationSource.pattern.test(source)) {
+      const url = citationSource.urlGenerator(title, source);
+      if (url) {
+        return {
+          text: `${title} - ${source}`,
+          url
+        };
+      }
+    }
+  }
+  return null;
+};
+
 const isValidUrl = (str: string) => {
   try {
     new URL(str);
@@ -108,7 +166,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     });
     
     // Process standard markdown links
-    const stdLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const stdLinkRegex = /\[([^\]]+)\]\(((?:\([^()]*\)|[^()])*)\)/g;
     modifiedContent = modifiedContent.replace(stdLinkRegex, (match, text, url) => {
       // Skip if it's a LaTeX placeholder
       if (match.includes(latexPlaceholder)) return match;
@@ -134,28 +192,16 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return `[${fullText.trim()}](${cleanUrl})`;
     });
     
-    // Process quoted paper titles followed by site references like "Attention Is All You Need" Transformer - Wikipedia
-    const quotedTitleRegex = /"([^"]+)"(?:\s+([^.!?\n]+?(?:\s+[-–—]\s+(?:Wikipedia|arXiv|GitHub|(?:[A-Z][a-z]+(?:\.[a-z]+)?)))))/g;
+    // Process quoted paper titles followed by site references
+    const quotedTitleRegex = /"([^"]+)"(?:\s+([^.!?\n]+?)(?:\s+[-–—]\s+(?:[A-Z][a-z]+(?:\.[a-z]+)?|\w+:\S+)))/g;
     modifiedContent = modifiedContent.replace(quotedTitleRegex, (match, title, source) => {
       // Skip if it contains a LaTeX placeholder
       if (match.includes(latexPlaceholder)) return match;
       
-      // Determine the likely URL based on the source
-      let url = "";
-      const fullText = match;
-      
-      if (source.includes("Wikipedia")) {
-        // Format for Wikipedia
-        const searchTerm = `${title} ${source.replace(/\s+[-–—]\s+Wikipedia/, "")}`.trim();
-        url = `https://en.wikipedia.org/wiki/${encodeURIComponent(searchTerm.replace(/\s+/g, '_'))}`;
-        citations.push({ text: fullText.trim(), link: url });
-        return `[${fullText.trim()}](${url})`;
-      } else if (source.includes("arXiv")) {
-        // Skip without a specific arXiv ID
-        return match;
-      } else if (source.includes("GitHub")) {
-        // Skip without a specific GitHub URL
-        return match;
+      const citation = processCitation(title, source);
+      if (citation) {
+        citations.push({ text: citation.text.trim(), link: citation.url });
+        return `[${citation.text.trim()}](${citation.url})`;
       }
       
       return match;

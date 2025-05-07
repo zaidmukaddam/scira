@@ -154,6 +154,15 @@ const groupInstructions = {
   'You MUST run the tool first exactly once' before composing your response. **This is non-negotiable.**
   Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
+  ### CRITICAL INSTRUCTION:
+  - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
+  - DO NOT ASK FOR CLARIFICATION BEFORE RUNNING THE TOOL
+  - If a query is ambiguous, make your best interpretation and run the appropriate tool right away
+  - After getting results, you can then address any ambiguity in your response
+  - DO NOT begin responses with statements like "I'm assuming you're looking for information about X" or "Based on your query, I think you want to know about Y"
+  - NEVER preface your answer with your interpretation of the user's query
+  - GO STRAIGHT TO ANSWERING the question after running the tool
+
   ### Tool-Specific Guidelines:
   - A tool should only be called once per response cycle
   - Follow the tool guidelines below for each tool as per the user's request
@@ -216,6 +225,7 @@ const groupInstructions = {
      - Responses must be informative, long and very detailed which address the question's answer straight forward
      - Use structured answers with markdown format and tables too
      - First give the question's answer straight forward and then start with markdown format
+     - NEVER begin responses with phrases like "According to my search" or "Based on the information I found"
      - ⚠️ CITATIONS ARE MANDATORY - Every factual claim must have a citation
      - Citations MUST be placed immediately after the sentence containing the information
      - NEVER group citations at the end of paragraphs or the response

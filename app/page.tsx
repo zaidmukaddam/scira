@@ -237,7 +237,7 @@ const HomeContent = () => {
     const Navbar: React.FC<NavbarProps> = () => {
         return (
             <div className={cn(
-                "fixed top-0 left-0 right-0 z-60 flex justify-between items-center p-4",
+                "fixed top-0 left-0 right-0 z-60 flex justify-between items-center p-3",
                 // Add opaque background only after submit
                 status === "streaming" || status === 'ready' ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60" : "bg-background",
             )}>
@@ -248,7 +248,7 @@ const HomeContent = () => {
                             variant={'secondary'}
                             className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-xs group transition-all hover:scale-105 pointer-events-auto"
                         >
-                            <Plus size={18} className="group-hover:rotate-90 transition-all" />
+                            <Plus size={18} className="group-hover:rotate-90 transition-all m-1.5" />
                             <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
                                 New
                             </span>

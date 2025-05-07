@@ -170,7 +170,7 @@ export const Message: React.FC<MessageProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-4 px-0"
+        className="mb-0! px-0"
       >
         <div className="grow min-w-0">
           {isEditingMessage && editingMessageIndex === index ? (
@@ -220,7 +220,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div 
                   ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-sans! max-w-none [&>*]:text-base [&>*]:md:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-base [&>*]:sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
                 >
                   <MarkdownRenderer content={preprocessLaTeX(message.content)} />
                   
