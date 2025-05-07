@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { T, Var } from "gt-next";
+import { useGT } from 'gt-next/client';
 
 interface ModelSwitcherProps {
 	selectedModel: string;
@@ -979,6 +980,8 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
 	// Icon color is always white for better contrast on colored backgrounds
 	const getIconColorClass = () => "text-white";
 
+	const t = useGT();
+
 	// Get background color for model notifications only
 	const getModelBgClass = (color: string) => {
 		switch (color) {
@@ -1052,7 +1055,7 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
 										: "text-neutral-900 dark:text-neutral-100",
 								)}
 							>
-								{title}
+								{t(title)}
 							</span>
 							<span
 								className={cn(
@@ -1062,7 +1065,7 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
 										: "text-neutral-600 dark:text-neutral-400",
 								)}
 							>
-								{description}
+								{t(description)}
 							</span>
 						</div>
 					</div>
@@ -1076,6 +1079,7 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
 	const Icon = group.icon;
 	const { width } = useWindowSize();
 	const isMobile = width ? width < 768 : false;
+	const t = useGT();
 
 	const commonClassNames = cn(
 		"relative flex items-center justify-center",
@@ -1125,9 +1129,9 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
 				className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
 			>
 				<div className="flex flex-col gap-0.5">
-					<span className="font-medium text-[11px]">{group.name}</span>
+					<span className="font-medium text-[11px]">{t(group.name)}</span>
 					<span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-						{group.description}
+						{t(group.description)}
 					</span>
 				</div>
 			</TooltipContent>
@@ -1285,6 +1289,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 		visibilityTimeout: undefined,
 	});
 
+
 	const showSwitchNotification = (
 		title: string,
 		description: string,
@@ -1332,7 +1337,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 		if (newValue.length > MAX_INPUT_CHARS) {
 			setInput(newValue);
 			toast.error(
-				`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`,
+				t(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`),
 			);
 		} else {
 			setInput(newValue);
@@ -1389,7 +1394,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 		} catch (error) {
 			console.error("Error uploading file:", error);
 			toast.error(
-				`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`,
+				t(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`),
 			);
 			throw error;
 		}
@@ -1430,7 +1435,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					unsupportedFiles.map((f) => `${f.name} (${f.type})`),
 				);
 				toast.error(
-					`Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`,
+					t(`Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`),
 				);
 			}
 
@@ -1468,7 +1473,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					);
 				} else {
 					console.warn("No PDF-compatible model found");
-					toast.error("PDFs are only supported by Gemini and Claude models");
+					toast.error(t("PDFs are only supported by Gemini and Claude models"));
 					// Continue with only image files
 					if (imageFiles.length === 0) {
 						event.target.value = "";
@@ -1490,7 +1495,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
 			const totalAttachments = attachments.length + validFiles.length;
 			if (totalAttachments > MAX_FILES) {
-				toast.error(`You can only attach up to ${MAX_FILES} files.`);
+				toast.error(t(`You can only attach up to ${MAX_FILES} files.`));
 				event.target.value = "";
 				return;
 			}
@@ -1532,14 +1537,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					]);
 
 					toast.success(
-						`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`,
+						t(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`),
 					);
 				} else {
-					toast.error("No files were successfully uploaded");
+					toast.error(t("No files were successfully uploaded"));
 				}
 			} catch (error) {
 				console.error("Error uploading files!", error);
-				toast.error("Failed to upload one or more files. Please try again.");
+				toast.error(t("Failed to upload one or more files. Please try again."));
 			} finally {
 				setUploadQueue([]);
 				event.target.value = "";
@@ -1599,12 +1604,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
 			);
 
 			if (allFiles.length === 0) {
-				toast.error("No files detected in drop");
+				toast.error(t("No files detected in drop"));
 				return;
 			}
 
 			// Simple verification to ensure we're actually getting Files from the drop
-			toast.info(`Detected ${allFiles.length} dropped files`);
+			toast.info(t(`Detected ${allFiles.length} dropped files`));
 
 			// First, separate images and PDFs
 			const imageFiles: File[] = [];
@@ -1628,17 +1633,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
 			if (unsupportedFiles.length > 0) {
 				console.log(
-					"Unsupported files:",
+					t("Unsupported files:"),
 					unsupportedFiles.map((f) => `${f.name} (${f.type})`),
 				);
 				toast.error(
-					`Some files not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`,
+					t(`Some files not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`),
 				);
 			}
 
 			// Check if we have any supported files
 			if (imageFiles.length === 0 && pdfFiles.length === 0) {
-				toast.error("Only image and PDF files are supported");
+				toast.error(t("Only image and PDF files are supported"));
 				return;
 			}
 
@@ -1654,7 +1659,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					console.log("Switching to compatible model:", compatibleModel.value);
 					setSelectedModel(compatibleModel.value);
 					toast.info(
-						`Switching to ${compatibleModel.label} to support PDF files`,
+						t(`Switching to ${compatibleModel.label} to support PDF files`),
 					);
 					showSwitchNotification(
 						compatibleModel.label,
@@ -1673,7 +1678,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					);
 				} else {
 					console.warn("No PDF-compatible model found");
-					toast.error("PDFs are only supported by Gemini and Claude models");
+					toast.error(t("PDFs are only supported by Gemini and Claude models"));
 					// Continue with only image files
 					if (imageFiles.length === 0) return;
 				}
@@ -1693,13 +1698,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
 			// Check total attachment count
 			const totalAttachments = attachments.length + validFiles.length;
 			if (totalAttachments > MAX_FILES) {
-				toast.error(`You can only attach up to ${MAX_FILES} files.`);
+				toast.error(t(`You can only attach up to ${MAX_FILES} files.`));
 				return;
 			}
 
 			if (validFiles.length === 0) {
 				console.error("No valid files to upload after filtering");
-				toast.error("No valid files to upload");
+				toast.error(t("No valid files to upload"));
 				return;
 			}
 
@@ -1745,7 +1750,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
 			// Set upload queue immediately
 			setUploadQueue(validFiles.map((file) => file.name));
-			toast.info(`Starting upload of ${validFiles.length} files...`);
+			toast.info(t(`Starting upload of ${validFiles.length} files...`));
 
 			// Forced timeout to ensure state updates before upload starts
 			setTimeout(async () => {
@@ -1778,14 +1783,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
 						]);
 
 						toast.success(
-							`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`,
+							t(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`),
 						);
 					} else {
-						toast.error("No files were successfully uploaded");
+						toast.error(t("No files were successfully uploaded"));
 					}
 				} catch (error) {
 					console.error("Error during file upload:", error);
-					toast.error("Upload failed. Please check console for details.");
+					toast.error(t("Upload failed. Please check console for details."));
 				} finally {
 					setUploadQueue([]);
 				}
@@ -1814,7 +1819,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
 			const totalAttachments = attachments.length + imageItems.length;
 			if (totalAttachments > MAX_FILES) {
-				toast.error(`You can only attach up to ${MAX_FILES} files.`);
+				toast.error(t(`You can only attach up to ${MAX_FILES} files.`));
 				return;
 			}
 
@@ -1859,10 +1864,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					...uploadedAttachments,
 				]);
 
-				toast.success("Image pasted successfully");
+				toast.success(t("Image pasted successfully"));
 			} catch (error) {
 				console.error("Error uploading pasted files!", error);
-				toast.error("Failed to upload pasted image. Please try again.");
+				toast.error(t("Failed to upload pasted image. Please try again."));
 			} finally {
 				setUploadQueue([]);
 			}
@@ -1898,14 +1903,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
 			event.stopPropagation();
 
 			if (status !== "ready") {
-				toast.error("Please wait for the current response to complete!");
+				toast.error(t("Please wait for the current response to complete!"));
 				return;
 			}
 
 			// Check if input exceeds character limit
 			if (input.length > MAX_INPUT_CHARS) {
 				toast.error(
-					`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`,
+					t(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`),
 				);
 				return;
 			}
@@ -1926,7 +1931,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 					fileInputRef.current.value = "";
 				}
 			} else {
-				toast.error("Please enter a search query or attach an image.");
+				toast.error(t("Please enter a search query or attach an image."));
 			}
 		},
 		[
@@ -1956,7 +1961,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
 	const triggerFileInput = useCallback(() => {
 		if (attachments.length >= MAX_FILES) {
-			toast.error(`You can only attach up to ${MAX_FILES} images.`);
+			toast.error(t(`You can only attach up to ${MAX_FILES} images.`));
 			return;
 		}
 
@@ -1975,7 +1980,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 		) {
 			event.preventDefault();
 			if (status === "submitted" || status === "streaming") {
-				toast.error("Please wait for the response to complete!");
+				toast.error(t("Please wait for the response to complete!"));
 			} else {
 				submitForm();
 				if (width && width > 768) {
@@ -1990,6 +1995,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 	const isProcessing = status === "submitted" || status === "streaming";
 	const hasInteracted = messages.length > 0;
 	const isMobile = width ? width < 768 : false;
+	const t = useGT();
 
 	return (
 		<div className={cn("flex flex-col w-full")}>
@@ -2101,7 +2107,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 							<Textarea
 								ref={inputRef}
 								placeholder={
-									hasInteracted ? "Ask a new question..." : "Ask a question..."
+									hasInteracted ? t("Ask a new question...") : t("Ask a question...")
 								}
 								value={input}
 								onChange={handleInput}

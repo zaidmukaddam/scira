@@ -8,6 +8,7 @@ import {
 	CalendarBlank,
 	Clock as PhosphorClock,
 	Info,
+	Translate,
 } from "@phosphor-icons/react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useTheme } from "next-themes";
@@ -32,6 +33,8 @@ import { cn, getUserId, SearchGroupId } from "@/lib/utils";
 import { suggestQuestions } from "./actions";
 import Messages from "@/components/messages";
 import { T } from "gt-next";
+import { LocaleSelector, DateTime} from "gt-next/client"
+import { useGT } from "gt-next/client";
 
 interface Attachment {
 	name: string;
@@ -89,6 +92,7 @@ const HomeContent = () => {
 	const [hasSubmitted, setHasSubmitted] = React.useState(false);
 	const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
 	const isAutoScrollingRef = useRef(false);
+	const t = useGT();
 
 	// Get stored user ID
 	const userId = useMemo(() => getUserId(), []);
@@ -121,8 +125,8 @@ const HomeContent = () => {
 			},
 			onError: (error) => {
 				console.error("Chat error:", error.cause, error.message);
-				toast.error("An error occurred.", {
-					description: `Oops! An error occurred while processing your request. ${error.message}`,
+				toast.error(t("An error occurred."), {
+					description: t(`Oops! An error occurred while processing your request. ${error.message}`),
 				});
 			},
 		}),
@@ -340,27 +344,6 @@ const HomeContent = () => {
 			};
 		}, []);
 
-		// Get user's timezone
-		const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-		// Format date and time with timezone
-		const dateFormatter = new Intl.DateTimeFormat("en-US", {
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-			timeZone: timezone,
-		});
-
-		const timeFormatter = new Intl.DateTimeFormat("en-US", {
-			hour: "2-digit",
-			minute: "2-digit",
-			hour12: true,
-			timeZone: timezone,
-		});
-
-		const formattedDate = dateFormatter.format(currentTime);
-		const formattedTime = timeFormatter.format(currentTime);
-
 		const handleDateTimeClick = useCallback(() => {
 			if (status !== "ready") return;
 
@@ -387,7 +370,9 @@ const HomeContent = () => {
 							className="h-5 w-5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform"
 						/>
 						<span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
-							{formattedTime}
+							<DateTime options={{ hour: "2-digit", minute: "2-digit" }}>
+								{currentTime}
+							</DateTime>
 						</span>
 					</Button>
 
@@ -402,8 +387,20 @@ const HomeContent = () => {
 							className="h-5 w-5 text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform"
 						/>
 						<span className="text-sm text-neutral-700 dark:text-neutral-300 font-medium">
-							{formattedDate}
+							<DateTime options={{ weekday: "short", month: "short", day: "numeric" }}>
+								{currentTime}
+							</DateTime>
 						</span>
+					</Button>
+					<Button
+						variant="outline"
+						className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:shadow-xs transition-all h-auto"
+					>
+						<Translate
+							weight="duotone"
+							className="h-5 w-5 text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform"
+						/>
+						<LocaleSelector />
 					</Button>
 				</div>
 			</div>

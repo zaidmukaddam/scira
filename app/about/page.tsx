@@ -38,6 +38,7 @@ import { VercelLogo } from "@/components/logos/vercel-logo";
 import { TavilyLogo } from "@/components/logos/tavily-logo";
 import NextImage from "next/image";
 import { Var, T } from "gt-next";
+import { useGT } from "gt-next/client";
 
 const container = {
 	hidden: { opacity: 0 },
@@ -57,6 +58,7 @@ const item = {
 export default function AboutPage() {
 	const router = useRouter();
 	const [showWarning, setShowWarning] = useState(false);
+	const t = useGT();
 
 	useEffect(() => {
 		// Check if user has seen the warning
@@ -149,7 +151,7 @@ export default function AboutPage() {
 									<input
 										type="text"
 										name="query"
-										placeholder="Ask anything..."
+										placeholder={t("Ask anything...")}
 										className="w-full h-14 px-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-neutral-300 dark:focus:border-neutral-700 focus:outline-hidden focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all duration-300"
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
@@ -588,10 +590,10 @@ export default function AboutPage() {
 											</div>
 											<div className="space-y-2">
 												<h3 className="text-xl font-semibold">
-													{feature.title}
+													{t(feature.title)}
 												</h3>
 												<p className="text-neutral-600 dark:text-neutral-400">
-													{feature.description}
+													{t(feature.description)}
 												</p>
 											</div>
 										</div>
