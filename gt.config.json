@@ -1,0 +1,9 @@
+{
+  "defaultLocale": "en",
+  "locales": [
+    "es",
+    "zh",
+    "ru",
+    "hi"
+  ]
+}
