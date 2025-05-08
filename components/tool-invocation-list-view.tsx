@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ArrowUpRight, LucideIcon, User2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
+import { DateTime, T, Var } from "gt-next";
 
 // UI Components
 import { BorderTrail } from "@/components/core/border-trail";
@@ -81,7 +82,6 @@ import Image from "next/image";
 
 // Interfaces
 
-import { T, Var } from "gt-next";
 interface VideoDetails {
 	title?: string;
 	author_name?: string;
@@ -1597,10 +1597,10 @@ const ToolInvocationListView = memo(
 												</h3>
 												<div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 md:gap-6">
 													<h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-neutral-900 dark:text-white">
-														<Var>{result.formatted.dateShort}</Var>
+														<DateTime>{result.formatted.dateShort}</DateTime>
 													</h2>
 													<p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-500">
-														<Var>{result.formatted.date}</Var>
+														<DateTime>{result.formatted.date}</DateTime>
 													</p>
 												</div>
 											</div>

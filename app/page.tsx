@@ -320,6 +320,7 @@ const HomeContent = () => {
 	const WidgetSection = memo(() => {
 		const [currentTime, setCurrentTime] = useState(new Date());
 		const timerRef = useRef<NodeJS.Timeout>();
+		const timeDateQuestion = t("What's the current date and time?");
 
 		useEffect(() => {
 			// Sync with the nearest second
@@ -348,11 +349,11 @@ const HomeContent = () => {
 			if (status !== "ready") return;
 
 			append({
-				content: `What's the current date and time?`,
+				content: timeDateQuestion,
 				role: "user",
 			});
 
-			lastSubmittedQueryRef.current = `What's the current date and time?`;
+			lastSubmittedQueryRef.current = timeDateQuestion;
 			setHasSubmitted(true);
 		}, []);
 
