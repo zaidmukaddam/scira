@@ -45,7 +45,7 @@ export const searchGroups = [
     name: 'Analysis',
     description: 'Code, stock and currency stuff',
     icon: Code,
-    show: true,
+    show: false,
   },
   {
     id: 'chat' as const,
@@ -73,7 +73,7 @@ export const searchGroups = [
     name: 'YouTube',
     description: 'Search YouTube videos powered by Exa',
     icon: YoutubeIcon,
-    show: true,
+    show: false,
   },
   {
     id: 'extreme' as const,
