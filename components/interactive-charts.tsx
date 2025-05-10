@@ -24,7 +24,8 @@ interface BaseChart {
   x_scale?: string;
 }
 
-export function InteractiveChart({ chart }: { chart: BaseChart }) {
+// Create a memoized chart component to prevent unnecessary rerenders
+const InteractiveChart = React.memo(({ chart }: { chart: BaseChart }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -36,7 +37,7 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
     tooltip: isDark ? '#171717' : '#ffffff',
   }), [isDark]);
 
-  const sharedOptions: EChartsOption = {
+  const sharedOptions: EChartsOption = useMemo(() => ({
     backgroundColor: 'transparent',
     grid: {
       top: chart.title ? 50 : 25,
@@ -123,9 +124,10 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
     animationEasing: 'cubicOut',
     responsive: true,
     maintainAspectRatio: false
-  };
+  }), [chart.title, chart.elements.length, themeStyles, isDark]);
 
-  const getChartOptions = (): EChartsOption => {
+  // Memoize the getChartOptions function to prevent recalculation during rerenders
+  const chartOptions = useMemo(() => {
     const defaultAxisOptions = {
       axisLine: { 
         show: true, 
@@ -164,6 +166,70 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
     // Mobile optimizations
     const isMobileMediaQuery = '(max-width: 640px)';
     const isMobile = window.matchMedia(isMobileMediaQuery).matches;
+
+    if (chart.type === 'pie') {
+      // Prepare pie chart data
+      const series = [{
+        type: 'pie',
+        radius: '75%',
+        center: ['50%', '58%'],
+        data: chart.elements.map((e, index) => {
+          const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
+          return {
+            name: e.label,
+            value: e.angle,
+            itemStyle: {
+              color: colorSet[0]
+            },
+            emphasis: {
+              itemStyle: {
+                color: colorSet[1],
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.2)'
+              }
+            }
+          };
+        }),
+        label: {
+          show: !isMobile,
+          position: 'outside',
+          formatter: '{b}: {d}%',
+          fontSize: 10,
+          color: themeStyles.text
+        },
+        labelLine: {
+          show: !isMobile,
+          lineStyle: {
+            color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'
+          }
+        },
+        itemStyle: {
+          borderRadius: 2,
+          borderColor: isDark ? '#1e1e1e' : '#ffffff',
+          borderWidth: 1
+        },
+        animationType: 'scale',
+        animationEasing: 'elasticOut'
+      }];
+
+      return {
+        ...sharedOptions,
+        grid: {
+          top: chart.title ? 50 : 25,
+          bottom: 25,
+          left: 10,
+          right: 10,
+          containLabel: true
+        },
+        tooltip: {
+          ...sharedOptions.tooltip,
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        series
+      };
+    }
 
     if (chart.type === 'line' || chart.type === 'scatter') {
       const series = chart.elements.map((e, index) => {
@@ -346,7 +412,7 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
     }
 
     return sharedOptions;
-  };
+  }, [sharedOptions, chart, themeStyles, isDark]);
 
   return (
     <motion.div
@@ -364,7 +430,7 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
         <div className='m-0 px-3 sm:px-4 pb-3'>
           <div className="w-full h-80">
             <ReactECharts 
-              option={getChartOptions()} 
+              option={chartOptions} 
               style={{ height: '100%', width: '100%' }}
               className='p-0! m-0! h-full w-full!'
               theme={theme === 'dark' ? 'dark' : undefined}
@@ -383,6 +449,44 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
       </Card>
     </motion.div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Deep comparison of chart props to prevent unnecessary rerenders
+  // Only rerender if essential properties change
+  if (prevProps.chart.title !== nextProps.chart.title) return false;
+  if (prevProps.chart.type !== nextProps.chart.type) return false;
+  
+  // Check if elements array references are the same
+  if (prevProps.chart.elements === nextProps.chart.elements) return true;
+  
+  // If elements references are different but lengths are different, they're definitely different
+  if (prevProps.chart.elements.length !== nextProps.chart.elements.length) return false;
+  
+  // For streaming, consider charts equal if they have the same number of elements
+  // and each element has the same label and value/points reference
+  // This prevents rerenders when streaming adds more content but chart data is unchanged
+  for (let i = 0; i < prevProps.chart.elements.length; i++) {
+    const prevElement = prevProps.chart.elements[i];
+    const nextElement = nextProps.chart.elements[i];
+    
+    if (prevElement.label !== nextElement.label) return false;
+    
+    // For pie charts, compare values directly
+    if (prevProps.chart.type === 'pie') {
+      if (prevElement.value !== nextElement.value) return false;
+      continue;
+    }
+    
+    // For line/scatter charts, compare points
+    // If points reference is the same, elements are equivalent
+    if (prevElement.points === nextElement.points) continue;
+    
+    // If lengths are different, they're definitely different
+    if (prevElement.points?.length !== nextElement.points?.length) return false;
+  }
+  
+  // If we reach here, consider them equal
+  return true;
+});
 
+export { InteractiveChart };
 export default InteractiveChart;

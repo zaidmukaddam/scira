@@ -479,24 +479,23 @@ const groupInstructions = {
   - Include library installations (!pip install <library_name>) where required
   - Keep code simple and concise unless complexity is absolutely necessary
   - ⚠️ NEVER use unnecessary intermediate variables or assignments
-  - ⚠️ NEVER use print() functions - directly reference final variables at the end
-  - For final output, simply use the variable name on the last line (e.g., \`result\` not \`print(result)\`)
+  - ⚠️ Always use print() functions - directly reference them at the end
+  - For final output, simply print the result (e.g., \`print(result)\` not \`result\`)
   - Use only essential code - avoid boilerplate, comments, or explanatory code
   - For visualizations: use 'plt.show()' for plots, and mention generated URLs for outputs
-  
-  Bad code example:
-  \`\`\`python
-  word = "strawberry"
-  count_r = word.count('r')
-  result = count_r  # Unnecessary assignment
-  print(result)     # Never use print()
-  \`\`\`
   
   Good code example:
   \`\`\`python
   word = "strawberry"
   count_r = word.count('r')
-  count_r           # Directly reference the final variable
+  print(count_r)     # use print()
+  \`\`\`
+  
+  Bad code example:
+  \`\`\`python
+  word = "strawberry"
+  count_r = word.count('r')
+  count_r           # Never directly reference the final variable
   \`\`\`
   
   #### Stock Charts Tool:

@@ -487,7 +487,20 @@ function CodeInterpreterView({
     status?: 'running' | 'completed' | 'error';
     error?: string;
 }) {
-    const [isExpanded, setIsExpanded] = useState(true);
+    // Set initial state based on status - expanded while running, collapsed when complete
+    const [isExpanded, setIsExpanded] = useState(status !== 'completed');
+    
+    // Update expanded state when status changes
+    useEffect(() => {
+        // If status changes to completed, collapse the code section
+        if (status === 'completed' && (output || error)) {
+            setIsExpanded(false);
+        }
+        // Keep expanded during running or error states
+        else if (status === 'running' || status === 'error') {
+            setIsExpanded(true);
+        }
+    }, [status, output, error]);
 
     return (
         <div className="group overflow-hidden bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm transition-all duration-200 hover:shadow">
@@ -1060,6 +1073,34 @@ const ToolInvocationListView = memo(
                 }
 
                 if (toolInvocation.toolName === "code_interpreter") {
+                    // Example code for creating charts (useful for reference but not shown to user):
+                    // 
+                    // # For pie charts:
+                    // chart_data = {
+                    //     "type": "pie",
+                    //     "title": "Distribution of Values",
+                    //     "elements": [
+                    //         {"label": "Category A", "value": 30},
+                    //         {"label": "Category B", "value": 20},
+                    //         {"label": "Category C", "value": 15},
+                    //         {"label": "Category D", "value": 35}
+                    //     ]
+                    // }
+                    // return {"message": "Chart generated successfully", "chart": chart_data}
+                    //
+                    // # For line charts:
+                    // chart_data = {
+                    //     "type": "line",
+                    //     "title": "Temperature Trends",
+                    //     "x_label": "Date",
+                    //     "y_label": "Temperature (°C)",
+                    //     "elements": [
+                    //         {"label": "Tokyo", "points": [["2023-01", 7], ["2023-02", 8], ["2023-03", 12]]},
+                    //         {"label": "New York", "points": [["2023-01", 2], ["2023-02", 3], ["2023-03", 7]]}
+                    //     ]
+                    // }
+                    // return {"message": "Chart generated successfully", "chart": chart_data}
+                    
                     return (
                         <div className="space-y-3 w-full overflow-hidden">
                             <CodeInterpreterView
@@ -1705,8 +1746,51 @@ const ToolInvocationListView = memo(
         );
     },
     (prevProps, nextProps) => {
-        return prevProps.toolInvocations === nextProps.toolInvocations &&
-            prevProps.message === nextProps.message;
+        // Improved comparison function to prevent rerenders during streaming
+        // Check if toolInvocations are functionally the same even if they're different references
+        const prevTools = prevProps.toolInvocations;
+        const nextTools = nextProps.toolInvocations;
+        
+        if (prevTools.length !== nextTools.length) return false;
+        
+        // Deep comparison of toolInvocations to prevent unnecessary rerenders
+        for (let i = 0; i < prevTools.length; i++) {
+            const prevTool = prevTools[i];
+            const nextTool = nextTools[i];
+            
+            // Compare toolName and args (which won't change during streaming)
+            if (prevTool.toolName !== nextTool.toolName) return false;
+            
+            // If both have results, compare them shallowly (if they're the same reference, they're equal)
+            if ('result' in prevTool && 'result' in nextTool) {
+                // If results are different references but both exist, consider them equal
+                // during streaming if they represent the same data
+                if (prevTool.result !== nextTool.result) {
+                    // For charts, avoid deep comparison which could be expensive
+                    if (prevTool.toolName === 'code_interpreter' && 
+                        prevTool.result?.chart && nextTool.result?.chart) {
+                        // If chart elements are identical references, they're equal
+                        if (prevTool.result.chart.elements === nextTool.result.chart.elements) {
+                            continue;
+                        }
+                    }
+                    
+                    // For stock charts
+                    if (prevTool.toolName === 'stock_chart' && 
+                        prevTool.result?.chart && nextTool.result?.chart) {
+                        // If chart elements are identical references, they're equal
+                        if (prevTool.result.chart.elements === nextTool.result.chart.elements) {
+                            continue;
+                        }
+                    }
+                }
+            }
+            
+            // If one has a result and the other doesn't, they're different
+            if (('result' in prevTool) !== ('result' in nextTool)) return false;
+        }
+        
+        return true;
     }
 );
 
