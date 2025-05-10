@@ -220,7 +220,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div 
                   ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-base [&>*]:sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
                 >
                   <MarkdownRenderer content={preprocessLaTeX(message.content)} />
                   

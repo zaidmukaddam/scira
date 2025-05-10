@@ -58,7 +58,8 @@ const middleware = extractReasoningMiddleware({
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-3-beta'),
+        'scira-default': xai("grok-3-mini"),
+        'scira-grok-3': xai('grok-3-beta'),
         'scira-vision': xai('grok-2-vision-1212'),
         'scira-4o': openai('gpt-4o', {
             structuredOutputs: true,
@@ -80,17 +81,6 @@ const scira = customProvider({
         }),
     }
 })
-
-interface XResult {
-    id: string;
-    url: string;
-    title: string;
-    author?: string;
-    publishedDate?: string;
-    text: string;
-    highlights?: string[];
-    tweetId: string;
-}
 
 interface MapboxFeature {
     id: string;
@@ -357,24 +347,24 @@ export async function POST(req: Request) {
                 }),
                 providerOptions: {
                     scira: {
-                        // ...(model === 'scira-default' ?
-                        //     {
-                        //         reasoningEffort: 'low',
-                        //     }
-                        //     : {}
-                        // ),
+                        ...(model === 'scira-default' ?
+                            {
+                                reasoningEffort: 'high',
+                            }
+                            : {}
+                        ),
                         ...(model === 'scira-o4-mini' ? {
                             reasoningEffort: 'medium'
                         } : {}),
                         ...(model === 'scira-google' ? {
                             thinkingConfig: {
-                                thinkingBudget: 5000,
+                                thinkingBudget: 10000,
                             },
                         } : {}),
                     },
                     google: {
                         thinkingConfig: {
-                            thinkingBudget: 5000,
+                            thinkingBudget: 10000,
                         },
                     },
                     openai: {
@@ -382,11 +372,11 @@ export async function POST(req: Request) {
                             reasoningEffort: 'medium'
                         } : {})
                     },
-                    // xai: {
-                    //     ...(model === 'scira-default' ? {
-                    //         reasoningEffort: 'low',
-                    //     } : {}),
-                    // },
+                    xai: {
+                        ...(model === 'scira-default' ? {
+                            reasoningEffort: 'high',
+                        } : {}),
+                    },
                     anthropic: {
                         thinking: { type: 'enabled', budgetTokens: 12000 },
                     }

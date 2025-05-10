@@ -26,6 +26,7 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
+    CardFooter,
 } from "@/components/ui/card";
 import {
     Tooltip,
@@ -40,6 +41,7 @@ import {
     Book,
     Building,
     ChevronDown,
+    Clock,
     Cloud,
     Copy,
     ExternalLink,
@@ -54,6 +56,7 @@ import {
     TextIcon,
     TrendingUpIcon,
     Tv,
+    XCircle,
     YoutubeIcon,
 } from 'lucide-react';
 import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon } from '@phosphor-icons/react';
@@ -386,91 +389,156 @@ const MemoizedYouTubeCard = React.memo(YouTubeCard, (prevProps, nextProps) => {
     );
 });
 
-// Also adding the CollapsibleSection component needed by ToolInvocationListView
-function CollapsibleSection({
-    code,
-    output,
-    language = "plaintext",
-    title,
-    icon,
-    status,
-}: CollapsibleSectionProps) {
-    const [copied, setCopied] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(true);
-    const [activeTab, setActiveTab] = useState<'code' | 'output'>('code');
+// Modern code interpreter components
+const LineNumbers = memo(({ count }: { count: number }) => (
+    <div className="hidden sm:block select-none w-8 sm:w-10 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-2 text-right">
+        {Array.from({ length: count }, (_, i) => (
+            <div 
+                key={i} 
+                className="text-[10px] leading-5 text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
+            >
+                {i + 1}
+            </div>
+        ))}
+    </div>
+));
+LineNumbers.displayName = 'LineNumbers';
 
-    const handleCopy = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const textToCopy = activeTab === 'code' ? code : output;
-        await navigator.clipboard.writeText(textToCopy || '');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+const StatusBadge = memo(({ status }: { status: 'running' | 'completed' | 'error' }) => {
+    if (status === 'completed') return null;
+    
+    if (status === 'error') {
+        return (
+            <div className="flex items-center gap-1 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded-md text-[9px] font-medium">
+                <XCircle className="h-2.5 w-2.5" />
+                <span className="hidden sm:inline">Error</span>
+            </div>
+        );
+    }
 
     return (
-        <div className="group rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-all duration-200 hover:shadow-xs">
-            <div 
-                className="flex items-center justify-between p-4 cursor-pointer"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                        {status === 'running' ? (
-                            <Loader2 className="h-4 w-4 text-neutral-500 animate-spin" />
-                        ) : (
-                            <Code className="h-4 w-4 text-neutral-500" />
-                        )}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20">
+            <Loader2 className="h-2.5 w-2.5 animate-spin text-blue-500" />
+            <span className="hidden sm:inline text-[9px] font-medium text-blue-600 dark:text-blue-400">
+                Running
+            </span>
+        </div>
+    );
+});
+StatusBadge.displayName = 'StatusBadge';
+
+const CodeBlock = memo(({ 
+    code, 
+    language 
+}: { 
+    code: string; 
+    language: string;
+}) => {
+    const lines = code.split('\n');
+    return (
+        <div className="flex bg-neutral-50 dark:bg-neutral-900/70">
+            <LineNumbers count={lines.length} />
+            <div className="overflow-x-auto w-full">
+                <pre className="p-2 sm:p-3 m-0 font-mono text-[11px] sm:text-xs leading-5 text-neutral-800 dark:text-neutral-300">
+                    {code}
+                </pre>
+            </div>
+        </div>
+    );
+});
+CodeBlock.displayName = 'CodeBlock';
+
+const OutputBlock = memo(({ 
+    output,
+    error 
+}: { 
+    output?: string;
+    error?: string;
+}) => {
+    if (!output && !error) return null;
+    
+    return (
+        <div className={cn(
+            "font-mono text-[11px] sm:text-xs leading-5 p-2 sm:p-3",
+            error 
+                ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" 
+                : "bg-neutral-100 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300"
+        )}>
+            <pre className="whitespace-pre-wrap overflow-x-auto">
+                {error || output}
+            </pre>
+        </div>
+    );
+});
+OutputBlock.displayName = 'OutputBlock';
+
+function CodeInterpreterView({
+    code,
+    output,
+    language = "python",
+    title,
+    status,
+    error,
+}: {
+    code: string;
+    output?: string;
+    language?: string;
+    title?: string;
+    status?: 'running' | 'completed' | 'error';
+    error?: string;
+}) {
+    const [isExpanded, setIsExpanded] = useState(true);
+
+    return (
+        <div className="group overflow-hidden bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm transition-all duration-200 hover:shadow">
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between px-2.5 sm:px-3 py-2 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-200 dark:border-neutral-800 gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-700/50">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        <div className="text-[9px] font-medium font-mono text-neutral-500 dark:text-neutral-400 uppercase">
+                            {language}
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-sm font-medium">{title || "Code"}</h3>
-                        <p className="text-xs text-neutral-500">{status === 'running' ? 'Running...' : 'Completed'}</p>
-                    </div>
+                    <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-[160px] sm:max-w-xs">
+                        {title || "Code Execution"}
+                    </h3>
+                    <StatusBadge status={status || 'completed'} />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-1.5 ml-auto">
+                    <CopyButton text={code} />
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
-                        onClick={handleCopy}
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="h-6 w-6 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                     >
-                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        <ChevronDown className={cn(
+                            "h-3.5 w-3.5 transition-transform duration-200",
+                            isExpanded ? "rotate-180" : ""
+                        )} />
                     </Button>
-                    <ChevronDown
-                        className={`h-5 w-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                    />
                 </div>
             </div>
+
+            {/* Content */}
             {isExpanded && (
-                <div className="border-t border-neutral-200 dark:border-neutral-800">
-                    <div className="flex items-center border-b border-neutral-200 dark:border-neutral-800">
-                        <button
-                            onClick={() => setActiveTab('code')}
-                            className={`px-4 py-2 text-sm font-medium ${
-                                activeTab === 'code'
-                                    ? 'text-neutral-900 dark:text-neutral-100 border-b-2 border-primary'
-                                    : 'text-neutral-500'
-                            }`}
-                        >
-                            Code
-                        </button>
-                        {output && (
-                            <button
-                                onClick={() => setActiveTab('output')}
-                                className={`px-4 py-2 text-sm font-medium ${
-                                    activeTab === 'output'
-                                        ? 'text-neutral-900 dark:text-neutral-100 border-b-2 border-primary'
-                                        : 'text-neutral-500'
-                                }`}
-                            >
-                                Output
-                            </button>
-                        )}
+                <div>
+                    <div className="max-w-full overflow-x-auto max-h-60 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                        <CodeBlock code={code} language={language} />
                     </div>
-                    <div className="max-h-[500px] overflow-auto p-4 bg-neutral-50 dark:bg-neutral-900">
-                        <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-                            {activeTab === 'code' ? code : output}
-                        </pre>
-                    </div>
+                    {(output || error) && (
+                        <>
+                            <div className="border-t border-neutral-200 dark:border-neutral-800 px-2.5 sm:px-3 py-1.5 bg-neutral-50 dark:bg-neutral-800/30">
+                                <div className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                                    {error ? 'Error Output' : 'Execution Result'}
+                                </div>
+                            </div>
+                            <div className="max-w-full overflow-x-auto max-h-60 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                                <OutputBlock output={output} error={error} />
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>
@@ -513,6 +581,35 @@ const Check = ({ className }: { className?: string }) => (
         <polyline points="20 6 9 17 4 12"></polyline>
     </svg>
 );
+
+const CopyButton = memo(({ text }: { text: string }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopy}
+            className={cn(
+                "h-7 w-7 transition-colors duration-150",
+                copied ? "text-green-500" : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            )}
+        >
+            {copied ? (
+                <Check className="h-3.5 w-3.5" />
+            ) : (
+                <Copy className="h-3.5 w-3.5" />
+            )}
+        </Button>
+    );
+});
+CopyButton.displayName = 'CopyButton';
 
 // Now let's add the ToolInvocationListView 
 const ToolInvocationListView = memo(
@@ -869,28 +966,53 @@ const ToolInvocationListView = memo(
                 if (toolInvocation.toolName === 'get_weather_data') {
                     if (!result) {
                         return (
-                            <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center gap-2">
-                                    <Cloud className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
-                                    <span className="text-neutral-700 dark:text-neutral-300 text-lg">Fetching weather data...</span>
-                                </div>
-                                <div className="flex space-x-1">
-                                    {[0, 1, 2].map((index) => (
-                                        <motion.div
-                                            key={index}
-                                            className="w-2 h-2 bg-neutral-400 dark:bg-neutral-600 rounded-full"
-                                            initial={{ opacity: 0.3 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{
-                                                repeat: Infinity,
-                                                duration: 0.8,
-                                                delay: index * 0.2,
-                                                repeatType: "reverse",
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                            <Card className="my-2 py-0 shadow-none bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 gap-0">
+                                <CardHeader className="py-2 px-3 sm:px-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="h-5 w-32 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse" />
+                                            <div className="flex items-center mt-1 gap-2">
+                                                <div className="h-4 w-20 bg-neutral-200 dark:bg-neutral-800 rounded-full animate-pulse" />
+                                                <div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-full animate-pulse" />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center ml-4">
+                                            <div className="text-right">
+                                                <div className="h-8 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse" />
+                                                <div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-md mt-1 animate-pulse" />
+                                            </div>
+                                            <div className="h-12 w-12 flex items-center justify-center ml-2">
+                                                <Cloud className="h-8 w-8 text-neutral-300 dark:text-neutral-700 animate-pulse" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5 mt-3">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="h-7 w-28 bg-neutral-200 dark:bg-neutral-800 rounded-full animate-pulse" />
+                                        ))}
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <div className="px-3 sm:px-4">
+                                        <div className="h-8 w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse mb-4" />
+                                        <div className="h-[180px] w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+                                        <div className="flex justify-between mt-4 pb-4 overflow-x-auto no-scrollbar">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div key={i} className="flex flex-col items-center min-w-[60px] sm:min-w-[70px] p-1.5 sm:p-2 mx-0.5">
+                                                    <div className="h-4 w-12 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse mb-2" />
+                                                    <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse mb-2" />
+                                                    <div className="h-3 w-8 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="border-t border-neutral-200 dark:border-neutral-800 py-0! px-4 m-0!">
+                                    <div className="w-full flex justify-end items-center py-1">
+                                        <div className="h-3 w-32 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                                    </div>
+                                </CardFooter>
+                            </Card>
                         );
                     }
                     return <WeatherChart result={result} />;
@@ -939,18 +1061,18 @@ const ToolInvocationListView = memo(
 
                 if (toolInvocation.toolName === "code_interpreter") {
                     return (
-                        <div className="space-y-6">
-                            <CollapsibleSection
+                        <div className="space-y-3 w-full overflow-hidden">
+                            <CodeInterpreterView
                                 code={args.code}
                                 output={result?.message}
+                                error={result?.error}
                                 language="python"
-                                title={args.title}
-                                icon={args.icon || 'default'}
-                                status={result ? 'completed' : 'running'}
+                                title={args.title || "Code Execution"}
+                                status={result?.error ? 'error' : (result ? 'completed' : 'running')}
                             />
 
                             {result?.chart && (
-                                <div className="pt-1">
+                                <div className="pt-1 overflow-x-auto">
                                     <InteractiveChart chart={result.chart} />
                                 </div>
                             )}
