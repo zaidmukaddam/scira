@@ -491,5 +491,4 @@ const InteractiveChart = React.memo(({ chart }: { chart: BaseChart }) => {
 // Add display name to satisfy ESLint rule
 InteractiveChart.displayName = 'InteractiveChart';
 
-export { InteractiveChart };
 export default InteractiveChart;
