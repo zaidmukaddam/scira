@@ -120,8 +120,9 @@
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "@vercel/speed-insights",
+      "core-js",
       "sharp",
-      "@tailwindcss/oxide"
+      "sqlite3"
     ]
   }
 }

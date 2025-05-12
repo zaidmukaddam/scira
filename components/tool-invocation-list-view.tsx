@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { ToolInvocation } from 'ai';
+import { ToolInvocation, UIMessage } from 'ai';
 import { motion } from 'framer-motion';
 import { Wave } from "@foobar404/wave";
 import { toast } from 'sonner';
@@ -41,7 +41,6 @@ import {
     Book,
     Building,
     ChevronDown,
-    Clock,
     Cloud,
     Copy,
     ExternalLink,
@@ -73,7 +72,7 @@ import AcademicPapersCard from '@/components/academic-papers';
 import WeatherChart from '@/components/weather-chart';
 import InteractiveStockChart from '@/components/interactive-stock-chart';
 import { CurrencyConverter } from '@/components/currency_conv';
-import ReasonSearch from '@/components/reason-search';
+import { ExtremeSearch } from '@/components/extreme-search';
 import MemoryManager from '@/components/memory-manager';
 import MCPServerList from '@/components/mcp-server-list';
 import RedditSearch from '@/components/reddit-search';
@@ -81,7 +80,6 @@ import RedditSearch from '@/components/reddit-search';
 // Actions
 import { generateSpeech } from '@/app/actions';
 import Image from 'next/image';
-
 
 // Interfaces
 interface VideoDetails {
@@ -114,15 +112,6 @@ interface YouTubeSearchResponse {
 interface YouTubeCardProps {
     video: VideoResult;
     index: number;
-}
-
-interface CollapsibleSectionProps {
-    code: string;
-    output?: string;
-    language?: string;
-    title?: string;
-    icon?: string;
-    status?: 'running' | 'completed';
 }
 
 // Now adding the SearchLoadingState component
@@ -626,12 +615,12 @@ CopyButton.displayName = 'CopyButton';
 
 // Now let's add the ToolInvocationListView 
 const ToolInvocationListView = memo(
-    ({ toolInvocations, message }: { toolInvocations: ToolInvocation[]; message: any }) => {
+    ({ toolInvocations, message, annotations }: { toolInvocations: ToolInvocation[]; message: UIMessage; annotations: any }) => {
         const renderToolInvocation = useCallback(
             (toolInvocation: ToolInvocation, index: number) => {
                 const args = JSON.parse(JSON.stringify(toolInvocation.args));
                 const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
-
+                
                 if (toolInvocation.toolName === 'find_place') {
                     if (!result) {
                         return <SearchLoadingState
@@ -1121,11 +1110,11 @@ const ToolInvocationListView = memo(
                     );
                 }
 
-                if (toolInvocation.toolName === 'reason_search') {
-                    const updates = message?.annotations?.filter((a: any) =>
-                        a.type === 'research_update'
-                    ).map((a: any) => a.data);
-                    return <ReasonSearch updates={updates || []} />;
+                if (toolInvocation.toolName === 'extreme_search') {
+                    return <ExtremeSearch
+                        toolInvocation={toolInvocation}
+                        annotations={annotations}
+                    />;
                 }
 
                 if (toolInvocation.toolName === 'web_search') {
@@ -1134,7 +1123,7 @@ const ToolInvocationListView = memo(
                             <MultiSearch
                                 result={result}
                                 args={args}
-                                annotations={message?.annotations?.filter(
+                                annotations={annotations?.filter(
                                     (a: any) => a.type === 'query_completion'
                                 ) || []}
                             />
@@ -1746,51 +1735,9 @@ const ToolInvocationListView = memo(
         );
     },
     (prevProps, nextProps) => {
-        // Improved comparison function to prevent rerenders during streaming
-        // Check if toolInvocations are functionally the same even if they're different references
-        const prevTools = prevProps.toolInvocations;
-        const nextTools = nextProps.toolInvocations;
-        
-        if (prevTools.length !== nextTools.length) return false;
-        
-        // Deep comparison of toolInvocations to prevent unnecessary rerenders
-        for (let i = 0; i < prevTools.length; i++) {
-            const prevTool = prevTools[i];
-            const nextTool = nextTools[i];
-            
-            // Compare toolName and args (which won't change during streaming)
-            if (prevTool.toolName !== nextTool.toolName) return false;
-            
-            // If both have results, compare them shallowly (if they're the same reference, they're equal)
-            if ('result' in prevTool && 'result' in nextTool) {
-                // If results are different references but both exist, consider them equal
-                // during streaming if they represent the same data
-                if (prevTool.result !== nextTool.result) {
-                    // For charts, avoid deep comparison which could be expensive
-                    if (prevTool.toolName === 'code_interpreter' && 
-                        prevTool.result?.chart && nextTool.result?.chart) {
-                        // If chart elements are identical references, they're equal
-                        if (prevTool.result.chart.elements === nextTool.result.chart.elements) {
-                            continue;
-                        }
-                    }
-                    
-                    // For stock charts
-                    if (prevTool.toolName === 'stock_chart' && 
-                        prevTool.result?.chart && nextTool.result?.chart) {
-                        // If chart elements are identical references, they're equal
-                        if (prevTool.result.chart.elements === nextTool.result.chart.elements) {
-                            continue;
-                        }
-                    }
-                }
-            }
-            
-            // If one has a result and the other doesn't, they're different
-            if (('result' in prevTool) !== ('result' in nextTool)) return false;
-        }
-        
-        return true;
+        return prevProps.toolInvocations === nextProps.toolInvocations &&
+        prevProps.message === nextProps.message &&
+        prevProps.annotations === nextProps.annotations
     }
 );
 

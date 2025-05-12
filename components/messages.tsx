@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Message } from '@/components/message';
-import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart } from '@ai-sdk/ui-utils';
+import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, UIMessage } from '@ai-sdk/ui-utils';
 import { ReasoningPartView, ReasoningPart } from '@/components/reasoning-part';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -92,11 +92,11 @@ const Messages: React.FC<MessagesProps> = ({
 
   // Handle rendering of message parts
   const renderPart = (
-    part: MessagePart,
+    part: UIMessage["parts"][number],
     messageIndex: number,
     partIndex: number,
-    parts: MessagePart[],
-    message: any,
+    parts: UIMessage["parts"],
+    message: UIMessage,
   ): React.ReactNode => {
     // First, update timing data for reasoning parts directly in the render function
     if (part.type === "reasoning") {
@@ -112,7 +112,7 @@ const Messages: React.FC<MessagesProps> = ({
       }
 
       // Check if reasoning is complete but we haven't recorded the end time
-      const isComplete = parts.some((p: MessagePart, i: number) =>
+      const isComplete = parts.some((p: UIMessage["parts"][number], i: number) =>
         i > partIndex && (p.type === "text" || p.type === "tool-invocation")
       );
 
@@ -134,7 +134,7 @@ const Messages: React.FC<MessagesProps> = ({
       if (!part.text || part.text.trim() === "") return null;
 
       // Check if this text part should be hidden because a tool invocation will show the same info
-      const hasRelatedToolInvocation = parts.some((p: MessagePart) =>
+      const hasRelatedToolInvocation = parts.some((p: UIMessage["parts"][number]) =>
         p.type === 'tool-invocation'
         // Don't need direct comparison between different types
       );
@@ -186,8 +186,8 @@ const Messages: React.FC<MessagesProps> = ({
         );
       case "reasoning": {
         const sectionKey = `${messageIndex}-${partIndex}`;
-        const hasParallelToolInvocation = parts.some((p: MessagePart) => p.type === 'tool-invocation');
-        const isComplete = parts.some((p: MessagePart, i: number) => i > partIndex && (p.type === "text" || p.type === "tool-invocation"));
+        const hasParallelToolInvocation = parts.some((p: UIMessage["parts"][number]) => p.type === 'tool-invocation');
+        const isComplete = parts.some((p: UIMessage["parts"][number], i: number) => i > partIndex && (p.type === "text" || p.type === "tool-invocation"));
         const timing = reasoningTimings[sectionKey];
         let duration = null;
         if (timing) {
@@ -196,7 +196,7 @@ const Messages: React.FC<MessagesProps> = ({
           }
         }
         const parallelTool = hasParallelToolInvocation 
-          ? (parts.find((p: MessagePart) => p.type === 'tool-invocation')?.toolInvocation?.toolName ?? null) 
+          ? (parts.find((p: UIMessage["parts"][number]) => p.type === 'tool-invocation')?.toolInvocation?.toolName ?? null) 
           : null;
 
         // Separate expanded and fullscreen states
@@ -228,6 +228,7 @@ const Messages: React.FC<MessagesProps> = ({
             key={`${messageIndex}-${partIndex}-tool`}
             toolInvocations={[part.toolInvocation]}
             message={message}
+            annotations={message.annotations}
           />
         );
       default:
