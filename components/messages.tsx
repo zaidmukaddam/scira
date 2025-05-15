@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Message } from '@/components/message';
-import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, UIMessage } from '@ai-sdk/ui-utils';
+import { UIMessage } from '@ai-sdk/ui-utils';
 import { ReasoningPartView, ReasoningPart } from '@/components/reasoning-part';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,6 @@ import { CopyButton } from '@/components/markdown';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import ToolInvocationListView from '@/components/tool-invocation-list-view';
 import { motion } from "framer-motion";
-
-// Define MessagePart type
-type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart;
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {

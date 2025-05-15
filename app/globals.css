@@ -10,6 +10,7 @@
   from {
     height: 0;
   }
+
   to {
     height: var(--radix-accordion-content-height);
   }
@@ -19,6 +20,7 @@
   from {
     height: var(--radix-accordion-content-height);
   }
+
   to {
     height: 0;
   }
@@ -34,6 +36,7 @@
 }
 
 @utility no-scrollbar {
+
   /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
     display: none;
@@ -64,16 +67,16 @@
     margin-bottom: 1em;
   }
 
-  .markdown-body .katex-display > .katex {
+  .markdown-body .katex-display>.katex {
     font-size: 1.21em;
   }
 
-  .markdown-body .katex-display > .katex > .katex-html {
+  .markdown-body .katex-display>.katex>.katex-html {
     display: block;
     position: relative;
   }
 
-  .markdown-body .katex-display > .katex > .katex-html > .tag {
+  .markdown-body .katex-display>.katex>.katex-html>.tag {
     position: absolute;
     right: 0;
   }
@@ -89,7 +92,7 @@
     overflow-y: auto;
   }
 
-  .tweet-container > div {
+  .tweet-container>div {
     flex: 1;
   }
 
@@ -113,6 +116,7 @@
     0% {
       transform: translateX(-100%);
     }
+
     100% {
       transform: translateX(200%);
     }
@@ -133,13 +137,11 @@
   }
 
   :is([data-theme='dark'], .dark) :where(.react-tweet-theme) {
-    --tweet-skeleton-gradient: linear-gradient(
-      270deg,
-      #15202b,
-      #1e2732,
-      #1e2732,
-      #15202b
-    ) !important;
+    --tweet-skeleton-gradient: linear-gradient(270deg,
+        #15202b,
+        #1e2732,
+        #1e2732,
+        #15202b) !important;
     --tweet-border: 1px solid #595959 !important;
     --tweet-font-color-secondary: #8b98a5 !important;
     --tweet-bg-color: #0c0c0c !important;
@@ -157,6 +159,15 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  [role="button"],
+  button {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
   }
 
   .whatsize {
@@ -299,6 +310,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
