@@ -113,7 +113,7 @@ export default function TermsPage() {
             Scira AI relies on third-party services to provide its functionality:
           </p>
           <ul>
-            <li>Our service is hosted on Vercel's infrastructure</li>
+            <li>Our service is hosted on Vercel&apos;s infrastructure</li>
             <li>We integrate with AI technology providers including OpenAI, Anthropic, xAI, and others</li>
             <li>These third-party services have their own terms of service and privacy policies</li>
             <li>We are not responsible for the practices or policies of these third-party services</li>
@@ -134,7 +134,7 @@ export default function TermsPage() {
 
           <h2>9. Disclaimers</h2>
           <p>
-            Scira AI is provided "as is" and "as available" without any warranties of any kind, either express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
+            Scira AI is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind, either express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
           </p>
 
           <h2>10. Termination</h2>

@@ -114,14 +114,14 @@ export default function PrivacyPage() {
             <li>Withdraw consent where applicable</li>
           </ul>
 
-          <h2>Children's Privacy</h2>
+          <h2>Children&apos;s Privacy</h2>
           <p>
             Our service is not directed to children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.
           </p>
 
           <h2>Changes to This Privacy Policy</h2>
           <p>
-            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
+            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last updated&quot; date.
           </p>
 
           <h2>Contact Us</h2>
