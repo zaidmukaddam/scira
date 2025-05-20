@@ -65,6 +65,40 @@ export default function AboutPage() {
 
     return (
         <div className="min-h-screen bg-background overflow-hidden">
+            {/* Top Navigation Bar */}
+            <div className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="container max-w-5xl mx-auto py-3 px-4 flex justify-between items-center">
+                    <Link href="/" className="flex items-center gap-2">
+                        <NextImage src="/scira.png" alt="Scira Logo" className="h-8 w-8 invert dark:invert-0" width={32} height={32} unoptimized quality={100}/>
+                        <span className="font-syne font-bold text-lg">Scira</span>
+                    </Link>
+                    
+                    <div className="flex items-center gap-6">
+                        <Link 
+                            href="/terms"
+                            className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                        >
+                            Terms
+                        </Link>
+                        <Link 
+                            href="/privacy"
+                            className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                        >
+                            Privacy
+                        </Link>
+                        <Link 
+                            href="https://git.new/scira"
+                            className="hidden sm:flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Github className="h-4 w-4" />
+                            <span>GitHub</span>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
             <Dialog open={showWarning} onOpenChange={setShowWarning}>
                 <DialogContent className="sm:max-w-[425px] p-0 bg-neutral-50 dark:bg-neutral-900">
                     <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
