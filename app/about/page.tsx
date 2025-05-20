@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { TextLoop } from '@/components/core/text-loop';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Check } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -39,7 +39,6 @@ const item = {
 };
 
 export default function AboutPage() {
-    const router = useRouter();
     const [showWarning, setShowWarning] = useState(false);
     
     useEffect(() => {
@@ -60,7 +59,7 @@ export default function AboutPage() {
         const formData = new FormData(e.currentTarget);
         const query = formData.get('query')?.toString();
         if (query) {
-            router.push(`/?q=${encodeURIComponent(query)}`);
+            redirect(`/?q=${encodeURIComponent(query)}`);
         }
     };
 
@@ -126,7 +125,7 @@ export default function AboutPage() {
                                             e.preventDefault();
                                             const query = e.currentTarget.value;
                                             if (query) {
-                                                router.push(`/?q=${encodeURIComponent(query)}`);
+                                                redirect(`/?q=${encodeURIComponent(query)}`);
                                             }
                                         }
                                     }}
@@ -552,6 +551,20 @@ export default function AboutPage() {
                         </div>
                         
                         <div className="flex items-center gap-3">
+                            <Link
+                                href="/terms"
+                                className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                            >
+                                Terms
+                            </Link>
+                            <span className="text-neutral-300 dark:text-neutral-700">|</span>
+                            <Link
+                                href="/privacy"
+                                className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                            >
+                                Privacy
+                            </Link>
+                            <span className="text-neutral-300 dark:text-neutral-700">|</span>
                             <Link
                                 href="https://x.com/sciraai"
                                 className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors"
