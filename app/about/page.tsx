@@ -2,7 +2,7 @@
 "use client";
 
 import { GithubLogo, XLogo } from '@phosphor-icons/react';
-import { Bot, Brain, Command, GraduationCap, Image, Search, Share2, Sparkles, Star, Trophy, Users, AlertTriangle, Github, Twitter } from 'lucide-react';
+import { Bot, Brain, Command, GraduationCap, Image, Search, Share2, Sparkles, Star, Trophy, Users, AlertTriangle, Github, Twitter, FileText, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { TextLoop } from '@/components/core/text-loop';
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
 import NextImage from 'next/image';
+import { Checkbox } from "@/components/ui/checkbox";
 
 const container = {
     hidden: { opacity: 0 },
@@ -39,19 +40,22 @@ const item = {
 };
 
 export default function AboutPage() {
-    const [showWarning, setShowWarning] = useState(false);
+    const [showTermsDialog, setShowTermsDialog] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     
     useEffect(() => {
-        // Check if user has seen the warning
-        const hasSeenWarning = localStorage.getItem('hasSeenWarning');
-        if (!hasSeenWarning) {
-            setShowWarning(true);
+        // Check if user has seen the terms
+        const hasAcceptedTerms = localStorage.getItem('hasAcceptedTerms');
+        if (!hasAcceptedTerms) {
+            setShowTermsDialog(true);
         }
     }, []);
 
-    const handleDismissWarning = () => {
-        setShowWarning(false);
-        localStorage.setItem('hasSeenWarning', 'true');
+    const handleAcceptTerms = () => {
+        if (acceptedTerms) {
+            setShowTermsDialog(false);
+            localStorage.setItem('hasAcceptedTerms', 'true');
+        }
     };
 
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -78,13 +82,13 @@ export default function AboutPage() {
                             href="/terms"
                             className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
                         >
-                            Terms
+                            Terms of Service
                         </Link>
                         <Link 
                             href="/privacy"
                             className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
                         >
-                            Privacy
+                            Privacy Policy
                         </Link>
                         <Link 
                             href="https://git.new/scira"
@@ -99,26 +103,77 @@ export default function AboutPage() {
                 </div>
             </div>
 
-            <Dialog open={showWarning} onOpenChange={setShowWarning}>
-                <DialogContent className="sm:max-w-[425px] p-0 bg-neutral-50 dark:bg-neutral-900">
-                    <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
+            <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
+                <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
+                    <div className="p-6 border-b border-border">
                         <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
-                                <AlertTriangle className="h-5 w-5" />
-                                Warning
+                            <DialogTitle className="flex items-center gap-2 text-primary">
+                                <FileText className="size-5" />
+                                Terms and Privacy
                             </DialogTitle>
-                            <DialogDescription className="text-neutral-600 dark:text-neutral-400">
-                                Scira is an AI search engine and is not associated with any cryptocurrency, memecoin, or token activities. Beware of impersonators.
+                            <DialogDescription className="text-muted-foreground mt-2.5">
+                                Before you continue, please review our Terms of Service and Privacy Policy.
                             </DialogDescription>
                         </DialogHeader>
                     </div>
-                    <DialogFooter className="p-6 pt-4">
+                    
+                    <div className="px-6 py-5 space-y-6 max-h-[300px] overflow-y-auto">
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-medium flex items-center gap-2">
+                                <ShieldCheck className="size-4 text-primary" />
+                                Terms of Service
+                            </h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                By using Scira, you agree to our Terms of Service which outline the rules for using our platform. 
+                                This includes guidelines on acceptable use, intellectual property rights, and limitations of liability.
+                            </p>
+                            <Link href="/terms" className="text-xs text-primary hover:underline inline-flex items-center">
+                                Read full Terms of Service
+                                <ArrowUpRight className="size-3 ml-1" />
+                            </Link>
+                        </div>
+                        
+                        <div className="space-y-3 pt-2">
+                            <h3 className="text-sm font-medium flex items-center gap-2">
+                                <ShieldCheck className="size-4 text-primary" />
+                                Privacy Policy
+                            </h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                Our Privacy Policy describes how we collect, use, and protect your personal information. 
+                                We take your privacy seriously and are committed to maintaining the confidentiality of your data.
+                            </p>
+                            <Link href="/privacy" className="text-xs text-primary hover:underline inline-flex items-center">
+                                Read full Privacy Policy
+                                <ArrowUpRight className="size-3 ml-1" />
+                            </Link>
+                        </div>
+                    </div>
+                    
+                    <div className="px-6 pt-1 pb-4">
+                        <div className="flex items-start space-x-3 p-3 rounded-md bg-accent/50 border border-border">
+                            <Checkbox 
+                                id="terms" 
+                                checked={acceptedTerms}
+                                onCheckedChange={() => setAcceptedTerms(!acceptedTerms)}
+                                className="mt-0.5"
+                            />
+                            <label
+                                htmlFor="terms"
+                                className="text-sm font-medium cursor-pointer"
+                            >
+                                I agree to the Terms of Service and Privacy Policy
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <DialogFooter className="p-6 pt-2">
                         <Button 
                             variant="default" 
-                            onClick={handleDismissWarning}
-                            className="w-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200"
+                            onClick={handleAcceptTerms}
+                            disabled={!acceptedTerms}
+                            className="w-full"
                         >
-                            Got it, thanks
+                            Continue
                         </Button>
                     </DialogFooter>
                 </DialogContent>
