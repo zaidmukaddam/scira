@@ -4,9 +4,9 @@ import './env/client';
 
 const nextConfig: NextConfig = {
     experimental: {
-        optimizePackageImports: ['@phosphor-icons/react'],
+        optimizePackageImports: ["@phosphor-icons/react"],
     },
-    transpilePackages: ['geist'],
+    transpilePackages: ["geist"],
     output: 'standalone',
     async headers() {
         return [
@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
                     },
                 ],
             },
-        ];
+        ]
     },
     async redirects() {
         return [
@@ -40,8 +40,8 @@ const nextConfig: NextConfig = {
                 source: '/raycast',
                 destination: 'https://www.raycast.com/zaidmukaddam/scira',
                 permanent: true,
-            },
-        ];
+            }
+        ]
     },
     images: {
         dangerouslyAllowSVG: true,
@@ -50,13 +50,13 @@ const nextConfig: NextConfig = {
                 protocol: 'https',
                 hostname: '**',
                 port: '',
-                pathname: '**',
+                pathname: '**'
             },
             {
                 protocol: 'http',
                 hostname: '**',
                 port: '',
-                pathname: '**',
+                pathname: '**'
             },
             {
                 protocol: 'https',
@@ -74,44 +74,44 @@ const nextConfig: NextConfig = {
                 protocol: 'https',
                 hostname: 'metwm7frkvew6tn1.public.blob.vercel-storage.com',
                 port: '',
-                pathname: '**',
+                pathname: "**"
             },
             // upload.wikimedia.org
             {
                 protocol: 'https',
                 hostname: 'upload.wikimedia.org',
                 port: '',
-                pathname: '**',
+                pathname: '**'
             },
             // media.theresanaiforthat.com
             {
                 protocol: 'https',
                 hostname: 'media.theresanaiforthat.com',
                 port: '',
-                pathname: '**',
+                pathname: '**'
             },
             // www.uneed.best
             {
                 protocol: 'https',
                 hostname: 'www.uneed.best',
                 port: '',
-                pathname: '**',
+                pathname: '**'
             },
             // image.tmdb.org
             {
                 protocol: 'https',
                 hostname: 'image.tmdb.org',
                 port: '',
-                pathname: '/t/p/original/**',
+                pathname: '/t/p/original/**'
             },
             // image.tmdb.org
             {
                 protocol: 'https',
                 hostname: 'image.tmdb.org',
                 port: '',
-                pathname: '/**',
+                pathname: '/**'
             },
-        ],
+        ]
     },
 };
 
