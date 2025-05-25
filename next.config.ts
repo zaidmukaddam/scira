@@ -1,18 +1,12 @@
-// https://env.t3.gg/docs/nextjs#validate-schema-on-build-(recommended)
-import { createJiti } from 'jiti'
-import { fileURLToPath } from 'node:url'
-const jiti = createJiti(fileURLToPath(import.meta.url))
+import type { NextConfig } from 'next';
+import './env/server';
+import './env/client';
 
-// Import env here to validate during build. Using jiti we can import .ts files :)
-jiti.import('./env/server')
-jiti.import('./env/client')
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
     experimental: {
-        optimizePackageImports: ["@phosphor-icons/react"],
+        optimizePackageImports: ['@phosphor-icons/react'],
     },
-    transpilePackages: ["geist"],
+    transpilePackages: ['geist'],
     output: 'standalone',
     async headers() {
         return [
@@ -33,7 +27,7 @@ const nextConfig = {
                     },
                 ],
             },
-        ]
+        ];
     },
     async redirects() {
         return [
@@ -46,8 +40,8 @@ const nextConfig = {
                 source: '/raycast',
                 destination: 'https://www.raycast.com/zaidmukaddam/scira',
                 permanent: true,
-            }
-        ]
+            },
+        ];
     },
     images: {
         dangerouslyAllowSVG: true,
@@ -56,13 +50,13 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '**',
                 port: '',
-                pathname: '**'
+                pathname: '**',
             },
             {
                 protocol: 'http',
                 hostname: '**',
                 port: '',
-                pathname: '**'
+                pathname: '**',
             },
             {
                 protocol: 'https',
@@ -80,44 +74,44 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'metwm7frkvew6tn1.public.blob.vercel-storage.com',
                 port: '',
-                pathname: "**"
+                pathname: '**',
             },
             // upload.wikimedia.org
             {
                 protocol: 'https',
                 hostname: 'upload.wikimedia.org',
                 port: '',
-                pathname: '**'
+                pathname: '**',
             },
             // media.theresanaiforthat.com
             {
                 protocol: 'https',
                 hostname: 'media.theresanaiforthat.com',
                 port: '',
-                pathname: '**'
+                pathname: '**',
             },
             // www.uneed.best
             {
                 protocol: 'https',
                 hostname: 'www.uneed.best',
                 port: '',
-                pathname: '**'
+                pathname: '**',
             },
             // image.tmdb.org
             {
                 protocol: 'https',
                 hostname: 'image.tmdb.org',
                 port: '',
-                pathname: '/t/p/original/**'
+                pathname: '/t/p/original/**',
             },
             // image.tmdb.org
             {
                 protocol: 'https',
                 hostname: 'image.tmdb.org',
                 port: '',
-                pathname: '/**'
+                pathname: '/**',
             },
-        ]
+        ],
     },
 };
 
