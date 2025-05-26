@@ -1,14 +1,8 @@
-// https://env.t3.gg/docs/nextjs#validate-schema-on-build-(recommended)
-import { createJiti } from 'jiti'
-import { fileURLToPath } from 'node:url'
-const jiti = createJiti(fileURLToPath(import.meta.url))
+import type { NextConfig } from 'next';
+import './env/server';
+import './env/client';
 
-// Import env here to validate during build. Using jiti we can import .ts files :)
-jiti.import('./env/server')
-jiti.import('./env/client')
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
     experimental: {
         optimizePackageImports: ["@phosphor-icons/react"],
     },
