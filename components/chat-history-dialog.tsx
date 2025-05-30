@@ -170,6 +170,41 @@ function fuzzySearch(query: string, text: string): boolean {
   return queryIndex === queryLower.length;
 }
 
+// Function to parse DD/MM/YY date format
+function parseDateQuery(dateStr: string): Date | null {
+  // Check if the string matches DD/MM/YY format
+  const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/;
+  const match = dateStr.match(dateRegex);
+  
+  if (!match) return null;
+  
+  const [, dayStr, monthStr, yearStr] = match;
+  const day = parseInt(dayStr, 10);
+  const month = parseInt(monthStr, 10) - 1; // Month is 0-indexed in Date
+  const year = 2000 + parseInt(yearStr, 10); // Convert YY to YYYY (assuming 20XX)
+  
+  // Validate the date components
+  if (day < 1 || day > 31 || month < 0 || month > 11) {
+    return null;
+  }
+  
+  const date = new Date(year, month, day);
+  
+  // Check if the date is valid (handles cases like 31/02/25)
+  if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+    return null;
+  }
+  
+  return date;
+}
+
+// Function to check if two dates are on the same day
+function isSameDay(date1: Date, date2: Date): boolean {
+  return date1.getDate() === date2.getDate() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getFullYear() === date2.getFullYear();
+}
+
 // Advanced search function with multiple criteria
 function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
   if (!query) return true;
@@ -197,11 +232,28 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
     return isThisMonth(new Date(chat.createdAt)) && fuzzySearch(query.slice(6), chat.title);
   }
 
+  // Handle date: prefix with DD/MM/YY format
+  if (query.startsWith('date:')) {
+    const dateQuery = query.slice(5).trim();
+    const parsedDate = parseDateQuery(dateQuery);
+    if (parsedDate) {
+      return isSameDay(new Date(chat.createdAt), parsedDate);
+    }
+    // If not a valid DD/MM/YY format, fall back to fuzzy search on the date query
+    return fuzzySearch(dateQuery, new Date(chat.createdAt).toLocaleDateString());
+  }
+
   // Regular search based on mode
   switch (mode) {
     case 'title':
       return fuzzySearch(query, chat.title);
     case 'date':
+      // In date mode, first try to parse as DD/MM/YY format
+      const parsedDate = parseDateQuery(query.trim());
+      if (parsedDate) {
+        return isSameDay(new Date(chat.createdAt), parsedDate);
+      }
+      // If not DD/MM/YY format, fall back to fuzzy search on date string
       const dateStr = new Date(chat.createdAt).toLocaleDateString();
       return fuzzySearch(query, dateStr);
     case 'visibility':
@@ -766,6 +818,8 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                             <p>Search tips:</p>
                             <p>• <code>public:</code> or <code>private:</code> for visibility</p>
                             <p>• <code>today:</code>, <code>week:</code>, <code>month:</code> for dates</p>
+                            <p>• <code>date:22/05/25</code> for specific date (DD/MM/YY)</p>
+                            <p>• Switch to Date mode and type <code>22/05/25</code></p>
                           </div>
                         </div>
                       )}
