@@ -392,97 +392,6 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
         }
     }, [chatId]);
 
-    const WidgetSection = memo(() => {
-        const [currentTime, setCurrentTime] = useState(new Date());
-        const timerRef = useRef<NodeJS.Timeout>();
-
-        useEffect(() => {
-            // Sync with the nearest second
-            const now = new Date();
-            const delay = 1000 - now.getMilliseconds();
-
-            // Initial sync
-            const timeout = setTimeout(() => {
-                setCurrentTime(new Date());
-
-                // Then start the interval
-                timerRef.current = setInterval(() => {
-                    setCurrentTime(new Date());
-                }, 1000);
-            }, delay);
-
-            return () => {
-                clearTimeout(timeout);
-                if (timerRef.current) {
-                    clearInterval(timerRef.current);
-                }
-            };
-        }, []);
-
-        // Get user's timezone
-        const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-        // Format date and time with timezone
-        const dateFormatter = new Intl.DateTimeFormat('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            timeZone: timezone
-        });
-
-        const timeFormatter = new Intl.DateTimeFormat('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-            timeZone: timezone
-        });
-
-        const formattedDate = dateFormatter.format(currentTime);
-        const formattedTime = timeFormatter.format(currentTime);
-
-        const handleDateTimeClick = useCallback(() => {
-            if (status !== 'ready') return;
-
-            append({
-                content: `What's the current date and time?`,
-                role: 'user'
-            });
-
-            lastSubmittedQueryRef.current = `What's the current date and time?`;
-            setHasSubmitted(true);
-        }, []);
-
-        return (
-            <div className="mt-8 w-full">
-                <div className="flex flex-wrap gap-2 justify-center">
-                    {/* Time Widget */}
-                    <button
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-800 bg-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-                        onClick={handleDateTimeClick}
-                    >
-                        <PhosphorClock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                        <span className="text-neutral-700 dark:text-neutral-300">
-                            {formattedTime}
-                        </span>
-                    </button>
-
-                    {/* Date Widget */}
-                    <button
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-neutral-200 dark:border-neutral-800 bg-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-                        onClick={handleDateTimeClick}
-                    >
-                        <CalendarBlank className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                        <span className="text-neutral-700 dark:text-neutral-300">
-                            {formattedDate}
-                        </span>
-                    </button>
-                </div>
-            </div>
-        );
-    });
-
-    WidgetSection.displayName = 'WidgetSection';
-
     return (
         <TooltipProvider>
             <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500">
@@ -557,14 +466,6 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                                     status={status}
                                     setHasSubmitted={setHasSubmitted}
                                 />
-                            </div>
-                        )}
-
-
-                        {/* Add the widget section below form when no messages */}
-                        {messages.length === 0 && (
-                            <div>
-                                <WidgetSection />
                             </div>
                         )}
 
