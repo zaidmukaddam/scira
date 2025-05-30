@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         // Use a different prefix for authenticated vs unauthenticated uploads
         const prefix = isAuthenticated ? 'auth' : 'public';
         
-        const blob = await put(`mplx/${prefix}`, file, {
+        const blob = await put(`mplx/${prefix}.${file.name.split('.').pop()}`, file, {
             access: 'public',
             addRandomSuffix: true,
         });
