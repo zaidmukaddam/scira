@@ -1,7 +1,7 @@
 // /app/api/chat/route.ts
-import { getGroupConfig } from '@/app/actions';
+import { generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
-import { openai } from "@ai-sdk/openai";
+import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import CodeInterpreter from '@e2b/code-interpreter';
 import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
 import { tavily } from '@tavily/core';
@@ -10,14 +10,70 @@ import {
     smoothStream,
     streamText,
     tool,
-    createDataStreamResponse,
     generateObject,
-    NoSuchToolError} from 'ai';
+    NoSuchToolError,
+    appendResponseMessages,
+    CoreToolMessage,
+    CoreAssistantMessage,
+    generateId,
+    createDataStream
+} from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 import { extremeSearchTool } from '@/ai/extreme-search';
 import { scira } from '@/ai/providers';
+import { getUser } from "@/lib/auth-utils";
+import { createStreamId, getChatById, getMessagesByChatId, getStreamIdsByChatId, saveChat, saveMessages } from '@/lib/db/queries';
+import { ChatSDKError } from '@/lib/errors';
+import {
+    createResumableStreamContext,
+    type ResumableStreamContext,
+} from 'resumable-stream';
+import { after } from 'next/server';
+import { differenceInSeconds } from 'date-fns';
+import { Chat } from '@/lib/db/schema';
+import { auth } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
+
+type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
+type ResponseMessage = ResponseMessageWithoutId & { id: string };
+
+export function getTrailingMessageId({
+    messages,
+}: {
+    messages: Array<ResponseMessage>;
+}): string | null {
+    const trailingMessage = messages.at(-1);
+
+    if (!trailingMessage) return null;
+
+    return trailingMessage.id;
+}
+
+
+let globalStreamContext: ResumableStreamContext | null = null;
+
+function getStreamContext() {
+    if (!globalStreamContext) {
+        try {
+            globalStreamContext = createResumableStreamContext({
+                waitUntil: after,
+            });
+        } catch (error: any) {
+            if (error.message.includes('REDIS_URL')) {
+                console.log(
+                    ' > Resumable streams are disabled due to missing REDIS_URL',
+                );
+            } else {
+                console.error(error);
+            }
+        }
+    }
+
+    return globalStreamContext;
+}
+
 
 // Add currency symbol mapping at the top of the file
 const CURRENCY_SYMBOLS = {
@@ -284,8 +340,61 @@ interface ExaResult {
 
 // Modify the POST function to use the new handler
 export async function POST(req: Request) {
-    const { messages, model, group, user_id, timezone } = await req.json();
+    const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
+
+    const user = await getUser();
+    const streamId = "stream-" + uuidv4();
+
+    if (!user) {
+        console.log("User not found");
+    }
+
     const { tools: activeTools, instructions } = await getGroupConfig(group);
+
+    if (user) {
+        const chat = await getChatById({ id });
+
+        if (!chat) {
+            const title = await generateTitleFromUserMessage({
+                message: messages[messages.length - 1],
+            });
+
+            console.log("--------------------------------");
+            console.log("Title: ", title);
+            console.log("--------------------------------");
+
+            await saveChat({
+                id,
+                userId: user.id,
+                title,
+                visibility: selectedVisibilityType,
+            });
+        } else {
+            if (chat.userId !== user.id) {
+                return new ChatSDKError('forbidden:chat').toResponse();
+            }
+        }
+
+
+        await saveMessages({
+            messages: [
+                {
+                    chatId: id,
+                    id: messages[messages.length - 1].id,
+                    role: 'user',
+                    parts: messages[messages.length - 1].parts,
+                    attachments: messages[messages.length - 1].experimental_attachments ?? [],
+                    createdAt: new Date(),
+                },
+            ],
+        });
+
+        console.log("--------------------------------");
+        console.log("Messages saved: ", messages);
+        console.log("--------------------------------");
+
+        await createStreamId({ streamId, chatId: id });
+    }
 
     console.log("--------------------------------");
     console.log("Messages: ", messages);
@@ -294,15 +403,21 @@ export async function POST(req: Request) {
     console.log("Group: ", group);
     console.log("Timezone: ", timezone);
 
-    return createDataStreamResponse({
+    const stream = createDataStream({
         execute: async (dataStream) => {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                ...(model !== 'scira-o4-mini' || model !== 'scira-anthropic' ? {
+                ...(!model.includes('scira-anthropic') || !model.includes('scira-o4-mini') ? {
                     temperature: 0,
-                } : {}),
+                } : (!model.includes('scira-qwq') ? {
+                    temperature: 0.6,
+                    topP: 0.95,
+                } : {
+                    temperature: 0,
+                })),
                 maxSteps: 5,
+                maxRetries: 5,
                 experimental_activeTools: [...activeTools],
                 system: instructions,
                 toolChoice: 'auto',
@@ -311,40 +426,40 @@ export async function POST(req: Request) {
                     delayInMs: 15,
                 }),
                 providerOptions: {
-                    scira: {
-                        ...(model === 'scira-default' ?
-                            {
-                                reasoningEffort: 'high',
-                            }
-                            : {}
-                        ),
-                        ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'medium'
-                        } : {}),
-                        ...(model === 'scira-google' ? {
-                            thinkingConfig: {
-                                thinkingBudget: 10000,
-                            },
-                        } : {}),
-                    },
                     google: {
                         thinkingConfig: {
-                            thinkingBudget: 10000,
+                            ...(model === 'scira-google' ? {
+                                thinkingBudget: 10000,
+                            } : {}),
+                            includeThoughts: true,
                         },
                     },
                     openai: {
                         ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'medium'
-                        } : {})
-                    },
+                            reasoningEffort: 'low',
+                            strictSchemas: true,
+                        } : {}),
+                        ...(model === 'scira-4o' ? {
+                            parallelToolCalls: false,
+                            strictSchemas: true,
+                        } : {}),
+                    } as OpenAIResponsesProviderOptions,
                     xai: {
+                        ...(group === "chat" ? {
+                            search_parameters: {
+                                mode: "auto",
+                                return_citations: true
+                            }
+                        } : {}),
                         ...(model === 'scira-default' ? {
                             reasoningEffort: 'high',
                         } : {}),
                     },
                     anthropic: {
-                        thinking: { type: 'enabled', budgetTokens: 12000 },
-                    }
+                        ...(model === 'scira-anthropic-thinking' || model === 'scira-anthropic-pro-thinking' ? {
+                            thinking: { type: 'enabled', budgetTokens: 12000 },
+                        } : {}),
+                    },
                 },
                 tools: {
                     stock_chart: tool({
@@ -582,7 +697,7 @@ plt.show()`
 
                             const pipInstall = await sandbox.process.executeCommand('pip install yfinance');
                             console.log('Pip install:', pipInstall.result);
-                            
+
                             const execution = await sandbox.process.codeRun(code);
                             let message = '';
 
@@ -590,7 +705,7 @@ plt.show()`
                                 message += execution.result;
                             }
 
-                    
+
                             if (execution.artifacts?.stdout) {
                                 message += execution.artifacts.stdout;
                             }
@@ -835,10 +950,9 @@ plt.show()`
                             try {
                                 // First do a multi-search to get the top result
                                 const searchResponse = await fetch(
-                                    `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(
-                                        query,
-                                    )}&language=en-US&page=1`,
+                                    `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=1&include_adult=false`,
                                     {
+                                        method: 'GET',
                                         headers: {
                                             Authorization: `Bearer ${TMDB_API_KEY}`,
                                             accept: 'application/json',
@@ -1143,13 +1257,13 @@ plt.show()`
                             include_summary?: boolean;
                             live_crawl?: 'never' | 'auto' | 'always';
                         }) => {
-                        try {
+                            try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
-                                
+
                                 console.log(`Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`);
-                                
+
                                 const start = Date.now();
-                                
+
                                 const result = await exa.getContents(
                                     [url],
                                     {
@@ -1158,13 +1272,13 @@ plt.show()`
                                         livecrawl: live_crawl
                                     }
                                 );
-                                
+
                                 // Check if there are results
                                 if (!result.results || result.results.length === 0) {
                                     console.error('Exa AI error: No content retrieved');
                                     return { error: 'Failed to retrieve content', results: [] };
                                 }
-                                
+
                                 return {
                                     base_url: url,
                                     results: result.results.map((item) => {
@@ -1201,13 +1315,13 @@ plt.show()`
                                 const geocodingResponse = await fetch(
                                     `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
                                 );
-                                
+
                                 const geocodingData = await geocodingResponse.json();
-                                
+
                                 if (!geocodingData.results || geocodingData.results.length === 0) {
                                     throw new Error(`Location '${location}' not found`);
                                 }
-                                
+
                                 const { latitude, longitude, name, country, timezone } = geocodingData.results[0];
                                 console.log('Latitude:', latitude);
                                 console.log('Longitude:', longitude);
@@ -1224,7 +1338,7 @@ plt.show()`
                                         `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=16&appid=${apiKey}`
                                     )
                                 ]);
-                                
+
                                 const [weatherData, airPollutionData, dailyForecastData] = await Promise.all([
                                     weatherResponse.json(),
                                     airPollutionResponse.json(),
@@ -1233,13 +1347,13 @@ plt.show()`
                                         return { list: [] }; // Return empty data if API fails
                                     })
                                 ]);
-                                
+
                                 // Step 3: Fetch air pollution forecast
                                 const airPollutionForecastResponse = await fetch(
                                     `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
                                 );
                                 const airPollutionForecastData = await airPollutionForecastResponse.json();
-                                
+
                                 // Add geocoding information to the weather data
                                 return {
                                     ...weatherData,
@@ -1295,7 +1409,7 @@ plt.show()`
                             console.log('Execution:', execution.result);
                             console.log('Execution:', execution.artifacts?.stdout);
 
-                            let message = '';                            
+                            let message = '';
 
                             if (execution.result) {
                                 message += execution.result;
@@ -1304,9 +1418,9 @@ plt.show()`
                             if (execution.artifacts?.stdout) {
                                 message += execution.artifacts.stdout;
                             }
-                            
+
                             if (execution.artifacts?.charts) {
-                               console.log('Chart:', execution.artifacts.charts[0]);
+                                console.log('Chart:', execution.artifacts.charts[0]);
                             }
 
                             let chart;
@@ -1752,9 +1866,10 @@ plt.show()`
                         parameters: z.object({}),
                         execute: async () => {
                             try {
-                                const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+                                // Get the current UTC time
+                                const now = new Date();
 
-                                // Format date and time using the timezone
+                                // Format date and time using the user's timezone
                                 return {
                                     timestamp: now.getTime(),
                                     iso: now.toISOString(),
@@ -1785,7 +1900,28 @@ plt.show()`
                                             minute: '2-digit',
                                             hour12: true,
                                             timeZone: timezone
-                                        }).format(now)
+                                        }).format(now),
+                                        // Add additional useful formats
+                                        full: new Intl.DateTimeFormat('en-US', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: true,
+                                            timeZone: timezone
+                                        }).format(now),
+                                        iso_local: new Intl.DateTimeFormat('sv-SE', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            timeZone: timezone
+                                        }).format(now).replace(' ', 'T')
                                     }
                                 };
                             } catch (error) {
@@ -1872,6 +2008,7 @@ plt.show()`
                             content?: string;
                             query?: string;
                         }) => {
+                            console.log("user", user);
                             const client = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY });
 
                             console.log("action", action);
@@ -1888,8 +2025,11 @@ plt.show()`
                                                 message: 'Content is required for add operation'
                                             };
                                         }
-                                        const result = await client.add(content, {
-                                            user_id,
+                                        const result = await client.add([{
+                                            role: 'user',
+                                            content: content
+                                        }], {
+                                            user_id: user?.id,
                                             org_id: serverEnv.MEM0_ORG_ID,
                                             project_id: serverEnv.MEM0_PROJECT_ID
                                         });
@@ -1917,7 +2057,7 @@ plt.show()`
                                         }
                                         const searchFilters = {
                                             AND: [
-                                                { user_id },
+                                                { user_id: user?.id },
                                             ]
                                         };
                                         const result = await client.search(query, {
@@ -1952,21 +2092,21 @@ plt.show()`
                             timeRange: z.enum(['day', 'week', 'month', 'year']).describe('Time range for Reddit search.'),
                         }),
                         execute: async ({
-                            query, 
-                            maxResults = 20, 
+                            query,
+                            maxResults = 20,
                             timeRange = 'week',
-                        }: { 
-                            query: string; 
+                        }: {
+                            query: string;
                             maxResults?: number;
                             timeRange?: 'day' | 'week' | 'month' | 'year';
                         }) => {
                             const apiKey = serverEnv.TAVILY_API_KEY;
                             const tvly = tavily({ apiKey });
-                            
+
                             console.log('Reddit search query:', query);
                             console.log('Max results:', maxResults);
                             console.log('Time range:', timeRange);
-                            
+
                             try {
                                 const data = await tvly.search(query, {
                                     maxResults: maxResults,
@@ -1978,15 +2118,15 @@ plt.show()`
                                 });
 
                                 console.log("data", data);
-                                
+
                                 // Process results for better display
                                 const processedResults = data.results.map(result => {
                                     // Extract Reddit post metadata
                                     const isRedditPost = result.url.includes('/comments/');
-                                    const subreddit = isRedditPost ? 
-                                        result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown' : 
+                                    const subreddit = isRedditPost ?
+                                        result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown' :
                                         'unknown';
-                                    
+
                                     // Don't attempt to parse comments - treat content as a single snippet
                                     // The Tavily API already returns short content snippets
                                     return {
@@ -2001,7 +2141,7 @@ plt.show()`
                                         comments: result.content ? [result.content] : []
                                     };
                                 });
-                                
+
                                 return {
                                     query,
                                     results: processedResults,
@@ -2063,23 +2203,172 @@ plt.show()`
                         console.log('Warnings: ', event.warnings);
                     }
                 },
-                onFinish(event) {
+                onFinish: async (event) => {
                     console.log('Fin reason: ', event.finishReason);
                     console.log('Reasoning: ', event.reasoning);
                     console.log('reasoning details: ', event.reasoningDetails);
                     console.log('Steps: ', event.steps);
                     console.log('Messages: ', event.response.messages);
-                    console.log('Response: ', event.response);
+                    console.log('Response Body: ', event.response.body);
+                    console.log('Provider metadata: ', event.providerMetadata);
+                    console.log("Sources: ", event.sources);
+
+                    if (user?.id) {
+                        try {
+                            const assistantId = getTrailingMessageId({
+                                messages: event.response.messages.filter(
+                                    (message: any) => message.role === 'assistant',
+                                ),
+                            });
+
+                            if (!assistantId) {
+                                throw new Error('No assistant message found!');
+                            }
+
+                            const [, assistantMessage] = appendResponseMessages({
+                                messages: [messages[messages.length - 1]],
+                                responseMessages: event.response.messages,
+                            });
+
+                            console.log("Assistant message [annotations]:", assistantMessage.annotations);
+
+                            await saveMessages({
+                                messages: [
+                                    {
+                                        id: assistantId,
+                                        chatId: id,
+                                        role: assistantMessage.role,
+                                        parts: assistantMessage.parts,
+                                        attachments:
+                                            assistantMessage.experimental_attachments ?? [],
+                                        createdAt: new Date(),
+                                    },
+                                ],
+                            });
+                        } catch (_) {
+                            console.error('Failed to save chat');
+                        }
+                    }
                 },
                 onError(event) {
                     console.log('Error: ', event.error);
                 },
             });
 
+            result.consumeStream()
+
             result.mergeIntoDataStream(dataStream, {
                 sendReasoning: true
             });
-        }
+        },
+        onError() {
+            return 'Oops, an error occurred!';
+        },
     })
+    const streamContext = getStreamContext();
 
+    if (streamContext) {
+        return new Response(
+            await streamContext.resumableStream(streamId, () => stream),
+        );
+    } else {
+        return new Response(stream);
+    }
+}
+
+export async function GET(request: Request) {
+    const streamContext = getStreamContext();
+    const resumeRequestedAt = new Date();
+
+    if (!streamContext) {
+        return new Response(null, { status: 204 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chatId');
+
+    if (!chatId) {
+        return new ChatSDKError('bad_request:api').toResponse();
+    }
+
+    const session = await auth.api.getSession(
+        request
+    );
+
+    if (!session?.user) {
+        return new ChatSDKError('unauthorized:chat').toResponse();
+    }
+
+    let chat: Chat | null;
+
+    try {
+        chat = await getChatById({ id: chatId });
+    } catch {
+        return new ChatSDKError('not_found:chat').toResponse();
+    }
+
+    if (!chat) {
+        return new ChatSDKError('not_found:chat').toResponse();
+    }
+
+    if (chat.visibility === 'private' && chat.userId !== session.user.id) {
+        return new ChatSDKError('forbidden:chat').toResponse();
+    }
+
+    const streamIds = await getStreamIdsByChatId({ chatId });
+
+    if (!streamIds.length) {
+        return new ChatSDKError('not_found:stream').toResponse();
+    }
+
+    const recentStreamId = streamIds.at(-1);
+
+    if (!recentStreamId) {
+        return new ChatSDKError('not_found:stream').toResponse();
+    }
+
+    const emptyDataStream = createDataStream({
+        execute: () => { },
+    });
+
+    const stream = await streamContext.resumableStream(
+        recentStreamId,
+        () => emptyDataStream,
+    );
+
+    /*
+     * For when the generation is streaming during SSR
+     * but the resumable stream has concluded at this point.
+     */
+    if (!stream) {
+        const messages = await getMessagesByChatId({ id: chatId });
+        const mostRecentMessage = messages.at(-1);
+
+        if (!mostRecentMessage) {
+            return new Response(emptyDataStream, { status: 200 });
+        }
+
+        if (mostRecentMessage.role !== 'assistant') {
+            return new Response(emptyDataStream, { status: 200 });
+        }
+
+        const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+
+        if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
+            return new Response(emptyDataStream, { status: 200 });
+        }
+
+        const restoredStream = createDataStream({
+            execute: (buffer) => {
+                buffer.writeData({
+                    type: 'append-message',
+                    message: JSON.stringify(mostRecentMessage),
+                });
+            },
+        });
+
+        return new Response(restoredStream, { status: 200 });
+    }
+
+    return new Response(stream, { status: 200 });
 }

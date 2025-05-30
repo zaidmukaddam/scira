@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        await deleteAllBlobsInFolder('mplx/');
-        return new NextResponse('All files in mplx/ folder were deleted', {
+        await deleteAllBlobsInFolder('mplx/public/');
+        return new NextResponse('All files in mplx/public/ folder were deleted', {
             status: 200,
         });
     } catch (error) {

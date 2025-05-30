@@ -1,29 +1,14 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { Globe, Book, YoutubeIcon, TelescopeIcon } from 'lucide-react'
-import { ChatsCircle, Code, Memory, RedditLogo, XLogo } from '@phosphor-icons/react'
+import { Globe, Book, TelescopeIcon } from 'lucide-react'
+import { ChatsCircle, Code, Memory, RedditLogo, YoutubeLogo } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function generateId(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).substring(2, 15)}`;
-}
-
-export function getUserId(): string {
-  if (typeof window === 'undefined') return '';
-  
-  let userId = localStorage.getItem('mem0_user_id');
-  if (!userId) {
-    userId = generateId('user');
-    localStorage.setItem('mem0_user_id', userId);
-  }
-  return userId;
-}
-
-export type SearchGroupId = 'web' | 'academic' | 'youtube' | 'reddit' | 'analysis' | 'chat' | 'extreme' | 'buddy';
+export type SearchGroupId = 'web' | 'academic' | 'youtube' | 'reddit' | 'analysis' | 'chat' | 'extreme' | 'memory';
 
 export const searchGroups = [
   {
@@ -34,11 +19,12 @@ export const searchGroups = [
     show: true,
   },
   {
-    id: 'buddy' as const,
-    name: 'Buddy',
+    id: 'memory' as const,
+    name: 'Memory',
     description: 'Your personal memory companion',
     icon: Memory,
     show: true,
+    requireAuth: true,
   },
   {
     id: 'analysis' as const,
@@ -72,7 +58,7 @@ export const searchGroups = [
     id: 'youtube' as const,
     name: 'YouTube',
     description: 'Search YouTube videos powered by Exa',
-    icon: YoutubeIcon,
+    icon: YoutubeLogo,
     show: true,
   },
   {
@@ -85,3 +71,10 @@ export const searchGroups = [
 ] as const;
 
 export type SearchGroup = typeof searchGroups[number];
+
+export function invalidateChatsCache() {
+  if (typeof window !== 'undefined') {
+    const event = new CustomEvent('invalidate-chats-cache');
+    window.dispatchEvent(event);
+  }
+}

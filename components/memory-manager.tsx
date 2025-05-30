@@ -1,13 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tag, Copy, Check, Clock } from 'lucide-react';
-import { Memory } from '@phosphor-icons/react';
+import { Copy, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { getUserId } from '@/lib/utils';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface MemoryAddResponse {
     id: string;
@@ -41,10 +36,11 @@ interface MemoryManagerProps {
 
 export const MemoryManager: React.FC<MemoryManagerProps> = ({ result }) => {
     const [copied, setCopied] = React.useState(false);
-    const userId = getUserId();
+
+    const user_id  = result.results?.user_id;
 
     const handleCopyUserId = async () => {
-        await navigator.clipboard.writeText(userId);
+        await navigator.clipboard.writeText(user_id ?? '');
         setCopied(true);
         toast.success("User ID copied to clipboard");
         setTimeout(() => setCopied(false), 2000);
@@ -88,84 +84,61 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({ result }) => {
     const actionTitle = getActionTitle(result.action);
 
     const MemoryCard = () => (
-        <Card className="w-full overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0 border-b border-neutral-200 dark:border-neutral-800">
-                <div className="flex items-center gap-3">
-                    <div className={cn(
-                        "h-8 w-8 rounded-full flex items-center justify-center",
-                        "bg-violet-100 dark:bg-violet-900/30"
-                    )}>
-                        <Memory className="h-4 w-4 text-violet-500" weight="duotone" />
-                    </div>
-                    <div className="flex flex-col">
-                        <CardTitle className="text-base font-medium text-neutral-900 dark:text-neutral-100">
-                            {actionTitle}
-                        </CardTitle>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCopyUserId}
-                                className="h-5 px-1.5 text-[10px] font-normal text-neutral-500 dark:text-neutral-400 hover:text-violet-500 dark:hover:text-violet-400"
-                            >
-                                ID: {userId.slice(0, 8)}...
-                                {copied ? (
-                                    <Check className="h-3 w-3 ml-1" />
-                                ) : (
-                                    <Copy className="h-3 w-3 ml-1" />
-                                )}
-                            </Button>
-                        </div>
-                    </div>
+        <div className="font-mono text-xs">
+            <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                    <span className="font-medium text-neutral-700 dark:text-neutral-300">{actionTitle}</span>
                 </div>
-            </CardHeader>
-            <CardContent className="p-4">
-                {memories.length === 0 ? (
-                    <div className="flex items-center gap-2 py-2 text-sm text-neutral-600 dark:text-neutral-400">
-                        <Memory className="h-4 w-4 text-neutral-400" />
-                        <span>No memories found</span>
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        {memories.map((memory, index) => (
-                            <div key={memory.id} className="relative pl-4 pt-1">
-                                <div className="absolute -left-0 top-0 bottom-0 w-[2px] rounded-full bg-violet-100 dark:bg-violet-900" />
-                                
-                                <div className="flex items-center gap-2 mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{formatDistanceToNow(new Date(memory.created_at), { addSuffix: true })}</span>
-                                </div>
-
-                                <div className="prose prose-sm dark:prose-invert max-w-none">
-                                    <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">
-                                        {memory.content}
-                                    </p>
-                                </div>
-
-                                {memory.tags && memory.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 mt-3">
-                                        {memory.tags.map((tag, tagIndex) => (
-                                            <Badge
-                                                key={tagIndex}
-                                                variant="secondary"
-                                                className="px-1.5 py-0 h-4 text-[10px] bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
-                                            >
-                                                <Tag className="h-2.5 w-2.5 mr-1" />
-                                                {tag}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyUserId}
+                    className="h-5 px-1 text-[9px] rounded-sm text-neutral-500 hover:text-violet-500"
+                >
+                    {user_id?.slice(0, 5)}...{copied ? <Check className="h-2.5 w-2.5 ml-0.5" /> : <Copy className="h-2.5 w-2.5 ml-0.5" />}
+                </Button>
+            </div>
+            
+            {memories.length === 0 ? (
+                <div className="text-[10px] text-neutral-400 italic">No memories</div>
+            ) : (
+                <div className="space-y-2">
+                    {memories.map((memory) => (
+                        <div key={memory.id} className="pl-1.5">
+                            <div className="flex items-center gap-1 text-[9px] text-neutral-400 mb-0.5">
+                                <div className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-600"></div>
+                                <span>{formatDistanceToNow(new Date(memory.created_at), { addSuffix: true })}</span>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                            
+                            <div className="relative">
+                                <div className="absolute left-[-4px] top-0 bottom-0 w-[1px] bg-violet-200 dark:bg-violet-800"></div>
+                                <p className="text-[10px] leading-tight border border-neutral-100 dark:border-neutral-800 rounded-sm py-1 px-2 bg-white/80 dark:bg-neutral-900/80 text-neutral-800 dark:text-neutral-200">
+                                    {memory.content}
+                                </p>
+                            </div>
+
+                            {memory.tags && memory.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-0.5 mt-1 ml-2">
+                                    {memory.tags.map((tag, tagIndex) => (
+                                        <span
+                                            key={tagIndex}
+                                            className="inline-flex items-center text-[8px] px-1 border border-violet-100 dark:border-violet-900 rounded-full text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 
     return (
-        <div className="w-full my-4">
+        <div className="w-full my-1 px-2 py-2 border border-neutral-200 dark:border-neutral-800 border-l-violet-300 dark:border-l-violet-800 border-l-2 rounded-sm bg-white/50 dark:bg-neutral-900/50">
             <MemoryCard />
         </div>
     );

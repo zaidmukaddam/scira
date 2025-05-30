@@ -3,8 +3,18 @@ import './env/server';
 import './env/client';
 
 const nextConfig: NextConfig = {
+    compiler: {
+        // if NODE_ENV is production, remove console.log
+        removeConsole: process.env.NODE_ENV === 'production' ? {
+            exclude: ['error'],
+        } : false,
+    },
     experimental: {
         optimizePackageImports: ["@phosphor-icons/react"],
+        nodeMiddleware: true,
+        serverActions: {
+            bodySizeLimit: '10mb',
+        },
     },
     transpilePackages: ["geist"],
     output: 'standalone',

@@ -1,14 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { GithubLogo, XLogo } from '@phosphor-icons/react';
-import { Bot, Brain, Command, GraduationCap, Image, Search, Share2, Sparkles, Star, Trophy, Users, AlertTriangle, Github, Twitter, FileText, ShieldCheck, ArrowUpRight } from 'lucide-react';
+
+import { Brain, Command, GraduationCap, Image as ImageIcon, Search, Sparkles, Users, FileText, ShieldCheck, ArrowUpRight, Check, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { TextLoop } from '@/components/core/text-loop';
-import { TextShimmer } from '@/components/core/text-shimmer';
-import { Check } from 'lucide-react';
-import { redirect, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -19,10 +16,13 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { TextLoop } from '@/components/core/text-loop';
+import { TextShimmer } from '@/components/core/text-shimmer';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
-import NextImage from 'next/image';
-import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from 'next/navigation';
+import { GithubLogo, XLogo } from '@phosphor-icons/react';
 
 const container = {
     hidden: { opacity: 0 },
@@ -40,6 +40,7 @@ const item = {
 };
 
 export default function AboutPage() {
+    const router = useRouter();
     const [showTermsDialog, setShowTermsDialog] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     
@@ -63,46 +64,13 @@ export default function AboutPage() {
         const formData = new FormData(e.currentTarget);
         const query = formData.get('query')?.toString();
         if (query) {
-            redirect(`/?q=${encodeURIComponent(query)}`);
+            router.push(`/?q=${encodeURIComponent(query)}`);
         }
     };
 
     return (
-        <div className="min-h-screen bg-background overflow-hidden">
-            {/* Top Navigation Bar */}
-            <div className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-neutral-200 dark:border-neutral-800">
-                <div className="container max-w-5xl mx-auto py-3 px-4 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2">
-                        <NextImage src="/scira.png" alt="Scira Logo" className="h-8 w-8 invert dark:invert-0" width={32} height={32} unoptimized quality={100}/>
-                        <span className="font-syne font-bold text-lg">Scira</span>
-                    </Link>
-                    
-                    <div className="flex items-center gap-6">
-                        <Link 
-                            href="/terms"
-                            className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
-                        >
-                            Terms of Service
-                        </Link>
-                        <Link 
-                            href="/privacy"
-                            className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
-                        >
-                            Privacy Policy
-                        </Link>
-                        <Link 
-                            href="https://git.new/scira"
-                            className="hidden sm:flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <Github className="h-4 w-4" />
-                            <span>GitHub</span>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
+        <div className="min-h-screen bg-background">
+            {/* Terms Dialog */}
             <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
                 <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
                     <div className="p-6 border-b border-border">
@@ -111,19 +79,19 @@ export default function AboutPage() {
                                 <FileText className="size-5" />
                                 Terms and Privacy
                             </DialogTitle>
-                            <DialogDescription className="text-muted-foreground mt-2.5">
-                                Before you continue, please review our Terms of Service and Privacy Policy.
+                            <DialogDescription className="text-muted-foreground mt-2">
+                                Please review our Terms of Service and Privacy Policy before continuing.
                             </DialogDescription>
                         </DialogHeader>
                     </div>
                     
-                    <div className="px-6 py-5 space-y-6 max-h-[300px] overflow-y-auto">
-                        <div className="space-y-3">
+                    <div className="px-6 py-5 space-y-5 max-h-[300px] overflow-y-auto">
+                        <div className="space-y-2">
                             <h3 className="text-sm font-medium flex items-center gap-2">
                                 <ShieldCheck className="size-4 text-primary" />
                                 Terms of Service
                             </h3>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground">
                                 By using Scira, you agree to our Terms of Service which outline the rules for using our platform. 
                                 This includes guidelines on acceptable use, intellectual property rights, and limitations of liability.
                             </p>
@@ -133,16 +101,16 @@ export default function AboutPage() {
                             </Link>
                         </div>
                         
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-2">
                             <h3 className="text-sm font-medium flex items-center gap-2">
                                 <ShieldCheck className="size-4 text-primary" />
                                 Privacy Policy
                             </h3>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground">
                                 Our Privacy Policy describes how we collect, use, and protect your personal information. 
                                 We take your privacy seriously and are committed to maintaining the confidentiality of your data.
                             </p>
-                            <Link href="/privacy" className="text-xs text-primary hover:underline inline-flex items-center">
+                            <Link href="/privacy-policy" className="text-xs text-primary hover:underline inline-flex items-center">
                                 Read full Privacy Policy
                                 <ArrowUpRight className="size-3 ml-1" />
                             </Link>
@@ -168,7 +136,6 @@ export default function AboutPage() {
                     
                     <DialogFooter className="p-6 pt-2">
                         <Button 
-                            variant="default" 
                             onClick={handleAcceptTerms}
                             disabled={!acceptedTerms}
                             className="w-full"
@@ -179,497 +146,668 @@ export default function AboutPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* Navigation */}
+            <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="container max-w-screen-xl mx-auto py-4 px-4 flex justify-between items-center">
+                    <Link href="/" className="flex items-center gap-2">
+                        <Image src="/scira.png" alt="Scira" width={32} height={32} className="h-8 w-8 invert dark:invert-0" unoptimized quality={100}/>
+                        <span className="font-bold text-lg font-syne">Scira</span>
+                    </Link>
+                    
+                    <nav className="flex items-center gap-8">
+                        <Link 
+                            href="/terms"
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+                        >
+                            Terms
+                        </Link>
+                        <Link 
+                            href="/privacy-policy"
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+                        >
+                            Privacy
+                        </Link>
+                        <Link 
+                            href="https://git.new/scira"
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <GithubLogo className="h-4 w-4" />
+                            <span className="hidden sm:inline">GitHub</span>
+                        </Link>
+                    </nav>
+                </div>
+            </header>
+
             {/* Hero Section */}
-            <div className="relative">
-                <div className="absolute inset-0 bg-linear-to-b from-neutral-100/40 dark:from-neutral-900/40" />
-                <div className="absolute inset-0 bg-grid-neutral-700/[0.05] dark:bg-grid-neutral-300/[0.05]" />
-                <div className="relative pt-20 pb-20 px-4">
+            <section className="relative py-24">
+                <div className="absolute inset-0 bg-gradient-to-b from-gray-50/40 to-transparent dark:from-gray-950/40" />
+                <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02]" />
+                <div className="relative container max-w-screen-xl mx-auto px-4">
                     <motion.div 
-                        className="container max-w-5xl mx-auto space-y-12"
+                        className="max-w-3xl mx-auto space-y-8 text-center"
                         variants={container}
                         initial="hidden"
                         animate="show"
                     >
-                        {/* Company Name/Logo */}
-                        <motion.div variants={item} className="text-center">
-                            <Link href="/" className="inline-flex items-end gap-3 text-5xl font-syne font-bold">
-                                <NextImage src="/scira.png" alt="Scira Logo" className="h-16 w-16 invert dark:invert-0" width={64} height={64} unoptimized quality={100}/>
-                                <span className=''>Scira</span>
+                        {/* Logo */}
+                        <motion.div variants={item}>
+                            <Link href="/" className="inline-flex items-center gap-3">
+                                <Image 
+                                    src="/scira.png" 
+                                    alt="Scira" 
+                                    width={56} 
+                                    height={56} 
+                                    className="h-14 w-14 invert dark:invert-0" 
+                                    unoptimized 
+                                    quality={100}
+                                />
+                                <span className="text-4xl font-bold tracking-tight font-syne">Scira</span>
                             </Link>
                         </motion.div>
 
+                        {/* Headline */}
+                        <motion.h1 
+                            variants={item}
+                            className="text-2xl sm:text-3xl font-medium tracking-tight text-balance font-syne"
+                        >
+                            Minimalistic Open Source AI-Powered Search Engine
+                        </motion.h1>
+
+                        {/* Description */}
+                        <motion.p 
+                            variants={item}
+                            className="text-xl text-muted-foreground max-w-2xl mx-auto"
+                        >
+                            A minimalistic AI-powered search engine with RAG and search grounding capabilities. Open source and built for everyone.
+                        </motion.p>
+
+                        {/* Search Box */}
                         <motion.form 
                             variants={item} 
-                            className="max-w-2xl mx-auto w-full"
+                            className="max-w-xl mx-auto w-full"
                             onSubmit={handleSearch}
                         >
-                            <div className="relative group">
+                            <div className="relative">
                                 <input
                                     type="text"
                                     name="query"
                                     placeholder="Ask anything..."
-                                    className="w-full h-14 px-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-neutral-300 dark:focus:border-neutral-700 focus:outline-hidden focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all duration-300"
+                                    className="w-full h-14 px-6 rounded-xl bg-background border border-input focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 transition-all"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
                                             const query = e.currentTarget.value;
                                             if (query) {
-                                                redirect(`/?q=${encodeURIComponent(query)}`);
+                                                router.push(`/?q=${encodeURIComponent(query)}`);
                                             }
                                         }
                                     }}
                                 />
                                 <button
                                     type="submit"
-                                    className="absolute right-2 top-2 h-10 px-4 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium hover:opacity-90 transition-opacity"
+                                    className="absolute right-2 top-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
                                 >
-                                    Ask Scira
+                                    Search
                                 </button>
                             </div>
                         </motion.form>
 
-                        <motion.div variants={item} className="text-center space-y-6">
-                            <p className="text-xl text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                                A minimalistic AI-powered search engine with RAG and search grounding capabilities. Open source and built for everyone.
-                            </p>
-                        </motion.div>
-
+                        {/* CTA Buttons */}
                         <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4">
                             <Link
                                 href="https://git.new/scira"
-                                className="group relative inline-flex h-12 items-center gap-2 px-6 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-all duration-300"
+                                className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                                <GithubLogo weight="fill" className="h-5 w-5" />
+                                <GithubLogo className="h-5 w-5" />
                                 <span className="font-medium">View Source</span>
                             </Link>
                             <Link
                                 href="/"
-                                className="group relative inline-flex h-12 items-center gap-2 px-6 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-300"
+                                className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-secondary text-secondary-foreground border border-input hover:border-ring transition-all"
                             >
                                 <span className="font-medium">Try Now</span>
-                                <svg className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 16 16" fill="none">
-                                    <path d="M6.66667 12.6667L11.3333 8.00004L6.66667 3.33337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <ArrowUpRight className="h-4 w-4" />
                             </Link>
                         </motion.div>
                     </motion.div>
                 </div>
-            </div>
+            </section>
 
             {/* Search Simulation */}
-            <div className="py-24 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
-                <motion.div 
-                    className="container max-w-5xl mx-auto"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="text-center space-y-4 mb-16">
-                        <h2 className="text-3xl font-bold">RAG & Search Grounding</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Watch how Scira combines RAG and search grounding to deliver accurate, up-to-date answers from reliable sources.
-                        </p>
-                    </div>
+            <section className="py-24 px-4 border-y border-border bg-accent/20">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">RAG & Search Grounding</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Scira combines RAG and search grounding to deliver accurate, up-to-date answers from reliable sources.
+                            </p>
+                        </div>
 
-                    <div className="relative max-w-2xl mx-auto rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-8 space-y-8">
-                        {/* Query */}
-                        <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-800 shrink-0" />
-                            <div className="flex-1 space-y-2">
-                                <p className="text-sm text-neutral-500">Query</p>
-                                <p className="text-neutral-900 dark:text-neutral-100">
-                                    Explain quantum computing and its real-world applications
+                        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
+                            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/50">
+                                <div className="flex space-x-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                    <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                    <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                                </div>
+                                <div className="text-xs text-muted-foreground">Search Demo</div>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {/* Query */}
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-accent shrink-0"></div>
+                                    <div className="flex-1 space-y-1.5">
+                                        <p className="text-xs text-muted-foreground">Query</p>
+                                        <p className="font-medium">
+                                            Explain quantum computing and its real-world applications
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Processing */}
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0 flex items-center justify-center">
+                                        <Bot className="w-4 h-4 text-blue-500" />
+                                    </div>
+                                    <div className="flex-1 space-y-4">
+                                        <div className="space-y-1.5">
+                                            <p className="text-xs text-muted-foreground">Processing</p>
+                                            <TextLoop interval={1.5}>
+                                                <p className="text-sm font-medium">
+                                                    🔍 Retrieving relevant information...
+                                                </p>
+                                                <p className="text-sm font-medium">
+                                                    📚 Processing search results...
+                                                </p>
+                                                <p className="text-sm font-medium">
+                                                    🤖 Generating response...
+                                                </p>
+                                                <p className="text-sm font-medium">
+                                                    ✨ Enhancing with context...
+                                                </p>
+                                            </TextLoop>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <TextShimmer className="text-sm leading-relaxed font-medium">
+                                                Combining insights from multiple reliable sources...
+                                            </TextShimmer>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Response */}
+                                <div className="flex items-start gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 shrink-0 flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-green-500" />
+                                    </div>
+                                    <div className="flex-1 space-y-1.5">
+                                        <p className="text-xs text-muted-foreground">Response</p>
+                                        <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
+                                            <p>
+                                                Quantum computing is a revolutionary technology that harnesses quantum mechanics to solve complex problems traditional computers cannot handle efficiently...
+                                            </p>
+                                            <div className="flex flex-wrap gap-1.5 mt-3">
+                                                <div className="text-xs py-1 px-2 bg-accent rounded-md text-accent-foreground">Nature Physics</div>
+                                                <div className="text-xs py-1 px-2 bg-accent rounded-md text-accent-foreground">IBM Research</div>
+                                                <div className="text-xs py-1 px-2 bg-accent rounded-md text-accent-foreground">MIT Technology Review</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Powered By Section */}
+            <section className="py-24 px-4 bg-background">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Powered By</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Built with cutting-edge technology from industry leaders
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-8 rounded-xl bg-card border border-border flex flex-col items-center justify-center gap-4 shadow-sm">
+                                <VercelLogo />
+                                <p className="text-muted-foreground text-center">
+                                    Powered by Vercel&apos;s AI SDK
+                                </p>
+                            </div>
+                            <div className="p-8 rounded-xl bg-card border border-border flex flex-col items-center justify-center gap-4 shadow-sm">
+                                <TavilyLogo />
+                                <p className="text-muted-foreground text-center">
+                                    Search grounding powered by Tavily AI
                                 </p>
                             </div>
                         </div>
-
-                        {/* Processing */}
-                        <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 shrink-0 flex items-center justify-center">
-                                <Bot className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="flex-1 space-y-4">
-                                <div className="space-y-2">
-                                    <p className="text-sm text-neutral-500">Processing with</p>
-                                    <TextLoop interval={1.5}>
-                                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                            🔍 Retrieving relevant information...
-                                        </p>
-                                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                            📚 Processing search results...
-                                        </p>
-                                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                            🤖 Generating response...
-                                        </p>
-                                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                            ✨ Enhancing with context...
-                                        </p>
-                                    </TextLoop>
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-sm text-neutral-500">Generating response</p>
-                                    <TextShimmer className="text-sm font-medium">
-                                        Combining insights from multiple sources for a comprehensive answer...
-                                    </TextShimmer>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Response Preview */}
-                        <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 shrink-0 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-green-500" />
-                            </div>
-                            <div className="flex-1 space-y-2">
-                                <p className="text-sm text-neutral-500">Response Preview</p>
-                                <div className="prose prose-sm dark:prose-invert">
-                                    <p className="text-neutral-900 dark:text-neutral-100">
-                                        Quantum computing is a revolutionary technology that harnesses quantum mechanics to solve complex problems...
-                                    </p>
-                                    <div className="text-xs text-neutral-500 mt-2">
-                                        Sources: Nature Physics, IBM Research, MIT Technology Review
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Powered By Section */}
-            <div className="py-24 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
-                <motion.div 
-                    className="container max-w-5xl mx-auto space-y-16"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="text-center space-y-4">
-                        <h2 className="text-3xl font-bold">Powered By</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Built with cutting-edge technology from industry leaders
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-4">
-                            <VercelLogo />
-                            <p className="text-neutral-600 dark:text-neutral-400 text-center">
-                                Powered by Vercel&apos;s AI SDK
-                            </p>
-                        </div>
-                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-4">
-                            <TavilyLogo />
-                            <p className="text-neutral-600 dark:text-neutral-400 text-center">
-                                Search grounding powered by Tavily AI
-                            </p>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
+                    </motion.div>
+                </div>
+            </section>
 
             {/* Stats Section */}
-            <div className="py-24 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
-                <motion.div 
-                    className="container max-w-5xl mx-auto"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                1M+
+            <section className="py-24 px-4 border-y border-border bg-muted/30">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 gap-x-8">
+                            <div className="flex flex-col items-center text-center space-y-2">
+                                <div className="text-5xl font-medium">1M+</div>
+                                <p className="text-muted-foreground">Questions Answered</p>
                             </div>
-                            <p className="text-neutral-600 dark:text-neutral-400">Questions Answered</p>
-                        </div>
-                        <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                100K+
+                            <div className="flex flex-col items-center text-center space-y-2">
+                                <div className="text-5xl font-medium">100K+</div>
+                                <p className="text-muted-foreground">Active Users</p>
                             </div>
-                            <p className="text-neutral-600 dark:text-neutral-400">Active Users</p>
-                        </div>
-                        <div className="text-center space-y-2">
-                            <div className="text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
-                                7K+
+                            <div className="flex flex-col items-center text-center space-y-2">
+                                <div className="text-5xl font-medium">7K+</div>
+                                <p className="text-muted-foreground">GitHub Stars</p>
                             </div>
-                            <p className="text-neutral-600 dark:text-neutral-400">Community Stars</p>
                         </div>
-                    </div>
-                </motion.div>
-            </div>
+                    </motion.div>
+                </div>
+            </section>
 
             {/* Highlight Section */}
-            <div className="py-24 px-4 bg-white dark:bg-neutral-900/50">
-                <motion.div 
-                    className="container max-w-5xl mx-auto"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div className="space-y-6">
-                            <h2 className="text-3xl font-bold">Featured on Vercel&apos;s Blog</h2>
-                            <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                                Recognized for our innovative use of AI technology and contribution to the developer community through the Vercel AI SDK.
+            <section className="py-24 px-4 bg-background">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-4xl mx-auto"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-center">
+                            <div className="lg:col-span-3 space-y-5">
+                                <h2 className="text-3xl font-medium tracking-tight">Featured on Vercel&apos;s Blog</h2>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Recognized for our innovative use of AI technology and contribution to the developer community through the Vercel AI SDK.
+                                </p>
+                                <Link
+                                    href="https://vercel.com/blog/ai-sdk-4-1"
+                                    className="inline-flex items-center gap-2 font-medium hover:text-primary transition-colors"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Read the Feature
+                                    <ArrowUpRight className="h-4 w-4" />
+                                </Link>
+                            </div>
+                            <div className="lg:col-span-2 relative aspect-video rounded-lg overflow-hidden border border-border">
+                                <Image 
+                                    src="/vercel-featured.png" 
+                                    alt="Featured on Vercel Blog" 
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Models Section */}
+            <section className="py-24 px-4 bg-accent/10 border-y border-border">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Powered By Advanced Models</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Each model is carefully selected for its unique strengths
                             </p>
-                            <Link
-                                href="https://vercel.com/blog/ai-sdk-4-1"
-                                className="inline-flex items-center gap-2 text-neutral-900 dark:text-white font-medium hover:opacity-80 transition-opacity"
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-stretch justify-center">
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Grok 3.0</h3>
+                                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most intelligent model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Grok 3.0 Mini</h3>
+                                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most efficient model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Grok 2.0 Vision</h3>
+                                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most advanced vision model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">OpenAI GPT 4o</h3>
+                                <p className="text-sm text-muted-foreground mt-1">OpenAI&apos;s smartest model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">OpenAI o4 mini</h3>
+                                <p className="text-sm text-muted-foreground mt-1">OpenAI&apos;s reasoning model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Claude 3.7 Sonnet</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Anthropic&apos;s most advanced model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Gemini 2.5 Flash (Thinking)</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Google&apos;s most advanced model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Gemini 2.5 Pro (Preview)</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Google&apos;s most advanced model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Llama 4 Maverick</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Meta&apos;s most advanced model</p>
+                            </div>
+                            <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
+                                <h3 className="font-medium">Qwen QWQ 32B</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Alibaba&apos;s most advanced model</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Community Recognition Section */}
+            <section className="py-24 px-4 bg-gradient-to-b from-accent/10 to-background">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Community Recognition</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Join thousands of developers and researchers who trust Scira
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
                             >
-                                Read the Feature
-                                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
-                                    <path d="M6.66667 12.6667L11.3333 8.00004L6.66667 3.33337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                            </Link>
-                        </div>
-                        <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                            <img 
-                                src="/vercel-featured.png" 
-                                alt="Featured on Vercel Blog" 
-                                className="object-cover w-full h-full"
-                            />
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Integration Section - Add before Use Cases */}
-            <div className="py-24 px-4">
-                <motion.div 
-                    className="container max-w-5xl mx-auto space-y-16"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="text-center space-y-4">
-                        <h2 className="text-3xl font-bold">Powered By Advanced Language Models</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Each model is carefully selected for its unique strengths in understanding and processing information.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-6">
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
-                            <h3 className="font-semibold">Grok 3.0</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most intelligent model</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
-                            <h3 className="font-semibold">Grok 3.0 Mini</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most efficient model</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
-                            <h3 className="font-semibold">Grok 2.0 Vision</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">xAI&apos;s most advanced vision model</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
-                            <h3 className="font-semibold">OpenAI GPT 4.1 Mini</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">OpenAI&apos;s smartest mini model</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-full sm:w-[calc(50%-12px)] lg:w-[280px]">
-                            <h3 className="font-semibold">Qwen QWQ 32B</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">Alibaba&apos;s most advanced model</p>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Testimonial Section - Add before CTA */}
-            <div className="py-20 px-4 bg-white dark:bg-black border-y border-neutral-200 dark:border-neutral-800">
-                <motion.div 
-                    className="container max-w-5xl mx-auto space-y-12"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="text-center space-y-3">
-                        <h2 className="text-3xl font-bold">Community Recognition</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Join the growing community of developers and researchers using Scira.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
-                            <div className="flex items-center gap-4">
-                                <img src="/Winner-Medal-Weekly.svg" alt="Award" className="h-10 w-10" />
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold">#3 Project of the Week</h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Peerlist</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
-                            <div className="flex items-center gap-4">
-                                <GithubLogo weight="fill" className="h-10 w-10" />
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold">7,000+ Stars</h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">GitHub</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-8 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between">
-                            <div className="flex items-center gap-4">
-                                <Users className="h-10 w-10" />
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold">100K+ Monthly Users</h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Active Community</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Features Section */}
-            <div className="py-24 px-4">
-                <motion.div 
-                    className="container max-w-5xl mx-auto space-y-16"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
-                    <div className="text-center space-y-4">
-                        <h2 className="text-3xl font-bold">Advanced Search Features</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Experience a smarter way to search with AI-powered features that understand your queries better.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            { 
-                                icon: Brain, 
-                                title: "Smart Understanding",
-                                description: "Uses multiple AI models to better understand your questions" 
-                            },
-                            { 
-                                icon: Search, 
-                                title: "Comprehensive Search",
-                                description: "Searches across multiple sources for complete answers" 
-                            },
-                            { 
-                                icon: Image, 
-                                title: "Image Understanding",
-                                description: "Can understand and explain images you share" 
-                            },
-                            { 
-                                icon: Command, 
-                                title: "Smart Calculations",
-                                description: "Performs complex calculations and analysis in real-time" 
-                            },
-                            { 
-                                icon: GraduationCap, 
-                                title: "Research Assistant",
-                                description: "Helps find and explain academic research" 
-                            },
-                            { 
-                                icon: Sparkles, 
-                                title: "Natural Conversations",
-                                description: "Responds in a clear, conversational way" 
-                            }
-                        ].map((feature, i) => (
-                            <motion.div
-                                key={i}
-                                className="group relative p-8 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-300"
-                                whileHover={{ y: -4 }}
-                            >
-                                <div className="space-y-4">
-                                    <div className="p-2.5 w-fit rounded-xl bg-neutral-100 dark:bg-neutral-800">
-                                        <feature.icon className="h-6 w-6" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative flex items-center gap-4">
+                                    <div className="p-2 rounded-lg bg-primary/10">
+                                        <img src="/Winner-Medal-Weekly.svg" alt="Award" className="h-10 w-10" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <h3 className="text-xl font-semibold">{feature.title}</h3>
-                                        <p className="text-neutral-600 dark:text-neutral-400">{feature.description}</p>
+                                    <div className="space-y-1">
+                                        <h3 className="font-medium">#3 Project of the Week</h3>
+                                        <p className="text-sm text-muted-foreground">Peerlist</p>
                                     </div>
                                 </div>
                             </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* New Use Cases Section */}
-            <div className="py-24 px-4 bg-neutral-50 dark:bg-neutral-900/50 border-y border-neutral-200 dark:border-neutral-800">
-                <motion.div className="container max-w-5xl mx-auto space-y-16">
-                    <div className="text-center space-y-4">
-                        <h2 className="text-3xl font-bold">Built For Everyone</h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-                            Whether you need quick answers or in-depth research, Scira adapts to your search needs.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="text-lg font-semibold mb-2">Students</h3>
-                            <ul className="list-disc list-inside space-y-2 text-neutral-600 dark:text-neutral-400">
-                                <li>Research paper assistance</li>
-                                <li>Complex topic explanations</li>
-                                <li>Math problem solving</li>
-                            </ul>
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative flex items-center gap-4">
+                                    <div className="p-2 rounded-lg bg-primary/10">
+                                        <GithubLogo className="h-10 w-10" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-medium">7,000+ Stars</h3>
+                                        <p className="text-sm text-muted-foreground">GitHub</p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative flex items-center gap-4">
+                                    <div className="p-2 rounded-lg bg-primary/10">
+                                        <Users className="h-10 w-10" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-medium">100K+ Monthly Users</h3>
+                                        <p className="text-sm text-muted-foreground">Active Community</p>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="text-lg font-semibold mb-2">Researchers</h3>
-                            <ul className="list-disc list-inside space-y-2 text-neutral-600 dark:text-neutral-400">
-                                <li>Academic paper analysis</li>
-                                <li>Data interpretation</li>
-                                <li>Literature review</li>
-                            </ul>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                            <h3 className="text-lg font-semibold mb-2">Professionals</h3>
-                            <ul className="list-disc list-inside space-y-2 text-neutral-600 dark:text-neutral-400">
-                                <li>Market research</li>
-                                <li>Technical documentation</li>
-                                <li>Data analysis</li>
-                            </ul>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
+                    </motion.div>
+                </div>
+            </section>
 
-            {/* Footer Section */}
-            <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black">
-                <div className="mx-auto max-w-5xl px-4 py-12">
-                    <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
+            {/* Use Cases Section */}
+            <section className="py-24 px-4 bg-gradient-to-b from-background to-accent/10">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Built For Everyone</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Whether you need quick answers or in-depth research, Scira adapts to your needs
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative space-y-4">
+                                    <h3 className="font-medium">Students</h3>
+                                    <ul className="space-y-3 text-sm text-muted-foreground">
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Research paper assistance</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Complex topic explanations</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Math problem solving</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </motion.div>
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative space-y-4">
+                                    <h3 className="font-medium">Researchers</h3>
+                                    <ul className="space-y-3 text-sm text-muted-foreground">
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Academic paper analysis</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Data interpretation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Literature review</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </motion.div>
+                            <motion.div 
+                                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                whileHover={{ y: -2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative space-y-4">
+                                    <h3 className="font-medium">Professionals</h3>
+                                    <ul className="space-y-3 text-sm text-muted-foreground">
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Market research</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Technical documentation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Check className="h-4 w-4 text-primary mt-0.5" />
+                                            <span>Data analysis</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="py-24 px-4 bg-muted/20">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Advanced Features</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Experience a smarter way to search with AI-powered capabilities
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[
+                                { 
+                                    icon: Brain, 
+                                    title: "Smart Understanding",
+                                    description: "Uses multiple AI models to understand complex questions" 
+                                },
+                                { 
+                                    icon: Search, 
+                                    title: "Comprehensive Search",
+                                    description: "Searches across multiple sources for complete answers" 
+                                },
+                                { 
+                                    icon: ImageIcon, 
+                                    title: "Image Understanding",
+                                    description: "Can understand and explain images you share" 
+                                },
+                                { 
+                                    icon: Command, 
+                                    title: "Smart Calculations",
+                                    description: "Performs complex calculations and analysis in real-time" 
+                                },
+                                { 
+                                    icon: GraduationCap, 
+                                    title: "Research Assistant",
+                                    description: "Helps find and explain academic research" 
+                                },
+                                { 
+                                    icon: Sparkles, 
+                                    title: "Natural Conversations",
+                                    description: "Responds in a clear, conversational way" 
+                                }
+                            ].map((feature, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                                    whileHover={{ y: -2 }}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="relative space-y-4">
+                                        <div className="p-2.5 w-fit rounded-lg bg-primary/10">
+                                            <feature.icon className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="font-medium">{feature.title}</h3>
+                                            <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="border-t border-border">
+                <div className="container max-w-screen-xl mx-auto py-12 px-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-3">
-                            <img src="/scira.png" alt="Scira Logo" className="h-8 w-8" />
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                            <Image 
+                                src="/scira.png" 
+                                alt="Scira" 
+                                width={32} 
+                                height={32} 
+                                className="h-8 w-8 invert dark:invert-0"
+                            />
+                            <p className="text-sm text-muted-foreground">
                                 © {new Date().getFullYear()} All rights reserved.
                             </p>
                         </div>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                             <Link
                                 href="/terms"
-                                className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Terms
                             </Link>
-                            <span className="text-neutral-300 dark:text-neutral-700">|</span>
                             <Link
-                                href="/privacy"
-                                className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                                href="/privacy-policy"
+                                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Privacy
                             </Link>
-                            <span className="text-neutral-300 dark:text-neutral-700">|</span>
-                            <Link
-                                href="https://x.com/sciraai"
-                                className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <XLogo className="h-5 w-5" />
-                            </Link>
-                            <Link
-                                href="https://git.new/scira"
-                                className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <Github className="h-5 w-5" />
-                            </Link>
+                            <div className="flex items-center gap-1">
+                                <Link
+                                    href="https://x.com/sciraai"
+                                    className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <XLogo className="h-4 w-4" />
+                                </Link>
+                                <Link
+                                    href="https://git.new/scira"
+                                    className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <GithubLogo className="h-4 w-4" />
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>

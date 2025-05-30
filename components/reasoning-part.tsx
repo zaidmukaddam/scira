@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Minimize2, Maximize2, ChevronDown, ChevronUp, Clock, Sparkles } from 'lucide-react';
+import { Minimize2, Maximize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Marked from 'marked-react';
 
@@ -209,12 +209,6 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
                 <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                   Reasoning
                 </div>
-                {duration && (
-                  <div className="flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                    <Clock className="size-3 text-teal-500 dark:text-teal-400" strokeWidth={2} />
-                    <span className="tabular-nums">{duration}s</span>
-                  </div>
-                )}
               </div>
             )}
           </div>

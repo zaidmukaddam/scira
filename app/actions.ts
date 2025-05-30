@@ -3,9 +3,13 @@
 
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { openai } from '@ai-sdk/openai';
-import { generateObject } from 'ai';
+import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
+import { getUser } from "@/lib/auth-utils";
+import { scira } from '@/ai/providers';
+import { getChatsByUserId, deleteChatById, updateChatVisiblityById, getChatById, getMessageById, deleteMessagesByChatIdAfterTimestamp } from '@/lib/db/queries';
+import { groq } from '@ai-sdk/groq';
+import { openai } from '@ai-sdk/openai';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
@@ -13,13 +17,13 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: openai("gpt-4o-mini"),
-    temperature: 0,
+    model: openai("gpt-4.1-nano"),
+    temperature: 1,
     maxTokens: 300,
     topP: 0.3,
     topK: 7,
     system:
-      `You are a search engine query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
+      `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -63,6 +67,51 @@ export async function suggestQuestions(history: any[]) {
     questions: object.questions
   };
 }
+
+export async function checkImageModeration(images: any) {
+  const { text } = await generateText({
+    model: groq("meta-llama/llama-guard-4-12b"),
+    messages: [{
+      role: "user",
+      content: images.map((image: any) => ({
+        type: "image",
+        image: image
+      }))
+    }]
+  })
+  return text
+}
+
+// Server action to get the current user
+export async function getCurrentUser() {
+  try {
+    const user = await getUser();
+    return user;
+  } catch (error) {
+    console.error("Error in getCurrentUser server action:", error);
+    return null;
+  }
+}
+
+export async function generateTitleFromUserMessage({
+  message,
+}: {
+  message: UIMessage;
+}) {
+  const { text: title } = await generateText({
+    model: scira.languageModel('scira-4o'),
+    system: `\n
+    - you will generate a short title based on the first message a user begins a conversation with
+    - ensure it is not more than 80 characters long
+    - the title should be a summary of the user's message
+    - the title should creative and unique
+    - do not use quotes or colons`,
+    prompt: JSON.stringify(message),
+  });
+
+  return title;
+}
+
 
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
@@ -130,6 +179,9 @@ export async function fetchMetadata(url: string) {
   }
 }
 
+// Map deprecated 'buddy' group ID to 'memory' for backward compatibility
+type LegacyGroupId = SearchGroupId | 'buddy';
+
 const groupTools = {
   web: [
     'web_search', 'get_weather_data',
@@ -144,18 +196,21 @@ const groupTools = {
   analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
   chat: [] as const,
   extreme: ['extreme_search'] as const,
+  memory: ['memory_manager', 'datetime'] as const,
+  // Add legacy mapping for backward compatibility
   buddy: ['memory_manager', 'datetime'] as const,
 } as const;
 
 const groupInstructions = {
   web: `
   You are an AI web search engine called Scira, designed to help users find information on the internet with no unnecessary chatter and more focus on the content.
-  'You MUST run the tool first exactly once' before composing your response. **This is non-negotiable.**
+  'You MUST run the tool IMMEDIATELY on receiving any user message' before composing your response. **This is non-negotiable.**
   Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
   ### CRITICAL INSTRUCTION:
+  - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
-  - DO NOT ASK FOR CLARIFICATION BEFORE RUNNING THE TOOL
+  - NEVER ask for clarification before running the tool - run first, clarify later if needed
   - If a query is ambiguous, make your best interpretation and run the appropriate tool right away
   - After getting results, you can then address any ambiguity in your response
   - DO NOT begin responses with statements like "I'm assuming you're looking for information about X" or "Based on your query, I think you want to know about Y"
@@ -222,6 +277,7 @@ const groupInstructions = {
 
   2. Content Rules:
      - Responses must be informative, long and very detailed which address the question's answer straight forward
+     - Maintain the language of the user's message and do not change it
      - Use structured answers with markdown format and tables too
      - First give the question's answer straight forward and then start with markdown format
      - NEVER begin responses with phrases like "According to my search" or "Based on the information I found"
@@ -291,14 +347,16 @@ const groupInstructions = {
   - Avoid running the same tool twice with same parameters
   - Do not include images in responses`,
 
-  buddy: `
-  You are a memory companion called Buddy, designed to help users manage and interact with their personal memories.
+  memory: `
+  You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
   Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Memory Management Tool Guidelines:
-  - Always search for memories first if the user asks for it or doesn't remember something
-  - If the user asks you to save or remember something, send it as the query to the tool
+  - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
+  - For ANY user message, ALWAYS run the memory_manager tool FIRST before responding
+  - If the user message contains anything to remember, store, or retrieve - use it as the query
+  - If not explicitly memory-related, still run a memory search with the user's message as query
   - The content of the memory should be a quick summary (less than 20 words) of what the user asked you to remember
   
   ### datetime tool:
@@ -316,6 +374,43 @@ const groupInstructions = {
   - Use markdown for formatting
   - Keep responses concise but informative
   - Include relevant memory details when appropriate
+  - Maintain the language of the user's message and do not change it
+  
+  ### Memory Management Guidelines:
+  - Always confirm successful memory operations
+  - Handle memory updates and deletions carefully
+  - Maintain a friendly, personal tone
+  - Always save the memory user asks you to save`,
+
+  // Legacy mapping for backward compatibility - same as memory instructions
+  buddy: `
+  You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
+  Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+
+  ### Memory Management Tool Guidelines:
+  - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
+  - For ANY user message, ALWAYS run the memory_manager tool FIRST before responding
+  - If the user message contains anything to remember, store, or retrieve - use it as the query
+  - If not explicitly memory-related, still run a memory search with the user's message as query
+  - The content of the memory should be a quick summary (less than 20 words) of what the user asked you to remember
+  
+  ### datetime tool:
+  - When you get the datetime data, talk about the date and time in the user's timezone
+  - Do not always talk about the date and time, only talk about it when the user asks for it
+  - No need to put a citation for this tool
+
+  ### Core Responsibilities:
+  1. Talk to the user in a friendly and engaging manner
+  2. If the user shares something with you, remember it and use it to help them in the future
+  3. If the user asks you to search for something or something about themselves, search for it
+  4. Do not talk about the memory results in the response, if you do retrive something, just talk about it in a natural language
+
+  ### Response Format:
+  - Use markdown for formatting
+  - Keep responses concise but informative
+  - Include relevant memory details when appropriate
+  - Maintain the language of the user's message and do not change it
   
   ### Memory Management Guidelines:
   - Always confirm successful memory operations
@@ -324,15 +419,16 @@ const groupInstructions = {
   - Always save the memory user asks you to save`,
 
   academic: `
-  ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL FIRST BEFORE ANY ANALYSIS OR RESPONSE!
+  ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
   You are an academic research assistant that helps find and analyze scholarly content.
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### Academic Search Tool:
-  1. FIRST ACTION: Run academic_search tool with user's query immediately
-  2. DO NOT write any analysis before running the tool
-  3. Focus on peer-reviewed papers and academic sources
+  1. ⚠️ URGENT: Run academic_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  2. NEVER write any text, analysis or thoughts before running the tool
+  3. Run the tool with the exact user query immediately on receiving it
+  4. Focus on peer-reviewed papers and academic sources
   
   #### Code Interpreter Tool:
   - Use for calculations and data analysis
@@ -351,6 +447,7 @@ const groupInstructions = {
   - Maintain scholarly tone throughout
   - Provide comprehensive analysis of findings
   - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
+  - Maintain the language of the user's message and do not change it
 
   ### Citation Requirements:
   - ⚠️ MANDATORY: Every academic claim must have a citation
@@ -389,7 +486,9 @@ const groupInstructions = {
 
   ### Tool Guidelines:
   #### YouTube Search Tool:
-  - ALWAYS run the youtube_search tool FIRST with the user's query before composing your response
+  - ⚠️ URGENT: Run youtube_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - DO NOT WRITE A SINGLE WORD before running the tool
+  - Run the tool with the exact user query immediately on receiving it
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
   
   #### datetime tool:
@@ -408,6 +507,7 @@ const groupInstructions = {
   - Include a brief conclusion that summarizes key takeaways
   - Write in a conversational yet authoritative tone throughout
   - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
+  - Maintain the language of the user's message and do not change it
   
   ### Video Content Guidelines:
   - Extract and explain the most valuable insights from each video
@@ -444,7 +544,9 @@ const groupInstructions = {
 
   ### Tool Guidelines:
   #### Reddit Search Tool:
-  - ALWAYS run the reddit_search tool FIRST with the user's query before composing your response
+  - ⚠️ URGENT: Run reddit_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - DO NOT WRITE A SINGLE WORD before running the tool
+  - Run the tool with the exact user query immediately on receiving it
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
   - When searching Reddit, always set maxResults to at least 10 to get a good sample of content
   - Set timeRange to appropriate value based on query (day, week, month, year)
@@ -461,6 +563,7 @@ const groupInstructions = {
   
   ### Content Structure (REQUIRED):
   - Begin with a concise introduction summarizing the Reddit landscape on the topic
+  - Maintain the language of the user's message and do not change it
   - Include all relevant results in your response, not just the first one
   - Cite specific posts using their titles and subreddits
   - All citations must be inline, placed immediately after the relevant information
@@ -471,7 +574,9 @@ const groupInstructions = {
   
   ### Tool Guidelines:
   #### Code Interpreter Tool:
-  - ⚠️ MANDATORY: Run this tool IMMEDIATELY when requested - no thinking or planning first
+  - ⚠️ URGENT: Run code_interpreter tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - NEVER write any text, analysis or thoughts before running the tool
+  - Run the tool with the exact user query immediately on receiving it
   - Use this Python-only sandbox for calculations, data analysis, or visualizations
   - matplotlib, pandas, numpy, sympy, and yfinance are available
   - Include necessary imports for libraries you use
@@ -530,7 +635,8 @@ const groupInstructions = {
   - For stock analysis, talk about the stock's performance and trends comprehensively
   - Never mention the code in the response, only the insights and analysis
   - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
-  
+  - Maintain the language of the user's message and do not change it
+
   ### Response Structure:
   - Begin with a clear, concise summary of the analysis results or calculation outcome like a professional analyst with sections and sub-sections
   - Structure technical information using appropriate headings (H2, H3) for better readability
@@ -582,6 +688,8 @@ const groupInstructions = {
   
   ### Guidelines:
   - You do not have access to any tools. You can code tho
+  - ⚠️ URGENT: Respond INSTANTLY to the user's message without delay
+  - Do not ask for clarification before giving your best response
   - You can use markdown formatting with tables too when needed
   - You can use latex formatting:
     - Use $ for inline equations
@@ -590,11 +698,14 @@ const groupInstructions = {
     - No need to use bold or italic formatting in tables
     - don't use the h1 heading in the markdown response
   - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
+  - You can use the following format for citations: [Source Title](URL)
+  - Even X posts can be cited with the following format: [Post Title](real post-id)
 
   ### Response Format:
   - Use markdown for formatting
   - Keep responses concise but informative
   - Include relevant memory details when appropriate
+  - Maintain the language of the user's message and do not change it
   
   ### Memory Management Guidelines:
   - Always confirm successful memory operations
@@ -615,6 +726,9 @@ const groupInstructions = {
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
+  - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - DO NOT WRITE A SINGLE WORD before running the tool
+  - Run the tool with the exact user query immediately on receiving it
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - DO NOT ASK FOR CLARIFICATION BEFORE RUNNING THE TOOL
   - If a query is ambiguous, make your best interpretation and run the appropriate tool right away
@@ -671,16 +785,149 @@ const groupInstructions = {
   - Each section should have 2-4 detailed paragraphs
   - CITATIONS SHOULD BE ON EVERYTHING YOU SAY
   - Include analysis of reliability and limitations
+  - Maintain the language of the user's message and do not change it
   - Avoid referencing citations directly, make them part of statements`
 };
 
-export async function getGroupConfig(groupId: SearchGroupId = 'web') {
+export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   "use server";
-  const tools = groupTools[groupId];
-  const instructions = groupInstructions[groupId];
-  
+
+  // Check if the user is authenticated for memory or buddy group
+  if (groupId === 'memory' || groupId === 'buddy') {
+    const user = await getUser();
+    if (!user) {
+      // Redirect to web group if user is not authenticated
+      groupId = 'web';
+    } else if (groupId === 'buddy') {
+      // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
+      // The tools are the same, just different instructions
+      const tools = groupTools[groupId];
+      const instructions = groupInstructions[groupId];
+
+      return {
+        tools,
+        instructions
+      };
+    }
+  }
+
+  const tools = groupTools[groupId as keyof typeof groupTools];
+  const instructions = groupInstructions[groupId as keyof typeof groupInstructions];
+
   return {
     tools,
     instructions
   };
+}
+
+// Add functions to fetch user chats
+export async function getUserChats(
+  userId: string,
+  limit: number = 20,
+  startingAfter?: string,
+  endingBefore?: string
+): Promise<{ chats: any[], hasMore: boolean }> {
+  'use server';
+
+  if (!userId) return { chats: [], hasMore: false };
+
+  try {
+    return await getChatsByUserId({
+      id: userId,
+      limit,
+      startingAfter: startingAfter || null,
+      endingBefore: endingBefore || null
+    });
+  } catch (error) {
+    console.error('Error fetching user chats:', error);
+    return { chats: [], hasMore: false };
+  }
+}
+
+// Add function to load more chats for infinite scroll
+export async function loadMoreChats(
+  userId: string,
+  lastChatId: string,
+  limit: number = 20
+): Promise<{ chats: any[], hasMore: boolean }> {
+  'use server';
+
+  if (!userId || !lastChatId) return { chats: [], hasMore: false };
+
+  try {
+    return await getChatsByUserId({
+      id: userId,
+      limit,
+      startingAfter: null,
+      endingBefore: lastChatId
+    });
+  } catch (error) {
+    console.error('Error loading more chats:', error);
+    return { chats: [], hasMore: false };
+  }
+}
+
+// Add function to delete a chat
+export async function deleteChat(chatId: string) {
+  'use server';
+
+  if (!chatId) return null;
+
+  try {
+    return await deleteChatById({ id: chatId });
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    return null;
+  }
+}
+
+// Add function to update chat visibility
+export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
+  'use server';
+
+  if (!chatId) return null;
+
+  try {
+    return await updateChatVisiblityById({ chatId, visibility });
+  } catch (error) {
+    console.error('Error updating chat visibility:', error);
+    return null;
+  }
+}
+
+// Add function to get chat info
+export async function getChatInfo(chatId: string) {
+  'use server';
+
+  if (!chatId) return null;
+
+  try {
+    return await getChatById({ id: chatId });
+  } catch (error) {
+    console.error('Error getting chat info:', error);
+    return null;
+  }
+}
+
+export async function deleteTrailingMessages({ id }: { id: string }) {
+  'use server';
+  try {
+    const [message] = await getMessageById({ id });
+    console.log("Message: ", message);
+
+    if (!message) {
+      console.error(`No message found with id: ${id}`);
+      return;
+    }
+
+    await deleteMessagesByChatIdAfterTimestamp({
+      chatId: message.chatId,
+      timestamp: message.createdAt,
+    });
+
+    console.log(`Successfully deleted trailing messages after message ID: ${id}`);
+  } catch (error) {
+    console.error(`Error deleting trailing messages: ${error}`);
+    throw error; // Re-throw to allow caller to handle
+  }
 }

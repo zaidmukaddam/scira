@@ -124,7 +124,7 @@ export default function TermsPage() {
 
           <h2>7. Privacy</h2>
           <p>
-            Your use of Scira AI is also governed by our <Link href="/privacy" className="underline">Privacy Policy</Link>, which is incorporated into these Terms of Service by reference.
+            Your use of Scira AI is also governed by our <Link href="/privacy-policy" className="underline">Privacy Policy</Link>, which is incorporated into these Terms of Service by reference.
           </p>
 
           <h2>8. Limitation of Liability</h2>
@@ -159,7 +159,7 @@ export default function TermsPage() {
 
           <div className="my-8 border-t border-neutral-200 dark:border-neutral-800 pt-8">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              By using Scira AI, you agree to these Terms of Service and our <Link href="/privacy" className="underline">Privacy Policy</Link>.
+              By using Scira AI, you agree to these Terms of Service and our <Link href="/privacy-policy" className="underline">Privacy Policy</Link>.
             </p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function TermsPage() {
               <Link href="/terms" className="text-neutral-900 dark:text-neutral-100 font-medium">
                 Terms
               </Link>
-              <Link href="/privacy" className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+              <Link href="/privacy-policy" className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
                 Privacy
               </Link>
             </div>

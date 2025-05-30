@@ -27,13 +27,23 @@ export const SYSTEM_PROMPT = `You are an expert researcher. Today is ${new Date(
   - You must provide links to sources used. Ideally these are inline e.g. [this documentation](https://documentation.com/this)
   `;
 
+const pythonLibsAvailable = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "keras",
+    "seaborn",
+    "matplotlib",
+    "transformers",
+    "scikit-learn"
+]
 
 const daytona = new Daytona({
     apiKey: serverEnv.DAYTONA_API_KEY,
     target: SandboxTargetRegion.US,
 });
 
-const runCode = async (code: string) => {
+const runCode = async (code: string, installLibs: string[] = []) => {
     const sandbox = await daytona.create({
         language: 'python',
         resources: {
@@ -43,6 +53,10 @@ const runCode = async (code: string) => {
         },
         autoStopInterval: 0
     })
+
+    if (installLibs.length > 0) {
+        await sandbox.process.executeCommand(`pip install ${installLibs.join(" ")}`);
+    }
 
     const result = await sandbox.process.codeRun(code, undefined, 0);
     sandbox.delete();
@@ -173,9 +187,10 @@ Plan Guidelines:
         plan: plan.plan
     });
 
+    let toolResults: any[] = [];
 
     // Create the autonomous research agent with tools
-    const { text, toolResults } = await generateText({
+    const { text } = await generateText({
         model: scira.languageModel("scira-default"),
         maxSteps: totalTodos + 2,
         system: `
@@ -223,13 +238,17 @@ ${JSON.stringify(plan.plan)}
                 }),
                 execute: async ({ title, code }) => {
                     console.log("Running code:", code);
+                    // check if the code has any imports other than the pythonLibsAvailable
+                    // and then install the missing libraries
+                    const imports = code.match(/import\s+([\w\s,]+)/);
+                    const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
+                    const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
+
                     dataStream.writeMessageAnnotation({
                         status: { type: "code", title: title, code: code },
                     });
-                    const response = await runCode(code);
-                    console.log("Code result:", response);
-                    console.log("Charts:", response.artifacts?.charts);
-                    
+                    const response = await runCode(code, missingLibs);
+
                     // Extract chart data if present, and if so then map and remove the png with chart.png
                     const charts = response.artifacts?.charts?.map(chart => {
                         if (chart.png) {
@@ -238,17 +257,19 @@ ${JSON.stringify(plan.plan)}
                         }
                         return chart;
                     }) || [];
-                    
+
+                    console.log("Charts:", response.artifacts?.charts);
+
                     dataStream.writeMessageAnnotation({
-                        status: { 
-                            type: "result", 
-                            title: title, 
-                            code: code, 
+                        status: {
+                            type: "result",
+                            title: title,
+                            code: code,
                             result: response.result,
-                            charts: charts 
+                            charts: charts
                         },
                     });
-                    
+
                     return {
                         result: response.result,
                         charts: charts
@@ -344,13 +365,30 @@ ${JSON.stringify(plan.plan)}
         onStepFinish: (step) => {
             console.log("Step finished:", step.finishReason);
             console.log("Step:", step.stepType);
-            console.log("Tool results:", step.toolResults);
-        }
+            if (step.toolResults) {
+                toolResults.push(...step.toolResults);
+            }
+        },
     });
 
     dataStream.writeMessageAnnotation({
         status: { title: "Research completed" },
     });
+
+    const chartResults = toolResults.filter(result =>
+        result.toolName === "codeRunner" &&
+        typeof result.result === 'object' &&
+        result.result !== null &&
+        'charts' in result.result
+    );
+
+    console.log("Chart results:", chartResults);
+
+    const charts = chartResults.flatMap(result => (result.result as any).charts || []);
+
+    console.log("Tool results:", toolResults);
+    console.log("Charts:", charts);
+    console.log("Sources:", allSources[2]);
 
     return {
         text,
@@ -363,14 +401,7 @@ ${JSON.stringify(plan.plan)}
                 ]),
             ).values(),
         ),
-        charts: toolResults
-            .filter(result => 
-                result.toolName === "codeRunner" && 
-                typeof result.result === 'object' && 
-                result.result !== null &&
-                'charts' in result.result
-            )
-            .flatMap(result => (result.result as any).charts || [])
+        charts,
     };
 };
 
@@ -394,7 +425,7 @@ export const extremeSearchTool = (dataStream: DataStreamWriter) =>
                     text: research.text,
                     toolResults: research.toolResults,
                     sources: research.sources,
-                    charts: research.charts
+                    charts: research.charts,
                 },
             };
         },

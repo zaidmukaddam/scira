@@ -187,15 +187,6 @@
       max-height: 10lh;
     }
   }
-
-  /* Add mobile-specific override */
-  @media (max-width: 768px) {
-    .whatsize {
-      min-height: 40px !important;
-      max-height: 200px !important;
-      overflow-y: auto !important;
-    }
-  }
 }
 
 @theme inline {

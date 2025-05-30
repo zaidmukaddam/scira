@@ -26,6 +26,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { User } from '@/lib/db/schema';
+import { useSession } from '@/lib/auth-client';
+import { checkImageModeration } from '@/app/actions';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -54,6 +57,19 @@ const XAIIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
+const OpenAIIcon = ({ className }: { className?: string }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="256"
+        height="260"
+        preserveAspectRatio="xMidYMid"
+        viewBox="0 0 256 260"
+        className={className}
+    >
+        <path fill="currentColor" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z" />
+    </svg>
+)
+
 const GeminiIcon = ({ className }: { className?: string }) => (
     <svg height="1em" style={{ flex: "none", lineHeight: "1" }} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className={className}>
         <title>Gemini</title>
@@ -68,28 +84,15 @@ const GeminiIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
-const OpenAIIcon = ({ className }: { className?: string }) => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="256"
-        height="260"
-        preserveAspectRatio="xMidYMid"
-        viewBox="0 0 256 260"
-        className={className}
-    >
-        <path fill="currentColor" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z" />
-    </svg>
-)
-
 const QwenIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColor" fillRule="evenodd" height="1em" style={{
-  flex: "none",
-  lineHeight: 1
+    flex: "none",
+    lineHeight: 1
 }} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" {...props}><title>{"Qwen"}</title><path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z" /></svg>;
 
 
 const AnthropicIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColor" fillRule="evenodd" style={{
-  flex: "none",
-  lineHeight: 1
+    flex: "none",
+    lineHeight: 1
 }} viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg" height="1em" {...props}><title>{"Anthropic"}</title><path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" /></svg>;
 
 const GroqIcon = (props: SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 201" width="1em" height="1em" {...props}><path fill="#F54F35" d="M0 0h201v201H0V0Z" /><path fill="#FEFBFB" d="m128 49 1.895 1.52C136.336 56.288 140.602 64.49 142 73c.097 1.823.148 3.648.161 5.474l.03 3.247.012 3.482.017 3.613c.01 2.522.016 5.044.02 7.565.01 3.84.041 7.68.072 11.521.007 2.455.012 4.91.016 7.364l.038 3.457c-.033 11.717-3.373 21.83-11.475 30.547-4.552 4.23-9.148 7.372-14.891 9.73l-2.387 1.055c-9.275 3.355-20.3 2.397-29.379-1.13-5.016-2.38-9.156-5.17-13.234-8.925 3.678-4.526 7.41-8.394 12-12l3.063 2.375c5.572 3.958 11.135 5.211 17.937 4.625 6.96-1.384 12.455-4.502 17-10 4.174-6.784 4.59-12.222 4.531-20.094l.012-3.473c.003-2.414-.005-4.827-.022-7.241-.02-3.68 0-7.36.026-11.04-.003-2.353-.008-4.705-.016-7.058l.025-3.312c-.098-7.996-1.732-13.21-6.681-19.47-6.786-5.458-13.105-8.211-21.914-7.792-7.327 1.188-13.278 4.7-17.777 10.601C75.472 72.012 73.86 78.07 75 85c2.191 7.547 5.019 13.948 12 18 5.848 3.061 10.892 3.523 17.438 3.688l2.794.103c2.256.082 4.512.147 6.768.209v16c-16.682.673-29.615.654-42.852-10.848-8.28-8.296-13.338-19.55-13.71-31.277.394-9.87 3.93-17.894 9.562-25.875l1.688-2.563C84.698 35.563 110.05 34.436 128 49Z" /></svg>;
@@ -98,10 +101,11 @@ const models = [
     { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable", pdf: false },
     { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Stable", pdf: false },
     { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false },
-    { value: "scira-anthropic", label: "Claude 3.7 Sonnet (Reasoning)", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-anthropic", label: "Claude 4 Sonnet", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced model", color: "violet", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-anthropic-thinking", label: "Claude 4 Sonnet Thinking", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Thinking)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
     { value: "scira-google-pro", label: "Gemini 2.5 Pro (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false },
+    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: true },
     { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: false },
     { value: "scira-llama-4", label: "Llama 4 Maverick", icon: GroqIcon, iconClass: "text-current", description: "Meta's latest model", color: "blue", vision: true, reasoning: false, experimental: true, category: "Experimental", pdf: false },
     { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false },
@@ -144,6 +148,10 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-[#1EA896]! dark:bg-[#1EA896]! text-white! hover:bg-[#19967F]! dark:hover:bg-[#19967F]! border-[#1EA896]! dark:border-[#1EA896]!`
                 : `${baseClasses} text-[#1EA896]! dark:text-[#34C0AE]! hover:bg-[#1EA896]! hover:text-white! dark:hover:bg-[#1EA896]! dark:hover:text-white!`;
+        case 'vercel-gray':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} bg-[#27272A]! dark:bg-[#27272A]! text-white! hover:bg-[#18181B]! dark:hover:bg-[#18181B]! border-[#27272A]! dark:border-[#27272A]!`
+                : `${baseClasses} text-[#27272A]! dark:text-[#A1A1AA]! hover:bg-[#27272A]! hover:text-white! dark:hover:bg-[#27272A]! dark:hover:text-white!`;
         default:
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-neutral-500! dark:bg-neutral-700! text-white! hover:bg-neutral-600! dark:hover:bg-neutral-800! border-neutral-500! dark:border-neutral-700!`
@@ -161,10 +169,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
         msg.experimental_attachments && msg.experimental_attachments.length > 0
     );
 
-    // Filter models based on attachments first, then experimental status
+    // Filter models based on attachments first
+    // Always show experimental models by removing the experimental filter
     const filteredModels = hasAttachments
         ? models.filter(model => model.vision)
-        : models.filter(model => showExperimentalModels ? true : !model.experimental);
+        : models;
 
     // Group filtered models by category
     const groupedModels = filteredModels.reduce((acc, model) => {
@@ -178,7 +187,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
 
     // Get hover color classes based on model color
     const getHoverColorClasses = (modelColor: string) => {
-        switch(modelColor) {
+        switch (modelColor) {
             case 'black': return 'hover:bg-black/20! dark:hover:bg-black/20!';
             case 'gray': return 'hover:bg-gray-500/20! dark:hover:bg-gray-400/20!';
             case 'indigo': return 'hover:bg-indigo-500/20! dark:hover:bg-indigo-400/20!';
@@ -186,6 +195,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
             case 'purple': return 'hover:bg-purple-500/20! dark:hover:bg-purple-400/20!';
             case 'gemini': return 'hover:bg-teal-500/20! dark:hover:bg-teal-400/20!';
             case 'blue': return 'hover:bg-blue-500/20! dark:hover:bg-blue-400/20!';
+            case 'vercel-gray': return 'hover:bg-zinc-500/20! dark:hover:bg-zinc-400/20!';
             default: return 'hover:bg-neutral-500/20! dark:hover:bg-neutral-400/20!';
         }
     };
@@ -272,14 +282,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                             }}
                             className="opacity-60"
                         >
-                            <svg 
-                                width="8" 
-                                height="5" 
-                                viewBox="0 0 9 6" 
-                                fill="none" 
+                            <svg
+                                width="8"
+                                height="5"
+                                viewBox="0 0 9 6"
+                                fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
-                                <path d="M1 1L4.5 4.5L8 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M1 1L4.5 4.5L8 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </motion.div>
                     </span>
@@ -316,7 +326,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         "flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs",
                                         "transition-all duration-200",
                                         "group/item",
-                                        selectedModel === model.value 
+                                        selectedModel === model.value
                                             ? getColorClasses(model.color, true)
                                             : getHoverColorClasses(model.color)
                                     )}
@@ -472,7 +482,18 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 
 const MAX_FILES = 4;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const MAX_INPUT_CHARS = 10000;
+
+// Helper function to convert File to base64 data URL for moderation
+const fileToDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
 
 // Add this helper function near the top with other utility functions
 const supportsPdfAttachments = (modelValue: string): boolean => {
@@ -506,7 +527,8 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
     const formatFileSize = (bytes: number): string => {
         if (bytes < 1024) return bytes + ' bytes';
         else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        else return (bytes / 1048576).toFixed(1) + ' MB';
+        else return (bytes / 1048576).toFixed(1) + ' MB' +
+            (bytes > MAX_FILE_SIZE ? ' (exceeds 5MB limit)' : '');
     };
 
     const isUploadingAttachment = (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
@@ -585,11 +607,11 @@ const AttachmentPreview: React.FC<{ attachment: Attachment | UploadingAttachment
                             <path d="M12 18v-5"></path>
                         </svg>
                     ) : (
-                    <img
-                        src={(attachment as Attachment).url}
-                        alt={`Preview of ${attachment.name}`}
-                        className="h-full w-full object-cover"
-                    />
+                        <img
+                            src={(attachment as Attachment).url}
+                            alt={`Preview of ${attachment.name}`}
+                            className="h-full w-full object-cover"
+                        />
                     )}
                 </div>
             )}
@@ -636,6 +658,8 @@ interface FormComponentProps {
     setInput: (input: string) => void;
     attachments: Array<Attachment>;
     setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
+    chatId: string;
+    user: User | null;
     handleSubmit: (
         event?: {
             preventDefault?: () => void;
@@ -711,6 +735,8 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                 return 'bg-[#1EA896] dark:bg-[#1EA896] border-[#1EA896] dark:border-[#1EA896]';
             case 'blue':
                 return 'bg-[#1C7DFF] dark:bg-[#1C7DFF] border-[#1C7DFF] dark:border-[#1C7DFF]';
+            case 'vercel-gray':
+                return 'bg-[#27272A] dark:bg-[#27272A] border-[#27272A] dark:border-[#27272A]';
             default:
                 return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
         }
@@ -734,12 +760,12 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                         height: { duration: 0.2 }
                     }}
                     className={cn(
-                        "w-[98%] max-w-2xl overflow-hidden mx-auto",
-                        "text-sm text-neutral-700 dark:text-neutral-300 -mb-1.5"
+                        "w-[97%] max-w-2xl overflow-hidden mx-auto z-0",
+                        "text-sm text-neutral-700 dark:text-neutral-300 -mb-[0.499px]"
                     )}
                 >
                     <div className={cn(
-                        "flex items-center gap-2 py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-t-lg border shadow-xs backdrop-blur-xs",
+                        "flex items-center gap-2 py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-t-lg border border-b-0 shadow-xs backdrop-blur-xs",
                         bgColorClass,
                         useModelColor ? "text-white" : "text-neutral-900 dark:text-neutral-100"
                     )}>
@@ -845,6 +871,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
     const isProcessing = status === 'submitted' || status === 'streaming';
     const { width } = useWindowSize();
     const isMobile = width ? width < 768 : false;
+    const { data: session } = useSession();
 
     // Notify parent component when expansion state changes
     useEffect(() => {
@@ -853,6 +880,28 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             onExpandChange(isMobile ? isExpanded : false);
         }
     }, [isExpanded, onExpandChange, isMobile]);
+
+    // If user is not authenticated and selectedGroup is memory, switch to web
+    useEffect(() => {
+        if (!session && (selectedGroup === 'memory')) {
+            // Find a group object with id 'web'
+            const webGroup = searchGroups.find(group => group.id === 'web');
+            if (webGroup) {
+                onGroupSelect(webGroup);
+            }
+        }
+    }, [session, selectedGroup, onGroupSelect]);
+
+    // Filter groups based on authentication status
+    const visibleGroups = searchGroups.filter(group => {
+        // Only show groups that are marked as visible
+        if (!group.show) return false;
+
+        // If the group requires authentication and user is not authenticated, hide it
+        if ('requireAuth' in group && group.requireAuth && !session) return false;
+
+        return true;
+    });
 
     return (
         <motion.div
@@ -879,7 +928,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
         >
             <TooltipProvider>
                 <AnimatePresence initial={false}>
-                    {searchGroups.filter(group => group.show).map((group, index, filteredGroups) => {
+                    {visibleGroups.map((group, index, filteredGroups) => {
                         const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
                         const isLastItem = index === filteredGroups.length - 1;
                         return (
@@ -926,6 +975,8 @@ const GroupSelector = ({ selectedGroup, onGroupSelect, status, onExpandChange }:
 };
 
 const FormComponent: React.FC<FormComponentProps> = ({
+    chatId,
+    user,
     input,
     setInput,
     attachments,
@@ -1034,6 +1085,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             group.id, // Use the group ID directly as the color code
             'group'   // Specify this is a group notification
         );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setSelectedGroup, inputRef]);
 
     // Update uploadFile function to add more error details
@@ -1071,15 +1123,23 @@ const FormComponent: React.FC<FormComponentProps> = ({
             console.log("No files selected in file input");
             return;
         }
-        
+
         console.log("Files selected:", files.map(f => `${f.name} (${f.type})`));
-        
+
         // First, separate images and PDFs
         const imageFiles: File[] = [];
         const pdfFiles: File[] = [];
         const unsupportedFiles: File[] = [];
+        const oversizedFiles: File[] = [];
 
         files.forEach(file => {
+            // Check file size first
+            if (file.size > MAX_FILE_SIZE) {
+                oversizedFiles.push(file);
+                return;
+            }
+
+            // Then check file type
             if (file.type.startsWith('image/')) {
                 imageFiles.push(file);
             } else if (file.type === 'application/pdf') {
@@ -1088,26 +1148,26 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 unsupportedFiles.push(file);
             }
         });
-        
+
         if (unsupportedFiles.length > 0) {
             console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
             toast.error(`Some files are not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
         }
-        
+
         if (imageFiles.length === 0 && pdfFiles.length === 0) {
             console.log("No supported files found");
             event.target.value = '';
             return;
         }
-        
+
         // Auto-switch to PDF-compatible model if PDFs are present
         const currentModelData = models.find(m => m.value === selectedModel);
         if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
             console.log("PDFs detected, switching to compatible model");
-            
+
             // Find first compatible model that supports PDFs and vision
             const compatibleModel = models.find(m => m.pdf && m.vision);
-            
+
             if (compatibleModel) {
                 console.log("Switching to compatible model:", compatibleModel.value);
                 setSelectedModel(compatibleModel.value);
@@ -1130,7 +1190,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 }
             }
         }
-        
+
         // Combine valid files
         let validFiles: File[] = [...imageFiles];
         if (supportsPdfAttachments(selectedModel) || pdfFiles.length > 0) {
@@ -1138,7 +1198,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
 
         console.log("Valid files for upload:", validFiles.map(f => f.name));
-        
+
         const totalAttachments = attachments.length + validFiles.length;
         if (totalAttachments > MAX_FILES) {
             toast.error(`You can only attach up to ${MAX_FILES} files.`);
@@ -1152,11 +1212,45 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
+        // Check image moderation before uploading
+        if (imageFiles.length > 0) {
+            try {
+                console.log("Checking image moderation for", imageFiles.length, "images");
+                toast.info("Checking images for safety...");
+
+                // Convert images to data URLs for moderation
+                const imageDataURLs = await Promise.all(
+                    imageFiles.map(file => fileToDataURL(file))
+                );
+
+                // Check moderation
+                const moderationResult = await checkImageModeration(imageDataURLs);
+                console.log("Moderation result:", moderationResult);
+
+                if (moderationResult !== 'safe') {
+                    const [status, category] = moderationResult.split('\n');
+                    if (status === 'unsafe') {
+                        console.warn("Unsafe image detected, category:", category);
+                        toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+                        event.target.value = '';
+                        return;
+                    }
+                }
+
+                console.log("Images passed moderation check");
+            } catch (error) {
+                console.error("Error during image moderation:", error);
+                toast.error("Unable to verify image safety. Please try again.");
+                event.target.value = '';
+                return;
+            }
+        }
+
         setUploadQueue(validFiles.map((file) => file.name));
 
         try {
             console.log("Starting upload of", validFiles.length, "files");
-            
+
             // Upload files one by one for better error handling
             const uploadedAttachments: Attachment[] = [];
             for (const file of validFiles) {
@@ -1169,15 +1263,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     console.error(`Failed to upload ${file.name}:`, err);
                 }
             }
-            
+
             console.log("Upload completed for", uploadedAttachments.length, "files");
-            
+
             if (uploadedAttachments.length > 0) {
                 setAttachments(currentAttachments => [
-                ...currentAttachments,
-                ...uploadedAttachments,
-            ]);
-                
+                    ...currentAttachments,
+                    ...uploadedAttachments,
+                ]);
+
                 toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
             } else {
                 toast.error("No files were successfully uploaded");
@@ -1189,6 +1283,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             setUploadQueue([]);
             event.target.value = '';
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attachments, setAttachments, selectedModel, setSelectedModel]);
 
     const removeAttachment = (index: number) => {
@@ -1198,7 +1293,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Only check if we've reached the attachment limit
         if (attachments.length >= MAX_FILES) return;
 
@@ -1207,7 +1302,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             // Check if at least one item is a file
             const hasFile = Array.from(e.dataTransfer.items).some(item => item.kind === "file");
             if (hasFile) {
-            setIsDragging(true);
+                setIsDragging(true);
             }
         }
     }, [attachments.length]);
@@ -1244,9 +1339,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
         const imageFiles: File[] = [];
         const pdfFiles: File[] = [];
         const unsupportedFiles: File[] = [];
+        const oversizedFiles: File[] = [];
 
         allFiles.forEach(file => {
             console.log(`Processing file: ${file.name} (${file.type})`);
+
+            // Check file size first
+            if (file.size > MAX_FILE_SIZE) {
+                oversizedFiles.push(file);
+                return;
+            }
+
+            // Then check file type
             if (file.type.startsWith('image/')) {
                 imageFiles.push(file);
             } else if (file.type === 'application/pdf') {
@@ -1255,12 +1359,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 unsupportedFiles.push(file);
             }
         });
-        
-        console.log(`Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}`);
-        
+
+        console.log(`Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}, Oversized: ${oversizedFiles.length}`);
+
         if (unsupportedFiles.length > 0) {
             console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
             toast.error(`Some files not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+        }
+
+        if (oversizedFiles.length > 0) {
+            console.log("Oversized files:", oversizedFiles.map(f => `${f.name} (${f.size} bytes)`));
+            toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
         }
 
         // Check if we have any supported files
@@ -1273,10 +1382,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         const currentModelData = models.find(m => m.value === selectedModel);
         if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
             console.log("PDFs detected, switching to compatible model");
-            
+
             // Find first compatible model that supports PDFs
             const compatibleModel = models.find(m => m.pdf && m.vision);
-            
+
             if (compatibleModel) {
                 console.log("Switching to compatible model:", compatibleModel.value);
                 setSelectedModel(compatibleModel.value);
@@ -1319,11 +1428,43 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
+        // Check image moderation before proceeding
+        if (imageFiles.length > 0) {
+            try {
+                console.log("Checking image moderation for", imageFiles.length, "images");
+                toast.info("Checking images for safety...");
+
+                // Convert images to data URLs for moderation
+                const imageDataURLs = await Promise.all(
+                    imageFiles.map(file => fileToDataURL(file))
+                );
+
+                // Check moderation
+                const moderationResult = await checkImageModeration(imageDataURLs);
+                console.log("Moderation result:", moderationResult);
+
+                if (moderationResult !== 'safe') {
+                    const [status, category] = moderationResult.split('\n');
+                    if (status === 'unsafe') {
+                        console.warn("Unsafe image detected, category:", category);
+                        toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+                        return;
+                    }
+                }
+
+                console.log("Images passed moderation check");
+            } catch (error) {
+                console.error("Error during image moderation:", error);
+                toast.error("Unable to verify image safety. Please try again.");
+                return;
+            }
+        }
+
         // Switch to vision model if current model doesn't support vision
         if (!currentModelData?.vision) {
             // Find the appropriate vision model based on file types
             let visionModel: string;
-            
+
             // If we have PDFs, prioritize a PDF-compatible model
             if (pdfFiles.length > 0) {
                 const pdfCompatibleModel = models.find(m => m.vision && m.pdf);
@@ -1335,7 +1476,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             } else {
                 visionModel = getFirstVisionModel();
             }
-            
+
             console.log("Switching to vision model:", visionModel);
             setSelectedModel(visionModel);
 
@@ -1361,7 +1502,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setTimeout(async () => {
             try {
                 console.log("Beginning upload of", validFiles.length, "files");
-                
+
                 // Try uploading one by one instead of all at once
                 const uploadedAttachments: Attachment[] = [];
                 for (const file of validFiles) {
@@ -1374,26 +1515,27 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         console.error(`Failed to upload ${file.name}:`, err);
                     }
                 }
-                
+
                 console.log("Upload completed for", uploadedAttachments.length, "files");
-                
+
                 if (uploadedAttachments.length > 0) {
                     setAttachments(currentAttachments => [
-                ...currentAttachments,
-                ...uploadedAttachments,
-            ]);
-                    
+                        ...currentAttachments,
+                        ...uploadedAttachments,
+                    ]);
+
                     toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
                 } else {
                     toast.error("No files were successfully uploaded");
                 }
-        } catch (error) {
+            } catch (error) {
                 console.error("Error during file upload:", error);
                 toast.error("Upload failed. Please check console for details.");
-        } finally {
-            setUploadQueue([]);
-        }
+            } finally {
+                setUploadQueue([]);
+            }
         }, 100);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
 
     const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
@@ -1410,6 +1552,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (totalAttachments > MAX_FILES) {
             toast.error(`You can only attach up to ${MAX_FILES} files.`);
             return;
+        }
+
+        // Get files and check sizes before proceeding
+        const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
+        const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE);
+
+        if (oversizedFiles.length > 0) {
+            console.log("Oversized files:", oversizedFiles.map(f => `${f.name} (${f.size} bytes)`));
+            toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map(f => f.name || 'unnamed').join(', ')}`);
+
+            // Filter out oversized files
+            const validFiles = files.filter(file => file.size <= MAX_FILE_SIZE);
+            if (validFiles.length === 0) return;
         }
 
         // Switch to vision model if needed
@@ -1433,11 +1588,47 @@ const FormComponent: React.FC<FormComponentProps> = ({
             }
         }
 
-        setUploadQueue(imageItems.map((_, i) => `Pasted Image ${i + 1}`));
+        // Use filtered files if we found oversized ones
+        const filesToUpload = oversizedFiles.length > 0
+            ? files.filter(file => file.size <= MAX_FILE_SIZE)
+            : files;
+
+        // Check image moderation before uploading
+        if (filesToUpload.length > 0) {
+            try {
+                console.log("Checking image moderation for", filesToUpload.length, "pasted images");
+                toast.info("Checking pasted images for safety...");
+
+                // Convert images to data URLs for moderation
+                const imageDataURLs = await Promise.all(
+                    filesToUpload.map(file => fileToDataURL(file))
+                );
+
+                // Check moderation
+                const moderationResult = await checkImageModeration(imageDataURLs);
+                console.log("Moderation result:", moderationResult);
+
+                if (moderationResult !== 'safe') {
+                    const [status, category] = moderationResult.split('\n');
+                    if (status === 'unsafe') {
+                        console.warn("Unsafe pasted image detected, category:", category);
+                        toast.error(`Pasted image content violates safety guidelines (${category}). Please choose different images.`);
+                        return;
+                    }
+                }
+
+                console.log("Pasted images passed moderation check");
+            } catch (error) {
+                console.error("Error during pasted image moderation:", error);
+                toast.error("Unable to verify pasted image safety. Please try again.");
+                return;
+            }
+        }
+
+        setUploadQueue(filesToUpload.map((file, i) => file.name || `Pasted Image ${i + 1}`));
 
         try {
-            const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
-            const uploadPromises = files.map(file => uploadFile(file));
+            const uploadPromises = filesToUpload.map(file => uploadFile(file));
             const uploadedAttachments = await Promise.all(uploadPromises);
 
             setAttachments(currentAttachments => [
@@ -1452,6 +1643,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } finally {
             setUploadQueue([]);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel]);
 
     useEffect(() => {
@@ -1471,7 +1663,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const onSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        event.stopPropagation();
 
         if (status !== 'ready') {
             toast.error("Please wait for the current response to complete!");
@@ -1488,6 +1679,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
             track('model_selected', {
                 model: selectedModel,
             });
+
+            if (user) {
+                window.history.replaceState({}, '', `/search/${chatId}`);
+            }
+
             setHasSubmitted(true);
             lastSubmittedQueryRef.current = input.trim();
 
@@ -1502,6 +1698,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
             toast.error("Please enter a search query or attach an image.");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status, selectedModel, setHasSubmitted]);
 
     const submitForm = useCallback(() => {
@@ -1546,6 +1743,33 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const hasInteracted = messages.length > 0;
     const isMobile = width ? width < 768 : false;
 
+    // Auto-resize function for textarea
+    const resizeTextarea = useCallback(() => {
+        if (!inputRef.current) return;
+        
+        const target = inputRef.current;
+        
+        // Reset height to auto first to get the actual scroll height
+        target.style.height = 'auto';
+        
+        const scrollHeight = target.scrollHeight;
+        const maxHeight = width && width < 768 ? 200 : 300;
+        
+        if (scrollHeight > maxHeight) {
+            target.style.height = `${maxHeight}px`;
+            target.style.overflowY = 'auto';
+        } else {
+            target.style.height = `${scrollHeight}px`;
+            target.style.overflowY = 'hidden';
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [width]);
+
+    // Resize textarea when input value changes
+    useEffect(() => {
+        resizeTextarea();
+    }, [input, resizeTextarea]);
+
     return (
         <div className={cn(
             "flex flex-col w-full"
@@ -1581,7 +1805,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                             Drop images or PDFs here
                                         </p>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                                            Max {MAX_FILES} files
+                                            Max {MAX_FILES} files (5MB per file)
                                         </p>
                                     </div>
                                 </div>
@@ -1589,23 +1813,23 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         )}
                     </AnimatePresence>
 
-                    <input 
-                        type="file" 
-                        className="hidden" 
-                        ref={fileInputRef} 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept={getAcceptFileTypes(selectedModel)} 
-                        tabIndex={-1} 
+                    <input
+                        type="file"
+                        className="hidden"
+                        ref={fileInputRef}
+                        multiple
+                        onChange={handleFileChange}
+                        accept={getAcceptFileTypes(selectedModel)}
+                        tabIndex={-1}
                     />
-                    <input 
-                        type="file" 
-                        className="hidden" 
-                        ref={postSubmitFileInputRef} 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept={getAcceptFileTypes(selectedModel)} 
-                        tabIndex={-1} 
+                    <input
+                        type="file"
+                        className="hidden"
+                        ref={postSubmitFileInputRef}
+                        multiple
+                        onChange={handleFileChange}
+                        accept={getAcceptFileTypes(selectedModel)}
+                        tabIndex={-1}
                     />
 
                     {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -1647,7 +1871,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             notificationType={switchNotification.notificationType}
                         />
 
-                        <div className="relative rounded-lg bg-neutral-100 dark:bg-neutral-900">
+                        <div className="rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
                             <Textarea
                                 ref={inputRef}
                                 placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
@@ -1659,28 +1883,37 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 onInput={(e) => {
                                     // Auto-resize textarea based on content
                                     const target = e.target as HTMLTextAreaElement;
-                                    if (width && width < 768) {
-                                        // For mobile, allow textarea to scroll after reaching max height
-                                        if (target.scrollHeight > 200) {
-                                            target.style.height = '200px';
-                                            target.style.overflowY = 'auto';
-                                        } else {
-                                            target.style.height = 'auto';
-                                            target.style.height = `${target.scrollHeight}px`;
-                                            target.style.overflowY = 'hidden';
-                                        }
+                                    
+                                    // Reset height to auto first to get the actual scroll height
+                                    target.style.height = 'auto';
+                                    
+                                    const scrollHeight = target.scrollHeight;
+                                    const maxHeight = width && width < 768 ? 200 : 300; // Increased max height for desktop
+                                    
+                                    if (scrollHeight > maxHeight) {
+                                        target.style.height = `${maxHeight}px`;
+                                        target.style.overflowY = 'auto';
+                                    } else {
+                                        target.style.height = `${scrollHeight}px`;
+                                        target.style.overflowY = 'hidden';
                                     }
+                                    
+                                    // Ensure the cursor position is visible by scrolling to bottom if needed
+                                    requestAnimationFrame(() => {
+                                        const cursorPosition = target.selectionStart;
+                                        if (cursorPosition === target.value.length) {
+                                            target.scrollTop = target.scrollHeight;
+                                        }
+                                    });
                                 }}
                                 className={cn(
-                                    "w-full rounded-lg md:text-base!",
+                                    "w-full rounded-lg rounded-b-none md:text-base!",
                                     "text-base leading-relaxed",
                                     "bg-neutral-100 dark:bg-neutral-900",
-                                    "border border-neutral-200! dark:border-neutral-700!",
-                                    "focus:border-neutral-300! dark:!focus:!border-neutral-500",
-                                    isFocused ? "border-neutral-300! dark:border-neutral-500!" : "",
+                                    "border-0!",
                                     "text-neutral-900 dark:text-neutral-100",
-                                    "focus:ring-0!",
-                                    "px-4 py-4 pb-16",
+                                    "focus:ring-0! focus-visible:ring-0!",
+                                    "px-4! py-4!",
                                     "touch-manipulation",
                                     "whatsize"
                                 )}
@@ -1698,31 +1931,20 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 onPaste={handlePaste}
                             />
 
-                            {/* Separate div for toolbar controls that won't trigger the textarea */}
+                            {/* Toolbar as a separate block - no absolute positioning */}
                             <div
                                 className={cn(
-                                    "absolute bottom-0 inset-x-0 flex justify-between items-center p-2 rounded-b-lg",
+                                    "flex justify-between items-center p-2 rounded-t-none rounded-b-lg",
                                     "bg-neutral-100 dark:bg-neutral-900",
-                                    "border-t-0 border-x border-b border-neutral-200! dark:border-neutral-700!",
-                                    isFocused ? "border-neutral-300! dark:border-neutral-500!" : "",
+                                    "border-t-0 border-neutral-200! dark:border-neutral-700!",
                                     isProcessing ? "opacity-20! cursor-not-allowed!" : ""
                                 )}
                             >
-                                {/* Toolbar controls in a touchable div that prevents keyboard */}
                                 <div
                                     className={cn(
                                         "flex items-center gap-2",
                                         isMobile && "overflow-hidden"
                                     )}
-                                    // Use pointer-events-auto to enable interactions without affecting the textarea
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        // Blur the textarea on toolbar click to hide keyboard
-                                        if (isMobile && document.activeElement === inputRef.current) {
-                                            inputRef.current?.blur();
-                                        }
-                                    }}
                                 >
                                     <div className={cn(
                                         "transition-all duration-100",
@@ -1865,17 +2087,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     </div>
                                 </div>
 
-                                <div
-                                    className="flex items-center gap-2"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        // Blur the textarea on button container click
-                                        if (isMobile && document.activeElement === inputRef.current) {
-                                            inputRef.current?.blur();
-                                        }
-                                    }}
-                                >
+                                <div className="flex items-center gap-2">
                                     {hasVisionSupport(selectedModel) && !(isMobile && isGroupSelectorExpanded) && (
                                         !isMobile ? (
                                             <Tooltip delayDuration={300}>
@@ -1901,8 +2113,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     <div className="flex flex-col gap-0.5">
                                                         <span className="font-medium text-[11px]">Attach File</span>
                                                         <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                                                            {supportsPdfAttachments(selectedModel) 
-                                                                ? "Upload an image or PDF document" 
+                                                            {supportsPdfAttachments(selectedModel)
+                                                                ? "Upload an image or PDF document"
                                                                 : "Upload an image"}
                                                         </span>
                                                     </div>

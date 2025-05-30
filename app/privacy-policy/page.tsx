@@ -165,7 +165,7 @@ export default function PrivacyPage() {
               <Link href="/terms" className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
                 Terms
               </Link>
-              <Link href="/privacy" className="text-neutral-900 dark:text-neutral-100 font-medium">
+              <Link href="/privacy-policy" className="text-neutral-900 dark:text-neutral-100 font-medium">
                 Privacy
               </Link>
             </div>

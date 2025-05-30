@@ -13,8 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import Image from 'next/image';
 
 type SearchImage = {
     url: string;
@@ -183,18 +184,21 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
                         {!imageLoaded && (
                             <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
                         )}
-                        <img
+                        <Image
                             src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(result.url).hostname}`}
                             alt=""
                             className={cn(
                                 "w-5 h-5 object-contain",
                                 !imageLoaded && "opacity-0"
                             )}
+                            width={100}
+                            height={100}
                             onLoad={() => setImageLoaded(true)}
                             onError={(e) => {
                                 setImageLoaded(true);
                                 e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='16'/%3E%3Cline x1='8' y1='12' x2='16' y2='12'/%3E%3C/svg%3E";
                             }}
+                            unoptimized
                         />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -236,13 +240,13 @@ interface ImageGridProps {
 const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedImage, setSelectedImage] = React.useState(0);
-    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const isMobile = useIsMobile();
     const [imageLoaded, setImageLoaded] = React.useState<Record<number, boolean>>({});
 
     const displayImages = showAll 
         ? images 
-        : images.slice(0, isDesktop ? PREVIEW_IMAGE_COUNT.DESKTOP : PREVIEW_IMAGE_COUNT.MOBILE);
-    const hasMore = images.length > (isDesktop ? PREVIEW_IMAGE_COUNT.DESKTOP : PREVIEW_IMAGE_COUNT.MOBILE);
+        : images.slice(0, isMobile ? PREVIEW_IMAGE_COUNT.MOBILE : PREVIEW_IMAGE_COUNT.DESKTOP);
+    const hasMore = images.length > (isMobile ? PREVIEW_IMAGE_COUNT.MOBILE : PREVIEW_IMAGE_COUNT.DESKTOP);
 
     const handleImageLoad = (index: number) => {
         setImageLoaded(prev => ({ ...prev, [index]: true }));
@@ -252,16 +256,14 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
         <div>
             <div className={cn(
                 "grid gap-1.5",
-                // Mobile layout
+                // Default mobile layout
                 "grid-cols-2",
                 displayImages.length === 1 && "grid-cols-1",
-                // Tablet layout
-                "sm:grid-cols-3",
-                // Desktop layout
-                "lg:grid-cols-4",
-                // Reduced height with aspect ratio
+                // Responsive layouts
+                "sm:grid-cols-3 md:grid-cols-4",
+                // Aspect ratio for all images
                 "*:aspect-video",
-                // First image larger on desktop
+                // First image larger on tablet and up
                 displayImages.length > 1 && "sm:[&>*:first-child]:row-span-2 sm:[&>*:first-child]:col-span-2",
                 displayImages.length === 1 && "[&>*:first-child]:col-span-full"
             )}>
@@ -288,7 +290,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
                             </div>
                         )}
-                        <img
+                        <Image
                             src={image.url}
                             alt={image.description || ""}
                             className={cn(
@@ -297,6 +299,9 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 "group-hover:scale-105",
                                 !imageLoaded[index] && "opacity-0"
                             )}
+                            width={100}
+                            height={100}
+                            unoptimized
                             onLoad={() => handleImageLoad(index)}
                             onError={() => handleImageLoad(index)}
                         />
@@ -327,7 +332,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                 ))}
             </div>
 
-            {isDesktop ? (
+            {!isMobile ? (
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogContent className="max-w-4xl! w-[90vw]! h-[65vh]! p-0 overflow-hidden border-none shadow-xl [&>button]:hidden">
                         <div className="relative w-full h-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900">

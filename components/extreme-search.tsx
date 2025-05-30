@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,6 +81,11 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
 
   // Memoize chartOptions
   const chartOptions = useMemo(() => {
+    // Skip chart options calculation for composite charts
+    if (chart.type === 'composite_chart') {
+      return {};
+    }
+    
     const chartColors = [
       { 
         main: '#3b82f6', // blue
@@ -417,6 +423,95 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       };
     }
 
+    // Box and Whisker Chart (Box Plot)
+    if (chart.type === 'box_and_whisker') {
+      // Format the data for ECharts boxplot
+      // Expected format for each element: [min, Q1, median, Q3, max]
+      return {
+        ...baseOption,
+        tooltip: {
+          ...baseOption.tooltip,
+          trigger: 'item',
+          axisPointer: {
+            type: 'shadow'
+          },
+          formatter: function (params: any) {
+            const data = params.data;
+            return `${params.seriesName}<br/>
+                   <strong>Maximum:</strong> ${data[4]}<br/>
+                   <strong>Upper Quartile:</strong> ${data[3]}<br/>
+                   <strong>Median:</strong> ${data[2]}<br/>
+                   <strong>Lower Quartile:</strong> ${data[1]}<br/>
+                   <strong>Minimum:</strong> ${data[0]}`;
+          }
+        },
+        xAxis: {
+          type: 'category',
+          data: chart.elements.map((e: any) => e.label || e.name),
+          boundaryGap: true,
+          splitArea: { show: false },
+          ...commonAxisOptions(chart.x_label)
+        },
+        yAxis: {
+          type: 'value',
+          ...commonAxisOptions(chart.y_label)
+        },
+        series: [{
+          name: chart.title || 'Box Plot',
+          type: 'boxplot',
+          data: chart.elements.map((element: any) => {
+            // If data is already in boxplot format [min, Q1, median, Q3, max]
+            if (Array.isArray(element.data) && element.data.length === 5) {
+              return element.data;
+            }
+            // If data points are provided, calculate box plot values
+            else if (Array.isArray(element.points)) {
+              const values = element.points.map((point: any) => 
+                Array.isArray(point) ? point[1] : point
+              ).sort((a: number, b: number) => a - b);
+              
+              if (values.length === 0) return [0, 0, 0, 0, 0];
+              
+              const min = values[0];
+              const max = values[values.length - 1];
+              const median = values.length % 2 === 0 
+                ? (values[values.length/2 - 1] + values[values.length/2]) / 2 
+                : values[Math.floor(values.length/2)];
+              
+              const lowerHalf = values.slice(0, Math.floor(values.length/2));
+              const upperHalf = values.length % 2 === 0 
+                ? values.slice(values.length/2) 
+                : values.slice(Math.floor(values.length/2) + 1);
+              
+              const q1 = lowerHalf.length % 2 === 0 
+                ? (lowerHalf[lowerHalf.length/2 - 1] + lowerHalf[lowerHalf.length/2]) / 2 
+                : lowerHalf[Math.floor(lowerHalf.length/2)];
+              
+              const q3 = upperHalf.length % 2 === 0 
+                ? (upperHalf[upperHalf.length/2 - 1] + upperHalf[upperHalf.length/2]) / 2 
+                : upperHalf[Math.floor(upperHalf.length/2)];
+              
+              return [min, q1, median, q3, max];
+            }
+            // Default empty box
+            return [0, 0, 0, 0, 0];
+          }),
+          itemStyle: {
+            color: chartColors[0].secondary,
+            borderColor: chartColors[0].main,
+          },
+          emphasis: {
+            itemStyle: {
+              borderWidth: 2,
+              shadowBlur: 5,
+              shadowColor: 'rgba(0,0,0,0.2)'
+            }
+          },
+          boxWidth: [isMobile ? 30 : 50],
+        }]
+      };
+    }
+
     // Default case - just return base options
     return {
       ...baseOption,
@@ -426,6 +521,24 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       }
     };
   }, [chart, isDark, isMobile]);
+
+  // Handle composite charts (multiple charts in one container)
+  if (chart.type === 'composite_chart') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        {(chart.elements || chart.data || []).map((subChart: any, index: number) => (
+          <div key={index} className="w-full">
+            <ExtremeChart chart={subChart} />
+          </div>
+        ))}
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -460,6 +573,10 @@ const ExtremeSearchComponent = ({
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [previousItemsLength, setPreviousItemsLength] = useState(0);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Add state for accordion sections (default to open)
+  const [researchProcessOpen, setResearchProcessOpen] = useState(true);
+  const [sourcesOpen, setSourcesOpen] = useState(true);
 
   const latestStatusAnnotation = useMemo(() => 
     (annotations as any[])
@@ -552,7 +669,7 @@ const ExtremeSearchComponent = ({
             title: annotation.status.title || 'Python Code Execution',
             result: annotation.status.result,
             charts: annotation.status.charts,
-            status: 'complete'
+            status: 'complete' as const
           });
         }
       }
@@ -578,32 +695,119 @@ const ExtremeSearchComponent = ({
 
   const timelineItems: TimelineItemData[] = useMemo(() => {
     const items: TimelineItemData[] = [];
-    queriesWithSources.forEach((queryData, index) => {
-      const calculatedQueryStatus = getQueryStatus(queryData, index, queriesWithSources, state);
-      items.push({
-        id: queryData.queryId,
-        type: 'search',
-        title: queryData.query,
-        status: calculatedQueryStatus,
-        timestamp: annotationTimestamps[queryData.queryId] || index,
-        searchData: queryData
+    
+    // If we're in result state and have research data available, use that instead of annotations
+    if (state === "result") {
+      const { result } = toolInvocation;
+      const researchData = result as { research: Research } | null;
+      const research = researchData?.research;
+      
+      if (research) {
+        // Process tool calls for web searches
+        const webSearchCalls = (research.toolResults || [])
+          .filter(call => call.toolName === 'webSearch')
+          .map((call, index) => {
+            const query = call.args?.query || '';
+            const queryId = call.toolCallId;
+            // Find the corresponding result
+            const resultData = (research.toolResults || [])
+              .find(r => r.toolCallId === call.toolCallId);
+            
+            // Create a QueryBlockData object similar to what we get from annotations
+            return {
+              queryId,
+              query,
+              sources: (resultData?.result || []).map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                favicon: source.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(source.url)}`
+              })),
+              content: (resultData?.result || []).map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                text: source.content || '',
+                favicon: source.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(source.url)}`
+              }))
+            };
+          });
+        
+        // Add web searches to items
+        webSearchCalls.forEach((queryData, index) => {
+          items.push({
+            id: queryData.queryId,
+            type: 'search',
+            title: queryData.query,
+            status: queryData.sources.length > 0 ? 'success' : 'no_results',
+            timestamp: index,
+            searchData: queryData
+          });
+        });
+        
+        // Process tool calls for code executions
+        const codeCalls = (research.toolResults || [])
+          .filter(call => call.toolName === 'codeRunner')
+          .map((call, index) => {
+            const title = call.args?.title || 'Python Code Execution';
+            const code = call.args?.code || '';
+            const codeId = `code-result-${index}`;
+            // Find the corresponding result
+            const resultData = (research.toolResults || [])
+              .find(r => r.toolCallId === call.toolCallId);
+            
+            // Create a CodeExecutionData object
+            return {
+              codeId,
+              code,
+              title,
+              result: resultData?.result?.result || '',
+              charts: resultData?.result?.charts || [],
+              status: 'complete' as const
+            };
+          });
+        
+        // Add code executions to items
+        codeCalls.forEach((codeData, index) => {
+          items.push({
+            id: codeData.codeId,
+            type: 'code',
+            title: codeData.title,
+            status: 'success',
+            timestamp: webSearchCalls.length + index,
+            codeData: codeData
+          });
+        });
+        
+      }
+    } else {
+      // Original behavior for non-result states using annotations
+      queriesWithSources.forEach((queryData, index) => {
+        const calculatedQueryStatus = getQueryStatus(queryData, index, queriesWithSources, state);
+        items.push({
+          id: queryData.queryId,
+          type: 'search',
+          title: queryData.query,
+          status: calculatedQueryStatus,
+          timestamp: annotationTimestamps[queryData.queryId] || index,
+          searchData: queryData
+        });
       });
-    });
 
-    codeExecutions.forEach((codeData, index) => {
-      const codeHash = codeData.code.length.toString();
-      items.push({
-        id: codeData.codeId,
-        type: 'code',
-        title: codeData.title,
-        status: codeData.status === 'running' ? 'loading' : 'success',
-        timestamp: annotationTimestamps[`code-${codeHash}`] || (queriesWithSources.length + index),
-        codeData: codeData
+      codeExecutions.forEach((codeData, index) => {
+        const codeHash = codeData.code.length.toString();
+        items.push({
+          id: codeData.codeId,
+          type: 'code',
+          title: codeData.title,
+          status: codeData.status === 'running' ? 'loading' : 'success',
+          timestamp: annotationTimestamps[`code-${codeHash}`] || (queriesWithSources.length + index),
+          codeData: codeData
+        });
       });
-    });
+    }
+    
     items.sort((a, b) => a.timestamp - b.timestamp);
     return items;
-  }, [queriesWithSources, codeExecutions, state, annotationTimestamps]);
+  }, [queriesWithSources, codeExecutions, state, annotationTimestamps, toolInvocation]);
 
   // Auto-expand latest item and close previous ones when a new item is added
   useEffect(() => {
@@ -620,7 +824,7 @@ const ExtremeSearchComponent = ({
       setExpandedItems(newExpandedMap);
       setPreviousItemsLength(timelineItems.length);
     }
-  }, [timelineItems.length, previousItemsLength]);
+  }, [timelineItems.length, previousItemsLength, timelineItems]);
 
   // Improved auto-scroll effect when items are added or expanded
   useEffect(() => {
@@ -877,118 +1081,154 @@ const ExtremeSearchComponent = ({
   // Rendering the sources card for result state
   const renderSources = (uniqueSources: Array<any>) => (
         <Card className="w-full mx-auto gap-0 py-0 mb-4 shadow-none overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800/50 rounded-xl">
-          <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800/50">
+          <div 
+            className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-neutral-800/50 cursor-pointer"
+            onClick={() => setSourcesOpen(!sourcesOpen)}
+          >
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Sources Found</p>
             </div>
-            {uniqueSources.length > 0 && (
-              <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-xl">
-                <Search className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
-                <p className="text-xs text-neutral-600 dark:text-neutral-300">
-                  {uniqueSources.length} Result{uniqueSources.length === 1 ? '' : 's'}
-                </p>
-              </div>
-            )}
-          </div>
-          <CardContent className="p-3 pt-2">
-            {uniqueSources.length > 0 ? (
-              <div className="relative">
-                <div className="absolute right-1.5 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-neutral-900 via-transparent to-transparent rounded opacity-0 transition-opacity hover:opacity-100" />
-                <div className="overflow-x-auto pb-2 -mx-3 px-3 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
-                  <div className="flex flex-row gap-3 min-w-min">
-                    {uniqueSources.map((source, index) => {
-                      let displayTitle = "View Source";
-                      let displayHostname = "";
-                      if (source && source.url) {
-                          try {
-                            const urlObj = new URL(source.url);
-                            displayHostname = urlObj.hostname.replace('www.', '');
-                            displayTitle = source.title || displayHostname;
-                          } catch (e) {
-                            console.warn("Invalid source URL for result display:", source.url);
-                            displayTitle = source.title || source.url;
-                          }
-                      } else if (source && source.title) {
-                          displayTitle = source.title;
-                      } else if (source && source.url) {
-                          displayTitle = source.url;
-                      }
-
-                  const sourceContent = timelineItems
-                    .filter(item => item.type === 'search' && item.searchData)
-                    .flatMap(item => 
-                      item.searchData!.content.filter(c => c.url === source.url)
-                      )[0]?.text || "";
-
-                      return (
-                        <motion.div
-                          key={index}
-                          className="flex flex-col min-w-[200px] max-w-[280px] bg-neutral-50 dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <div className="flex items-center gap-2.5 p-3 pb-2">
-                            <img
-                              src={source.favicon}
-                              alt=""
-                              className="w-5 h-5 rounded-full flex-shrink-0 opacity-90"
-                              onError={(e) => {
-                                e.currentTarget.src = 'https://www.google.com/s2/favicons?sz-128&domain_url=example.com';
-                                (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%) brightness(150%)';
-                              }}
-                            />
-                            <span className="truncate text-neutral-900 dark:text-neutral-100 text-sm font-medium flex-1" title={displayTitle}>
-                              {displayTitle}
-                            </span>
-                          </div>
-
-                          <div className="px-3 pb-2 text-xs">
-                            <a 
-                              href={source.url} 
-                              target="_blank"
-                              rel="noopener noreferrer" 
-                              className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 truncate flex items-center gap-1 group w-fit"
-                            >
-                              {displayHostname}
-                              <ArrowUpRight className="w-3 h-3 opacity-70 group-hover:opacity-100 transition-opacity" />
-                            </a>
-                          </div>
-                          
-                          {sourceContent && (
-                            <div className="px-3 pb-3 text-xs text-neutral-600 dark:text-neutral-400 overflow-y-auto max-h-[80px] leading-relaxed scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
-                              {sourceContent.length > 250 ? 
-                                sourceContent.substring(0, 250) + "..." : 
-                                sourceContent}
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+            <div className="flex items-center gap-1.5">
+              {uniqueSources.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-xl">
+                  <Search className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                  <p className="text-xs text-neutral-600 dark:text-neutral-300">
+                    {uniqueSources.length} Result{uniqueSources.length === 1 ? '' : 's'}
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <motion.p 
-                className="text-neutral-500 dark:text-neutral-400 text-xs"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+              )}
+              {sourcesOpen ? 
+                <ChevronDown className="w-4 h-4 text-neutral-500 dark:text-neutral-400 ml-1" /> : 
+                <ChevronRight className="w-4 h-4 text-neutral-500 dark:text-neutral-400 ml-1" />
+              }
+            </div>
+          </div>
+          <AnimatePresence>
+            {sourcesOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{
+                  height: { duration: 0.2, ease: "easeOut" },
+                  opacity: { duration: 0.15 }
+                }}
               >
-                No sources found for this research.
-              </motion.p>
+                <CardContent className="p-3 pt-2">
+                  {uniqueSources.length > 0 ? (
+                    <div className="relative">
+                      <div className="absolute right-1.5 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-neutral-900 via-transparent to-transparent rounded opacity-0 transition-opacity hover:opacity-100" />
+                      <div className="overflow-x-auto pb-2 -mx-3 px-3 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
+                        <div className="flex flex-row gap-3 min-w-min">
+                          {uniqueSources.map((source, index) => {
+                            let displayTitle = "View Source";
+                            let displayHostname = "";
+                            if (source && source.url) {
+                                try {
+                                  const urlObj = new URL(source.url);
+                                  displayHostname = urlObj.hostname.replace('www.', '');
+                                  displayTitle = source.title || displayHostname;
+                                } catch (e) {
+                                  console.warn("Invalid source URL for result display:", source.url);
+                                  displayTitle = source.title || source.url;
+                                }
+                            } else if (source && source.title) {
+                                displayTitle = source.title;
+                            } else if (source && source.url) {
+                                displayTitle = source.url;
+                            }
+
+                        const sourceContent = timelineItems
+                          .filter(item => item.type === 'search' && item.searchData)
+                          .flatMap(item => 
+                            item.searchData!.content.filter(c => c.url === source.url)
+                            )[0]?.text || "";
+
+                            return (
+                              <motion.div
+                                key={index}
+                                className="flex flex-col min-w-[200px] max-w-[280px] bg-neutral-50 dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.05 }}
+                              >
+                                <div className="flex items-center gap-2.5 p-3 pb-2">
+                                  <img
+                                    src={source.favicon}
+                                    alt=""
+                                    className="w-5 h-5 rounded-full flex-shrink-0 opacity-90"
+                                    onError={(e) => {
+                                      e.currentTarget.src = 'https://www.google.com/s2/favicons?sz-128&domain_url=example.com';
+                                      (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%) brightness(150%)';
+                                    }}
+                                  />
+                                  <span className="truncate text-neutral-900 dark:text-neutral-100 text-sm font-medium flex-1" title={displayTitle}>
+                                    {displayTitle}
+                                  </span>
+                                </div>
+
+                                <div className="px-3 pb-2 text-xs">
+                                  <a 
+                                    href={source.url} 
+                                    target="_blank"
+                                    rel="noopener noreferrer" 
+                                    className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 truncate flex items-center gap-1 group w-fit"
+                                  >
+                                    {displayHostname}
+                                    <ArrowUpRight className="w-3 h-3 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                  </a>
+                                </div>
+                                
+                                {sourceContent && (
+                                  <div className="px-3 pb-3 text-xs text-neutral-600 dark:text-neutral-400 overflow-y-auto max-h-[80px] leading-relaxed scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
+                                    {sourceContent.length > 250 ? 
+                                      sourceContent.substring(0, 250) + "..." : 
+                                      sourceContent}
+                                  </div>
+                                )}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.p 
+                      className="text-neutral-500 dark:text-neutral-400 text-xs"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      No sources found for this research.
+                    </motion.p>
+                  )}
+                </CardContent>
+              </motion.div>
             )}
-          </CardContent>
+          </AnimatePresence>
         </Card>
   );
 
   // Collect all charts from code executions for the final result view
   const allCharts = useMemo(() => {
     if (state !== "result") return []; // Only calculate if in result state
+    
+    // Get charts from result data if available
+    if (state === "result") {
+      const { result } = toolInvocation;
+      const researchData = result as { research: Research } | null;
+      const research = researchData?.research;
+      
+      if (research && research.charts && research.charts.length > 0) {
+        return research.charts;
+      }
+    }
+    
+    // Fallback to getting charts from timeline items
     return timelineItems
       .filter(item => item.type === 'code' && item.codeData?.charts && item.codeData.charts.length > 0)
       .flatMap(item => item.codeData?.charts || []);
-  }, [timelineItems, state]);
+  }, [timelineItems, state, toolInvocation]);
 
   if (state === "result") {
     const { result } = toolInvocation;
@@ -1017,14 +1257,35 @@ const ExtremeSearchComponent = ({
       >
         {/* Show the timeline view first */}
         <Card className="w-full mx-auto gap-0 py-0 mb-4 shadow-none overflow-hidden">
-          <div className="p-3 border-b bg-neutral-50 dark:bg-neutral-900">
+          <div
+            className="p-3 border-b bg-neutral-50 dark:bg-neutral-900 flex justify-between items-center cursor-pointer"
+            onClick={() => setResearchProcessOpen(!researchProcessOpen)}
+          >
             <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
               Research Process
             </div>
+            {researchProcessOpen ? 
+              <ChevronDown className="w-4 h-4 text-neutral-500 dark:text-neutral-400" /> : 
+              <ChevronRight className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+            }
           </div>
-          <CardContent className="p-3 pt-2">
-            {renderTimeline()}
-          </CardContent>
+          <AnimatePresence>
+            {researchProcessOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{
+                  height: { duration: 0.2, ease: "easeOut" },
+                  opacity: { duration: 0.15 }
+                }}
+              >
+                <CardContent className="p-3 pt-2">
+                  {renderTimeline()}
+                </CardContent>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card>
         
         {/* Show charts if any */}

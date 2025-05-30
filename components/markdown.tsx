@@ -97,44 +97,45 @@ const isValidUrl = (str: string) => {
 };
 
 const preprocessLaTeX = (content: string) => {
-  // First, handle escaped delimiters to prevent double processing
-  let processedContent = content
-    .replace(/\\\[/g, '___BLOCK_OPEN___')
-    .replace(/\\\]/g, '___BLOCK_CLOSE___')
-    .replace(/\\\(/g, '___INLINE_OPEN___')
-    .replace(/\\\)/g, '___INLINE_CLOSE___');
+  // Handle all LaTeX delimiters properly
+  let processedContent = content;
 
   // Find and preserve complete LaTeX blocks as-is
-  // For block equations ($$...$$)
-  const blockRegex = /(\$\$[\s\S]*?\$\$)/g;
-  const blocks: string[] = [];
+  const latexBlocks: string[] = [];
   
-  processedContent = processedContent.replace(blockRegex, (match) => {
-    const id = blocks.length;
-    blocks.push(match);
-    return `___LATEX_BLOCK_${id}___`;
+  // For block equations ($$...$$ and \[...\])
+  const blockRegexes = [
+    /(\$\$[\s\S]*?\$\$)/g,
+    /(\\\[[\s\S]*?\\\])/g
+  ];
+  
+  blockRegexes.forEach(regex => {
+    processedContent = processedContent.replace(regex, (match) => {
+      const id = latexBlocks.length;
+      latexBlocks.push(match);
+      return `___LATEX_BLOCK_${id}___`;
+    });
   });
 
-  // For inline equations ($...$) - avoiding currency values
-  const inlineRegex = /(\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$)/g;
+  // For inline equations ($...$ and \(...\)) - avoiding currency values
+  const inlineRegexes = [
+    /(\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$)/g,
+    /(\\\([\s\S]*?\\\))/g
+  ];
+  
   const inlines: string[] = [];
   
-  processedContent = processedContent.replace(inlineRegex, (match) => {
-    const id = inlines.length;
-    inlines.push(match);
-    return `___LATEX_INLINE_${id}___`;
+  inlineRegexes.forEach(regex => {
+    processedContent = processedContent.replace(regex, (match) => {
+      const id = inlines.length;
+      inlines.push(match);
+      return `___LATEX_INLINE_${id}___`;
+    });
   });
-
-  // Handle any remaining escaped delimiters that weren't part of a complete pair
-  processedContent = processedContent
-    .replace(/___BLOCK_OPEN___/g, '\\[')
-    .replace(/___BLOCK_CLOSE___/g, '\\]')
-    .replace(/___INLINE_OPEN___/g, '\\(')
-    .replace(/___INLINE_CLOSE___/g, '\\)');
 
   // Now restore the LaTeX blocks after other processing
   processedContent = processedContent.replace(/___LATEX_BLOCK_(\d+)___/g, (_, id) => {
-    return blocks[parseInt(id)];
+    return latexBlocks[parseInt(id)];
   });
 
   processedContent = processedContent.replace(/___LATEX_INLINE_(\d+)___/g, (_, id) => {
@@ -146,73 +147,77 @@ const preprocessLaTeX = (content: string) => {
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   // Preprocess content to find and normalize citation links before passing to marked
-  const [processedContent, extractedCitations] = useMemo(() => {
+  // Table row counter for zebra striping
+  const [tableRowCounter, setTableRowCounter] = useState(0);
+
+  const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
+    
+    // First, extract and protect LaTeX blocks
+    const latexBlocks: Array<{id: string, content: string, isBlock: boolean}> = [];
     let modifiedContent = content;
     
-    // First, protect LaTeX content from citation processing
-    const latexBlocks: string[] = [];
-    const latexPlaceholder = "___LATEX_BLOCK_PLACEHOLDER___";
+    // Extract block equations first (they need to be standalone)
+    const blockPatterns = [
+      { pattern: /\\\[([\s\S]*?)\\\]/g, isBlock: true },
+      { pattern: /\$\$([\s\S]*?)\$\$/g, isBlock: true }
+    ];
     
-    // Replace block and inline LaTeX with placeholders
-    modifiedContent = modifiedContent.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-      latexBlocks.push(match);
-      return `${latexPlaceholder}${latexBlocks.length - 1}`;
+    blockPatterns.forEach(({pattern, isBlock}) => {
+      modifiedContent = modifiedContent.replace(pattern, (match) => {
+        const id = `LATEX_${latexBlocks.length}_${Date.now()}`;
+        latexBlocks.push({ id, content: match, isBlock });
+        return `\n\n${id}\n\n`; // Ensure block equations are on their own lines
+      });
     });
     
-    modifiedContent = modifiedContent.replace(/\$(?!\d)(?:\\.|[^$])*?\$(?!\d)/g, (match) => {
-      latexBlocks.push(match);
-      return `${latexPlaceholder}${latexBlocks.length - 1}`;
+    // Extract inline equations
+    const inlinePatterns = [
+      { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
+      { pattern: /\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$(?!\d)/g, isBlock: false }
+    ];
+    
+    inlinePatterns.forEach(({pattern, isBlock}) => {
+      modifiedContent = modifiedContent.replace(pattern, (match) => {
+        const id = `LATEX_${latexBlocks.length}_${Date.now()}`;
+        latexBlocks.push({ id, content: match, isBlock });
+        return id;
+      });
     });
     
+    // Now process citations (LaTeX is already protected)
     // Process standard markdown links
     const stdLinkRegex = /\[([^\]]+)\]\(((?:\([^()]*\)|[^()])*)\)/g;
     modifiedContent = modifiedContent.replace(stdLinkRegex, (match, text, url) => {
-      // Skip if it's a LaTeX placeholder
-      if (match.includes(latexPlaceholder)) return match;
-      
       citations.push({ text, link: url });
       return `[${text}](${url})`;
     });
     
-    // Process references followed by URLs - handles both malformed markdown and natural text references
+    // Process references followed by URLs
     const refWithUrlRegex = /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
     modifiedContent = modifiedContent.replace(refWithUrlRegex, (match, docType, bracketText, plainText, url) => {
-      // Skip if it contains a LaTeX placeholder
-      if (match.includes(latexPlaceholder)) return match;
-      
-      // Get the reference text - either from brackets or plain text
       const text = bracketText || plainText;
       const fullText = (docType ? `[${docType}] ` : '') + text;
-      
-      // Clean up the URL (remove trailing punctuation etc)
       const cleanUrl = url.replace(/[.,;:]+$/, '');
       
       citations.push({ text: fullText.trim(), link: cleanUrl });
       return `[${fullText.trim()}](${cleanUrl})`;
     });
     
-    // Process quoted paper titles followed by site references
+    // Process quoted paper titles
     const quotedTitleRegex = /"([^"]+)"(?:\s+([^.!?\n]+?)(?:\s+[-–—]\s+(?:[A-Z][a-z]+(?:\.[a-z]+)?|\w+:\S+)))/g;
     modifiedContent = modifiedContent.replace(quotedTitleRegex, (match, title, source) => {
-      // Skip if it contains a LaTeX placeholder
-      if (match.includes(latexPlaceholder)) return match;
-      
       const citation = processCitation(title, source);
       if (citation) {
         citations.push({ text: citation.text.trim(), link: citation.url });
         return `[${citation.text.trim()}](${citation.url})`;
       }
-      
       return match;
     });
     
     // Process raw URLs to documents
     const rawUrlRegex = /(https?:\/\/[^\s]+\.(?:pdf|doc|docx|ppt|pptx|xls|xlsx))\b/gi;
     modifiedContent = modifiedContent.replace(rawUrlRegex, (match, url) => {
-      // Skip if it contains a LaTeX placeholder
-      if (match.includes(latexPlaceholder)) return match;
-      
       const filename = url.split('/').pop() || url;
       const alreadyLinked = citations.some(citation => citation.link === url);
       if (!alreadyLinked) {
@@ -221,12 +226,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return match;
     });
     
-    // Restore LaTeX blocks
-    modifiedContent = modifiedContent.replace(new RegExp(`${latexPlaceholder}(\\d+)`, 'g'), (_, index) => {
-      return latexBlocks[parseInt(index)];
-    });
-    
-    return [modifiedContent, citations];
+    return [modifiedContent, citations, latexBlocks];
   }, [content]);
   
   const citationLinks = extractedCitations;
@@ -393,8 +393,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             target="_blank"
             rel="noopener noreferrer"
             className={isCitation
-              ? "cursor-pointer text-xs text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm no-underline font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline"
-              : "text-primary dark:text-primary-light no-underline hover:underline font-medium"}
+              ? "cursor-pointer text-xs no-underline text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline"
+              : "text-primary bg-primary/10 dark:text-primary-light no-underline hover:underline font-medium"}
           >
             {text}
           </Link>
@@ -425,39 +425,117 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   const renderer: Partial<ReactRenderer> = {
     text(text: string) {
-      // Simple check for any LaTeX content
-      if (!text.includes('$')) return text;
+      // Check if this text contains any LaTeX placeholders
+      const latexPattern = /LATEX_(\d+)_\d+/g;
+      const matches = [...text.matchAll(latexPattern)];
       
-      return (
-        <Latex
-          delimiters={[
-            { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false }
-          ]}
-          strict={false}
-          key={generateKey()}
-        >
-          {text}
-        </Latex>
-      );
+      if (matches.length === 0) {
+        return text;
+      }
+      
+      // If the entire text is just one LaTeX placeholder
+      if (matches.length === 1 && text.trim() === matches[0][0]) {
+        const latexBlock = latexBlocks.find(block => block.id === text.trim());
+        if (latexBlock) {
+          if (latexBlock.isBlock) {
+            return (
+              <div className="my-6 text-center" key={generateKey()}>
+                <Latex
+                  delimiters={[
+                    { left: '$$', right: '$$', display: true },
+                    { left: '\\[', right: '\\]', display: true }
+                  ]}
+                  strict={false}
+                >
+                  {latexBlock.content}
+                </Latex>
+              </div>
+            );
+          } else {
+            return (
+              <Latex
+                delimiters={[
+                  { left: '$', right: '$', display: false },
+                  { left: '\\(', right: '\\)', display: false }
+                ]}
+                strict={false}
+                key={generateKey()}
+              >
+                {latexBlock.content}
+              </Latex>
+            );
+          }
+        }
+      }
+      
+      // If text contains LaTeX placeholders mixed with other content
+      if (matches.length > 0) {
+        const parts = [];
+        let lastIndex = 0;
+        
+        matches.forEach((match, index) => {
+          // Add text before the LaTeX placeholder
+          if (match.index! > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index));
+          }
+          
+          // Add the LaTeX component
+          const latexBlock = latexBlocks.find(block => block.id === match[0]);
+          if (latexBlock) {
+            parts.push(
+              <Latex
+                key={`latex-${index}-${generateKey()}`}
+                delimiters={[
+                  { left: '$', right: '$', display: false },
+                  { left: '\\(', right: '\\)', display: false }
+                ]}
+                strict={false}
+              >
+                {latexBlock.content}
+              </Latex>
+            );
+          } else {
+            parts.push(match[0]); // fallback to placeholder text
+          }
+          
+          lastIndex = match.index! + match[0].length;
+        });
+        
+        // Add any remaining text after the last LaTeX placeholder
+        if (lastIndex < text.length) {
+          parts.push(text.slice(lastIndex));
+        }
+        
+        return <>{parts}</>;
+      }
+      
+      return text;
     },
     paragraph(children) {
-      if (typeof children === 'string' && children.includes('$')) {
-        return (
-          <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">
-            <Latex
-              delimiters={[
-                { left: '$$', right: '$$', display: true },
-                { left: '$', right: '$', display: false }
-              ]}
-              strict={false}
-              key={generateKey()}
-            >
-              {children}
-            </Latex>
-          </p>
-        );
+      // Check if the paragraph contains only a LaTeX block placeholder
+      if (typeof children === 'string') {
+        const latexMatch = children.match(/^LATEX_(\d+)_\d+$/);
+        if (latexMatch) {
+          const latexBlock = latexBlocks.find(block => block.id === children);
+          if (latexBlock && latexBlock.isBlock) {
+            // Render block equations outside of paragraph tags
+            return (
+              <div className="my-6 text-center" key={generateKey()}>
+                <Latex
+                  delimiters={[
+                    { left: '$$', right: '$$', display: true },
+                    { left: '\\[', right: '\\]', display: true }
+                  ]}
+                  strict={false}
+                >
+                  {latexBlock.content}
+                </Latex>
+              </div>
+            );
+          }
+        }
       }
+      
       return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
     },
     code(children, language) {
@@ -477,10 +555,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     heading(children, level) {
       const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
       const sizeClasses = {
-        1: "text-2xl md:text-3xl font-extrabold mt-8 mb-4",
-        2: "text-xl md:text-2xl font-bold mt-7 mb-3",
-        3: "text-lg md:text-xl font-semibold mt-6 mb-3",
-        4: "text-base md:text-lg font-medium mt-5 mb-2",
+        1: "text-2xl md:text-3xl font-extrabold mt-4 mb-4",
+        2: "text-xl md:text-2xl font-bold mt-4 mb-3",
+        3: "text-lg md:text-xl font-semibold mt-4 mb-3",
+        4: "text-base md:text-lg font-medium mt-4 mb-2",
         5: "text-sm md:text-base font-medium mt-4 mb-2",
         6: "text-xs md:text-sm font-medium mt-4 mb-2",
       }[level] || "";
@@ -510,19 +588,33 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       );
     },
     table(children) {
+      // Reset row counter for each table
+      setTableRowCounter(0);
       return (
-        <div className="w-full my-6 overflow-hidden">
-          <div className="w-full overflow-x-auto border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-sm">
-            <table className="table-auto border-collapse divide-y divide-neutral-200 dark:divide-neutral-800 m-0!">
-              {children}
-            </table>
+        <div className="w-full my-6">
+          <div className="overflow-hidden rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse m-0!">
+                {children}
+              </table>
+            </div>
           </div>
         </div>
       );
     },
     tableRow(children) {
+      const currentRow = tableRowCounter;
+      setTableRowCounter(prev => prev + 1);
+      
+      // Skip zebra striping for header rows
+      const isEvenRow = currentRow > 0 && currentRow % 2 === 0;
+      
       return (
-        <tr className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
+        <tr className={cn(
+          "border-b border-neutral-200 dark:border-neutral-700 last:border-b-0",
+          "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-200",
+          isEvenRow && "bg-neutral-50/50 dark:bg-neutral-800/30"
+        )}>
           {children}
         </tr>
       );
@@ -535,34 +627,39 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
       return isHeader ? (
         <th className={cn(
-          "px-5 py-3 text-xs font-semibold text-neutral-900 dark:text-neutral-50",
-          "bg-neutral-100 dark:bg-neutral-800/90",
-          "whitespace-nowrap border-b border-neutral-200 dark:border-neutral-700",
+          "px-4 py-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
+          "bg-neutral-100 dark:bg-neutral-800",
+          "border-b border-neutral-200 dark:border-neutral-700",
+          "break-words",
           alignClass
         )}>
-          {children}
+          <div className="font-medium">
+            {children}
+          </div>
         </th>
       ) : (
         <td className={cn(
-          "px-5 py-4 text-xs text-neutral-700 dark:text-neutral-300",
-          "bg-white dark:bg-neutral-900 border-r border-neutral-100 dark:border-neutral-800 last:border-r-0",
-          "leading-relaxed",
+          "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
+          "border-r border-neutral-100 dark:border-neutral-800 last:border-r-0",
+          "break-words",
           alignClass
         )}>
-          {children}
+          <div className="leading-relaxed">
+            {children}
+          </div>
         </td>
       );
     },
     tableHeader(children) {
       return (
-        <thead className="bg-neutral-100 dark:bg-neutral-800/90">
+        <thead>
           {children}
         </thead>
       );
     },
     tableBody(children) {
       return (
-        <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 bg-white dark:bg-neutral-900">
+        <tbody>
           {children}
         </tbody>
       );
@@ -570,7 +667,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   };
 
   return (
-    <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
+    <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
       <Marked renderer={renderer}>
         {processedContent}
       </Marked>

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -1488,33 +1489,43 @@ const ToolInvocationListView = memo(
                     return (
                         <div className="w-full my-6">
                             <div className="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
-                                <div className="p-5 sm:p-6 md:p-8">
-                                    <div className="flex flex-col gap-6 sm:gap-8 md:gap-10">
+                                <div className="p-4 sm:p-6">
+                                    <div className="flex flex-col gap-4 sm:gap-6">
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
-                                                <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
+                                                <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
                                                     Current Time
                                                 </h3>
-                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
+                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
                                                     <PhosphorClock weight="regular" className="h-3 w-3 text-blue-500" />
                                                     {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>
                                             <LiveClock />
+                                            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
+                                                {result.formatted.date}
+                                            </p>
                                         </div>
 
-                                        <div>
-                                            <h3 className="text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase mb-2">
-                                                Today&apos;s Date
-                                            </h3>
-                                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 md:gap-6">
-                                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-neutral-900 dark:text-white">
-                                                    {result.formatted.dateShort}
-                                                </h2>
-                                                <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-500">
-                                                    {result.formatted.date}
-                                                </p>
-                                            </div>
+                                        {/* Compact Technical Details */}
+                                        <div className="grid grid-cols-2 gap-3 text-xs">
+                                            {result.formatted.iso_local && (
+                                                <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
+                                                    <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
+                                                    <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                                                        {result.formatted.iso_local}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {result.timestamp && (
+                                                <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
+                                                    <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
+                                                    <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                                                        {result.timestamp}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1589,7 +1600,7 @@ const ToolInvocationListView = memo(
 
                 return null;
             },
-            [message]
+            [annotations]
         );
 
         const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
