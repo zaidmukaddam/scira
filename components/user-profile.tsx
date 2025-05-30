@@ -24,7 +24,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { MemoryDialog } from "./memory-dialog";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { XLogo } from "@phosphor-icons/react";
+import { XLogo, InstagramLogoIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { User } from '@/lib/db/schema';
 
@@ -227,6 +227,12 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
             <a href={"https://x.com/sciraai"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
               <XLogo className="size-4" />
               <span>X.com</span>
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" asChild>
+            <a href={"https://www.instagram.com/scira.ai"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
+              <InstagramLogoIcon className="size-4" />
+              <span>Instagram</span>
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
