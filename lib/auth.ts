@@ -28,4 +28,5 @@ export const auth = betterAuth({
         },
     },
     plugins: [nextCookies()],
+    trustedOrigins: ["http://localhost:3000", "https://scira.ai", "https://www.scira.ai"],
 });
