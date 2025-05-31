@@ -10,28 +10,28 @@ importers:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^1.2.12
-        version: 1.2.12(zod@3.25.28)
+        version: 1.2.12(zod@3.25.42)
       '@ai-sdk/google':
         specifier: ^1.2.18
-        version: 1.2.18(zod@3.25.28)
+        version: 1.2.18(zod@3.25.42)
       '@ai-sdk/google-vertex':
         specifier: ^2.2.23
-        version: 2.2.23(encoding@0.1.13)(zod@3.25.28)
+        version: 2.2.23(encoding@0.1.13)(zod@3.25.42)
       '@ai-sdk/groq':
         specifier: ^1.2.9
-        version: 1.2.9(zod@3.25.28)
+        version: 1.2.9(zod@3.25.42)
       '@ai-sdk/openai':
         specifier: ^1.3.22
-        version: 1.3.22(zod@3.25.28)
+        version: 1.3.22(zod@3.25.42)
       '@ai-sdk/react':
         specifier: ^1.2.12
-        version: 1.2.12(react@18.3.1)(zod@3.25.28)
+        version: 1.2.12(react@18.3.1)(zod@3.25.42)
       '@ai-sdk/ui-utils':
         specifier: ^1.2.11
-        version: 1.2.11(zod@3.25.28)
+        version: 1.2.11(zod@3.25.42)
       '@ai-sdk/xai':
         specifier: ^1.2.16
-        version: 1.2.16(zod@3.25.28)
+        version: 1.2.16(zod@3.25.42)
       '@babel/runtime':
         specifier: '>=7.27.0'
         version: 7.27.0
@@ -115,10 +115,10 @@ importers:
         version: 4.3.0(react@18.3.1)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.4
-        version: 0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.28)
+        version: 0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.42)
       '@tailwindcss/typography':
         specifier: ^0.5.16
-        version: 0.5.16(tailwindcss@4.1.7)
+        version: 0.5.16(tailwindcss@4.1.8)
       '@tanstack/react-query':
         specifier: ^5.76.1
         version: 5.76.1(react@18.3.1)
@@ -151,7 +151,7 @@ importers:
         version: 1.2.0(next@15.4.0-canary.59(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       ai:
         specifier: ^4.3.16
-        version: 4.3.16(react@18.3.1)(zod@3.25.28)
+        version: 4.3.16(react@18.3.1)(zod@3.25.42)
       axios:
         specifier: ^1.9.0
         version: 1.9.0
@@ -223,7 +223,7 @@ importers:
         version: 3.0.0(react@18.3.1)
       mem0ai:
         specifier: ^2.1.29
-        version: 2.1.29(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28)))(@mistralai/mistralai@1.5.2(zod@3.25.28))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1)
+        version: 2.1.29(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42)))(@mistralai/mistralai@1.5.2(zod@3.25.42))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1)
       motion:
         specifier: ^12.15.0
         version: 12.15.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -282,17 +282,17 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       sonner:
-        specifier: ^2.0.3
-        version: 2.0.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^2.0.4
+        version: 2.0.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.3.0
       tailwind-scrollbar:
         specifier: 4.0.2
-        version: 4.0.2(react@18.3.1)(tailwindcss@4.1.7)
+        version: 4.0.2(react@18.3.1)(tailwindcss@4.1.8)
       tailwindcss-animate:
         specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@4.1.7)
+        version: 1.0.7(tailwindcss@4.1.8)
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -306,12 +306,12 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@18.3.5(@types/react@18.3.19))(@types/react@18.3.19)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod:
-        specifier: ^3.25.28
-        version: 3.25.28
+        specifier: ^3.25.42
+        version: 3.25.42
     devDependencies:
       '@tailwindcss/postcss':
-        specifier: ^4.1.7
-        version: 4.1.7
+        specifier: ^4.1.8
+        version: 4.1.8
       '@types/google.maps':
         specifier: ^3.58.1
         version: 3.58.1
@@ -355,8 +355,8 @@ importers:
         specifier: '>=8.4.31'
         version: 8.5.3
       tailwindcss:
-        specifier: ^4.1.7
-        version: 4.1.7
+        specifier: ^4.1.8
+        version: 4.1.8
       tw-animate-css:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1913,65 +1913,65 @@ packages:
       zod:
         optional: true
 
-  '@tailwindcss/node@4.1.7':
-    resolution: {integrity: sha512-9rsOpdY9idRI2NH6CL4wORFY0+Q6fnx9XP9Ju+iq/0wJwGD5IByIgFmwVbyy4ymuyprj8Qh4ErxMKTUL4uNh3g==}
+  '@tailwindcss/node@4.1.8':
+    resolution: {integrity: sha512-OWwBsbC9BFAJelmnNcrKuf+bka2ZxCE2A4Ft53Tkg4uoiE67r/PMEYwCsourC26E+kmxfwE0hVzMdxqeW+xu7Q==}
 
-  '@tailwindcss/oxide-android-arm64@4.1.7':
-    resolution: {integrity: sha512-IWA410JZ8fF7kACus6BrUwY2Z1t1hm0+ZWNEzykKmMNM09wQooOcN/VXr0p/WJdtHZ90PvJf2AIBS/Ceqx1emg==}
+  '@tailwindcss/oxide-android-arm64@4.1.8':
+    resolution: {integrity: sha512-Fbz7qni62uKYceWYvUjRqhGfZKwhZDQhlrJKGtnZfuNtHFqa8wmr+Wn74CTWERiW2hn3mN5gTpOoxWKk0jRxjg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [android]
 
-  '@tailwindcss/oxide-darwin-arm64@4.1.7':
-    resolution: {integrity: sha512-81jUw9To7fimGGkuJ2W5h3/oGonTOZKZ8C2ghm/TTxbwvfSiFSDPd6/A/KE2N7Jp4mv3Ps9OFqg2fEKgZFfsvg==}
+  '@tailwindcss/oxide-darwin-arm64@4.1.8':
+    resolution: {integrity: sha512-RdRvedGsT0vwVVDztvyXhKpsU2ark/BjgG0huo4+2BluxdXo8NDgzl77qh0T1nUxmM11eXwR8jA39ibvSTbi7A==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@tailwindcss/oxide-darwin-x64@4.1.7':
-    resolution: {integrity: sha512-q77rWjEyGHV4PdDBtrzO0tgBBPlQWKY7wZK0cUok/HaGgbNKecegNxCGikuPJn5wFAlIywC3v+WMBt0PEBtwGw==}
+  '@tailwindcss/oxide-darwin-x64@4.1.8':
+    resolution: {integrity: sha512-t6PgxjEMLp5Ovf7uMb2OFmb3kqzVTPPakWpBIFzppk4JE4ix0yEtbtSjPbU8+PZETpaYMtXvss2Sdkx8Vs4XRw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@tailwindcss/oxide-freebsd-x64@4.1.7':
-    resolution: {integrity: sha512-RfmdbbK6G6ptgF4qqbzoxmH+PKfP4KSVs7SRlTwcbRgBwezJkAO3Qta/7gDy10Q2DcUVkKxFLXUQO6J3CRvBGw==}
+  '@tailwindcss/oxide-freebsd-x64@4.1.8':
+    resolution: {integrity: sha512-g8C8eGEyhHTqwPStSwZNSrOlyx0bhK/V/+zX0Y+n7DoRUzyS8eMbVshVOLJTDDC+Qn9IJnilYbIKzpB9n4aBsg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [freebsd]
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.1.7':
-    resolution: {integrity: sha512-OZqsGvpwOa13lVd1z6JVwQXadEobmesxQ4AxhrwRiPuE04quvZHWn/LnihMg7/XkN+dTioXp/VMu/p6A5eZP3g==}
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.1.8':
+    resolution: {integrity: sha512-Jmzr3FA4S2tHhaC6yCjac3rGf7hG9R6Gf2z9i9JFcuyy0u79HfQsh/thifbYTF2ic82KJovKKkIB6Z9TdNhCXQ==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.1.7':
-    resolution: {integrity: sha512-voMvBTnJSfKecJxGkoeAyW/2XRToLZ227LxswLAwKY7YslG/Xkw9/tJNH+3IVh5bdYzYE7DfiaPbRkSHFxY1xA==}
+  '@tailwindcss/oxide-linux-arm64-gnu@4.1.8':
+    resolution: {integrity: sha512-qq7jXtO1+UEtCmCeBBIRDrPFIVI4ilEQ97qgBGdwXAARrUqSn/L9fUrkb1XP/mvVtoVeR2bt/0L77xx53bPZ/Q==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.1.7':
-    resolution: {integrity: sha512-PjGuNNmJeKHnP58M7XyjJyla8LPo+RmwHQpBI+W/OxqrwojyuCQ+GUtygu7jUqTEexejZHr/z3nBc/gTiXBj4A==}
+  '@tailwindcss/oxide-linux-arm64-musl@4.1.8':
+    resolution: {integrity: sha512-O6b8QesPbJCRshsNApsOIpzKt3ztG35gfX9tEf4arD7mwNinsoCKxkj8TgEE0YRjmjtO3r9FlJnT/ENd9EVefQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.1.7':
-    resolution: {integrity: sha512-HMs+Va+ZR3gC3mLZE00gXxtBo3JoSQxtu9lobbZd+DmfkIxR54NO7Z+UQNPsa0P/ITn1TevtFxXTpsRU7qEvWg==}
+  '@tailwindcss/oxide-linux-x64-gnu@4.1.8':
+    resolution: {integrity: sha512-32iEXX/pXwikshNOGnERAFwFSfiltmijMIAbUhnNyjFr3tmWmMJWQKU2vNcFX0DACSXJ3ZWcSkzNbaKTdngH6g==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-x64-musl@4.1.7':
-    resolution: {integrity: sha512-MHZ6jyNlutdHH8rd+YTdr3QbXrHXqwIhHw9e7yXEBcQdluGwhpQY2Eku8UZK6ReLaWtQ4gijIv5QoM5eE+qlsA==}
+  '@tailwindcss/oxide-linux-x64-musl@4.1.8':
+    resolution: {integrity: sha512-s+VSSD+TfZeMEsCaFaHTaY5YNj3Dri8rST09gMvYQKwPphacRG7wbuQ5ZJMIJXN/puxPcg/nU+ucvWguPpvBDg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@tailwindcss/oxide-wasm32-wasi@4.1.7':
-    resolution: {integrity: sha512-ANaSKt74ZRzE2TvJmUcbFQ8zS201cIPxUDm5qez5rLEwWkie2SkGtA4P+GPTj+u8N6JbPrC8MtY8RmJA35Oo+A==}
+  '@tailwindcss/oxide-wasm32-wasi@4.1.8':
+    resolution: {integrity: sha512-CXBPVFkpDjM67sS1psWohZ6g/2/cd+cq56vPxK4JeawelxwK4YECgl9Y9TjkE2qfF+9/s1tHHJqrC4SS6cVvSg==}
     engines: {node: '>=14.0.0'}
     cpu: [wasm32]
     bundledDependencies:
@@ -1982,24 +1982,24 @@ packages:
       - '@emnapi/wasi-threads'
       - tslib
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.1.7':
-    resolution: {integrity: sha512-HUiSiXQ9gLJBAPCMVRk2RT1ZrBjto7WvqsPBwUrNK2BcdSxMnk19h4pjZjI7zgPhDxlAbJSumTC4ljeA9y0tEw==}
+  '@tailwindcss/oxide-win32-arm64-msvc@4.1.8':
+    resolution: {integrity: sha512-7GmYk1n28teDHUjPlIx4Z6Z4hHEgvP5ZW2QS9ygnDAdI/myh3HTHjDqtSqgu1BpRoI4OiLx+fThAyA1JePoENA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.1.7':
-    resolution: {integrity: sha512-rYHGmvoHiLJ8hWucSfSOEmdCBIGZIq7SpkPRSqLsH2Ab2YUNgKeAPT1Fi2cx3+hnYOrAb0jp9cRyode3bBW4mQ==}
+  '@tailwindcss/oxide-win32-x64-msvc@4.1.8':
+    resolution: {integrity: sha512-fou+U20j+Jl0EHwK92spoWISON2OBnCazIc038Xj2TdweYV33ZRkS9nwqiUi2d/Wba5xg5UoHfvynnb/UB49cQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
-  '@tailwindcss/oxide@4.1.7':
-    resolution: {integrity: sha512-5SF95Ctm9DFiUyjUPnDGkoKItPX/k+xifcQhcqX5RA85m50jw1pT/KzjdvlqxRja45Y52nR4MR9fD1JYd7f8NQ==}
+  '@tailwindcss/oxide@4.1.8':
+    resolution: {integrity: sha512-d7qvv9PsM5N3VNKhwVUhpK6r4h9wtLkJ6lz9ZY9aeZgrUWk1Z8VPyqyDT9MZlem7GTGseRQHkeB1j3tC7W1P+A==}
     engines: {node: '>= 10'}
 
-  '@tailwindcss/postcss@4.1.7':
-    resolution: {integrity: sha512-88g3qmNZn7jDgrrcp3ZXEQfp9CVox7xjP1HN2TFKI03CltPVd/c61ydn5qJJL8FYunn0OqBaW5HNUga0kmPVvw==}
+  '@tailwindcss/postcss@4.1.8':
+    resolution: {integrity: sha512-vB/vlf7rIky+w94aWMw34bWW1ka6g6C3xIOdICKX2GC0VcLtL6fhlLiafF0DVIwa9V6EHz8kbWMkS2s2QvvNlw==}
 
   '@tailwindcss/typography@0.5.16':
     resolution: {integrity: sha512-0wDLwCVF5V3x3b1SGXPCDcdsbDHMBe+lkFzBRaHeLvNi+nrrnZ1lA18u+OTWO8iSWU2GxUOCvlXtDuqftc1oiA==}
@@ -5242,8 +5242,8 @@ packages:
     resolution: {integrity: sha512-D3YaD0aRxR3mEcqnidIs7ReYJFVzWdd6fXJYUM8ixcQcJRGTka/b3saV0KflYhyVJXKhb947GndU35SxYNResQ==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
 
-  sonner@2.0.3:
-    resolution: {integrity: sha512-njQ4Hht92m0sMqqHVDL32V2Oun9W1+PHO9NDv9FHfJjT3JT22IG4Jpo3FPQy+mouRKCXFWO+r67v6MrHX2zeIA==}
+  sonner@2.0.4:
+    resolution: {integrity: sha512-fUOGFwhM9/t05VqjKeDv0+t6QZPByMkbFFs6IFsgRQKCBh/1d3HUAC5sYy80Q05+vDKdwSOG/zUPBc8PPpbDjw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
@@ -5409,8 +5409,8 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders'
 
-  tailwindcss@4.1.7:
-    resolution: {integrity: sha512-kr1o/ErIdNhTz8uzAYL7TpaUuzKIE6QPQ4qmSdxnoX/lo+5wmUHQA6h3L5yIqEImSRnAAURDirLu/BgiXGPAhg==}
+  tailwindcss@4.1.8:
+    resolution: {integrity: sha512-kjeW8gjdxasbmFKpVGrGd5T4i40mV5J2Rasw48QARfYeQ8YS9x02ON9SFWax3Qf616rt4Cp3nVNIj6Hd1mP3og==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -5764,8 +5764,8 @@ packages:
     peerDependencies:
       zod: ^3.18.0
 
-  zod@3.25.28:
-    resolution: {integrity: sha512-/nt/67WYKnr5by3YS7LroZJbtcCBurDKKPBPWWzaxvVCGuG/NOsiKkrjoOhI8mJ+SQUXEbUzeB3S+6XDUEEj7Q==}
+  zod@3.25.42:
+    resolution: {integrity: sha512-PcALTLskaucbeHc41tU/xfjfhcz8z0GdhhDcSgrCTmSazUuqnYqiXO63M0QUBVwpBlsLsNVn5qHSC5Dw3KZvaQ==}
 
   zrender@5.6.1:
     resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
@@ -5775,82 +5775,82 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@1.2.12(zod@3.25.28)':
+  '@ai-sdk/anthropic@1.2.12(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
-  '@ai-sdk/google-vertex@2.2.23(encoding@0.1.13)(zod@3.25.28)':
+  '@ai-sdk/google-vertex@2.2.23(encoding@0.1.13)(zod@3.25.42)':
     dependencies:
-      '@ai-sdk/anthropic': 1.2.12(zod@3.25.28)
-      '@ai-sdk/google': 1.2.18(zod@3.25.28)
+      '@ai-sdk/anthropic': 1.2.12(zod@3.25.42)
+      '@ai-sdk/google': 1.2.18(zod@3.25.42)
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
       google-auth-library: 9.15.1(encoding@0.1.13)
-      zod: 3.25.28
+      zod: 3.25.42
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@ai-sdk/google@1.2.18(zod@3.25.28)':
+  '@ai-sdk/google@1.2.18(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
-  '@ai-sdk/groq@1.2.9(zod@3.25.28)':
+  '@ai-sdk/groq@1.2.9(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
-  '@ai-sdk/openai-compatible@0.2.14(zod@3.25.28)':
+  '@ai-sdk/openai-compatible@0.2.14(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
-  '@ai-sdk/openai@1.3.22(zod@3.25.28)':
+  '@ai-sdk/openai@1.3.22(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
-  '@ai-sdk/provider-utils@2.2.8(zod@3.25.28)':
+  '@ai-sdk/provider-utils@2.2.8(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       nanoid: 3.3.11
       secure-json-parse: 2.7.0
-      zod: 3.25.28
+      zod: 3.25.42
 
   '@ai-sdk/provider@1.1.3':
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@1.2.12(react@18.3.1)(zod@3.25.28)':
+  '@ai-sdk/react@1.2.12(react@18.3.1)(zod@3.25.42)':
     dependencies:
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      '@ai-sdk/ui-utils': 1.2.11(zod@3.25.28)
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      '@ai-sdk/ui-utils': 1.2.11(zod@3.25.42)
       react: 18.3.1
       swr: 2.3.3(react@18.3.1)
       throttleit: 2.1.0
     optionalDependencies:
-      zod: 3.25.28
+      zod: 3.25.42
 
-  '@ai-sdk/ui-utils@1.2.11(zod@3.25.28)':
+  '@ai-sdk/ui-utils@1.2.11(zod@3.25.42)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
-      zod-to-json-schema: 3.24.5(zod@3.25.28)
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
+      zod-to-json-schema: 3.24.5(zod@3.25.42)
 
-  '@ai-sdk/xai@1.2.16(zod@3.25.28)':
+  '@ai-sdk/xai@1.2.16(zod@3.25.42)':
     dependencies:
-      '@ai-sdk/openai-compatible': 0.2.14(zod@3.25.28)
+      '@ai-sdk/openai-compatible': 0.2.14(zod@3.25.42)
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      zod: 3.25.28
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      zod: 3.25.42
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -6311,20 +6311,20 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28))':
+  '@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.19
-      langsmith: 0.3.16(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28))
+      langsmith: 0.3.16(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 10.0.0
-      zod: 3.25.28
-      zod-to-json-schema: 3.24.5(zod@3.25.28)
+      zod: 3.25.42
+      zod-to-json-schema: 3.24.5(zod@3.25.42)
     transitivePeerDependencies:
       - openai
 
@@ -6350,15 +6350,15 @@ snapshots:
     dependencies:
       axios: 1.9.0
       typescript-event-target: 1.1.1
-      zod: 3.25.28
-      zod-to-json-schema: 3.24.5(zod@3.25.28)
+      zod: 3.25.42
+      zod-to-json-schema: 3.24.5(zod@3.25.42)
     transitivePeerDependencies:
       - debug
 
-  '@mistralai/mistralai@1.5.2(zod@3.25.28)':
+  '@mistralai/mistralai@1.5.2(zod@3.25.42)':
     dependencies:
-      zod: 3.25.28
-      zod-to-json-schema: 3.24.5(zod@3.25.28)
+      zod: 3.25.42
+      zod-to-json-schema: 3.24.5(zod@3.25.42)
 
   '@napi-rs/wasm-runtime@0.2.7':
     dependencies:
@@ -7254,23 +7254,23 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.28)':
+  '@t3-oss/env-core@0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.42)':
     dependencies:
       arktype: 2.1.20
     optionalDependencies:
       typescript: 5.8.2
-      zod: 3.25.28
+      zod: 3.25.42
 
-  '@t3-oss/env-nextjs@0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.28)':
+  '@t3-oss/env-nextjs@0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.42)':
     dependencies:
-      '@t3-oss/env-core': 0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.28)
+      '@t3-oss/env-core': 0.13.4(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.42)
     optionalDependencies:
       typescript: 5.8.2
-      zod: 3.25.28
+      zod: 3.25.42
     transitivePeerDependencies:
       - arktype
 
-  '@tailwindcss/node@4.1.7':
+  '@tailwindcss/node@4.1.8':
     dependencies:
       '@ampproject/remapping': 2.3.0
       enhanced-resolve: 5.18.1
@@ -7278,77 +7278,77 @@ snapshots:
       lightningcss: 1.30.1
       magic-string: 0.30.17
       source-map-js: 1.2.1
-      tailwindcss: 4.1.7
+      tailwindcss: 4.1.8
 
-  '@tailwindcss/oxide-android-arm64@4.1.7':
+  '@tailwindcss/oxide-android-arm64@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-darwin-arm64@4.1.7':
+  '@tailwindcss/oxide-darwin-arm64@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-darwin-x64@4.1.7':
+  '@tailwindcss/oxide-darwin-x64@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-freebsd-x64@4.1.7':
+  '@tailwindcss/oxide-freebsd-x64@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.1.7':
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.1.7':
+  '@tailwindcss/oxide-linux-arm64-gnu@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.1.7':
+  '@tailwindcss/oxide-linux-arm64-musl@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.1.7':
+  '@tailwindcss/oxide-linux-x64-gnu@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-musl@4.1.7':
+  '@tailwindcss/oxide-linux-x64-musl@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-wasm32-wasi@4.1.7':
+  '@tailwindcss/oxide-wasm32-wasi@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.1.7':
+  '@tailwindcss/oxide-win32-arm64-msvc@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.1.7':
+  '@tailwindcss/oxide-win32-x64-msvc@4.1.8':
     optional: true
 
-  '@tailwindcss/oxide@4.1.7':
+  '@tailwindcss/oxide@4.1.8':
     dependencies:
       detect-libc: 2.0.4
       tar: 7.4.3
     optionalDependencies:
-      '@tailwindcss/oxide-android-arm64': 4.1.7
-      '@tailwindcss/oxide-darwin-arm64': 4.1.7
-      '@tailwindcss/oxide-darwin-x64': 4.1.7
-      '@tailwindcss/oxide-freebsd-x64': 4.1.7
-      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.1.7
-      '@tailwindcss/oxide-linux-arm64-gnu': 4.1.7
-      '@tailwindcss/oxide-linux-arm64-musl': 4.1.7
-      '@tailwindcss/oxide-linux-x64-gnu': 4.1.7
-      '@tailwindcss/oxide-linux-x64-musl': 4.1.7
-      '@tailwindcss/oxide-wasm32-wasi': 4.1.7
-      '@tailwindcss/oxide-win32-arm64-msvc': 4.1.7
-      '@tailwindcss/oxide-win32-x64-msvc': 4.1.7
+      '@tailwindcss/oxide-android-arm64': 4.1.8
+      '@tailwindcss/oxide-darwin-arm64': 4.1.8
+      '@tailwindcss/oxide-darwin-x64': 4.1.8
+      '@tailwindcss/oxide-freebsd-x64': 4.1.8
+      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.1.8
+      '@tailwindcss/oxide-linux-arm64-gnu': 4.1.8
+      '@tailwindcss/oxide-linux-arm64-musl': 4.1.8
+      '@tailwindcss/oxide-linux-x64-gnu': 4.1.8
+      '@tailwindcss/oxide-linux-x64-musl': 4.1.8
+      '@tailwindcss/oxide-wasm32-wasi': 4.1.8
+      '@tailwindcss/oxide-win32-arm64-msvc': 4.1.8
+      '@tailwindcss/oxide-win32-x64-msvc': 4.1.8
 
-  '@tailwindcss/postcss@4.1.7':
+  '@tailwindcss/postcss@4.1.8':
     dependencies:
       '@alloc/quick-lru': 5.2.0
-      '@tailwindcss/node': 4.1.7
-      '@tailwindcss/oxide': 4.1.7
+      '@tailwindcss/node': 4.1.8
+      '@tailwindcss/oxide': 4.1.8
       postcss: 8.5.3
-      tailwindcss: 4.1.7
+      tailwindcss: 4.1.8
 
-  '@tailwindcss/typography@0.5.16(tailwindcss@4.1.7)':
+  '@tailwindcss/typography@0.5.16(tailwindcss@4.1.8)':
     dependencies:
       lodash.castarray: 4.4.0
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 4.1.7
+      tailwindcss: 4.1.8
 
   '@tanstack/query-core@5.76.0': {}
 
@@ -7675,15 +7675,15 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@4.3.16(react@18.3.1)(zod@3.25.28):
+  ai@4.3.16(react@18.3.1)(zod@3.25.42):
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.28)
-      '@ai-sdk/react': 1.2.12(react@18.3.1)(zod@3.25.28)
-      '@ai-sdk/ui-utils': 1.2.11(zod@3.25.28)
+      '@ai-sdk/provider-utils': 2.2.8(zod@3.25.42)
+      '@ai-sdk/react': 1.2.12(react@18.3.1)(zod@3.25.42)
+      '@ai-sdk/ui-utils': 1.2.11(zod@3.25.42)
       '@opentelemetry/api': 1.9.0
       jsondiffpatch: 0.6.0
-      zod: 3.25.28
+      zod: 3.25.42
     optionalDependencies:
       react: 18.3.1
 
@@ -7858,7 +7858,7 @@ snapshots:
       jose: 5.10.0
       kysely: 0.28.2
       nanostores: 0.11.4
-      zod: 3.25.28
+      zod: 3.25.42
 
   better-call@1.0.9:
     dependencies:
@@ -9555,12 +9555,12 @@ snapshots:
       strip-json-comments: 5.0.1
       summary: 2.1.0
       typescript: 5.8.2
-      zod: 3.25.28
-      zod-validation-error: 3.4.0(zod@3.25.28)
+      zod: 3.25.42
+      zod-validation-error: 3.4.0(zod@3.25.42)
 
   kysely@0.28.2: {}
 
-  langsmith@0.3.16(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28)):
+  langsmith@0.3.16(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -9570,7 +9570,7 @@ snapshots:
       semver: 7.7.1
       uuid: 10.0.0
     optionalDependencies:
-      openai: 4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28)
+      openai: 4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42)
 
   language-subtag-registry@0.3.23: {}
 
@@ -9918,12 +9918,12 @@ snapshots:
 
   media-engine@1.0.3: {}
 
-  mem0ai@2.1.29(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28)))(@mistralai/mistralai@1.5.2(zod@3.25.28))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1):
+  mem0ai@2.1.29(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42)))(@mistralai/mistralai@1.5.2(zod@3.25.42))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1):
     dependencies:
       '@anthropic-ai/sdk': 0.18.0(encoding@0.1.13)
       '@google/genai': 0.7.0(encoding@0.1.13)
-      '@langchain/core': 0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28))
-      '@mistralai/mistralai': 1.5.2(zod@3.25.28)
+      '@langchain/core': 0.3.44(openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42))
+      '@mistralai/mistralai': 1.5.2(zod@3.25.42)
       '@qdrant/js-client-rest': 1.13.0(typescript@5.8.2)
       '@supabase/supabase-js': 2.49.4
       '@types/jest': 29.5.14
@@ -9933,12 +9933,12 @@ snapshots:
       groq-sdk: 0.3.0(encoding@0.1.13)
       neo4j-driver: 5.28.1
       ollama: 0.5.14
-      openai: 4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28)
+      openai: 4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42)
       pg: 8.11.3
       redis: 4.7.0
       sqlite3: 5.1.7
       uuid: 9.0.1
-      zod: 3.25.28
+      zod: 3.25.42
     transitivePeerDependencies:
       - debug
       - encoding
@@ -10423,7 +10423,7 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.28):
+  openai@4.94.0(encoding@0.1.13)(ws@8.18.1)(zod@3.25.42):
     dependencies:
       '@types/node': 18.19.81
       '@types/node-fetch': 2.6.12
@@ -10434,7 +10434,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
       ws: 8.18.1
-      zod: 3.25.28
+      zod: 3.25.42
     transitivePeerDependencies:
       - encoding
 
@@ -11198,7 +11198,7 @@ snapshots:
       smart-buffer: 4.2.0
     optional: true
 
-  sonner@2.0.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  sonner@2.0.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -11370,18 +11370,18 @@ snapshots:
 
   tailwind-merge@3.3.0: {}
 
-  tailwind-scrollbar@4.0.2(react@18.3.1)(tailwindcss@4.1.7):
+  tailwind-scrollbar@4.0.2(react@18.3.1)(tailwindcss@4.1.8):
     dependencies:
       prism-react-renderer: 2.4.1(react@18.3.1)
-      tailwindcss: 4.1.7
+      tailwindcss: 4.1.8
     transitivePeerDependencies:
       - react
 
-  tailwindcss-animate@1.0.7(tailwindcss@4.1.7):
+  tailwindcss-animate@1.0.7(tailwindcss@4.1.8):
     dependencies:
-      tailwindcss: 4.1.7
+      tailwindcss: 4.1.8
 
-  tailwindcss@4.1.7: {}
+  tailwindcss@4.1.8: {}
 
   tapable@2.2.1: {}
 
@@ -11787,15 +11787,15 @@ snapshots:
 
   yoga-layout@3.2.1: {}
 
-  zod-to-json-schema@3.24.5(zod@3.25.28):
+  zod-to-json-schema@3.24.5(zod@3.25.42):
     dependencies:
-      zod: 3.25.28
+      zod: 3.25.42
 
-  zod-validation-error@3.4.0(zod@3.25.28):
+  zod-validation-error@3.4.0(zod@3.25.42):
     dependencies:
-      zod: 3.25.28
+      zod: 3.25.42
 
-  zod@3.25.28: {}
+  zod@3.25.42: {}
 
   zrender@5.6.1:
     dependencies:
