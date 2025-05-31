@@ -70,6 +70,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
     const isAutoScrollingRef = useRef(false);
     const [user, setUser] = useState<User | null>(null);
     const [userLoading, setUserLoading] = useState(true);
+    const [isSparkling, setIsSparkling] = useState(false);
 
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
@@ -217,6 +218,15 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
         error,
         experimental_resume
     } = useChat(chatOptions);
+
+    useEffect(()
+ => {
+        if (status === 'loading' || status === 'streaming') {
+            setIsSparkling(true);
+        } else {
+            setIsSparkling(false);
+        }
+    }, [status]);
 
     useAutoResume({
         autoResume: true,
@@ -394,7 +404,10 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500">
+            <div className={cn(
+                "flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500",
+                isSparkling && "sparkle-background"
+            )}>
                 <Navbar
                     isDialogOpen={anyDialogOpen}
                     chatId={initialChatId || (messages.length > 0 ? chatId : null)}
