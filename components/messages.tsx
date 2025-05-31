@@ -375,8 +375,11 @@ const Messages: React.FC<MessagesProps> = ({
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
-      // Only scroll if new message is added or we're streaming, and not during initial load
-      if ((status === 'streaming' || status === 'submitted') && hasInitialScrolled) {
+      // Scroll when status changes to submitted/streaming (new user input) or when new messages are added
+      if (status === 'streaming' || status === 'submitted') {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      } else if (hasInitialScrolled && memoizedMessages.length > 0) {
+        // Also scroll for message updates when not in initial load
         messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
