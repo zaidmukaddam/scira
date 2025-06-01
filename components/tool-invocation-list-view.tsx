@@ -383,8 +383,8 @@ const MemoizedYouTubeCard = React.memo(YouTubeCard, (prevProps, nextProps) => {
 const LineNumbers = memo(({ count }: { count: number }) => (
     <div className="hidden sm:block select-none w-8 sm:w-10 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-0">
         {Array.from({ length: count }, (_, i) => (
-            <div 
-                key={i} 
+            <div
+                key={i}
                 className="text-[10px] h-[20px] flex items-center justify-end text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
             >
                 {i + 1}
@@ -396,7 +396,7 @@ LineNumbers.displayName = 'LineNumbers';
 
 const StatusBadge = memo(({ status }: { status: 'running' | 'completed' | 'error' }) => {
     if (status === 'completed') return null;
-    
+
     if (status === 'error') {
         return (
             <div className="flex items-center gap-1 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded-md text-[9px] font-medium">
@@ -417,11 +417,11 @@ const StatusBadge = memo(({ status }: { status: 'running' | 'completed' | 'error
 });
 StatusBadge.displayName = 'StatusBadge';
 
-const CodeBlock = memo(({ 
-    code, 
-    language 
-}: { 
-    code: string; 
+const CodeBlock = memo(({
+    code,
+    language
+}: {
+    code: string;
     language: string;
 }) => {
     const lines = code.split('\n');
@@ -438,20 +438,20 @@ const CodeBlock = memo(({
 });
 CodeBlock.displayName = 'CodeBlock';
 
-const OutputBlock = memo(({ 
+const OutputBlock = memo(({
     output,
-    error 
-}: { 
+    error
+}: {
     output?: string;
     error?: string;
 }) => {
     if (!output && !error) return null;
-    
+
     return (
         <div className={cn(
             "font-mono text-[11px] sm:text-xs leading-[20px] py-0 px-2 sm:px-3",
-            error 
-                ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" 
+            error
+                ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                 : "bg-neutral-100 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300"
         )}>
             <pre className="whitespace-pre-wrap overflow-x-auto">
@@ -479,7 +479,7 @@ function CodeInterpreterView({
 }) {
     // Set initial state based on status - expanded while running, collapsed when complete
     const [isExpanded, setIsExpanded] = useState(status !== 'completed');
-    
+
     // Update expanded state when status changes
     useEffect(() => {
         // If status changes to completed, collapse the code section
@@ -550,16 +550,16 @@ function CodeInterpreterView({
 
 // Missing icon reference in CollapsibleSection
 const Code = ({ className }: { className?: string }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className={className}
     >
         <polyline points="16 18 22 12 16 6"></polyline>
@@ -569,16 +569,16 @@ const Code = ({ className }: { className?: string }) => (
 
 // Missing icon reference in CollapsibleSection
 const Check = ({ className }: { className?: string }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className={className}
     >
         <polyline points="20 6 9 17 4 12"></polyline>
@@ -621,7 +621,7 @@ const ToolInvocationListView = memo(
             (toolInvocation: ToolInvocation, index: number) => {
                 const args = JSON.parse(JSON.stringify(toolInvocation.args));
                 const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
-                
+
                 if (toolInvocation.toolName === 'find_place') {
                     if (!result) {
                         return <SearchLoadingState
@@ -1090,7 +1090,7 @@ const ToolInvocationListView = memo(
                     //     ]
                     // }
                     // return {"message": "Chart generated successfully", "chart": chart_data}
-                    
+
                     return (
                         <div className="space-y-3 w-full overflow-hidden">
                             <CodeInterpreterView
@@ -1217,9 +1217,9 @@ const ToolInvocationListView = memo(
                             {result.results[0].image && (
                                 <div className="h-36 overflow-hidden relative">
                                     <Image
-                                        src={result.results[0].image} 
-                                        alt={result.results[0].title || "Featured image"} 
-                                        className="w-full h-full object-cover" 
+                                        src={result.results[0].image}
+                                        alt={result.results[0].title || "Featured image"}
+                                        className="w-full h-full object-cover"
                                         width={128}
                                         height={128}
                                         quality={100}
@@ -1251,7 +1251,7 @@ const ToolInvocationListView = memo(
                                             <Image
                                                 className="w-full h-full object-contain rounded-lg"
                                                 src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
-                                                alt="" 
+                                                alt=""
                                                 width={64}
                                                 height={64}
                                                 quality={100}
@@ -1273,7 +1273,7 @@ const ToolInvocationListView = memo(
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex flex-wrap items-center gap-2 mt-2">
                                             {result.results[0].author && (
                                                 <Badge variant="secondary" className="rounded-md bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/30 text-violet-600 dark:text-violet-400 border-0 transition-colors">
@@ -1300,7 +1300,7 @@ const ToolInvocationListView = memo(
                                 <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 line-clamp-2">
                                     {result.results[0].description || 'No description available'}
                                 </p>
-                                
+
                                 <div className="mt-3 flex justify-between items-center gap-3">
                                     <div className="flex items-center gap-2">
                                         <Badge variant="secondary" className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 transition-colors cursor-pointer">
@@ -1314,7 +1314,7 @@ const ToolInvocationListView = memo(
                                                 View source
                                             </a>
                                         </Badge>
-                                        
+
                                         {result.results.length > 1 && (
                                             <Badge variant="secondary" className="rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-0 transition-colors">
                                                 <TextIcon className="h-3 w-3 mr-1" />
@@ -1322,7 +1322,7 @@ const ToolInvocationListView = memo(
                                             </Badge>
                                         )}
                                     </div>
-                                    
+
                                     <Badge variant="secondary" className="rounded-md bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 border-0 transition-colors">
                                         <Globe className="h-3 w-3 mr-1" />
                                         {new URL(result.results[0].url).hostname.replace('www.', '')}
@@ -1354,7 +1354,7 @@ const ToolInvocationListView = memo(
                         </div>
                     );
                 }
-                
+
                 if (toolInvocation.toolName === 'text_translate') {
                     return <TranslationTool toolInvocation={toolInvocation} result={result} />;
                 }
@@ -1486,47 +1486,79 @@ const ToolInvocationListView = memo(
 
                     LiveClock.displayName = 'LiveClock';
 
+                    // Determine if this is being used in a greeting context
+                    const isGreetingContext = message?.content?.toLowerCase().includes('good morning') ||
+                        message?.content?.toLowerCase().includes('good evening') ||
+                        message?.content?.toLowerCase().includes('good afternoon') ||
+                        message?.content?.toLowerCase().includes('good night') ||
+                        message?.content?.toLowerCase().match(/\b(hi|hello|hey|greetings?)\b/);
+
                     return (
                         <div className="w-full my-6">
-                            <div className="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                            <div className={cn(
+                                "rounded-xl overflow-hidden border",
+                                isGreetingContext
+                                    ? "bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30 border-pink-200 dark:border-pink-800/50"
+                                    : "bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800"
+                            )}>
                                 <div className="p-4 sm:p-6">
                                     <div className="flex flex-col gap-4 sm:gap-6">
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
-                                                <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
-                                                    Current Time
+                                                <h3 className={cn(
+                                                    "text-xs font-medium tracking-wider uppercase",
+                                                    isGreetingContext
+                                                        ? "text-pink-600 dark:text-pink-400"
+                                                        : "text-neutral-500 dark:text-neutral-400"
+                                                )}>
+                                                    {isGreetingContext ? "Current Time 🕐" : "Current Time"}
                                                 </h3>
-                                                <div className="bg-neutral-100 dark:bg-neutral-800 rounded px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
-                                                    <PhosphorClock weight="regular" className="h-3 w-3 text-blue-500" />
+                                                <div className={cn(
+                                                    "rounded px-2 py-1 text-xs font-medium flex items-center gap-1.5",
+                                                    isGreetingContext
+                                                        ? "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300"
+                                                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                                                )}>
+                                                    <PhosphorClock weight="regular" className={cn(
+                                                        "h-3 w-3",
+                                                        isGreetingContext ? "text-pink-500" : "text-blue-500"
+                                                    )} />
                                                     {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>
                                             <LiveClock />
-                                            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
+                                            <p className={cn(
+                                                "text-sm mt-2",
+                                                isGreetingContext
+                                                    ? "text-pink-600 dark:text-pink-400"
+                                                    : "text-neutral-500 dark:text-neutral-400"
+                                            )}>
                                                 {result.formatted.date}
                                             </p>
                                         </div>
 
-                                        {/* Compact Technical Details */}
-                                        <div className="grid grid-cols-2 gap-3 text-xs">
-                                            {result.formatted.iso_local && (
-                                                <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                                                    <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
-                                                    <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
-                                                        {result.formatted.iso_local}
+                                        {/* Compact Technical Details - only show if not greeting context */}
+                                        {!isGreetingContext && (
+                                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                                {result.formatted.iso_local && (
+                                                    <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
+                                                        <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
+                                                        <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                                                            {result.formatted.iso_local}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                            
-                                            {result.timestamp && (
-                                                <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                                                    <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
-                                                    <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
-                                                        {result.timestamp}
+                                                )}
+
+                                                {result.timestamp && (
+                                                    <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
+                                                        <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
+                                                        <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                                                            {result.timestamp}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1575,9 +1607,9 @@ const ToolInvocationListView = memo(
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-0 px-3 pb-3">
-                                    <MCPServerList 
-                                        servers={result.servers || []} 
-                                        query={result.query} 
+                                    <MCPServerList
+                                        servers={result.servers || []}
+                                        query={result.query}
                                         error={result.error}
                                     />
                                 </CardContent>
@@ -1594,7 +1626,7 @@ const ToolInvocationListView = memo(
                             color="orange"
                         />;
                     }
-                    
+
                     return <RedditSearch result={result} args={args} />;
                 }
 
@@ -1747,8 +1779,8 @@ const ToolInvocationListView = memo(
     },
     (prevProps, nextProps) => {
         return prevProps.toolInvocations === nextProps.toolInvocations &&
-        prevProps.message === nextProps.message &&
-        prevProps.annotations === nextProps.annotations
+            prevProps.message === nextProps.message &&
+            prevProps.annotations === nextProps.annotations
     }
 );
 

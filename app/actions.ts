@@ -5,25 +5,31 @@ import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
-import { getUser } from "@/lib/auth-utils";
+import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
-import { getChatsByUserId, deleteChatById, updateChatVisiblityById, getChatById, getMessageById, deleteMessagesByChatIdAfterTimestamp } from '@/lib/db/queries';
+import {
+    getChatsByUserId,
+    deleteChatById,
+    updateChatVisiblityById,
+    getChatById,
+    getMessageById,
+    deleteMessagesByChatIdAfterTimestamp,
+} from '@/lib/db/queries';
 import { groq } from '@ai-sdk/groq';
 import { openai } from '@ai-sdk/openai';
 
 export async function suggestQuestions(history: any[]) {
-  'use server';
+    'use server';
 
-  console.log(history);
+    console.log(history);
 
-  const { object } = await generateObject({
-    model: openai("gpt-4.1-nano"),
-    temperature: 1,
-    maxTokens: 300,
-    topP: 0.3,
-    topK: 7,
-    system:
-      `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
+    const { object } = await generateObject({
+        model: openai('gpt-4.1-nano'),
+        temperature: 1,
+        maxTokens: 300,
+        topP: 0.3,
+        topK: 7,
+        system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -57,155 +63,161 @@ export async function suggestQuestions(history: any[]) {
 - Each question must end with a question mark
 - Questions must be diverse and not redundant
 - Do not include instructions or meta-commentary in the questions`,
-    messages: history,
-    schema: z.object({
-      questions: z.array(z.string()).describe('The generated questions based on the message history.')
-    }),
-  });
+        messages: history,
+        schema: z.object({
+            questions: z.array(z.string()).describe('The generated questions based on the message history.'),
+        }),
+    });
 
-  return {
-    questions: object.questions
-  };
+    return {
+        questions: object.questions,
+    };
 }
 
 export async function checkImageModeration(images: any) {
-  const { text } = await generateText({
-    model: groq("meta-llama/llama-guard-4-12b"),
-    messages: [{
-      role: "user",
-      content: images.map((image: any) => ({
-        type: "image",
-        image: image
-      }))
-    }]
-  })
-  return text
+    const { text } = await generateText({
+        model: groq('meta-llama/llama-guard-4-12b'),
+        messages: [
+            {
+                role: 'user',
+                content: images.map((image: any) => ({
+                    type: 'image',
+                    image: image,
+                })),
+            },
+        ],
+    });
+    return text;
 }
 
 // Server action to get the current user
 export async function getCurrentUser() {
-  try {
-    const user = await getUser();
-    return user;
-  } catch (error) {
-    console.error("Error in getCurrentUser server action:", error);
-    return null;
-  }
+    try {
+        const user = await getUser();
+        return user;
+    } catch (error) {
+        console.error('Error in getCurrentUser server action:', error);
+        return null;
+    }
 }
 
-export async function generateTitleFromUserMessage({
-  message,
-}: {
-  message: UIMessage;
-}) {
-  const { text: title } = await generateText({
-    model: scira.languageModel('scira-4o'),
-    system: `\n
+export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
+    const { text: title } = await generateText({
+        model: scira.languageModel('scira-4o'),
+        system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
     - the title should be a summary of the user's message
     - the title should creative and unique
     - do not use quotes or colons`,
-    prompt: JSON.stringify(message),
-  });
+        prompt: JSON.stringify(message),
+    });
 
-  return title;
+    return title;
 }
-
 
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
+    const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
+    const method = 'POST';
 
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb' // This is the ID for the "George" voice. Replace with your preferred voice ID.
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`
-  const method = 'POST'
+    if (!ELEVENLABS_API_KEY) {
+        throw new Error('ELEVENLABS_API_KEY is not defined');
+    }
 
-  if (!ELEVENLABS_API_KEY) {
-    throw new Error('ELEVENLABS_API_KEY is not defined');
-  }
+    const headers = {
+        Accept: 'audio/mpeg',
+        'xi-api-key': ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json',
+    };
 
-  const headers = {
-    Accept: 'audio/mpeg',
-    'xi-api-key': ELEVENLABS_API_KEY,
-    'Content-Type': 'application/json',
-  }
+    const data = {
+        text,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+        },
+    };
 
-  const data = {
-    text,
-    model_id: 'eleven_turbo_v2_5',
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.5,
-    },
-  }
+    const body = JSON.stringify(data);
 
-  const body = JSON.stringify(data)
+    const input = {
+        method,
+        headers,
+        body,
+    };
 
-  const input = {
-    method,
-    headers,
-    body,
-  }
+    const response = await fetch(url, input);
 
-  const response = await fetch(url, input)
+    const arrayBuffer = await response.arrayBuffer();
 
-  const arrayBuffer = await response.arrayBuffer();
+    const base64Audio = Buffer.from(arrayBuffer).toString('base64');
 
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-
-  return {
-    audio: `data:audio/mp3;base64,${base64Audio}`,
-  };
+    return {
+        audio: `data:audio/mp3;base64,${base64Audio}`,
+    };
 }
 
 export async function fetchMetadata(url: string) {
-  try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
-    const html = await response.text();
+    try {
+        const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+        const html = await response.text();
 
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(
-      /<meta\s+name=["']description["']\s+content=["'](.*?)["']/i
-    );
+        const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+        const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
 
-    const title = titleMatch ? titleMatch[1] : '';
-    const description = descMatch ? descMatch[1] : '';
+        const title = titleMatch ? titleMatch[1] : '';
+        const description = descMatch ? descMatch[1] : '';
 
-    return { title, description };
-  } catch (error) {
-    console.error('Error fetching metadata:', error);
-    return null;
-  }
+        return { title, description };
+    } catch (error) {
+        console.error('Error fetching metadata:', error);
+        return null;
+    }
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility
 type LegacyGroupId = SearchGroupId | 'buddy';
 
 const groupTools = {
-  web: [
-    'web_search', 'get_weather_data',
-    'retrieve', 'text_translate',
-    'nearby_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies',
-    'trending_tv', 'datetime', 'mcp_search'
-  ] as const,
-  academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
-  youtube: ['youtube_search', 'datetime'] as const,
-  reddit: ['reddit_search', 'datetime'] as const,
-  analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
-  chat: [] as const,
-  extreme: ['extreme_search'] as const,
-  memory: ['memory_manager', 'datetime'] as const,
-  // Add legacy mapping for backward compatibility
-  buddy: ['memory_manager', 'datetime'] as const,
+    web: [
+        'web_search',
+        'get_weather_data',
+        'retrieve',
+        'text_translate',
+        'nearby_search',
+        'track_flight',
+        'movie_or_tv_search',
+        'trending_movies',
+        'trending_tv',
+        'datetime',
+        'mcp_search',
+    ] as const,
+    academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
+    youtube: ['youtube_search', 'datetime'] as const,
+    reddit: ['reddit_search', 'datetime'] as const,
+    analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
+    chat: [] as const,
+    extreme: ['extreme_search'] as const,
+    memory: ['memory_manager', 'datetime'] as const,
+    greeting: ['datetime'] as const,
+    // Add legacy mapping for backward compatibility
+    buddy: ['memory_manager', 'datetime'] as const,
 } as const;
 
 const groupInstructions = {
-  web: `
+    web: `
   You are an AI web search engine called Scira, designed to help users find information on the internet with no unnecessary chatter and more focus on the content.
   'You MUST run the tool IMMEDIATELY on receiving any user message' before composing your response. **This is non-negotiable.**
-  Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
+  Today's Date: ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -347,10 +359,89 @@ const groupInstructions = {
   - Avoid running the same tool twice with same parameters
   - Do not include images in responses`,
 
-  memory: `
+    greeting: `
+  You are Scira, a warm and friendly AI assistant with a vibrant personality! You excel at social interactions and making users feel welcomed and appreciated.
+  Today's date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
+
+  ### Your Personality:
+  - You're genuinely enthusiastic and positive
+  - You have a warm, approachable demeanor
+  - You're emotionally intelligent and can read the context of interactions
+  - You use appropriate emojis sparingly but effectively
+  - You're conversational but not overly casual
+  - You show genuine interest in the user's well-being
+
+  ### Tool Guidelines:
+  #### datetime tool:
+  - Use this tool when greeting users to provide contextually appropriate responses based on time of day
+  - No need to cite datetime information in greetings
+  - Use the time information to make your greetings more personal and relevant
+
+  ### Response Guidelines for Different Greetings:
+
+  #### Time-based Greetings (Good morning/afternoon/evening/night):
+  - Always run the datetime tool first to get the current time
+  - Respond with appropriate energy level for the time of day
+  - Morning: Energetic and optimistic
+  - Afternoon: Steady and supportive
+  - Evening: Warm and relaxed
+  - Night: Gentle and calming
+
+  #### General Greetings (Hi, Hello, Hey):
+  - Match the user's energy level
+  - Ask how they're doing or what brings them here today
+  - Be genuinely welcoming
+
+  #### Thank You Messages:
+  - Express genuine appreciation for their gratitude
+  - Offer continued assistance
+  - Be humble and gracious
+
+  #### Casual Check-ins:
+  - Show interest in their well-being
+  - Be supportive and encouraging
+  - Offer to help with anything they might need
+
+  ### Response Structure:
+  - Keep responses concise but meaningful (2-4 sentences max)
+  - Include one relevant question to encourage further interaction
+  - Use warm, conversational language
+  - Maintain the language of the user's message and do not change it
+  - End with an open invitation to help
+
+  ### Example Responses:
+  - For "Good morning": "Good morning! ☀️ I hope you're having a wonderful start to your day. What can I help you explore or discover today?"
+  - For "Thank you": "You're so welcome! 😊 It's always a pleasure to help. Is there anything else I can assist you with?"
+  - For "Hi": "Hello there! Great to see you. How are you doing today? What's on your mind?"
+
+  ### Tone Guidelines:
+  - Be authentic and genuine, never robotic
+  - Use contractions to sound more natural
+  - Show enthusiasm without being overwhelming
+  - Be supportive and encouraging
+  - Adapt your energy to match the user's apparent mood
+
+  ### Prohibited Actions:
+  - Don't be overly effusive or fake
+  - Don't use too many emojis (1-2 max per response)
+  - Don't make assumptions about the user's day or circumstances
+  - Don't launch into explanations unless asked
+  - Don't use formal or stiff language`,
+
+    memory: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  Today's date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -382,11 +473,16 @@ const groupInstructions = {
   - Maintain a friendly, personal tone
   - Always save the memory user asks you to save`,
 
-  // Legacy mapping for backward compatibility - same as memory instructions
-  buddy: `
+    // Legacy mapping for backward compatibility - same as memory instructions
+    buddy: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  Today's date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -418,10 +514,15 @@ const groupInstructions = {
   - Maintain a friendly, personal tone
   - Always save the memory user asks you to save`,
 
-  academic: `
+    academic: `
   ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
   You are an academic research assistant that helps find and analyze scholarly content.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### Tool Guidelines:
   #### Academic Search Tool:
@@ -480,9 +581,14 @@ const groupInstructions = {
   - Apply markdown formatting for clarity
   - Tables for data comparison only when necessary`,
 
-  youtube: `
+    youtube: `
   You are a YouTube content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### Tool Guidelines:
   #### YouTube Search Tool:
@@ -538,9 +644,14 @@ const groupInstructions = {
   - Do NOT use bullet points or numbered lists under any circumstances
   - Do NOT use heading level 1 (h1) in your markdown formatting
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
-  reddit: `
+    reddit: `
   You are a Reddit content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### Tool Guidelines:
   #### Reddit Search Tool:
@@ -569,7 +680,7 @@ const groupInstructions = {
   - All citations must be inline, placed immediately after the relevant information
   - Format citations as: [Post Title - r/subreddit](URL)
   `,
-  analysis: `
+    analysis: `
   You are a code runner, stock analysis and currency conversion expert.
   
   ### Tool Guidelines:
@@ -682,9 +793,14 @@ const groupInstructions = {
   - Avoid running the same tool twice with same parameters
   - Do not include images in responses`,
 
-  chat: `
+    chat: `
   You are Scira, a helpful assistant that helps with the task asked by the user.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  Today's date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
   
   ### Guidelines:
   - You do not have access to any tools. You can code tho
@@ -720,10 +836,15 @@ const groupInstructions = {
   - ⚠️ MANDATORY: Make sure the latex is properly delimited at all times!!
   - Mathematical expressions must always be properly delimited`,
 
-  extreme: `
+    extreme: `
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      weekday: 'short',
+  })}.
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
   - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -786,148 +907,148 @@ const groupInstructions = {
   - CITATIONS SHOULD BE ON EVERYTHING YOU SAY
   - Include analysis of reliability and limitations
   - Maintain the language of the user's message and do not change it
-  - Avoid referencing citations directly, make them part of statements`
+  - Avoid referencing citations directly, make them part of statements`,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
-  "use server";
+    'use server';
 
-  // Check if the user is authenticated for memory or buddy group
-  if (groupId === 'memory' || groupId === 'buddy') {
-    const user = await getUser();
-    if (!user) {
-      // Redirect to web group if user is not authenticated
-      groupId = 'web';
-    } else if (groupId === 'buddy') {
-      // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
-      // The tools are the same, just different instructions
-      const tools = groupTools[groupId];
-      const instructions = groupInstructions[groupId];
+    // Check if the user is authenticated for memory or buddy group
+    if (groupId === 'memory' || groupId === 'buddy') {
+        const user = await getUser();
+        if (!user) {
+            // Redirect to web group if user is not authenticated
+            groupId = 'web';
+        } else if (groupId === 'buddy') {
+            // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
+            // The tools are the same, just different instructions
+            const tools = groupTools[groupId];
+            const instructions = groupInstructions[groupId];
 
-      return {
-        tools,
-        instructions
-      };
+            return {
+                tools,
+                instructions,
+            };
+        }
     }
-  }
 
-  const tools = groupTools[groupId as keyof typeof groupTools];
-  const instructions = groupInstructions[groupId as keyof typeof groupInstructions];
+    const tools = groupTools[groupId as keyof typeof groupTools];
+    const instructions = groupInstructions[groupId as keyof typeof groupInstructions];
 
-  return {
-    tools,
-    instructions
-  };
+    return {
+        tools,
+        instructions,
+    };
 }
 
 // Add functions to fetch user chats
 export async function getUserChats(
-  userId: string,
-  limit: number = 20,
-  startingAfter?: string,
-  endingBefore?: string
-): Promise<{ chats: any[], hasMore: boolean }> {
-  'use server';
+    userId: string,
+    limit: number = 20,
+    startingAfter?: string,
+    endingBefore?: string,
+): Promise<{ chats: any[]; hasMore: boolean }> {
+    'use server';
 
-  if (!userId) return { chats: [], hasMore: false };
+    if (!userId) return { chats: [], hasMore: false };
 
-  try {
-    return await getChatsByUserId({
-      id: userId,
-      limit,
-      startingAfter: startingAfter || null,
-      endingBefore: endingBefore || null
-    });
-  } catch (error) {
-    console.error('Error fetching user chats:', error);
-    return { chats: [], hasMore: false };
-  }
+    try {
+        return await getChatsByUserId({
+            id: userId,
+            limit,
+            startingAfter: startingAfter || null,
+            endingBefore: endingBefore || null,
+        });
+    } catch (error) {
+        console.error('Error fetching user chats:', error);
+        return { chats: [], hasMore: false };
+    }
 }
 
 // Add function to load more chats for infinite scroll
 export async function loadMoreChats(
-  userId: string,
-  lastChatId: string,
-  limit: number = 20
-): Promise<{ chats: any[], hasMore: boolean }> {
-  'use server';
+    userId: string,
+    lastChatId: string,
+    limit: number = 20,
+): Promise<{ chats: any[]; hasMore: boolean }> {
+    'use server';
 
-  if (!userId || !lastChatId) return { chats: [], hasMore: false };
+    if (!userId || !lastChatId) return { chats: [], hasMore: false };
 
-  try {
-    return await getChatsByUserId({
-      id: userId,
-      limit,
-      startingAfter: null,
-      endingBefore: lastChatId
-    });
-  } catch (error) {
-    console.error('Error loading more chats:', error);
-    return { chats: [], hasMore: false };
-  }
+    try {
+        return await getChatsByUserId({
+            id: userId,
+            limit,
+            startingAfter: null,
+            endingBefore: lastChatId,
+        });
+    } catch (error) {
+        console.error('Error loading more chats:', error);
+        return { chats: [], hasMore: false };
+    }
 }
 
 // Add function to delete a chat
 export async function deleteChat(chatId: string) {
-  'use server';
+    'use server';
 
-  if (!chatId) return null;
+    if (!chatId) return null;
 
-  try {
-    return await deleteChatById({ id: chatId });
-  } catch (error) {
-    console.error('Error deleting chat:', error);
-    return null;
-  }
+    try {
+        return await deleteChatById({ id: chatId });
+    } catch (error) {
+        console.error('Error deleting chat:', error);
+        return null;
+    }
 }
 
 // Add function to update chat visibility
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
-  'use server';
+    'use server';
 
-  if (!chatId) return null;
+    if (!chatId) return null;
 
-  try {
-    return await updateChatVisiblityById({ chatId, visibility });
-  } catch (error) {
-    console.error('Error updating chat visibility:', error);
-    return null;
-  }
+    try {
+        return await updateChatVisiblityById({ chatId, visibility });
+    } catch (error) {
+        console.error('Error updating chat visibility:', error);
+        return null;
+    }
 }
 
 // Add function to get chat info
 export async function getChatInfo(chatId: string) {
-  'use server';
+    'use server';
 
-  if (!chatId) return null;
+    if (!chatId) return null;
 
-  try {
-    return await getChatById({ id: chatId });
-  } catch (error) {
-    console.error('Error getting chat info:', error);
-    return null;
-  }
+    try {
+        return await getChatById({ id: chatId });
+    } catch (error) {
+        console.error('Error getting chat info:', error);
+        return null;
+    }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  'use server';
-  try {
-    const [message] = await getMessageById({ id });
-    console.log("Message: ", message);
+    'use server';
+    try {
+        const [message] = await getMessageById({ id });
+        console.log('Message: ', message);
 
-    if (!message) {
-      console.error(`No message found with id: ${id}`);
-      return;
+        if (!message) {
+            console.error(`No message found with id: ${id}`);
+            return;
+        }
+
+        await deleteMessagesByChatIdAfterTimestamp({
+            chatId: message.chatId,
+            timestamp: message.createdAt,
+        });
+
+        console.log(`Successfully deleted trailing messages after message ID: ${id}`);
+    } catch (error) {
+        console.error(`Error deleting trailing messages: ${error}`);
+        throw error; // Re-throw to allow caller to handle
     }
-
-    await deleteMessagesByChatIdAfterTimestamp({
-      chatId: message.chatId,
-      timestamp: message.createdAt,
-    });
-
-    console.log(`Successfully deleted trailing messages after message ID: ${id}`);
-  } catch (error) {
-    console.error(`Error deleting trailing messages: ${error}`);
-    throw error; // Re-throw to allow caller to handle
-  }
 }
