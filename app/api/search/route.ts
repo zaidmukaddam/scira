@@ -1,7 +1,7 @@
 // /app/api/chat/route.ts
 import { generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { openai, OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import CodeInterpreter from '@e2b/code-interpreter';
 import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
 import { tavily } from '@tavily/core';
@@ -16,20 +16,24 @@ import {
     CoreToolMessage,
     CoreAssistantMessage,
     generateId,
-    createDataStream
+    createDataStream,
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 import { extremeSearchTool } from '@/ai/extreme-search';
 import { scira } from '@/ai/providers';
-import { getUser } from "@/lib/auth-utils";
-import { createStreamId, getChatById, getMessagesByChatId, getStreamIdsByChatId, saveChat, saveMessages } from '@/lib/db/queries';
-import { ChatSDKError } from '@/lib/errors';
+import { getUser } from '@/lib/auth-utils';
 import {
-    createResumableStreamContext,
-    type ResumableStreamContext,
-} from 'resumable-stream';
+    createStreamId,
+    getChatById,
+    getMessagesByChatId,
+    getStreamIdsByChatId,
+    saveChat,
+    saveMessages,
+} from '@/lib/db/queries';
+import { ChatSDKError } from '@/lib/errors';
+import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
 import { differenceInSeconds } from 'date-fns';
 import { Chat } from '@/lib/db/schema';
@@ -39,18 +43,13 @@ import { v4 as uuidv4 } from 'uuid';
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
-export function getTrailingMessageId({
-    messages,
-}: {
-    messages: Array<ResponseMessage>;
-}): string | null {
+export function getTrailingMessageId({ messages }: { messages: Array<ResponseMessage> }): string | null {
     const trailingMessage = messages.at(-1);
 
     if (!trailingMessage) return null;
 
     return trailingMessage.id;
 }
-
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -62,9 +61,7 @@ function getStreamContext() {
             });
         } catch (error: any) {
             if (error.message.includes('REDIS_URL')) {
-                console.log(
-                    ' > Resumable streams are disabled due to missing REDIS_URL',
-                );
+                console.log(' > Resumable streams are disabled due to missing REDIS_URL');
             } else {
                 console.error(error);
             }
@@ -74,33 +71,32 @@ function getStreamContext() {
     return globalStreamContext;
 }
 
-
 // Add currency symbol mapping at the top of the file
 const CURRENCY_SYMBOLS = {
-    USD: '$',   // US Dollar
-    EUR: '€',   // Euro
-    GBP: '£',   // British Pound
-    JPY: '¥',   // Japanese Yen
-    CNY: '¥',   // Chinese Yuan
-    INR: '₹',   // Indian Rupee
-    RUB: '₽',   // Russian Ruble
-    KRW: '₩',   // South Korean Won
-    BTC: '₿',   // Bitcoin
-    THB: '฿',   // Thai Baht
-    BRL: 'R$',  // Brazilian Real
-    PHP: '₱',   // Philippine Peso
-    ILS: '₪',   // Israeli Shekel
-    TRY: '₺',   // Turkish Lira
-    NGN: '₦',   // Nigerian Naira
-    VND: '₫',   // Vietnamese Dong
-    ARS: '$',   // Argentine Peso
-    ZAR: 'R',   // South African Rand
-    AUD: 'A$',  // Australian Dollar
-    CAD: 'C$',  // Canadian Dollar
-    SGD: 'S$',  // Singapore Dollar
+    USD: '$', // US Dollar
+    EUR: '€', // Euro
+    GBP: '£', // British Pound
+    JPY: '¥', // Japanese Yen
+    CNY: '¥', // Chinese Yuan
+    INR: '₹', // Indian Rupee
+    RUB: '₽', // Russian Ruble
+    KRW: '₩', // South Korean Won
+    BTC: '₿', // Bitcoin
+    THB: '฿', // Thai Baht
+    BRL: 'R$', // Brazilian Real
+    PHP: '₱', // Philippine Peso
+    ILS: '₪', // Israeli Shekel
+    TRY: '₺', // Turkish Lira
+    NGN: '₦', // Nigerian Naira
+    VND: '₫', // Vietnamese Dong
+    ARS: '$', // Argentine Peso
+    ZAR: 'R', // South African Rand
+    AUD: 'A$', // Australian Dollar
+    CAD: 'C$', // Canadian Dollar
+    SGD: 'S$', // Singapore Dollar
     HKD: 'HK$', // Hong Kong Dollar
     NZD: 'NZ$', // New Zealand Dollar
-    MXN: 'Mex$' // Mexican Peso
+    MXN: 'Mex$', // Mexican Peso
 } as const;
 
 interface MapboxFeature {
@@ -179,16 +175,20 @@ async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirecte
             method: 'HEAD',
             signal: controller.signal,
             headers: {
-                'Accept': 'image/*',
-                'User-Agent': 'Mozilla/5.0 (compatible; ImageValidator/1.0)'
+                Accept: 'image/*',
+                'User-Agent': 'Mozilla/5.0 (compatible; ImageValidator/1.0)',
             },
-            redirect: 'follow' // Ensure redirects are followed
+            redirect: 'follow', // Ensure redirects are followed
         });
 
         clearTimeout(timeout);
 
         // Log response details for debugging
-        console.log(`Image validation [${url}]: status=${response.status}, content-type=${response.headers.get('content-type')}`);
+        console.log(
+            `Image validation [${url}]: status=${response.status}, content-type=${response.headers.get(
+                'content-type',
+            )}`,
+        );
 
         // Capture redirected URL if applicable
         const redirectedUrl = response.redirected ? response.url : undefined;
@@ -215,7 +215,7 @@ async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirecte
 
                 const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`, {
                     method: 'HEAD',
-                    signal: controller.signal
+                    signal: controller.signal,
                 });
 
                 clearTimeout(proxyTimeout);
@@ -228,7 +228,7 @@ async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirecte
                         console.log(`Proxy validation successful for ${url}`);
                         return {
                             valid: true,
-                            redirectedUrl: proxyRedirectedUrl || redirectedUrl
+                            redirectedUrl: proxyRedirectedUrl || redirectedUrl,
                         };
                     }
                 }
@@ -266,7 +266,7 @@ async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirecte
 
                 const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`, {
                     method: 'HEAD',
-                    signal: controller.signal
+                    signal: controller.signal,
                 });
 
                 clearTimeout(proxyTimeout);
@@ -291,7 +291,6 @@ async function isValidImageUrl(url: string): Promise<{ valid: boolean; redirecte
     }
 }
 
-
 const extractDomain = (url: string): string => {
     const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
     return url.match(urlPattern)?.[1] || url;
@@ -301,7 +300,7 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
     const seenDomains = new Set<string>();
     const seenUrls = new Set<string>();
 
-    return items.filter(item => {
+    return items.filter((item) => {
         const domain = extractDomain(item.url);
         const isNewUrl = !seenUrls.has(item.url);
         const isNewDomain = !seenDomains.has(domain);
@@ -343,10 +342,10 @@ export async function POST(req: Request) {
     const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
 
     const user = await getUser();
-    const streamId = "stream-" + uuidv4();
+    const streamId = 'stream-' + uuidv4();
 
     if (!user) {
-        console.log("User not found");
+        console.log('User not found');
     }
 
     const { tools: activeTools, instructions } = await getGroupConfig(group);
@@ -359,9 +358,9 @@ export async function POST(req: Request) {
                 message: messages[messages.length - 1],
             });
 
-            console.log("--------------------------------");
-            console.log("Title: ", title);
-            console.log("--------------------------------");
+            console.log('--------------------------------');
+            console.log('Title: ', title);
+            console.log('--------------------------------');
 
             await saveChat({
                 id,
@@ -374,7 +373,6 @@ export async function POST(req: Request) {
                 return new ChatSDKError('forbidden:chat').toResponse();
             }
         }
-
 
         await saveMessages({
             messages: [
@@ -389,33 +387,37 @@ export async function POST(req: Request) {
             ],
         });
 
-        console.log("--------------------------------");
-        console.log("Messages saved: ", messages);
-        console.log("--------------------------------");
+        console.log('--------------------------------');
+        console.log('Messages saved: ', messages);
+        console.log('--------------------------------');
 
         await createStreamId({ streamId, chatId: id });
     }
 
-    console.log("--------------------------------");
-    console.log("Messages: ", messages);
-    console.log("--------------------------------");
-    console.log("Running with model: ", model.trim());
-    console.log("Group: ", group);
-    console.log("Timezone: ", timezone);
+    console.log('--------------------------------');
+    console.log('Messages: ', messages);
+    console.log('--------------------------------');
+    console.log('Running with model: ', model.trim());
+    console.log('Group: ', group);
+    console.log('Timezone: ', timezone);
 
     const stream = createDataStream({
         execute: async (dataStream) => {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                ...(!model.includes('scira-anthropic') || !model.includes('scira-o4-mini') ? {
-                    temperature: 0,
-                } : (!model.includes('scira-qwq') ? {
-                    temperature: 0.6,
-                    topP: 0.95,
-                } : {
-                    temperature: 0,
-                })),
+                ...(!model.includes('scira-anthropic') || !model.includes('scira-o4-mini')
+                    ? {
+                          temperature: 0,
+                      }
+                    : !model.includes('scira-qwq')
+                    ? {
+                          temperature: 0.6,
+                          topP: 0.95,
+                      }
+                    : {
+                          temperature: 0,
+                      }),
                 maxSteps: 5,
                 maxRetries: 5,
                 experimental_activeTools: [...activeTools],
@@ -428,37 +430,49 @@ export async function POST(req: Request) {
                 providerOptions: {
                     google: {
                         thinkingConfig: {
-                            ...(model === 'scira-google' ? {
-                                thinkingBudget: 10000,
-                            } : {}),
+                            ...(model === 'scira-google'
+                                ? {
+                                      thinkingBudget: 10000,
+                                  }
+                                : {}),
                             includeThoughts: true,
                         },
                     },
                     openai: {
-                        ...(model === 'scira-o4-mini' ? {
-                            reasoningEffort: 'low',
-                            strictSchemas: true,
-                        } : {}),
-                        ...(model === 'scira-4o' ? {
-                            parallelToolCalls: false,
-                            strictSchemas: true,
-                        } : {}),
+                        ...(model === 'scira-o4-mini'
+                            ? {
+                                  reasoningEffort: 'low',
+                                  strictSchemas: true,
+                              }
+                            : {}),
+                        ...(model === 'scira-4o'
+                            ? {
+                                  parallelToolCalls: false,
+                                  strictSchemas: true,
+                              }
+                            : {}),
                     } as OpenAIResponsesProviderOptions,
                     xai: {
-                        ...(group === "chat" ? {
-                            search_parameters: {
-                                mode: "auto",
-                                return_citations: true
-                            }
-                        } : {}),
-                        ...(model === 'scira-default' ? {
-                            reasoningEffort: 'high',
-                        } : {}),
+                        ...(group === 'chat'
+                            ? {
+                                  search_parameters: {
+                                      mode: 'auto',
+                                      return_citations: true,
+                                  },
+                              }
+                            : {}),
+                        ...(model === 'scira-default'
+                            ? {
+                                  reasoningEffort: 'high',
+                              }
+                            : {}),
                     },
                     anthropic: {
-                        ...(model === 'scira-anthropic-thinking' || model === 'scira-anthropic-pro-thinking' ? {
-                            thinking: { type: 'enabled', budgetTokens: 12000 },
-                        } : {}),
+                        ...(model === 'scira-anthropic-thinking' || model === 'scira-anthropic-pro-thinking'
+                            ? {
+                                  thinking: { type: 'enabled', budgetTokens: 12000 },
+                              }
+                            : {}),
                     },
                 },
                 tools: {
@@ -471,10 +485,32 @@ export async function POST(req: Request) {
                                 .enum(['stock', 'date', 'calculation', 'default'])
                                 .describe('The icon to display for the chart.'),
                             stock_symbols: z.array(z.string()).describe('The stock symbols to display for the chart.'),
-                            currency_symbols: z.array(z.string()).describe('The currency symbols for each stock/asset in the chart. Available symbols: ' + Object.keys(CURRENCY_SYMBOLS).join(', ') + '. Defaults to USD if not provided.'),
-                            interval: z.enum(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']).describe('The interval of the chart. default is 1y.'),
+                            currency_symbols: z
+                                .array(z.string())
+                                .describe(
+                                    'The currency symbols for each stock/asset in the chart. Available symbols: ' +
+                                        Object.keys(CURRENCY_SYMBOLS).join(', ') +
+                                        '. Defaults to USD if not provided.',
+                                ),
+                            interval: z
+                                .enum(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'])
+                                .describe('The interval of the chart. default is 1y.'),
                         }),
-                        execute: async ({ title, icon, stock_symbols, currency_symbols, interval, news_queries }: { title: string; icon: string; stock_symbols: string[]; currency_symbols?: string[]; interval: string; news_queries: string[] }) => {
+                        execute: async ({
+                            title,
+                            icon,
+                            stock_symbols,
+                            currency_symbols,
+                            interval,
+                            news_queries,
+                        }: {
+                            title: string;
+                            icon: string;
+                            stock_symbols: string[];
+                            currency_symbols?: string[];
+                            interval: string;
+                            news_queries: string[];
+                        }) => {
                             console.log('Title:', title);
                             console.log('Icon:', icon);
                             console.log('Stock symbols:', stock_symbols);
@@ -483,10 +519,12 @@ export async function POST(req: Request) {
                             console.log('News queries:', news_queries);
 
                             // Format currency symbols with actual symbols
-                            const formattedCurrencySymbols = (currency_symbols || stock_symbols.map(() => 'USD')).map(currency => {
-                                const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS];
-                                return symbol || currency; // Fallback to currency code if symbol not found
-                            });
+                            const formattedCurrencySymbols = (currency_symbols || stock_symbols.map(() => 'USD')).map(
+                                (currency) => {
+                                    const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS];
+                                    return symbol || currency; // Fallback to currency code if symbol not found
+                                },
+                            );
 
                             interface NewsResult {
                                 title: string;
@@ -519,7 +557,7 @@ export async function POST(req: Request) {
                                         days: 7,
                                         maxResults: 3,
                                         searchDepth: 'advanced',
-                                    })
+                                    }),
                                 });
 
                                 searchPromises.push({
@@ -530,16 +568,18 @@ export async function POST(req: Request) {
                                         days: 7,
                                         maxResults: 3,
                                         searchDepth: 'advanced',
-                                    })
+                                    }),
                                 });
                             }
 
                             // Execute all searches in parallel
                             const searchResults = await Promise.all(
-                                searchPromises.map(({ promise }) => promise.catch(err => ({
-                                    results: [],
-                                    error: err.message
-                                })))
+                                searchPromises.map(({ promise }) =>
+                                    promise.catch((err) => ({
+                                        results: [],
+                                        error: err.message,
+                                    })),
+                                ),
                             );
 
                             // Process results and deduplicate
@@ -549,26 +589,26 @@ export async function POST(req: Request) {
                                 if (!result.results) return;
 
                                 const processedResults = result.results
-                                    .filter(item => {
+                                    .filter((item) => {
                                         // Skip if we've already included this URL
                                         if (urlSet.has(item.url)) return false;
                                         urlSet.add(item.url);
                                         return true;
                                     })
-                                    .map(item => ({
+                                    .map((item) => ({
                                         title: item.title,
                                         url: item.url,
                                         content: item.content.slice(0, 30000),
                                         published_date: item.publishedDate,
                                         category: topic,
-                                        query: query
+                                        query: query,
                                     }));
 
                                 if (processedResults.length > 0) {
                                     news_results.push({
                                         query,
                                         topic,
-                                        results: processedResults
+                                        results: processedResults,
                                     });
                                 }
                             });
@@ -577,23 +617,22 @@ export async function POST(req: Request) {
                             const exaResults: NewsGroup[] = [];
                             try {
                                 // Run Exa search for each stock symbol
-                                const exaSearchPromises = stock_symbols.map(symbol =>
-                                    exa.searchAndContents(
-                                        `${symbol} financial report analysis`,
-                                        {
+                                const exaSearchPromises = stock_symbols.map((symbol) =>
+                                    exa
+                                        .searchAndContents(`${symbol} financial report analysis`, {
                                             text: true,
-                                            category: "financial report",
-                                            livecrawl: "always",
-                                            type: "auto",
+                                            category: 'financial report',
+                                            livecrawl: 'always',
+                                            type: 'auto',
                                             numResults: 10,
                                             summary: {
-                                                query: "all important information relevent to the important for investors"
-                                            }
-                                        }
-                                    ).catch(error => {
-                                        console.error(`Exa search error for ${symbol}:`, error);
-                                        return { results: [] };
-                                    })
+                                                query: 'all important information relevent to the important for investors',
+                                            },
+                                        })
+                                        .catch((error) => {
+                                            console.error(`Exa search error for ${symbol}:`, error);
+                                            return { results: [] };
+                                        }),
                                 );
 
                                 const exaSearchResults = await Promise.all(exaSearchPromises);
@@ -605,25 +644,25 @@ export async function POST(req: Request) {
 
                                     const stockSymbol = stock_symbols[index];
                                     const processedResults = result.results
-                                        .filter(item => {
+                                        .filter((item) => {
                                             if (exaUrlSet.has(item.url)) return false;
                                             exaUrlSet.add(item.url);
                                             return true;
                                         })
-                                        .map(item => ({
-                                            title: item.title || "",
+                                        .map((item) => ({
+                                            title: item.title || '',
                                             url: item.url,
-                                            content: item.summary || "",
+                                            content: item.summary || '',
                                             published_date: item.publishedDate,
-                                            category: "financial",
-                                            query: stockSymbol
+                                            category: 'financial',
+                                            query: stockSymbol,
                                         }));
 
                                     if (processedResults.length > 0) {
                                         exaResults.push({
                                             query: stockSymbol,
-                                            topic: "financial",
-                                            results: processedResults
+                                            topic: 'financial',
+                                            results: processedResults,
                                         });
                                     }
                                 });
@@ -632,18 +671,28 @@ export async function POST(req: Request) {
                                 for (const group of exaResults) {
                                     for (let i = 0; i < group.results.length; i++) {
                                         const result = group.results[i];
-                                        if (!result.title || result.title.trim() === "") {
+                                        if (!result.title || result.title.trim() === '') {
                                             try {
                                                 const { object } = await generateObject({
-                                                    model: openai.chat("gpt-4.1-nano"),
-                                                    prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query} and contains this content: ${result.content.substring(0, 500)}...`,
+                                                    model: openai.chat('gpt-4.1-nano'),
+                                                    prompt: `Complete the following financial report with an appropriate title. The report is about ${
+                                                        group.query
+                                                    } and contains this content: ${result.content.substring(
+                                                        0,
+                                                        500,
+                                                    )}...`,
                                                     schema: z.object({
-                                                        title: z.string().describe("A descriptive title for the financial report")
+                                                        title: z
+                                                            .string()
+                                                            .describe('A descriptive title for the financial report'),
                                                     }),
                                                 });
                                                 group.results[i].title = object.title;
                                             } catch (error) {
-                                                console.error(`Error generating title for ${group.query} report:`, error);
+                                                console.error(
+                                                    `Error generating title for ${group.query} report:`,
+                                                    error,
+                                                );
                                                 group.results[i].title = `${group.query} Financial Report`;
                                             }
                                         }
@@ -653,7 +702,7 @@ export async function POST(req: Request) {
                                 // Merge Exa results with news results
                                 news_results = [...news_results, ...exaResults];
                             } catch (error) {
-                                console.error("Error fetching Exa financial reports:", error);
+                                console.error('Error fetching Exa financial reports:', error);
                             }
 
                             const code = `
@@ -662,16 +711,28 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 
-${stock_symbols.map(symbol =>
-                                `${symbol.toLowerCase().replace('.', '')} = yf.download('${symbol}', period='${interval}', interval='1d')`).join('\n')}
+${stock_symbols
+    .map(
+        (symbol) =>
+            `${symbol.toLowerCase().replace('.', '')} = yf.download('${symbol}', period='${interval}', interval='1d')`,
+    )
+    .join('\n')}
 
 # Create the plot
 plt.figure(figsize=(10, 6))
-${stock_symbols.map(symbol => `
+${stock_symbols
+    .map(
+        (symbol) => `
 # Convert datetime64 index to strings to make it serializable
 ${symbol.toLowerCase().replace('.', '')}.index = ${symbol.toLowerCase().replace('.', '')}.index.strftime('%Y-%m-%d')
-plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol.toLowerCase().replace('.', '')}['Close'], label='${symbol} ${formattedCurrencySymbols[stock_symbols.indexOf(symbol)]}', color='blue')
-`).join('\n')}
+plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol
+            .toLowerCase()
+            .replace('.', '')}['Close'], label='${symbol} ${
+            formattedCurrencySymbols[stock_symbols.indexOf(symbol)]
+        }', color='blue')
+`,
+    )
+    .join('\n')}
 
 # Customize the chart
 plt.title('${title}')
@@ -679,11 +740,11 @@ plt.xlabel('Date')
 plt.ylabel('Closing Price')
 plt.legend()
 plt.grid(True)
-plt.show()`
+plt.show()`;
 
                             console.log('Code:', code);
 
-                            const daytona = new Daytona()
+                            const daytona = new Daytona();
                             const sandbox = await daytona.create({
                                 language: 'python',
                                 target: SandboxTargetRegion.US,
@@ -692,8 +753,8 @@ plt.show()`
                                     memory: 5,
                                     disk: 10,
                                 },
-                                autoStopInterval: 0
-                            })
+                                autoStopInterval: 0,
+                            });
 
                             const pipInstall = await sandbox.process.executeCommand('pip install yfinance');
                             console.log('Pip install:', pipInstall.result);
@@ -705,42 +766,43 @@ plt.show()`
                                 message += execution.result;
                             }
 
-
                             if (execution.artifacts?.stdout) {
                                 message += execution.artifacts.stdout;
                             }
 
-                            console.log("execution exit code: ", execution.exitCode)
-                            console.log("execution result: ", execution.result)
+                            console.log('execution exit code: ', execution.exitCode);
+                            console.log('execution result: ', execution.result);
 
-                            console.log("Chart details: ", execution.artifacts?.charts)
+                            console.log('Chart details: ', execution.artifacts?.charts);
                             if (execution.artifacts?.charts) {
-                                console.log("showing chart")
+                                console.log('showing chart');
                                 execution.artifacts.charts[0].elements.map((element: any) => {
                                     console.log(element.points);
                                 });
                             }
 
                             if (execution.artifacts?.charts === undefined) {
-                                console.log("No chart found");
+                                console.log('No chart found');
                             }
 
                             await sandbox.delete();
 
                             // map the chart to the correct format for the frontend and remove the png property
                             const chart = execution.artifacts?.charts?.[0] ?? undefined;
-                            const chartData = chart ? {
-                                type: chart.type,
-                                title: chart.title,
-                                elements: chart.elements,
-                                png: undefined
-                            } : undefined;
+                            const chartData = chart
+                                ? {
+                                      type: chart.type,
+                                      title: chart.title,
+                                      elements: chart.elements,
+                                      png: undefined,
+                                  }
+                                : undefined;
 
                             return {
                                 message: message.trim(),
                                 chart: chartData,
                                 currency_symbols: formattedCurrencySymbols,
-                                news_results: news_results
+                                news_results: news_results,
                             };
                         },
                     }),
@@ -795,9 +857,9 @@ plt.show()`
                         },
                     }),
                     text_translate: tool({
-                        description: "Translate text from one language to another.",
+                        description: 'Translate text from one language to another.',
                         parameters: z.object({
-                            text: z.string().describe("The text to translate."),
+                            text: z.string().describe('The text to translate.'),
                             to: z.string().describe("The language to translate to (e.g., 'fr' for French)."),
                         }),
                         execute: async ({ text, to }: { text: string; to: string }) => {
@@ -820,22 +882,40 @@ plt.show()`
                     web_search: tool({
                         description: 'Search the web for information with 5-10 queries, max results and search depth.',
                         parameters: z.object({
-                            queries: z.array(z.string().describe('Array of search queries to look up on the web. Default is 5 to 10 queries.')),
+                            queries: z.array(
+                                z
+                                    .string()
+                                    .describe(
+                                        'Array of search queries to look up on the web. Default is 5 to 10 queries.',
+                                    ),
+                            ),
                             maxResults: z.array(
-                                z.number().describe('Array of maximum number of results to return per query. Default is 10.'),
+                                z
+                                    .number()
+                                    .describe('Array of maximum number of results to return per query. Default is 10.'),
                             ),
                             topics: z.array(
-                                z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general.'),
+                                z
+                                    .enum(['general', 'news', 'finance'])
+                                    .describe('Array of topic types to search for. Default is general.'),
                             ),
                             searchDepth: z.array(
-                                z.enum(['basic', 'advanced']).describe('Array of search depths to use. Default is basic. Use advanced for more detailed results.'),
+                                z
+                                    .enum(['basic', 'advanced'])
+                                    .describe(
+                                        'Array of search depths to use. Default is basic. Use advanced for more detailed results.',
+                                    ),
                             ),
                             include_domains: z
                                 .array(z.string())
-                                .describe('A list of domains to include in all search results. Default is an empty list.'),
+                                .describe(
+                                    'A list of domains to include in all search results. Default is an empty list.',
+                                ),
                             exclude_domains: z
                                 .array(z.string())
-                                .describe('A list of domains to exclude from all search results. Default is an empty list.'),
+                                .describe(
+                                    'A list of domains to exclude from all search results. Default is an empty list.',
+                                ),
                         }),
                         execute: async ({
                             queries,
@@ -886,8 +966,8 @@ plt.show()`
                                         total: queries.length,
                                         status: 'completed',
                                         resultsCount: data.results.length,
-                                        imagesCount: data.images.length
-                                    }
+                                        imagesCount: data.images.length,
+                                    },
                                 });
 
                                 return {
@@ -900,34 +980,44 @@ plt.show()`
                                     })),
                                     images: includeImageDescriptions
                                         ? await Promise.all(
-                                            deduplicateByDomainAndUrl(data.images).map(
-                                                async ({ url, description }: { url: string; description?: string }) => {
-                                                    const sanitizedUrl = sanitizeUrl(url);
-                                                    const imageValidation = await isValidImageUrl(sanitizedUrl);
-                                                    return imageValidation.valid
-                                                        ? {
-                                                            url: imageValidation.redirectedUrl || sanitizedUrl,
-                                                            description: description ?? '',
-                                                        }
-                                                        : null;
-                                                },
-                                            ),
-                                        ).then((results) =>
-                                            results.filter(
-                                                (image): image is { url: string; description: string } =>
-                                                    image !== null &&
-                                                    typeof image === 'object' &&
-                                                    typeof image.description === 'string' &&
-                                                    image.description !== '',
-                                            ),
-                                        )
+                                              deduplicateByDomainAndUrl(data.images).map(
+                                                  async ({
+                                                      url,
+                                                      description,
+                                                  }: {
+                                                      url: string;
+                                                      description?: string;
+                                                  }) => {
+                                                      const sanitizedUrl = sanitizeUrl(url);
+                                                      const imageValidation = await isValidImageUrl(sanitizedUrl);
+                                                      return imageValidation.valid
+                                                          ? {
+                                                                url: imageValidation.redirectedUrl || sanitizedUrl,
+                                                                description: description ?? '',
+                                                            }
+                                                          : null;
+                                                  },
+                                              ),
+                                          ).then((results) =>
+                                              results.filter(
+                                                  (image): image is { url: string; description: string } =>
+                                                      image !== null &&
+                                                      typeof image === 'object' &&
+                                                      typeof image.description === 'string' &&
+                                                      image.description !== '',
+                                              ),
+                                          )
                                         : await Promise.all(
-                                            deduplicateByDomainAndUrl(data.images).map(async ({ url }: { url: string }) => {
-                                                const sanitizedUrl = sanitizeUrl(url);
-                                                const imageValidation = await isValidImageUrl(sanitizedUrl);
-                                                return imageValidation.valid ? (imageValidation.redirectedUrl || sanitizedUrl) : null;
-                                            }),
-                                        ).then((results) => results.filter((url) => url !== null) as string[]),
+                                              deduplicateByDomainAndUrl(data.images).map(
+                                                  async ({ url }: { url: string }) => {
+                                                      const sanitizedUrl = sanitizeUrl(url);
+                                                      const imageValidation = await isValidImageUrl(sanitizedUrl);
+                                                      return imageValidation.valid
+                                                          ? imageValidation.redirectedUrl || sanitizedUrl
+                                                          : null;
+                                                  },
+                                              ),
+                                          ).then((results) => results.filter((url) => url !== null) as string[]),
                                 };
                             });
 
@@ -950,7 +1040,9 @@ plt.show()`
                             try {
                                 // First do a multi-search to get the top result
                                 const searchResponse = await fetch(
-                                    `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=1&include_adult=false`,
+                                    `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(
+                                        query,
+                                    )}&language=en-US&page=1&include_adult=false`,
                                     {
                                         method: 'GET',
                                         headers: {
@@ -1154,7 +1246,7 @@ plt.show()`
                         parameters: z.object({
                             query: z.string().describe('The search query for YouTube videos'),
                         }),
-                        execute: async ({ query, }: { query: string; }) => {
+                        execute: async ({ query }: { query: string }) => {
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
@@ -1183,35 +1275,36 @@ plt.show()`
 
                                         try {
                                             // Fetch detailed info from our endpoints
-                                            const [detailsResponse, captionsResponse, timestampsResponse] = await Promise.all([
-                                                fetch(`${serverEnv.YT_ENDPOINT}/video-data`, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                    },
-                                                    body: JSON.stringify({
-                                                        url: result.url,
-                                                    }),
-                                                }).then((res) => (res.ok ? res.json() : null)),
-                                                fetch(`${serverEnv.YT_ENDPOINT}/video-captions`, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                    },
-                                                    body: JSON.stringify({
-                                                        url: result.url,
-                                                    }),
-                                                }).then((res) => (res.ok ? res.text() : null)),
-                                                fetch(`${serverEnv.YT_ENDPOINT}/video-timestamps`, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                    },
-                                                    body: JSON.stringify({
-                                                        url: result.url,
-                                                    }),
-                                                }).then((res) => (res.ok ? res.json() : null)),
-                                            ]);
+                                            const [detailsResponse, captionsResponse, timestampsResponse] =
+                                                await Promise.all([
+                                                    fetch(`${serverEnv.YT_ENDPOINT}/video-data`, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                        body: JSON.stringify({
+                                                            url: result.url,
+                                                        }),
+                                                    }).then((res) => (res.ok ? res.json() : null)),
+                                                    fetch(`${serverEnv.YT_ENDPOINT}/video-captions`, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                        body: JSON.stringify({
+                                                            url: result.url,
+                                                        }),
+                                                    }).then((res) => (res.ok ? res.text() : null)),
+                                                    fetch(`${serverEnv.YT_ENDPOINT}/video-timestamps`, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                        body: JSON.stringify({
+                                                            url: result.url,
+                                                        }),
+                                                    }).then((res) => (res.ok ? res.json() : null)),
+                                                ]);
 
                                             // Return combined data
                                             return {
@@ -1242,16 +1335,23 @@ plt.show()`
                         },
                     }),
                     retrieve: tool({
-                        description: 'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
+                        description:
+                            'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
                         parameters: z.object({
                             url: z.string().describe('The URL to retrieve the information from.'),
-                            include_summary: z.boolean().describe('Whether to include a summary of the content. Default is true.'),
-                            live_crawl: z.enum(['never', 'auto', 'always']).describe('Whether to crawl the page immediately. Options: never, auto, always. Default is "always".'),
+                            include_summary: z
+                                .boolean()
+                                .describe('Whether to include a summary of the content. Default is true.'),
+                            live_crawl: z
+                                .enum(['never', 'auto', 'always'])
+                                .describe(
+                                    'Whether to crawl the page immediately. Options: never, auto, always. Default is "always".',
+                                ),
                         }),
                         execute: async ({
                             url,
                             include_summary = true,
-                            live_crawl = 'always'
+                            live_crawl = 'always',
                         }: {
                             url: string;
                             include_summary?: boolean;
@@ -1260,18 +1360,17 @@ plt.show()`
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
-                                console.log(`Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`);
+                                console.log(
+                                    `Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`,
+                                );
 
                                 const start = Date.now();
 
-                                const result = await exa.getContents(
-                                    [url],
-                                    {
-                                        text: true,
-                                        summary: include_summary ? true : undefined,
-                                        livecrawl: live_crawl
-                                    }
-                                );
+                                const result = await exa.getContents([url], {
+                                    text: true,
+                                    summary: include_summary ? true : undefined,
+                                    livecrawl: live_crawl,
+                                });
 
                                 // Check if there are results
                                 if (!result.results || result.results.length === 0) {
@@ -1296,24 +1395,34 @@ plt.show()`
                                             language: 'en',
                                         };
                                     }),
-                                    response_time: (Date.now() - start) / 1000
+                                    response_time: (Date.now() - start) / 1000,
                                 };
                             } catch (error) {
                                 console.error('Exa AI error:', error);
-                                return { error: error instanceof Error ? error.message : 'Failed to retrieve content', results: [] };
+                                return {
+                                    error: error instanceof Error ? error.message : 'Failed to retrieve content',
+                                    results: [],
+                                };
                             }
                         },
                     }),
                     get_weather_data: tool({
-                        description: 'Get the weather data for the given location name using geocoding and OpenWeather API.',
+                        description:
+                            'Get the weather data for the given location name using geocoding and OpenWeather API.',
                         parameters: z.object({
-                            location: z.string().describe('The name of the location to get weather data for (e.g., "London", "New York", "Tokyo").')
+                            location: z
+                                .string()
+                                .describe(
+                                    'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo").',
+                                ),
                         }),
                         execute: async ({ location }: { location: string }) => {
                             try {
                                 // Step 1: Geocode the location name using Open Meteo API
                                 const geocodingResponse = await fetch(
-                                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+                                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+                                        location,
+                                    )}&count=1&language=en&format=json`,
                                 );
 
                                 const geocodingData = await geocodingResponse.json();
@@ -1327,30 +1436,31 @@ plt.show()`
                                 console.log('Longitude:', longitude);
                                 // Step 2: Fetch weather data using OpenWeather API with the obtained coordinates
                                 const apiKey = serverEnv.OPENWEATHER_API_KEY;
-                                const [weatherResponse, airPollutionResponse, dailyForecastResponse] = await Promise.all([
-                                    fetch(
-                                        `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
-                                    ),
-                                    fetch(
-                                        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
-                                    ),
-                                    fetch(
-                                        `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=16&appid=${apiKey}`
-                                    )
-                                ]);
+                                const [weatherResponse, airPollutionResponse, dailyForecastResponse] =
+                                    await Promise.all([
+                                        fetch(
+                                            `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`,
+                                        ),
+                                        fetch(
+                                            `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${apiKey}`,
+                                        ),
+                                        fetch(
+                                            `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=16&appid=${apiKey}`,
+                                        ),
+                                    ]);
 
                                 const [weatherData, airPollutionData, dailyForecastData] = await Promise.all([
                                     weatherResponse.json(),
                                     airPollutionResponse.json(),
-                                    dailyForecastResponse.json().catch(error => {
+                                    dailyForecastResponse.json().catch((error) => {
                                         console.error('Daily forecast API error:', error);
                                         return { list: [] }; // Return empty data if API fails
-                                    })
+                                    }),
                                 ]);
 
                                 // Step 3: Fetch air pollution forecast
                                 const airPollutionForecastResponse = await fetch(
-                                    `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                    `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`,
                                 );
                                 const airPollutionForecastData = await airPollutionForecastResponse.json();
 
@@ -1362,11 +1472,11 @@ plt.show()`
                                         longitude,
                                         name,
                                         country,
-                                        timezone
+                                        timezone,
                                     },
                                     air_pollution: airPollutionData,
                                     air_pollution_forecast: airPollutionForecastData,
-                                    daily_forecast: dailyForecastData
+                                    daily_forecast: dailyForecastData,
                                 };
                             } catch (error) {
                                 console.error('Weather data error:', error);
@@ -1392,7 +1502,7 @@ plt.show()`
                             console.log('Title:', title);
                             console.log('Icon:', icon);
 
-                            const daytona = new Daytona()
+                            const daytona = new Daytona();
                             const sandbox = await daytona.create({
                                 language: 'python',
                                 target: SandboxTargetRegion.US,
@@ -1402,7 +1512,7 @@ plt.show()`
                                     disk: 10,
                                 },
                                 timeout: 300,
-                            })
+                            });
 
                             const execution = await sandbox.process.codeRun(code);
 
@@ -1430,12 +1540,14 @@ plt.show()`
                             }
 
                             // map the chart to the correct format for the frontend and remove the png property
-                            const chartData = chart ? {
-                                type: chart.type,
-                                title: chart.title,
-                                elements: chart.elements,
-                                png: undefined
-                            } : undefined;
+                            const chartData = chart
+                                ? {
+                                      type: chart.type,
+                                      title: chart.title,
+                                      elements: chart.elements,
+                                      png: undefined,
+                                  }
+                                : undefined;
 
                             await sandbox.delete();
 
@@ -1450,7 +1562,9 @@ plt.show()`
                             'Find a place using Google Maps API for forward geocoding and Mapbox for reverse geocoding.',
                         parameters: z.object({
                             query: z.string().describe('The search query for forward geocoding'),
-                            coordinates: z.array(z.number()).describe('Array of [latitude, longitude] for reverse geocoding'),
+                            coordinates: z
+                                .array(z.number())
+                                .describe('Array of [latitude, longitude] for reverse geocoding'),
                         }),
                         execute: async ({ query, coordinates }: { query: string; coordinates: number[] }) => {
                             try {
@@ -1483,7 +1597,10 @@ plt.show()`
                                             formatted_address: result.formatted_address,
                                             geometry: {
                                                 type: 'Point',
-                                                coordinates: [result.geometry.location.lng, result.geometry.location.lat],
+                                                coordinates: [
+                                                    result.geometry.location.lng,
+                                                    result.geometry.location.lat,
+                                                ],
                                             },
                                             feature_type: result.types[0],
                                             address_components: result.address_components,
@@ -1528,10 +1645,20 @@ plt.show()`
                         description: 'Perform a text-based search for places using Mapbox API.',
                         parameters: z.object({
                             query: z.string().describe("The search query (e.g., '123 main street')."),
-                            location: z.string().describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
+                            location: z
+                                .string()
+                                .describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
                             radius: z.number().describe('The radius of the search area in meters (max 50000).'),
                         }),
-                        execute: async ({ query, location, radius }: { query: string; location?: string; radius?: number }) => {
+                        execute: async ({
+                            query,
+                            location,
+                            radius,
+                        }: {
+                            query: string;
+                            location?: string;
+                            radius?: number;
+                        }) => {
                             const mapboxToken = serverEnv.MAPBOX_ACCESS_TOKEN;
 
                             let proximity = '';
@@ -1576,7 +1703,8 @@ plt.show()`
                         },
                     }),
                     nearby_search: tool({
-                        description: 'Search for nearby places, such as restaurants or hotels based on the details given.',
+                        description:
+                            'Search for nearby places, such as restaurants or hotels based on the details given.',
                         parameters: z.object({
                             location: z.string().describe('The location name given by user.'),
                             latitude: z.number().describe('The latitude of the location.'),
@@ -1716,8 +1844,10 @@ plt.show()`
 
                                             // Get timezone for the location
                                             const tzResponse = await fetch(
-                                                `https://maps.googleapis.com/maps/api/timezone/json?location=${details.latitude
-                                                },${details.longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY
+                                                `https://maps.googleapis.com/maps/api/timezone/json?location=${
+                                                    details.latitude
+                                                },${details.longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=${
+                                                    serverEnv.GOOGLE_MAPS_API_KEY
                                                 }`,
                                             );
                                             const tzData = await tzResponse.json();
@@ -1862,7 +1992,8 @@ plt.show()`
                         },
                     }),
                     datetime: tool({
-                        description: 'Get the current date and time in the user\'s timezone',
+                        description:
+                            "Get the current date and time in the user's timezone, useful for greetings and time-sensitive responses",
                         parameters: z.object({}),
                         execute: async () => {
                             try {
@@ -1880,26 +2011,26 @@ plt.show()`
                                             year: 'numeric',
                                             month: 'long',
                                             day: 'numeric',
-                                            timeZone: timezone
+                                            timeZone: timezone,
                                         }).format(now),
                                         time: new Intl.DateTimeFormat('en-US', {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             second: '2-digit',
                                             hour12: true,
-                                            timeZone: timezone
+                                            timeZone: timezone,
                                         }).format(now),
                                         dateShort: new Intl.DateTimeFormat('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
-                                            timeZone: timezone
+                                            timeZone: timezone,
                                         }).format(now),
                                         timeShort: new Intl.DateTimeFormat('en-US', {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             hour12: true,
-                                            timeZone: timezone
+                                            timeZone: timezone,
                                         }).format(now),
                                         // Add additional useful formats
                                         full: new Intl.DateTimeFormat('en-US', {
@@ -1911,7 +2042,7 @@ plt.show()`
                                             minute: '2-digit',
                                             second: '2-digit',
                                             hour12: true,
-                                            timeZone: timezone
+                                            timeZone: timezone,
                                         }).format(now),
                                         iso_local: new Intl.DateTimeFormat('sv-SE', {
                                             year: 'numeric',
@@ -1920,9 +2051,11 @@ plt.show()`
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             second: '2-digit',
-                                            timeZone: timezone
-                                        }).format(now).replace(' ', 'T')
-                                    }
+                                            timeZone: timezone,
+                                        })
+                                            .format(now)
+                                            .replace(' ', 'T'),
+                                    },
                                 };
                             } catch (error) {
                                 console.error('Datetime error:', error);
@@ -1942,10 +2075,10 @@ plt.show()`
                                     `https://registry.smithery.ai/servers?q=${encodeURIComponent(query)}`,
                                     {
                                         headers: {
-                                            'Authorization': `Bearer ${serverEnv.SMITHERY_API_KEY}`,
+                                            Authorization: `Bearer ${serverEnv.SMITHERY_API_KEY}`,
                                             'Content-Type': 'application/json',
                                         },
-                                    }
+                                    },
                                 );
 
                                 if (!response.ok) {
@@ -1958,13 +2091,15 @@ plt.show()`
                                 const detailedServers = await Promise.all(
                                     data.servers.map(async (server: any) => {
                                         const detailResponse = await fetch(
-                                            `https://registry.smithery.ai/servers/${encodeURIComponent(server.qualifiedName)}`,
+                                            `https://registry.smithery.ai/servers/${encodeURIComponent(
+                                                server.qualifiedName,
+                                            )}`,
                                             {
                                                 headers: {
-                                                    'Authorization': `Bearer ${serverEnv.SMITHERY_API_KEY}`,
+                                                    Authorization: `Bearer ${serverEnv.SMITHERY_API_KEY}`,
                                                     'Content-Type': 'application/json',
                                                 },
-                                            }
+                                            },
                                         );
 
                                         if (!detailResponse.ok) {
@@ -1978,19 +2113,19 @@ plt.show()`
                                             deploymentUrl: details.deploymentUrl,
                                             connections: details.connections,
                                         };
-                                    })
+                                    }),
                                 );
 
                                 return {
                                     servers: detailedServers,
                                     pagination: data.pagination,
-                                    query: query
+                                    query: query,
                                 };
                             } catch (error) {
                                 console.error('Smithery search error:', error);
                                 return {
                                     error: error instanceof Error ? error.message : 'Unknown error',
-                                    query: query
+                                    query: query,
                                 };
                             }
                         },
@@ -2003,17 +2138,21 @@ plt.show()`
                             content: z.string().describe('The memory content for add operation'),
                             query: z.string().describe('The search query for search operations'),
                         }),
-                        execute: async ({ action, content, query }: {
+                        execute: async ({
+                            action,
+                            content,
+                            query,
+                        }: {
                             action: 'add' | 'search';
                             content?: string;
                             query?: string;
                         }) => {
-                            console.log("user", user);
+                            console.log('user', user);
                             const client = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY });
 
-                            console.log("action", action);
-                            console.log("content", content);
-                            console.log("query", query);
+                            console.log('action', action);
+                            console.log('content', content);
+                            console.log('query', query);
 
                             try {
                                 switch (action) {
@@ -2022,29 +2161,34 @@ plt.show()`
                                             return {
                                                 success: false,
                                                 action: 'add',
-                                                message: 'Content is required for add operation'
+                                                message: 'Content is required for add operation',
                                             };
                                         }
-                                        const result = await client.add([{
-                                            role: 'user',
-                                            content: content
-                                        }], {
-                                            user_id: user?.id,
-                                            org_id: serverEnv.MEM0_ORG_ID,
-                                            project_id: serverEnv.MEM0_PROJECT_ID
-                                        });
+                                        const result = await client.add(
+                                            [
+                                                {
+                                                    role: 'user',
+                                                    content: content,
+                                                },
+                                            ],
+                                            {
+                                                user_id: user?.id,
+                                                org_id: serverEnv.MEM0_ORG_ID,
+                                                project_id: serverEnv.MEM0_PROJECT_ID,
+                                            },
+                                        );
                                         if (result.length === 0) {
                                             return {
                                                 success: false,
                                                 action: 'add',
-                                                message: 'No memory added'
+                                                message: 'No memory added',
                                             };
                                         }
-                                        console.log("result", result);
+                                        console.log('result', result);
                                         return {
                                             success: true,
                                             action: 'add',
-                                            memory: result[0]
+                                            memory: result[0],
                                         };
                                     }
                                     case 'search': {
@@ -2052,29 +2196,27 @@ plt.show()`
                                             return {
                                                 success: false,
                                                 action: 'search',
-                                                message: 'Query is required for search operation'
+                                                message: 'Query is required for search operation',
                                             };
                                         }
                                         const searchFilters = {
-                                            AND: [
-                                                { user_id: user?.id },
-                                            ]
+                                            AND: [{ user_id: user?.id }],
                                         };
                                         const result = await client.search(query, {
                                             filters: searchFilters,
-                                            api_version: 'v2'
+                                            api_version: 'v2',
                                         });
                                         if (!result || !result[0]) {
                                             return {
                                                 success: false,
                                                 action: 'search',
-                                                message: 'No results found for the search query'
+                                                message: 'No results found for the search query',
                                             };
                                         }
                                         return {
                                             success: true,
                                             action: 'search',
-                                            results: result[0]
+                                            results: result[0],
                                         };
                                     }
                                 }
@@ -2089,7 +2231,9 @@ plt.show()`
                         parameters: z.object({
                             query: z.string().describe('The exact search query from the user.'),
                             maxResults: z.number().describe('Maximum number of results to return. Default is 20.'),
-                            timeRange: z.enum(['day', 'week', 'month', 'year']).describe('Time range for Reddit search.'),
+                            timeRange: z
+                                .enum(['day', 'week', 'month', 'year'])
+                                .describe('Time range for Reddit search.'),
                         }),
                         execute: async ({
                             query,
@@ -2114,18 +2258,18 @@ plt.show()`
                                     includeRawContent: true,
                                     searchDepth: 'basic',
                                     topic: 'general',
-                                    includeDomains: ["reddit.com"],
+                                    includeDomains: ['reddit.com'],
                                 });
 
-                                console.log("data", data);
+                                console.log('data', data);
 
                                 // Process results for better display
-                                const processedResults = data.results.map(result => {
+                                const processedResults = data.results.map((result) => {
                                     // Extract Reddit post metadata
                                     const isRedditPost = result.url.includes('/comments/');
-                                    const subreddit = isRedditPost ?
-                                        result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown' :
-                                        'unknown';
+                                    const subreddit = isRedditPost
+                                        ? result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown'
+                                        : 'unknown';
 
                                     // Don't attempt to parse comments - treat content as a single snippet
                                     // The Tavily API already returns short content snippets
@@ -2138,7 +2282,7 @@ plt.show()`
                                         subreddit,
                                         isRedditPost,
                                         // Keep original content as a single comment/snippet
-                                        comments: result.content ? [result.content] : []
+                                        comments: result.content ? [result.content] : [],
                                     };
                                 });
 
@@ -2154,30 +2298,25 @@ plt.show()`
                         },
                     }),
                 },
-                experimental_repairToolCall: async ({
-                    toolCall,
-                    tools,
-                    parameterSchema,
-                    error,
-                }) => {
+                experimental_repairToolCall: async ({ toolCall, tools, parameterSchema, error }) => {
                     if (NoSuchToolError.isInstance(error)) {
                         return null; // do not attempt to fix invalid tool names
                     }
 
-                    console.log("Fixing tool call================================");
-                    console.log("toolCall", toolCall);
-                    console.log("tools", tools);
-                    console.log("parameterSchema", parameterSchema);
-                    console.log("error", error);
+                    console.log('Fixing tool call================================');
+                    console.log('toolCall', toolCall);
+                    console.log('tools', tools);
+                    console.log('parameterSchema', parameterSchema);
+                    console.log('error', error);
 
                     const tool = tools[toolCall.toolName as keyof typeof tools];
 
                     const { object: repairedArgs } = await generateObject({
-                        model: scira.languageModel("scira-default"),
+                        model: scira.languageModel('scira-default'),
                         schema: tool.parameters,
                         prompt: [
                             `The model tried to call the tool "${toolCall.toolName}"` +
-                            ` with the following arguments:`,
+                                ` with the following arguments:`,
                             JSON.stringify(toolCall.args),
                             `The tool accepts the following schema:`,
                             JSON.stringify(parameterSchema(toolCall)),
@@ -2185,11 +2324,15 @@ plt.show()`
                             'Do not use print statements stock chart tool.',
                             `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
                             `For the web search make multiple queries to get the best results.`,
-                            `Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                            `Today's date is ${new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}`,
                         ].join('\n'),
                     });
 
-                    console.log("repairedArgs", repairedArgs);
+                    console.log('repairedArgs', repairedArgs);
 
                     return { ...toolCall, args: JSON.stringify(repairedArgs) };
                 },
@@ -2211,7 +2354,7 @@ plt.show()`
                     console.log('Messages: ', event.response.messages);
                     console.log('Response Body: ', event.response.body);
                     console.log('Provider metadata: ', event.providerMetadata);
-                    console.log("Sources: ", event.sources);
+                    console.log('Sources: ', event.sources);
 
                     if (user?.id) {
                         try {
@@ -2230,7 +2373,7 @@ plt.show()`
                                 responseMessages: event.response.messages,
                             });
 
-                            console.log("Assistant message [annotations]:", assistantMessage.annotations);
+                            console.log('Assistant message [annotations]:', assistantMessage.annotations);
 
                             await saveMessages({
                                 messages: [
@@ -2239,8 +2382,7 @@ plt.show()`
                                         chatId: id,
                                         role: assistantMessage.role,
                                         parts: assistantMessage.parts,
-                                        attachments:
-                                            assistantMessage.experimental_attachments ?? [],
+                                        attachments: assistantMessage.experimental_attachments ?? [],
                                         createdAt: new Date(),
                                     },
                                 ],
@@ -2255,22 +2397,20 @@ plt.show()`
                 },
             });
 
-            result.consumeStream()
+            result.consumeStream();
 
             result.mergeIntoDataStream(dataStream, {
-                sendReasoning: true
+                sendReasoning: true,
             });
         },
         onError() {
             return 'Oops, an error occurred!';
         },
-    })
+    });
     const streamContext = getStreamContext();
 
     if (streamContext) {
-        return new Response(
-            await streamContext.resumableStream(streamId, () => stream),
-        );
+        return new Response(await streamContext.resumableStream(streamId, () => stream));
     } else {
         return new Response(stream);
     }
@@ -2291,9 +2431,7 @@ export async function GET(request: Request) {
         return new ChatSDKError('bad_request:api').toResponse();
     }
 
-    const session = await auth.api.getSession(
-        request
-    );
+    const session = await auth.api.getSession(request);
 
     if (!session?.user) {
         return new ChatSDKError('unauthorized:chat').toResponse();
@@ -2328,13 +2466,10 @@ export async function GET(request: Request) {
     }
 
     const emptyDataStream = createDataStream({
-        execute: () => { },
+        execute: () => {},
     });
 
-    const stream = await streamContext.resumableStream(
-        recentStreamId,
-        () => emptyDataStream,
-    );
+    const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
 
     /*
      * For when the generation is streaming during SSR
