@@ -176,68 +176,68 @@ export const Message: React.FC<MessageProps> = ({
           className="mb-0! px-0"
         >
           <div className="grow min-w-0">
-                    {isEditingMessage && editingMessageIndex === index ? (
-          <div className="group relative">
-            <form onSubmit={handleMessageUpdate} className="w-full">
-              <div className="relative">
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  autoFocus
-                  className="w-full resize-none bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2 text-lg leading-relaxed text-neutral-900 dark:text-neutral-100 font-[syne] focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 min-h-[100px] pr-10 sm:pr-12"
-                  placeholder="Edit your message..."
-                />
+            {isEditingMessage && editingMessageIndex === index ? (
+              <div className="group relative">
+                <form onSubmit={handleMessageUpdate} className="w-full">
+                  <div className="relative">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      autoFocus
+                      className="w-full resize-none bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2 text-lg leading-relaxed text-neutral-900 dark:text-neutral-100 font-[syne] focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 min-h-[100px] pr-10 sm:pr-12"
+                      placeholder="Edit your message..."
+                    />
 
-                <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                    disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                  <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCancelEdit}
-                    className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                    disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </form>
+                    <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting || editContent.trim() === message.content.trim()}
+                      >
+                        {isSubmitting ? (
+                          <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCancelEdit}
+                        className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </form>
 
-            {/* Show editable attachments */}
-            {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-              <div className="mt-3">
-                <EditableAttachmentsBadge 
-                  attachments={message.experimental_attachments}
-                  onRemoveAttachment={(index) => {
-                    // Handle attachment removal
-                    const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
-                    // Update the message with new attachments
-                    const updatedMessage = {
-                      ...message,
-                      experimental_attachments: updatedAttachments
-                    };
-                    const updatedMessages = [...messages];
-                    updatedMessages[editingMessageIndex] = updatedMessage;
-                    setMessages(updatedMessages);
-                  }}
-                />
+                {/* Show editable attachments */}
+                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+                  <div className="mt-3">
+                    <EditableAttachmentsBadge
+                      attachments={message.experimental_attachments}
+                      onRemoveAttachment={(index) => {
+                        // Handle attachment removal
+                        const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
+                        // Update the message with new attachments
+                        const updatedMessage = {
+                          ...message,
+                          experimental_attachments: updatedAttachments
+                        };
+                        const updatedMessages = [...messages];
+                        updatedMessages[editingMessageIndex] = updatedMessage;
+                        setMessages(updatedMessages);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             ) : (
               <div className="group relative">
                 <div className="relative">
@@ -374,7 +374,7 @@ export const Message: React.FC<MessageProps> = ({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
+                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting || editContent.trim() === message.content.trim()}
                     >
                       {isSubmitting ? (
                         <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -400,7 +400,7 @@ export const Message: React.FC<MessageProps> = ({
               {/* Show editable attachments */}
               {message.experimental_attachments && message.experimental_attachments.length > 0 && (
                 <div className="mt-3">
-                  <EditableAttachmentsBadge 
+                  <EditableAttachmentsBadge
                     attachments={message.experimental_attachments}
                     onRemoveAttachment={(index) => {
                       // Handle attachment removal
@@ -644,11 +644,11 @@ export const Message: React.FC<MessageProps> = ({
 };
 
 // Editable attachments badge component for edit mode
-export const EditableAttachmentsBadge = ({ 
-  attachments, 
-  onRemoveAttachment 
-}: { 
-  attachments: any[]; 
+export const EditableAttachmentsBadge = ({
+  attachments,
+  onRemoveAttachment
+}: {
+  attachments: any[];
   onRemoveAttachment: (index: number) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -732,7 +732,7 @@ export const EditableAttachmentsBadge = ({
                   {truncatedName}
                 </span>
               </button>
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -894,8 +894,8 @@ export const EditableAttachmentsBadge = ({
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
                         }`}
                     >
                       {isPdf(attachment) ? (
@@ -1183,8 +1183,8 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
                         }`}
                     >
                       {isPdf(attachment) ? (
