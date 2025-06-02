@@ -51,7 +51,7 @@
     "@tavily/core": "^0.5.3",
     "@types/he": "^1.2.3",
     "@types/katex": "^0.16.7",
-    "@types/mapbox-gl": "^3.4.0",
+    "@types/mapbox-gl": "^3.4.1",
     "@types/unist": "^3.0.3",
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^1.1.1",
@@ -83,7 +83,7 @@
     "marked-react": "^3.0.0",
     "mem0ai": "^2.1.29",
     "motion": "^12.15.0",
-    "next": "15.4.0-canary.59",
+    "next": "15.4.0-canary.61",
     "next-themes": "0.4.6",
     "nuqs": "^2.4.3",
     "postgres": "^3.4.7",
@@ -136,6 +136,7 @@
       "@tailwindcss/oxide",
       "@vercel/speed-insights",
       "core-js",
+      "esbuild",
       "sharp",
       "sqlite3"
     ]

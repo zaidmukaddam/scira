@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import PlaceholderImage from '@/components/placeholder-image';
 import {
     MapPin, Star, ExternalLink, Navigation, Globe, Phone, ChevronDown, ChevronUp,
     Clock
@@ -16,11 +17,10 @@ interface Location {
 }
 
 interface Photo {
-    thumbnail: string;
-    small: string;
-    medium: string;
-    large: string;
-    original: string;
+    photo_reference: string;
+    width: number;
+    height: number;
+    url: string;
     caption?: string;
 }
 
@@ -31,10 +31,11 @@ interface Place {
     vicinity: string;
     rating?: number;
     reviews_count?: number;
-    price_level?: string;
+    price_level?: number;
     description?: string;
     photos?: Photo[];
     is_closed?: boolean;
+    is_open?: boolean;
     next_open_close?: string;
     type?: string;
     cuisine?: string;
@@ -42,6 +43,7 @@ interface Place {
     phone?: string;
     website?: string;
     hours?: string[];
+    opening_hours?: string[];
     distance?: number;
     bearing?: string;
     timezone?: string;
@@ -68,73 +70,51 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
     const todayHours = hours.find(h => h.startsWith(currentDay!))?.split(': ')[1] || 'Closed';
 
     return (
-        <div className="mt-4 border-t dark:border-neutral-800">
-            <div
+        <div className="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+            <button
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsOpen(!isOpen);
                 }}
-                className={cn(
-                    "mt-4 flex items-center gap-2 cursor-pointer transition-colors",
-                    "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
-                )}
+                className="w-full flex items-center justify-between text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-1 px-1 py-1 rounded transition-colors"
             >
-                <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span>Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span></span>
+                <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+                    <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                        Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span>
+                    </span>
                 </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsOpen(!isOpen);
-                    }}
-                    className="ml-auto p-0 h-8 w-8 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                    {isOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                    ) : (
-                        <ChevronDown className="h-4 w-4" />
-                    )}
-                </Button>
-            </div>
+                {isOpen ? (
+                    <ChevronUp className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+                ) : (
+                    <ChevronDown className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+                )}
+            </button>
 
-            <div className={cn(
-                "grid transition-all duration-200 overflow-hidden",
-                isOpen ? "grid-rows-[1fr] mt-2" : "grid-rows-[0fr]"
-            )}>
-                <div className="overflow-hidden">
-                    <div className="rounded-md border dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-                        {hours.map((timeSlot, idx) => {
-                            const [day, hours] = timeSlot.split(': ');
-                            const isToday = day === currentDay;
+            {isOpen && (
+                <div className="mt-2 border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden">
+                    {hours.map((timeSlot, idx) => {
+                        const [day, hours] = timeSlot.split(': ');
+                        const isToday = day === currentDay;
 
-                            return (
-                                <div
-                                    key={idx}
-                                    className={cn(
-                                        "flex items-center justify-between py-2 px-3 text-sm rounded-md",
-                                        isToday && "bg-white dark:bg-neutral-800"
-                                    )}
-                                >
-                                    <span className={cn(
-                                        "font-medium",
-                                        isToday ? "text-primary" : "text-neutral-600 dark:text-neutral-400"
-                                    )}>
-                                        {day}
-                                    </span>
-                                    <span className={cn(
-                                        isToday ? "font-medium" : "text-neutral-600 dark:text-neutral-400"
-                                    )}>
-                                        {hours}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                        return (
+                            <div
+                                key={idx}
+                                className={cn(
+                                    "flex items-center justify-between px-3 py-2 text-xs",
+                                    isToday 
+                                        ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-medium" 
+                                        : "text-neutral-600 dark:text-neutral-400",
+                                    idx !== hours.length - 1 && "border-b border-neutral-200 dark:border-neutral-800"
+                                )}
+                            >
+                                <span>{day}</span>
+                                <span>{hours}</span>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
+            )}
         </div>
     );
 };
@@ -147,6 +127,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
     variant = 'list'
 }) => {
     const [showHours, setShowHours] = useState(false);
+    const [imageError, setImageError] = useState(false);
     const isOverlay = variant === 'overlay';
 
     const formatTime = (timeStr: string | undefined, timezone: string | undefined): string => {
@@ -160,174 +141,194 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
     };
 
     const getStatusDisplay = (): { text: string; color: string } | null => {
-        if (!place.timezone || place.is_closed === undefined || !place.next_open_close) {
+        if (!place.timezone || (place.is_closed === undefined && place.is_open === undefined) || !place.next_open_close) {
             return null;
         }
 
         const timeStr = formatTime(place.next_open_close, place.timezone);
-        if (place.is_closed) {
+        const isClosed = place.is_closed ?? !place.is_open;
+        
+        if (isClosed) {
             return {
                 text: `Closed · Opens ${timeStr}`,
-                color: 'red-600 dark:text-red-400'
+                color: 'text-red-600 dark:text-red-400'
             };
         }
         return {
             text: `Open · Closes ${timeStr}`,
-            color: 'green-600 dark:text-green-400'
+            color: 'text-emerald-600 dark:text-emerald-400'
         };
     };
 
+    // Convert Google Places price level (0-4) to dollar signs
+    const getPriceLevelDisplay = (priceLevel?: number): string => {
+        if (priceLevel === undefined || priceLevel === null) return '';
+        return '$'.repeat(Math.max(1, Math.min(4, priceLevel)));
+    };
+
     const statusDisplay = getStatusDisplay();
+    const displayHours = place.hours || place.opening_hours || [];
+    const hasValidImage = place.photos?.[0]?.url && !imageError;
 
     const cardContent = (
-        <>
-            <div className="flex gap-3">
-                {/* Image with Price Badge */}
-                {place.photos?.[0]?.medium && (
-                    <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0">
-                        <img
-                            src={place.photos[0].medium}
-                            alt={place.name}
-                            className="w-full h-full object-cover"
-                        />
-                        {place.price_level && (
-                            <div className="absolute top-0 left-0 bg-black/80 text-white px-2 py-0.5 text-xs font-medium">
-                                {place.price_level}
+        <div className="flex gap-3">
+            {/* Clean Image Container */}
+            <div className="relative w-16 h-16 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-neutral-50 dark:bg-neutral-900 shrink-0">
+                {hasValidImage ? (
+                    <img
+                        src={place.photos![0].url}
+                        alt={place.name}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <PlaceholderImage 
+                        variant="compact" 
+                        size="sm"
+                        className="border-0"
+                    />
+                )}
+                {place.price_level && (
+                    <div className="absolute top-1 left-1 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-1.5 py-0.5 text-xs font-medium rounded-md">
+                        {getPriceLevelDisplay(place.price_level)}
+                    </div>
+                )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <div className="space-y-1">
+                    {/* Title and Rating Row */}
+                    <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm leading-tight truncate">
+                            {place.name}
+                        </h3>
+                        {place.rating && (
+                            <div className="flex items-center gap-1 shrink-0">
+                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                                    {place.rating.toFixed(1)}
+                                </span>
                             </div>
                         )}
                     </div>
-                )}
 
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate pr-6">
-                                {place.name}
-                            </h3>
-
-                            {/* Rating & Reviews */}
-                            {place.rating && (
-                                <div className="flex items-center gap-1 mt-1">
-                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                    <span className="font-medium">{place.rating.toFixed(1)}</span>
-                                    {place.reviews_count && (
-                                        <span className="text-neutral-500">({place.reviews_count})</span>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Status */}
-                            {statusDisplay && (
-                                <div className={`text-sm text-${statusDisplay.color} mt-1`}>
-                                    {statusDisplay.text}
-                                </div>
-                            )}
-
-                            {/* Address */}
-                            {place.vicinity && (
-                                <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                    <MapPin className="w-4 h-4 mr-1 shrink-0" />
-                                    <span className="truncate">{place.vicinity}</span>
-                                </div>
-                            )}
+                    {/* Status */}
+                    {statusDisplay && (
+                        <div className={cn("text-xs font-medium", statusDisplay.color)}>
+                            {statusDisplay.text}
                         </div>
-                    </div>
+                    )}
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2 mt-3">
-                        <Button
-                            variant="default"
-                            size="sm"
-                            className="h-8"
+                    {/* Address */}
+                    {place.vicinity && (
+                        <div className="flex items-start gap-1">
+                            <MapPin className="w-3 h-3 text-neutral-400 dark:text-neutral-500 mt-0.5 shrink-0" />
+                            <span className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                {place.vicinity}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Review Count */}
+                    {place.reviews_count && (
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {place.reviews_count} reviews
+                        </div>
+                    )}
+                </div>
+
+                {/* Clean Action Buttons */}
+                <div className="flex gap-1 mt-3">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                                `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`,
+                                '_blank'
+                            );
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+                    >
+                        <Navigation className="w-3 h-3" />
+                        Directions
+                    </button>
+
+                    {place.phone && (
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(
-                                    `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`,
-                                    '_blank'
-                                );
+                                window.open(`tel:${place.phone}`, '_blank');
                             }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
                         >
-                            <Navigation className="w-4 h-4 mr-2" />
-                            Directions
-                        </Button>
+                            <Phone className="w-3 h-3" />
+                            Call
+                        </button>
+                    )}
 
-                        {place.phone && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(`tel:${place.phone}`, '_blank');
-                                }}
-                            >
-                                <Phone className="w-4 h-4 mr-2" />
-                                Call
-                            </Button>
-                        )}
+                    {place.website && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(place.website, '_blank');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+                        >
+                            <Globe className="w-3 h-3" />
+                            Website
+                        </button>
+                    )}
 
-                        {place.website && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(place.website, '_blank');
-                                }}
-                            >
-                                <Globe className="w-4 h-4 mr-2" />
-                                Website
-                            </Button>
-                        )}
-
-                        {place.place_id && !isOverlay && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(`https://www.tripadvisor.com/${place.place_id}`, '_blank');
-                                }}
-                            >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                More Info
-                            </Button>
-                        )}
-                    </div>
+                    {place.place_id && !isOverlay && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`https://www.google.com/maps/place/?q=place_id:${place.place_id}`, '_blank');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+                        >
+                            <ExternalLink className="w-3 h-3" />
+                            Maps
+                        </button>
+                    )}
                 </div>
             </div>
-
-            {/* Hours Section - Only show if has hours */}
-            {place.hours && place.hours.length > 0 && (
-                <HoursSection hours={place.hours} timezone={place.timezone} />
-            )}
-        </>
+        </div>
     );
 
     if (isOverlay) {
         return (
             <div
-                className="bg-white/95 dark:bg-black/95 backdrop-blur-xs p-4 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800"
+                className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg"
                 onClick={onClick}
             >
                 {cardContent}
+                
+                {/* Hours Section for Overlay */}
+                {displayHours && displayHours.length > 0 && (
+                    <HoursSection hours={displayHours} timezone={place.timezone} />
+                )}
             </div>
         );
     }
 
     return (
-        <Card
+        <div
             onClick={onClick}
             className={cn(
-                "w-full transition-all duration-200 cursor-pointer p-4",
-                "hover:bg-neutral-50 dark:hover:bg-neutral-800",
-                isSelected && "ring-2 ring-primary"
+                "w-full p-4 cursor-pointer transition-colors border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-neutral-900 shadow-sm",
+                "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:shadow-md",
+                isSelected && "ring-1 ring-neutral-900 dark:ring-neutral-100 shadow-md"
             )}
         >
             {cardContent}
-        </Card>
+            
+            {/* Hours Section */}
+            {displayHours && displayHours.length > 0 && (
+                <HoursSection hours={displayHours} timezone={place.timezone} />
+            )}
+        </div>
     );
 };
 

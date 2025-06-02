@@ -41,6 +41,7 @@ interface MessageProps {
   error?: any;
   isMissingAssistantResponse?: boolean;
   handleRetry?: () => Promise<void>;
+  isOwner?: boolean;
 }
 
 // Max height for collapsed user messages (in pixels)
@@ -67,7 +68,8 @@ export const Message: React.FC<MessageProps> = ({
   isLastMessage,
   error,
   isMissingAssistantResponse,
-  handleRetry
+  handleRetry,
+  isOwner = true
 }) => {
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
@@ -295,8 +297,8 @@ export const Message: React.FC<MessageProps> = ({
 
                   {!isEditingMessage && index === lastUserMessageIndex && (
                     <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
-                      {/* Only hide edit button for unauthenticated users on public chats */}
-                      {(user || selectedVisibilityType === 'private') && (
+                      {/* Only show edit button for owners OR unauthenticated users on private chats */}
+                      {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                         <>
                           <Button
                             variant="ghost"
@@ -332,7 +334,7 @@ export const Message: React.FC<MessageProps> = ({
                           navigator.clipboard.writeText(message.content);
                           toast.success("Copied to clipboard");
                         }}
-                        className={`h-7 w-7 ${(!user && selectedVisibilityType === 'public') ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                        className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                         aria-label="Copy message"
                       >
                         <Copy className="h-3.5 w-3.5" />
@@ -374,7 +376,7 @@ export const Message: React.FC<MessageProps> = ({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
+                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting || editContent.trim() === message.content.trim()}
                     >
                       {isSubmitting ? (
                         <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -452,8 +454,8 @@ export const Message: React.FC<MessageProps> = ({
 
                 {!isEditingMessage && index === lastUserMessageIndex && (
                   <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
-                    {/* Only hide edit button for unauthenticated users on public chats */}
-                    {(user || selectedVisibilityType === 'private') && (
+                    {/* Only show edit button for owners OR unauthenticated users on private chats */}
+                    {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
                         <Button
                           variant="ghost"
@@ -473,10 +475,10 @@ export const Message: React.FC<MessageProps> = ({
                           >
                             <path
                               d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                              fill="currentColor"
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                            />
+                                fill="currentColor"
+                                fillRule="evenodd"
+                                clipRule="evenodd"
+                              />
                           </svg>
                         </Button>
                         <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
@@ -489,7 +491,7 @@ export const Message: React.FC<MessageProps> = ({
                         navigator.clipboard.writeText(message.content);
                         toast.success("Copied to clipboard");
                       }}
-                      className={`h-7 w-7 ${(!user && selectedVisibilityType === 'public') ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                      className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                       aria-label="Copy message"
                     >
                       <Copy className="h-3.5 w-3.5" />

@@ -16,6 +16,7 @@ import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
+import PlaceholderImage from './placeholder-image';
 
 type SearchImage = {
     url: string;
@@ -242,6 +243,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     const [selectedImage, setSelectedImage] = React.useState(0);
     const isMobile = useIsMobile();
     const [imageLoaded, setImageLoaded] = React.useState<Record<number, boolean>>({});
+    const [imageError, setImageError] = React.useState<Record<number, boolean>>({});
 
     const displayImages = showAll 
         ? images 
@@ -250,6 +252,11 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
     const handleImageLoad = (index: number) => {
         setImageLoaded(prev => ({ ...prev, [index]: true }));
+    };
+
+    const handleImageError = (index: number) => {
+        setImageError(prev => ({ ...prev, [index]: true }));
+        setImageLoaded(prev => ({ ...prev, [index]: true })); // Set loaded to true to hide loading state
     };
 
     return (
@@ -285,32 +292,40 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                     >
-                        {!imageLoaded[index] && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
+                        {(!imageLoaded[index] || imageError[index]) && (
+                            <div className="absolute inset-0">
+                                {imageError[index] ? (
+                                    <PlaceholderImage variant="compact" />
+                                ) : (
+                                    <div className="flex items-center justify-center w-full h-full">
+                                        <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
+                                    </div>
+                                )}
                             </div>
                         )}
-                        <Image
-                            src={image.url}
-                            alt={image.description || ""}
-                            className={cn(
-                                "w-full h-full object-cover",
-                                "transition-all duration-300",
-                                "group-hover:scale-105",
-                                !imageLoaded[index] && "opacity-0"
-                            )}
-                            width={100}
-                            height={100}
-                            unoptimized
-                            onLoad={() => handleImageLoad(index)}
-                            onError={() => handleImageLoad(index)}
-                        />
-                        {image.description && (
+                        {!imageError[index] && (
+                            <Image
+                                src={image.url}
+                                alt={image.description || ""}
+                                className={cn(
+                                    "w-full h-full object-cover",
+                                    "transition-all duration-300",
+                                    "group-hover:scale-105",
+                                    !imageLoaded[index] && "opacity-0"
+                                )}
+                                width={100}
+                                height={100}
+                                unoptimized
+                                onLoad={() => handleImageLoad(index)}
+                                onError={() => handleImageError(index)}
+                            />
+                        )}
+                        {!imageError[index] && image.description && (
                             <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 flex items-end">
                                 <p className="text-xs text-white line-clamp-2 w-full">{image.description}</p>
                             </div>
                         )}
-                        {!showAll && hasMore && index === displayImages.length - 1 && (
+                        {!showAll && hasMore && index === displayImages.length - 1 && !imageError[index] && (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <Badge
                                     variant="secondary"
@@ -354,16 +369,32 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
                             <div className="absolute inset-0 flex items-center justify-center p-8 mt-[35px] mb-[35px]">
                                 <AnimatePresence mode="wait">
-                                    <motion.img
-                                        key={selectedImage}
-                                        src={images[selectedImage].url}
-                                        alt={images[selectedImage].description || ""}
-                                        className="max-w-full max-h-full object-contain"
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ duration: 0.2 }}
-                                    />
+                                    {imageError[selectedImage] ? (
+                                        <motion.div
+                                            key={`error-${selectedImage}`}
+                                            className="w-full h-full flex items-center justify-center"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <div className="w-full max-w-md h-64">
+                                                <PlaceholderImage />
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.img
+                                            key={selectedImage}
+                                            src={images[selectedImage].url}
+                                            alt={images[selectedImage].description || ""}
+                                            className="max-w-full max-h-full object-contain"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            transition={{ duration: 0.2 }}
+                                            onError={() => handleImageError(selectedImage)}
+                                        />
+                                    )}
                                 </AnimatePresence>
                             </div>
 
@@ -392,7 +423,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 <ChevronRight className="h-3.5 w-3.5" />
                             </Button>
 
-                            {images[selectedImage].description && (
+                            {images[selectedImage].description && !imageError[selectedImage] && (
                                 <div className="absolute bottom-0 inset-x-0 p-2 bg-white/90 dark:bg-neutral-800/90 border-t border-neutral-200 dark:border-neutral-700">
                                     <p className="text-xs text-neutral-700 dark:text-neutral-300 max-w-[90%] mx-auto text-center">
                                         {images[selectedImage].description}
@@ -424,16 +455,32 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
 
                             <div className="absolute inset-0 flex items-center justify-center p-6 mt-[35px] mb-[35px]">
                                 <AnimatePresence mode="wait">
-                                    <motion.img
-                                        key={selectedImage}
-                                        src={images[selectedImage].url}
-                                        alt={images[selectedImage].description || ""}
-                                        className="max-w-full max-h-full object-contain"
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ duration: 0.2 }}
-                                    />
+                                    {imageError[selectedImage] ? (
+                                        <motion.div
+                                            key={`error-${selectedImage}`}
+                                            className="w-full h-full flex items-center justify-center"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <div className="w-full max-w-sm h-48">
+                                                <PlaceholderImage />
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.img
+                                            key={selectedImage}
+                                            src={images[selectedImage].url}
+                                            alt={images[selectedImage].description || ""}
+                                            className="max-w-full max-h-full object-contain"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            transition={{ duration: 0.2 }}
+                                            onError={() => handleImageError(selectedImage)}
+                                        />
+                                    )}
                                 </AnimatePresence>
                             </div>
 
@@ -462,7 +509,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                                 <ChevronRight className="h-3.5 w-3.5" />
                             </Button>
 
-                            {images[selectedImage].description && (
+                            {images[selectedImage].description && !imageError[selectedImage] && (
                                 <div className="absolute bottom-0 inset-x-0 p-2 bg-white/90 dark:bg-neutral-800/90 border-t border-neutral-200 dark:border-neutral-700">
                                     <p className="text-xs text-neutral-700 dark:text-neutral-300 max-w-[90%] mx-auto text-center">
                                         {images[selectedImage].description}

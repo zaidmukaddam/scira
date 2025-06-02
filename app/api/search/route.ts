@@ -1445,146 +1445,190 @@ plt.show()`
                             };
                         },
                     }),
-                    find_place: tool({
-                        description:
-                            'Find a place using Google Maps API for forward geocoding and Mapbox for reverse geocoding.',
+                    // Improved geocoding tool - combines forward and reverse geocoding in one tool
+                    find_place_on_map: tool({
+                        description: 'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
                         parameters: z.object({
-                            query: z.string().describe('The search query for forward geocoding'),
-                            coordinates: z.array(z.number()).describe('Array of [latitude, longitude] for reverse geocoding'),
+                            query: z.string().optional().describe('Address or place name to search for (for forward geocoding)'),
+                            latitude: z.number().optional().describe('Latitude for reverse geocoding'),
+                            longitude: z.number().optional().describe('Longitude for reverse geocoding'),
                         }),
-                        execute: async ({ query, coordinates }: { query: string; coordinates: number[] }) => {
+                        execute: async ({ query, latitude, longitude }) => {
                             try {
-                                // Forward geocoding with Google Maps API
                                 const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;
-                                const googleResponse = await fetch(
-                                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-                                        query,
-                                    )}&key=${googleApiKey}`,
-                                );
-                                const googleData = await googleResponse.json();
-
-                                // Reverse geocoding with Mapbox
-                                const mapboxToken = serverEnv.MAPBOX_ACCESS_TOKEN;
-                                const [lat, lng] = coordinates;
-                                const mapboxResponse = await fetch(
-                                    `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${mapboxToken}`,
-                                );
-                                const mapboxData = await mapboxResponse.json();
-
-                                // Process and combine results
-                                const features = [];
-
-                                // Process Google results
-                                if (googleData.status === 'OK' && googleData.results.length > 0) {
-                                    features.push(
-                                        ...googleData.results.map((result: GoogleResult) => ({
-                                            id: result.place_id,
-                                            name: result.formatted_address.split(',')[0],
-                                            formatted_address: result.formatted_address,
-                                            geometry: {
-                                                type: 'Point',
-                                                coordinates: [result.geometry.location.lng, result.geometry.location.lat],
-                                            },
-                                            feature_type: result.types[0],
-                                            address_components: result.address_components,
-                                            viewport: result.geometry.viewport,
-                                            place_id: result.place_id,
-                                            source: 'google',
-                                        })),
-                                    );
+                                
+                                if (!googleApiKey) {
+                                    throw new Error('Google Maps API key not configured');
                                 }
 
-                                // Process Mapbox results
-                                if (mapboxData.features && mapboxData.features.length > 0) {
-                                    features.push(
-                                        ...mapboxData.features.map(
-                                            (feature: any): MapboxFeature => ({
-                                                id: feature.id,
-                                                name: feature.properties.name_preferred || feature.properties.name,
-                                                formatted_address: feature.properties.full_address,
-                                                geometry: feature.geometry,
-                                                feature_type: feature.properties.feature_type,
-                                                context: feature.properties.context,
-                                                coordinates: feature.properties.coordinates,
-                                                bbox: feature.properties.bbox,
-                                                source: 'mapbox',
-                                            }),
-                                        ),
-                                    );
+                                let url: string;
+                                let searchType: 'forward' | 'reverse';
+
+                                // Determine search type and build URL
+                                if (query) {
+                                    // Forward geocoding
+                                    url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${googleApiKey}`;
+                                    searchType = 'forward';
+                                } else if (latitude !== undefined && longitude !== undefined) {
+                                    // Reverse geocoding
+                                    url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`;
+                                    searchType = 'reverse';
+                                } else {
+                                    throw new Error('Either query or coordinates (latitude/longitude) must be provided');
                                 }
+
+                                const response = await fetch(url);
+                                const data = await response.json();
+
+                                if (data.status === 'OVER_QUERY_LIMIT') {
+                                    return {
+                                        success: false,
+                                        error: 'Google Maps API quota exceeded. Please try again later.',
+                                        places: []
+                                    };
+                                }
+
+                                if (data.status !== 'OK') {
+                                    return {
+                                        success: false,
+                                        error: data.error_message || `Geocoding failed: ${data.status}`,
+                                        places: []
+                                    };
+                                }
+
+                                const places = data.results.map((result: GoogleResult) => ({
+                                    place_id: result.place_id,
+                                    name: result.formatted_address.split(',')[0].trim(),
+                                    formatted_address: result.formatted_address,
+                                    location: {
+                                        lat: result.geometry.location.lat,
+                                        lng: result.geometry.location.lng,
+                                    },
+                                    types: result.types,
+                                    address_components: result.address_components,
+                                    viewport: result.geometry.viewport,
+                                    source: 'google_maps'
+                                }));
 
                                 return {
-                                    features,
-                                    google_attribution: 'Powered by Google Maps Platform',
-                                    mapbox_attribution: 'Powered by Mapbox',
+                                    success: true,
+                                    search_type: searchType,
+                                    query: query || `${latitude},${longitude}`,
+                                    places,
+                                    count: places.length
                                 };
                             } catch (error) {
                                 console.error('Geocoding error:', error);
-                                throw error;
+                                return {
+                                    success: false,
+                                    error: error instanceof Error ? error.message : 'Unknown geocoding error',
+                                    places: []
+                                };
                             }
                         },
                     }),
-                    text_search: tool({
-                        description: 'Perform a text-based search for places using Mapbox API.',
+                    
+                    // Improved text search using Google Places Text Search API
+                    text_place_search: tool({
+                        description: 'Search for places using Google Places Text Search API with optional location bias.',
                         parameters: z.object({
-                            query: z.string().describe("The search query (e.g., '123 main street')."),
-                            location: z.string().describe("The location to center the search (e.g., '42.3675294,-71.186966')."),
-                            radius: z.number().describe('The radius of the search area in meters (max 50000).'),
+                            query: z.string().describe('Search query for places (e.g., "restaurants in Paris", "hotels near Times Square")'),
+                            location: z.string().optional().describe('Optional location to bias the search (e.g., "40.7589,-73.9851" for coordinates or "New York" for city)'),
+                            radius: z.number().optional().describe('Search radius in meters (max 50000). Only used with coordinate location.'),
                         }),
                         execute: async ({ query, location, radius }: { query: string; location?: string; radius?: number }) => {
-                            const mapboxToken = serverEnv.MAPBOX_ACCESS_TOKEN;
+                            try {
+                                const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;
+                                
+                                if (!googleApiKey) {
+                                    throw new Error('Google Maps API key not configured');
+                                }
 
-                            let proximity = '';
-                            if (location) {
-                                const [lng, lat] = location.split(',').map(Number);
-                                proximity = `&proximity=${lng},${lat}`;
-                            }
+                                let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${googleApiKey}`;
 
-                            const response = await fetch(
-                                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-                                    query,
-                                )}.json?types=poi${proximity}&access_token=${mapboxToken}`,
-                            );
-                            const data = await response.json();
+                                // Add location bias if provided
+                                if (location) {
+                                    // Check if location is coordinates (contains comma and numbers)
+                                    if (/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(location.trim())) {
+                                        url += `&location=${location}`;
+                                        if (radius) {
+                                            url += `&radius=${Math.min(radius, 50000)}`;
+                                        }
+                                    } else {
+                                        // Location is a place name, add as bias
+                                        url += `&location=${encodeURIComponent(location)}`;
+                                    }
+                                }
 
-                            // If location and radius provided, filter results by distance
-                            let results = data.features;
-                            if (location && radius) {
-                                const [centerLng, centerLat] = location.split(',').map(Number);
-                                const radiusInDegrees = radius / 111320;
-                                results = results.filter((feature: any) => {
-                                    const [placeLng, placeLat] = feature.center;
-                                    const distance = Math.sqrt(
-                                        Math.pow(placeLng - centerLng, 2) + Math.pow(placeLat - centerLat, 2),
-                                    );
-                                    return distance <= radiusInDegrees;
-                                });
-                            }
+                                const response = await fetch(url);
+                                const data = await response.json();
 
-                            return {
-                                results: results.map((feature: any) => ({
-                                    name: feature.text,
-                                    formatted_address: feature.place_name,
-                                    geometry: {
-                                        location: {
-                                            lat: feature.center[1],
-                                            lng: feature.center[0],
-                                        },
+                                if (data.status === 'OVER_QUERY_LIMIT') {
+                                    return {
+                                        success: false,
+                                        error: 'Google Places API quota exceeded. Please try again later.',
+                                        places: []
+                                    };
+                                }
+
+                                if (data.status !== 'OK') {
+                                    return {
+                                        success: false,
+                                        error: data.error_message || `Places search failed: ${data.status}`,
+                                        places: []
+                                    };
+                                }
+
+                                const places = data.results.map((place: any) => ({
+                                    place_id: place.place_id,
+                                    name: place.name,
+                                    formatted_address: place.formatted_address,
+                                    location: {
+                                        lat: place.geometry.location.lat,
+                                        lng: place.geometry.location.lng,
                                     },
-                                })),
-                            };
+                                    rating: place.rating,
+                                    price_level: place.price_level,
+                                    types: place.types,
+                                    // Removed photos to avoid Google Places Photo API quota limits
+                                    // photos: place.photos?.slice(0, 3).map((photo: any) => ({
+                                    //     photo_reference: photo.photo_reference,
+                                    //     width: photo.width,
+                                    //     height: photo.height,
+                                    //     url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${googleApiKey}`
+                                    // })) || [],
+                                    photos: [], // Empty array to avoid quota issues
+                                    source: 'google_places'
+                                }));
+
+                                return {
+                                    success: true,
+                                    query,
+                                    location_bias: location,
+                                    places,
+                                    count: places.length
+                                };
+                            } catch (error) {
+                                console.error('Text search error:', error);
+                                return {
+                                    success: false,
+                                    error: error instanceof Error ? error.message : 'Unknown text search error',
+                                    places: []
+                                };
+                            }
                         },
                     }),
-                    nearby_search: tool({
-                        description: 'Search for nearby places, such as restaurants or hotels based on the details given.',
+
+                    // Improved nearby search using Google Places Nearby Search API
+                    nearby_places_search: tool({
+                        description: 'Search for nearby places using Google Places Nearby Search API.',
                         parameters: z.object({
-                            location: z.string().describe('The location name given by user.'),
-                            latitude: z.number().describe('The latitude of the location.'),
-                            longitude: z.number().describe('The longitude of the location.'),
-                            type: z
-                                .string()
-                                .describe('The type of place to search for (restaurants, hotels, attractions, geos).'),
-                            radius: z.number().describe('The radius in meters (max 50000).'),
+                            location: z.string().describe('The location name or coordinates to search around'),
+                            latitude: z.number().optional().describe('Latitude of the search center'),
+                            longitude: z.number().optional().describe('Longitude of the search center'),
+                            type: z.string().describe('Type of place to search for (restaurant, lodging, tourist_attraction, gas_station, bank, hospital, etc.) from the new google places api'),
+                            radius: z.number().describe('Search radius in meters (max 50000)'),
+                            keyword: z.string().optional().describe('Additional keyword to filter results'),
                         }),
                         execute: async ({
                             location,
@@ -1592,255 +1636,181 @@ plt.show()`
                             longitude,
                             type,
                             radius,
+                            keyword
                         }: {
-                            latitude: number;
-                            longitude: number;
                             location: string;
+                            latitude?: number;
+                            longitude?: number;
                             type: string;
                             radius: number;
+                            keyword?: string;
                         }) => {
-                            const apiKey = serverEnv.TRIPADVISOR_API_KEY;
-                            let finalLat = latitude;
-                            let finalLng = longitude;
-
                             try {
-                                // Try geocoding first
-                                const geocodingData = await fetch(
-                                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-                                        location,
-                                    )}&key=${serverEnv.GOOGLE_MAPS_API_KEY}`,
-                                );
-
-                                const geocoding = await geocodingData.json();
-
-                                if (geocoding.results?.[0]?.geometry?.location) {
-                                    let trimmedLat = geocoding.results[0].geometry.location.lat.toString().split('.');
-                                    finalLat = parseFloat(trimmedLat[0] + '.' + trimmedLat[1].slice(0, 6));
-                                    let trimmedLng = geocoding.results[0].geometry.location.lng.toString().split('.');
-                                    finalLng = parseFloat(trimmedLng[0] + '.' + trimmedLng[1].slice(0, 6));
-                                    console.log('Using geocoded coordinates:', finalLat, finalLng);
-                                } else {
-                                    console.log('Using provided coordinates:', finalLat, finalLng);
+                                const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;
+                                
+                                if (!googleApiKey) {
+                                    throw new Error('Google Maps API key not configured');
                                 }
 
-                                // Get nearby places
-                                const nearbyResponse = await fetch(
-                                    `https://api.content.tripadvisor.com/api/v1/location/nearby_search?latLong=${finalLat},${finalLng}&category=${type}&radius=${radius}&language=en&key=${apiKey}`,
-                                    {
-                                        method: 'GET',
-                                        headers: {
-                                            Accept: 'application/json',
-                                            origin: 'https://mplx.local',
-                                            referer: 'https://mplx.local',
-                                        },
-                                    },
-                                );
+                                let searchLat = latitude;
+                                let searchLng = longitude;
 
-                                if (!nearbyResponse.ok) {
-                                    throw new Error(`Nearby search failed: ${nearbyResponse.status}`);
+                                // If coordinates not provided, geocode the location
+                                if (!searchLat || !searchLng) {
+                                    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${googleApiKey}`;
+                                    const geocodeResponse = await fetch(geocodeUrl);
+                                    const geocodeData = await geocodeResponse.json();
+
+                                    if (geocodeData.status === 'OK' && geocodeData.results.length > 0) {
+                                        searchLat = geocodeData.results[0].geometry.location.lat;
+                                        searchLng = geocodeData.results[0].geometry.location.lng;
+                                    } else {
+                                        return {
+                                            success: false,
+                                            error: `Could not geocode location: ${location}`,
+                                            places: [],
+                                            center: null
+                                        };
+                                    }
                                 }
 
-                                const nearbyData = await nearbyResponse.json();
+                                // Build nearby search URL
+                                let nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${searchLat},${searchLng}&radius=${Math.min(radius, 50000)}&type=${type}&key=${googleApiKey}`;
+                                
+                                if (keyword) {
+                                    nearbyUrl += `&keyword=${encodeURIComponent(keyword)}`;
+                                }
 
-                                if (!nearbyData.data || nearbyData.data.length === 0) {
-                                    console.log('No nearby places found');
+                                const response = await fetch(nearbyUrl);
+                                const data = await response.json();
+
+                                if (data.status !== 'OK') {
                                     return {
-                                        results: [],
-                                        center: { lat: finalLat, lng: finalLng },
+                                        success: false,
+                                        error: data.error_message || `Nearby search failed: ${data.status}`,
+                                        places: [],
+                                        center: { lat: searchLat, lng: searchLng }
                                     };
                                 }
 
-                                // Process each place
+                                // Get detailed information for each place
                                 const detailedPlaces = await Promise.all(
-                                    nearbyData.data.map(async (place: any) => {
+                                    data.results.slice(0, 20).map(async (place: any) => {
                                         try {
-                                            if (!place.location_id) {
-                                                console.log(`Skipping place "${place.name}": No location_id`);
-                                                return null;
-                                            }
-
-                                            // Fetch place details
-                                            const detailsResponse = await fetch(
-                                                `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/details?language=en&currency=USD&key=${apiKey}`,
-                                                {
-                                                    method: 'GET',
-                                                    headers: {
-                                                        Accept: 'application/json',
-                                                        origin: 'https://mplx.local',
-                                                        referer: 'https://mplx.local',
-                                                    },
-                                                },
-                                            );
-
-                                            if (!detailsResponse.ok) {
-                                                console.log(`Failed to fetch details for "${place.name}"`);
-                                                return null;
-                                            }
-
+                                            // Get place details for additional information
+                                            const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,reviews,opening_hours,photos,price_level,types&key=${googleApiKey}`;
+                                            const detailsResponse = await fetch(detailsUrl);
                                             const details = await detailsResponse.json();
 
-                                            console.log(`Place details for "${place.name}":`, details);
+                                            let detailsData = details.status === 'OK' ? details.result : {};
 
-                                            // Fetch place photos
-                                            let photos = [];
-                                            try {
-                                                const photosResponse = await fetch(
-                                                    `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/photos?language=en&key=${apiKey}`,
-                                                    {
-                                                        method: 'GET',
-                                                        headers: {
-                                                            Accept: 'application/json',
-                                                            origin: 'https://mplx.local',
-                                                            referer: 'https://mplx.local',
-                                                        },
-                                                    },
-                                                );
+                                            // Calculate distance from search center
+                                            const lat1 = searchLat!;
+                                            const lon1 = searchLng!;
+                                            const lat2 = place.geometry.location.lat;
+                                            const lon2 = place.geometry.location.lng;
+                                            
+                                            const R = 6371000; // Earth's radius in meters
+                                            const dLat = (lat2 - lat1) * Math.PI / 180;
+                                            const dLon = (lon2 - lon1) * Math.PI / 180;
+                                            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                                                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                                                      Math.sin(dLon/2) * Math.sin(dLon/2);
+                                            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                                            const distance = R * c;
 
-                                                if (photosResponse.ok) {
-                                                    const photosData = await photosResponse.json();
-                                                    photos =
-                                                        photosData.data
-                                                            ?.map((photo: any) => ({
-                                                                thumbnail: photo.images?.thumbnail?.url,
-                                                                small: photo.images?.small?.url,
-                                                                medium: photo.images?.medium?.url,
-                                                                large: photo.images?.large?.url,
-                                                                original: photo.images?.original?.url,
-                                                                caption: photo.caption,
-                                                            }))
-                                                            .filter((photo: any) => photo.medium) || [];
+                                            // Convert Google's price_level to text representation
+                                            const formatPriceLevel = (priceLevel: number | undefined): string => {
+                                                if (priceLevel === undefined || priceLevel === null) return 'Not Available';
+                                                switch (priceLevel) {
+                                                    case 0: return 'Free';
+                                                    case 1: return 'Inexpensive';
+                                                    case 2: return 'Moderate';
+                                                    case 3: return 'Expensive';
+                                                    case 4: return 'Very Expensive';
+                                                    default: return 'Not Available';
                                                 }
-                                            } catch (error) {
-                                                console.log(`Photo fetch failed for "${place.name}":`, error);
-                                            }
+                                            };
 
-                                            // Get timezone for the location
-                                            const tzResponse = await fetch(
-                                                `https://maps.googleapis.com/maps/api/timezone/json?location=${details.latitude
-                                                },${details.longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY
-                                                }`,
-                                            );
-                                            const tzData = await tzResponse.json();
-                                            const timezone = tzData.timeZoneId || 'UTC';
-
-                                            // Process hours and status with timezone
-                                            const localTime = new Date(
-                                                new Date().toLocaleString('en-US', {
-                                                    timeZone: timezone,
-                                                }),
-                                            );
-                                            const currentDay = localTime.getDay();
-                                            const currentHour = localTime.getHours();
-                                            const currentMinute = localTime.getMinutes();
-                                            const currentTime = currentHour * 100 + currentMinute;
-
-                                            let is_closed = true;
-                                            let next_open_close = null;
-                                            let next_day = currentDay;
-
-                                            if (details.hours?.periods) {
-                                                // Sort periods by day and time for proper handling of overnight hours
-                                                const sortedPeriods = [...details.hours.periods].sort((a, b) => {
-                                                    if (a.open.day !== b.open.day) return a.open.day - b.open.day;
-                                                    return parseInt(a.open.time) - parseInt(b.open.time);
-                                                });
-
-                                                // Find current or next opening period
-                                                for (let i = 0; i < sortedPeriods.length; i++) {
-                                                    const period = sortedPeriods[i];
-                                                    const openTime = parseInt(period.open.time);
-                                                    const closeTime = period.close ? parseInt(period.close.time) : 2359;
-                                                    const periodDay = period.open.day;
-
-                                                    // Handle overnight hours
-                                                    if (closeTime < openTime) {
-                                                        // Place is open from previous day
-                                                        if (currentDay === periodDay && currentTime < closeTime) {
-                                                            is_closed = false;
-                                                            next_open_close = period.close.time;
-                                                            break;
-                                                        }
-                                                        // Place is open today and extends to tomorrow
-                                                        if (currentDay === periodDay && currentTime >= openTime) {
-                                                            is_closed = false;
-                                                            next_open_close = period.close.time;
-                                                            next_day = (periodDay + 1) % 7;
-                                                            break;
-                                                        }
-                                                    } else {
-                                                        // Normal hours within same day
-                                                        if (
-                                                            currentDay === periodDay &&
-                                                            currentTime >= openTime &&
-                                                            currentTime < closeTime
-                                                        ) {
-                                                            is_closed = false;
-                                                            next_open_close = period.close.time;
-                                                            break;
-                                                        }
-                                                    }
-
-                                                    // Find next opening time if currently closed
-                                                    if (is_closed) {
-                                                        if (
-                                                            periodDay > currentDay ||
-                                                            (periodDay === currentDay && openTime > currentTime)
-                                                        ) {
-                                                            next_open_close = period.open.time;
-                                                            next_day = periodDay;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            // Return processed place data
                                             return {
-                                                name: place.name || 'Unnamed Place',
+                                                place_id: place.place_id,
+                                                name: place.name,
+                                                formatted_address: detailsData.formatted_address || place.vicinity,
                                                 location: {
-                                                    lat: parseFloat(details.latitude || place.latitude || finalLat),
-                                                    lng: parseFloat(details.longitude || place.longitude || finalLng),
+                                                    lat: place.geometry.location.lat,
+                                                    lng: place.geometry.location.lng,
                                                 },
-                                                timezone,
-                                                place_id: place.location_id,
-                                                vicinity: place.address_obj?.address_string || '',
-                                                distance: parseFloat(place.distance || '0'),
-                                                bearing: place.bearing || '',
-                                                type: type,
-                                                rating: parseFloat(details.rating || '0'),
-                                                price_level: details.price_level || '',
-                                                cuisine: details.cuisine?.[0]?.name || '',
-                                                description: details.description || '',
-                                                phone: details.phone || '',
-                                                website: details.website || '',
-                                                reviews_count: parseInt(details.num_reviews || '0'),
-                                                is_closed,
-                                                hours: details.hours?.weekday_text || [],
-                                                next_open_close,
-                                                next_day,
-                                                periods: details.hours?.periods || [],
-                                                photos,
-                                                source: details.source?.name || 'TripAdvisor',
+                                                rating: place.rating || detailsData.rating,
+                                                price_level: formatPriceLevel(place.price_level || detailsData.price_level),
+                                                types: place.types,
+                                                distance: Math.round(distance),
+                                                is_open: place.opening_hours?.open_now,
+                                                photos: (detailsData.photos || place.photos)?.slice(0, 3).map((photo: any) => ({
+                                                    photo_reference: photo.photo_reference,
+                                                    width: photo.width,
+                                                    height: photo.height,
+                                                    url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${googleApiKey}`
+                                                })) || [],
+                                                phone: detailsData.formatted_phone_number,
+                                                website: detailsData.website,
+                                                opening_hours: detailsData.opening_hours?.weekday_text || [],
+                                                reviews_count: detailsData.reviews?.length || 0,
+                                                source: 'google_places'
                                             };
                                         } catch (error) {
-                                            console.log(`Failed to process place "${place.name}":`, error);
-                                            return null;
+                                            console.error(`Failed to get details for place ${place.name}:`, error);
+                                            
+                                            // Convert Google's price_level to text representation (same function as above)
+                                            const formatPriceLevel = (priceLevel: number | undefined): string => {
+                                                if (priceLevel === undefined || priceLevel === null) return 'Not Available';
+                                                switch (priceLevel) {
+                                                    case 0: return 'Free';
+                                                    case 1: return 'Inexpensive';
+                                                    case 2: return 'Moderate';
+                                                    case 3: return 'Expensive';
+                                                    case 4: return 'Very Expensive';
+                                                    default: return 'Not Available';
+                                                }
+                                            };
+                                            
+                                            // Return basic place info if details fail
+                                            return {
+                                                place_id: place.place_id,
+                                                name: place.name,
+                                                formatted_address: place.vicinity,
+                                                location: {
+                                                    lat: place.geometry.location.lat,
+                                                    lng: place.geometry.location.lng,
+                                                },
+                                                rating: place.rating,
+                                                price_level: formatPriceLevel(place.price_level),
+                                                types: place.types,
+                                                distance: 0,
+                                                source: 'google_places'
+                                            };
                                         }
-                                    }),
+                                    })
                                 );
 
-                                // Filter and sort results
-                                const validPlaces = detailedPlaces
-                                    .filter((place) => place !== null)
-                                    .sort((a, b) => (a?.distance || 0) - (b?.distance || 0));
+                                // Sort by distance
+                                const sortedPlaces = detailedPlaces.sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
                                 return {
-                                    results: validPlaces,
-                                    center: { lat: finalLat, lng: finalLng },
+                                    success: true,
+                                    query: location,
+                                    type,
+                                    center: { lat: searchLat, lng: searchLng },
+                                    places: sortedPlaces,
+                                    count: sortedPlaces.length
                                 };
                             } catch (error) {
                                 console.error('Nearby search error:', error);
-                                throw error;
+                                return {
+                                    success: false,
+                                    error: error instanceof Error ? error.message : 'Unknown nearby search error',
+                                    places: [],
+                                    center: latitude && longitude ? { lat: latitude, lng: longitude } : null
+                                };
                             }
                         },
                     }),

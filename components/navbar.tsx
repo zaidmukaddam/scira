@@ -27,6 +27,7 @@ interface NavbarProps {
     status: string;
     user: User | null;
     onHistoryClick: () => void;
+    isOwner?: boolean;
 }
 
 const Navbar = memo(({
@@ -36,7 +37,8 @@ const Navbar = memo(({
     onVisibilityChange,
     status,
     user,
-    onHistoryClick
+    onHistoryClick,
+    isOwner = true
 }: NavbarProps) => {
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -117,11 +119,11 @@ const Navbar = memo(({
                 </Link>
             </div>
             <div className={cn('flex items-center space-x-2', isDialogOpen ? "pointer-events-auto" : "")}>
-                {/* Visibility indicator or toggle based on authentication */}
+                {/* Visibility indicator or toggle based on authentication and ownership */}
                 {chatId && (
                     <>
-                        {user ? (
-                            /* Authenticated users get toggle and share option */
+                        {user && isOwner ? (
+                            /* Authenticated chat owners get toggle and share option */
                             <>
                                 {selectedVisibilityType === 'public' ? (
                                     /* Public chat - show dropdown for copying link */
@@ -324,8 +326,8 @@ const Navbar = memo(({
                                     </DropdownMenu>
                                 )}
                             </>
-                        ) : (
-                            /* Unauthenticated users just see indicator */
+                        ) :
+                            /* Non-owners (authenticated or not) just see indicator */
                             selectedVisibilityType === 'public' && (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -339,11 +341,11 @@ const Navbar = memo(({
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>
-                                        This is a public page shared with you
+                                        {user ? "This is someone else's public page" : "This is a public page shared with you"}
                                     </TooltipContent>
                                 </Tooltip>
                             )
-                        )}
+                        }
                     </>
                 )}
 

@@ -7,7 +7,7 @@ import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
 import { getUser } from "@/lib/auth-utils";
 import { scira } from '@/ai/providers';
-import { getChatsByUserId, deleteChatById, updateChatVisiblityById, getChatById, getMessageById, deleteMessagesByChatIdAfterTimestamp } from '@/lib/db/queries';
+import { getChatsByUserId, deleteChatById, updateChatVisiblityById, getChatById, getMessageById, deleteMessagesByChatIdAfterTimestamp, updateChatTitleById } from '@/lib/db/queries';
 import { groq } from '@ai-sdk/groq';
 import { openai } from '@ai-sdk/openai';
 
@@ -186,8 +186,9 @@ const groupTools = {
   web: [
     'web_search', 'get_weather_data',
     'retrieve', 'text_translate',
-    'nearby_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies',
+    'nearby_places_search', 'track_flight',
+    'movie_or_tv_search', 'trending_movies', 
+    'text_place_search', 'find_place_on_map',
     'trending_tv', 'datetime', 'mcp_search'
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
@@ -257,6 +258,23 @@ const groupInstructions = {
 
   #### Nearby Search:
   - Use location and radius parameters. Adding the country name improves accuracy
+  - Use the 'nearby_places_search' tool to search for places by name or description
+  - Do not use the 'nearby_places_search' tool for general web searches
+  - invoke the tool when the user mentions the word 'near <location>' or 'nearby hotels in <location>' or 'nearby places' in the query or any location related query
+  - invoke the tool when the user says something like show me <tpye> in/near <location> in the query or something like that, example: show me restaurants in new york or restaurants in juhu beach
+  - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool
+
+  #### Text Place Search:
+  - Use the 'text_place_search' tool to search for places by name or description
+  - Do not use the 'text_place_search' tool for general web searches
+  - invoke the tool when the user mentions the word 'place' or 'places' in the query or any location related query
+  - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool
+
+  #### Find Place on Map:
+  - Use the 'find_place_on_map' tool to search for places by name or description
+  - Do not use the 'find_place_on_map' tool for general web searches
+  - invoke the tool when the user mentions the word 'map' or 'maps' in the query or any location related query
+  - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool
 
   #### translate tool:
   - Use the 'translate' tool to translate text to the user's requested language
@@ -929,5 +947,19 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   } catch (error) {
     console.error(`Error deleting trailing messages: ${error}`);
     throw error; // Re-throw to allow caller to handle
+  }
+}
+
+// Add function to update chat title
+export async function updateChatTitle(chatId: string, title: string) {
+  'use server';
+
+  if (!chatId || !title.trim()) return null;
+
+  try {
+    return await updateChatTitleById({ chatId, title: title.trim() });
+  } catch (error) {
+    console.error('Error updating chat title:', error);
+    return null;
   }
 }

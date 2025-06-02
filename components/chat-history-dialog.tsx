@@ -11,10 +11,10 @@ import {
   CommandItem,
   CommandList
 } from "@/components/ui/command";
-import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X } from "lucide-react";
+import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from "lucide-react";
 import { ListMagnifyingGlass } from "@phosphor-icons/react";
 import { isToday, isYesterday, isThisWeek, isThisMonth, subWeeks, differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from "date-fns";
-import { deleteChat, getUserChats, loadMoreChats } from "@/app/actions";
+import { deleteChat, getUserChats, loadMoreChats, updateChatTitle } from "@/app/actions";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { User } from "@/lib/db/schema";
@@ -278,6 +278,8 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const [searchMode, setSearchMode] = useState<SearchMode>('all');
   const [navigating, setNavigating] = useState<string | null>(null);
   const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const [, forceUpdate] = useState({});
 
   // Focus search input on dialog open
@@ -330,6 +332,8 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   useEffect(() => {
     if (!open) {
       setDeletingChatId(null);
+      setEditingChatId(null);
+      setEditingTitle("");
       setSearchQuery("");
       setSearchMode('all');
       if (focusTimeoutRef.current) {
@@ -445,6 +449,36 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     }
   });
 
+  const updateTitleMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      return await updateChatTitle(id, title);
+    },
+    onSuccess: (updatedChat, { id, title }) => {
+      if (updatedChat) {
+        toast.success("Title updated");
+        // Update cache after successful title update
+        queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              chats: page.chats.map((chat: Chat) => 
+                chat.id === id ? { ...chat, title: title } : chat
+              )
+            }))
+          };
+        });
+      } else {
+        toast.error("Failed to update title. Please try again.");
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to update chat title:", error);
+      toast.error("Failed to update title. Please try again.");
+    }
+  });
+
   // Infinite scroll handler
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -536,6 +570,53 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     setDeletingChatId(null);
   }, []);
 
+  // Handle chat title editing
+  const handleEditTitle = useCallback((e: React.MouseEvent | KeyboardEvent, id: string, currentTitle: string) => {
+    e.stopPropagation();
+    setEditingChatId(id);
+    setEditingTitle(currentTitle || "");
+  }, []);
+
+  // Save edited title
+  const saveEditedTitle = useCallback(async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
+    e.stopPropagation();
+    
+    if (!editingTitle.trim()) {
+      toast.error("Title cannot be empty");
+      return;
+    }
+
+    if (editingTitle.trim().length > 100) {
+      toast.error("Title is too long (max 100 characters)");
+      return;
+    }
+
+    try {
+      await updateTitleMutation.mutateAsync({ id, title: editingTitle.trim() });
+      setEditingChatId(null);
+      setEditingTitle("");
+    } catch (error) {
+      // Error handling is done in mutation callbacks
+      console.error("Save title error:", error);
+    }
+  }, [editingTitle, updateTitleMutation]);
+
+  // Cancel title editing
+  const cancelEditTitle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingChatId(null);
+    setEditingTitle("");
+  }, []);
+
+  // Handle key press in title input
+  const handleTitleKeyPress = useCallback((e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter') {
+      saveEditedTitle(e, id);
+    } else if (e.key === 'Escape') {
+      cancelEditTitle(e as any);
+    }
+  }, [saveEditedTitle, cancelEditTitle]);
+
   // Get search mode icon and label
   const getSearchModeInfo = (mode: SearchMode) => {
     switch (mode) {
@@ -568,21 +649,29 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     const isCurrentChat = currentChatId === chat.id;
     const isPublic = chat.visibility === 'public';
     const isDeleting = deletingChatId === chat.id;
+    const isEditing = editingChatId === chat.id;
     const displayTitle = chat.title || "Untitled Conversation";
 
     return (
       <CommandItem
         key={chat.id}
         value={chat.id}
-        onSelect={() => !isDeleting && handleSelectChat(chat.id, chat.title)}
+        onSelect={() => !isDeleting && !isEditing && handleSelectChat(chat.id, chat.title)}
         className={cn(
           "flex items-center py-2.5! px-3! mx-1! my-0.5! rounded-md transition-colors",
-          isDeleting && "bg-destructive/10! border border-destructive/20 hover:bg-destructive/20!"
+          isDeleting && "bg-destructive/10! border border-destructive/20 hover:bg-destructive/20!",
+          isEditing && "bg-muted/50! border border-muted-foreground/20"
         )}
         disabled={navigating === chat.id}
         data-chat-id={chat.id}
         role="option"
-        aria-label={isDeleting ? `Delete ${displayTitle}? Press Enter to confirm, Escape to cancel` : `Open chat: ${displayTitle}`}
+        aria-label={
+          isDeleting 
+            ? `Delete ${displayTitle}? Press Enter to confirm, Escape to cancel`
+            : isEditing
+            ? `Editing title: ${displayTitle}`
+            : `Open chat: ${displayTitle}`
+        }
       >
         <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
           {/* Icon with visibility indicator */}
@@ -602,14 +691,30 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             )}
           </div>
 
-          {/* Title */}
-          <span className={cn(
-            "truncate",
-            isCurrentChat && "font-medium",
-            isDeleting && "text-foreground/70" // Better contrast than muted-foreground
-          )}>
-            {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
-          </span>
+          {/* Title - editable when in edit mode */}
+          <div className="min-w-0 flex-1">
+            {isEditing ? (
+              <input
+                type="text"
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full bg-transparent border-none outline-none focus:outline-none text-sm"
+                placeholder="Enter title..."
+                autoFocus
+                maxLength={100}
+              />
+            ) : (
+              <span className={cn(
+                "truncate block",
+                isCurrentChat && "font-medium",
+                isDeleting && "text-foreground/70"
+              )}>
+                {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
+              </span>
+            )}
+          </div>
 
           {/* Meta information and actions */}
           <div className="flex items-center gap-2 shrink-0">
@@ -636,6 +741,29 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   <X className="h-4 w-4" />
                 </Button>
               </>
+            ) : isEditing ? (
+              // Edit confirmation actions
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 flex-shrink-0 text-green-600 hover:text-green-600 hover:bg-green-600/10"
+                  onClick={(e) => saveEditedTitle(e, chat.id)}
+                  aria-label="Save title"
+                  disabled={updateTitleMutation.isPending}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 flex-shrink-0 text-muted-foreground"
+                  onClick={cancelEditTitle}
+                  aria-label="Cancel edit"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
             ) : (
               // Normal state actions
               <>
@@ -645,6 +773,19 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 </span>
 
                 {/* Actions - always enabled */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "transition-colors hover:text-blue-600 h-7 w-7 flex-shrink-0",
+                    isCurrentChat ? "text-blue-600/70 hover:text-blue-600" : ""
+                  )}
+                  onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
+                  aria-label={`Edit title of ${displayTitle}`}
+                  disabled={navigating === chat.id || updateTitleMutation.isPending}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -840,9 +981,9 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             <div className="flex justify-center items-center gap-3">
               <span>Tap to open</span>
               <span>•</span>
-              <span>Trash to delete</span>
+              <span>Edit to rename</span>
               <span>•</span>
-              <span>Badge to filter</span>
+              <span>Trash to delete</span>
             </div>
           </div>
 
@@ -862,7 +1003,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 
               {/* Less critical shortcuts on the right */}
               <div className="flex items-center gap-4">
-                <span className="text-muted-foreground/80">Click trash to delete</span>
+                <span className="text-muted-foreground/80">Click edit to rename • Click trash to delete</span>
                 <span className="flex items-center gap-1.5"><kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Esc</kbd> close</span>
               </div>
             </div>

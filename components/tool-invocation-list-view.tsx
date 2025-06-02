@@ -218,6 +218,61 @@ const SearchLoadingState = ({
     );
 };
 
+// Dedicated nearby search skeleton loading state
+const NearbySearchSkeleton = ({ type }: { type: string }) => {
+    return (
+        <div className="relative w-full h-[70vh] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4">
+            {/* Header skeleton */}
+            <div className="absolute top-4 left-4 z-20 flex gap-2">
+                <div className="h-6 w-12 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
+                <div className="h-6 w-24 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
+            </div>
+            
+            {/* View toggle skeleton */}
+            <div className="absolute top-4 right-4 z-20 flex rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 p-0.5 shadow-lg">
+                <div className="px-4 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 animate-pulse">
+                    <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded" />
+                </div>
+                <div className="px-4 py-1 rounded-full">
+                    <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                </div>
+            </div>
+
+            {/* Map skeleton */}
+            <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 relative animate-pulse">
+                <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
+                
+                {/* Mock markers */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-6 h-6 bg-blue-400 rounded-full opacity-60 animate-pulse"></div>
+                </div>
+                <div className="absolute top-1/3 right-1/3 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-6 h-6 bg-blue-400 rounded-full opacity-40 animate-pulse"></div>
+                </div>
+                <div className="absolute bottom-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-6 h-6 bg-blue-400 rounded-full opacity-50 animate-pulse"></div>
+                </div>
+
+                {/* Loading text overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
+                        <TextShimmer className="text-sm font-medium" duration={2}>
+                            {`Finding nearby ${type}...`}
+                        </TextShimmer>
+                    </div>
+                </div>
+
+                {/* Map controls skeleton */}
+                <div className="absolute bottom-4 right-4 space-y-2">
+                    <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
+                    <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -622,7 +677,7 @@ const ToolInvocationListView = memo(
                 const args = JSON.parse(JSON.stringify(toolInvocation.args));
                 const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
                 
-                if (toolInvocation.toolName === 'find_place') {
+                if (toolInvocation.toolName === 'find_place_on_map') {
                     if (!result) {
                         return <SearchLoadingState
                             icon={MapPin}
@@ -631,123 +686,157 @@ const ToolInvocationListView = memo(
                         />;
                     }
 
-                    const { features } = result;
-                    if (!features || features.length === 0) return null;
+                    // Handle error responses
+                    if (!result.success) {
+                        return (
+                            <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                                <div className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                                            <MapPin className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-medium text-red-900 dark:text-red-100">
+                                                Location search failed
+                                            </h3>
+                                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                                                {result.error}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    const { places } = result;
+                    if (!places || places.length === 0) {
+                        return (
+                            <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
+                                <div className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                                            <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                                No locations found
+                                            </h3>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                                Try searching with different keywords or check the spelling.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
 
                     return (
-                        <Card className="w-full my-4 overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                            <div className="relative w-full h-[60vh]">
-                                <div className="absolute top-4 left-4 z-10 flex gap-2">
-                                    <Badge
-                                        variant="secondary"
-                                        className="bg-white/90 dark:bg-black/90 backdrop-blur-xs"
-                                    >
-                                        {features.length} Locations Found
-                                    </Badge>
+                        <div className="w-full my-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+                            {/* Compact Header */}
+                            <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                    <div>
+                                        <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                            {places.length} Location{places.length !== 1 ? 's' : ''} Found
+                                        </h3>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                            {result.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
+                                        </p>
+                                    </div>
                                 </div>
+                            </div>
 
+                            {/* Compact Map */}
+                            <div className="relative h-[400px] min-h-[300px] bg-neutral-50 dark:bg-neutral-900">
                                 <MapComponent
                                     center={{
-                                        lat: features[0].geometry.coordinates[1],
-                                        lng: features[0].geometry.coordinates[0],
+                                        lat: places[0].location.lat,
+                                        lng: places[0].location.lng,
                                     }}
-                                    places={features.map((feature: any) => ({
-                                        name: feature.name,
-                                        location: {
-                                            lat: feature.geometry.coordinates[1],
-                                            lng: feature.geometry.coordinates[0],
-                                        },
-                                        vicinity: feature.formatted_address,
+                                    places={places.map((place: any) => ({
+                                        name: place.name,
+                                        location: place.location,
+                                        vicinity: place.formatted_address,
                                     }))}
-                                    zoom={features.length > 1 ? 12 : 15}
+                                    zoom={places.length > 1 ? 12 : 15}
+                                    height="h-full"
+                                    className="rounded-none"
                                 />
                             </div>
 
-                            <div className="max-h-[300px] overflow-y-auto border-t border-neutral-200 dark:border-neutral-800">
-                                {features.map((place: any, index: any) => {
-                                    const isGoogleResult = place.source === 'google';
+                            {/* Compact Places List */}
+                            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                                {places.map((place: any, index: number) => (
+                                    <div key={place.place_id || index} className="p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+                                                {place.types?.[0] === 'street_address' || place.types?.[0] === 'route' ? (
+                                                    <RoadHorizon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                ) : place.types?.[0] === 'locality' ? (
+                                                    <Building className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                ) : (
+                                                    <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                )}
+                                            </div>
 
-                                    return (
-                                        <div
-                                            key={place.id || index}
-                                            className={cn(
-                                                "p-4",
-                                                index !== features.length - 1 && "border-b border-neutral-200 dark:border-neutral-800"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
-                                                    {place.feature_type === 'street_address' || place.feature_type === 'street' ? (
-                                                        <RoadHorizon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                                                    ) : place.feature_type === 'locality' ? (
-                                                        <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                                                    ) : (
-                                                        <MapPin className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                                                    )}
-                                                </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+                                                            {place.name}
+                                                        </h4>
+                                                        
+                                                        {place.formatted_address && (
+                                                            <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+                                                                {place.formatted_address}
+                                                            </p>
+                                                        )}
 
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-                                                        {place.name}
-                                                    </h3>
-                                                    {place.formatted_address && (
-                                                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                                            {place.formatted_address}
-                                                        </p>
-                                                    )}
-                                                    <Badge variant="secondary" className="mt-2">
-                                                        {place.feature_type.replace(/_/g, ' ')}
-                                                    </Badge>
-                                                </div>
+                                                        <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                                                            <span className="font-mono">{place.location.lat.toFixed(4)}, {place.location.lng.toFixed(4)}</span>
+                                                            {place.types?.[0] && (
+                                                                <span className="capitalize">{place.types[0].replace(/_/g, ' ')}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
 
-                                                <div className="flex gap-2">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="outline"
-                                                                    onClick={() => {
-                                                                        const coords = `${place.geometry.coordinates[1]},${place.geometry.coordinates[0]}`;
-                                                                        navigator.clipboard.writeText(coords);
-                                                                        toast.success("Coordinates copied!");
-                                                                    }}
-                                                                    className="h-10 w-10"
-                                                                >
-                                                                    <Copy className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Copy Coordinates</TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                    <div className="flex items-center gap-1 ml-3">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                const coords = `${place.location.lat},${place.location.lng}`;
+                                                                navigator.clipboard.writeText(coords);
+                                                                toast.success("Coordinates copied!");
+                                                            }}
+                                                            className="h-7 px-2 text-xs"
+                                                        >
+                                                            <Copy className="h-3 w-3" />
+                                                        </Button>
 
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="outline"
-                                                                    onClick={() => {
-                                                                        const url = isGoogleResult
-                                                                            ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}`
-                                                                            : `https://www.google.com/maps/search/?api=1&query=${place.geometry.coordinates[1]},${place.geometry.coordinates[0]}`;
-                                                                        window.open(url, '_blank');
-                                                                    }}
-                                                                    className="h-10 w-10"
-                                                                >
-                                                                    <ExternalLink className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>View in Maps</TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const url = place.place_id
+                                                                    ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}`
+                                                                    : `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`;
+                                                                window.open(url, '_blank');
+                                                            }}
+                                                            className="h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                                        >
+                                                            <ExternalLink className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                ))}
                             </div>
-                        </Card>
+                        </div>
                     );
                 }
 
@@ -881,50 +970,72 @@ const ToolInvocationListView = memo(
                     return <AcademicPapersCard results={result.results} />;
                 }
 
-                if (toolInvocation.toolName === 'nearby_search') {
+                if (toolInvocation.toolName === 'nearby_places_search') {
                     if (!result) {
+                        return <NearbySearchSkeleton type={args.type} />;
+                    }
+
+                    // Handle error responses
+                    if (!result.success) {
                         return (
-                            <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center gap-2">
-                                    <MapPin className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
-                                    <span className="text-neutral-700 dark:text-neutral-300 text-lg">
-                                        Finding nearby {args.type}...
-                                    </span>
+                            <Card className="w-full my-4 p-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                                    <MapPin className="h-5 w-5" />
+                                    <span className="font-medium">Nearby search failed</span>
                                 </div>
-                                <motion.div className="flex space-x-1">
-                                    {[0, 1, 2].map((index) => (
-                                        <motion.div
-                                            key={index}
-                                            className="w-2 h-2 bg-neutral-400 dark:bg-neutral-600 rounded-full"
-                                            initial={{ opacity: 0.3 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{
-                                                repeat: Infinity,
-                                                duration: 0.8,
-                                                delay: index * 0.2,
-                                                repeatType: "reverse",
-                                            }}
-                                        />
-                                    ))}
-                                </motion.div>
-                            </div>
+                                <p className="text-sm text-red-500 dark:text-red-300 mt-1">{result.error}</p>
+                            </Card>
                         );
                     }
 
-                    console.log(result);
+                    const { places, center } = result;
+                    if (!places || places.length === 0) {
+                        return (
+                            <Card className="w-full my-4 p-4 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950">
+                                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                                    <MapPin className="h-5 w-5" />
+                                    <span className="font-medium">No nearby {args.type} found</span>
+                                </div>
+                                <p className="text-sm text-yellow-500 dark:text-yellow-300 mt-1">
+                                    Try expanding the search radius or searching in a different area.
+                                </p>
+                            </Card>
+                        );
+                    }
+
+                    // Transform places to match the NearbySearchMapView expected format
+                    const transformedPlaces = places.map((place: any) => ({
+                        name: place.name,
+                        location: place.location,
+                        place_id: place.place_id,
+                        vicinity: place.formatted_address,
+                        rating: place.rating,
+                        reviews_count: place.reviews_count,
+                        price_level: place.price_level,
+                        photos: place.photos,
+                        is_closed: !place.is_open,
+                        type: place.types?.[0]?.replace(/_/g, ' '),
+                        source: place.source,
+                        phone: place.phone,
+                        website: place.website,
+                        hours: place.opening_hours,
+                        distance: place.distance,
+                    }));
 
                     return (
                         <div className="my-4">
                             <NearbySearchMapView
-                                center={result.center}
-                                places={result.results}
-                                type={args.type}
+                                center={center}
+                                places={transformedPlaces}
+                                type={result.type}
+                                query={result.query}
+                                searchRadius={result.radius}
                             />
                         </div>
                     );
                 }
 
-                if (toolInvocation.toolName === 'text_search') {
+                if (toolInvocation.toolName === 'text_place_search') {
                     if (!result) {
                         return (
                             <div className="flex items-center justify-between w-full">
@@ -952,17 +1063,161 @@ const ToolInvocationListView = memo(
                         );
                     }
 
-                    const centerLocation = result.results[0]?.geometry?.location;
+                    // Handle error responses
+                    if (!result.success) {
+                        return (
+                            <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                                <div className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                                            <MapPin className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-medium text-red-900 dark:text-red-100">
+                                                Place search failed
+                                            </h3>
+                                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                                                {result.error}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    const { places } = result;
+                    if (!places || places.length === 0) {
+                        return (
+                            <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
+                                <div className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                                            <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                                No places found
+                                            </h3>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                                Try searching with different keywords or location.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    const centerLocation = places[0].location;
                     return (
-                        <MapContainer
-                            title="Search Results"
-                            center={centerLocation}
-                            places={result.results.map((place: any) => ({
-                                name: place.name,
-                                location: place.geometry.location,
-                                vicinity: place.formatted_address
-                            }))}
-                        />
+                        <div className="w-full my-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+                            {/* Compact Header */}
+                            <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                    <div>
+                                        <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                            {places.length} Place{places.length !== 1 ? 's' : ''} Found
+                                        </h3>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                            {result.location_bias ? `Near ${result.location_bias}` : 'Search Results'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Compact Map */}
+                            <div className="relative h-[400px] min-h-[300px] bg-neutral-50 dark:bg-neutral-900">
+                                <MapComponent
+                                    center={centerLocation}
+                                    places={places.map((place: any) => ({
+                                        name: place.name,
+                                        location: place.location,
+                                        vicinity: place.formatted_address
+                                    }))}
+                                    zoom={places.length > 1 ? 12 : 15}
+                                    height="h-full"
+                                    className="rounded-none"
+                                />
+                            </div>
+
+                            {/* Compact Places List */}
+                            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                                {places.map((place: any, index: number) => (
+                                    <div key={place.place_id || index} className="p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-50 dark:bg-green-950 flex items-center justify-center">
+                                                <MapPin className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+                                                            {place.name}
+                                                        </h4>
+                                                        
+                                                        {place.formatted_address && (
+                                                            <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+                                                                {place.formatted_address}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="flex items-center gap-3 text-xs">
+                                                            {place.rating && (
+                                                                <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                                                    <span>★</span>
+                                                                    <span>{place.rating}</span>
+                                                                </div>
+                                                            )}
+                                                            {place.price_level && (
+                                                                <span className="text-green-600 dark:text-green-400">
+                                                                    {'$'.repeat(place.price_level)}
+                                                                </span>
+                                                            )}
+                                                            {place.types?.[0] && (
+                                                                <span className="text-neutral-500 dark:text-neutral-400 capitalize">
+                                                                    {place.types[0].replace(/_/g, ' ')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1 ml-3">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                const coords = `${place.location.lat},${place.location.lng}`;
+                                                                navigator.clipboard.writeText(coords);
+                                                                toast.success("Coordinates copied!");
+                                                            }}
+                                                            className="h-7 px-2 text-xs"
+                                                        >
+                                                            <Copy className="h-3 w-3" />
+                                                        </Button>
+
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const url = place.place_id
+                                                                    ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}`
+                                                                    : `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`;
+                                                                window.open(url, '_blank');
+                                                            }}
+                                                            className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                                        >
+                                                            <ExternalLink className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     );
                 }
 
@@ -1063,34 +1318,6 @@ const ToolInvocationListView = memo(
                 }
 
                 if (toolInvocation.toolName === "code_interpreter") {
-                    // Example code for creating charts (useful for reference but not shown to user):
-                    // 
-                    // # For pie charts:
-                    // chart_data = {
-                    //     "type": "pie",
-                    //     "title": "Distribution of Values",
-                    //     "elements": [
-                    //         {"label": "Category A", "value": 30},
-                    //         {"label": "Category B", "value": 20},
-                    //         {"label": "Category C", "value": 15},
-                    //         {"label": "Category D", "value": 35}
-                    //     ]
-                    // }
-                    // return {"message": "Chart generated successfully", "chart": chart_data}
-                    //
-                    // # For line charts:
-                    // chart_data = {
-                    //     "type": "line",
-                    //     "title": "Temperature Trends",
-                    //     "x_label": "Date",
-                    //     "y_label": "Temperature (°C)",
-                    //     "elements": [
-                    //         {"label": "Tokyo", "points": [["2023-01", 7], ["2023-02", 8], ["2023-03", 12]]},
-                    //         {"label": "New York", "points": [["2023-01", 2], ["2023-02", 3], ["2023-03", 7]]}
-                    //     ]
-                    // }
-                    // return {"message": "Chart generated successfully", "chart": chart_data}
-                    
                     return (
                         <div className="space-y-3 w-full overflow-hidden">
                             <CodeInterpreterView

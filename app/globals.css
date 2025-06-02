@@ -3,18 +3,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @plugin 'tailwind-scrollbar';
-@plugin 'tailwindcss-animate';
+@import "tw-animate-css";
 @plugin "@tailwindcss/typography";
-
-@keyframes accordion-down {
-  from {
-    height: 0;
-  }
-
-  to {
-    height: var(--radix-accordion-content-height);
-  }
-}
 
 @keyframes spinner-fade {
   0% {
@@ -26,18 +16,8 @@
   }
 }
 
-@keyframes accordion-up {
-  from {
-    height: var(--radix-accordion-content-height);
-  }
-
-  to {
-    height: 0;
-  }
-}
-
 ::selection {
-  @apply bg-primary text-primary-foreground;
+  @apply bg-primary/15 text-foreground;
 }
 
 @theme {
@@ -314,5 +294,79 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for Mapbox */
+@layer utilities {
+  /* Mapbox popup styles */
+  .mapboxgl-popup {
+    z-index: 12 !important;
+  }
+
+  .mapboxgl-popup-content {
+    @apply rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 p-0 overflow-hidden;
+  }
+
+  .mapboxgl-popup-close-button {
+    @apply text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-lg w-6 h-6 flex items-center justify-center;
+  }
+
+  .mapboxgl-popup-close-button:hover {
+    @apply bg-neutral-100 dark:bg-neutral-800 rounded;
+  }
+
+  .mapboxgl-popup-tip {
+    @apply border-t-neutral-200 dark:border-t-neutral-800;
+  }
+
+  /* Custom marker styles */
+  .custom-marker {
+    @apply cursor-pointer;
+  }
+
+  .custom-marker:focus {
+    @apply outline-none;
+  }
+
+  .custom-marker:focus > div {
+    @apply ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  /* Map controls styling - minimal and compatible */
+  .mapboxgl-ctrl-group {
+    z-index: 10 !important;
+  }
+
+  .mapboxgl-ctrl-attrib {
+    z-index: 10 !important;
+  }
+
+  /* Navigation controls positioning - avoid overlap with view toggle */
+  .mapboxgl-ctrl-bottom-right {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+
+  .mapboxgl-ctrl-bottom-left {
+    bottom: 16px !important;
+    left: 16px !important;
+  }
+
+  /* Responsive positioning for nearby search component */
+  .nearby-search-map .mapboxgl-ctrl-bottom-right {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+
+  /* In list view, adjust bottom position to account for reduced map height */
+  .nearby-search-map.list-view .mapboxgl-ctrl-bottom-right {
+    bottom: 8px !important;
+    right: 8px !important;
+  }
+
+  /* Ensure place card overlays have proper z-index */
+  .place-card-overlay {
+    z-index: 15 !important;
   }
 }

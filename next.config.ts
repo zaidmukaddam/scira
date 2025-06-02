@@ -68,11 +68,32 @@ const nextConfig: NextConfig = {
                 port: '',
                 pathname: '**'
             },
+            // Google Favicon Service - comprehensive patterns
+            {
+                protocol: 'https',
+                hostname: 'www.google.com',
+                port: '',
+                pathname: '/s2/favicons/**',
+            },
             {
                 protocol: 'https',
                 hostname: 'www.google.com',
                 port: '',
                 pathname: '/s2/favicons',
+            },
+            // Google Maps Static API
+            {
+                protocol: 'https',
+                hostname: 'maps.googleapis.com',
+                port: '',
+                pathname: '/**',
+            },
+            // Google Street View Static API
+            {
+                protocol: 'https',
+                hostname: 'maps.googleapis.com',
+                port: '',
+                pathname: '/maps/api/streetview/**',
             },
             {
                 protocol: 'https',
@@ -121,7 +142,14 @@ const nextConfig: NextConfig = {
                 port: '',
                 pathname: '/**'
             },
-        ]
+        ],
+        // Add additional settings for better image loading
+        domains: [],
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+        formats: ['image/webp'],
+        minimumCacheTTL: 60,
+        unoptimized: false,
     },
 };
 

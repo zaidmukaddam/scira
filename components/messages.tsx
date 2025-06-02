@@ -41,6 +41,7 @@ interface MessagesProps {
   chatId?: string; // Add chatId prop
   onVisibilityChange?: (visibility: 'public' | 'private') => void; // Add visibility change handler
   initialMessages?: any[]; // Add initial messages prop to detect existing chat
+  isOwner?: boolean; // Add ownership prop
 }
 
 // Create a consistent logo header component to reuse
@@ -79,7 +80,8 @@ const Messages: React.FC<MessagesProps> = ({
   selectedVisibilityType = 'private',
   chatId,
   onVisibilityChange,
-  initialMessages
+  initialMessages,
+  isOwner
 }) => {
   // Track visibility state for each reasoning section using messageIndex-partIndex as key
   const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
@@ -212,8 +214,8 @@ const Messages: React.FC<MessagesProps> = ({
             {/* Add buttons below the text with visible labels */}
             {status === 'ready' && (
               <div className="flex items-center gap-3 mt-3">
-                {/* Only hide reload for unauthenticated users on public chats */}
-                {(user || selectedVisibilityType === 'private') && (
+                {/* Only show reload for owners OR unauthenticated users on private chats */}
+                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -255,7 +257,8 @@ const Messages: React.FC<MessagesProps> = ({
                     Rewrite
                   </Button>
                 )}
-                {user && chatId && (
+                {/* Only show share for authenticated owners */}
+                {user && isOwner && chatId && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -497,6 +500,7 @@ const Messages: React.FC<MessagesProps> = ({
                 error={index === memoizedMessages.length - 1 ? error : null}
                 isMissingAssistantResponse={index === memoizedMessages.length - 1 ? isMissingAssistantResponse : false}
                 handleRetry={handleRetry}
+                isOwner={isOwner}
               />
             </div>
           );

@@ -133,11 +133,15 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const initialMessages = convertToUIMessages(messagesFromDb);
 
+  // Determine if the current user owns this chat
+  const isOwner = user ? user.id === chat.userId : false;
+
   return (
     <ChatInterface
       initialChatId={id}
       initialMessages={initialMessages}
       initialVisibility={chat.visibility as 'public' | 'private'}
+      isOwner={isOwner}
     />
   );
 } 

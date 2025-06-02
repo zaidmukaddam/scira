@@ -41,9 +41,10 @@ interface ChatInterfaceProps {
     initialChatId?: string;
     initialMessages?: any[];
     initialVisibility?: 'public' | 'private';
+    isOwner?: boolean;
 }
 
-const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility = 'private' }: ChatInterfaceProps): JSX.Element => {
+const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility = 'private', isOwner = true }: ChatInterfaceProps): JSX.Element => {
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''))
     const [q] = useQueryState('q', parseAsString.withDefault(''))
@@ -403,6 +404,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                     status={status}
                     user={user}
                     onHistoryClick={() => setCommandDialogOpen(true)}
+                    isOwner={isOwner}
                 />
 
                 {/* Chat History Dialog */}
@@ -440,6 +442,14 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                         )}
 
                         {messages.length === 0 && !hasSubmitted && (
+                            // Show initial form only if:
+                            // 1. User is authenticated AND owns the chat, OR
+                            // 2. It's a new chat (no initialChatId), OR
+                            // 3. User is not authenticated but it's a private chat (anonymous private session)
+                            (user && isOwner) || 
+                            !initialChatId || 
+                            (!user && selectedVisibilityType === 'private')
+                        ) && (
                             <div
                                 className={cn('mt-4!')}
                             >
@@ -492,14 +502,23 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                                 chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
                                 onVisibilityChange={handleVisibilityChange}
                                 initialMessages={initialMessages}
+                                isOwner={isOwner}
                             />
                         )}
 
                         <div ref={bottomRef} />
                     </div>
 
-                    {/* Only hide form for unauthenticated users on public chats */}
-                    {(messages.length > 0 || hasSubmitted) && (user || selectedVisibilityType === 'private') && (
+                    {/* Only show form if user owns the chat OR it's a new private chat */}
+                    {(messages.length > 0 || hasSubmitted) && (
+                        // Show form only if:
+                        // 1. User is authenticated AND owns the chat, OR
+                        // 2. It's a private chat with no initial chat ID (new chat), OR  
+                        // 3. User is not authenticated but it's a private chat (anonymous private session)
+                        (user && isOwner) || 
+                        (selectedVisibilityType === 'private' && !initialChatId) || 
+                        (!user && selectedVisibilityType === 'private')
+                    ) && (
                         <div
                             className="fixed bottom-6 sm:bottom-4 left-0 right-0 w-full max-w-[26rem] sm:max-w-2xl mx-auto z-20"
                         >

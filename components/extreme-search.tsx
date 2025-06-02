@@ -612,7 +612,7 @@ const ExtremeSearchComponent = ({
           targetQuery.sources.push({
               title: annotation.source.title || '',
               url: annotation.source.url,
-              favicon: annotation.source.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(annotation.source.url)}`
+              favicon: annotation.source.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(annotation.source.url).hostname)}`
           });
         }
       } else if (annotation.type === "content" && annotation.content && typeof annotation.content.url === 'string') {
@@ -627,7 +627,7 @@ const ExtremeSearchComponent = ({
               title: annotation.content.title || '',
               url: annotation.content.url,
               text: annotation.content.text || '',
-              favicon: annotation.content.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(annotation.content.url)}`
+              favicon: annotation.content.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(annotation.content.url).hostname)}`
           });
         }
       }
@@ -720,13 +720,13 @@ const ExtremeSearchComponent = ({
               sources: (resultData?.result || []).map((source: any) => ({
                 title: source.title || '',
                 url: source.url || '',
-                favicon: source.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(source.url)}`
+                favicon: source.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url).hostname)}`
               })),
               content: (resultData?.result || []).map((source: any) => ({
                 title: source.title || '',
                 url: source.url || '',
                 text: source.content || '',
-                favicon: source.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(source.url)}`
+                favicon: source.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url).hostname)}`
               }))
             };
           });
@@ -992,7 +992,7 @@ const ExtremeSearchComponent = ({
                                     alt=""
                                     className="w-3.5 h-3.5 rounded-full"
                                     onError={(e) => {
-                                      e.currentTarget.src = 'https://www.google.com/s2/favicons?sz-128&domain_url=example.com';
+                                      e.currentTarget.src = 'https://www.google.com/s2/favicons?sz=128&domain=example.com';
                                       (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
                                     }}
                                   />
@@ -1159,7 +1159,7 @@ const ExtremeSearchComponent = ({
                                     alt=""
                                     className="w-5 h-5 rounded-full flex-shrink-0 opacity-90"
                                     onError={(e) => {
-                                      e.currentTarget.src = 'https://www.google.com/s2/favicons?sz-128&domain_url=example.com';
+                                      e.currentTarget.src = 'https://www.google.com/s2/favicons?sz=128&domain=example.com';
                                       (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%) brightness(150%)';
                                     }}
                                   />
@@ -1242,7 +1242,7 @@ const ExtremeSearchComponent = ({
       new Map(
         (research?.sources || []).map(s => [
           s.url,
-          { ...s, favicon: s.favicon || `https://www.google.com/s2/favicons?sz-128&domain_url=${encodeURIComponent(s.url)}` }
+          { ...s, favicon: s.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(s.url).hostname)}` }
         ])
       ).values()
     ).filter(source => source && source.url);
