@@ -188,7 +188,7 @@ const groupTools = {
     'retrieve', 'text_translate',
     'nearby_places_search', 'track_flight',
     'movie_or_tv_search', 'trending_movies', 
-    'text_place_search', 'find_place_on_map',
+    'find_place_on_map',
     'trending_tv', 'datetime', 'mcp_search'
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
@@ -262,12 +262,6 @@ const groupInstructions = {
   - Do not use the 'nearby_places_search' tool for general web searches
   - invoke the tool when the user mentions the word 'near <location>' or 'nearby hotels in <location>' or 'nearby places' in the query or any location related query
   - invoke the tool when the user says something like show me <tpye> in/near <location> in the query or something like that, example: show me restaurants in new york or restaurants in juhu beach
-  - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool
-
-  #### Text Place Search:
-  - Use the 'text_place_search' tool to search for places by name or description
-  - Do not use the 'text_place_search' tool for general web searches
-  - invoke the tool when the user mentions the word 'place' or 'places' in the query or any location related query
   - do not mistake this tool as tts or the word 'tts' in the query and run tts query on the web search tool
 
   #### Find Place on Map:

@@ -29,7 +29,6 @@ export const serverEnv = createEnv({
     SANDBOX_TEMPLATE_ID: z.string().min(1),
     GOOGLE_MAPS_API_KEY: z.string().min(1),
     MAPBOX_ACCESS_TOKEN: z.string().min(1),
-    TRIPADVISOR_API_KEY: z.string().min(1),
     AVIATION_STACK_API_KEY: z.string().min(1),
     CRON_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
