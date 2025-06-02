@@ -162,19 +162,6 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
                                 Call
                             </Button>
                         )}
-                        {place.place_id && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="bg-neutral-800 hover:bg-neutral-700 text-white"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(`https://www.tripadvisor.com/${place.place_id}`, '_blank');
-                                }}
-                            >
-                                TripAdvisor
-                            </Button>
-                        )}
                     </div>
                 </div>
             </div>

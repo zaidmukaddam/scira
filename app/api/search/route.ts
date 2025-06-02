@@ -15,7 +15,6 @@ import {
     appendResponseMessages,
     CoreToolMessage,
     CoreAssistantMessage,
-    generateId,
     createDataStream
 } from 'ai';
 import Exa from 'exa-js';
@@ -35,6 +34,7 @@ import { differenceInSeconds } from 'date-fns';
 import { Chat } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { geolocation } from "@vercel/functions";
 
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
@@ -341,6 +341,11 @@ interface ExaResult {
 // Modify the POST function to use the new handler
 export async function POST(req: Request) {
     const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
+    const { latitude, longitude } = geolocation(req);
+
+    console.log("--------------------------------");
+    console.log("Location: ", latitude, longitude);
+    console.log("--------------------------------");
 
     const user = await getUser();
     const streamId = "stream-" + uuidv4();
@@ -419,11 +424,11 @@ export async function POST(req: Request) {
                 maxSteps: 5,
                 maxRetries: 5,
                 experimental_activeTools: [...activeTools],
-                system: instructions,
+                system: instructions + `\n\nThe user's location is ${latitude}, ${longitude}.`,
                 toolChoice: 'auto',
                 experimental_transform: smoothStream({
                     chunking: 'word',
-                    delayInMs: 15,
+                    delayInMs: 1,
                 }),
                 providerOptions: {
                     google: {

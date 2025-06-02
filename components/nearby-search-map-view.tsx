@@ -27,7 +27,7 @@ interface Place {
   formatted_address?: string;
   rating?: number;
   reviews_count?: number;
-  price_level?: number | string; // Support both number and string for backward compatibility
+  price_level?: number | string;
   description?: string;
   photos?: Photo[];
   is_closed?: boolean;
@@ -125,7 +125,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(({
 
   return (
     <div className={cn(
-      "relative w-full h-[70vh] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4 nearby-search-map",
+      "relative w-full h-[600px] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4 nearby-search-map",
       viewMode === 'list' && "list-view"
     )}>
       {/* Header with search info */}

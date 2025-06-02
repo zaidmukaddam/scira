@@ -231,7 +231,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
                     )}
 
                     {/* Review Count */}
-                    {place.reviews_count && (
+                    {place.reviews_count && place.reviews_count > 0 && (
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
                             {place.reviews_count} reviews
                         </div>
