@@ -7,7 +7,6 @@ import {
     customProvider,
     generateText
 } from 'ai';
-import Exa from 'exa-js';
 import { z } from 'zod';
 
 const scira = customProvider({
@@ -17,17 +16,6 @@ const scira = customProvider({
 })
 
 export const maxDuration = 300;
-
-interface XResult {
-    id: string;
-    url: string;
-    title: string;
-    author?: string;
-    publishedDate?: string;
-    text: string;
-    highlights?: string[];
-    tweetId: string;
-}
 
 const extractDomain = (url: string): string => {
     const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
@@ -194,54 +182,72 @@ export async function POST(req: Request) {
                 },
             }),
             x_search: tool({
-                description: 'Search X (formerly Twitter) posts.',
+                description: 'Search X (formerly Twitter) posts using xAI Live Search.',
                 parameters: z.object({
-                    query: z.string().describe('The search query, if a username is provided put in the query with @username'),
+                    query: z.string().describe('The search query for X posts'),
                     startDate: z.string().describe('The start date of the search in the format YYYY-MM-DD'),
                     endDate: z.string().describe('The end date of the search in the format YYYY-MM-DD'),
+                    xHandles: z.array(z.string()).optional().describe('Optional list of X handles to search from (without @ symbol)'),
+                    maxResults: z.number().optional().default(15).describe('Maximum number of search results to return'),
                 }),
                 execute: async ({
                     query,
                     startDate,
                     endDate,
+                    xHandles,
+                    maxResults = 15,
                 }: {
                     query: string;
                     startDate: string;
                     endDate: string;
+                    xHandles?: string[];
+                    maxResults?: number;
                 }) => {
                     try {
-                        const exa = new Exa(serverEnv.EXA_API_KEY as string);
-
-                        const result = await exa.searchAndContents(query, {
-                            type: 'keyword',
-                            numResults: 15,
-                            text: true,
-                            highlights: true,
-                            includeDomains: ['twitter.com', 'x.com'],
-                            startDate,
-                            endDate,
-                        });
-
-                        // Extract tweet ID from URL
-                        const extractTweetId = (url: string): string | null => {
-                            const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
-                            return match ? match[1] : null;
+                        const searchParameters: any = {
+                            mode: "on",
+                            from_date: startDate,
+                            to_date: endDate,
+                            max_search_results: maxResults,
+                            return_citations: true,
+                            sources: [
+                                xHandles && xHandles.length > 0 
+                                    ? { type: "x", x_handles: xHandles }
+                                    : { type: "x" }
+                            ]
                         };
 
-                        // Process and filter results
-                        const processedResults = result.results.reduce<Array<XResult>>((acc, post) => {
-                            const tweetId = extractTweetId(post.url);
-                            if (tweetId) {
-                                acc.push({
-                                    ...post,
-                                    tweetId,
-                                    title: post.title || '',
-                                });
-                            }
-                            return acc;
-                        }, []);
+                        const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${serverEnv.XAI_API_KEY}`,
+                            },
+                            body: JSON.stringify({
+                                model: 'grok-3-latest',
+                                messages: [
+                                    {
+                                        role: 'user',
+                                        content: `Search for: ${query}. Please provide the posts with their content, URLs, and any relevant metadata.`
+                                    }
+                                ],
+                                search_parameters: searchParameters,
+                            }),
+                        });
 
-                        return processedResults;
+                        if (!response.ok) {
+                            throw new Error(`xAI API error: ${response.status} ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+                        
+                        return {
+                            content: data.choices[0]?.message?.content || '',
+                            citations: data.citations || [],
+                            query,
+                            dateRange: `${startDate} to ${endDate}`,
+                            handles: xHandles || [],
+                        };
                     } catch (error) {
                         console.error('X search error:', error);
                         throw error;
