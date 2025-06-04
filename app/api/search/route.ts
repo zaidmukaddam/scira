@@ -2227,7 +2227,11 @@ print(f"Converted amount: {converted_amount}")
                 sendReasoning: true
             });
         },
-        onError() {
+        onError(error) {
+            console.log('Error: ', error);
+            if (error instanceof Error && error.message.includes('Rate Limit')) {
+                return 'Oops, you have reached the rate limit! Please try again later.';
+            }
             return 'Oops, an error occurred!';
         },
     })
