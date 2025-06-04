@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        await deleteAllBlobsInFolder('mplx/public/');
-        return new NextResponse('All files in mplx/public/ folder were deleted', {
+        await deleteAllBlobsWithPrefix('mplx/public.');
+        return new NextResponse('All public files with mplx/public. prefix were deleted', {
             status: 200,
         });
     } catch (error) {
@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
     }
 }
 
-async function deleteAllBlobsInFolder(folderPrefix: string) {
+async function deleteAllBlobsWithPrefix(filePrefix: string) {
     let cursor;
 
     do {
         const listResult: ListBlobResult = await list({
-            prefix: folderPrefix,
+            prefix: filePrefix,
             cursor,
             limit: 1000,
         });
