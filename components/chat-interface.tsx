@@ -29,7 +29,6 @@ import { useRouter } from 'next/navigation';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Navbar } from '@/components/navbar';
 import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
-import { clientEnv } from '@/env/client';
 
 interface Attachment {
     name: string;
@@ -181,9 +180,6 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             ...(initialChatId ? { chat_id: initialChatId } : {}),
             selectedVisibilityType,
-        },
-        headers: {
-            "X-API-Key": clientEnv.NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY || "",
         },
         onFinish: async (message, { finishReason }) => {
             console.log("[finish reason]:", finishReason);
