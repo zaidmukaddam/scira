@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input"; 
-import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,6 +12,7 @@ interface CurrencyConverterProps {
 export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterProps) => {
   const [amount, setAmount] = useState<string>(toolInvocation.args.amount || "1");
   const [error, setError] = useState<string | null>(null);
+  const [isSwapped, setIsSwapped] = useState(false);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -23,39 +24,85 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
     }
   };
 
-  const convertedAmount = result ? parseFloat(result.rate) * parseFloat(amount) : null;
-  const rate = result ? parseFloat(result.rate) : null;
+  const handleSwap = () => {
+    setIsSwapped(!isSwapped);
+  };
+
+  const fromCurrency = isSwapped ? toolInvocation.args.to : toolInvocation.args.from;
+  const toCurrency = isSwapped ? toolInvocation.args.from : toolInvocation.args.to;
+  
+  const convertedAmount = result?.convertedAmount ? 
+    (isSwapped ? 
+      (parseFloat(amount) / result.forwardRate) : 
+      (result.convertedAmount / result.amount) * parseFloat(amount)
+    ) : null;
+  
+  const exchangeRate = isSwapped ? result?.reverseRate : result?.forwardRate;
 
   return (
-    <Card className="w-full bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">
-          Convert {toolInvocation.args.from} to {toolInvocation.args.to}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Amount Input */}
-        <div className="space-y-4">
-          <div className="relative">
+    <div className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 sm:p-4">
+      {/* Currency Converter - Responsive Layout */}
+      <div className="flex items-center gap-3 sm:flex-row">
+        {/* Mobile: Side Layout, Desktop: Horizontal Layout */}
+        
+        {/* Currency Inputs Container - Mobile Stacked */}
+        <div className="flex-1 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
+          {/* From Currency Input */}
+          <div className="relative sm:flex-1">
             <Input
               type="text"
               value={amount}
               onChange={handleAmountChange}
-              className="pl-12 h-12 text-lg"
-              placeholder="Amount"
+              className="h-11 sm:h-12 text-base pl-12 sm:pl-14 pr-3 border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 focus:bg-white dark:focus:bg-neutral-950 transition-colors font-medium"
+              placeholder="0"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-500">
-              {toolInvocation.args.from}
-            </span>
+            <div className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2">
+              <span className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+                {fromCurrency}
+              </span>
+            </div>
           </div>
-
+          
+          {/* Swap Button - Desktop Only (Hidden on Mobile) */}
+          <div className="hidden sm:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSwap}
+              className="h-8 w-8 p-0 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5 text-neutral-500" />
+            </Button>
+          </div>
+          
+          {/* To Currency Output */}
+          <div className="h-11 sm:h-12 px-2.5 sm:px-3 border border-neutral-200 dark:border-neutral-800 rounded-md bg-neutral-50 dark:bg-neutral-900 flex items-center sm:flex-1">
+            <span className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mr-2 sm:mr-3 shrink-0">
+              {toCurrency}
+            </span>
+            {!result ? (
+              <div className="flex items-center gap-1.5 text-neutral-500 min-w-0">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                <span className="text-sm">...</span>
+              </div>
+            ) : (
+              <span className="text-sm sm:text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                {convertedAmount?.toLocaleString(undefined, { 
+                  minimumFractionDigits: 2, 
+                  maximumFractionDigits: 4 
+                })}
+              </span>
+            )}
+          </div>
+          
+          {/* Error Message */}
           <AnimatePresence>
             {error && (
               <motion.p
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="text-sm text-red-500"
+                className="text-xs text-red-500 sm:absolute sm:mt-1"
               >
                 {error}
               </motion.p>
@@ -63,38 +110,34 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
           </AnimatePresence>
         </div>
 
-        {/* Result Display */}
-        <div className="space-y-2">
-          {!result ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-2 text-neutral-500"
-            >
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Getting latest rates...</span>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-2"
-            >
-              <div className="text-2xl font-semibold">
-                {convertedAmount?.toFixed(2)} {toolInvocation.args.to}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-neutral-500">
-                <span>1 {toolInvocation.args.from} = {rate?.toFixed(4)} {toolInvocation.args.to}</span>
-                {rate && rate > 1 ? (
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-red-500" />
-                )}
-              </div>
-            </motion.div>
-          )}
+        {/* Swap Button - Mobile Only (Hidden on Desktop) */}
+        <div className="flex items-center sm:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSwap}
+            className="h-10 w-10 p-0 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors touch-manipulation"
+          >
+            <ArrowUpDown className="h-4 w-4 text-neutral-500" />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Exchange Rate - Mobile Friendly */}
+      {result && exchangeRate && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-3 text-xs text-neutral-500 dark:text-neutral-400 text-center px-2"
+        >
+          <span className="inline-block">
+            1 {fromCurrency} = {exchangeRate?.toLocaleString(undefined, { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 4 
+            })} {toCurrency}
+          </span>
+        </motion.div>
+      )}
+    </div>
   );
 };
