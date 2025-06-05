@@ -8,23 +8,11 @@ import { openai } from "@ai-sdk/openai";
 import { xai } from "@ai-sdk/xai";
 import { groq } from "@ai-sdk/groq";
 import { anthropic } from "@ai-sdk/anthropic";
-import { createVertex } from '@ai-sdk/google-vertex';
+import { google } from '@ai-sdk/google';
 
 const middleware = extractReasoningMiddleware({
     tagName: 'think',
 });
-
-const vertex = createVertex({
-    location: process.env.GOOGLE_VERTEX_LOCATION,
-    project: process.env.GOOGLE_VERTEX_PROJECT,
-    googleAuthOptions: {
-        credentials: {
-            client_email: process.env.GOOGLE_CLIENT_EMAIL,
-            private_key: process.env.GOOGLE_PRIVATE_KEY,
-        },
-    },
-});
-
 
 export const scira = customProvider({
     languageModels: {
@@ -37,8 +25,8 @@ export const scira = customProvider({
             model: groq('qwen-qwq-32b'),
             middleware,
         }),
-        'scira-google': vertex('gemini-2.5-flash-preview-05-20'),
-        'scira-google-pro': vertex('gemini-2.5-pro-preview-05-06'),
+        'scira-google': google('gemini-2.5-flash-preview-05-20'),
+        'scira-google-pro': google('gemini-2.5-pro-preview-05-06'),
         'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
         'scira-anthropic-thinking': anthropic('claude-sonnet-4-20250514'),
         'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
