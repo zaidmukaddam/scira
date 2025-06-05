@@ -8,6 +8,7 @@ export const serverEnv = createEnv({
     OPENAI_API_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
     GROQ_API_KEY: z.string().min(1),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
     DAYTONA_API_KEY: z.string().min(1),
     E2B_API_KEY: z.string().min(1),
     DATABASE_URL: z.string().min(1),
