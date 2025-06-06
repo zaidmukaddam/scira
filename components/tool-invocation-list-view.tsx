@@ -59,7 +59,7 @@ import {
     XCircle,
     YoutubeIcon,
 } from 'lucide-react';
-import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon } from '@phosphor-icons/react';
+import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon, XLogo } from '@phosphor-icons/react';
 
 // Components
 import { FlightTracker } from '@/components/flight-tracker';
@@ -77,6 +77,7 @@ import { ExtremeSearch } from '@/components/extreme-search';
 import MemoryManager from '@/components/memory-manager';
 import MCPServerList from '@/components/mcp-server-list';
 import RedditSearch from '@/components/reddit-search';
+import XSearch from '@/components/x-search';
 
 // Actions
 import { generateSpeech } from '@/app/actions';
@@ -1637,6 +1638,18 @@ const ToolInvocationListView = memo(
                     }
                     
                     return <RedditSearch result={result} args={args} />;
+                }
+
+                if (toolInvocation.toolName === 'x_search') {
+                    if (!result) {
+                        return <SearchLoadingState
+                            icon={XLogo}
+                            text="Searching X (Twitter)..."
+                            color="gray"
+                        />;
+                    }
+                    
+                    return <XSearch result={result} args={args} />;
                 }
 
                 return null;

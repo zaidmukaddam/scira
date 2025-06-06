@@ -73,52 +73,78 @@
 }
 
 @layer utilities {
-  .tweet-container {
-    display: flex;
-    flex-direction: column;
-    --tweet-body-background-color: transparent !important;
-    --tweet-container-margin: 0 !important;
-    /* max-height: 250px !important; */
-    overflow-y: auto;
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
   }
 
-  .tweet-container>div {
-    flex: 1;
+  /* Tweet wrapper styling for horizontal layout */
+  .tweet-wrapper {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
   }
 
-  .tweet-container div[data-theme] {
+  .tweet-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .dark .tweet-wrapper::after {
+    background: linear-gradient(transparent, rgba(23, 23, 23, 0.8));
+  }
+
+  .tweet-wrapper [data-theme] {
     margin: 0 !important;
-    background: transparent !important;
-    border: none !important;
+    border-radius: 1rem !important;
+    border: 1px solid rgb(229 231 235) !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+    background: white !important;
+    height: 100%;
   }
 
-  .tweet-container div[data-theme='light'],
-  .tweet-container div[data-theme='dark'] {
-    background: transparent !important;
+  .dark .tweet-wrapper [data-theme] {
+    border: 1px solid rgb(64 64 64) !important;
+    background: rgb(23 23 23) !important;
   }
 
-  .tweet-container::-webkit-scrollbar {
-    width: 0px;
-    background: transparent;
+  /* Tweet wrapper styling for sheet */
+  .tweet-wrapper-sheet [data-theme] {
+    margin: 0 !important;
+    border-radius: 1rem !important;
+    border: 1px solid rgb(229 231 235) !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+    background: white !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 
-  @keyframes loading-shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-
-    100% {
-      transform: translateX(200%);
-    }
+  .dark .tweet-wrapper-sheet [data-theme] {
+    border: 1px solid rgb(64 64 64) !important;
+    background: rgb(23 23 23) !important;
   }
 
-  .animate-loading-shimmer {
-    animation: loading-shimmer 1.5s infinite;
+  /* Ensure proper tweet spacing */
+  .tweet-wrapper .react-tweet-theme,
+  .tweet-wrapper-sheet .react-tweet-theme {
+    margin: 0 !important;
   }
 
-  .gradient-mask {
-    mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+  /* Override react-tweet default margins */
+  [data-tweet-container] {
+    margin: 0 !important;
   }
 
   .linenumber {

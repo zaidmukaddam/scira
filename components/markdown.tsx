@@ -1,6 +1,6 @@
 import 'katex/dist/katex.min.css';
 
-import { GeistMono } from 'geist/font/mono';
+import { Geist_Mono } from 'next/font/google';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from 'next-themes';
@@ -35,6 +35,13 @@ interface CitationSourceConfig {
   pattern: RegExp;
   urlGenerator: (title: string, source: string) => string | null;
 }
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  preload: true,
+  display: 'swap',
+});
 
 const citationSources: CitationSourceConfig[] = [
   {
@@ -319,7 +326,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               borderRadius: 0,
               borderBottomLeftRadius: '0.375rem',
               borderBottomRightRadius: '0.375rem',
-              fontFamily: GeistMono.style.fontFamily,
+              fontFamily: geistMono.style.fontFamily,
             }}
             showLineNumbers={true}
             lineNumberStyle={{
@@ -329,7 +336,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               fontStyle: 'normal',
               marginRight: '1em',
               paddingRight: '0.5em',
-              fontFamily: GeistMono.style.fontFamily,
+              fontFamily: geistMono.style.fontFamily,
               minWidth: '2em'
             }}
             lineNumberContainerStyle={{
@@ -339,7 +346,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             wrapLongLines={isWrapped}
             codeTagProps={{
               style: {
-                fontFamily: GeistMono.style.fontFamily,
+                fontFamily: geistMono.style.fontFamily, 
                 fontSize: '0.85em',
                 whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
                 overflowWrap: isWrapped ? 'break-word' : 'normal',

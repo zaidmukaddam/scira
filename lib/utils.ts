@@ -2,7 +2,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Globe, Book, TelescopeIcon } from 'lucide-react'
-import { ChatsCircle, Code, Memory, RedditLogo, YoutubeLogo } from '@phosphor-icons/react'
+import { ChatsCircle, Code, Memory, RedditLogo, YoutubeLogo, XLogoIcon  } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -38,6 +38,13 @@ export const searchGroups = [
     name: 'Chat',
     description: 'Talk to the model directly.',
     icon: ChatsCircle,
+    show: true,
+  },
+  {
+    id: 'x' as const,
+    name: 'X',
+    description: 'Search X posts',
+    icon: XLogoIcon,
     show: true,
   },
   {

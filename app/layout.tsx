@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { GeistSans } from 'geist/font/sans';
+import { Geist } from 'next/font/google';
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Metadata, Viewport } from "next";
@@ -72,6 +72,13 @@ const syne = Syne({
   display: 'swap',
 });
 
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  preload: true,
+  display: 'swap',
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -79,7 +86,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${geist.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />

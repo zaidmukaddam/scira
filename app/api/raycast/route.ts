@@ -228,7 +228,7 @@ export async function POST(req: Request) {
                                 messages: [
                                     {
                                         role: 'user',
-                                        content: `Search for: ${query}. Please provide the posts with their content, URLs, and any relevant metadata.`
+                                        content: `Search for: ${query}. Please provide the posts with their content, URLs, and any relevant metadata. And cite the sources in the format [Source No.]`
                                     }
                                 ],
                                 search_parameters: searchParameters,
