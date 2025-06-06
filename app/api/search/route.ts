@@ -500,7 +500,7 @@ export async function POST(req: Request) {
                             }
                         } : {}),
                         ...(model === 'scira-default' ? {
-                            reasoningEffort: 'high',
+                            reasoningEffort: 'low',
                         } : {}),
                     },
                     anthropic: {
