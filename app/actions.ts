@@ -116,7 +116,6 @@ export async function generateTitleFromUserMessage({
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
-
   const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb' // This is the ID for the "George" voice. Replace with your preferred voice ID.
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`
   const method = 'POST'

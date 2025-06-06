@@ -1679,8 +1679,8 @@ const ToolInvocationListView = memo(
                 if (audioUrl && audioRef.current && canvasRef.current) {
                     waveRef.current = new Wave(audioRef.current, canvasRef.current);
                     waveRef.current.addAnimation(new waveRef.current.animations.Lines({
-                        lineWidth: 1.5,
-                        lineColor: 'rgb(147, 51, 234)',
+                        lineWidth: 3,
+                        lineColor: 'rgb(82, 82, 91)',
                         count: 80,
                         mirroredY: true,
                     }));
@@ -1694,7 +1694,6 @@ const ToolInvocationListView = memo(
                         const { audio } = await generateSpeech(result.translatedText);
                         setAudioUrl(audio);
                         setIsGeneratingAudio(false);
-                        // Autoplay after a short delay to ensure audio is loaded
                         setTimeout(() => {
                             if (audioRef.current) {
                                 audioRef.current.play();
@@ -1715,75 +1714,111 @@ const ToolInvocationListView = memo(
                 }
             };
 
-            const handleReset = () => {
-                if (audioRef.current) {
-                    audioRef.current.pause();
-                    audioRef.current.currentTime = 0;
-                    setIsPlaying(false);
-                }
-            };
-
             if (!result) {
                 return (
-                    <Card className="w-full my-4 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                        <CardContent className="flex items-center justify-center h-24">
-                            <div className="animate-pulse flex items-center">
-                                <div className="h-4 w-4 bg-primary rounded-full mr-2"></div>
-                                <div className="h-4 w-32 bg-primary rounded"></div>
+                    <div className="group my-2 p-3 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-neutral-50/30 dark:bg-neutral-900/30">
+                        <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center opacity-80">
+                                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                             </div>
-                        </CardContent>
-                    </Card>
+                            <div className="flex-1">
+                                <div className="h-2.5 w-20 bg-neutral-300 dark:bg-neutral-600 rounded-sm animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
                 );
             }
 
             return (
-                <Card className="w-full my-4 shadow-none bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
-                    <CardContent className="p-4 sm:p-6">
-                        <div className="space-y-4 sm:space-y-6">
-                            <div>
-                                <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                                    The phrase <span className="font-medium text-neutral-900 dark:text-neutral-100">{toolInvocation.args.text}</span> translates from <span className="font-medium text-neutral-900 dark:text-neutral-100">{result.detectedLanguage}</span> to <span className="font-medium text-primary">{result.translatedText}</span>
-                                </p>
+                <div className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200">
+                    <div className="p-3">
+                        {/* Single row layout with inline elements */}
+                        <div className="flex items-start gap-3">
+                            {/* Icon */}
+                            <div className="mt-0.5 w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
+                                <TextIcon className="w-2.5 h-2.5 text-white" />
                             </div>
-
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <Button
-                                    onClick={handlePlayPause}
-                                    disabled={isGeneratingAudio}
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary shrink-0"
-                                >
-                                    {isGeneratingAudio ? (
-                                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                                    ) : isPlaying ? (
-                                        <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
-                                    ) : (
-                                        <PlayIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                                    )}
-                                </Button>
-
-                                <div className="flex-1 h-8 sm:h-10 bg-neutral-100 dark:bg-neutral-900 rounded-md sm:rounded-lg overflow-hidden">
-                                    <canvas
-                                        ref={canvasRef}
-                                        width="800"
-                                        height="200"
-                                        className="w-full h-full opacity-90 dark:opacity-70"
-                                    />
+                            
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 space-y-2">
+                                {/* Header with languages */}
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">Translation</span>
+                                    <span className="text-neutral-400">•</span>
+                                    <span className="text-neutral-500 dark:text-neutral-400">{result.detectedLanguage} → {toolInvocation.args.to}</span>
+                                </div>
+                                
+                                {/* Text blocks - side by side on larger screens */}
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    <div className="group/text">
+                                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 opacity-70">{result.detectedLanguage}</div>
+                                        <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
+                                            {toolInvocation.args.text}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="group/text">
+                                        <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1 opacity-70">{toolInvocation.args.to}</div>
+                                        <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 leading-relaxed break-words">
+                                            {result.translatedText}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Audio player - minimal and inline */}
+                                <div className="flex items-center gap-2 pt-1">
+                                    <button
+                                        onClick={handlePlayPause}
+                                        disabled={isGeneratingAudio}
+                                        className={cn(
+                                            "w-5 h-5 rounded-sm flex items-center justify-center transition-all duration-150",
+                                            isPlaying 
+                                                ? "bg-neutral-700 text-white shadow-sm" 
+                                                : "bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                                        )}
+                                    >
+                                        {isGeneratingAudio ? (
+                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                        ) : isPlaying ? (
+                                            <Pause className="w-2.5 h-2.5" />
+                                        ) : (
+                                            <PlayIcon className="w-2.5 h-2.5" />
+                                        )}
+                                    </button>
+                                    
+                                                                         <div className="flex-1 h-5 bg-neutral-100/80 dark:bg-neutral-800/80 rounded-sm overflow-hidden">
+                                        {!audioUrl && !isGeneratingAudio && (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <div className="w-full h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
+                                            </div>
+                                        )}
+                                        <canvas
+                                            ref={canvasRef}
+                                            width="800"
+                                            height="40"
+                                            className="w-full h-full"
+                                            style={{ imageRendering: 'crisp-edges' }}
+                                        />
+                                    </div>
+                                    
+                                    <span className="text-xs text-neutral-400 dark:text-neutral-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {isGeneratingAudio ? "..." : audioUrl ? "●" : "○"}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
+                    </div>
+
                     {audioUrl && (
                         <audio
                             ref={audioRef}
                             src={audioUrl}
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
-                            onEnded={() => { setIsPlaying(false); handleReset(); }}
+                            onEnded={() => setIsPlaying(false)}
                         />
                     )}
-                </Card>
+                </div>
             );
         };
 

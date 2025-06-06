@@ -1006,7 +1006,7 @@ print(f"Converted amount: {converted_amount}")
                         description: "Translate text from one language to another.",
                         parameters: z.object({
                             text: z.string().describe("The text to translate."),
-                            to: z.string().describe("The language to translate to (e.g., 'fr' for French)."),
+                            to: z.string().describe("The language to translate to (e.g., French)."),
                         }),
                         execute: async ({ text, to }: { text: string; to: string }) => {
                             const { object: translation } = await generateObject({
