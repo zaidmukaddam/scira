@@ -166,21 +166,21 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
             <Accordion type="single" collapsible defaultValue="x_search" className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 shadow-sm">
                 <AccordionItem value="x_search">
                     <AccordionTrigger className="px-3 py-2.75 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-neutral-200 [&[data-state=open]]:dark:border-neutral-800 w-full [&>svg]:flex [&>svg]:items-center [&>svg]:justify-center [&>svg]:self-center">
-                        <div className="flex items-center justify-between flex-1">
-                            <div className="flex items-center gap-2.5">
-                                <div className="p-1.5 rounded-md bg-black dark:bg-white">
+                        <div className="flex items-center justify-between flex-1 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div className="p-1.5 rounded-md bg-black dark:bg-white flex-shrink-0">
                                     <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
                                 </div>
-                                <div className="text-left">
+                                <div className="text-left min-w-0 flex-1">
                                     <h3 className="font-medium text-sm">X Search Results</h3>
-                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                                         {result.query} • {start} - {end}
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                                 {result.handles.length > 0 && (
-                                    <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
+                                    <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs hidden sm:flex">
                                         <Users className="h-2.5 w-2.5 mr-1" />
                                         {result.handles.length}
                                     </Badge>
@@ -193,19 +193,19 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                         </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="px-3 py-3">
+                    <AccordionContent className="px-2 sm:px-3 py-3">
                         <div className="space-y-3">
                             {/* Horizontal Tweets Row */}
                             {tweetCitations.length > 0 && (
                                 <div className="space-y-3">
-                                    <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
+                                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 scrollbar-hide">
                                         {displayedTweets.map((citation, index) => (
                                             <motion.div
                                                 key={citation.tweet_id}
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: index * 0.05 }}
-                                                className="flex-shrink-0 w-[350px]"
+                                                className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px]"
                                             >
                                                 {citation.tweet_id && (
                                                     <div className="tweet-wrapper">
@@ -221,7 +221,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                                         {remainingTweets.length > 0 && (
                                             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                                                 <SheetTrigger asChild>
-                                                    <div className="flex-shrink-0 w-[350px] min-h-[180px] border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-all duration-200 group">
+                                                    <div className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] min-h-[180px] border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-all duration-200 group">
                                                         <div className="text-center px-4">
                                                             <div className="mb-2">
                                                                 <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-2 group-hover:scale-105 transition-transform">
@@ -237,9 +237,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                                                         </div>
                                                     </div>
                                                 </SheetTrigger>
-                                                <SheetContent side="right" className="w-full sm:w-[650px] sm:max-w-[650px] p-0">
+                                                <SheetContent side="right" className="w-full sm:w-[500px] md:w-[600px] lg:w-[650px] sm:max-w-[90vw] p-0">
                                                     <div className="flex flex-col h-full">
-                                                        <SheetHeader className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+                                                        <SheetHeader className="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
                                                             <SheetTitle className="flex items-center gap-2.5">
                                                                 <div className="p-1.5 rounded-md bg-black dark:bg-white">
                                                                     <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
@@ -247,8 +247,8 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                                                                 <span>All Posts ({tweetCitations.length})</span>
                                                             </SheetTitle>
                                                         </SheetHeader>
-                                                        <div className="flex-1 overflow-y-auto p-6">
-                                                            <div className="space-y-6 max-w-[550px] mx-auto">
+                                                        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                                                            <div className="space-y-6 max-w-full sm:max-w-[550px] mx-auto">
                                                                 {tweetCitations.map((citation, index) => (
                                                                     <motion.div
                                                                         key={citation.tweet_id}

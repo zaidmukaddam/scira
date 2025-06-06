@@ -520,7 +520,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                         (!user && selectedVisibilityType === 'private')
                     ) && (
                         <div
-                            className="fixed bottom-6 sm:bottom-4 left-0 right-0 w-full max-w-[26rem] sm:max-w-2xl mx-auto z-20"
+                            className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[26rem] sm:max-w-2xl mx-auto z-20"
                         >
                             <FormComponent
                                 chatId={chatId}
