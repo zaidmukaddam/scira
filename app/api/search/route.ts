@@ -736,7 +736,7 @@ plt.show()`
                                 target: SandboxTargetRegion.US,
                             })
                             const sandbox = await daytona.create({
-                                image: "scira-analysis:1749032298",
+                                image: "scira-analysis:1749316515",
                                 language: 'python',
                                 resources: {
                                     cpu: 2,
@@ -830,7 +830,7 @@ print(f"Converted amount: {converted_amount}")
                                 target: SandboxTargetRegion.US,
                             })
                             const sandbox = await daytona.create({
-                                image: "scira-analysis:1749032298",
+                                image: "scira-analysis:1749316515",
                                 language: 'python',
                                 resources: {
                                     cpu: 2,
@@ -1609,7 +1609,7 @@ print(f"Converted amount: {converted_amount}")
                                 target: SandboxTargetRegion.US,
                             })
                             const sandbox = await daytona.create({
-                                image: "scira-analysis:1749032298",
+                                image: "scira-analysis:1749316515",
                                 language: 'python',
                                 resources: {
                                     cpu: 4,
