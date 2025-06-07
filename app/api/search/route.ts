@@ -749,13 +749,14 @@ plt.show()`
                             const execution = await sandbox.process.codeRun(code);
                             let message = '';
 
-                            if (execution.result) {
+                            if (execution.result === execution.artifacts?.stdout) {
                                 message += execution.result;
-                            }
-
-
-                            if (execution.artifacts?.stdout) {
+                            } else if (execution.result && execution.result !== execution.artifacts?.stdout) {
+                                message += execution.result;
+                            } else if (execution.artifacts?.stdout && execution.artifacts?.stdout !== execution.result) {
                                 message += execution.artifacts.stdout;
+                            } else {
+                                message += execution.result;
                             }
 
                             console.log("execution exit code: ", execution.exitCode)
@@ -843,12 +844,14 @@ print(f"Converted amount: {converted_amount}")
                             const execution = await sandbox.process.codeRun(code);
                             let message = '';
 
-                            if (execution.result) {
+                            if (execution.result === execution.artifacts?.stdout) {
                                 message += execution.result;
-                            }
-
-                            if (execution.artifacts?.stdout) {
+                            } else if (execution.result && execution.result !== execution.artifacts?.stdout) {
+                                message += execution.result;
+                            } else if (execution.artifacts?.stdout && execution.artifacts?.stdout !== execution.result) {
                                 message += execution.artifacts.stdout;
+                            } else {
+                                message += execution.result;
                             }
 
                             await sandbox.delete();
@@ -1626,12 +1629,17 @@ print(f"Converted amount: {converted_amount}")
 
                             let message = '';
 
-                            if (execution.result) {
+                            if (execution.artifacts?.stdout === execution.result) {
                                 message += execution.result;
                             }
-
-                            if (execution.artifacts?.stdout) {
+                            else if (execution.result && execution.result !== execution.artifacts?.stdout) {
+                                message += execution.result;
+                            }
+                            else if (execution.artifacts?.stdout && execution.artifacts?.stdout !== execution.result) {
                                 message += execution.artifacts.stdout;
+                            }
+                            else {
+                                message += execution.result;
                             }
 
                             if (execution.artifacts?.charts) {

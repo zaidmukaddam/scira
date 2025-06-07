@@ -638,6 +638,7 @@ const groupInstructions = {
   - For final output, simply print the result (e.g., \`print(result)\` not \`result\`)
   - Use only essential code - avoid boilerplate, comments, or explanatory code
   - For visualizations: use 'plt.show()' for plots, and mention generated URLs for outputs
+  - Always use the print() function for final output!!! This is very important!!!
   
   Good code example:
   \`\`\`python

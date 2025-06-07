@@ -23,12 +23,8 @@ interface PartInfo {
 interface MessagesProps {
   messages: any[];
   lastUserMessageIndex: number;
-  isEditingMessage: boolean;
-  editingMessageIndex: number;
   input: string;
   setInput: (value: string) => void;
-  setIsEditingMessage: (value: boolean) => void;
-  setEditingMessageIndex: (value: number) => void;
   setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
   append: (message: any, options?: any) => Promise<string | null | undefined>;
   reload: () => Promise<string | null | undefined>;
@@ -65,10 +61,6 @@ const SciraLogoHeader = () => (
 const Messages: React.FC<MessagesProps> = ({
   messages,
   lastUserMessageIndex,
-  isEditingMessage,
-  editingMessageIndex,
-  setIsEditingMessage,
-  setEditingMessageIndex,
   setMessages,
   append,
   suggestedQuestions,
@@ -482,10 +474,6 @@ const Messages: React.FC<MessagesProps> = ({
                 message={message}
                 index={index}
                 lastUserMessageIndex={lastUserMessageIndex}
-                isEditingMessage={isEditingMessage}
-                editingMessageIndex={editingMessageIndex}
-                setIsEditingMessage={setIsEditingMessage}
-                setEditingMessageIndex={setEditingMessageIndex}
                 renderPart={renderPart}
                 status={status}
                 messages={messages}

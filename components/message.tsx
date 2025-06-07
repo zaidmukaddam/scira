@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -18,10 +18,6 @@ interface MessageProps {
   message: any;
   index: number;
   lastUserMessageIndex: number;
-  isEditingMessage: boolean;
-  editingMessageIndex: number;
-  setIsEditingMessage: (value: boolean) => void;
-  setEditingMessageIndex: (value: number) => void;
   renderPart: (
     part: MessagePart,
     messageIndex: number,
@@ -45,6 +41,160 @@ interface MessageProps {
   isOwner?: boolean;
 }
 
+// Message Editor Component
+interface MessageEditorProps {
+  message: any;
+  setMode: (mode: 'view' | 'edit') => void;
+  setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
+  reload: () => Promise<string | null | undefined>;
+}
+
+const MessageEditor: React.FC<MessageEditorProps> = ({
+  message,
+  setMode,
+  setMessages,
+  reload,
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [draftContent, setDraftContent] = useState<string>(message.content);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustHeight();
+    }
+  }, []);
+
+  const adjustHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
+    }
+  };
+
+  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDraftContent(event.target.value);
+    adjustHeight();
+  };
+
+  return (
+    <div className="group relative">
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        if (!draftContent.trim()) {
+          toast.error("Please enter a valid message.");
+          return;
+        }
+
+        try {
+          setIsSubmitting(true);
+
+          // Delete trailing messages if message has an ID
+          if (message.id) {
+            await deleteTrailingMessages({
+              id: message.id,
+            });
+          }
+
+          // Update messages
+          setMessages((messages) => {
+            const index = messages.findIndex((m) => m.id === message.id);
+
+            if (index !== -1) {
+              const updatedMessage = {
+                ...message,
+                content: draftContent.trim(),
+                parts: [{ type: 'text', text: draftContent.trim() }],
+              };
+
+              return [...messages.slice(0, index), updatedMessage];
+            }
+
+            return messages;
+          });
+
+          setMode('view');
+          await reload();
+        } catch (error) {
+          console.error("Error updating message:", error);
+          toast.error("Failed to update message. Please try again.");
+        } finally {
+          setIsSubmitting(false);
+        }
+      }} className="w-full">
+        <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-neutral-50/30 dark:bg-neutral-800/30">
+          <Textarea
+            ref={textareaRef}
+            value={draftContent}
+            onChange={handleInput}
+            autoFocus
+            className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
+            placeholder="Edit your message..."
+            style={{
+              lineHeight: '1.625',
+              fontSize: '1.125rem'
+            }}
+          />
+
+          <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              disabled={isSubmitting || draftContent.trim() === message.content.trim()}
+            >
+              {isSubmitting ? (
+                <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ArrowRight className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setMode('view')}
+              className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              disabled={isSubmitting}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* Show editable attachments */}
+      {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+        <div className="mt-3">
+          <EditableAttachmentsBadge
+            attachments={message.experimental_attachments}
+            onRemoveAttachment={(index) => {
+              // Handle attachment removal
+              const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
+              // Update the message with new attachments
+              setMessages((messages) => {
+                const messageIndex = messages.findIndex((m) => m.id === message.id);
+                if (messageIndex !== -1) {
+                  const updatedMessage = {
+                    ...message,
+                    experimental_attachments: updatedAttachments
+                  };
+                  const updatedMessages = [...messages];
+                  updatedMessages[messageIndex] = updatedMessage;
+                  return updatedMessages;
+                }
+                return messages;
+              });
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Max height for collapsed user messages (in pixels)
 const USER_MESSAGE_MAX_HEIGHT = 100;
 
@@ -52,10 +202,6 @@ export const Message: React.FC<MessageProps> = ({
   message,
   index,
   lastUserMessageIndex,
-  isEditingMessage,
-  editingMessageIndex,
-  setIsEditingMessage,
-  setEditingMessageIndex,
   renderPart,
   status,
   messages,
@@ -78,10 +224,8 @@ export const Message: React.FC<MessageProps> = ({
   const [exceedsMaxHeight, setExceedsMaxHeight] = useState(false);
   // Ref to check content height
   const messageContentRef = React.useRef<HTMLDivElement>(null);
-  // Local edit state to avoid conflicts with global input
-  const [editContent, setEditContent] = useState("");
-  // Loading state for form submission
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Mode state for editing
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
 
   // Check if message content exceeds max height
   React.useEffect(() => {
@@ -90,73 +234,6 @@ export const Message: React.FC<MessageProps> = ({
       setExceedsMaxHeight(contentHeight > USER_MESSAGE_MAX_HEIGHT);
     }
   }, [message.content]);
-
-  // Initialize edit content when editing starts
-  React.useEffect(() => {
-    if (isEditingMessage && editingMessageIndex === index) {
-      setEditContent(message.content);
-    }
-  }, [isEditingMessage, editingMessageIndex, index, message.content]);
-
-  // Move handlers inside the component
-  const handleMessageEdit = useCallback((index: number) => {
-    setIsEditingMessage(true);
-    setEditingMessageIndex(index);
-    setEditContent(messages[index].content);
-  }, [messages, setIsEditingMessage, setEditingMessageIndex]);
-
-  const handleMessageUpdate = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editContent.trim()) {
-      toast.error("Please enter a valid message.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      const originalMessage = messages[editingMessageIndex];
-
-      // Step 1: Delete trailing messages
-      if (user && originalMessage.id) {
-        await deleteTrailingMessages({
-          id: originalMessage.id,
-        });
-      }
-
-      // Step 2: Update the message in the local state
-      const updatedMessage = {
-        ...originalMessage,
-        content: editContent.trim(),
-        parts: [{ type: 'text', text: editContent.trim() }],
-      };
-
-      // Filter messages to keep only up to the edited message
-      const updatedMessages = messages.slice(0, editingMessageIndex);
-      updatedMessages.push(updatedMessage);
-      setMessages(updatedMessages);
-
-      // Step 3: Reset UI state
-      setEditContent("");
-      setIsEditingMessage(false);
-      setEditingMessageIndex(-1);
-      setSuggestedQuestions([]);
-
-      // Step 4: Reload
-      await reload();
-    } catch (error) {
-      console.error("Error updating message:", error);
-      toast.error("Failed to update message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [editContent, messages, editingMessageIndex, setMessages, setIsEditingMessage, setEditingMessageIndex, setSuggestedQuestions, user, reload]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditingMessage(false);
-    setEditingMessageIndex(-1);
-    setEditContent("");
-  }, [setIsEditingMessage, setEditingMessageIndex]);
 
   const handleSuggestedQuestionClick = useCallback(async (question: string) => {
     // Only proceed if user is authenticated for public chats
@@ -170,81 +247,19 @@ export const Message: React.FC<MessageProps> = ({
     });
   }, [append, setSuggestedQuestions, user, selectedVisibilityType]);
 
-
   if (message.role === 'user') {
     // Check if the message has parts that should be rendered
     if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
       return (
-        <div
-          className="mb-0! px-0"
-        >
+        <div className="mb-0! px-0">
           <div className="grow min-w-0">
-            {isEditingMessage && editingMessageIndex === index ? (
-              <div className="group relative">
-                <form onSubmit={handleMessageUpdate} className="w-full">
-                  <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-neutral-50/30 dark:bg-neutral-800/30">
-                    <Textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      autoFocus
-                      className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
-                      placeholder="Edit your message..."
-                      style={{
-                        lineHeight: '1.625',
-                        fontSize: '1.125rem'
-                      }}
-                    />
-
-                    <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCancelEdit}
-                        className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-
-                {/* Show editable attachments */}
-                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                  <div className="mt-3">
-                    <EditableAttachmentsBadge
-                      attachments={message.experimental_attachments}
-                      onRemoveAttachment={(index) => {
-                        // Handle attachment removal
-                        const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
-                        // Update the message with new attachments
-                        const updatedMessage = {
-                          ...message,
-                          experimental_attachments: updatedAttachments
-                        };
-                        const updatedMessages = [...messages];
-                        updatedMessages[editingMessageIndex] = updatedMessage;
-                        setMessages(updatedMessages);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+            {mode === 'edit' ? (
+              <MessageEditor
+                message={message}
+                setMode={setMode}
+                setMessages={setMessages}
+                reload={reload}
+              />
             ) : (
               <div className="group relative">
                 <div className="relative">
@@ -300,168 +315,6 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  {!isEditingMessage && (
-                    <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
-                      {/* Only show edit button for owners OR unauthenticated users on private chats */}
-                      {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleMessageEdit(index)}
-                            className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                            disabled={status === 'submitted' || status === 'streaming'}
-                            aria-label="Edit message"
-                          >
-                            <svg
-                              width="15"
-                              height="15"
-                              viewBox="0 0 15 15"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-3.5 w-3.5"
-                            >
-                              <path
-                                d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                                fill="currentColor"
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </Button>
-                          <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
-                        </>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          navigator.clipboard.writeText(message.content);
-                          toast.success("Copied to clipboard");
-                        }}
-                        className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
-                        aria-label="Copy message"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                  <AttachmentsBadge attachments={message.experimental_attachments} />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Fallback to the original rendering if no parts are present
-    return (
-      <div
-        className="mb-0! px-0"
-      >
-        <div className="grow min-w-0">
-          {isEditingMessage && editingMessageIndex === index ? (
-            <div className="group relative">
-              <form onSubmit={handleMessageUpdate} className="w-full">
-                <div className="relative">
-                  <Textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    autoFocus
-                    className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
-                    placeholder="Edit your message..."
-                    style={{
-                      lineHeight: '1.625',
-                      fontSize: '1.125rem'
-                    }}
-                  />
-
-                  <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting || editContent.trim() === message.content.trim()}
-                    >
-                      {isSubmitting ? (
-                        <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                    <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleCancelEdit}
-                      className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                      disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </form>
-
-              {/* Show editable attachments */}
-              {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                <div className="mt-3">
-                  <EditableAttachmentsBadge
-                    attachments={message.experimental_attachments}
-                    onRemoveAttachment={(index) => {
-                      // Handle attachment removal
-                      const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
-                      // Update the message with new attachments
-                      const updatedMessage = {
-                        ...message,
-                        experimental_attachments: updatedAttachments
-                      };
-                      const updatedMessages = [...messages];
-                      updatedMessages[editingMessageIndex] = updatedMessage;
-                      setMessages(updatedMessages);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="group relative">
-              <div className="relative">
-                <div
-                  ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
-                >
-                  <MarkdownRenderer content={preprocessLaTeX(message.content)} />
-
-                  {!isExpanded && exceedsMaxHeight && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                  )}
-                </div>
-
-                {exceedsMaxHeight && (
-                  <div className="flex justify-center mt-0.5">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                      aria-label={isExpanded ? "Show less" : "Show more"}
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                )}
-
-                {!isEditingMessage && (
                   <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
@@ -469,7 +322,7 @@ export const Message: React.FC<MessageProps> = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleMessageEdit(index)}
+                          onClick={() => setMode('edit')}
                           className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                           disabled={status === 'submitted' || status === 'streaming'}
                           aria-label="Edit message"
@@ -506,7 +359,104 @@ export const Message: React.FC<MessageProps> = ({
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </div>
+                </div>
+                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+                  <AttachmentsBadge attachments={message.experimental_attachments} />
                 )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback to the original rendering if no parts are present
+    return (
+      <div className="mb-0! px-0">
+        <div className="grow min-w-0">
+          {mode === 'edit' ? (
+            <MessageEditor
+              message={message}
+              setMode={setMode}
+              setMessages={setMessages}
+              reload={reload}
+            />
+          ) : (
+            <div className="group relative">
+              <div className="relative">
+                <div
+                  ref={messageContentRef}
+                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                >
+                  <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+
+                  {!isExpanded && exceedsMaxHeight && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                  )}
+                </div>
+
+                {exceedsMaxHeight && (
+                  <div className="flex justify-center mt-0.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
+                      aria-label={isExpanded ? "Show less" : "Show more"}
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
+                  {/* Only show edit button for owners OR unauthenticated users on private chats */}
+                  {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMode('edit')}
+                        className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        disabled={status === 'submitted' || status === 'streaming'}
+                        aria-label="Edit message"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 15 15"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3.5 w-3.5"
+                        >
+                          <path
+                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
+                            fill="currentColor"
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </Button>
+                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                    </>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(message.content);
+                      toast.success("Copied to clipboard");
+                    }}
+                    className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                    aria-label="Copy message"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
               {message.experimental_attachments && message.experimental_attachments.length > 0 && (
                 <AttachmentsBadge attachments={message.experimental_attachments} />
