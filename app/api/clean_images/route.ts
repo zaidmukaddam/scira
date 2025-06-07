@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        await deleteAllBlobsWithPrefix('mplx/public.');
-        return new NextResponse('All public files with mplx/public. prefix were deleted', {
+        await deleteAllBlobsWithPrefix('mplx/public');
+        return new NextResponse('All public files with mplx/public prefix were deleted', {
             status: 200,
         });
     } catch (error) {
