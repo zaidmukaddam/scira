@@ -29,6 +29,9 @@ importers:
       '@ai-sdk/xai':
         specifier: ^1.2.16
         version: 1.2.16(zod@3.25.42)
+      '@aws-sdk/client-s3':
+        specifier: ^3.826.0
+        version: 3.826.0
       '@babel/runtime':
         specifier: '>=7.27.0'
         version: 7.27.0
