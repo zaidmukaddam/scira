@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Download, X, ExternalLink, Maximize2, FileText, Plus, AlignLeft, AlertCircle, RefreshCw } from 'lucide-react';
@@ -178,68 +179,72 @@ export const Message: React.FC<MessageProps> = ({
           className="mb-0! px-0"
         >
           <div className="grow min-w-0">
-                    {isEditingMessage && editingMessageIndex === index ? (
-          <div className="group relative">
-            <form onSubmit={handleMessageUpdate} className="w-full">
-              <div className="relative">
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  autoFocus
-                  className="w-full resize-none bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2 text-lg leading-relaxed text-neutral-900 dark:text-neutral-100 font-[syne] focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 min-h-[100px] pr-10 sm:pr-12"
-                  placeholder="Edit your message..."
-                />
+            {isEditingMessage && editingMessageIndex === index ? (
+              <div className="group relative">
+                <form onSubmit={handleMessageUpdate} className="w-full">
+                  <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-neutral-50/30 dark:bg-neutral-800/30">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      autoFocus
+                      className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
+                      placeholder="Edit your message..."
+                      style={{
+                        lineHeight: '1.625',
+                        fontSize: '1.125rem'
+                      }}
+                    />
 
-                <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                    disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                  <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCancelEdit}
-                    className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                    disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </form>
+                    <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCancelEdit}
+                        className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        disabled={status === 'submitted' || status === 'streaming' || isSubmitting}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </form>
 
-            {/* Show editable attachments */}
-            {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-              <div className="mt-3">
-                <EditableAttachmentsBadge 
-                  attachments={message.experimental_attachments}
-                  onRemoveAttachment={(index) => {
-                    // Handle attachment removal
-                    const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
-                    // Update the message with new attachments
-                    const updatedMessage = {
-                      ...message,
-                      experimental_attachments: updatedAttachments
-                    };
-                    const updatedMessages = [...messages];
-                    updatedMessages[editingMessageIndex] = updatedMessage;
-                    setMessages(updatedMessages);
-                  }}
-                />
+                {/* Show editable attachments */}
+                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+                  <div className="mt-3">
+                    <EditableAttachmentsBadge
+                      attachments={message.experimental_attachments}
+                      onRemoveAttachment={(index) => {
+                        // Handle attachment removal
+                        const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
+                        // Update the message with new attachments
+                        const updatedMessage = {
+                          ...message,
+                          experimental_attachments: updatedAttachments
+                        };
+                        const updatedMessages = [...messages];
+                        updatedMessages[editingMessageIndex] = updatedMessage;
+                        setMessages(updatedMessages);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             ) : (
               <div className="group relative">
                 <div className="relative">
@@ -295,7 +300,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  {!isEditingMessage && index === lastUserMessageIndex && (
+                  {!isEditingMessage && (
                     <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                       {/* Only show edit button for owners OR unauthenticated users on private chats */}
                       {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
@@ -362,12 +367,16 @@ export const Message: React.FC<MessageProps> = ({
             <div className="group relative">
               <form onSubmit={handleMessageUpdate} className="w-full">
                 <div className="relative">
-                  <textarea
+                  <Textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     autoFocus
-                    className="w-full resize-none bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-lg leading-relaxed text-neutral-900 dark:text-neutral-100 font-[syne] focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 min-h-[100px] pr-10 sm:pr-12"
+                    className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
                     placeholder="Edit your message..."
+                    style={{
+                      lineHeight: '1.625',
+                      fontSize: '1.125rem'
+                    }}
                   />
 
                   <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
@@ -402,7 +411,7 @@ export const Message: React.FC<MessageProps> = ({
               {/* Show editable attachments */}
               {message.experimental_attachments && message.experimental_attachments.length > 0 && (
                 <div className="mt-3">
-                  <EditableAttachmentsBadge 
+                  <EditableAttachmentsBadge
                     attachments={message.experimental_attachments}
                     onRemoveAttachment={(index) => {
                       // Handle attachment removal
@@ -452,7 +461,7 @@ export const Message: React.FC<MessageProps> = ({
                   </div>
                 )}
 
-                {!isEditingMessage && index === lastUserMessageIndex && (
+                {!isEditingMessage && (
                   <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
@@ -475,10 +484,10 @@ export const Message: React.FC<MessageProps> = ({
                           >
                             <path
                               d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                                fill="currentColor"
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                              />
+                              fill="currentColor"
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </Button>
                         <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
@@ -646,11 +655,11 @@ export const Message: React.FC<MessageProps> = ({
 };
 
 // Editable attachments badge component for edit mode
-export const EditableAttachmentsBadge = ({ 
-  attachments, 
-  onRemoveAttachment 
-}: { 
-  attachments: any[]; 
+export const EditableAttachmentsBadge = ({
+  attachments,
+  onRemoveAttachment
+}: {
+  attachments: any[];
   onRemoveAttachment: (index: number) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -734,7 +743,7 @@ export const EditableAttachmentsBadge = ({
                   {truncatedName}
                 </span>
               </button>
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -896,8 +905,8 @@ export const EditableAttachmentsBadge = ({
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
                         }`}
                     >
                       {isPdf(attachment) ? (
@@ -1185,8 +1194,8 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
                         }`}
                     >
                       {isPdf(attachment) ? (
