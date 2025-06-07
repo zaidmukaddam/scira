@@ -735,7 +735,6 @@ plt.show()`
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
-                                target: SandboxTargetRegion.US,
                                 resources: {
                                     cpu: 2,
                                     memory: 5,
@@ -827,7 +826,6 @@ print(f"Converted amount: {converted_amount}")
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
-                                target: SandboxTargetRegion.US,
                                 resources: {
                                     cpu: 2,
                                     memory: 5,
@@ -1604,7 +1602,6 @@ print(f"Converted amount: {converted_amount}")
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
-                                target: SandboxTargetRegion.US,
                                 resources: {
                                     cpu: 4,
                                     memory: 8,
@@ -2199,7 +2196,7 @@ print(f"Converted amount: {converted_amount}")
                                 const data = await tvly.search(query, {
                                     maxResults: maxResults,
                                     timeRange: timeRange,
-                                    includeRawContent: true,
+                                    includeRawContent: "text",
                                     searchDepth: 'basic',
                                     topic: 'general',
                                     includeDomains: ["reddit.com"],
