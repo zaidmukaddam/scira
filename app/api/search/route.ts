@@ -731,7 +731,10 @@ plt.show()`
 
                             console.log('Code:', code);
 
-                            const daytona = new Daytona()
+                            const daytona = new Daytona({
+                                apiKey: serverEnv.DAYTONA_API_KEY,
+                                target: SandboxTargetRegion.US,
+                            })
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
@@ -822,7 +825,10 @@ print(f"Converted amount: {converted_amount}")
 `;
                             console.log('Currency pair:', from, to);
 
-                            const daytona = new Daytona()
+                            const daytona = new Daytona({
+                                apiKey: serverEnv.DAYTONA_API_KEY,
+                                target: SandboxTargetRegion.US,
+                            })
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
@@ -1598,7 +1604,10 @@ print(f"Converted amount: {converted_amount}")
                             console.log('Title:', title);
                             console.log('Icon:', icon);
 
-                            const daytona = new Daytona()
+                            const daytona = new Daytona({
+                                apiKey: serverEnv.DAYTONA_API_KEY,
+                                target: SandboxTargetRegion.US,
+                            })
                             const sandbox = await daytona.create({
                                 image: "scira-analysis:1749032298",
                                 language: 'python',
