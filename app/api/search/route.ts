@@ -1526,37 +1526,85 @@ print(f"Converted amount: {converted_amount}")
                         },
                     }),
                     get_weather_data: tool({
-                        description: 'Get the weather data for the given location name using geocoding and OpenWeather API.',
+                        description: 'Get the weather data for a location using either location name or coordinates with OpenWeather API.',
                         parameters: z.object({
-                            location: z.string().describe('The name of the location to get weather data for (e.g., "London", "New York", "Tokyo").')
+                            location: z.string().optional().describe('The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Required if latitude and longitude are not provided.'),
+                            latitude: z.number().optional().describe('The latitude coordinate. Required if location is not provided.'),
+                            longitude: z.number().optional().describe('The longitude coordinate. Required if location is not provided.')
                         }),
-                        execute: async ({ location }: { location: string }) => {
+                        execute: async ({ location, latitude, longitude }: { location?: string; latitude?: number; longitude?: number }) => {
                             try {
-                                // Step 1: Geocode the location name using Open Meteo API
-                                const geocodingResponse = await fetch(
-                                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
-                                );
+                                let lat = latitude;
+                                let lng = longitude;
+                                let locationName = location;
+                                let country: string | undefined;
+                                let timezone: string | undefined;
 
-                                const geocodingData = await geocodingResponse.json();
-
-                                if (!geocodingData.results || geocodingData.results.length === 0) {
-                                    throw new Error(`Location '${location}' not found`);
+                                // Validate input parameters
+                                if (!location && (!latitude || !longitude)) {
+                                    throw new Error('Either location name or both latitude and longitude coordinates must be provided');
                                 }
 
-                                const { latitude, longitude, name, country, timezone } = geocodingData.results[0];
-                                console.log('Latitude:', latitude);
-                                console.log('Longitude:', longitude);
-                                // Step 2: Fetch weather data using OpenWeather API with the obtained coordinates
+                                // Step 1: Get coordinates if not provided
+                                if (!lat || !lng) {
+                                    if (!location) {
+                                        throw new Error('Location name is required when coordinates are not provided');
+                                    }
+
+                                    // Geocode the location name using Open Meteo API
+                                    const geocodingResponse = await fetch(
+                                        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+                                    );
+
+                                    const geocodingData = await geocodingResponse.json();
+
+                                    if (!geocodingData.results || geocodingData.results.length === 0) {
+                                        throw new Error(`Location '${location}' not found`);
+                                    }
+
+                                    const geocodingResult = geocodingData.results[0];
+                                    lat = geocodingResult.latitude;
+                                    lng = geocodingResult.longitude;
+                                    locationName = geocodingResult.name;
+                                    country = geocodingResult.country;
+                                    timezone = geocodingResult.timezone;
+                                } else {
+                                    // If coordinates are provided but no location name, try reverse geocoding
+                                    if (!location) {
+                                        try {
+                                            const reverseGeocodeResponse = await fetch(
+                                                `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lng}&limit=1&appid=${serverEnv.OPENWEATHER_API_KEY}`
+                                            );
+                                            const reverseGeocodeData = await reverseGeocodeResponse.json();
+                                            
+                                            if (reverseGeocodeData && reverseGeocodeData.length > 0) {
+                                                locationName = reverseGeocodeData[0].name;
+                                                country = reverseGeocodeData[0].country;
+                                            } else {
+                                                locationName = `${lat}, ${lng}`;
+                                            }
+                                        } catch (reverseGeocodeError) {
+                                            console.warn('Reverse geocoding failed:', reverseGeocodeError);
+                                            locationName = `${lat}, ${lng}`;
+                                        }
+                                    }
+                                }
+
+                                console.log('Latitude:', lat);
+                                console.log('Longitude:', lng);
+                                console.log('Location:', locationName);
+
+                                // Step 2: Fetch weather data using OpenWeather API with the coordinates
                                 const apiKey = serverEnv.OPENWEATHER_API_KEY;
                                 const [weatherResponse, airPollutionResponse, dailyForecastResponse] = await Promise.all([
                                     fetch(
-                                        `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}`
                                     ),
                                     fetch(
-                                        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${apiKey}`
                                     ),
                                     fetch(
-                                        `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=16&appid=${apiKey}`
+                                        `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lng}&cnt=16&appid=${apiKey}`
                                     )
                                 ]);
 
@@ -1571,7 +1619,7 @@ print(f"Converted amount: {converted_amount}")
 
                                 // Step 3: Fetch air pollution forecast
                                 const airPollutionForecastResponse = await fetch(
-                                    `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`
+                                    `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}`
                                 );
                                 const airPollutionForecastData = await airPollutionForecastResponse.json();
 
@@ -1579,11 +1627,11 @@ print(f"Converted amount: {converted_amount}")
                                 return {
                                     ...weatherData,
                                     geocoding: {
-                                        latitude,
-                                        longitude,
-                                        name,
-                                        country,
-                                        timezone
+                                        latitude: lat,
+                                        longitude: lng,
+                                        name: locationName,
+                                        country: country,
+                                        timezone: timezone
                                     },
                                     air_pollution: airPollutionData,
                                     air_pollution_forecast: airPollutionForecastData,
