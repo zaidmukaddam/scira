@@ -22,7 +22,13 @@ import MemoryClient from 'mem0ai';
 import { extremeSearchTool } from '@/ai/extreme-search';
 import { scira } from '@/ai/providers';
 import { getUser } from "@/lib/auth-utils";
-import { createStreamId, getChatById, getMessagesByChatId, getStreamIdsByChatId, saveChat, saveMessages } from '@/lib/db/queries';
+import { createStreamId, 
+    getChatById, 
+    getMessagesByChatId, 
+    getStreamIdsByChatId, 
+    saveChat, 
+    saveMessages,
+} from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import {
     createResumableStreamContext,
@@ -39,11 +45,11 @@ import { getTweet } from 'react-tweet/api';
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
-export function getTrailingMessageId({
+function getTrailingMessageId({
     messages,
 }: {
     messages: Array<ResponseMessage>;
-}): string | null {
+}): string | null { 
     const trailingMessage = messages.at(-1);
 
     if (!trailingMessage) return null;
