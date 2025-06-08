@@ -4,7 +4,6 @@ import 'katex/dist/katex.min.css';
 
 
 import { useChat, UseChatOptions } from '@ai-sdk/react';
-import { CalendarBlank, Clock as PhosphorClock } from '@phosphor-icons/react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 import React, {
@@ -68,7 +67,6 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
     const isAutoScrollingRef = useRef(false);
     const [user, setUser] = useState<User | null>(null);
-    const [userLoading, setUserLoading] = useState(true);
 
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
@@ -111,15 +109,12 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                setUserLoading(true);
                 const userData = await getCurrentUser();
                 if (userData) {
                     setUser(userData as User);
                 }
             } catch (error) {
                 console.error("Error fetching user:", error);
-            } finally {
-                setUserLoading(false);
             }
         };
 
