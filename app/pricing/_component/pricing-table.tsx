@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { SEARCH_LIMITS } from "@/lib/constants";
 
 type SubscriptionDetails = {
   id: string;
@@ -144,7 +145,7 @@ export default function PricingTable({
               <ul className="space-y-4">
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">150 normal searches per day</span>
+                  <span className="text-zinc-700 dark:text-zinc-300">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT} normal searches per day</span>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
