@@ -18,7 +18,7 @@ import React, {
 import FormComponent from '@/components/ui/form-component';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
-import { getCurrentUser, suggestQuestions, updateChatVisibility } from '@/app/actions';
+import { getCurrentUser, suggestQuestions, updateChatVisibility, getSubDetails } from '@/app/actions';
 import Messages from '@/components/messages';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '@/lib/db/schema';
@@ -67,6 +67,8 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
     const isAutoScrollingRef = useRef(false);
     const [user, setUser] = useState<User | null>(null);
+    const [subscriptionData, setSubscriptionData] = useState<any>(null);
+    const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
@@ -120,6 +122,25 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
 
         fetchUser();
     }, []);
+
+    // Fetch subscription data when user is authenticated
+    useEffect(() => {
+        const fetchSubscription = async () => {
+            if (user && !subscriptionData && !subscriptionLoading) {
+                setSubscriptionLoading(true);
+                try {
+                    const data = await getSubDetails();
+                    setSubscriptionData(data);
+                } catch (error) {
+                    console.error("Error fetching subscription:", error);
+                } finally {
+                    setSubscriptionLoading(false);
+                }
+            }
+        };
+
+        fetchSubscription();
+    }, [user, subscriptionData, subscriptionLoading]);
 
     // Timer for sign-in prompt for unauthenticated users
     useEffect(() => {
@@ -398,6 +419,8 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                     user={user}
                     onHistoryClick={() => setCommandDialogOpen(true)}
                     isOwner={isOwner}
+                    subscriptionData={subscriptionData}
+                    subscriptionLoading={subscriptionLoading}
                 />
 
                 {/* Chat History Dialog */}
@@ -449,6 +472,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                                 <FormComponent
                                     chatId={chatId}
                                     user={user!}
+                                    subscriptionData={subscriptionData}
                                     input={input}
                                     setInput={setInput}
                                     attachments={attachments}
@@ -515,6 +539,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                                 chatId={chatId}
                                 input={input}
                                 user={user!}
+                                subscriptionData={subscriptionData}
                                 setInput={setInput}
                                 attachments={attachments}
                                 setAttachments={setAttachments}

@@ -3,6 +3,7 @@ import './env/server';
 import './env/client';
 
 const nextConfig: NextConfig = {
+    allowedDevOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai", "https://f990-2409-40c0-77-b1af-8d4e-e70d-9000-a209.ngrok-free.app/"],
     compiler: {
         // if NODE_ENV is production, remove console.log
         removeConsole: process.env.NODE_ENV === 'production' ? {

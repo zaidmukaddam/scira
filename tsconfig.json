@@ -23,6 +23,6 @@
     },
     "types": ["google.maps"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.mjs"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.mjs", "app/pricing/page.tsx"],
   "exclude": ["node_modules"]
 }

@@ -1,10 +1,10 @@
 import { createAuthClient } from "better-auth/react";
-import { config } from 'dotenv';
+import { organizationClient } from "better-auth/client/plugins";
+import { polarClient } from "@polar-sh/better-auth";
 
-config({
-    path: '.env.local',
+
+export const authClient = createAuthClient({
+  plugins: [organizationClient(), polarClient()],
 });
-
-export const authClient = createAuthClient();
 
 export const { signIn, signOut, signUp, useSession } = authClient;

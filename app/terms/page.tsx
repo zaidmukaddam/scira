@@ -122,32 +122,65 @@ export default function TermsPage() {
             By using Scira AI, you acknowledge and agree that your data may be processed by these third-party services as described in our Privacy Policy.
           </p>
 
-          <h2>7. Privacy</h2>
+          <h2>7. Pricing and Billing</h2>
+          <p>
+            Scira AI offers both free and paid subscription plans. For detailed pricing information, visit our <Link href="/pricing" className="underline">Pricing page</Link>.
+          </p>
+          <ul>
+            <li><strong>Free Plan:</strong> Includes limited searches per month with basic AI models</li>
+            <li><strong>Scira Pro:</strong> $15/month subscription with unlimited searches and access to all AI models</li>
+          </ul>
+          <p>
+            For paid subscriptions:
+          </p>
+          <ul>
+            <li>Billing is processed monthly and charged automatically to your payment method</li>
+            <li>All fees are non-refundable except as expressly stated in our refund policy</li>
+            <li>We reserve the right to change subscription prices with 30 days advance notice</li>
+            <li>You are responsible for all applicable taxes</li>
+            <li>Failed payments may result in service suspension or termination</li>
+          </ul>
+
+          <h2>8. Cancellation and Refunds</h2>
+          <p>
+            You may cancel your subscription at any time through your account settings or by contacting us. Upon cancellation:
+          </p>
+          <ul>
+            <li>Your subscription will remain active until the end of your current billing period</li>
+            <li>You will retain access to paid features until the subscription expires</li>
+            <li>Your account will automatically revert to the free plan</li>
+            <li>No partial refunds will be provided for unused portions of your subscription</li>
+          </ul>
+          <p>
+            <strong>No Refund Policy:</strong> All subscription fees are final and non-refundable. We do not provide refunds, credits, or prorated billing for partial subscription periods, regardless of usage or circumstances. Please consider this policy carefully before subscribing to our paid plans.
+          </p>
+
+          <h2>9. Privacy</h2>
           <p>
             Your use of Scira AI is also governed by our <Link href="/privacy-policy" className="underline">Privacy Policy</Link>, which is incorporated into these Terms of Service by reference.
           </p>
 
-          <h2>8. Limitation of Liability</h2>
+          <h2>10. Limitation of Liability</h2>
           <p>
             To the maximum extent permitted by law, Scira AI shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising out of or in connection with your use of or inability to use the service.
           </p>
 
-          <h2>9. Disclaimers</h2>
+          <h2>11. Disclaimers</h2>
           <p>
             Scira AI is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind, either express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
           </p>
 
-          <h2>10. Termination</h2>
+          <h2>12. Termination</h2>
           <p>
             We reserve the right to suspend or terminate your access to Scira AI, with or without notice, for conduct that we believe violates these Terms of Service or is harmful to other users, us, or third parties, or for any other reason at our discretion.
           </p>
 
-          <h2>11. Governing Law</h2>
+          <h2>13. Governing Law</h2>
           <p>
             These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Scira AI operates, without regard to its conflict of law provisions.
           </p>
 
-          <h2>12. Contact Us</h2>
+          <h2>14. Contact Us</h2>
           <p>
             If you have any questions about these Terms of Service, please contact us at:
           </p>

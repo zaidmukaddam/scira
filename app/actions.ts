@@ -7,9 +7,20 @@ import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
 import { getUser } from "@/lib/auth-utils";
 import { scira } from '@/ai/providers';
-import { getChatsByUserId, deleteChatById, updateChatVisiblityById, getChatById, getMessageById, deleteMessagesByChatIdAfterTimestamp, updateChatTitleById } from '@/lib/db/queries';
+import {
+  getChatsByUserId,
+  deleteChatById,
+  updateChatVisiblityById,
+  getChatById,
+  getMessageById,
+  deleteMessagesByChatIdAfterTimestamp,
+  updateChatTitleById,
+  getMessageCountByUserId,
+  getExtremeSearchCount
+} from '@/lib/db/queries';
 import { groq } from '@ai-sdk/groq';
 import { openai } from '@ai-sdk/openai';
+import { getSubscriptionDetails } from '@/lib/subscription';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
@@ -186,7 +197,7 @@ const groupTools = {
     'web_search', 'get_weather_data',
     'retrieve', 'text_translate',
     'nearby_places_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies', 
+    'movie_or_tv_search', 'trending_movies',
     'find_place_on_map',
     'trending_tv', 'datetime', 'mcp_search'
   ] as const,
@@ -634,25 +645,68 @@ const groupInstructions = {
   - Include library installations (!pip install <library_name>) where required
   - Keep code simple and concise unless complexity is absolutely necessary
   - ⚠️ NEVER use unnecessary intermediate variables or assignments
-  - ⚠️ Always use print() functions - directly reference them at the end
-  - For final output, simply print the result (e.g., \`print(result)\` not \`result\`)
+  
+  ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
+  - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
+  - NEVER leave variables hanging without print() at the end
+  - NEVER use bare variable names as final statements (e.g., result alone)
+  - ALWAYS wrap final outputs in print() function: print(final_result)
+  - For multiple outputs, use separate print() statements for each
+  - For calculations: Always end with print(calculation_result)
+  - For data analysis: Always end with print(analysis_summary)
+  - For string operations: Always end with print(string_result)
+  - For mathematical computations: Always end with print(math_result)
+  - Even for simple operations: Always end with print(simple_result)
+  - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
   - Use only essential code - avoid boilerplate, comments, or explanatory code
-  - For visualizations: use 'plt.show()' for plots, and mention generated URLs for outputs
+  
+  ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
+  \`\`\`python
+  # Simple calculation
+  result = 2 + 2
+  print(result)  # MANDATORY
+  
+  # String operation
+  word = "strawberry"
+  count_r = word.count('r')
+  print(count_r)  # MANDATORY
+  
+  # Data analysis
+  import pandas as pd
+  data = pd.Series([1, 2, 3, 4, 5])
+  mean_value = data.mean()
+  print(mean_value)  # MANDATORY
+  
+  # Multiple outputs
+  x = 10
+  y = 20
+  sum_val = x + y
+  product = x * y
+  print(f"Sum: {sum_val}")  # MANDATORY
+  print(f"Product: {product}")  # MANDATORY
+  \`\`\`
+  
+  ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
+  \`\`\`python
+  # BAD - No print statement
+  word = "strawberry"
+  count_r = word.count('r')
+  count_r  # WRONG - bare variable
+  
+  # BAD - No print for calculation
+  result = 2 + 2
+  result  # WRONG - bare variable
+  
+  # BAD - Missing print for final output
+  data.mean()  # WRONG - no print wrapper
+  \`\`\`
+  
+  ### ENFORCEMENT RULES:
+  - If you write code without print() at the end, it is AUTOMATICALLY WRONG
+  - Every code block MUST end with at least one print() statement
+  - No bare variables, expressions, or function calls as final statements
+  - This rule applies to ALL code regardless of complexity or purpose
   - Always use the print() function for final output!!! This is very important!!!
-  
-  Good code example:
-  \`\`\`python
-  word = "strawberry"
-  count_r = word.count('r')
-  print(count_r)     # use print()
-  \`\`\`
-  
-  Bad code example:
-  \`\`\`python
-  word = "strawberry"
-  count_r = word.count('r')
-  count_r           # Never directly reference the final variable
-  \`\`\`
   
   #### Stock Charts Tool:
   - Use yfinance to get stock data and matplotlib for visualization
@@ -995,5 +1049,53 @@ export async function updateChatTitle(chatId: string, title: string) {
   } catch (error) {
     console.error('Error updating chat title:', error);
     return null;
+  }
+}
+
+export async function getSubDetails() {
+  'use server';
+
+  const subscriptionDetails = await getSubscriptionDetails();
+  return subscriptionDetails;
+}
+
+export async function getUserMessageCount(differenceInHours: number = 24) {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { count: 0, error: 'User not found' };
+    }
+
+    const count = await getMessageCountByUserId({
+      id: user.id,
+      differenceInHours
+    });
+
+    return { count, error: null };
+  } catch (error) {
+    console.error('Error getting user message count:', error);
+    return { count: 0, error: 'Failed to get message count' };
+  }
+}
+
+export async function getExtremeSearchUsageCount() {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { count: 0, error: 'User not found' };
+    }
+
+    const count = await getExtremeSearchCount({
+      userId: user.id
+    });
+
+    return { count, error: null };
+  } catch (error) {
+    console.error('Error getting extreme search usage count:', error);
+    return { count: 0, error: 'Failed to get extreme search count' };
   }
 }

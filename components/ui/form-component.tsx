@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback, useEffect, SVGProps } from 'react';
+import React, { useState, useRef, useCallback, useEffect, SVGProps, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
@@ -39,6 +39,7 @@ interface ModelSwitcherProps {
     messages: Array<Message>;
     status: 'submitted' | 'streaming' | 'ready' | 'error';
     onModelSelect?: (model: typeof models[0]) => void;
+    subscriptionData?: any;
 }
 
 const XAIIcon = ({ className }: { className?: string }) => (
@@ -98,17 +99,17 @@ const AnthropicIcon = (props: SVGProps<SVGSVGElement>) => <svg fill="currentColo
 const GroqIcon = (props: SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 201" width="1em" height="1em" {...props}><path fill="#F54F35" d="M0 0h201v201H0V0Z" /><path fill="#FEFBFB" d="m128 49 1.895 1.52C136.336 56.288 140.602 64.49 142 73c.097 1.823.148 3.648.161 5.474l.03 3.247.012 3.482.017 3.613c.01 2.522.016 5.044.02 7.565.01 3.84.041 7.68.072 11.521.007 2.455.012 4.91.016 7.364l.038 3.457c-.033 11.717-3.373 21.83-11.475 30.547-4.552 4.23-9.148 7.372-14.891 9.73l-2.387 1.055c-9.275 3.355-20.3 2.397-29.379-1.13-5.016-2.38-9.156-5.17-13.234-8.925 3.678-4.526 7.41-8.394 12-12l3.063 2.375c5.572 3.958 11.135 5.211 17.937 4.625 6.96-1.384 12.455-4.502 17-10 4.174-6.784 4.59-12.222 4.531-20.094l.012-3.473c.003-2.414-.005-4.827-.022-7.241-.02-3.68 0-7.36.026-11.04-.003-2.353-.008-4.705-.016-7.058l.025-3.312c-.098-7.996-1.732-13.21-6.681-19.47-6.786-5.458-13.105-8.211-21.914-7.792-7.327 1.188-13.278 4.7-17.777 10.601C75.472 72.012 73.86 78.07 75 85c2.191 7.547 5.019 13.948 12 18 5.848 3.061 10.892 3.523 17.438 3.688l2.794.103c2.256.082 4.512.147 6.768.209v16c-16.682.673-29.615.654-42.852-10.848-8.28-8.296-13.338-19.55-13.71-31.277.394-9.87 3.93-17.894 9.562-25.875l1.688-2.563C84.698 35.563 110.05 34.436 128 49Z" /></svg>;
 
 const models = [
-    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable", pdf: false },
-    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Stable", pdf: false },
-    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false },
-    { value: "scira-anthropic", label: "Claude 4 Sonnet", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced model", color: "violet", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-anthropic-thinking", label: "Claude 4 Sonnet Thinking", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-google", label: "Gemini 2.5 Flash (Thinking)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-google-pro", label: "Gemini 2.5 Pro (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: true },
-    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: false },
-    { value: "scira-llama-4", label: "Llama 4 Maverick", icon: GroqIcon, iconClass: "text-current", description: "Meta's latest model", color: "blue", vision: true, reasoning: false, experimental: true, category: "Experimental", pdf: false },
-    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false },
+    { value: "scira-default", label: "Grok 3.0 Mini", icon: XAIIcon, iconClass: "text-current", description: "xAI's most efficient reasoning model", color: "black", vision: false, reasoning: true, experimental: false, category: "Stable", pdf: false, pro: false },
+    { value: "scira-grok-3", label: "Grok 3.0", icon: XAIIcon, iconClass: "text-current", description: "xAI's most intelligent model", color: "gray", vision: false, reasoning: false, experimental: false, category: "Pro", pdf: false, pro: true },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "text-current", description: "xAI's advanced vision model", color: "indigo", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: false, pro: false },
+    { value: "scira-anthropic", label: "Claude 4 Sonnet", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced model", color: "violet", vision: true, reasoning: false, experimental: false, category: "Stable", pdf: true, pro: false },
+    { value: "scira-anthropic-thinking", label: "Claude 4 Sonnet Thinking", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: true, pro: true },
+    { value: "scira-google", label: "Gemini 2.5 Flash (Thinking)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true, pro: false },
+    { value: "scira-google-pro", label: "Gemini 2.5 Pro (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: true, pro: true },
+    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Pro", pdf: true, pro: true },
+    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: false, pro: true },
+    { value: "scira-llama-4", label: "Llama 4 Maverick", icon: GroqIcon, iconClass: "text-current", description: "Meta's latest model", color: "blue", vision: true, reasoning: false, experimental: true, category: "Experimental", pdf: false, pro: false },
+    { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false, pro: false },
 ];
 
 const getColorClasses = (color: string, isSelected: boolean = false) => {
@@ -159,8 +160,21 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
     }
 }
 
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect }) => {
-    const selectedModelData = models.find(model => model.value === selectedModel);
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect, subscriptionData }) => {
+    const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+    
+    // Filter models based on subscription status
+    const availableModels = useMemo(() => {
+        if (isProUser) {
+            // Pro users can see all models
+            return models;
+        } else {
+            // Non-pro users can only see free models
+            return models.filter(model => !model.pro);
+        }
+    }, [isProUser]);
+    
+    const selectedModelData = availableModels.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
     const isProcessing = status === 'submitted' || status === 'streaming';
 
@@ -172,8 +186,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
     // Filter models based on attachments first
     // Always show experimental models by removing the experimental filter
     const filteredModels = hasAttachments
-        ? models.filter(model => model.vision)
-        : models;
+        ? availableModels.filter(model => model.vision)
+        : availableModels;
 
     // Group filtered models by category
     const groupedModels = filteredModels.reduce((acc, model) => {
@@ -183,7 +197,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
         }
         acc[category].push(model);
         return acc;
-    }, {} as Record<string, typeof models>);
+    }, {} as Record<string, typeof availableModels>);
 
     // Get hover color classes based on model color
     const getHoverColorClasses = (modelColor: string) => {
@@ -309,105 +323,130 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                             {category} Models
                         </div>
                         <div className="space-y-0.5">
-                            {categoryModels.map((model) => (
-                                <DropdownMenuItem
-                                    key={model.value}
-                                    onSelect={() => {
-                                        console.log("Selected model:", model.value);
-                                        setSelectedModel(model.value.trim());
+                            {categoryModels.map((model) => {
+                                const isProModel = model.pro;
+                                const canUseModel = !isProModel || isProUser;
+                                
+                                return (
+                                    <DropdownMenuItem
+                                        key={model.value}
+                                        onSelect={() => {
+                                            if (!canUseModel) {
+                                                toast.error("This model requires a Pro subscription", {
+                                                    description: "Upgrade to Pro to access advanced models",
+                                                    action: {
+                                                        label: "Upgrade",
+                                                        onClick: () => window.location.href = "/pricing"
+                                                    }
+                                                });
+                                                return;
+                                            }
+                                            
+                                            console.log("Selected model:", model.value);
+                                            setSelectedModel(model.value.trim());
 
-                                        // Call onModelSelect if provided
-                                        if (onModelSelect) {
-                                            // Show additional info about image attachments for vision models
-                                            onModelSelect(model);
-                                        }
-                                    }}
-                                    className={cn(
-                                        "flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs",
-                                        "transition-all duration-200",
-                                        "group/item",
-                                        selectedModel === model.value
-                                            ? getColorClasses(model.color, true)
-                                            : getHoverColorClasses(model.color)
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "flex items-center justify-center size-7 rounded-md",
-                                        "transition-all duration-300",
-                                        "group-hover/item:scale-110 group-hover/item:rotate-6",
-                                        selectedModel === model.value
-                                            ? "bg-white/20 dark:bg-white/10"
-                                            : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
-                                    )}>
-                                        {typeof model.icon === 'string' ? (
-                                            <img
-                                                src={model.icon}
-                                                alt={model.label}
-                                                className={cn(
-                                                    "w-4 h-4 object-contain",
-                                                    "transition-all duration-300",
-                                                    "group-hover/item:scale-110 group-hover/item:rotate-12",
-                                                    model.iconClass,
-                                                    model.value === "scira-optimus" && "invert"
-                                                )}
-                                            />
-                                        ) : (
-                                            <model.icon
-                                                className={cn(
-                                                    "size-4",
-                                                    "transition-all duration-300",
-                                                    "group-hover/item:scale-110 group-hover/item:rotate-12",
-                                                    model.iconClass
-                                                )}
-                                            />
+                                            // Call onModelSelect if provided
+                                            if (onModelSelect) {
+                                                // Show additional info about image attachments for vision models
+                                                onModelSelect(model);
+                                            }
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs",
+                                            "transition-all duration-200",
+                                            "group/item",
+                                            !canUseModel && "opacity-50",
+                                            selectedModel === model.value
+                                                ? getColorClasses(model.color, true)
+                                                : getHoverColorClasses(model.color)
                                         )}
-                                    </div>
-                                    <div className="flex flex-col gap-0 min-w-0 flex-1">
-                                        <div className="font-medium truncate text-[11px] flex items-center">
-                                            {model.label}
-                                        </div>
-                                        <div className="text-[9px] opacity-70 truncate leading-tight">
-                                            {model.description}
-                                        </div>
-                                        <div className="flex items-center gap-1 mt-0.5">
-                                            {(model.vision || model.reasoning || model.pdf) && (
-                                                <div className="flex gap-1">
-                                                    {model.vision && (
-                                                        <div className={cn(
-                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
-                                                            getCapabilityColors("vision")
-                                                        )}>
-                                                            <EyeIcon className="size-2.5" />
-                                                            <span>Vision</span>
-                                                        </div>
+                                    >
+                                        <div className={cn(
+                                            "flex items-center justify-center size-7 rounded-md",
+                                            "transition-all duration-300",
+                                            "group-hover/item:scale-110 group-hover/item:rotate-6",
+                                            selectedModel === model.value
+                                                ? "bg-white/20 dark:bg-white/10"
+                                                : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+                                        )}>
+                                            {typeof model.icon === 'string' ? (
+                                                <img
+                                                    src={model.icon}
+                                                    alt={model.label}
+                                                    className={cn(
+                                                        "w-4 h-4 object-contain",
+                                                        "transition-all duration-300",
+                                                        "group-hover/item:scale-110 group-hover/item:rotate-12",
+                                                        model.iconClass,
+                                                        model.value === "scira-optimus" && "invert"
                                                     )}
-                                                    {model.reasoning && (
-                                                        <div className={cn(
-                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
-                                                            getCapabilityColors("reasoning")
-                                                        )}>
-                                                            <BrainCircuit className="size-2.5" />
-                                                            <span>Reasoning</span>
-                                                        </div>
+                                                />
+                                            ) : (
+                                                <model.icon
+                                                    className={cn(
+                                                        "size-4",
+                                                        "transition-all duration-300",
+                                                        "group-hover/item:scale-110 group-hover/item:rotate-12",
+                                                        model.iconClass
                                                     )}
-                                                    {model.pdf && (
-                                                        <div className={cn(
-                                                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
-                                                            getCapabilityColors("pdf")
-                                                        )}>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="size-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                            </svg>
-                                                            <span>PDF</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                />
                                             )}
                                         </div>
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
+                                        <div className="flex flex-col gap-0 min-w-0 flex-1">
+                                            <div className="font-medium truncate text-[11px] flex items-center gap-1">
+                                                {model.label}
+                                                {isProModel && !isProUser && (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3 text-yellow-500">
+                                                        <path d="M12 2 L2 7 L2 17 L12 22 L22 17 L22 7 L12 2"/>
+                                                        <path d="M12 22 L12 12"/>
+                                                        <path d="M12 12 L2 7"/>
+                                                        <path d="M12 12 L22 7"/>
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className="text-[9px] opacity-70 truncate leading-tight">
+                                                {model.description}
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                {(model.vision || model.reasoning || model.pdf) && (
+                                                    <div className="flex gap-1">
+                                                        {model.vision && (
+                                                            <div className={cn(
+                                                                "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                                getCapabilityColors("vision")
+                                                            )}>
+                                                                <EyeIcon className="size-2.5" />
+                                                                <span>Vision</span>
+                                                            </div>
+                                                        )}
+                                                        {model.reasoning && (
+                                                            <div className={cn(
+                                                                "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                                getCapabilityColors("reasoning")
+                                                            )}>
+                                                                <BrainCircuit className="size-2.5" />
+                                                                <span>Reasoning</span>
+                                                            </div>
+                                                        )}
+                                                        {model.pdf && (
+                                                            <div className={cn(
+                                                                "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium",
+                                                                getCapabilityColors("pdf")
+                                                            )}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="size-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                                </svg>
+                                                                <span>PDF</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </DropdownMenuItem>
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
@@ -660,6 +699,7 @@ interface FormComponentProps {
     setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
     chatId: string;
     user: User | null;
+    subscriptionData?: any;
     handleSubmit: (
         event?: {
             preventDefault?: () => void;
@@ -977,6 +1017,7 @@ const GroupSelector = ({ selectedGroup, onGroupSelect, status, onExpandChange }:
 const FormComponent: React.FC<FormComponentProps> = ({
     chatId,
     user,
+    subscriptionData,
     input,
     setInput,
     attachments,
@@ -1988,6 +2029,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     'model'  // Explicitly mark as model notification
                                                 );
                                             }}
+                                            subscriptionData={subscriptionData}
                                         />
                                     </div>
 

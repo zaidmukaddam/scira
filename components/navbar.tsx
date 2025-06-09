@@ -1,7 +1,9 @@
+"use client";
+
 /* eslint-disable @next/next/no-img-element */
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Globe, Lock, Copy, Check } from 'lucide-react';
+import { Plus, Globe, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Eye, DotsThree } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -10,12 +12,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { User } from '@/lib/db/schema';
 import { LinkedinLogo, RedditLogo, Share, XLogo } from '@phosphor-icons/react';
 import { ClassicLoader } from '@/components/ui/loading';
+import { useRouter } from 'next/navigation';
+
 
 type VisibilityType = 'public' | 'private';
 
@@ -28,6 +33,8 @@ interface NavbarProps {
     user: User | null;
     onHistoryClick: () => void;
     isOwner?: boolean;
+    subscriptionData?: any;
+    subscriptionLoading?: boolean;
 }
 
 const Navbar = memo(({
@@ -38,12 +45,18 @@ const Navbar = memo(({
     status,
     user,
     onHistoryClick,
-    isOwner = true
+    isOwner = true,
+    subscriptionData,
+    subscriptionLoading
 }: NavbarProps) => {
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+    const router = useRouter();
+
+    // Determine subscription status
+    const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
 
     const handleCopyLink = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -95,6 +108,17 @@ const Navbar = memo(({
         }
     };
 
+    const visibilityContent = useMemo(() => {
+        const isPrivate = selectedVisibilityType === 'private';
+        return {
+            icon: isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />,
+            label: isPrivate ? 'Private' : 'Public',
+            tooltip: isPrivate 
+                ? 'This chat is private and only visible to you' 
+                : 'This chat is publicly accessible via link'
+        };
+    }, [selectedVisibilityType]);
+
     return (
         <div className={cn(
             "fixed top-0 left-0 right-0 z-30 flex justify-between items-center p-3 transition-colors duration-200",
@@ -141,7 +165,7 @@ const Navbar = memo(({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Globe size={16} className="text-blue-600 dark:text-blue-300" />
+                                                        <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
                                                         <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
                                                         <Copy size={14} className="ml-1.5 text-blue-600 dark:text-blue-300 opacity-80" />
                                                     </>
@@ -317,7 +341,7 @@ const Navbar = memo(({
                                                         onClick={() => handleVisibilityChange('public')}
                                                         disabled={isChangingVisibility}
                                                     >
-                                                        <Globe size={12} className="mr-1" />
+                                                        <GlobeHemisphereWest size={12} className="mr-1" />
                                                         Make Public
                                                     </Button>
                                                 </footer>
@@ -336,7 +360,7 @@ const Navbar = memo(({
                                             className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-700 opacity-80 cursor-not-allowed focus:outline-none"
                                             disabled
                                         >
-                                            <Globe size={16} className="text-blue-600 dark:text-blue-300" />
+                                            <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
                                             <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
                                         </Button>
                                     </TooltipTrigger>
@@ -349,11 +373,46 @@ const Navbar = memo(({
                     </>
                 )}
 
+                {/* Subscription Status - only show if we have subscription data */}
+                {user && subscriptionData && (
+                    <>
+                        {hasActiveSubscription ? (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
+                                        <Crown size={16} className="text-foreground" />
+                                        <span className="text-sm font-medium text-foreground hidden sm:inline">Pro</span>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" sideOffset={4}>
+                                    Pro Subscribed - Unlimited access
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm border-border hover:bg-muted/50 transition-colors focus:outline-none"
+                                        onClick={() => router.push("/pricing")}
+                                    >
+                                        <Lightning size={16} />
+                                        <span className="text-sm font-medium hidden sm:inline">Upgrade</span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" sideOffset={4}>
+                                    Upgrade to Pro for unlimited searches
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    </>
+                )}
+
                 {/* Chat History Button */}
                 <ChatHistoryButton onClick={onHistoryClick} />
 
                 {/* Memoized UserProfile component */}
-                <UserProfile user={user} />
+                <UserProfile user={user} subscriptionData={subscriptionData} subscriptionLoading={subscriptionLoading} />
             </div>
         </div>
     );

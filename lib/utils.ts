@@ -2,7 +2,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Globe, Book, TelescopeIcon } from 'lucide-react'
-import { ChatsCircle, Code, Memory, RedditLogo, YoutubeLogo, XLogoIcon  } from '@phosphor-icons/react'
+import { ChatsCircleIcon, CodeIcon, MemoryIcon, RedditLogoIcon, YoutubeLogoIcon, XLogoIcon } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,7 +14,7 @@ export const searchGroups = [
   {
     id: 'web' as const,
     name: 'Web',
-    description: 'Search across the entire internet',
+    description: 'Search across the entire internet powered by Tavily',
     icon: Globe,
     show: true,
   },
@@ -22,7 +22,7 @@ export const searchGroups = [
     id: 'memory' as const,
     name: 'Memory',
     description: 'Your personal memory companion',
-    icon: Memory,
+    icon: MemoryIcon,
     show: true,
     requireAuth: true,
   },
@@ -30,14 +30,14 @@ export const searchGroups = [
     id: 'analysis' as const,
     name: 'Analysis',
     description: 'Code, stock and currency stuff',
-    icon: Code,
+    icon: CodeIcon,
     show: true,
   },
   {
     id: 'chat' as const,
     name: 'Chat',
     description: 'Talk to the model directly.',
-    icon: ChatsCircle,
+    icon: ChatsCircleIcon,
     show: true,
   },
   {
@@ -51,7 +51,7 @@ export const searchGroups = [
     id: 'reddit' as const,
     name: 'Reddit',
     description: 'Search Reddit posts',
-    icon: RedditLogo,
+    icon: RedditLogoIcon,
     show: true,
   },
   {
@@ -65,7 +65,7 @@ export const searchGroups = [
     id: 'youtube' as const,
     name: 'YouTube',
     description: 'Search YouTube videos powered by Exa',
-    icon: YoutubeLogo,
+    icon: YoutubeLogoIcon,
     show: true,
   },
   {

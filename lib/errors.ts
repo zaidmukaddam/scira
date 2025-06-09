@@ -75,6 +75,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
   switch (errorCode) {
     case 'bad_request:api':
       return "The request couldn't be processed. Please check your input and try again.";
+    case 'rate_limit:api':
+      return 'You have reached your daily limit for this feature. Upgrade to Pro for unlimited access.';
 
     case 'unauthorized:auth':
       return 'You need to sign in before continuing.';

@@ -1,5 +1,5 @@
 // /app/api/chat/route.ts
-import { generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
+import { generateTitleFromUserMessage, getGroupConfig, getUserMessageCount, getSubDetails, getExtremeSearchUsageCount } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
@@ -28,8 +28,10 @@ import { createStreamId,
     getStreamIdsByChatId, 
     saveChat, 
     saveMessages,
+    incrementExtremeSearchUsage,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
+import { SEARCH_LIMITS } from '@/lib/constants';
 import {
     createResumableStreamContext,
     type ResumableStreamContext,
@@ -108,21 +110,6 @@ const CURRENCY_SYMBOLS = {
     NZD: 'NZ$', // New Zealand Dollar
     MXN: 'Mex$' // Mexican Peso
 } as const;
-
-interface MapboxFeature {
-    id: string;
-    name: string;
-    formatted_address: string;
-    geometry: {
-        type: string;
-        coordinates: number[];
-    };
-    feature_type: string;
-    context: string;
-    coordinates: number[];
-    bbox: number[];
-    source: string;
-}
 
 interface GoogleResult {
     place_id: string;
@@ -324,76 +311,10 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 // Initialize Exa client
 const exa = new Exa(serverEnv.EXA_API_KEY);
 
-// Add interface for Exa search results
-interface ExaResult {
-    title: string;
-    url: string;
-    publishedDate?: string;
-    author?: string;
-    score?: number;
-    id: string;
-    image?: string;
-    favicon?: string;
-    text: string;
-    highlights?: string[];
-    highlightScores?: number[];
-    summary?: string;
-    subpages?: ExaResult[];
-    extras?: {
-        links: any[];
-    };
-}
-
-// Modify the POST function to use the new handler
 export async function POST(req: Request) {
     const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
     const { latitude, longitude } = geolocation(req);
     
-    // Enhanced security checks
-    const origin = req.headers.get('origin');
-    const referer = req.headers.get('referer');
-    const userAgent = req.headers.get('user-agent');
-    const allowedOrigins = serverEnv.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
-
-    // Check for bot/automated requests
-    const suspiciousUserAgents = [
-        'curl', 'wget', 'python-requests', 'axios', 'node-fetch', 'PostmanRuntime',
-        'insomnia', 'httpie', 'RestSharp', 'okhttp'
-    ];
-    
-    const isSuspiciousBot = suspiciousUserAgents.some(agent => 
-        userAgent?.toLowerCase().includes(agent.toLowerCase())
-    );
-
-    // Basic origin validation
-    const isValidOrigin = origin && allowedOrigins.includes(origin);
-    const isValidReferer = referer && allowedOrigins.some(allowed => referer.startsWith(allowed));
-
-    // For public chats, require authentication OR valid origin/referer
-    if (selectedVisibilityType === 'public') {
-        const user = await getUser();
-        if (!user && (!isValidOrigin && !isValidReferer)) {
-            console.log(`Blocked unauthorized public chat request - Origin: ${origin}, Referer: ${referer}, UA: ${userAgent}`);
-            return new ChatSDKError('forbidden:chat').toResponse();
-        }
-        // Block suspicious bots even for authenticated users on public chats
-        if (isSuspiciousBot && !user) {
-            console.log(`Blocked suspicious bot request - UA: ${userAgent}`);
-            return new ChatSDKError('forbidden:chat').toResponse();
-        }
-    } else {
-        // For private chats, require valid origin or referer (more permissive for legitimate users)
-        if (!isValidOrigin && !isValidReferer) {
-            console.log(`Blocked unauthorized private chat request - Origin: ${origin}, Referer: ${referer}`);
-            return new ChatSDKError('forbidden:chat').toResponse();
-        }
-        // Block obvious bots
-        if (isSuspiciousBot) {
-            console.log(`Blocked bot request on private chat - UA: ${userAgent}`);
-            return new ChatSDKError('forbidden:chat').toResponse();
-        }
-    }
-
     console.log("--------------------------------");
     console.log("Location: ", latitude, longitude);
     console.log("--------------------------------");
@@ -403,6 +324,34 @@ export async function POST(req: Request) {
 
     if (!user) {
         console.log("User not found");
+    }
+
+    // Check message count limit for non-pro users
+    if (user) {
+        const [messageCountResult, subscriptionResult, extremeSearchUsage] = await Promise.all([
+            getUserMessageCount(24), // Check messages in last 24 hours
+            getSubDetails(),
+            getExtremeSearchUsageCount()
+        ]);
+
+        if (messageCountResult.error) {
+            console.error("Error getting message count:", messageCountResult.error);
+            return new ChatSDKError('bad_request:api').toResponse();
+        }
+
+        const isProUser = subscriptionResult.hasSubscription && 
+                         subscriptionResult.subscription?.status === 'active';
+        
+        if (!isProUser && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
+            return new ChatSDKError('rate_limit:chat').toResponse();
+        }
+
+        // Check extreme search usage limit for non-pro users
+        if (!isProUser && group === 'extreme') {
+            if (extremeSearchUsage.count >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) {
+                return new ChatSDKError('rate_limit:api').toResponse();
+            }
+        }
     }
 
     const { tools: activeTools, instructions } = await getGroupConfig(group);
@@ -2368,6 +2317,25 @@ print(f"Converted amount: {converted_amount}")
                     console.log('Response Body: ', event.response.body);
                     console.log('Provider metadata: ', event.providerMetadata);
                     console.log("Sources: ", event.sources);
+
+                    // Track extreme search usage if it was used successfully
+                    if (user?.id && group === 'extreme') {
+                        try {
+                            // Check if extreme_search tool was actually called
+                            const extremeSearchUsed = event.steps?.some((step: any) => 
+                                step.toolCalls?.some((toolCall: any) => 
+                                    toolCall.toolName === 'extreme_search'
+                                )
+                            );
+
+                            if (extremeSearchUsed) {
+                                console.log('Extreme search was used successfully, incrementing count');
+                                await incrementExtremeSearchUsage({ userId: user.id });
+                            }
+                        } catch (error) {
+                            console.error('Failed to track extreme search usage:', error);
+                        }
+                    }
 
                     if (user?.id) {
                         try {

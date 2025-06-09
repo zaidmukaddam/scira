@@ -29,6 +29,20 @@
       "when": 1748200357301,
       "tag": "0003_volatile_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749393369342,
+      "tag": "0004_modern_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749455592764,
+      "tag": "0005_square_mantis",
+      "breakpoints": true
     }
   ]
 }

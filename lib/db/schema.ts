@@ -4,7 +4,8 @@ import {
     timestamp,
     boolean,
     json,
-    varchar
+    varchar,
+    integer
 } from "drizzle-orm/pg-core";
 import { generateId } from "ai";
 import { InferSelectModel } from "drizzle-orm";
@@ -87,6 +88,45 @@ export const stream = pgTable('stream', {
     createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
+// Subscription table for Polar webhook data
+export const subscription = pgTable("subscription", {
+    id: text("id").primaryKey(),
+    createdAt: timestamp("createdAt").notNull(),
+    modifiedAt: timestamp("modifiedAt"),
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull(),
+    recurringInterval: text("recurringInterval").notNull(),
+    status: text("status").notNull(),
+    currentPeriodStart: timestamp("currentPeriodStart").notNull(),
+    currentPeriodEnd: timestamp("currentPeriodEnd").notNull(),
+    cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
+    canceledAt: timestamp("canceledAt"),
+    startedAt: timestamp("startedAt").notNull(),
+    endsAt: timestamp("endsAt"),
+    endedAt: timestamp("endedAt"),
+    customerId: text("customerId").notNull(),
+    productId: text("productId").notNull(),
+    discountId: text("discountId"),
+    checkoutId: text("checkoutId").notNull(),
+    customerCancellationReason: text("customerCancellationReason"),
+    customerCancellationComment: text("customerCancellationComment"),
+    metadata: text("metadata"), // JSON string
+    customFieldData: text("customFieldData"), // JSON string
+    userId: text("userId").references(() => user.id),
+});
+
+// Extreme search usage tracking table
+export const extremeSearchUsage = pgTable("extreme_search_usage", {
+    id: text("id").primaryKey().$defaultFn(() => generateId()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+    searchCount: integer("search_count").notNull().default(0),
+    date: timestamp("date").notNull().defaultNow(),
+    resetAt: timestamp("reset_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;
@@ -95,3 +135,5 @@ export type Verification = InferSelectModel<typeof verification>;
 export type Chat = InferSelectModel<typeof chat>;
 export type Message = InferSelectModel<typeof message>;
 export type Stream = InferSelectModel<typeof stream>;
+export type Subscription = InferSelectModel<typeof subscription>;
+export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;

@@ -1,23 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSessionCookie } from "better-auth/cookies";
 
 const authRoutes = ["/sign-in", "/sign-up"];
 
 export async function middleware(request: NextRequest) {
-    const session = await auth.api.getSession({
-        headers: request.headers
-    })
-    
-    const { pathname } = request.nextUrl;
-    console.log("Pathname: ", pathname);
+  const sessionCookie = getSessionCookie(request);
 
-    // If user is authenticated but trying to access auth routes
-    if (session && authRoutes.some(route => pathname.startsWith(route))) {
-        console.log("Redirecting to home");
-        return NextResponse.redirect(new URL("/", request.url));
-    }
- 
+  const { pathname } = request.nextUrl;
+  console.log("Pathname: ", pathname);
+
+  // /api/payments/webhooks is a webhook endpoint that should be accessible without authentication
+  if (pathname.startsWith("/api/payments/webhooks")) {
     return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/polar/webhooks")) {
+    return NextResponse.next();
+  }
+
+  // If user is authenticated but trying to access auth routes
+  if (sessionCookie && authRoutes.some(route => pathname.startsWith(route))) {
+    console.log("Redirecting to home");
+    console.log("Session cookie: ", sessionCookie);
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!sessionCookie && pathname.startsWith("/pricing")) {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

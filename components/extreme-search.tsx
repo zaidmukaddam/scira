@@ -545,9 +545,9 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-sm overflow-hidden h-full"
+      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm overflow-hidden h-full"
     >
-              <div className="w-full pt-1.5 pb-1 px-1.5 h-60 sm:h-70">
+      <div className="w-full pt-2 pb-1 px-2 h-64 sm:h-72">
         <ReactECharts
           option={chartOptions}
           style={{ height: '100%', width: '100%' }}
@@ -991,10 +991,10 @@ const ExtremeSearchComponent = ({
                         <>
                           {item.searchData.sources.length > 0 && (
                             <motion.div 
-                              className="flex flex-wrap gap-1 py-0.5"
+                              className="flex flex-wrap gap-1.5 py-1"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              transition={{ duration: 0.15 }}
+                              transition={{ duration: 0.2 }}
                             >
                               {item.searchData.sources.map((source, index) => (
                                 <motion.a 
@@ -1002,21 +1002,21 @@ const ExtremeSearchComponent = ({
                                   href={source.url} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md text-[10px] hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                                  className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
-                                  transition={{ duration: 0.15, delay: index * 0.01 }}
+                                  transition={{ duration: 0.15, delay: index * 0.02 }}
                                 >
                                   <img
                                     src={source.favicon}
                                     alt=""
-                                    className="w-3 h-3 rounded-full"
+                                    className="w-3.5 h-3.5 rounded-full"
                                     onError={(e) => {
                                       e.currentTarget.src = 'https://www.google.com/s2/favicons?sz=128&domain=example.com';
                                       (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
                                     }}
                                   />
-                                  <span className="text-neutral-600 dark:text-neutral-400 truncate max-w-[110px]" title={source.title || "source"}>
+                                  <span className="text-neutral-600 dark:text-neutral-400 truncate max-w-[120px]" title={source.title || "source"}>
                                     {source.title || "source"}
                                   </span>
                                 </motion.a>
@@ -1026,19 +1026,19 @@ const ExtremeSearchComponent = ({
                           {(() => {
                             if (isReadingContent && item.searchData.sources.length > 0 && state !== "result") {
                               return (
-                                <TextShimmer className="text-[10px] py-0.5" duration={2}>
+                                <TextShimmer className="text-xs py-0.5" duration={2.5}>
                                   Reading content...
                                 </TextShimmer>
                               );
                             } else if (item.status === 'loading' && state !== "result") { 
                               return (
-                                <TextShimmer className="text-[10px] py-0.5" duration={2}>
+                                <TextShimmer className="text-xs py-0.5" duration={2.5}>
                                   Searching sources...
                                 </TextShimmer>
                               );
                             } else if (item.status === 'no_results' && item.searchData.sources.length === 0) {
                               return (
-                                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 py-0.5 mt-0.5">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400 py-1 mt-1">
                                   No sources found for this query.
                                 </p>
                               );
@@ -1059,7 +1059,7 @@ const ExtremeSearchComponent = ({
                           {/* Result Block (if available) */}
                           {item.codeData.result && (
                             <div className="mt-2">
-                              <div className="text-[10px] text-neutral-600 dark:text-neutral-400 font-medium mb-0.5">
+                              <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mb-1">
                                 Result:
                               </div>
                               <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md overflow-auto max-h-[100px] text-xs font-mono">
@@ -1070,7 +1070,7 @@ const ExtremeSearchComponent = ({
                           
                           {/* Charts Block (if available) */}
                           {item.codeData.charts && item.codeData.charts.length > 0 && (
-                            <div className="mt-2 mb-1 space-y-3">
+                            <div className="mt-3 mb-1 space-y-4">
                               {item.codeData.charts.map((chart, chartIndex) => (
                                 <div key={chartIndex} className="w-full">
                                   <ExtremeChart chart={chart} />
@@ -1081,7 +1081,7 @@ const ExtremeSearchComponent = ({
                           
                           {/* If still running */}
                           {item.codeData.status === 'running' && state !== "result" && (
-                            <TextShimmer className="text-[10px] py-0.5 mt-0.5" duration={2}>
+                            <TextShimmer className="text-xs py-0.5 mt-1" duration={2.5}>
                               Executing code...
                             </TextShimmer>
                           )}

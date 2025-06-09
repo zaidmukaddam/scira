@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, memo } from "react";
+import React, { useState, memo, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,11 +17,9 @@ import {
 import { useSession, signOut } from "@/lib/auth-client"
 import { redirect } from "next/navigation";
 import { toast } from "sonner"
-import { LogOutIcon, LogInIcon, UserCircle, BookmarkIcon, EyeIcon, EyeOffIcon, InfoIcon, FileTextIcon, ShieldIcon, GithubIcon, BugIcon, Sun } from "lucide-react"
+import { SignOut, SignIn, UserCircle, Bookmark, Eye, EyeSlash, Info, FileText, Shield, GithubLogo, Bug, Sun, Crown, Lightning, Gear } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./theme-switcher";
-import { Dialog } from "@/components/ui/dialog";
-import { MemoryDialog } from "./memory-dialog";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { XLogo, InstagramLogoIcon } from "@phosphor-icons/react";
@@ -48,10 +46,14 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 };
 
 // Update the component to use memo
-const UserProfile = memo(({ className, user }: { className?: string; user?: User | null }) => {
+const UserProfile = memo(({ className, user, subscriptionData, subscriptionLoading }: { 
+  className?: string; 
+  user?: User | null;
+  subscriptionData?: any;
+  subscriptionLoading?: boolean;
+}) => {
   const [signingOut, setSigningOut] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
-  const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
   const { data: session, isPending } = useSession();
   const router = useRouter();
@@ -59,6 +61,9 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
   // Use passed user prop if available, otherwise fall back to session
   const currentUser = user || session?.user;
   const isAuthenticated = !!(user || session);
+
+  // Determine subscription status
+  const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
 
   if (isPending && !user) {
     return (
@@ -92,10 +97,6 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
 
   return (
     <>
-      <Dialog open={memoryDialogOpen} onOpenChange={setMemoryDialogOpen}>
-        {memoryDialogOpen && <MemoryDialog />}
-      </Dialog>
-
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -144,8 +145,8 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
                       className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded-sm"
                     >
                       {showEmail ?
-                        <EyeOffIcon className="size-3" /> :
-                        <EyeIcon className="size-3" />
+                        <EyeSlash className="size-3" /> :
+                        <Eye className="size-3" />
                       }
                       <span className="sr-only">
                         {showEmail ? "Hide email" : "Show email"}
@@ -172,14 +173,46 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
           )}
           <DropdownMenuSeparator />
 
+          {/* Subscription Status - only show if authenticated and we have subscription data */}
+          {isAuthenticated && subscriptionData && (
+            <>
+              {hasActiveSubscription ? (
+                <div className="px-3 py-2">
+                  <div className="flex items-center gap-2.5 text-sm">
+                    <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                      <Crown className="size-3.5 text-foreground" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground text-sm">Scira Pro</span>
+                      <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <DropdownMenuItem
+                  className="cursor-pointer flex items-center gap-2.5 py-1.5"
+                  onClick={() => router.push("/pricing")}
+                >
+                  <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                    <Lightning className="size-3.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Upgrade to Pro</span>
+                    <span className="text-[10px] text-muted-foreground">Unlimited searches & premium models</span>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+
           {isAuthenticated && (
             <>
-              <DropdownMenuItem
-                className="cursor-pointer flex items-center gap-2"
-                onClick={() => setMemoryDialogOpen(true)}
-              >
-                <BookmarkIcon className="size-4" />
-                <span>Your Memories</span>
+              <DropdownMenuItem className="cursor-pointer" asChild>
+                <Link href="/settings" className="w-full flex items-center gap-2">
+                  <Gear className="size-4" />
+                  <span>Settings</span>
+                </Link>
               </DropdownMenuItem>
             </>
           )}
@@ -198,19 +231,19 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
           {/* About and Information */}
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/about" className="w-full flex items-center gap-2">
-              <InfoIcon className="size-4" />
+              <Info className="size-4" />
               <span>About</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/terms" className="w-full flex items-center gap-2">
-              <FileTextIcon className="size-4" />
+              <FileText className="size-4" />
               <span>Terms</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/privacy-policy" className="w-full flex items-center gap-2">
-              <ShieldIcon className="size-4" />
+              <Shield className="size-4" />
               <span>Privacy</span>
             </Link>
           </DropdownMenuItem>
@@ -219,7 +252,7 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
           {/* Social and External Links */}
           <DropdownMenuItem className="cursor-pointer" asChild>
             <a href={"https://git.new/scira"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
-              <GithubIcon className="size-4" />
+              <GithubLogo className="size-4" />
               <span>Github</span>
             </a>
           </DropdownMenuItem>
@@ -248,7 +281,7 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <a href={"https://scira.userjot.com"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
-              <BugIcon className="size-4" />
+              <Bug className="size-4" />
               <span>Feature/Bug Request</span>
             </a>
           </DropdownMenuItem>
@@ -278,7 +311,7 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
               })}
             >
               <span>Sign Out</span>
-              <LogOutIcon className="size-4" />
+              <SignOut className="size-4" />
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
@@ -289,7 +322,7 @@ const UserProfile = memo(({ className, user }: { className?: string; user?: User
               }}
             >
               <span>Sign In</span>
-              <LogInIcon className="size-4" />
+              <SignIn className="size-4" />
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

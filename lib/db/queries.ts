@@ -23,6 +23,7 @@ import {
   type Message,
   type Chat,
   stream,
+  extremeSearchUsage,
 } from './schema';
 import { ChatSDKError } from '../errors';
 
@@ -391,5 +392,100 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       'bad_request:database',
       'Failed to get stream ids by chat id',
     );
+  }
+}
+
+export async function getExtremeSearchUsageByUserId({
+  userId
+}: {
+  userId: string;
+}) {
+  try {
+    const now = new Date();
+    // Start of current month
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    // Start of next month
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    startOfNextMonth.setHours(0, 0, 0, 0);
+
+    const [usage] = await db
+      .select()
+      .from(extremeSearchUsage)
+      .where(
+        and(
+          eq(extremeSearchUsage.userId, userId),
+          gte(extremeSearchUsage.date, startOfMonth),
+          lt(extremeSearchUsage.date, startOfNextMonth)
+        )
+      )
+      .limit(1);
+
+    return usage;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get extreme search usage',
+    );
+  }
+}
+
+export async function incrementExtremeSearchUsage({
+  userId
+}: {
+  userId: string;
+}) {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // End of current month for monthly reset
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    endOfMonth.setHours(0, 0, 0, 0);
+
+    const existingUsage = await getExtremeSearchUsageByUserId({ userId });
+
+    if (existingUsage) {
+      const [updatedUsage] = await db
+        .update(extremeSearchUsage)
+        .set({ 
+          searchCount: existingUsage.searchCount + 1,
+          updatedAt: new Date()
+        })
+        .where(eq(extremeSearchUsage.id, existingUsage.id))
+        .returning();
+      return updatedUsage;
+    } else {
+      const [newUsage] = await db
+        .insert(extremeSearchUsage)
+        .values({
+          userId,
+          searchCount: 1,
+          date: today,
+          resetAt: endOfMonth,
+        })
+        .returning();
+      return newUsage;
+    }
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to increment extreme search usage',
+    );
+  }
+}
+
+export async function getExtremeSearchCount({
+  userId
+}: {
+  userId: string;
+}): Promise<number> {
+  try {
+    const usage = await getExtremeSearchUsageByUserId({ userId });
+    return usage?.searchCount || 0;
+  } catch (error) {
+    console.error('Error getting extreme search count:', error);
+    return 0;
   }
 }
