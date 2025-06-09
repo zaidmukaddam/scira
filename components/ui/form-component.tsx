@@ -14,6 +14,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
@@ -29,6 +36,7 @@ import {
 import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
+import { Crown } from '@phosphor-icons/react';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -163,19 +171,15 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
 const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect, subscriptionData }) => {
     const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
     
-    // Filter models based on subscription status
+    // Show all models to everyone, but control access via dialog
     const availableModels = useMemo(() => {
-        if (isProUser) {
-            // Pro users can see all models
-            return models;
-        } else {
-            // Non-pro users can only see free models
-            return models.filter(model => !model.pro);
-        }
-    }, [isProUser]);
+        return models;
+    }, []);
     
     const selectedModelData = availableModels.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+    const [selectedProModel, setSelectedProModel] = useState<typeof models[0] | null>(null);
     const isProcessing = status === 'submitted' || status === 'streaming';
 
     // Check for attachments in current and previous messages
@@ -332,13 +336,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         key={model.value}
                                         onSelect={() => {
                                             if (!canUseModel) {
-                                                toast.error("This model requires a Pro subscription", {
-                                                    description: "Upgrade to Pro to access advanced models",
-                                                    action: {
-                                                        label: "Upgrade",
-                                                        onClick: () => window.location.href = "/pricing"
-                                                    }
-                                                });
+                                                setSelectedProModel(model);
+                                                setShowUpgradeDialog(true);
                                                 return;
                                             }
                                             
@@ -451,6 +450,112 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                     </div>
                 ))}
             </DropdownMenuContent>
+
+            {/* Upgrade Dialog */}
+            <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+                <DialogContent className="sm:max-w-[480px] p-0 gap-0 border border-neutral-200 dark:border-neutral-800">
+                    <div className="p-6 pb-4">
+                        <DialogHeader className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                                    <Crown className="w-4 h-4 text-neutral-700 dark:text-neutral-300" weight="fill" />
+                                </div>
+                                <DialogTitle className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
+                                    Upgrade to Pro
+                                </DialogTitle>
+                            </div>
+                            <DialogDescription className="text-sm text-neutral-600 dark:text-neutral-400">
+                                Access {selectedProModel?.label} and all Pro features
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+                    
+                    <div className="px-6 pb-6">
+                        {selectedProModel && (
+                            <div className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 mb-6">
+                                <div className="flex items-center justify-center size-10 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+                                    {typeof selectedProModel.icon === 'string' ? (
+                                        <img
+                                            src={selectedProModel.icon}
+                                            alt={selectedProModel.label}
+                                            className="size-5 object-contain"
+                                        />
+                                    ) : (
+                                        <selectedProModel.icon className="size-5 text-neutral-700 dark:text-neutral-300" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100">
+                                        {selectedProModel.label}
+                                    </p>
+                                    <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                        {selectedProModel.description}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-2">
+                                        {selectedProModel.vision && (
+                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                                                Vision
+                                            </span>
+                                        )}
+                                        {selectedProModel.reasoning && (
+                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                                                Reasoning
+                                            </span>
+                                        )}
+                                        {selectedProModel.pdf && (
+                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                                                PDF
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="space-y-3 mb-6">
+                            <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                Pro includes:
+                            </h4>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
+                                    <span>Access to all premium models</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
+                                    <span>Advanced reasoning capabilities</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
+                                    <span>PDF document analysis</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
+                                    <span>Priority support</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowUpgradeDialog(false)}
+                                className="flex-1 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    window.location.href = "/pricing";
+                                }}
+                                className="flex-1 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-white text-white dark:text-neutral-900 border-0"
+                            >
+                                Upgrade to Pro
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </DropdownMenu>
     );
 };
@@ -546,10 +651,10 @@ const hasVisionSupport = (modelValue: string): boolean => {
     return selectedModel?.vision === true;
 };
 
-// Update the getAcceptFileTypes function to use pdf property
-const getAcceptFileTypes = (modelValue: string): string => {
+// Update the getAcceptFileTypes function to use pdf property and check Pro status
+const getAcceptFileTypes = (modelValue: string, isProUser: boolean): string => {
     const selectedModel = models.find(model => model.value === modelValue);
-    if (selectedModel?.pdf) {
+    if (selectedModel?.pdf && isProUser) {
         return "image/*,.pdf";
     }
     return "image/*";
@@ -1167,11 +1272,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         console.log("Files selected:", files.map(f => `${f.name} (${f.type})`));
 
+        // Check if user is Pro
+        const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+
         // First, separate images and PDFs
         const imageFiles: File[] = [];
         const pdfFiles: File[] = [];
         const unsupportedFiles: File[] = [];
         const oversizedFiles: File[] = [];
+        const blockedPdfFiles: File[] = [];
 
         files.forEach(file => {
             // Check file size first
@@ -1184,7 +1293,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (file.type.startsWith('image/')) {
                 imageFiles.push(file);
             } else if (file.type === 'application/pdf') {
-                pdfFiles.push(file);
+                if (!isProUser) {
+                    blockedPdfFiles.push(file);
+                } else {
+                    pdfFiles.push(file);
+                }
             } else {
                 unsupportedFiles.push(file);
             }
@@ -1193,6 +1306,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (unsupportedFiles.length > 0) {
             console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
             toast.error(`Some files are not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+        }
+
+        if (blockedPdfFiles.length > 0) {
+            console.log("Blocked PDF files for non-Pro user:", blockedPdfFiles.map(f => f.name));
+            toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
+                action: {
+                    label: "Upgrade",
+                    onClick: () => window.location.href = "/pricing"
+                }
+            });
         }
 
         if (imageFiles.length === 0 && pdfFiles.length === 0) {
@@ -1376,11 +1499,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
         // Simple verification to ensure we're actually getting Files from the drop
         toast.info(`Detected ${allFiles.length} dropped files`);
 
+        // Check if user is Pro
+        const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+
         // First, separate images and PDFs
         const imageFiles: File[] = [];
         const pdfFiles: File[] = [];
         const unsupportedFiles: File[] = [];
         const oversizedFiles: File[] = [];
+        const blockedPdfFiles: File[] = [];
 
         allFiles.forEach(file => {
             console.log(`Processing file: ${file.name} (${file.type})`);
@@ -1395,7 +1522,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (file.type.startsWith('image/')) {
                 imageFiles.push(file);
             } else if (file.type === 'application/pdf') {
-                pdfFiles.push(file);
+                if (!isProUser) {
+                    blockedPdfFiles.push(file);
+                } else {
+                    pdfFiles.push(file);
+                }
             } else {
                 unsupportedFiles.push(file);
             }
@@ -1411,6 +1542,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (oversizedFiles.length > 0) {
             console.log("Oversized files:", oversizedFiles.map(f => `${f.name} (${f.size} bytes)`));
             toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+        }
+
+        if (blockedPdfFiles.length > 0) {
+            console.log("Blocked PDF files for non-Pro user:", blockedPdfFiles.map(f => f.name));
+            toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
+                action: {
+                    label: "Upgrade",
+                    onClick: () => window.location.href = "/pricing"
+                }
+            });
         }
 
         // Check if we have any supported files
@@ -1860,7 +2001,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         ref={fileInputRef}
                         multiple
                         onChange={handleFileChange}
-                        accept={getAcceptFileTypes(selectedModel)}
+                        accept={getAcceptFileTypes(selectedModel, subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active')}
                         tabIndex={-1}
                     />
                     <input
@@ -1869,7 +2010,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         ref={postSubmitFileInputRef}
                         multiple
                         onChange={handleFileChange}
-                        accept={getAcceptFileTypes(selectedModel)}
+                        accept={getAcceptFileTypes(selectedModel, subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active')}
                         tabIndex={-1}
                     />
 
