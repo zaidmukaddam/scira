@@ -6,6 +6,7 @@ import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import useWindowSize from '@/hooks/use-window-size';
 import { TelescopeIcon, X } from 'lucide-react';
 import {
@@ -999,6 +1000,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
     const isMounted = useRef(true);
     const isCompositionActive = useRef(false)
+    const { t } = useTranslation(); // Add useTranslation hook
     const { width } = useWindowSize();
     const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(true);
@@ -1060,7 +1062,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         // Check if input exceeds character limit
         if (newValue.length > MAX_INPUT_CHARS) {
             setInput(newValue);
-            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+            toast.error(t('toast_error_input_exceeds_max_chars', { maxLength: MAX_INPUT_CHARS }));
         } else {
             setInput(newValue);
         }
@@ -1151,7 +1153,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         if (unsupportedFiles.length > 0) {
             console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
-            toast.error(`Some files are not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+            toast.error(t('toast_error_unsupported_files', { files: unsupportedFiles.map(f => f.name).join(', ') }));
         }
 
         if (imageFiles.length === 0 && pdfFiles.length === 0) {
@@ -1173,7 +1175,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 setSelectedModel(compatibleModel.value);
                 showSwitchNotification(
                     compatibleModel.label,
-                    'Switched to a model that supports PDF documents',
+                    t('toast_info_switched_to_pdf_model'),
                     typeof compatibleModel.icon === 'string' ?
                         <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" /> :
                         <compatibleModel.icon className="size-4" />,
@@ -1182,7 +1184,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 );
             } else {
                 console.warn("No PDF-compatible model found");
-                toast.error("PDFs are only supported by Gemini and Claude models");
+                toast.error(t('toast_error_no_pdf_compatible_model'));
                 // Continue with only image files
                 if (imageFiles.length === 0) {
                     event.target.value = '';
@@ -1201,7 +1203,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         const totalAttachments = attachments.length + validFiles.length;
         if (totalAttachments > MAX_FILES) {
-            toast.error(`You can only attach up to ${MAX_FILES} files.`);
+            toast.error(t('toast_error_max_files_limit', { maxFiles: MAX_FILES }));
             event.target.value = '';
             return;
         }
@@ -1216,7 +1218,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (imageFiles.length > 0) {
             try {
                 console.log("Checking image moderation for", imageFiles.length, "images");
-                toast.info("Checking images for safety...");
+                toast.info(t('toast_info_checking_images_safety'));
 
                 // Convert images to data URLs for moderation
                 const imageDataURLs = await Promise.all(
@@ -1231,7 +1233,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     const [status, category] = moderationResult.split('\n');
                     if (status === 'unsafe') {
                         console.warn("Unsafe image detected, category:", category);
-                        toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+                        toast.error(t('toast_error_unsafe_image_content', { category }));
                         event.target.value = '';
                         return;
                     }
@@ -1240,7 +1242,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 console.log("Images passed moderation check");
             } catch (error) {
                 console.error("Error during image moderation:", error);
-                toast.error("Unable to verify image safety. Please try again.");
+                toast.error(t('toast_error_image_safety_verification_failed'));
                 event.target.value = '';
                 return;
             }
@@ -1272,13 +1274,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     ...uploadedAttachments,
                 ]);
 
-                toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
+                toast.success(t('toast_success_files_uploaded', { count: uploadedAttachments.length }));
             } else {
-                toast.error("No files were successfully uploaded");
+                toast.error(t('toast_error_no_files_uploaded_successfully'));
             }
         } catch (error) {
             console.error("Error uploading files!", error);
-            toast.error("Failed to upload one or more files. Please try again.");
+            toast.error(t('toast_error_upload_failed_try_again'));
         } finally {
             setUploadQueue([]);
             event.target.value = '';
@@ -1328,12 +1330,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
         console.log("Raw files dropped:", allFiles.map(f => `${f.name} (${f.type})`));
 
         if (allFiles.length === 0) {
-            toast.error("No files detected in drop");
+            toast.error(t('toast_error_no_files_detected_drop'));
             return;
         }
 
         // Simple verification to ensure we're actually getting Files from the drop
-        toast.info(`Detected ${allFiles.length} dropped files`);
+        toast.info(t('toast_info_detected_dropped_files', { count: allFiles.length }));
 
         // First, separate images and PDFs
         const imageFiles: File[] = [];
@@ -1364,17 +1366,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         if (unsupportedFiles.length > 0) {
             console.log("Unsupported files:", unsupportedFiles.map(f => `${f.name} (${f.type})`));
-            toast.error(`Some files not supported: ${unsupportedFiles.map(f => f.name).join(', ')}`);
+            toast.error(t('toast_error_unsupported_files_list', { files: unsupportedFiles.map(f => f.name).join(', ') }));
         }
 
         if (oversizedFiles.length > 0) {
             console.log("Oversized files:", oversizedFiles.map(f => `${f.name} (${f.size} bytes)`));
-            toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+            toast.error(t('toast_error_oversized_files_list', { files: oversizedFiles.map(f => f.name).join(', ') }));
         }
 
         // Check if we have any supported files
         if (imageFiles.length === 0 && pdfFiles.length === 0) {
-            toast.error("Only image and PDF files are supported");
+            toast.error(t('toast_error_only_image_pdf_supported'));
             return;
         }
 
@@ -1389,10 +1391,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (compatibleModel) {
                 console.log("Switching to compatible model:", compatibleModel.value);
                 setSelectedModel(compatibleModel.value);
-                toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
+                toast.info(t('toast_info_switching_to_model_for_pdf', { modelName: compatibleModel.label }));
                 showSwitchNotification(
                     compatibleModel.label,
-                    'Switched to a model that supports PDF documents',
+                    t('toast_info_switched_to_pdf_model'),
                     typeof compatibleModel.icon === 'string' ?
                         <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" /> :
                         <compatibleModel.icon className="size-4" />,
@@ -1401,7 +1403,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 );
             } else {
                 console.warn("No PDF-compatible model found");
-                toast.error("PDFs are only supported by Gemini and Claude models");
+                toast.error(t('toast_error_no_pdf_compatible_model'));
                 // Continue with only image files
                 if (imageFiles.length === 0) return;
             }
@@ -1418,13 +1420,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         // Check total attachment count
         const totalAttachments = attachments.length + validFiles.length;
         if (totalAttachments > MAX_FILES) {
-            toast.error(`You can only attach up to ${MAX_FILES} files.`);
+            toast.error(t('toast_error_max_files_limit', { maxFiles: MAX_FILES }));
             return;
         }
 
         if (validFiles.length === 0) {
             console.error("No valid files to upload after filtering");
-            toast.error("No valid files to upload");
+            toast.error(t('toast_error_no_valid_files_to_upload_after_filtering'));
             return;
         }
 
@@ -1432,7 +1434,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (imageFiles.length > 0) {
             try {
                 console.log("Checking image moderation for", imageFiles.length, "images");
-                toast.info("Checking images for safety...");
+                toast.info(t('toast_info_checking_images_safety'));
 
                 // Convert images to data URLs for moderation
                 const imageDataURLs = await Promise.all(
@@ -1447,7 +1449,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     const [status, category] = moderationResult.split('\n');
                     if (status === 'unsafe') {
                         console.warn("Unsafe image detected, category:", category);
-                        toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+                        toast.error(t('toast_error_unsafe_image_content', { category }));
                         return;
                     }
                 }
@@ -1455,7 +1457,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 console.log("Images passed moderation check");
             } catch (error) {
                 console.error("Error during image moderation:", error);
-                toast.error("Unable to verify image safety. Please try again.");
+                toast.error(t('toast_error_image_safety_verification_failed'));
                 return;
             }
         }
@@ -1484,7 +1486,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (modelData) {
                 showSwitchNotification(
                     modelData.label,
-                    `Vision model enabled - you can now attach images${modelData.pdf ? ' and PDFs' : ''}`,
+                    t(modelData.pdf ? 'toast_info_vision_model_pdf_enabled' : 'toast_info_vision_model_enabled'),
                     typeof modelData.icon === 'string' ?
                         <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
                         <modelData.icon className="size-4" />,
@@ -1496,7 +1498,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         // Set upload queue immediately
         setUploadQueue(validFiles.map((file) => file.name));
-        toast.info(`Starting upload of ${validFiles.length} files...`);
+        toast.info(t('toast_info_starting_upload_count', { count: validFiles.length }));
 
         // Forced timeout to ensure state updates before upload starts
         setTimeout(async () => {
@@ -1524,13 +1526,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         ...uploadedAttachments,
                     ]);
 
-                    toast.success(`${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`);
+                    toast.success(t('toast_success_files_uploaded', { count: uploadedAttachments.length }));
                 } else {
-                    toast.error("No files were successfully uploaded");
+                    toast.error(t('toast_error_no_files_uploaded_successfully'));
                 }
             } catch (error) {
                 console.error("Error during file upload:", error);
-                toast.error("Upload failed. Please check console for details.");
+                toast.error(t('toast_error_upload_failed_check_console'));
             } finally {
                 setUploadQueue([]);
             }
@@ -1550,7 +1552,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         const totalAttachments = attachments.length + imageItems.length;
         if (totalAttachments > MAX_FILES) {
-            toast.error(`You can only attach up to ${MAX_FILES} files.`);
+            toast.error(t('toast_error_max_files_limit', { maxFiles: MAX_FILES }));
             return;
         }
 
@@ -1560,7 +1562,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         if (oversizedFiles.length > 0) {
             console.log("Oversized files:", oversizedFiles.map(f => `${f.name} (${f.size} bytes)`));
-            toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map(f => f.name || 'unnamed').join(', ')}`);
+            toast.error(t('toast_error_oversized_files_list_unnamed', { files: oversizedFiles.map(f => f.name || t('unnamed_file')).join(', ') }));
 
             // Filter out oversized files
             const validFiles = files.filter(file => file.size <= MAX_FILE_SIZE);
@@ -1578,7 +1580,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 const supportsPdfs = supportsPdfAttachments(visionModel);
                 showSwitchNotification(
                     modelData.label,
-                    `Vision model enabled - you can now attach images${supportsPdfs ? ' and PDFs' : ''}`,
+                    t(supportsPdfs ? 'toast_info_vision_model_pdf_enabled' : 'toast_info_vision_model_enabled'),
                     typeof modelData.icon === 'string' ?
                         <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" /> :
                         <modelData.icon className="size-4" />,
@@ -1597,7 +1599,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (filesToUpload.length > 0) {
             try {
                 console.log("Checking image moderation for", filesToUpload.length, "pasted images");
-                toast.info("Checking pasted images for safety...");
+                toast.info(t('toast_info_checking_pasted_images_safety'));
 
                 // Convert images to data URLs for moderation
                 const imageDataURLs = await Promise.all(
@@ -1612,7 +1614,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     const [status, category] = moderationResult.split('\n');
                     if (status === 'unsafe') {
                         console.warn("Unsafe pasted image detected, category:", category);
-                        toast.error(`Pasted image content violates safety guidelines (${category}). Please choose different images.`);
+                        toast.error(t('toast_error_pasted_image_unsafe', { category }));
                         return;
                     }
                 }
@@ -1620,12 +1622,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 console.log("Pasted images passed moderation check");
             } catch (error) {
                 console.error("Error during pasted image moderation:", error);
-                toast.error("Unable to verify pasted image safety. Please try again.");
+                toast.error(t('toast_error_pasted_image_safety_verification_failed'));
                 return;
             }
         }
 
-        setUploadQueue(filesToUpload.map((file, i) => file.name || `Pasted Image ${i + 1}`));
+        setUploadQueue(filesToUpload.map((file, i) => file.name || t('pasted_image_placeholder_name', { index: i + 1 })));
 
         try {
             const uploadPromises = filesToUpload.map(file => uploadFile(file));
@@ -1636,10 +1638,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 ...uploadedAttachments,
             ]);
 
-            toast.success('Image pasted successfully');
+            toast.success(t('toast_success_image_pasted'));
         } catch (error) {
             console.error("Error uploading pasted files!", error);
-            toast.error("Failed to upload pasted image. Please try again.");
+            toast.error(t('toast_error_failed_to_upload_pasted_image'));
         } finally {
             setUploadQueue([]);
         }
@@ -1665,13 +1667,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         event.preventDefault();
 
         if (status !== 'ready') {
-            toast.error("Please wait for the current response to complete!");
+            toast.error(t('toast_error_wait_for_response'));
             return;
         }
 
         // Check if input exceeds character limit
         if (input.length > MAX_INPUT_CHARS) {
-            toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
+            toast.error(t('toast_error_input_exceeds_max_chars_shorten', { maxLength: MAX_INPUT_CHARS }));
             return;
         }
 
@@ -1696,7 +1698,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 fileInputRef.current.value = '';
             }
         } else {
-            toast.error("Please enter a search query or attach an image.");
+            toast.error(t('toast_error_enter_query_or_attach_image'));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status, selectedModel, setHasSubmitted]);
@@ -1712,7 +1714,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const triggerFileInput = useCallback(() => {
         if (attachments.length >= MAX_FILES) {
-            toast.error(`You can only attach up to ${MAX_FILES} images.`);
+            toast.error(t('toast_error_max_files_limit_images', { maxFiles: MAX_FILES }));
             return;
         }
 
@@ -1727,7 +1729,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (event.key === "Enter" && !event.shiftKey && !isCompositionActive.current) {
             event.preventDefault();
             if (status === 'submitted' || status === 'streaming') {
-                toast.error("Please wait for the response to complete!");
+                toast.error(t('toast_error_wait_for_response'));
             } else {
                 submitForm();
                 if (width && width > 768) {
@@ -1802,10 +1804,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     </div>
                                     <div className="space-y-1 text-center">
                                         <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                            Drop images or PDFs here
+                                            {t('form_drop_files_here_pdf')}
                                         </p>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                                            Max {MAX_FILES} files (5MB per file)
+                                            {t('form_max_files_limit_description', { maxFiles: MAX_FILES })}
                                         </p>
                                     </div>
                                 </div>
@@ -1874,7 +1876,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <div className="rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
                             <Textarea
                                 ref={inputRef}
-                                placeholder={hasInteracted ? "Ask a new question..." : "Ask a question..."}
+                                placeholder={hasInteracted ? t('form_placeholder_ask_new_question') : t('form_placeholder_ask_question')}
                                 value={input}
                                 onChange={handleInput}
                                 disabled={isProcessing}
@@ -1979,8 +1981,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 showSwitchNotification(
                                                     model.label,
                                                     isVisionModel
-                                                        ? 'Vision model enabled - you can now attach images and PDFs'
-                                                        : model.description,
+                                                        ? t('toast_info_vision_model_pdf_enabled')
+                                                        : t('toast_info_vision_model_enabled_no_pdf'),
                                                     typeof model.icon === 'string' ?
                                                         <img src={model.icon} alt={model.label} className="size-4 object-contain" /> :
                                                         <model.icon className="size-4" />,
@@ -2007,19 +2009,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                             const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
                                                             setSelectedGroup(newMode);
 
-                                                            // Enhanced notification messages
-                                                            const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
+                                                            const newModeText = selectedGroup === 'extreme' ? t('toast_info_switched_to_web_search_title') : t('toast_info_switched_to_extreme_mode_title');
                                                             const description = selectedGroup === 'extreme'
-                                                                ? 'Standard web search mode is now active'
-                                                                : 'Enhanced deep research mode is now active';
+                                                                ? t('toast_info_switched_to_web_search_description')
+                                                                : t('toast_info_switched_to_extreme_mode_description');
 
-                                                            // Use appropriate colors for groups that don't conflict with model colors
                                                             showSwitchNotification(
                                                                 newModeText,
                                                                 description,
                                                                 selectedGroup === 'extreme' ? <Globe className="size-4" /> : <TelescopeIcon className="size-4" />,
-                                                                newMode, // Use the new mode as the color identifier
-                                                                'group'  // Specify this is a group notification
+                                                                newMode,
+                                                                'group'
                                                             );
                                                         }}
                                                         className={cn(
@@ -2033,7 +2033,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                         )}
                                                     >
                                                         <TelescopeIcon className="h-3.5 w-3.5" />
-                                                        <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                                                        <span className="hidden sm:block text-xs font-medium">{t('extreme_mode_button')}</span>
                                                     </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent
@@ -2042,8 +2042,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
                                                 >
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="font-medium text-[11px]">Extreme Mode</span>
-                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">Deep research with multiple sources and analysis</span>
+                                                        <span className="font-medium text-[11px]">{t('tooltip_extreme_mode_title')}</span>
+                                                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">{t('tooltip_extreme_mode_description')}</span>
                                                     </div>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -2055,19 +2055,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
                                                     setSelectedGroup(newMode);
 
-                                                    // Enhanced notification messages
-                                                    const newModeText = selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
+                                                    const newModeText = selectedGroup === 'extreme' ? t('toast_info_switched_to_web_search_title') : t('toast_info_switched_to_extreme_mode_title');
                                                     const description = selectedGroup === 'extreme'
-                                                        ? 'Standard web search mode is now active'
-                                                        : 'Enhanced deep research mode is now active';
+                                                        ? t('toast_info_switched_to_web_search_description')
+                                                        : t('toast_info_switched_to_extreme_mode_description');
 
-                                                    // Use appropriate colors for groups that don't conflict with model colors
                                                     showSwitchNotification(
                                                         newModeText,
                                                         description,
                                                         selectedGroup === 'extreme' ? <Globe className="size-4" /> : <TelescopeIcon className="size-4" />,
-                                                        newMode, // Use the new mode as the color identifier
-                                                        'group'  // Specify this is a group notification
+                                                        newMode,
+                                                        'group'
                                                     );
                                                 }}
                                                 className={cn(
@@ -2081,7 +2079,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 )}
                                             >
                                                 <TelescopeIcon className="h-3.5 w-3.5" />
-                                                <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                                                <span className="hidden sm:block text-xs font-medium">{t('extreme_mode_button')}</span>
                                             </button>
                                         )}
                                     </div>
@@ -2111,11 +2109,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="font-medium text-[11px]">Attach File</span>
+                                                        <span className="font-medium text-[11px]">{t('tooltip_attach_file_title')}</span>
                                                         <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
                                                             {supportsPdfAttachments(selectedModel)
-                                                                ? "Upload an image or PDF document"
-                                                                : "Upload an image"}
+                                                                ? t('tooltip_attach_file_description_pdf')
+                                                                : t('tooltip_attach_file_description_image')}
                                                         </span>
                                                     </div>
                                                 </TooltipContent>
@@ -2157,7 +2155,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     sideOffset={6}
                                                     className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
-                                                    <span className="font-medium text-[11px]">Stop Generation</span>
+                                                    <span className="font-medium text-[11px]">{t('tooltip_stop_generation_title')}</span>
                                                 </TooltipContent>
                                             </Tooltip>
                                         ) : (
@@ -2194,7 +2192,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     sideOffset={6}
                                                     className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                                                 >
-                                                    <span className="font-medium text-[11px]">Send Message</span>
+                                                    <span className="font-medium text-[11px]">{t('tooltip_send_message_title')}</span>
                                                 </TooltipContent>
                                             </Tooltip>
                                         ) : (

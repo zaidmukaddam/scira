@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, memo } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Plus, Globe, Lock, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ const Navbar = memo(({
     onHistoryClick,
     isOwner = true
 }: NavbarProps) => {
+    const { t } = useTranslation(); // Add useTranslation hook
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
@@ -113,7 +115,7 @@ const Navbar = memo(({
                     >
                         <Plus size={18} className="group-hover:rotate-90 transition-all m-1.5" />
                         <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
-                            New
+                            {t('nav_new')}
                         </span>
                     </Button>
                 </Link>
@@ -137,12 +139,12 @@ const Navbar = memo(({
                                                 {isChangingVisibility ? (
                                                     <>
                                                         <ClassicLoader size="sm" className="text-blue-600 dark:text-blue-300" />
-                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Saving...</span>
+                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{t('saving_button_text')}</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Globe size={16} className="text-blue-600 dark:text-blue-300" />
-                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
+                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{t('public_status_text')}</span>
                                                         <Copy size={14} className="ml-1.5 text-blue-600 dark:text-blue-300 opacity-80" />
                                                     </>
                                                 )}
@@ -151,7 +153,7 @@ const Navbar = memo(({
                                         <DropdownMenuContent align="end" className="w-70 p-3">
                                             <div className="space-y-3">
                                                 <header className="flex justify-between items-center">
-                                                    <h4 className="text-sm font-medium">Share Link</h4>
+                                                    <h4 className="text-sm font-medium">{t('share_link_title')}</h4>
                                                     <div className="flex gap-2">
                                                         <Button
                                                             variant="secondary"
@@ -161,7 +163,7 @@ const Navbar = memo(({
                                                             disabled={isChangingVisibility}
                                                         >
                                                             <Lock size={12} className="mr-1" />
-                                                            Make Private
+                                                            {t('make_private_button')}
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -200,7 +202,7 @@ const Navbar = memo(({
                                                 <footer className="flex flex-col space-y-2">
                                                     <div className="flex justify-center items-center">
                                                         <p className="text-xs text-muted-foreground">
-                                                            Anyone with this link can view this page
+                                                            {t('share_link_anyone_can_view')}
                                                         </p>
 
 
@@ -266,12 +268,12 @@ const Navbar = memo(({
                                                 {isChangingVisibility ? (
                                                     <>
                                                         <ClassicLoader size="sm" className="text-neutral-500" />
-                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Saving...</span>
+                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('saving_button_text')}</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Lock size={16} className="text-neutral-500" />
-                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Private</span>
+                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('private_status_text')}</span>
                                                     </>
                                                 )}
                                             </Button>
@@ -279,7 +281,7 @@ const Navbar = memo(({
                                         <DropdownMenuContent align="end" className="w-70 p-3">
                                             <div className="space-y-3">
                                                 <header className="flex justify-between items-center">
-                                                    <h4 className="text-sm font-medium">Make Public</h4>
+                                                    <h4 className="text-sm font-medium">{t('make_public_title')}</h4>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -296,7 +298,7 @@ const Navbar = memo(({
 
                                                 <div className="space-y-2">
                                                     <p className="text-sm text-muted-foreground">
-                                                        Making this page public will allow anyone with the link to view it.
+                                                        {t('make_public_description')}
                                                     </p>
                                                 </div>
 
@@ -308,7 +310,7 @@ const Navbar = memo(({
                                                         onClick={() => setPrivateDropdownOpen(false)}
                                                         disabled={isChangingVisibility}
                                                     >
-                                                        Cancel
+                                                        {t('cancel_button')}
                                                     </Button>
                                                     <Button
                                                         variant="default"
@@ -318,7 +320,7 @@ const Navbar = memo(({
                                                         disabled={isChangingVisibility}
                                                     >
                                                         <Globe size={12} className="mr-1" />
-                                                        Make Public
+                                                        {t('make_public_button')}
                                                     </Button>
                                                 </footer>
                                             </div>
@@ -337,17 +339,20 @@ const Navbar = memo(({
                                             disabled
                                         >
                                             <Globe size={16} className="text-blue-600 dark:text-blue-300" />
-                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
+                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{t('public_status_text')}</span>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>
-                                        {user ? "This is someone else's public page" : "This is a public page shared with you"}
+                                        {user ? t('tooltip_others_public_page') : t('tooltip_shared_public_page')}
                                     </TooltipContent>
                                 </Tooltip>
                             )
                         }
                     </>
                 )}
+
+                {/* Language Switcher */}
+                <LanguageSwitcher />
 
                 {/* Chat History Button */}
                 <ChatHistoryButton onClick={onHistoryClick} />

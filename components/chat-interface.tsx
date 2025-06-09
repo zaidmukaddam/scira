@@ -71,24 +71,57 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
 
+import { useTranslation } from 'react-i18next'; // Import useTranslation
+
+// ... (other imports)
+
+const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility = 'private', isOwner = true }: ChatInterfaceProps): JSX.Element => {
+    const { t } = useTranslation(); // Add useTranslation hook
+    const router = useRouter();
+    const [query] = useQueryState('query', parseAsString.withDefault(''))
+    const [q] = useQueryState('q', parseAsString.withDefault(''))
+
+    // Use localStorage hook directly for model selection with a default
+    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
+
+    const initialState = useMemo(() => ({
+        query: query || q,
+    }), [query, q]);
+
+    const lastSubmittedQueryRef = useRef(initialState.query);
+    const bottomRef = useRef<HTMLDivElement>(null);
+    const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const initializedRef = useRef(false);
+    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
+    const [hasSubmitted, setHasSubmitted] = React.useState(false);
+    const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
+    const isAutoScrollingRef = useRef(false);
+    const [user, setUser] = useState<User | null>(null);
+
+    // Generate random UUID once for greeting selection
+    const greetingUuidRef = useRef<string>(uuidv4());
+
     // Memoized greeting to prevent flickering
     const personalizedGreeting = useMemo(() => {
-        if (!user?.name) return "What do you want to explore?";
+        if (!user?.name) return t('greeting_explore');
         
         const firstName = user.name.trim().split(' ')[0];
-        if (!firstName) return "What do you want to explore?";
+        if (!firstName) return t('greeting_explore');
         
         const greetings = [
-            `Hey ${firstName}! Let's dive in!`,
-            `${firstName}, what's the question?`,
-            `Ready ${firstName}? Ask me anything!`,
-            `Go ahead ${firstName}, I'm listening!`,
-            `${firstName}, fire away!`,
-            `What's cooking, ${firstName}?`,
-            `${firstName}, let's explore together!`,
-            `Hit me ${firstName}!`,
-            `${firstName}, what's the mystery?`,
-            `Shoot ${firstName}, what's up?`
+            t('greeting_hey_name', { name: firstName }),
+            t('greeting_name_question', { name: firstName }),
+            t('greeting_ready_name', { name: firstName }),
+            t('greeting_go_ahead_name', { name: firstName }),
+            t('greeting_fire_away_name', { name: firstName }),
+            t('greeting_cooking_name', { name: firstName }),
+            t('greeting_explore_together_name', { name: firstName }),
+            t('greeting_hit_me_name', { name: firstName }),
+            t('greeting_mystery_name', { name: firstName }),
+            t('greeting_shoot_name', { name: firstName })
         ];
         
         // Use user ID + random UUID for truly random but stable greeting
@@ -189,8 +222,8 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
         },
         onError: (error) => {
             console.error("Chat error:", error.cause, error.message);
-            toast.error("An error occurred.", {
-                description: `Oops! An error occurred while processing your request. ${error.message}`,
+            toast.error(t('error_occurred_toast_title'), {
+                description: t('error_occurred_toast_description', { message: error.message }),
             });
         },
         initialMessages: initialMessages,
@@ -377,14 +410,14 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
         try {
             await updateChatVisibility(chatId, visibility);
             setSelectedVisibilityType(visibility);
-            toast.success(`Chat is now ${visibility}`);
+            toast.success(t('chat_visibility_updated_toast', { visibility }));
             // Invalidate cache to refresh the list with updated visibility
             invalidateChatsCache();
         } catch (error) {
             console.error('Error updating chat visibility:', error);
-            toast.error('Failed to update chat visibility');
+            toast.error(t('chat_visibility_update_failed_toast'));
         }
-    }, [chatId]);
+    }, [chatId, t]);
 
     return (
         <TooltipProvider>
@@ -429,7 +462,7 @@ const ChatInterface = memo(({ initialChatId, initialMessages, initialVisibility 
                         {status === 'ready' && messages.length === 0 && (
                             <div className="text-center">
                                 <h1 className="text-2xl sm:text-4xl mb-4 sm:mb-6 text-neutral-800 dark:text-neutral-100 font-syne!">
-                                    {user ? personalizedGreeting : "What do you want to explore?"}
+                                    {user ? personalizedGreeting : t('greeting_explore')}
                                 </h1>
                             </div>
                         )}

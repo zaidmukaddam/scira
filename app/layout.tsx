@@ -1,6 +1,9 @@
+"use client"; // Add this line to make it a client component
+
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Geist } from 'next/font/google';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Metadata, Viewport } from "next";
@@ -84,8 +87,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { i18n } = useTranslation(); // Get i18n instance
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={i18n.language} dir={i18n.dir()} suppressHydrationWarning>
       <body className={`${geist.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>

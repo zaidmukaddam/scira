@@ -321,6 +321,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  [dir="rtl"] body {
+    text-align: right;
+  }
 }
 
 /* Custom styles for Mapbox */
