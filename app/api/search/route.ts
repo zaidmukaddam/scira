@@ -459,7 +459,7 @@ export async function POST(req: Request) {
                         } : {}),
                     },
                     anthropic: {
-                        ...(model === 'scira-anthropic-thinking' || model === 'scira-anthropic-pro-thinking' ? {
+                        ...(model === 'scira-anthropic-thinking'? {
                             thinking: { type: 'enabled', budgetTokens: 12000 },
                         } : {}),
                     },

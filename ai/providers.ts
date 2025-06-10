@@ -29,6 +29,7 @@ export const scira = customProvider({
         'scira-google-pro': google('gemini-2.5-pro-preview-06-05'),
         'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
         'scira-anthropic-thinking': anthropic('claude-sonnet-4-20250514'),
+        'scira-opus': anthropic('claude-4-opus-20250514'),
         'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
             parallelToolCalls: false,
         }),
