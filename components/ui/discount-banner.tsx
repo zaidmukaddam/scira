@@ -230,7 +230,7 @@ export function DiscountBanner({
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Find discount section</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Look for "Discount" on checkout page</p>
+                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Look for &quot;Discount&quot; on checkout page</p>
                         </div>
                       </div>
                       
@@ -252,7 +252,7 @@ export function DiscountBanner({
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Click apply</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Click "Apply" to activate discount</p>
+                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Click &quot;Apply&quot; to activate discount</p>
                         </div>
                       </div>
                     </div>
