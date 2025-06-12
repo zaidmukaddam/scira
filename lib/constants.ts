@@ -1,10 +1,9 @@
 // Search limits for free users
 export const SEARCH_LIMITS = {
-  DAILY_SEARCH_LIMIT: 80,        // Daily searches for free users
-  EXTREME_SEARCH_LIMIT: 20,       // Monthly extreme searches for free users
+  DAILY_SEARCH_LIMIT: 50,        // Daily searches for free users
+  EXTREME_SEARCH_LIMIT: 10,       // Monthly extreme searches for free users
 } as const;
 
-// App-wide constants
-export const APP_CONSTANTS = {
-  // Add other app constants here as needed
-} as const; 
+export const PRICING = {
+  PRO_MONTHLY: 15, // Pro plan monthly price in USD
+} as const;

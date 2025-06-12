@@ -1,5 +1,11 @@
 // /app/api/chat/route.ts
-import { generateTitleFromUserMessage, getGroupConfig, getUserMessageCount, getSubDetails, getExtremeSearchUsageCount } from '@/app/actions';
+import { 
+    generateTitleFromUserMessage, 
+    getGroupConfig, 
+    getUserMessageCount, 
+    getSubDetails, 
+    getExtremeSearchUsageCount
+} from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
@@ -319,11 +325,21 @@ export async function POST(req: Request) {
     console.log("Location: ", latitude, longitude);
     console.log("--------------------------------");
 
+    console.log("--------------------------------");
+    console.log("Messages: ", messages);
+    console.log("--------------------------------");
+
     const user = await getUser();
     const streamId = "stream-" + uuidv4();
 
     if (!user) {
         console.log("User not found");
+    }
+
+    // Check if model requires authentication
+    const authRequiredModels = ['scira-anthropic', 'scira-google'];
+    if (authRequiredModels.includes(model) && !user) {
+        return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
     }
 
     // Check message count limit for non-pro users
@@ -336,20 +352,26 @@ export async function POST(req: Request) {
 
         if (messageCountResult.error) {
             console.error("Error getting message count:", messageCountResult.error);
-            return new ChatSDKError('bad_request:api').toResponse();
+            return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
         }
 
         const isProUser = subscriptionResult.hasSubscription && 
                          subscriptionResult.subscription?.status === 'active';
+
+        // Check if model requires Pro subscription
+        const proRequiredModels = ['scira-grok-3', 'scira-anthropic-thinking', 'scira-opus', 'scira-opus-pro', 'scira-google-pro'];
+        if (proRequiredModels.includes(model) && !isProUser) {
+            return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
+        }
         
         if (!isProUser && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
-            return new ChatSDKError('rate_limit:chat').toResponse();
+            return new ChatSDKError('upgrade_required:chat', `Daily search limit of ${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} exceeded`).toResponse();
         }
 
         // Check extreme search usage limit for non-pro users
         if (!isProUser && group === 'extreme') {
             if (extremeSearchUsage.count >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) {
-                return new ChatSDKError('rate_limit:api').toResponse();
+                return new ChatSDKError('upgrade_required:api', `Daily extreme search limit of ${SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} exceeded`).toResponse();
             }
         }
     }
@@ -376,7 +398,7 @@ export async function POST(req: Request) {
             });
         } else {
             if (chat.userId !== user.id) {
-                return new ChatSDKError('forbidden:chat').toResponse();
+                return new ChatSDKError('forbidden:chat', 'This chat belongs to another user').toResponse();
             }
         }
 
@@ -413,14 +435,12 @@ export async function POST(req: Request) {
             const result = streamText({
                 model: scira.languageModel(model),
                 messages: convertToCoreMessages(messages),
-                ...(!model.includes('scira-anthropic') || !model.includes('scira-o4-mini') ? {
-                    temperature: 0,
-                } : (!model.includes('scira-qwq') ? {
+                ...(model.includes('scira-qwq') || model.includes('scira-qwen-32b') ? {
                     temperature: 0.6,
                     topP: 0.95,
                 } : {
                     temperature: 0,
-                })),
+                }),
                 maxSteps: 5,
                 maxRetries: 5,
                 experimental_activeTools: [...activeTools],
@@ -428,7 +448,7 @@ export async function POST(req: Request) {
                 toolChoice: 'auto',
                 experimental_transform: smoothStream({
                     chunking: 'word',
-                    delayInMs: 1,
+                    delayInMs: 0.5,
                 }),
                 providerOptions: {
                     google: {
@@ -448,18 +468,12 @@ export async function POST(req: Request) {
                         } : {}),
                     } as OpenAIResponsesProviderOptions,
                     xai: {
-                        ...(group === "chat" ? {
-                            search_parameters: {
-                                mode: "auto",
-                                return_citations: true
-                            }
-                        } : {}),
                         ...(model === 'scira-default' ? {
                             reasoningEffort: 'low',
                         } : {}),
                     },
                     anthropic: {
-                        ...(model === 'scira-anthropic-thinking'? {
+                        ...(model === 'scira-anthropic-thinking' || model === 'scira-opus-pro' ?  {
                             thinking: { type: 'enabled', budgetTokens: 12000 },
                         } : {}),
                     },
@@ -2416,7 +2430,7 @@ export async function GET(request: Request) {
     const chatId = searchParams.get('chatId');
 
     if (!chatId) {
-        return new ChatSDKError('bad_request:api').toResponse();
+        return new ChatSDKError('bad_request:api', 'Chat ID is required').toResponse();
     }
 
     const session = await auth.api.getSession(
@@ -2424,7 +2438,7 @@ export async function GET(request: Request) {
     );
 
     if (!session?.user) {
-        return new ChatSDKError('unauthorized:chat').toResponse();
+        return new ChatSDKError('unauthorized:auth', 'Authentication required to resume chat stream').toResponse();
     }
 
     let chat: Chat | null;
@@ -2440,7 +2454,7 @@ export async function GET(request: Request) {
     }
 
     if (chat.visibility === 'private' && chat.userId !== session.user.id) {
-        return new ChatSDKError('forbidden:chat').toResponse();
+        return new ChatSDKError('forbidden:chat', 'Access denied to private chat').toResponse();
     }
 
     const streamIds = await getStreamIdsByChatId({ chatId });

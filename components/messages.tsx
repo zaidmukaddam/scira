@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { updateChatVisibility } from '@/app/actions';
 import { invalidateChatsCache } from '@/lib/utils';
 import { Share } from '@phosphor-icons/react';
+import { EnhancedErrorDisplay } from '@/components/message';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -31,7 +32,7 @@ interface MessagesProps {
   suggestedQuestions: string[];
   setSuggestedQuestions: (questions: string[]) => void;
   status: string;
-  error: any; // Add error from useChat
+  error: Error | null; // Add error from useChat
   user?: any; // Add user prop
   selectedVisibilityType?: 'public' | 'private'; // Add visibility type
   chatId?: string; // Add chatId prop
@@ -485,8 +486,8 @@ const Messages: React.FC<MessagesProps> = ({
                 selectedVisibilityType={selectedVisibilityType}
                 reload={reload}
                 isLastMessage={isLastMessage}
-                error={index === memoizedMessages.length - 1 ? error : null}
-                isMissingAssistantResponse={index === memoizedMessages.length - 1 ? isMissingAssistantResponse : false}
+                error={error}
+                isMissingAssistantResponse={isMissingAssistantResponse}
                 handleRetry={handleRetry}
                 isOwner={isOwner}
               />
@@ -517,10 +518,13 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
 
-      
-
       <div ref={reasoningScrollRef} />
       <div ref={messagesEndRef} />
+
+      {/* Show global error when there is no assistant message to display it */}
+      {error && (memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant') && (
+        <EnhancedErrorDisplay error={error} user={user} selectedVisibilityType={selectedVisibilityType} handleRetry={handleRetry} />
+      )}
     </div>
   );
 };

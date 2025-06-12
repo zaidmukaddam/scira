@@ -349,6 +349,8 @@ export async function getMessageCountByUserId({
       )
       .execute();
 
+      console.log("stats", stats);
+
     return stats?.count ?? 0;
   } catch (error) {
     throw new ChatSDKError(

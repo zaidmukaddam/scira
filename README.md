@@ -37,7 +37,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - **Web search**: Search the web using Tavily's API.
 - **URL Specific search**: Get information from a specific URL.
 - **Weather**: Get the current weather for any location using OpenWeather's API.
-- **Programming**: Run code snippets in multiple languages using E2B's API.
+- **Programming**: Run code snippets in multiple languages using Daytona's Code Execution API.
 - **Maps**: Get the location of any place using Google Maps API, Mapbox API, and TripAdvisor API.
 - **YouTube Search**: Search for videos on YouTube and get timestamps and transcripts [powered by Exa.AI - the Web Search API](https://exa.ai/).
 - **Academic Search**: Search for academic papers [powered by Exa.AI - the Web Search API](https://exa.ai/). 
@@ -54,9 +54,11 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Google's Gemini 2.5 Flash (Preview)](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-preview)
 - [Gemini 2.5 Pro (Preview)](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-pro-preview-05-06)
 - [Anthropic's Claude 4 Sonnet](https://www.anthropic.com/claude/sonnet)
+- [Anthropic's Claude 4 Opus](https://www.anthropic.com/claude/opus)
 - [OpenAI's GPT-4o](https://platform.openai.com/docs/models/gpt-4o)
 - [OpenAI's o4-mini](https://platform.openai.com/docs/models/o4-mini)
 - [Qwen QwQ by Groq Inc](https://console.groq.com/docs/model/qwen-qwq-32b)
+- [Qwen 3 32B by Alibaba Cloud](https://console.groq.com/docs/model/qwen3-32b)
 - [Meta's Llama 4 Maverick by Groq Inc](https://console.groq.com/docs/model/llama-4-maverick-17b-128e-instruct)
 
 ## Built with
@@ -68,7 +70,6 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Tavily](https://tavily.com/)
 - [OpenWeather](https://openweathermap.org/)
 - [Daytona](https://daytona.io/)
-- [E2B](https://e2b.dev/)
 - [Google Maps](https://developers.google.com/maps)
 - [Mapbox](https://www.mapbox.com/)
 - [Aviation Stack](https://aviationstack.com/)
@@ -76,7 +77,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 ### Deploy your own
 
 <!-- TODO: update key names -->
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function)
 
 ## Set Scira as your default search engine
 

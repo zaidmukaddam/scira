@@ -6,13 +6,232 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { toast } from 'sonner';
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Download, X, ExternalLink, Maximize2, FileText, Plus, AlignLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Download, X, ExternalLink, Maximize2, FileText, Plus, AlignLeft, AlertCircle, RefreshCw, LogIn } from 'lucide-react';
 import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { deleteTrailingMessages } from '@/app/actions';
+import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
+import { Crown, User } from '@phosphor-icons/react';
 
 // Define MessagePart type
 type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | StepStartUIPart;
+
+// Enhanced Error Display Component
+interface EnhancedErrorDisplayProps {
+  error: any;
+  handleRetry?: () => Promise<void>;
+  user?: any;
+  selectedVisibilityType?: 'public' | 'private';
+}
+
+const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
+  error,
+  handleRetry,
+  user,
+  selectedVisibilityType
+}) => {
+  let parsedError: any = null;
+  let isChatSDKError = false;
+
+  if (error) {
+    try {
+      const errorData = JSON.parse(error.message);
+      if (errorData.code && errorData.message) {
+        parsedError = {
+          type: errorData.code.split(':')[0],
+          surface: errorData.code.split(':')[1],
+          message: errorData.message,
+          cause: errorData.cause,
+        };
+        isChatSDKError = true;
+      }
+    } catch (e) {
+      // Not JSON, fallback
+      parsedError = {
+        type: 'unknown',
+        surface: 'chat',
+        message: error.message,
+        cause: (error as any).cause,
+      };
+      isChatSDKError = false;
+    }
+  }
+  
+  // Get error details
+  const errorIcon = getErrorIcon(parsedError as any);
+  const errorMessage = isChatSDKError
+    ? parsedError.message
+    : (typeof error === 'string' ? error : (error as any).message || "Something went wrong while processing your message");
+  const errorCause = isChatSDKError
+    ? parsedError.cause
+    : (typeof error === 'string' ? undefined : (error as any).cause);
+  const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
+  const actions = isChatSDKError ? getErrorActions(parsedError as any) : { primary: { label: 'Try Again', action: 'retry' } };
+
+  // Get icon component based on error type
+  const getIconComponent = () => {
+    switch (errorIcon) {
+      case 'auth':
+        return <User className="h-4 w-4 text-blue-500 dark:text-blue-300" weight="fill" />;
+      case 'upgrade':
+        return <Crown className="h-4 w-4 text-amber-500 dark:text-amber-300" weight="fill" />;
+      case 'warning':
+        return <AlertCircle className="h-4 w-4 text-orange-500 dark:text-orange-300" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-300" />;
+    }
+  };
+
+  // Get color scheme based on error type
+  const getColorScheme = () => {
+    switch (errorIcon) {
+      case 'auth':
+        return {
+          bg: 'bg-blue-50 dark:bg-blue-900/30',
+          border: 'border-blue-200 dark:border-blue-800',
+          iconBg: 'bg-blue-100 dark:bg-blue-700/50',
+          title: 'text-blue-700 dark:text-blue-300',
+          text: 'text-blue-600/80 dark:text-blue-400/80',
+          button: 'bg-blue-600 hover:bg-blue-700 text-white'
+        };
+      case 'upgrade':
+        return {
+          bg: 'bg-amber-50 dark:bg-amber-900/30',
+          border: 'border-amber-200 dark:border-amber-800',
+          iconBg: 'bg-amber-100 dark:bg-amber-700/50',
+          title: 'text-amber-700 dark:text-amber-300',
+          text: 'text-amber-600/80 dark:text-amber-400/80',
+          button: 'bg-amber-600 hover:bg-amber-700 text-white'
+        };
+      case 'warning':
+        return {
+          bg: 'bg-orange-50 dark:bg-orange-900/30',
+          border: 'border-orange-200 dark:border-orange-800',
+          iconBg: 'bg-orange-100 dark:bg-orange-700/50',
+          title: 'text-orange-700 dark:text-orange-300',
+          text: 'text-orange-600/80 dark:text-orange-400/80',
+          button: 'bg-orange-600 hover:bg-orange-700 text-white'
+        };
+      default:
+        return {
+          bg: 'bg-red-50 dark:bg-red-900/30',
+          border: 'border-red-200 dark:border-red-800',
+          iconBg: 'bg-red-100 dark:bg-red-700/50',
+          title: 'text-red-700 dark:text-red-300',
+          text: 'text-red-600/80 dark:text-red-400/80',
+          button: 'bg-red-600 hover:bg-red-700 text-white'
+        };
+    }
+  };
+
+  const colors = getColorScheme();
+
+  // Handle action clicks
+  const handleAction = (action: string) => {
+    switch (action) {
+      case 'signin':
+        window.location.href = '/sign-in';
+        break;
+      case 'upgrade':
+        window.location.href = '/pricing';
+        break;
+      case 'retry':
+        if (handleRetry) {
+          handleRetry();
+        }
+        break;
+      case 'refresh':
+        window.location.href = '/new';
+        break;
+      default:
+        if (handleRetry) {
+          handleRetry();
+        }
+    }
+  };
+
+  // Determine if user can perform action
+  const canPerformAction = (action: string) => {
+    if (action === 'retry' || action === 'refresh') {
+      return (user || selectedVisibilityType === 'private') && handleRetry;
+    }
+    return true;
+  };
+
+  return (
+    <div className="mt-3">
+      <div className={`rounded-lg border ${colors.border} bg-white dark:bg-neutral-900 shadow-sm overflow-hidden`}>
+        <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
+          <div className="mt-0.5">
+            <div className={`${colors.iconBg} p-1.5 rounded-full`}>
+              {getIconComponent()}
+            </div>
+          </div>
+          <div className="flex-1">
+            <h3 className={`font-medium ${colors.title}`}>
+              {isChatSDKError && isSignInRequired(parsedError as any) && 'Sign In Required'}
+              {isChatSDKError && (isProRequired(parsedError as any) || isRateLimited(parsedError as any)) && 'Upgrade Required'}
+              {isChatSDKError && !isSignInRequired(parsedError as any) && !isProRequired(parsedError as any) && !isRateLimited(parsedError as any) && 'Error'}
+              {!isChatSDKError && 'Error'}
+            </h3>
+            <p className={`text-sm ${colors.text} mt-0.5`}>
+              {errorMessage}
+            </p>
+            {errorCode && (
+              <p className={`text-xs ${colors.text} mt-1 font-mono`}>
+                Error Code: {errorCode}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="px-4 py-3">
+          {errorCause && (
+            <div className="mb-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-md border border-neutral-200 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300 overflow-x-auto">
+              {errorCause.toString()}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-neutral-500 dark:text-neutral-400 text-xs">
+              {(!user && selectedVisibilityType === 'public')
+                ? "Please sign in to retry or try a different prompt"
+                : "You can retry your request or try a different approach"
+              }
+            </p>
+                         <div className="flex gap-2">
+               {actions.secondary && canPerformAction(actions.secondary.action) && (
+                 <Button
+                   onClick={() => handleAction(actions.secondary!.action)}
+                   variant="outline"
+                   size="sm"
+                   className="text-xs"
+                 >
+                   {actions.secondary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                   {actions.secondary.label}
+                 </Button>
+               )}
+               {actions.primary && canPerformAction(actions.primary.action) && (
+                 <Button
+                   onClick={() => handleAction(actions.primary!.action)}
+                   className={colors.button}
+                   size="sm"
+                 >
+                   {actions.primary.action === 'signin' && <LogIn className="mr-2 h-3.5 w-3.5" />}
+                   {actions.primary.action === 'upgrade' && <Crown className="mr-2 h-3.5 w-3.5" />}
+                   {actions.primary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                   {actions.primary.label}
+                 </Button>
+               )}
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { EnhancedErrorDisplay };
 
 interface MessageProps {
   message: any;
@@ -47,6 +266,8 @@ interface MessageEditorProps {
   setMode: (mode: 'view' | 'edit') => void;
   setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
   reload: () => Promise<string | null | undefined>;
+  messages: any[];
+  setSuggestedQuestions: (questions: string[]) => void;
 }
 
 const MessageEditor: React.FC<MessageEditorProps> = ({
@@ -54,6 +275,8 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   setMode,
   setMessages,
   reload,
+  messages,
+  setSuggestedQuestions,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [draftContent, setDraftContent] = useState<string>(message.content);
@@ -89,31 +312,38 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         try {
           setIsSubmitting(true);
 
-          // Delete trailing messages if message has an ID
+          // Step 1: Delete trailing messages if message has an ID (same as rewrite logic)
           if (message.id) {
             await deleteTrailingMessages({
               id: message.id,
             });
           }
 
-          // Update messages
-          setMessages((messages) => {
-            const index = messages.findIndex((m) => m.id === message.id);
-
-            if (index !== -1) {
+          // Step 2: Update local state to include only messages up to and including the edited message (same as rewrite logic)
+          const newMessages = [];
+          // Find the index of the message being edited
+          for (let i = 0; i < messages.length; i++) {
+            if (messages[i].id === message.id) {
+              // Add the updated message
               const updatedMessage = {
                 ...message,
                 content: draftContent.trim(),
                 parts: [{ type: 'text', text: draftContent.trim() }],
               };
-
-              return [...messages.slice(0, index), updatedMessage];
+              newMessages.push(updatedMessage);
+              break;
+            } else {
+              newMessages.push(messages[i]);
             }
+          }
 
-            return messages;
-          });
+          // Step 3: Update UI state (same as rewrite logic)
+          setMessages(newMessages);
+          setSuggestedQuestions([]);
 
           setMode('view');
+          
+          // Step 4: Reload to generate new response (same as rewrite logic)
           await reload();
         } catch (error) {
           console.error("Error updating message:", error);
@@ -259,6 +489,8 @@ export const Message: React.FC<MessageProps> = ({
                 setMode={setMode}
                 setMessages={setMessages}
                 reload={reload}
+                messages={messages}
+                setSuggestedQuestions={setSuggestedQuestions}
               />
             ) : (
               <div className="group relative">
@@ -380,6 +612,8 @@ export const Message: React.FC<MessageProps> = ({
               setMode={setMode}
               setMessages={setMessages}
               reload={reload}
+              messages={messages}
+              setSuggestedQuestions={setSuggestedQuestions}
             />
           ) : (
             <div className="group relative">
@@ -484,7 +718,7 @@ export const Message: React.FC<MessageProps> = ({
         )}
 
         {/* Show retry option when assistant response is missing (not an error status) */}
-        {isMissingAssistantResponse && handleRetry && (
+        {isMissingAssistantResponse && (
           <div className="mt-3">
             <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
               <div className="bg-amber-50 dark:bg-amber-900/30 px-4 py-3 border-b border-amber-200 dark:border-amber-800 flex items-start gap-3">
@@ -526,53 +760,8 @@ export const Message: React.FC<MessageProps> = ({
         )}
 
         {/* Display error message with retry button */}
-        {error && handleRetry && (
-          <div className="mt-3">
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
-              <div className="bg-red-50 dark:bg-red-900/30 px-4 py-3 border-b border-red-200 dark:border-red-800 flex items-start gap-3">
-                <div className="mt-0.5">
-                  <div className="bg-red-100 dark:bg-red-700/50 p-1.5 rounded-full">
-                    <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-300" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-medium text-red-700 dark:text-red-300">
-                    Error
-                  </h3>
-                  <p className="text-sm text-red-600/80 dark:text-red-400/80 mt-0.5">
-                    {error.message || "Something went wrong while processing your message"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="px-4 pb-2 text-sm">
-                {error.cause && (
-                  <div className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-md border border-neutral-200 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300 overflow-x-auto">
-                    {error.cause.toString()}
-                  </div>
-                )}
-
-                <div className="mt-2 flex items-center justify-between">
-                  <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-                    {(!user && selectedVisibilityType === 'public')
-                      ? "Please sign in to retry or try a different prompt"
-                      : "You can retry your request or try a different prompt"
-                    }
-                  </p>
-                  {(user || selectedVisibilityType === 'private') && (
-                    <Button
-                      onClick={handleRetry}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                      size="sm"
-                    >
-                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                      Retry
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+        {error && (
+          <EnhancedErrorDisplay error={error} handleRetry={handleRetry} user={user} selectedVisibilityType={selectedVisibilityType} />
         )}
 
         {suggestedQuestions.length > 0 && (user || selectedVisibilityType === 'private') && status !== 'streaming' && (

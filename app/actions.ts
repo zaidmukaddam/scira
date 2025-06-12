@@ -18,8 +18,8 @@ import {
   getMessageCountByUserId,
   getExtremeSearchCount
 } from '@/lib/db/queries';
+import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
-import { openai } from '@ai-sdk/openai';
 import { getSubscriptionDetails } from '@/lib/subscription';
 
 export async function suggestQuestions(history: any[]) {
@@ -28,11 +28,9 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: openai("gpt-4.1-nano"),
-    temperature: 1,
-    maxTokens: 300,
-    topP: 0.3,
-    topK: 7,
+    model: scira.languageModel('scira-g2'),
+    temperature: 0,
+    maxTokens: 512,
     system:
       `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
@@ -110,7 +108,7 @@ export async function generateTitleFromUserMessage({
   message: UIMessage;
 }) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-4o'),
+    model: scira.languageModel('scira-g2'),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
@@ -1097,5 +1095,18 @@ export async function getExtremeSearchUsageCount() {
   } catch (error) {
     console.error('Error getting extreme search usage count:', error);
     return { count: 0, error: 'Failed to get extreme search count' };
+  }
+}
+
+export async function getDiscountConfigAction() {
+  'use server';
+
+  try {
+    return await getDiscountConfig();
+  } catch (error) {
+    console.error('Error getting discount configuration:', error);
+    return {
+      enabled: false,
+    };
   }
 }

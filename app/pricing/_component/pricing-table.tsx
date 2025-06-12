@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SEARCH_LIMITS } from "@/lib/constants";
+import { SEARCH_LIMITS, PRICING } from "@/lib/constants";
+import { DiscountBanner } from "@/components/ui/discount-banner";
+import { getDiscountConfigAction } from "@/app/actions";
+import { DiscountConfig } from "@/lib/discount";
 
 type SubscriptionDetails = {
   id: string;
@@ -39,6 +42,7 @@ export default function PricingTable({
 }: PricingTableProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -49,7 +53,22 @@ export default function PricingTable({
         setIsAuthenticated(false);
       }
     };
+    
+    const fetchDiscountConfig = async () => {
+      try {
+        const config = await getDiscountConfigAction();
+        // Add original price if not already present (let edge config handle discount details)
+        if (config.enabled && !config.originalPrice) {
+          config.originalPrice = PRICING.PRO_MONTHLY;
+        }
+        setDiscountConfig(config);
+      } catch (error) {
+        console.error('Failed to fetch discount config:', error);
+      }
+    };
+    
     checkAuth();
+    fetchDiscountConfig();
   }, []);
 
   const handleCheckout = async (productId: string, slug: string) => {
@@ -59,10 +78,12 @@ export default function PricingTable({
     }
 
     try {
-      await authClient.checkout({
+      const checkoutOptions: any = {
         products: [productId],
         slug: slug,
-      });
+      };
+      
+      await authClient.checkout(checkoutOptions);
     } catch (error) {
       console.error("Checkout failed:", error);
       toast.error("Something went wrong. Please try again.");
@@ -101,6 +122,12 @@ export default function PricingTable({
     });
   };
 
+  const handleDiscountClaim = (code: string) => {
+    // Copy discount code to clipboard
+    navigator.clipboard.writeText(code);
+    toast.success(`Discount code "${code}" copied to clipboard!`);
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       {/* Back to Home Link */}
@@ -117,13 +144,22 @@ export default function PricingTable({
       {/* Header */}
       <div className="max-w-3xl mx-auto px-6 pt-8 pb-16">
         <div className="text-center">
-          <h1 className="text-[2.5rem] font-light text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.02em] leading-tight">
+          <h1 className="text-[2.5rem] font-black font-syne text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.02em] leading-tight">
             Pricing
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed">
+          <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-syne leading-relaxed">
             Choose the plan that works best for you
           </p>
         </div>
+      </div>
+
+      {/* Discount Banner */}
+      <div className="max-w-4xl mx-auto px-6 mb-8">
+        <DiscountBanner 
+          discountConfig={discountConfig}
+          onClaim={handleDiscountClaim}
+          className="animate-in slide-in-from-top-2 duration-500"
+        />
       </div>
 
       {/* Pricing Cards */}

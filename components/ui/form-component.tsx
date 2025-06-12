@@ -36,7 +36,7 @@ import {
 import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown } from '@phosphor-icons/react';
+import { Crown, LockIcon } from '@phosphor-icons/react';
 
 interface ModelSwitcherProps {
     selectedModel: string;
@@ -48,6 +48,7 @@ interface ModelSwitcherProps {
     status: 'submitted' | 'streaming' | 'ready' | 'error';
     onModelSelect?: (model: typeof models[0]) => void;
     subscriptionData?: any;
+    user?: any;
 }
 
 const XAIIcon = ({ className }: { className?: string }) => (
@@ -116,9 +117,10 @@ const models = [
     { value: "scira-opus-pro", label: "Claude 4 Opus Thinking", icon: AnthropicIcon, iconClass: "text-current", description: "Anthropic's most advanced reasoning model", color: "violet", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: true, pro: true },
     { value: "scira-google", label: "Gemini 2.5 Flash (Thinking)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced small reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Stable", pdf: true, pro: false },
     { value: "scira-google-pro", label: "Gemini 2.5 Pro (Preview)", icon: GeminiIcon, iconClass: "text-current", description: "Google's advanced reasoning model", color: "gemini", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: true, pro: true },
-    { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Pro", pdf: true, pro: true },
-    { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: false, pro: true },
+    // { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Pro", pdf: true, pro: true },
+    // { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: false, pro: true },
     { value: "scira-llama-4", label: "Llama 4 Maverick", icon: GroqIcon, iconClass: "text-current", description: "Meta's latest model", color: "blue", vision: true, reasoning: false, experimental: true, category: "Experimental", pdf: false, pro: false },
+    { value: "scira-qwen-32b", label: "Qwen 3 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false, pro: false },
     { value: "scira-qwq", label: "QWQ 32B", icon: QwenIcon, iconClass: "text-current", description: "Alibaba's advanced reasoning model", color: "purple", vision: false, reasoning: true, experimental: true, category: "Experimental", pdf: false, pro: false },
 ];
 
@@ -155,6 +157,10 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-[#1C7DFF]! dark:bg-[#1C7DFF]! text-white! hover:bg-[#0A6AE9]! dark:hover:bg-[#0A6AE9]! border-[#1C7DFF]! dark:border-[#1C7DFF]!`
                 : `${baseClasses} text-[#1C7DFF]! dark:text-[#4C96FF]! hover:bg-[#1C7DFF]! hover:text-white! dark:hover:bg-[#1C7DFF]! dark:hover:text-white!`;
+        case 'orange':
+            return isSelected
+                ? `${baseClasses} ${selectedClasses} bg-[#FF8C00]! dark:bg-[#FF8C00]! text-white! hover:bg-[#FF7F00]! dark:hover:bg-[#FF7F00]! border-[#FF8C00]! dark:border-[#FF8C00]!`
+                : `${baseClasses} text-[#FF8C00]! dark:text-[#FF8C00]! hover:bg-[#FF8C00]! hover:text-white! dark:hover:bg-[#FF8C00]! dark:hover:text-white!`;
         case 'gemini':
             return isSelected
                 ? `${baseClasses} ${selectedClasses} bg-[#1EA896]! dark:bg-[#1EA896]! text-white! hover:bg-[#19967F]! dark:hover:bg-[#19967F]! border-[#1EA896]! dark:border-[#1EA896]!`
@@ -170,10 +176,10 @@ const getColorClasses = (color: string, isSelected: boolean = false) => {
     }
 }
 
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect, subscriptionData }) => {
+const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelectedModel, className, showExperimentalModels, attachments, messages, status, onModelSelect, subscriptionData, user }) => {
     const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
     
-    // Show all models to everyone, but control access via dialog
+    // Show all models to everyone, but control access via dialogs
     const availableModels = useMemo(() => {
         return models;
     }, []);
@@ -181,7 +187,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
     const selectedModelData = availableModels.find(model => model.value === selectedModel);
     const [isOpen, setIsOpen] = useState(false);
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+    const [showSignInDialog, setShowSignInDialog] = useState(false);
     const [selectedProModel, setSelectedProModel] = useState<typeof models[0] | null>(null);
+    const [selectedAuthModel, setSelectedAuthModel] = useState<typeof models[0] | null>(null);
     const isProcessing = status === 'submitted' || status === 'streaming';
 
     // Check for attachments in current and previous messages
@@ -213,6 +221,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
             case 'indigo': return 'hover:bg-indigo-500/20! dark:hover:bg-indigo-400/20!';
             case 'violet': return 'hover:bg-violet-500/20! dark:hover:bg-violet-400/20!';
             case 'purple': return 'hover:bg-purple-500/20! dark:hover:bg-purple-400/20!';
+            case 'orange': return 'hover:bg-orange-500/20! dark:hover:bg-orange-400/20!';
             case 'gemini': return 'hover:bg-teal-500/20! dark:hover:bg-teal-400/20!';
             case 'blue': return 'hover:bg-blue-500/20! dark:hover:bg-blue-400/20!';
             case 'vercel-gray': return 'hover:bg-zinc-500/20! dark:hover:bg-zinc-400/20!';
@@ -332,11 +341,22 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                             {categoryModels.map((model) => {
                                 const isProModel = model.pro;
                                 const canUseModel = !isProModel || isProUser;
+                                const authRequiredModels = ['scira-anthropic', 'scira-google', 'scira-google-pro'];
+                                const requiresAuth = authRequiredModels.includes(model.value) && !user;
+                                const isLocked = !canUseModel || requiresAuth;
                                 
                                 return (
                                     <DropdownMenuItem
                                         key={model.value}
                                         onSelect={() => {
+                                            // Check for authentication requirement first
+                                            if (requiresAuth) {
+                                                setSelectedAuthModel(model);
+                                                setShowSignInDialog(true);
+                                                return;
+                                            }
+                                            
+                                            // Then check for Pro requirement
                                             if (!canUseModel) {
                                                 setSelectedProModel(model);
                                                 setShowUpgradeDialog(true);
@@ -356,7 +376,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                             "flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs",
                                             "transition-all duration-200",
                                             "group/item",
-                                            !canUseModel && "opacity-50",
+                                            isLocked && "opacity-50",
                                             selectedModel === model.value
                                                 ? getColorClasses(model.color, true)
                                                 : getHoverColorClasses(model.color)
@@ -396,14 +416,22 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
                                         <div className="flex flex-col gap-0 min-w-0 flex-1">
                                             <div className="font-medium truncate text-[11px] flex items-center gap-1">
                                                 {model.label}
-                                                {isProModel && !isProUser && (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3 text-yellow-500">
-                                                        <path d="M12 2 L2 7 L2 17 L12 22 L22 17 L22 7 L12 2"/>
-                                                        <path d="M12 22 L12 12"/>
-                                                        <path d="M12 12 L2 7"/>
-                                                        <path d="M12 12 L22 7"/>
-                                                    </svg>
-                                                )}
+                                                {(() => {
+                                                    const authRequiredModels = ['scira-anthropic', 'scira-google'];
+                                                    const requiresAuth = authRequiredModels.includes(model.value) && !user;
+                                                    const requiresPro = isProModel && !isProUser;
+                                                    
+                                                    if (requiresAuth) {
+                                                        return (
+                                                            <LockIcon className="size-3 text-neutral-500" />
+                                                        );
+                                                    } else if (requiresPro) {
+                                                        return (
+                                                            <Crown className="size-3 text-neutral-500" />
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </div>
                                             <div className="text-[9px] opacity-70 truncate leading-tight">
                                                 {model.description}
@@ -455,104 +483,146 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({ selectedModel, setSelecte
 
             {/* Upgrade Dialog */}
             <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-                <DialogContent className="sm:max-w-[480px] p-0 gap-0 border border-neutral-200 dark:border-neutral-800">
-                    <div className="p-6 pb-4">
-                        <DialogHeader className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
-                                    <Crown className="w-4 h-4 text-neutral-700 dark:text-neutral-300" weight="fill" />
+                <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+                    <div className="p-6 space-y-5">
+                        {/* Header */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center">
+                                    <Crown className="w-4 h-4 text-white dark:text-black" weight="fill" />
                                 </div>
-                                <DialogTitle className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                                    Upgrade to Pro
-                                </DialogTitle>
-                            </div>
-                            <DialogDescription className="text-sm text-neutral-600 dark:text-neutral-400">
-                                Access {selectedProModel?.label} and all Pro features
-                            </DialogDescription>
-                        </DialogHeader>
-                    </div>
-                    
-                    <div className="px-6 pb-6">
-                        {selectedProModel && (
-                            <div className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 mb-6">
-                                <div className="flex items-center justify-center size-10 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
-                                    {typeof selectedProModel.icon === 'string' ? (
-                                        <img
-                                            src={selectedProModel.icon}
-                                            alt={selectedProModel.label}
-                                            className="size-5 object-contain"
-                                        />
-                                    ) : (
-                                        <selectedProModel.icon className="size-5 text-neutral-700 dark:text-neutral-300" />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100">
-                                        {selectedProModel.label}
+                                <div>
+                                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
+                                        {selectedProModel?.label} requires Pro
+                                    </h2>
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                        Upgrade to access premium AI models
                                     </p>
-                                    <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                        {selectedProModel.description}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mt-2">
-                                        {selectedProModel.vision && (
-                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
-                                                Vision
-                                            </span>
-                                        )}
-                                        {selectedProModel.reasoning && (
-                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
-                                                Reasoning
-                                            </span>
-                                        )}
-                                        {selectedProModel.pdf && (
-                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
-                                                PDF
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        <div className="space-y-3 mb-6">
-                            <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                                Pro includes:
-                            </h4>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-                                    <span>Access to all premium models</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-                                    <span>Advanced reasoning capabilities</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-                                    <span>PDF document analysis</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500"></div>
-                                    <span>Priority support</span>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Features */}
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Claude 4 Opus, Grok 3, advanced reasoning</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Pricing */}
+                        <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-4 space-y-2">
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
+                                <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
+                            </div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
+                        </div>
                         
-                        <div className="flex gap-3">
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-2">
                             <Button
                                 variant="outline"
                                 onClick={() => setShowUpgradeDialog(false)}
-                                className="flex-1 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                             >
-                                Cancel
+                                Maybe later
                             </Button>
                             <Button
                                 onClick={() => {
                                     window.location.href = "/pricing";
                                 }}
-                                className="flex-1 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-white text-white dark:text-neutral-900 border-0"
+                                className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
                             >
-                                Upgrade to Pro
+                                Upgrade now
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Sign In Dialog */}
+            <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
+                <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+                    <div className="p-6 space-y-5">
+                        {/* Header */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-neutral-600 dark:bg-neutral-700 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-white">
+                                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
+                                        {selectedAuthModel?.label} requires sign in
+                                    </h2>
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                        Create an account to access advanced AI models
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Features */}
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access advanced models</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Claude 4 Sonnet and Gemini 2.5</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Save search history</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Keep track of your conversations</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Free to start</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">No payment required for basic features</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowSignInDialog(false)}
+                                className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    window.location.href = "/sign-in";
+                                }}
+                                className="flex-1 h-9 text-sm font-normal bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
+                            >
+                                Sign in
                             </Button>
                         </div>
                     </div>
@@ -830,6 +900,7 @@ interface FormComponentProps {
     showExperimentalModels: boolean;
     status: 'submitted' | 'streaming' | 'ready' | 'error';
     setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+    isLimitBlocked?: boolean;
 }
 
 interface GroupSelectorProps {
@@ -878,6 +949,8 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
                 return 'bg-[#8B5CF6] dark:bg-[#8B5CF6] border-[#8B5CF6] dark:border-[#8B5CF6]';
             case 'purple':
                 return 'bg-[#5E5ADB] dark:bg-[#5E5ADB] border-[#5E5ADB] dark:border-[#5E5ADB]';
+            case 'orange':
+                return 'bg-[#FF8C00] dark:bg-[#FF8C00] border-[#FF8C00] dark:border-[#FF8C00]';
             case 'gemini':
                 return 'bg-[#1EA896] dark:bg-[#1EA896] border-[#1EA896] dark:border-[#1EA896]';
             case 'blue':
@@ -1143,6 +1216,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     messages,
     status,
     setHasSubmitted,
+    isLimitBlocked = false,
 }) => {
     const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
     const isMounted = useRef(true);
@@ -1853,6 +1927,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
             return;
         }
 
+        if (isLimitBlocked) {
+            toast.error("Daily search limit reached. Please upgrade to Pro for unlimited searches.");
+            return;
+        }
+
         // Check if input exceeds character limit
         if (input.length > MAX_INPUT_CHARS) {
             toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
@@ -1883,7 +1962,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             toast.error("Please enter a search query or attach an image.");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status, selectedModel, setHasSubmitted]);
+    }, [input, attachments, handleSubmit, setAttachments, fileInputRef, lastSubmittedQueryRef, status, selectedModel, setHasSubmitted, isLimitBlocked]);
 
     const submitForm = useCallback(() => {
         onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
@@ -1912,6 +1991,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             event.preventDefault();
             if (status === 'submitted' || status === 'streaming') {
                 toast.error("Please wait for the response to complete!");
+            } else if (isLimitBlocked) {
+                toast.error("Daily search limit reached. Please upgrade to Pro for unlimited searches.");
             } else {
                 submitForm();
                 if (width && width > 768) {
@@ -2173,6 +2254,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                 );
                                             }}
                                             subscriptionData={subscriptionData}
+                                            user={user}
                                         />
                                     </div>
 
@@ -2369,7 +2451,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                             event.stopPropagation();
                                                             submitForm();
                                                         }}
-                                                        disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
+                                                        disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready' || isLimitBlocked}
                                                     >
                                                         <ArrowUpIcon size={14} />
                                                     </Button>
@@ -2390,7 +2472,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                                     event.stopPropagation();
                                                     submitForm();
                                                 }}
-                                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready'}
+                                                disabled={input.length === 0 && attachments.length === 0 || uploadQueue.length > 0 || status !== 'ready' || isLimitBlocked}
                                             >
                                                 <ArrowUpIcon size={14} />
                                             </Button>
