@@ -159,8 +159,7 @@ const extremeSearch = async (
         status: { title: "Beginning autonomous research" },
     });
 
-    // add sleep for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Removed artificial delay for better performance
 
     // Track all sources we've found
     const allSources: SearchResult[] = [];
