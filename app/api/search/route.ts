@@ -428,7 +428,7 @@ export async function POST(req: Request) {
                 toolChoice: 'auto',
                 experimental_transform: smoothStream({
                     chunking: 'word',
-                    delayInMs: 1,
+                    delayInMs: 0,
                 }),
                 providerOptions: {
                     google: {
