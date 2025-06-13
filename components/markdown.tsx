@@ -246,7 +246,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isWrapped, setIsWrapped] = useState(false);
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
 
     const handleCopy = useCallback(async () => {
       await navigator.clipboard.writeText(children);
@@ -318,11 +318,12 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           </div>
           <SyntaxHighlighter
             language={language || 'text'}
-            style={theme === 'dark' ? oneDark : oneLight}
+            style={resolvedTheme === 'dark' ? oneDark : oneLight}
             customStyle={{
               margin: 0,
               padding: '0.75rem 0.25rem 0.75rem',
-              backgroundColor: theme === 'dark' ? '#171717' : 'transparent',
+              backgroundColor: resolvedTheme === 'dark' ? '#171717' : 'transparent',
+              color: resolvedTheme === 'dark' ? '#e5e5e5' : '#171717',
               borderRadius: 0,
               borderBottomLeftRadius: '0.375rem',
               borderBottomRightRadius: '0.375rem',
@@ -331,7 +332,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             showLineNumbers={true}
             lineNumberStyle={{
               textAlign: 'right',
-              color: theme === 'dark' ? '#6b7280' : '#808080',
+              color: resolvedTheme === 'dark' ? '#6b7280' : '#808080',
               backgroundColor: 'transparent',
               fontStyle: 'normal',
               marginRight: '1em',
@@ -340,7 +341,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               minWidth: '2em'
             }}
             lineNumberContainerStyle={{
-              backgroundColor: theme === 'dark' ? '#171717' : '#f5f5f5',
+              backgroundColor: resolvedTheme === 'dark' ? '#171717' : '#f5f5f5',
               float: 'left'
             }}
             wrapLongLines={isWrapped}

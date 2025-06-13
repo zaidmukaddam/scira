@@ -52,10 +52,10 @@ importers:
         version: 2.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@polar-sh/better-auth':
         specifier: ^1.0.1
-        version: 1.0.1(@polar-sh/sdk@0.33.0(zod@3.25.63))(better-auth@1.2.8)
+        version: 1.0.1(@polar-sh/sdk@0.33.1(zod@3.25.63))(better-auth@1.2.9)
       '@polar-sh/sdk':
-        specifier: ^0.33.0
-        version: 0.33.0(zod@3.25.63)
+        specifier: ^0.33.1
+        version: 0.33.1(zod@3.25.63)
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@18.3.5(@types/react@18.3.19))(@types/react@18.3.19)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -114,14 +114,14 @@ importers:
         specifier: ^1.2.7
         version: 1.2.7(@types/react-dom@18.3.5(@types/react@18.3.19))(@types/react@18.3.19)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@t3-oss/env-nextjs':
-        specifier: ^0.13.6
-        version: 0.13.6(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)
+        specifier: ^0.13.8
+        version: 0.13.8(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)
       '@tailwindcss/typography':
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.1.10)
       '@tanstack/react-query':
-        specifier: ^5.80.6
-        version: 5.80.6(react@18.3.1)
+        specifier: ^5.80.7
+        version: 5.80.7(react@18.3.1)
       '@tavily/core':
         specifier: ^0.5.6
         version: 0.5.6
@@ -150,8 +150,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(@opentelemetry/api@1.9.0)
       '@vercel/functions':
-        specifier: ^2.1.0
-        version: 2.1.0(@aws-sdk/credential-provider-web-identity@3.826.0)
+        specifier: ^2.2.0
+        version: 2.2.0(@aws-sdk/credential-provider-web-identity@3.826.0)
       '@vercel/speed-insights':
         specifier: ^1.2.0
         version: 1.2.0(next@15.4.0-canary.81(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -162,8 +162,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0
       better-auth:
-        specifier: ^1.2.8
-        version: 1.2.8
+        specifier: ^1.2.9
+        version: 1.2.9
       canvas-confetti:
         specifier: ^1.9.3
         version: 1.9.3
@@ -204,8 +204,8 @@ importers:
         specifier: ^1.8.8
         version: 1.8.8(encoding@0.1.13)(ws@8.18.1)(zod@3.25.63)
       framer-motion:
-        specifier: ^12.16.0
-        version: 12.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^12.17.3
+        version: 12.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       geist:
         specifier: ^1.4.2
         version: 1.4.2(next@15.4.0-canary.81(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -234,8 +234,8 @@ importers:
         specifier: ^2.1.30
         version: 2.1.30(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@cloudflare/workers-types@4.20250607.0)(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@5.1.1(ws@8.18.1)(zod@3.25.63)))(@mistralai/mistralai@1.5.2(zod@3.25.63))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1)
       motion:
-        specifier: ^12.16.0
-        version: 12.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^12.17.3
+        version: 12.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next:
         specifier: 15.4.0-canary.81
         version: 15.4.0-canary.81(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1880,8 +1880,8 @@ packages:
       '@polar-sh/sdk': ^0.32.15
       better-auth: ^1.2.7
 
-  '@polar-sh/sdk@0.33.0':
-    resolution: {integrity: sha512-PhskTc6AHuDhcxx0e7qpD+r2DtXPnVxuSVizj8FJWEdsXzUUs1Q8qpiT5azp5dY0QLqfmY9ok4JMkVQCMU0cXQ==}
+  '@polar-sh/sdk@0.33.1':
+    resolution: {integrity: sha512-DfnNtbL2+74RmCeZx3SpVu2XWanzSbZlpcUgdnQ38iSWkITI181t1DlvWWFYC2+VTaR2/xFcC4lOFjxLv20vvg==}
     hasBin: true
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
@@ -2755,8 +2755,8 @@ packages:
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
-  '@t3-oss/env-core@0.13.6':
-    resolution: {integrity: sha512-rH7FgcB1YGbv/tvv7mdJAxnNvRkK/gEqdVYBwO1AVvaWOTNuftqskxkEYyhM2O+lkNPJmTq5YBE7H+Unl7CLjg==}
+  '@t3-oss/env-core@0.13.8':
+    resolution: {integrity: sha512-L1inmpzLQyYu4+Q1DyrXsGJYCXbtXjC4cICw1uAKv0ppYPQv656lhZPU91Qd1VS6SO/bou1/q5ufVzBGbNsUpw==}
     peerDependencies:
       arktype: ^2.1.0
       typescript: '>=5.0.0'
@@ -2772,8 +2772,8 @@ packages:
       zod:
         optional: true
 
-  '@t3-oss/env-nextjs@0.13.6':
-    resolution: {integrity: sha512-KcA5U8L+Be4OuR5YxmrBzkeo7WsKkEFJDwcAgYFwcBgxxc3oJBdTB7KPQfVrx7wjtX5aDr2jZ0LG55yEXqQi9A==}
+  '@t3-oss/env-nextjs@0.13.8':
+    resolution: {integrity: sha512-QmTLnsdQJ8BiQad2W2nvV6oUpH4oMZMqnFEjhVpzU0h3sI9hn8zb8crjWJ1Amq453mGZs6A4v4ihIeBFDOrLeQ==}
     peerDependencies:
       arktype: ^2.1.0
       typescript: '>=5.0.0'
@@ -2882,11 +2882,11 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
 
-  '@tanstack/query-core@5.80.6':
-    resolution: {integrity: sha512-nl7YxT/TAU+VTf+e2zTkObGTyY8YZBMnbgeA1ee66lIVqzKlYursAII6z5t0e6rXgwUMJSV4dshBTNacNpZHbQ==}
+  '@tanstack/query-core@5.80.7':
+    resolution: {integrity: sha512-s09l5zeUKC8q7DCCCIkVSns8zZrK4ZDT6ryEjxNBFi68G4z2EBobBS7rdOY3r6W1WbUDpc1fe5oY+YO/+2UVUg==}
 
-  '@tanstack/react-query@5.80.6':
-    resolution: {integrity: sha512-izX+5CnkpON3NQGcEm3/d7LfFQNo9ZpFtX2QsINgCYK9LT2VCIdi8D3bMaMSNhrAJCznRoAkFic76uvLroALBw==}
+  '@tanstack/react-query@5.80.7':
+    resolution: {integrity: sha512-u2F0VK6+anItoEvB3+rfvTO9GEh2vb00Je05OwlUe/A0lkJBgW1HckiY3f9YZa+jx6IOe4dHPh10dyp9aY3iRQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3262,8 +3262,8 @@ packages:
       '@opentelemetry/api':
         optional: true
 
-  '@vercel/functions@2.1.0':
-    resolution: {integrity: sha512-1gSbK9zfrbJxk1JTBVERDhLi01mK3fz+gw4GjOjZwHnqs0zsBhQA70HGVtXQX/Z3BTRMfbpAEMVDfhecRw0lDA==}
+  '@vercel/functions@2.2.0':
+    resolution: {integrity: sha512-x1Zrc2jOclTSB9+Ic/XNMDinO0SG4ZS5YeV2Xz1m/tuJOM7QtPVU3Epw2czBao0dukefmC8HCNpyUL8ZchJ/Tg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@aws-sdk/credential-provider-web-identity': '*'
@@ -3472,8 +3472,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  better-auth@1.2.8:
-    resolution: {integrity: sha512-y8ry7ZW3/3ZIr82Eo1zUDtMzdoQlFnwNuZ0+b0RxoNZgqmvgTIc/0tCDC7NDJerqSu4UCzer0dvYxBsv3WMIGg==}
+  better-auth@1.2.9:
+    resolution: {integrity: sha512-WLqBXDzuaCQetQctLGC5oTfGmL32zUvxnM4Y+LZkhwseMaZWq5EKI+c/ZATgz2YkFt7726q659PF8CfB9P1VuA==}
 
   better-call@1.0.9:
     resolution: {integrity: sha512-Qfm0gjk0XQz0oI7qvTK1hbqTsBY4xV2hsHAxF8LZfUYl3RaECCIifXuVqtPpZJWvlCCMlQSvkvhhyuApGUba6g==}
@@ -4361,8 +4361,8 @@ packages:
     resolution: {integrity: sha512-0iirZp3uVDjVGt9p49aTaqjk84TrglENEDuqfdlZQ1roC9CWlPk6Avf8EEnZNcAqPonwkG35x4n3ww/1THYAeQ==}
     engines: {node: '>= 12.20'}
 
-  framer-motion@12.16.0:
-    resolution: {integrity: sha512-xryrmD4jSBQrS2IkMdcTmiS4aSKckbS7kLDCuhUn9110SQKG1w3zlq1RTqCblewg+ZYe+m3sdtzQA6cRwo5g8Q==}
+  framer-motion@12.17.3:
+    resolution: {integrity: sha512-+1GMxQvZGUu20clzYdUWQY+iUWGBFc6UmpxvZBJjWu++rPdj7imXcQITzVs+QLKyjOpLoPOOar2KAOeYL88YQg==}
     peerDependencies:
       '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
@@ -5377,14 +5377,14 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  motion-dom@12.16.0:
-    resolution: {integrity: sha512-Z2nGwWrrdH4egLEtgYMCEN4V2qQt1qxlKy/uV7w691ztyA41Q5Rbn0KNGbsNVDZr9E8PD2IOQ3hSccRnB6xWzw==}
+  motion-dom@12.17.3:
+    resolution: {integrity: sha512-nJrH4O9Z6lBSgllD5t+2lF1O8LkBxOq9QSUUmygHJVzHiTLaYpZRgd+U70919IL0CMbFBaFGEJ8hDSwnrmcyZw==}
 
   motion-utils@12.12.1:
     resolution: {integrity: sha512-f9qiqUHm7hWSLlNW8gS9pisnsN7CRFRD58vNjptKdsqFLpkVnX00TNeD6Q0d27V9KzT7ySFyK1TZ/DShfVOv6w==}
 
-  motion@12.16.0:
-    resolution: {integrity: sha512-P3HA83fnPMEGBLfKdD5vDdjH1Aa3wM3jT3+HX3fCVpy/4/lJiqvABajLgZenBu+rzkFzmeaPkvT7ouf9Tq5tVQ==}
+  motion@12.17.3:
+    resolution: {integrity: sha512-zf4+ppV5HE2bvaGZDWK6oySvS7uig/9eniq0JX/JuM0G9LqrLGxtFUF7b8CUMJ/0bo2ReID6yGWbS0LUxKzYZQ==}
     peerDependencies:
       '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
@@ -8644,13 +8644,13 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@polar-sh/better-auth@1.0.1(@polar-sh/sdk@0.33.0(zod@3.25.63))(better-auth@1.2.8)':
+  '@polar-sh/better-auth@1.0.1(@polar-sh/sdk@0.33.1(zod@3.25.63))(better-auth@1.2.9)':
     dependencies:
-      '@polar-sh/sdk': 0.33.0(zod@3.25.63)
-      better-auth: 1.2.8
+      '@polar-sh/sdk': 0.33.1(zod@3.25.63)
+      better-auth: 1.2.9
       zod: 3.25.63
 
-  '@polar-sh/sdk@0.33.0(zod@3.25.63)':
+  '@polar-sh/sdk@0.33.1(zod@3.25.63)':
     dependencies:
       standardwebhooks: 1.0.0
       zod: 3.25.63
@@ -9662,15 +9662,15 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.13.6(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)':
+  '@t3-oss/env-core@0.13.8(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)':
     optionalDependencies:
       arktype: 2.1.20
       typescript: 5.8.2
       zod: 3.25.63
 
-  '@t3-oss/env-nextjs@0.13.6(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)':
+  '@t3-oss/env-nextjs@0.13.8(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)':
     dependencies:
-      '@t3-oss/env-core': 0.13.6(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)
+      '@t3-oss/env-core': 0.13.8(arktype@2.1.20)(typescript@5.8.2)(zod@3.25.63)
     optionalDependencies:
       arktype: 2.1.20
       typescript: 5.8.2
@@ -9756,11 +9756,11 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.1.10
 
-  '@tanstack/query-core@5.80.6': {}
+  '@tanstack/query-core@5.80.7': {}
 
-  '@tanstack/react-query@5.80.6(react@18.3.1)':
+  '@tanstack/react-query@5.80.7(react@18.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.80.6
+      '@tanstack/query-core': 5.80.7
       react: 18.3.1
 
   '@tavily/core@0.5.6':
@@ -10140,7 +10140,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
 
-  '@vercel/functions@2.1.0(@aws-sdk/credential-provider-web-identity@3.826.0)':
+  '@vercel/functions@2.2.0(@aws-sdk/credential-provider-web-identity@3.826.0)':
     optionalDependencies:
       '@aws-sdk/credential-provider-web-identity': 3.826.0
 
@@ -10369,7 +10369,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  better-auth@1.2.8:
+  better-auth@1.2.9:
     dependencies:
       '@better-auth/utils': 0.2.5
       '@better-fetch/fetch': 1.1.18
@@ -11382,9 +11382,9 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 4.0.0-beta.3
 
-  framer-motion@12.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  framer-motion@12.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      motion-dom: 12.16.0
+      motion-dom: 12.17.3
       motion-utils: 12.12.1
       tslib: 2.8.1
     optionalDependencies:
@@ -12766,15 +12766,15 @@ snapshots:
 
   mkdirp@3.0.1: {}
 
-  motion-dom@12.16.0:
+  motion-dom@12.17.3:
     dependencies:
       motion-utils: 12.12.1
 
   motion-utils@12.12.1: {}
 
-  motion@12.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  motion@12.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      framer-motion: 12.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      framer-motion: 12.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tslib: 2.8.1
     optionalDependencies:
       react: 18.3.1
