@@ -39,7 +39,7 @@ export const scira = customProvider({
         'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
         'scira-anthropic-thinking': anthropic('claude-sonnet-4-20250514'),
         'scira-opus': anthropic('claude-4-opus-20250514'),
-        'scira-opus-pro': anthropic('claude-4-opus-pro-20250514'),
+        'scira-opus-pro': anthropic('claude-4-opus-20250514'),
         'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
             parallelToolCalls: false,
         }),
