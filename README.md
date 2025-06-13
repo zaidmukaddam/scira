@@ -4,6 +4,8 @@
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/scira)
+
 ## Powered By
 
 <div align="center">
