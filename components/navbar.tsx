@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Globe, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Eye, DotsThree } from '@phosphor-icons/react';
+import { Plus, Globe, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Eye, DotsThree, Share } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { User } from '@/lib/db/schema';
-import { LinkedinLogo, RedditLogo, Share, XLogo } from '@phosphor-icons/react';
+import { LinkedinLogo, RedditLogo, XLogo } from '@phosphor-icons/react';
 import { ClassicLoader } from '@/components/ui/loading';
 import { useRouter } from 'next/navigation';
 
@@ -111,8 +111,8 @@ const Navbar = memo(({
     const visibilityContent = useMemo(() => {
         const isPrivate = selectedVisibilityType === 'private';
         return {
-            icon: isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />,
-            label: isPrivate ? 'Private' : 'Public',
+            icon: isPrivate ? <Lock className="h-3 w-3" /> : <GlobeHemisphereWest className="h-3 w-3" />,
+            label: 'Share',
             tooltip: isPrivate 
                 ? 'This chat is private and only visible to you' 
                 : 'This chat is publicly accessible via link'
@@ -166,7 +166,7 @@ const Navbar = memo(({
                                                 ) : (
                                                     <>
                                                         <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
-                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
+                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Shared</span>
                                                         <Copy size={14} className="ml-1.5 text-blue-600 dark:text-blue-300 opacity-80" />
                                                     </>
                                                 )}
@@ -294,8 +294,8 @@ const Navbar = memo(({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Lock size={16} className="text-neutral-500" />
-                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Private</span>
+                                                        <Share size={16} className="text-neutral-500" />
+                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Share</span>
                                                     </>
                                                 )}
                                             </Button>
@@ -303,7 +303,7 @@ const Navbar = memo(({
                                         <DropdownMenuContent align="end" className="w-70 p-3">
                                             <div className="space-y-3">
                                                 <header className="flex justify-between items-center">
-                                                    <h4 className="text-sm font-medium">Make Public</h4>
+                                                    <h4 className="text-sm font-medium">Share</h4>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -320,7 +320,7 @@ const Navbar = memo(({
 
                                                 <div className="space-y-2">
                                                     <p className="text-sm text-muted-foreground">
-                                                        Making this page public will allow anyone with the link to view it.
+                                                        Share this page to make it accessible to anyone with the link.
                                                     </p>
                                                 </div>
 
@@ -341,8 +341,8 @@ const Navbar = memo(({
                                                         onClick={() => handleVisibilityChange('public')}
                                                         disabled={isChangingVisibility}
                                                     >
-                                                        <GlobeHemisphereWest size={12} className="mr-1" />
-                                                        Make Public
+                                                        <Share size={12} className="mr-1" />
+                                                        Share
                                                     </Button>
                                                 </footer>
                                             </div>
@@ -361,11 +361,11 @@ const Navbar = memo(({
                                             disabled
                                         >
                                             <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
-                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Public</span>
+                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Shared</span>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>
-                                        {user ? "This is someone else's public page" : "This is a public page shared with you"}
+                                        {user ? "This is someone else's shared page" : "This is a shared page"}
                                     </TooltipContent>
                                 </Tooltip>
                             )
