@@ -167,10 +167,9 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
   return (
     <div className="my-3" key={sectionKey}>
       <div className={cn(
-        "bg-white dark:bg-black",
+        "bg-neutral-50 dark:bg-neutral-900",
         "border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden",
-        "shadow-[0_1px_2px_0_rgba(0,0,0,0.03)]",
-        "dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.2)]",
+        "shadow-sm dark:shadow-md",
       )}>
         {/* Header - Always visible */}
         <div 
@@ -178,6 +177,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
           className={cn(
             "flex items-center justify-between py-2.5 px-3",
             isComplete && "cursor-pointer",
+            "bg-white dark:bg-neutral-900",
           )}
         >
           <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
                   "bg-blue-50 dark:bg-blue-900/20",
                   "text-blue-600 dark:text-blue-400",
                   "flex items-center gap-1.5",
-                  "shadow-[0_0_0_1px_rgba(59,130,246,0.05)]",
+                  "shadow-sm",
                   "animate-pulse",
                 )}>
                   <div className="size-3 text-blue-500 dark:text-blue-400">
@@ -254,7 +254,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
               className="overflow-hidden"
             >
               <div>
-                <div className="h-px w-full bg-neutral-100 dark:bg-neutral-800"></div>
+                <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
                 <div 
                   ref={scrollRef}
                   className={cn(
@@ -274,7 +274,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(({
                           key={detailIndex}
                           className={cn(
                             "px-3 py-3 text-xs leading-relaxed",
-                            detailIndex !== part.details.length - 1 && "border-b border-neutral-100 dark:border-neutral-800/80",
+                            detailIndex !== part.details.length - 1 && "border-b border-neutral-200 dark:border-neutral-800/80",
                           )}
                         >
                           <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
