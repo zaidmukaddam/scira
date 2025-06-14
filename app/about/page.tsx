@@ -931,7 +931,7 @@ export default function AboutPage() {
                             
                             <ProAccordionItem value="item-2">
                                 <ProAccordionTrigger>
-                                    What's the difference between Free and Pro plans?
+                                    What&apos;s the difference between Free and Pro plans?
                                 </ProAccordionTrigger>
                                 <ProAccordionContent>
                                     The Free plan offers limited daily searches with basic AI models, while the Pro plan ($15/month) provides unlimited searches, access to all AI models, PDF document analysis, and priority support.
@@ -979,7 +979,7 @@ export default function AboutPage() {
                                     How do I apply for the student discount?
                                 </ProAccordionTrigger>
                                 <ProAccordionContent>
-                                    Email zaid@scira.ai with a copy of your student ID or enrollment proof. In your email, include a brief description of how you use or plan to use Scira for your academic work or studies. Once verified, you'll receive a special discount code for $10 off the Pro plan.
+                                    Email zaid@scira.ai with a copy of your student ID or enrollment proof. In your email, include a brief description of how you use or plan to use Scira for your academic work or studies. Once verified, you&apos;ll receive a special discount code for $10 off the Pro plan.
                                 </ProAccordionContent>
                             </ProAccordionItem>
                         </ProAccordion>
