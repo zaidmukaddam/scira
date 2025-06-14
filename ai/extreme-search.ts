@@ -155,14 +155,6 @@ const extremeSearch = async (
     prompt: string,
     dataStream: DataStreamWriter,
 ): Promise<Research> => {
-    dataStream.writeMessageAnnotation({
-        status: { title: "Beginning autonomous research" },
-    });
-
-    // add sleep for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Track all sources we've found
     const allSources: SearchResult[] = [];
 
     dataStream.writeMessageAnnotation({

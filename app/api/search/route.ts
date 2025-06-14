@@ -446,10 +446,6 @@ export async function POST(req: Request) {
                 experimental_activeTools: [...activeTools],
                 system: instructions + `\n\nThe user's location is ${latitude}, ${longitude}.`,
                 toolChoice: 'auto',
-                experimental_transform: smoothStream({
-                    chunking: 'word',
-                    delayInMs: 0.5,
-                }),
                 providerOptions: {
                     google: {
                         thinkingConfig: {
