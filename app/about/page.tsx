@@ -23,6 +23,9 @@ import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
 import { useRouter } from 'next/navigation';
 import { GithubLogo, XLogo } from '@phosphor-icons/react';
+import { Badge } from "@/components/ui/badge"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { ProAccordion, ProAccordionItem, ProAccordionTrigger, ProAccordionContent } from "@/components/ui/pro-accordion"
 
 const container = {
     hidden: { opacity: 0 },
@@ -755,6 +758,239 @@ export default function AboutPage() {
                                     </div>
                                 </motion.div>
                             ))}
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section className="py-24 px-4 bg-white dark:bg-zinc-950 border-y border-border">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-4xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Pricing Plans</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Choose the plan that works best for you
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                            {/* Free Plan */}
+                            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-8 relative hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-colors duration-200">
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Free</h3>
+                                    <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6 leading-relaxed">Get started with essential features</p>
+                                    <div className="flex items-baseline mb-2">
+                                        <span className="text-3xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$0</span>
+                                        <span className="text-zinc-400 dark:text-zinc-500 ml-2 text-sm">/month</span>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <ul className="space-y-3">
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Limited daily searches</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Basic AI models</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Search history</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    className="w-full h-9 border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-normal text-sm tracking-[-0.01em]"
+                                    onClick={() => router.push('/')}
+                                >
+                                    Get Started
+                                </Button>
+                            </div>
+
+                            {/* Pro Plan */}
+                            <div className="bg-white dark:bg-zinc-900 border-[1.5px] border-black dark:border-white rounded-xl p-8 relative shadow-sm">
+                                <div className="absolute -top-3 right-8 z-10">
+                                    <Badge className="bg-black dark:bg-white text-white dark:text-black px-3 py-1 text-xs font-normal tracking-wide">
+                                        POPULAR
+                                    </Badge>
+                                </div>
+
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Scira Pro</h3>
+                                    <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6 leading-relaxed">Everything you need for unlimited usage</p>
+                                    <div className="flex items-baseline mb-2">
+                                        <span className="text-3xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
+                                        <span className="text-zinc-500 dark:text-zinc-400 ml-2 text-sm">/month</span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p>
+                                </div>
+
+                                <div className="mb-6">
+                                    <ul className="space-y-3">
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Unlimited searches</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">All AI models</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">PDF document analysis</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Priority support</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <Button
+                                    className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
+                                    onClick={() => router.push('/pricing')}
+                                >
+                                    Upgrade to Pro
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Student Discount */}
+                        <div className="max-w-3xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 mt-8">
+                            <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                                <div className="p-2 rounded-md bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
+                                    <GraduationCap className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                                </div>
+                                <div className="flex-1 space-y-2 text-center sm:text-left">
+                                    <h3 className="font-medium text-base">
+                                        Student Discount: $10 off Pro Plan
+                                    </h3>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                        Students can get the Pro plan for just $5/month. Email zaid@scira.ai with your student ID and a brief description of how you use Scira for your studies.
+                                    </p>
+                                    <div className="pt-1">
+                                        <a 
+                                            href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
+                                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-zinc-300 dark:border-zinc-700 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 px-4 py-2"
+                                        >
+                                            Request Student Discount
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="text-center">
+                            <Link
+                                href="/pricing"
+                                className="inline-flex items-center gap-2 font-medium hover:text-primary transition-colors"
+                            >
+                                View full pricing details
+                                <ArrowUpRight className="h-4 w-4" />
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="py-24 px-4 bg-accent/10">
+                <div className="container max-w-screen-xl mx-auto">
+                    <motion.div 
+                        className="max-w-3xl mx-auto space-y-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="text-center space-y-4">
+                            <h2 className="text-3xl font-medium tracking-tight">Frequently Asked Questions</h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                Find answers to common questions about Scira
+                            </p>
+                        </div>
+
+                        <ProAccordion type="single" collapsible className="w-full">
+                            <ProAccordionItem value="item-1">
+                                <ProAccordionTrigger>
+                                    What is Scira?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Scira is a minimalistic open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and search grounding to provide accurate, up-to-date answers from reliable sources.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-2">
+                                <ProAccordionTrigger>
+                                    What's the difference between Free and Pro plans?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    The Free plan offers limited daily searches with basic AI models, while the Pro plan ($15/month) provides unlimited searches, access to all AI models, PDF document analysis, and priority support.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-3">
+                                <ProAccordionTrigger>
+                                    Is there a student discount?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Yes, students can get $10 off the Pro plan, bringing it down to $5/month. To apply, email zaid@scira.ai with your student verification details and a brief description of how you use Scira for your academic work or studies.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-4">
+                                <ProAccordionTrigger>
+                                    Can I cancel my subscription anytime?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Yes, you can cancel your Pro subscription at any time. Your benefits will continue until the end of your current billing period.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-5">
+                                <ProAccordionTrigger>
+                                    What AI models does Scira use?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Scira uses a range of advanced AI models including Grok 3.0, Claude 3.7 Sonnet, OpenAI GPT 4o, Gemini 2.5 Pro, and more to provide the best possible answers.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-6">
+                                <ProAccordionTrigger>
+                                    How does Scira ensure information accuracy?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Scira combines RAG technology with search grounding to retrieve information from reliable sources and verify it before providing answers. Each response includes source attribution.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                            
+                            <ProAccordionItem value="item-7">
+                                <ProAccordionTrigger>
+                                    How do I apply for the student discount?
+                                </ProAccordionTrigger>
+                                <ProAccordionContent>
+                                    Email zaid@scira.ai with a copy of your student ID or enrollment proof. In your email, include a brief description of how you use or plan to use Scira for your academic work or studies. Once verified, you'll receive a special discount code for $10 off the Pro plan.
+                                </ProAccordionContent>
+                            </ProAccordionItem>
+                        </ProAccordion>
+
+                        <div className="text-center pt-4">
+                            <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+                                Have more questions?{" "}
+                                <a href="mailto:zaid@scira.ai" className="text-black dark:text-white hover:underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600 transition-colors duration-200">
+                                    Get in touch
+                                </a>
+                            </p>
                         </div>
                     </motion.div>
                 </div>

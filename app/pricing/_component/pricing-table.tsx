@@ -11,6 +11,7 @@ import { SEARCH_LIMITS, PRICING } from "@/lib/constants";
 import { DiscountBanner } from "@/components/ui/discount-banner";
 import { getDiscountConfigAction } from "@/app/actions";
 import { DiscountConfig } from "@/lib/discount";
+import { SlidingNumber } from "@/components/core/sliding-number";
 
 type SubscriptionDetails = {
   id: string;
@@ -43,6 +44,7 @@ export default function PricingTable({
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
+  const [countdownTime, setCountdownTime] = useState<{ hours: number, minutes: number, seconds: number }>({ hours: 23, minutes: 59, seconds: 59 });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -62,9 +64,38 @@ export default function PricingTable({
           config.originalPrice = PRICING.PRO_MONTHLY;
         }
         setDiscountConfig(config);
+
+        // Set initial countdown
+        if (config.expiresAt) {
+          updateCountdown(config.expiresAt);
+        } else {
+          // Default 24-hour countdown if no expiration set
+          const endTime = new Date();
+          endTime.setHours(endTime.getHours() + 24);
+          updateCountdown(endTime);
+        }
       } catch (error) {
         console.error('Failed to fetch discount config:', error);
       }
+    };
+
+    const updateCountdown = (endTime: Date) => {
+      const calculateTimeLeft = () => {
+        const now = new Date().getTime();
+        const difference = new Date(endTime).getTime() - now;
+        
+        if (difference > 0) {
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+          
+          setCountdownTime({ hours, minutes, seconds });
+        }
+      };
+      
+      calculateTimeLeft();
+      const countdownInterval = setInterval(calculateTimeLeft, 1000);
+      return () => clearInterval(countdownInterval);
     };
     
     checkAuth();
@@ -153,14 +184,80 @@ export default function PricingTable({
         </div>
       </div>
 
-      {/* Discount Banner */}
-      <div className="max-w-4xl mx-auto px-6 mb-8">
-        <DiscountBanner 
-          discountConfig={discountConfig}
-          onClaim={handleDiscountClaim}
-          className="animate-in slide-in-from-top-2 duration-500"
-        />
-      </div>
+      {/* Discount Banner with Countdown */}
+      {discountConfig.enabled && (
+        <div className="max-w-4xl mx-auto px-6 mb-8">
+          <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden animate-in slide-in-from-top-2 duration-500">
+            <div className="px-6 py-5">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <h3 className="text-base font-medium">Special Limited-Time Offer</h3>
+                    {discountConfig.percentage && (
+                      <Badge className="bg-black dark:bg-white text-white dark:text-black px-2.5 py-1 text-xs font-medium">
+                        {discountConfig.percentage}% OFF
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Pricing Information */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-zinc-500 dark:text-zinc-400 line-through">
+                      ${discountConfig.originalPrice}/month
+                    </span>
+                    <span className="text-lg font-semibold">
+                      ${discountConfig.finalPrice ? discountConfig.finalPrice.toFixed(2) : (discountConfig.originalPrice || 0) - ((discountConfig.originalPrice || 0) * (discountConfig.percentage || 0) / 100)}/month
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+                        First month
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="flex flex-col items-center">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p>
+                  <div className="flex items-center gap-1.5">
+                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
+                      <SlidingNumber value={countdownTime.hours} padStart={true} />
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">hrs</span>
+                    </div>
+                    <span className="text-lg font-medium">:</span>
+                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
+                      <SlidingNumber value={countdownTime.minutes} padStart={true} />
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">min</span>
+                    </div>
+                    <span className="text-lg font-medium">:</span>
+                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
+                      <SlidingNumber value={countdownTime.seconds} padStart={true} />
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">sec</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Claim Button */}
+              {discountConfig.code && (
+                <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDiscountClaim(discountConfig.code || '')}
+                    className="w-full sm:w-auto"
+                  >
+                    {discountConfig.code ? `Claim discount: ${discountConfig.code}` : 'Claim discount'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DiscountBanner 
+        discountConfig={discountConfig}
+        onClaim={handleDiscountClaim}
+        className="max-w-4xl mx-auto px-6 mb-8 hidden"
+      />
 
       {/* Pricing Cards */}
       <div className="max-w-4xl mx-auto px-6 pb-24">
