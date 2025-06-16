@@ -3,155 +3,158 @@ import './env/server';
 import './env/client';
 
 const nextConfig: NextConfig = {
-    allowedDevOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai", "https://f990-2409-40c0-77-b1af-8d4e-e70d-9000-a209.ngrok-free.app/"],
-    compiler: {
-        // if NODE_ENV is production, remove console.log
-        removeConsole: process.env.NODE_ENV === 'production' ? {
+  allowedDevOrigins: ['https://localhost:3000'],
+  compiler: {
+    // if NODE_ENV is production, remove console.log
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
             exclude: ['error'],
-        } : false,
+          }
+        : false,
+  },
+  experimental: {
+    optimizePackageImports: ['@phosphor-icons/react'],
+    nodeMiddleware: true,
+    serverActions: {
+      bodySizeLimit: '10mb',
     },
-    experimental: {
-        optimizePackageImports: ["@phosphor-icons/react"],
-        nodeMiddleware: true,
-        serverActions: {
-            bodySizeLimit: '10mb',
-        },
-    },
-    transpilePackages: ["geist"],
-    output: 'standalone',
-    async headers() {
-        return [
-            {
-                source: '/(.*)',
-                headers: [
-                    {
-                        key: 'X-Content-Type-Options',
-                        value: 'nosniff',
-                    },
-                    {
-                        key: 'X-Frame-Options',
-                        value: 'DENY',
-                    },
-                    {
-                        key: 'Referrer-Policy',
-                        value: 'strict-origin-when-cross-origin',
-                    },
-                ],
-            },
-        ]
-    },
-    async redirects() {
-        return [
-            {
-                source: '/ph',
-                destination: 'https://www.producthunt.com/posts/scira',
-                permanent: true,
-            },
-            {
-                source: '/raycast',
-                destination: 'https://www.raycast.com/zaidmukaddam/scira',
-                permanent: true,
-            }
-        ]
-    },
-    images: {
-        dangerouslyAllowSVG: true,
-        remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: '**',
-                port: '',
-                pathname: '**'
-            },
-            {
-                protocol: 'http',
-                hostname: '**',
-                port: '',
-                pathname: '**'
-            },
-            // Google Favicon Service - comprehensive patterns
-            {
-                protocol: 'https',
-                hostname: 'www.google.com',
-                port: '',
-                pathname: '/s2/favicons/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'www.google.com',
-                port: '',
-                pathname: '/s2/favicons',
-            },
-            // Google Maps Static API
-            {
-                protocol: 'https',
-                hostname: 'maps.googleapis.com',
-                port: '',
-                pathname: '/**',
-            },
-            // Google Street View Static API
-            {
-                protocol: 'https',
-                hostname: 'maps.googleapis.com',
-                port: '',
-                pathname: '/maps/api/streetview/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'api.producthunt.com',
-                port: '',
-                pathname: '/widgets/embed-image/v1/featured.svg',
-            },
-            {
-                protocol: 'https',
-                hostname: 'metwm7frkvew6tn1.public.blob.vercel-storage.com',
-                port: '',
-                pathname: "**"
-            },
-            // upload.wikimedia.org
-            {
-                protocol: 'https',
-                hostname: 'upload.wikimedia.org',
-                port: '',
-                pathname: '**'
-            },
-            // media.theresanaiforthat.com
-            {
-                protocol: 'https',
-                hostname: 'media.theresanaiforthat.com',
-                port: '',
-                pathname: '**'
-            },
-            // www.uneed.best
-            {
-                protocol: 'https',
-                hostname: 'www.uneed.best',
-                port: '',
-                pathname: '**'
-            },
-            // image.tmdb.org
-            {
-                protocol: 'https',
-                hostname: 'image.tmdb.org',
-                port: '',
-                pathname: '/t/p/original/**'
-            },
-            // image.tmdb.org
-            {
-                protocol: 'https',
-                hostname: 'image.tmdb.org',
-                port: '',
-                pathname: '/**'
-            },
+  },
+  transpilePackages: ['geist'],
+  output: 'standalone',
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
         ],
-        // Add additional settings for better image loading
-        domains: [],
-        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-        formats: ['image/webp'],
-        minimumCacheTTL: 60,
-        unoptimized: false,
-    },
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/ph',
+        destination: 'https://www.producthunt.com/posts/scira',
+        permanent: true,
+      },
+      {
+        source: '/raycast',
+        destination: 'https://www.raycast.com/zaidmukaddam/scira',
+        permanent: true,
+      },
+    ];
+  },
+  images: {
+    dangerouslyAllowSVG: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+        port: '',
+        pathname: '**',
+      },
+      // Google Favicon Service - comprehensive patterns
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        port: '',
+        pathname: '/s2/favicons/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        port: '',
+        pathname: '/s2/favicons',
+      },
+      // Google Maps Static API
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      // Google Street View Static API
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+        port: '',
+        pathname: '/maps/api/streetview/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.producthunt.com',
+        port: '',
+        pathname: '/widgets/embed-image/v1/featured.svg',
+      },
+      {
+        protocol: 'https',
+        hostname: 'metwm7frkvew6tn1.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '**',
+      },
+      // upload.wikimedia.org
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        port: '',
+        pathname: '**',
+      },
+      // media.theresanaiforthat.com
+      {
+        protocol: 'https',
+        hostname: 'media.theresanaiforthat.com',
+        port: '',
+        pathname: '**',
+      },
+      // www.uneed.best
+      {
+        protocol: 'https',
+        hostname: 'www.uneed.best',
+        port: '',
+        pathname: '**',
+      },
+      // image.tmdb.org
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        port: '',
+        pathname: '/t/p/original/**',
+      },
+      // image.tmdb.org
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+    // Add additional settings for better image loading
+    domains: [],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ['image/webp'],
+    minimumCacheTTL: 60,
+    unoptimized: false,
+  },
 };
 
 export default nextConfig;

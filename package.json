@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "drizzle-kit push && next build --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",
     "knip": "knip"
