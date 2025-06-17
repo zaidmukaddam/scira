@@ -198,7 +198,7 @@ const models = [
     experimental: false,
     category: 'Stable',
     pdf: true,
-    pro: false,
+    pro: true,
   },
   {
     value: 'scira-anthropic-thinking',
