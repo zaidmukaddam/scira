@@ -172,12 +172,21 @@ const ChatInterface = memo(
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
 
+    // Add upgrade dialog state
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+    const [hasShownUpgradeDialog, setHasShownUpgradeDialog] = useLocalStorage('scira-upgrade-prompt-shown', false);
+
     // Memoized greeting to prevent flickering
     const personalizedGreeting = useMemo(() => {
       if (!user?.name) return 'What do you want to explore?';
 
       const firstName = user.name.trim().split(' ')[0];
       if (!firstName) return 'What do you want to explore?';
+
+      // Show upgrade message when upgrade dialog is displayed
+      if (showUpgradeDialog) {
+        return `Hey ${firstName}, Time to go Pro!`;
+      }
 
       const greetings = [
         `Hey ${firstName}! Let's dive in!`,
@@ -196,16 +205,12 @@ const ChatInterface = memo(
       const seed = user.id + greetingUuidRef.current;
       const seedHash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       return greetings[seedHash % greetings.length];
-    }, [user?.name, user?.id]);
+    }, [user?.name, user?.id, showUpgradeDialog]);
 
     // Sign-in prompt dialog state
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
     const [hasShownSignInPrompt, setHasShownSignInPrompt] = useLocalStorage('scira-signin-prompt-shown', false);
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Add upgrade dialog state
-    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-    const [hasShownUpgradeDialog, setHasShownUpgradeDialog] = useLocalStorage('scira-upgrade-prompt-shown', false);
 
     // Generate a consistent ID for new chats
     const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
