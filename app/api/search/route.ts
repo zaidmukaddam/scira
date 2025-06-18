@@ -7,7 +7,7 @@ import {
   getExtremeSearchUsageCount,
 } from '@/app/actions';
 import { serverEnv } from '@/env/server';
-import { openai, OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
+import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
 import { tavily } from '@tavily/core';
 import {
@@ -686,7 +686,7 @@ export async function POST(req: Request) {
                     if (!result.title || result.title.trim() === '') {
                       try {
                         const { object } = await generateObject({
-                          model: openai.chat('gpt-4.1-nano'),
+                          model: scira.languageModel('scira-g2'),
                           prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query} and contains this content: ${result.content.substring(0, 500)}...`,
                           schema: z.object({
                             title: z.string().describe('A descriptive title for the financial report'),
