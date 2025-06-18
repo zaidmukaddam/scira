@@ -351,11 +351,14 @@ export async function POST(req: Request) {
     // Check if model requires Pro subscription
     const proRequiredModels = [
       'scira-grok-3',
+      'scira-anthropic',
       'scira-anthropic-thinking',
       'scira-opus',
       'scira-opus-pro',
+      'scira-google',
       'scira-google-pro',
     ];
+
     if (proRequiredModels.includes(model) && !isProUser) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
