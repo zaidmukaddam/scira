@@ -193,12 +193,12 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                         </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="px-2 sm:px-3 py-3">
+                    <AccordionContent className="px-2 sm:px-3 pt-3 mb-0 pb-0">
                         <div className="space-y-3">
                             {/* Horizontal Tweets Row */}
                             {tweetCitations.length > 0 && (
                                 <div className="space-y-3">
-                                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 scrollbar-hide">
+                                    <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide rounded-lg">
                                         {displayedTweets.map((citation, index) => (
                                             <motion.div
                                                 key={citation.tweet_id}

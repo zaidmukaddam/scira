@@ -103,7 +103,7 @@
   }
 
   .dark .tweet-wrapper::after {
-    background: linear-gradient(transparent, rgba(23, 23, 23, 0.8));
+    background: linear-gradient(transparent, rgba(9, 9, 11, 0.95));
   }
 
   .tweet-wrapper [data-theme] {
@@ -116,8 +116,9 @@
   }
 
   .dark .tweet-wrapper [data-theme] {
-    border: 1px solid rgb(64 64 64) !important;
-    background: rgb(23 23 23) !important;
+    border: 1px solid rgb(39 39 42) !important;
+    background: rgb(9 9 11) !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2) !important;
   }
 
   /* Tweet wrapper styling for sheet */
@@ -132,8 +133,9 @@
   }
 
   .dark .tweet-wrapper-sheet [data-theme] {
-    border: 1px solid rgb(64 64 64) !important;
-    background: rgb(23 23 23) !important;
+    border: 1px solid rgb(39 39 42) !important;
+    background: rgb(9 9 11) !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2) !important;
   }
 
   /* Ensure proper tweet spacing */
@@ -154,17 +156,21 @@
 
   :is([data-theme='dark'], .dark) :where(.react-tweet-theme) {
     --tweet-skeleton-gradient: linear-gradient(270deg,
-        #15202b,
-        #1e2732,
-        #1e2732,
-        #15202b) !important;
-    --tweet-border: 1px solid #595959 !important;
-    --tweet-font-color-secondary: #8b98a5 !important;
-    --tweet-bg-color: #0c0c0c !important;
-    --tweet-bg-color-hover: #000000 !important;
-    --tweet-quoted-bg-color-hover: hsla(0, 0%, 100%, 0.03) !important;
-    --tweet-color-blue-primary: #1d9bf0 !important;
-    --tweet-color-blue-secondary-hover: rgb(129 129 129 / 10%) !important;
+        #09090b,
+        #18181b,
+        #18181b,
+        #09090b) !important;
+    --tweet-border: 1px solid #27272a !important;
+    --tweet-font-color: #fafafa !important;
+    --tweet-font-color-secondary: #a1a1aa !important;
+    --tweet-bg-color: #09090b !important;
+    --tweet-bg-color-hover: #18181b !important;
+    --tweet-quoted-bg-color: #18181b !important;
+    --tweet-quoted-bg-color-hover: #27272a !important;
+    --tweet-color-blue-primary: #3b82f6 !important;
+    --tweet-color-blue-secondary-hover: rgba(59, 130, 246, 0.1) !important;
+    --tweet-icon-color: #71717a !important;
+    --tweet-icon-color-hover: #a1a1aa !important;
   }
 }
 

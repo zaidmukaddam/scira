@@ -44,7 +44,7 @@ export default function PricingTable({
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
-  const [countdownTime, setCountdownTime] = useState<{ hours: number, minutes: number, seconds: number }>({ hours: 23, minutes: 59, seconds: 59 });
+  const [countdownTime, setCountdownTime] = useState<{ days: number, hours: number, minutes: number, seconds: number }>({ days: 0, hours: 23, minutes: 59, seconds: 59 });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -85,11 +85,12 @@ export default function PricingTable({
         const difference = new Date(endTime).getTime() - now;
         
         if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((difference % (1000 * 60)) / 1000);
           
-          setCountdownTime({ hours, minutes, seconds });
+          setCountdownTime({ days, hours, minutes, seconds });
         }
       };
       
@@ -218,6 +219,15 @@ export default function PricingTable({
                 <div className="flex flex-col items-center">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p>
                   <div className="flex items-center gap-1.5">
+                    {countdownTime.days > 0 && (
+                      <>
+                        <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
+                          <SlidingNumber value={countdownTime.days} padStart={true} />
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">days</span>
+                        </div>
+                        <span className="text-lg font-medium">:</span>
+                      </>
+                    )}
                     <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
                       <SlidingNumber value={countdownTime.hours} padStart={true} />
                       <span className="text-xs text-zinc-500 dark:text-zinc-400">hrs</span>
