@@ -35,6 +35,7 @@ import {
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
+  incrementMessageUsage,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { SEARCH_LIMITS } from '@/lib/constants';
@@ -335,7 +336,7 @@ export async function POST(req: Request) {
   // Check message count limit for non-pro users
   if (user) {
     const [messageCountResult, subscriptionResult, extremeSearchUsage] = await Promise.all([
-      getUserMessageCount(24), // Check messages in last 24 hours
+      getUserMessageCount(), // Check daily message count (deletion-proof tracking)
       getSubDetails(),
       getExtremeSearchUsageCount(),
     ]);
@@ -415,6 +416,9 @@ export async function POST(req: Request) {
         },
       ],
     });
+
+    // Track message usage for rate limiting (deletion-proof)
+    await incrementMessageUsage({ userId: user.id });
 
     console.log('--------------------------------');
     console.log('Messages saved: ', messages);

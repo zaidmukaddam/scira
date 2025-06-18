@@ -196,7 +196,7 @@ const models = [
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Stable',
+    category: 'Pro',
     pdf: true,
     pro: true,
   },

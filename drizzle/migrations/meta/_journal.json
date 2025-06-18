@@ -43,6 +43,13 @@
       "when": 1749455592764,
       "tag": "0005_square_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1750221725745,
+      "tag": "0006_confused_the_captain",
+      "breakpoints": true
     }
   ]
 }

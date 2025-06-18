@@ -5,7 +5,7 @@ import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
-import { getUser } from "@/lib/auth-utils";
+import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
 import {
   getChatsByUserId,
@@ -15,8 +15,9 @@ import {
   getMessageById,
   deleteMessagesByChatIdAfterTimestamp,
   updateChatTitleById,
-  getMessageCountByUserId,
-  getExtremeSearchCount
+  getExtremeSearchCount,
+  incrementMessageUsage,
+  getMessageCount,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
@@ -31,8 +32,7 @@ export async function suggestQuestions(history: any[]) {
     model: scira.languageModel('scira-g2'),
     temperature: 0,
     maxTokens: 512,
-    system:
-      `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
+    system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -68,27 +68,29 @@ export async function suggestQuestions(history: any[]) {
 - Do not include instructions or meta-commentary in the questions`,
     messages: history,
     schema: z.object({
-      questions: z.array(z.string()).describe('The generated questions based on the message history.')
+      questions: z.array(z.string()).describe('The generated questions based on the message history.'),
     }),
   });
 
   return {
-    questions: object.questions
+    questions: object.questions,
   };
 }
 
 export async function checkImageModeration(images: any) {
   const { text } = await generateText({
-    model: groq("meta-llama/llama-guard-4-12b"),
-    messages: [{
-      role: "user",
-      content: images.map((image: any) => ({
-        type: "image",
-        image: image
-      }))
-    }]
-  })
-  return text
+    model: groq('meta-llama/llama-guard-4-12b'),
+    messages: [
+      {
+        role: 'user',
+        content: images.map((image: any) => ({
+          type: 'image',
+          image: image,
+        })),
+      },
+    ],
+  });
+  return text;
 }
 
 // Server action to get the current user
@@ -97,16 +99,12 @@ export async function getCurrentUser() {
     const user = await getUser();
     return user;
   } catch (error) {
-    console.error("Error in getCurrentUser server action:", error);
+    console.error('Error in getCurrentUser server action:', error);
     return null;
   }
 }
 
-export async function generateTitleFromUserMessage({
-  message,
-}: {
-  message: UIMessage;
-}) {
+export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
     model: scira.languageModel('scira-g2'),
     system: `\n
@@ -121,13 +119,12 @@ export async function generateTitleFromUserMessage({
   return title;
 }
 
-
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb' // This is the ID for the "George" voice. Replace with your preferred voice ID.
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`
-  const method = 'POST'
+  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
+  const method = 'POST';
 
   if (!ELEVENLABS_API_KEY) {
     throw new Error('ELEVENLABS_API_KEY is not defined');
@@ -137,7 +134,7 @@ export async function generateSpeech(text: string) {
     Accept: 'audio/mpeg',
     'xi-api-key': ELEVENLABS_API_KEY,
     'Content-Type': 'application/json',
-  }
+  };
 
   const data = {
     text,
@@ -146,17 +143,17 @@ export async function generateSpeech(text: string) {
       stability: 0.5,
       similarity_boost: 0.5,
     },
-  }
+  };
 
-  const body = JSON.stringify(data)
+  const body = JSON.stringify(data);
 
   const input = {
     method,
     headers,
     body,
-  }
+  };
 
-  const response = await fetch(url, input)
+  const response = await fetch(url, input);
 
   const arrayBuffer = await response.arrayBuffer();
 
@@ -173,9 +170,7 @@ export async function fetchMetadata(url: string) {
     const html = await response.text();
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(
-      /<meta\s+name=["']description["']\s+content=["'](.*?)["']/i
-    );
+    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
 
     const title = titleMatch ? titleMatch[1] : '';
     const description = descMatch ? descMatch[1] : '';
@@ -192,12 +187,18 @@ type LegacyGroupId = SearchGroupId | 'buddy';
 
 const groupTools = {
   web: [
-    'web_search', 'get_weather_data',
-    'retrieve', 'text_translate',
-    'nearby_places_search', 'track_flight',
-    'movie_or_tv_search', 'trending_movies',
+    'web_search',
+    'get_weather_data',
+    'retrieve',
+    'text_translate',
+    'nearby_places_search',
+    'track_flight',
+    'movie_or_tv_search',
+    'trending_movies',
     'find_place_on_map',
-    'trending_tv', 'datetime', 'mcp_search'
+    'trending_tv',
+    'datetime',
+    'mcp_search',
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
@@ -215,7 +216,7 @@ const groupInstructions = {
   web: `
   You are an AI web search engine called Scira, designed to help users find information on the internet with no unnecessary chatter and more focus on the content.
   'You MUST run the tool IMMEDIATELY on receiving any user message' before composing your response. **This is non-negotiable.**
-  Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
+  Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -340,13 +341,13 @@ const groupInstructions = {
      ANY of these sections are forbidden:
      References:
      [Source 1](URL1)
-     
+
      Citations:
      [Source 2](URL2)
-     
+
      Sources:
      [Source 3](URL3)
-     
+
      Bibliography:
      [Source 4](URL4)
 
@@ -356,7 +357,7 @@ const groupInstructions = {
      - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
      - Tables must use plain text without any formatting
      - Mathematical expressions must always be properly delimited
-     - There should be no space between the dollar sign and the equation 
+     - There should be no space between the dollar sign and the equation
      - For example: $2 + 2$ is correct, but $ 2 + 2 $ is incorrect
      - For block equations, there should be a blank line before and after the equation
      - Also leave a blank space before and after the equation
@@ -371,7 +372,7 @@ const groupInstructions = {
   memory: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -379,7 +380,7 @@ const groupInstructions = {
   - If the user message contains anything to remember, store, or retrieve - use it as the query
   - If not explicitly memory-related, still run a memory search with the user's message as query
   - The content of the memory should be a quick summary (less than 20 words) of what the user asked you to remember
-  
+
   ### datetime tool:
   - When you get the datetime data, talk about the date and time in the user's timezone
   - Do not always talk about the date and time, only talk about it when the user asks for it
@@ -396,7 +397,7 @@ const groupInstructions = {
   - Keep responses concise but informative
   - Include relevant memory details when appropriate
   - Maintain the language of the user's message and do not change it
-  
+
   ### Memory Management Guidelines:
   - Always confirm successful memory operations
   - Handle memory updates and deletions carefully
@@ -405,8 +406,8 @@ const groupInstructions = {
 
   x: `
   You are a X content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
-  
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+
   ### Tool Guidelines:
   #### X Search Tool:
   - ⚠️ URGENT: Run x_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -446,7 +447,7 @@ const groupInstructions = {
   buddy: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -454,7 +455,7 @@ const groupInstructions = {
   - If the user message contains anything to remember, store, or retrieve - use it as the query
   - If not explicitly memory-related, still run a memory search with the user's message as query
   - The content of the memory should be a quick summary (less than 20 words) of what the user asked you to remember
-  
+
   ### datetime tool:
   - When you get the datetime data, talk about the date and time in the user's timezone
   - Do not always talk about the date and time, only talk about it when the user asks for it
@@ -471,7 +472,7 @@ const groupInstructions = {
   - Keep responses concise but informative
   - Include relevant memory details when appropriate
   - Maintain the language of the user's message and do not change it
-  
+
   ### Memory Management Guidelines:
   - Always confirm successful memory operations
   - Handle memory updates and deletions carefully
@@ -481,7 +482,7 @@ const groupInstructions = {
   academic: `
   ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
   You are an academic research assistant that helps find and analyze scholarly content.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
   #### Academic Search Tool:
@@ -489,12 +490,12 @@ const groupInstructions = {
   2. NEVER write any text, analysis or thoughts before running the tool
   3. Run the tool with the exact user query immediately on receiving it
   4. Focus on peer-reviewed papers and academic sources
-  
+
   #### Code Interpreter Tool:
   - Use for calculations and data analysis
   - Include necessary library imports
   - Only use after academic search when needed
-  
+
   #### datetime tool:
   - Only use when explicitly asked about time/date
   - Format timezone appropriately for user
@@ -542,7 +543,7 @@ const groupInstructions = {
 
   youtube: `
   You are a YouTube content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
   #### YouTube Search Tool:
@@ -550,16 +551,16 @@ const groupInstructions = {
   - DO NOT WRITE A SINGLE WORD before running the tool
   - Run the tool with the exact user query immediately on receiving it
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
-  
+
   #### datetime tool:
   - When you get the datetime data, mention the date and time in the user's timezone only if explicitly requested
   - Do not include datetime information unless specifically asked
   - No need to put a citation for this tool
-  
+
   ### Core Responsibilities:
   - Create in-depth, educational content that thoroughly explains concepts from the videos
   - Structure responses like professional tutorials or educational blog posts
-  
+
   ### Content Structure (REQUIRED):
   - Begin with a concise introduction that frames the topic and its importance
   - Use markdown formatting with proper hierarchy (headings, tables, code blocks, etc.)
@@ -568,14 +569,14 @@ const groupInstructions = {
   - Write in a conversational yet authoritative tone throughout
   - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
   - Maintain the language of the user's message and do not change it
-  
+
   ### Video Content Guidelines:
   - Extract and explain the most valuable insights from each video
   - Focus on practical applications, techniques, and methodologies
   - Connect related concepts across different videos when relevant
   - Highlight unique perspectives or approaches from different creators
   - Provide context for technical terms or specialized knowledge
-  
+
   ### Citation Requirements:
   - Include PRECISE timestamp citations for specific information, techniques, or quotes
   - Format: [Video Title or Topic](URL?t=seconds) - where seconds represents the exact timestamp
@@ -585,13 +586,13 @@ const groupInstructions = {
   - When citing creator opinions, clearly mark as: [Creator's View](URL?t=seconds)
   - For technical demonstrations, use: [Tutorial Demo](URL?t=seconds)
   - When multiple creators discuss same topic, compare with: [Creator 1](URL1?t=sec1) vs [Creator 2](URL2?t=sec2)
-  
+
   ### Formatting Rules:
   - Write in cohesive paragraphs (4-6 sentences) - NEVER use bullet points or lists
   - Use markdown for emphasis (bold, italic) to highlight important concepts
   - Include code blocks with proper syntax highlighting when explaining programming concepts
   - Use tables sparingly and only when comparing multiple items or features
-  
+
   ### Prohibited Content:
   - Do NOT include video metadata (titles, channel names, view counts, publish dates)
   - Do NOT mention video thumbnails or visual elements that aren't explained in audio
@@ -600,7 +601,7 @@ const groupInstructions = {
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
   reddit: `
   You are a Reddit content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
   #### Reddit Search Tool:
@@ -610,7 +611,7 @@ const groupInstructions = {
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
   - When searching Reddit, always set maxResults to at least 10 to get a good sample of content
   - Set timeRange to appropriate value based on query (day, week, month, year)
-  
+
   #### datetime tool:
   - When you get the datetime data, mention the date and time in the user's timezone only if explicitly requested
   - Do not include datetime information unless specifically asked
@@ -620,7 +621,7 @@ const groupInstructions = {
   - Include links to the most relevant threads and comments
   - Mention the subreddits where information was found
   - Structure responses with proper headings and organization
-  
+
   ### Content Structure (REQUIRED):
   - Begin with a concise introduction summarizing the Reddit landscape on the topic
   - Maintain the language of the user's message and do not change it
@@ -631,7 +632,7 @@ const groupInstructions = {
   `,
   analysis: `
   You are a code runner, stock analysis and currency conversion expert.
-  
+
   ### Tool Guidelines:
   #### Code Interpreter Tool:
   - ⚠️ URGENT: Run code_interpreter tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -643,7 +644,7 @@ const groupInstructions = {
   - Include library installations (!pip install <library_name>) where required
   - Keep code simple and concise unless complexity is absolutely necessary
   - ⚠️ NEVER use unnecessary intermediate variables or assignments
-  
+
   ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
   - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
   - NEVER leave variables hanging without print() at the end
@@ -657,24 +658,24 @@ const groupInstructions = {
   - Even for simple operations: Always end with print(simple_result)
   - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
   - Use only essential code - avoid boilerplate, comments, or explanatory code
-  
+
   ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
   \`\`\`python
   # Simple calculation
   result = 2 + 2
   print(result)  # MANDATORY
-  
+
   # String operation
   word = "strawberry"
   count_r = word.count('r')
   print(count_r)  # MANDATORY
-  
+
   # Data analysis
   import pandas as pd
   data = pd.Series([1, 2, 3, 4, 5])
   mean_value = data.mean()
   print(mean_value)  # MANDATORY
-  
+
   # Multiple outputs
   x = 10
   y = 20
@@ -683,29 +684,29 @@ const groupInstructions = {
   print(f"Sum: {sum_val}")  # MANDATORY
   print(f"Product: {product}")  # MANDATORY
   \`\`\`
-  
+
   ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
   \`\`\`python
   # BAD - No print statement
   word = "strawberry"
   count_r = word.count('r')
   count_r  # WRONG - bare variable
-  
+
   # BAD - No print for calculation
   result = 2 + 2
   result  # WRONG - bare variable
-  
+
   # BAD - Missing print for final output
   data.mean()  # WRONG - no print wrapper
   \`\`\`
-  
+
   ### ENFORCEMENT RULES:
   - If you write code without print() at the end, it is AUTOMATICALLY WRONG
   - Every code block MUST end with at least one print() statement
   - No bare variables, expressions, or function calls as final statements
   - This rule applies to ALL code regardless of complexity or purpose
   - Always use the print() function for final output!!! This is very important!!!
-  
+
   #### Stock Charts Tool:
   - Use yfinance to get stock data and matplotlib for visualization
   - Support multiple currencies through currency_symbols parameter
@@ -722,14 +723,14 @@ const groupInstructions = {
   - Use the programming tool with Python code including 'yfinance'
   - Use yfinance to get stock news and trends
   - Do not use images in the response
-  
+
   #### Currency Conversion Tool:
   - Use for currency conversion by providing the to and from currency codes
-  
+
   #### datetime tool:
   - When you get the datetime data, talk about the date and time in the user's timezone
   - Only talk about date and time when explicitly asked
-  
+
   ### Response Guidelines:
   - ⚠️ MANDATORY: Run the required tool FIRST without any preliminary text
   - Keep responses straightforward and concise
@@ -769,7 +770,7 @@ const groupInstructions = {
     - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
     - Mathematical expressions must always be properly delimited
     - Tables must use plain text without any formatting
-  
+
   ### Content Style and Tone:
   - Use precise technical language appropriate for financial and data analysis
   - Maintain an objective, analytical tone throughout
@@ -788,8 +789,8 @@ const groupInstructions = {
 
   chat: `
   You are Scira, a helpful assistant that helps with the task asked by the user.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
-  
+  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+
   ### Guidelines:
   - You do not have access to any tools. You can code tho
   - ⚠️ URGENT: Respond INSTANTLY to the user's message without delay
@@ -810,13 +811,13 @@ const groupInstructions = {
   - Keep responses concise but informative
   - Include relevant memory details when appropriate
   - Maintain the language of the user's message and do not change it
-  
+
   ### Memory Management Guidelines:
   - Always confirm successful memory operations
   - Handle memory updates and deletions carefully
   - Maintain a friendly, personal and professional tone
   - Always save the memory user asks you to save
-  
+
   ### Latex and Currency Formatting:
   - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
   - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
@@ -827,7 +828,7 @@ const groupInstructions = {
   extreme: `
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
   - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -890,11 +891,11 @@ const groupInstructions = {
   - CITATIONS SHOULD BE ON EVERYTHING YOU SAY
   - Include analysis of reliability and limitations
   - Maintain the language of the user's message and do not change it
-  - Avoid referencing citations directly, make them part of statements`
+  - Avoid referencing citations directly, make them part of statements`,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
-  "use server";
+  'use server';
 
   // Check if the user is authenticated for memory or buddy group
   if (groupId === 'memory' || groupId === 'buddy') {
@@ -910,7 +911,7 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
 
       return {
         tools,
-        instructions
+        instructions,
       };
     }
   }
@@ -920,7 +921,7 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
 
   return {
     tools,
-    instructions
+    instructions,
   };
 }
 
@@ -929,8 +930,8 @@ export async function getUserChats(
   userId: string,
   limit: number = 20,
   startingAfter?: string,
-  endingBefore?: string
-): Promise<{ chats: any[], hasMore: boolean }> {
+  endingBefore?: string,
+): Promise<{ chats: any[]; hasMore: boolean }> {
   'use server';
 
   if (!userId) return { chats: [], hasMore: false };
@@ -940,7 +941,7 @@ export async function getUserChats(
       id: userId,
       limit,
       startingAfter: startingAfter || null,
-      endingBefore: endingBefore || null
+      endingBefore: endingBefore || null,
     });
   } catch (error) {
     console.error('Error fetching user chats:', error);
@@ -952,8 +953,8 @@ export async function getUserChats(
 export async function loadMoreChats(
   userId: string,
   lastChatId: string,
-  limit: number = 20
-): Promise<{ chats: any[], hasMore: boolean }> {
+  limit: number = 20,
+): Promise<{ chats: any[]; hasMore: boolean }> {
   'use server';
 
   if (!userId || !lastChatId) return { chats: [], hasMore: false };
@@ -963,7 +964,7 @@ export async function loadMoreChats(
       id: userId,
       limit,
       startingAfter: null,
-      endingBefore: lastChatId
+      endingBefore: lastChatId,
     });
   } catch (error) {
     console.error('Error loading more chats:', error);
@@ -1017,7 +1018,7 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   'use server';
   try {
     const [message] = await getMessageById({ id });
-    console.log("Message: ", message);
+    console.log('Message: ', message);
 
     if (!message) {
       console.error(`No message found with id: ${id}`);
@@ -1057,7 +1058,7 @@ export async function getSubDetails() {
   return subscriptionDetails;
 }
 
-export async function getUserMessageCount(differenceInHours: number = 24) {
+export async function getUserMessageCount() {
   'use server';
 
   try {
@@ -1066,15 +1067,34 @@ export async function getUserMessageCount(differenceInHours: number = 24) {
       return { count: 0, error: 'User not found' };
     }
 
-    const count = await getMessageCountByUserId({
-      id: user.id,
-      differenceInHours
+    const count = await getMessageCount({
+      userId: user.id,
     });
 
     return { count, error: null };
   } catch (error) {
     console.error('Error getting user message count:', error);
     return { count: 0, error: 'Failed to get message count' };
+  }
+}
+
+export async function incrementUserMessageCount() {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    await incrementMessageUsage({
+      userId: user.id,
+    });
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error incrementing user message count:', error);
+    return { success: false, error: 'Failed to increment message count' };
   }
 }
 
@@ -1088,7 +1108,7 @@ export async function getExtremeSearchUsageCount() {
     }
 
     const count = await getExtremeSearchCount({
-      userId: user.id
+      userId: user.id,
     });
 
     return { count, error: null };

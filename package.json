@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "drizzle-kit push && next build --turbopack",
     "start": "next start",
     "lint": "next lint",
     "knip": "knip"
@@ -75,7 +75,7 @@
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "exa-js": "^1.8.8",
-    "framer-motion": "^12.17.3",
+    "framer-motion": "^12.18.1",
     "geist": "^1.4.2",
     "he": "^1.2.0",
     "highlight.js": "^11.11.1",
@@ -85,8 +85,8 @@
     "mapbox-gl": "^3.12.0",
     "marked-react": "^3.0.0",
     "mem0ai": "^2.1.30",
-    "motion": "^12.17.3",
-    "next": "15.4.0-canary.83",
+    "motion": "^12.18.1",
+    "next": "15.4.0-canary.85",
     "next-themes": "0.4.6",
     "nuqs": "^2.4.3",
     "postgres": "^3.4.7",
