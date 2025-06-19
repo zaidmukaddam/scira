@@ -655,7 +655,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           </SelectValue>
         </SelectTrigger>
         <SelectContent
-          className="w-[260px] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-52 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+          className="w-[260px] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
           align="start"
           side="bottom"
           sideOffset={0}
@@ -1023,7 +1023,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                     {selectedAuthModel?.label} requires sign in
                   </h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    Create an account to access advanced AI models
+                    Create an account to access this AI model
                   </p>
                 </div>
               </div>
@@ -1034,8 +1034,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access advanced models</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Claude 4 Sonnet and Gemini 2.5</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Gemini 2.5 Flash Lite and GPT-4o Mini</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
