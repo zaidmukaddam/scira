@@ -438,7 +438,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
               )}
               <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                {category}
+                {category} Models
               </SelectLabel>
               {categoryModels.map((model) => {
                 const isProModel = model.pro;
