@@ -8,12 +8,6 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import useWindowSize from '@/hooks/use-window-size';
 import { TelescopeIcon, X } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
@@ -26,6 +20,15 @@ import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
 import { Crown, LockIcon } from '@phosphor-icons/react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+  SelectValue,
+  SelectTrigger,
+} from '@/components/ui/select';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -458,17 +461,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   const filteredModels = hasAttachments ? availableModels.filter((model) => model.vision) : availableModels;
 
   // Group filtered models by category
-  const groupedModels = filteredModels.reduce(
-    (acc, model) => {
-      const category = model.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(model);
-      return acc;
-    },
-    {} as Record<string, typeof availableModels>,
-  );
+  const groupedModels = filteredModels.reduce((acc, model) => {
+    const category = model.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(model);
+    return acc;
+  }, {} as Record<string, typeof availableModels>);
 
   // Get hover color classes based on model color
   const getHoverColorClasses = (modelColor: string) => {
@@ -508,104 +508,166 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
     return '';
   };
 
+  // Style the Select component's internal arrow to match model color
+  const getSelectArrowColorClasses = (color: string) => {
+    switch (color) {
+      case 'black':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'gray':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'indigo':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'violet':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'purple':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'orange':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'gemini':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'blue':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      case 'vercel-gray':
+        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
+      default:
+        return '[&>svg]:text-neutral-600! dark:[&>svg]:text-neutral-300!';
+    }
+  };
+
+  // Style the Select component's check icon to match model color
+  const getSelectCheckColorClasses = (color: string) => {
+    switch (color) {
+      case 'black':
+        return '[&>span>svg]:text-[#0F0F0F]! dark:[&>span>svg]:text-[#E5E5E5]!';
+      case 'gray':
+        return '[&>span>svg]:text-[#4E4E4E]! dark:[&>span>svg]:text-[#E5E5E5]!';
+      case 'indigo':
+        return '[&>span>svg]:text-[#4F46E5]! dark:[&>span>svg]:text-[#6366F1]!';
+      case 'violet':
+        return '[&>span>svg]:text-[#8B5CF6]! dark:[&>span>svg]:text-[#A78BFA]!';
+      case 'purple':
+        return '[&>span>svg]:text-[#5E5ADB]! dark:[&>span>svg]:text-[#5E5ADB]!';
+      case 'orange':
+        return '[&>span>svg]:text-[#FF8C00]! dark:[&>span>svg]:text-[#FF8C00]!';
+      case 'gemini':
+        return '[&>span>svg]:text-[#1EA896]! dark:[&>span>svg]:text-[#34C0AE]!';
+      case 'blue':
+        return '[&>span>svg]:text-[#1C7DFF]! dark:[&>span>svg]:text-[#4C96FF]!';
+      case 'vercel-gray':
+        return '[&>span>svg]:text-[#27272A]! dark:[&>span>svg]:text-[#A1A1AA]!';
+      default:
+        return '[&>span>svg]:text-neutral-600! dark:[&>span>svg]:text-neutral-300!';
+    }
+  };
+
+  const handleModelChange = (value: string) => {
+    const model = availableModels.find((m) => m.value === value);
+    if (!model) return;
+
+    const isProModel = model.pro;
+    const canUseModel = !isProModel || isProUser;
+    const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
+    const requiresAuth = authRequiredModels.includes(model.value) && !user;
+
+    // Check for authentication requirement first
+    if (requiresAuth) {
+      setSelectedAuthModel(model);
+      setShowSignInDialog(true);
+      return;
+    }
+
+    // Then check for Pro requirement
+    if (!canUseModel) {
+      setSelectedProModel(model);
+      setShowUpgradeDialog(true);
+      return;
+    }
+
+    console.log('Selected model:', model.value);
+    setSelectedModel(model.value.trim());
+
+    // Call onModelSelect if provided
+    if (onModelSelect) {
+      onModelSelect(model);
+    }
+  };
+
   return (
-    <DropdownMenu onOpenChange={setIsOpen} modal={false} open={isOpen && !isProcessing}>
-      <DropdownMenuTrigger
-        className={cn(
-          'flex items-center gap-2 p-2 sm:px-3 h-8',
-          'rounded-full transition-all duration-200',
-          'border border-neutral-200 dark:border-neutral-800',
-          'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
-          getColorClasses(selectedModelData?.color || 'neutral', true),
-          isProcessing && 'opacity-50 pointer-events-none',
-          'ring-0 outline-hidden',
-          'group',
-          className,
-        )}
-        disabled={isProcessing}
-      >
-        <div className="relative flex items-center gap-2">
-          {selectedModelData &&
-            (typeof selectedModelData.icon === 'string' ? (
-              <img
-                src={selectedModelData.icon}
-                alt={selectedModelData.label}
-                className={cn(
-                  'w-3.5 h-3.5 object-contain transition-all duration-300',
-                  'group-hover:scale-110 group-hover:rotate-6',
-                  selectedModelData.iconClass,
-                )}
-              />
-            ) : (
-              <selectedModelData.icon
-                className={cn(
-                  'w-3.5 h-3.5 transition-all duration-300',
-                  'group-hover:scale-110 group-hover:rotate-6',
-                  selectedModelData.iconClass,
-                )}
-              />
-            ))}
-          <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium overflow-hidden">
-            <motion.div
-              variants={{
-                initial: { opacity: 0, y: 10 },
-                animate: { opacity: 1, y: 0 },
-                exit: { opacity: 0, y: -10 },
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 500,
-                damping: 30,
-                mass: 0.5,
-              }}
-              className="whitespace-nowrap"
-            >
-              {selectedModelData?.label || ''}
-            </motion.div>
-            <motion.div
-              animate={{
-                rotate: isOpen ? 180 : 0,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 500,
-                damping: 30,
-              }}
-              className="opacity-60"
-            >
-              <svg width="8" height="5" viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M1 1L4.5 4.5L8 1"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </motion.div>
-          </span>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-[260px]! p-1! font-sans! rounded-lg bg-white dark:bg-neutral-900 mt-2! z-52! shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px]! overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
-        align="start"
-        side="bottom"
-        avoidCollisions={['submitted', 'streaming', 'ready', 'error'].includes(status)}
-        sideOffset={6}
-        forceMount
-      >
-        {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
-          <div
-            key={category}
-            className={cn(
-              'pt-0.5 pb-0.5',
-              categoryIndex > 0 ? 'mt-0.5 border-t border-neutral-200 dark:border-neutral-800' : '',
-            )}
-          >
-            <div className="px-1.5 py-0.5 text-xs! sm:text-[9px] font-medium text-neutral-500 dark:text-neutral-400">
-              {category} Models
+    <>
+      <Select value={selectedModel} onValueChange={handleModelChange} disabled={isProcessing}>
+        <SelectTrigger
+          size="sm"
+          className={cn(
+            'flex items-center gap-2 p-2 h-8 w-fit',
+            'rounded-full transition-all duration-200',
+            'border border-neutral-200 dark:border-neutral-800',
+            'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+            getColorClasses(selectedModelData?.color || 'neutral', true),
+            isProcessing && 'opacity-50 pointer-events-none',
+            'ring-0! outline-hidden!',
+            'group',
+            // Style the internal arrow to match model color
+            getSelectArrowColorClasses(selectedModelData?.color || 'neutral'),
+            className,
+          )}
+        >
+          <SelectValue asChild>
+            <div className="relative flex items-center gap-2">
+              {selectedModelData &&
+                (typeof selectedModelData.icon === 'string' ? (
+                  <img
+                    src={selectedModelData.icon}
+                    alt={selectedModelData.label}
+                    className={cn(
+                      'w-3.5 h-3.5 object-contain transition-all duration-300',
+                      'group-hover:scale-110 group-hover:rotate-6',
+                      selectedModelData.iconClass,
+                    )}
+                  />
+                ) : (
+                  <selectedModelData.icon
+                    className={cn(
+                      'w-3.5 h-3.5 transition-all duration-300',
+                      'group-hover:scale-110 group-hover:rotate-6',
+                      selectedModelData.iconClass,
+                    )}
+                  />
+                ))}
+              <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium overflow-hidden">
+                <motion.div
+                  variants={{
+                    initial: { opacity: 0, y: 10 },
+                    animate: { opacity: 1, y: 0 },
+                    exit: { opacity: 0, y: -10 },
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                    mass: 0.5,
+                  }}
+                  className="whitespace-nowrap"
+                >
+                  {selectedModelData?.label || ''}
+                </motion.div>
+              </span>
             </div>
-            <div className="space-y-0.5">
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent
+          className="w-[260px] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-52 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+          align="start"
+          side="bottom"
+          sideOffset={0}
+        >
+          {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+            <SelectGroup key={category}>
+              {categoryIndex > 0 && (
+                <div className="mt-0.5 mb-0.5 border-t border-neutral-200 dark:border-neutral-800" />
+              )}
+              <SelectLabel className="px-1.5 py-0.5 text-xs sm:text-[9px] font-medium text-neutral-500 dark:text-neutral-400">
+                {category} Models
+              </SelectLabel>
               {categoryModels.map((model) => {
                 const isProModel = model.pro;
                 const canUseModel = !isProModel || isProUser;
@@ -613,41 +675,138 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 const requiresAuth = authRequiredModels.includes(model.value) && !user;
                 const isLocked = !canUseModel || requiresAuth;
 
+                if (isLocked) {
+                  // Render locked models as non-selectable divs that show dialogs on click
+                  return (
+                    <div
+                      key={model.value}
+                      className={cn(
+                        'flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs cursor-pointer',
+                        'transition-all duration-200',
+                        'group/item',
+                        'opacity-50 hover:opacity-70',
+                        getHoverColorClasses(model.color),
+                      )}
+                      onClick={() => {
+                        if (requiresAuth) {
+                          setSelectedAuthModel(model);
+                          setShowSignInDialog(true);
+                        } else if (!canUseModel) {
+                          setSelectedProModel(model);
+                          setShowUpgradeDialog(true);
+                        }
+                      }}
+                    >
+                      <div
+                        className={cn(
+                          'flex items-center justify-center size-7 rounded-md',
+                          'transition-all duration-300',
+                          'group-hover/item:scale-110 group-hover/item:rotate-6',
+                          'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700',
+                        )}
+                      >
+                        {typeof model.icon === 'string' ? (
+                          <img
+                            src={model.icon}
+                            alt={model.label}
+                            className={cn(
+                              'w-4 h-4 object-contain',
+                              'transition-all duration-300',
+                              'group-hover/item:scale-110 group-hover/item:rotate-12',
+                              model.iconClass,
+                              model.value === 'scira-optimus' && 'invert',
+                            )}
+                          />
+                        ) : (
+                          <model.icon
+                            className={cn(
+                              'size-4',
+                              'transition-all duration-300',
+                              'group-hover/item:scale-110 group-hover/item:rotate-12',
+                              model.iconClass,
+                            )}
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-0 min-w-0 flex-1">
+                        <div className="font-medium truncate text-[11px] flex items-center gap-1">
+                          {model.label}
+                          {requiresAuth ? (
+                            <LockIcon className="size-3 text-neutral-500" />
+                          ) : (
+                            <Crown className="size-3 text-neutral-500" />
+                          )}
+                        </div>
+                        <div className="text-[9px] opacity-70 truncate leading-tight">{model.description}</div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {(model.vision || model.reasoning || model.pdf) && (
+                            <div className="flex gap-1">
+                              {model.vision && (
+                                <div
+                                  className={cn(
+                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
+                                    getCapabilityColors('vision'),
+                                  )}
+                                >
+                                  <EyeIcon className="size-2.5" />
+                                  <span>Vision</span>
+                                </div>
+                              )}
+                              {model.reasoning && (
+                                <div
+                                  className={cn(
+                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
+                                    getCapabilityColors('reasoning'),
+                                  )}
+                                >
+                                  <BrainCircuit className="size-2.5" />
+                                  <span>Reasoning</span>
+                                </div>
+                              )}
+                              {model.pdf && (
+                                <div
+                                  className={cn(
+                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
+                                    getCapabilityColors('pdf'),
+                                  )}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="size-2.5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                  </svg>
+                                  <span>PDF</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
-                  <DropdownMenuItem
+                  <SelectItem
                     key={model.value}
-                    onSelect={() => {
-                      // Check for authentication requirement first
-                      if (requiresAuth) {
-                        setSelectedAuthModel(model);
-                        setShowSignInDialog(true);
-                        return;
-                      }
-
-                      // Then check for Pro requirement
-                      if (!canUseModel) {
-                        setSelectedProModel(model);
-                        setShowUpgradeDialog(true);
-                        return;
-                      }
-
-                      console.log('Selected model:', model.value);
-                      setSelectedModel(model.value.trim());
-
-                      // Call onModelSelect if provided
-                      if (onModelSelect) {
-                        // Show additional info about image attachments for vision models
-                        onModelSelect(model);
-                      }
-                    }}
+                    value={model.value}
                     className={cn(
                       'flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs',
                       'transition-all duration-200',
                       'group/item',
-                      isLocked && 'opacity-50',
                       selectedModel === model.value
                         ? getColorClasses(model.color, true)
                         : getHoverColorClasses(model.color),
+                      // Style the check icon to match model color
+                      getSelectCheckColorClasses(model.color),
                     )}
                   >
                     <div
@@ -752,13 +911,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                         )}
                       </div>
                     </div>
-                  </DropdownMenuItem>
+                  </SelectItem>
                 );
               })}
-            </div>
-          </div>
-        ))}
-      </DropdownMenuContent>
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Upgrade Dialog */}
       <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
@@ -918,7 +1077,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-    </DropdownMenu>
+    </>
   );
 };
 
@@ -1202,19 +1361,6 @@ interface FormComponentProps {
   isLimitBlocked?: boolean;
 }
 
-interface GroupSelectorProps {
-  selectedGroup: SearchGroupId;
-  onGroupSelect: (group: SearchGroup) => void;
-  status: 'submitted' | 'streaming' | 'ready' | 'error';
-  onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-interface ToolbarButtonProps {
-  group: SearchGroup;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
 interface SwitchNotificationProps {
   icon: React.ReactNode;
   title: string;
@@ -1320,6 +1466,19 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
   );
 };
 
+interface GroupSelectorProps {
+  selectedGroup: SearchGroupId;
+  onGroupSelect: (group: SearchGroup) => void;
+  status: 'submitted' | 'streaming' | 'ready' | 'error';
+  onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface ToolbarButtonProps {
+  group: SearchGroup;
+  isSelected: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}
+
 const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
   const Icon = group.icon;
   const { width } = useWindowSize();
@@ -1337,8 +1496,7 @@ const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    onClick();
+    onClick(e);
   };
 
   // Use regular button for mobile without tooltip
@@ -1390,6 +1548,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
   const { width } = useWindowSize();
   const isMobile = width ? width < 768 : false;
   const { data: session } = useSession();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Notify parent component when expansion state changes
   useEffect(() => {
@@ -1410,6 +1569,23 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
     }
   }, [session, selectedGroup, onGroupSelect]);
 
+  // Close expansion when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+
+    if (isExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExpanded]);
+
   // Filter groups based on authentication status
   const visibleGroups = searchGroups.filter((group) => {
     // Only show groups that are marked as visible
@@ -1421,8 +1597,32 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
     return true;
   });
 
-  return (
+  // Handle clicking to toggle expansion
+  const handleToggleExpansion = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isProcessing) {
+      setIsExpanded(!isExpanded);
+    }
+  };
+
+  // Handle group selection and close expansion
+  const handleGroupSelect = (group: SearchGroup, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the container's click handler
+    
+    if (group.id === selectedGroup && !isExpanded) {
+      // If clicking on the currently selected group when collapsed, expand instead
+      setIsExpanded(true);
+    } else {
+      // Otherwise, select the group and close expansion
+      onGroupSelect(group);
+      setIsExpanded(false);
+    }
+  };
+
+      return (
     <motion.div
+      ref={containerRef}
       layout={false}
       initial={false}
       animate={{
@@ -1440,9 +1640,9 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
         'bg-white dark:bg-neutral-900 shadow-xs overflow-visible',
         'relative z-10',
         isProcessing && 'opacity-50 pointer-events-none',
+        'cursor-pointer', // Add cursor pointer to indicate clickability
       )}
-      onMouseEnter={() => !isProcessing && setIsExpanded(true)}
-      onMouseLeave={() => !isProcessing && setIsExpanded(false)}
+      onClick={handleToggleExpansion}
     >
       <TooltipProvider>
         <AnimatePresence initial={false}>
@@ -1467,7 +1667,11 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
                 <ToolbarButton
                   group={group}
                   isSelected={selectedGroup === group.id}
-                  onClick={() => !isProcessing && onGroupSelect(group)}
+                  onClick={(e) => {
+                    if (!isProcessing) {
+                      handleGroupSelect(group, e);
+                    }
+                  }}
                 />
               </motion.div>
             );
