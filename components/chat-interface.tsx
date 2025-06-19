@@ -32,6 +32,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
+import { useProUserStatus } from '@/hooks/use-user-data';
 
 // Utility and type imports
 import { SEARCH_LIMITS } from '@/lib/constants';
@@ -162,12 +163,10 @@ const ChatInterface = memo(
     const [hasSubmitted, setHasSubmitted] = React.useState(false);
     const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
     const isAutoScrollingRef = useRef(false);
-    const [user, setUser] = useState<User | null>(null);
-    const [subscriptionData, setSubscriptionData] = useState<any>(null);
-    const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-
-    // Use TanStack Query for usage data
-    const { data: usageData, refetch: refetchUsage } = useUsageData(user);
+    
+    // Use clean React Query hooks for all data fetching
+    const { user, subscriptionData, isProUser: isUserPro, isLoading: proStatusLoading, shouldCheckLimits: shouldCheckUserLimits } = useProUserStatus();
+    const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
 
     // Generate random UUID once for greeting selection
     const greetingUuidRef = useRef<string>(uuidv4());
@@ -215,47 +214,8 @@ const ChatInterface = memo(
     // Generate a consistent ID for new chats
     const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
 
-    // Fetch user data after component mounts
-    useEffect(() => {
-      const fetchUser = async () => {
-        try {
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUser(userData as User);
-          }
-        } catch (error) {
-          console.error('Error fetching user:', error);
-        }
-      };
-
-      fetchUser();
-    }, []);
-
-    // Fetch subscription data when user is authenticated
-    useEffect(() => {
-      const fetchSubscription = async () => {
-        if (user && !subscriptionData && !subscriptionLoading) {
-          setSubscriptionLoading(true);
-          try {
-            const data = await getSubDetails();
-            setSubscriptionData(data);
-          } catch (error) {
-            console.error('Error fetching subscription:', error);
-          } finally {
-            setSubscriptionLoading(false);
-          }
-        }
-      };
-
-      fetchSubscription();
-    }, [user, subscriptionData, subscriptionLoading]);
-
-    // Check Pro status first - Pro users bypass all limit checks
-    const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-    
-    // Only check limits for non-Pro users (or when we don't have subscription data yet)
-    const shouldCheckLimits = user && !isProUser && !subscriptionLoading && subscriptionData !== null;
-    const hasExceededLimit = shouldCheckLimits && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+    // Pro users bypass all limit checks - much cleaner!
+    const hasExceededLimit = shouldCheckUserLimits && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
 
     // Timer for sign-in prompt for unauthenticated users
@@ -325,18 +285,17 @@ const ChatInterface = memo(
           // Check if this is the first message completion and user is not Pro
           // messages.length will be 1 (just the user message) when the first assistant response completes
           const isFirstMessage = messages.length <= 1;
-          const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
 
           console.log('Upgrade dialog check:', {
             isFirstMessage,
-            isProUser,
+            isProUser: isUserPro,
             hasShownUpgradeDialog,
             user: !!user,
             messagesLength: messages.length,
           });
 
           // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-          if (isFirstMessage && !isProUser && !hasShownUpgradeDialog && user) {
+          if (isFirstMessage && !isUserPro && !hasShownUpgradeDialog && user) {
             console.log('Showing upgrade dialog...');
             setTimeout(() => {
               setShowUpgradeDialog(true);
@@ -599,7 +558,7 @@ const ChatInterface = memo(
             onHistoryClick={() => setCommandDialogOpen(true)}
             isOwner={isOwner}
             subscriptionData={subscriptionData}
-            subscriptionLoading={subscriptionLoading}
+            subscriptionLoading={proStatusLoading}
           />
 
           {/* Chat History Dialog */}
