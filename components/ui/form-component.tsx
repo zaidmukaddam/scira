@@ -154,7 +154,7 @@ const models = [
     vision: false,
     reasoning: true,
     experimental: false,
-    category: 'Stable',
+    category: 'Mini',
     pdf: false,
     pro: false,
   },
@@ -182,7 +182,7 @@ const models = [
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Stable',
+    category: 'Mini',
     pdf: false,
     pro: false,
   },
@@ -252,7 +252,7 @@ const models = [
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Stable',
+    category: 'Mini',
     pdf: true,
     pro: false,
   },
@@ -284,8 +284,48 @@ const models = [
     pdf: true,
     pro: true,
   },
-  // { value: "scira-4o", label: "GPT 4o", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's flagship model", color: "blue", vision: true, reasoning: false, experimental: false, category: "Pro", pdf: true, pro: true },
-  // { value: "scira-o4-mini", label: "o4 mini", icon: OpenAIIcon, iconClass: "text-current", description: "OpenAI's faster mini reasoning model", color: "blue", vision: true, reasoning: true, experimental: false, category: "Pro", pdf: false, pro: true },
+  {
+    value: 'scira-4o-mini',
+    label: 'GPT 4o Mini',
+    icon: OpenAIIcon,
+    iconClass: 'text-current',
+    description: "OpenAI's flagship model",
+    color: 'blue',
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: true,
+    pro: false,
+  },
+  {
+    value: 'scira-o4-mini',
+    label: 'o4 mini',
+    icon: OpenAIIcon,
+    iconClass: 'text-current',
+    description: "OpenAI's faster mini reasoning model",
+    color: 'blue',
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+  },
+  {
+    value: 'scira-o3',
+    label: 'o3',
+    icon: OpenAIIcon,
+    iconClass: 'text-current',
+    description: "OpenAI's big reasoning model",
+    color: 'blue',
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+  },
   {
     value: 'scira-llama-4',
     label: 'Llama 4 Maverick',
@@ -569,7 +609,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
               {categoryModels.map((model) => {
                 const isProModel = model.pro;
                 const canUseModel = !isProModel || isProUser;
-                const authRequiredModels = ['scira-anthropic', 'scira-google', 'scira-google-pro'];
+                const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
                 const requiresAuth = authRequiredModels.includes(model.value) && !user;
                 const isLocked = !canUseModel || requiresAuth;
 
@@ -647,7 +687,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                       <div className="font-medium truncate text-[11px] flex items-center gap-1">
                         {model.label}
                         {(() => {
-                          const authRequiredModels = ['scira-anthropic', 'scira-google'];
+                          const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
                           const requiresAuth = authRequiredModels.includes(model.value) && !user;
                           const requiresPro = isProModel && !isProUser;
 

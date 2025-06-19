@@ -463,10 +463,11 @@ export async function POST(req: Request) {
             },
           },
           openai: {
-            ...(model === 'scira-o4-mini'
+            ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
                   reasoningEffort: 'low',
                   strictSchemas: true,
+                  reasoningSummary: 'detailed',
                 }
               : {}),
             ...(model === 'scira-4o'
@@ -912,14 +913,13 @@ print(f"Converted amount: {converted_amount}")
                 .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
               xHandles: z
                 .array(z.string())
-                .optional()
+                .nullable()
                 .describe(
                   'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles like "@elonmusk" or "@openai"',
                 ),
               maxResults: z
                 .number()
-                .optional()
-                .default(15)
+                .nullable()
                 .describe('Maximum number of search results to return (default 15)'),
             }),
             execute: async ({
@@ -932,15 +932,15 @@ print(f"Converted amount: {converted_amount}")
               query: string;
               startDate: string;
               endDate: string;
-              xHandles?: string[];
-              maxResults?: number;
+              xHandles: string[] | null;
+              maxResults: number | null;
             }) => {
               try {
                 const searchParameters: any = {
                   mode: 'on',
                   from_date: startDate,
                   to_date: endDate,
-                  max_search_results: maxResults < 5 ? 5 : maxResults,
+                  max_search_results: maxResults! < 5 ? 5 : maxResults,
                   return_citations: true,
                   sources: [
                     xHandles && xHandles.length > 0
@@ -1550,17 +1550,17 @@ print(f"Converted amount: {converted_amount}")
             parameters: z.object({
               location: z
                 .string()
-                .optional()
+                .nullable()
                 .describe(
                   'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Required if latitude and longitude are not provided.',
                 ),
               latitude: z
                 .number()
-                .optional()
+                .nullable()
                 .describe('The latitude coordinate. Required if location is not provided.'),
               longitude: z
                 .number()
-                .optional()
+                .nullable()
                 .describe('The longitude coordinate. Required if location is not provided.'),
             }),
             execute: async ({
@@ -1568,9 +1568,9 @@ print(f"Converted amount: {converted_amount}")
               latitude,
               longitude,
             }: {
-              location?: string;
-              latitude?: number;
-              longitude?: number;
+              location?: string | null;
+              latitude?: number | null;
+              longitude?: number | null;
             }) => {
               try {
                 let lat = latitude;
@@ -1761,9 +1761,9 @@ print(f"Converted amount: {converted_amount}")
             description:
               'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
             parameters: z.object({
-              query: z.string().optional().describe('Address or place name to search for (for forward geocoding)'),
-              latitude: z.number().optional().describe('Latitude for reverse geocoding'),
-              longitude: z.number().optional().describe('Longitude for reverse geocoding'),
+              query: z.string().nullable().describe('Address or place name to search for (for forward geocoding)'),
+              latitude: z.number().nullable().describe('Latitude for reverse geocoding'),
+              longitude: z.number().nullable().describe('Longitude for reverse geocoding'),
             }),
             execute: async ({ query, latitude, longitude }) => {
               try {
@@ -1845,15 +1845,15 @@ print(f"Converted amount: {converted_amount}")
             description: 'Search for nearby places using Google Places Nearby Search API.',
             parameters: z.object({
               location: z.string().describe('The location name or coordinates to search around'),
-              latitude: z.number().optional().describe('Latitude of the search center'),
-              longitude: z.number().optional().describe('Longitude of the search center'),
+              latitude: z.number().nullable().describe('Latitude of the search center'),
+              longitude: z.number().nullable().describe('Longitude of the search center'),
               type: z
                 .string()
                 .describe(
                   'Type of place to search for (restaurant, lodging, tourist_attraction, gas_station, bank, hospital, etc.) from the new google places api',
                 ),
               radius: z.number().describe('Search radius in meters (max 50000)'),
-              keyword: z.string().optional().describe('Additional keyword to filter results'),
+              keyword: z.string().nullable().describe('Additional keyword to filter results'),
             }),
             execute: async ({
               location,
@@ -1864,11 +1864,11 @@ print(f"Converted amount: {converted_amount}")
               keyword,
             }: {
               location: string;
-              latitude?: number;
-              longitude?: number;
+              latitude: number | null;
+              longitude: number | null;
               type: string;
               radius: number;
-              keyword?: string;
+              keyword: string | null;
             }) => {
               try {
                 const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;

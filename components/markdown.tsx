@@ -104,56 +104,12 @@ const isValidUrl = (str: string) => {
 };
 
 const preprocessLaTeX = (content: string) => {
-  // Handle all LaTeX delimiters properly
-  let processedContent = content;
-
-  // Find and preserve complete LaTeX blocks as-is
-  const latexBlocks: string[] = [];
-  
-  // For block equations ($$...$$ and \[...\])
-  const blockRegexes = [
-    /(\$\$[\s\S]*?\$\$)/g,
-    /(\\\[[\s\S]*?\\\])/g
-  ];
-  
-  blockRegexes.forEach(regex => {
-    processedContent = processedContent.replace(regex, (match) => {
-      const id = latexBlocks.length;
-      latexBlocks.push(match);
-      return `___LATEX_BLOCK_${id}___`;
-    });
-  });
-
-  // For inline equations ($...$ and \(...\)) - avoiding currency values
-  const inlineRegexes = [
-    /(\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$)/g,
-    /(\\\([\s\S]*?\\\))/g
-  ];
-  
-  const inlines: string[] = [];
-  
-  inlineRegexes.forEach(regex => {
-    processedContent = processedContent.replace(regex, (match) => {
-      const id = inlines.length;
-      inlines.push(match);
-      return `___LATEX_INLINE_${id}___`;
-    });
-  });
-
-  // Now restore the LaTeX blocks after other processing
-  processedContent = processedContent.replace(/___LATEX_BLOCK_(\d+)___/g, (_, id) => {
-    return latexBlocks[parseInt(id)];
-  });
-
-  processedContent = processedContent.replace(/___LATEX_INLINE_(\d+)___/g, (_, id) => {
-    return inlines[parseInt(id)];
-  });
-
-  return processedContent;
+  // This function is kept for backward compatibility but is no longer used
+  // The new LaTeX processing is integrated directly into the MarkdownRenderer
+  return content;
 };
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
-  // Preprocess content to find and normalize citation links before passing to marked
   // Table row counter for zebra striping
   const [tableRowCounter, setTableRowCounter] = useState(0);
 
@@ -172,21 +128,22 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     
     blockPatterns.forEach(({pattern, isBlock}) => {
       modifiedContent = modifiedContent.replace(pattern, (match) => {
-        const id = `LATEX_${latexBlocks.length}_${Date.now()}`;
+        const id = `LATEXBLOCK${latexBlocks.length}END`;
         latexBlocks.push({ id, content: match, isBlock });
-        return `\n\n${id}\n\n`; // Ensure block equations are on their own lines
+        return id;
       });
     });
     
-    // Extract inline equations
+    // Extract inline equations - improved regex to handle complex cases
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
-      { pattern: /\$(?!\s*\d+[.,\s]*\d*\s*$)(?:[^\$]|\\.)*?\$(?!\d)/g, isBlock: false }
+      // Better inline LaTeX regex that handles nested braces and special chars
+      { pattern: /\$(?!\d)(?:[^\$\\]|\\.|\\\{[^}]*\})*\$/g, isBlock: false }
     ];
     
     inlinePatterns.forEach(({pattern, isBlock}) => {
       modifiedContent = modifiedContent.replace(pattern, (match) => {
-        const id = `LATEX_${latexBlocks.length}_${Date.now()}`;
+        const id = `LATEXINLINE${latexBlocks.length}END`;
         latexBlocks.push({ id, content: match, isBlock });
         return id;
       });
@@ -434,65 +391,69 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const renderer: Partial<ReactRenderer> = {
     text(text: string) {
       // Check if this text contains any LaTeX placeholders
-      const latexPattern = /LATEX_(\d+)_\d+/g;
-      const matches = [...text.matchAll(latexPattern)];
+      const blockPattern = /LATEXBLOCK(\d+)END/g;
+      const inlinePattern = /LATEXINLINE(\d+)END/g;
       
-      if (matches.length === 0) {
+      // If no LaTeX placeholders, return text as-is
+      if (!blockPattern.test(text) && !inlinePattern.test(text)) {
         return text;
       }
       
-      // If the entire text is just one LaTeX placeholder
-      if (matches.length === 1 && text.trim() === matches[0][0]) {
-        const latexBlock = latexBlocks.find(block => block.id === text.trim());
+      // Reset regex state
+      blockPattern.lastIndex = 0;
+      inlinePattern.lastIndex = 0;
+      
+      // Process the text to replace placeholders with LaTeX components
+      let processedText = text;
+      const components: any[] = [];
+      let lastEnd = 0;
+      
+      // Collect all matches (both block and inline)
+      const allMatches: Array<{match: RegExpExecArray, isBlock: boolean}> = [];
+      
+      let match;
+      while ((match = blockPattern.exec(text)) !== null) {
+        allMatches.push({ match, isBlock: true });
+      }
+      
+      while ((match = inlinePattern.exec(text)) !== null) {
+        allMatches.push({ match, isBlock: false });
+      }
+      
+      // Sort matches by position
+      allMatches.sort((a, b) => a.match.index - b.match.index);
+      
+      // Process matches in order
+      allMatches.forEach(({ match, isBlock }) => {
+        const fullMatch = match[0];
+        const start = match.index;
+        
+        // Add text before this match
+        if (start > lastEnd) {
+          components.push(text.slice(lastEnd, start));
+        }
+        
+        // Find the corresponding LaTeX block
+        const latexBlock = latexBlocks.find(block => block.id === fullMatch);
         if (latexBlock) {
-          if (latexBlock.isBlock) {
-            return (
-              <div className="my-6 text-center" key={generateKey()}>
-                <Latex
-                  delimiters={[
-                    { left: '$$', right: '$$', display: true },
-                    { left: '\\[', right: '\\]', display: true }
-                  ]}
-                  strict={false}
-                >
-                  {latexBlock.content}
-                </Latex>
-              </div>
-            );
-          } else {
-            return (
+          if (isBlock) {
+            // Don't wrap block equations in div here - let paragraph handler do it
+            components.push(
               <Latex
+                key={`latex-${components.length}-${generateKey()}`}
                 delimiters={[
-                  { left: '$', right: '$', display: false },
-                  { left: '\\(', right: '\\)', display: false }
+                  { left: '$$', right: '$$', display: true },
+                  { left: '\\[', right: '\\]', display: true }
                 ]}
                 strict={false}
-                key={generateKey()}
               >
                 {latexBlock.content}
               </Latex>
             );
-          }
-        }
-      }
-      
-      // If text contains LaTeX placeholders mixed with other content
-      if (matches.length > 0) {
-        const parts = [];
-        let lastIndex = 0;
-        
-        matches.forEach((match, index) => {
-          // Add text before the LaTeX placeholder
-          if (match.index! > lastIndex) {
-            parts.push(text.slice(lastIndex, match.index));
-          }
-          
-          // Add the LaTeX component
-          const latexBlock = latexBlocks.find(block => block.id === match[0]);
-          if (latexBlock) {
-            parts.push(
+          } else {
+            components.push(
               <Latex
-                key={`latex-${index}-${generateKey()}`}
+                key={`latex-${components.length}-${generateKey()}`}
                 delimiters={[
                   { left: '$', right: '$', display: false },
                   { left: '\\(', right: '\\)', display: false }
@@ -502,28 +463,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
                 {latexBlock.content}
               </Latex>
             );
-          } else {
-            parts.push(match[0]); // fallback to placeholder text
           }
-          
-          lastIndex = match.index! + match[0].length;
-        });
-        
-        // Add any remaining text after the last LaTeX placeholder
-        if (lastIndex < text.length) {
-          parts.push(text.slice(lastIndex));
+        } else {
+          components.push(fullMatch); // fallback
         }
         
-        return <>{parts}</>;
+        lastEnd = start + fullMatch.length;
+      });
+      
+      // Add any remaining text
+      if (lastEnd < text.length) {
+        components.push(text.slice(lastEnd));
       }
       
-      return text;
+      return components.length === 1 ? components[0] : <>{components}</>;
     },
     paragraph(children) {
       // Check if the paragraph contains only a LaTeX block placeholder
       if (typeof children === 'string') {
-        const latexMatch = children.match(/^LATEX_(\d+)_\d+$/);
-        if (latexMatch) {
+        const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
+        if (blockMatch) {
           const latexBlock = latexBlocks.find(block => block.id === children);
           if (latexBlock && latexBlock.isBlock) {
             // Render block equations outside of paragraph tags

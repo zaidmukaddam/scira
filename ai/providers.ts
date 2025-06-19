@@ -18,8 +18,9 @@ export const scira = customProvider({
     'scira-grok-3': xai('grok-3'),
     'scira-vision': xai('grok-2-vision-1212'),
     'scira-g2': xai('grok-2-latest'),
-    'scira-4o': openai.responses('gpt-4o'),
+    'scira-4o-mini': openai.responses('gpt-4o-mini'),
     'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
+    'scira-o3': openai.responses('o3'),
     'scira-qwq': wrapLanguageModel({
       model: groq('qwen-qwq-32b', {
         parallelToolCalls: false,
