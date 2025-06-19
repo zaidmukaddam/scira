@@ -150,10 +150,7 @@ const models = [
   {
     value: 'scira-default',
     label: 'Grok 3.0 Mini',
-    icon: XAIIcon,
-    iconClass: 'text-current',
     description: "xAI's most efficient reasoning model",
-    color: 'black',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -164,10 +161,7 @@ const models = [
   {
     value: 'scira-grok-3',
     label: 'Grok 3.0',
-    icon: XAIIcon,
-    iconClass: 'text-current',
     description: "xAI's most intelligent model",
-    color: 'gray',
     vision: false,
     reasoning: false,
     experimental: false,
@@ -178,10 +172,7 @@ const models = [
   {
     value: 'scira-vision',
     label: 'Grok 2.0 Vision',
-    icon: XAIIcon,
-    iconClass: 'text-current',
     description: "xAI's advanced vision model",
-    color: 'indigo',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -192,10 +183,7 @@ const models = [
   {
     value: 'scira-anthropic',
     label: 'Claude 4 Sonnet',
-    icon: AnthropicIcon,
-    iconClass: 'text-current',
     description: "Anthropic's most advanced model",
-    color: 'violet',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -206,10 +194,7 @@ const models = [
   {
     value: 'scira-anthropic-thinking',
     label: 'Claude 4 Sonnet Thinking',
-    icon: AnthropicIcon,
-    iconClass: 'text-current',
     description: "Anthropic's most advanced reasoning model",
-    color: 'violet',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -220,10 +205,7 @@ const models = [
   {
     value: 'scira-opus',
     label: 'Claude 4 Opus',
-    icon: AnthropicIcon,
-    iconClass: 'text-current',
     description: "Anthropic's most advanced reasoning model",
-    color: 'violet',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -234,10 +216,7 @@ const models = [
   {
     value: 'scira-opus-pro',
     label: 'Claude 4 Opus Thinking',
-    icon: AnthropicIcon,
-    iconClass: 'text-current',
     description: "Anthropic's most advanced reasoning model",
-    color: 'violet',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -248,10 +227,7 @@ const models = [
   {
     value: 'scira-google-lite',
     label: 'Gemini 2.5 Flash Lite',
-    icon: GeminiIcon,
-    iconClass: 'text-current',
     description: "Google's advanced small reasoning model",
-    color: 'gemini',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -262,10 +238,7 @@ const models = [
   {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash (Thinking)',
-    icon: GeminiIcon,
-    iconClass: 'text-current',
     description: "Google's advanced small reasoning model",
-    color: 'gemini',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -276,10 +249,7 @@ const models = [
   {
     value: 'scira-google-pro',
     label: 'Gemini 2.5 Pro (Preview)',
-    icon: GeminiIcon,
-    iconClass: 'text-current',
     description: "Google's advanced reasoning model",
-    color: 'gemini',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -290,10 +260,7 @@ const models = [
   {
     value: 'scira-4o-mini',
     label: 'GPT 4o Mini',
-    icon: OpenAIIcon,
-    iconClass: 'text-current',
     description: "OpenAI's flagship model",
-    color: 'blue',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -304,10 +271,7 @@ const models = [
   {
     value: 'scira-o4-mini',
     label: 'o4 mini',
-    icon: OpenAIIcon,
-    iconClass: 'text-current',
     description: "OpenAI's faster mini reasoning model",
-    color: 'blue',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -318,10 +282,7 @@ const models = [
   {
     value: 'scira-o3',
     label: 'o3',
-    icon: OpenAIIcon,
-    iconClass: 'text-current',
     description: "OpenAI's big reasoning model",
-    color: 'blue',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -332,10 +293,7 @@ const models = [
   {
     value: 'scira-llama-4',
     label: 'Llama 4 Maverick',
-    icon: GroqIcon,
-    iconClass: 'text-current',
     description: "Meta's latest model",
-    color: 'blue',
     vision: true,
     reasoning: false,
     experimental: true,
@@ -346,10 +304,7 @@ const models = [
   {
     value: 'scira-qwen-32b',
     label: 'Qwen 3 32B',
-    icon: QwenIcon,
-    iconClass: 'text-current',
     description: "Alibaba's advanced reasoning model",
-    color: 'purple',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -360,10 +315,7 @@ const models = [
   {
     value: 'scira-qwq',
     label: 'QWQ 32B',
-    icon: QwenIcon,
-    iconClass: 'text-current',
     description: "Alibaba's advanced reasoning model",
-    color: 'purple',
     vision: false,
     reasoning: true,
     experimental: true,
@@ -373,57 +325,7 @@ const models = [
   },
 ];
 
-const getColorClasses = (color: string, isSelected: boolean = false) => {
-  const baseClasses = 'transition-colors duration-200';
-  const selectedClasses = isSelected ? 'bg-opacity-100! dark:bg-opacity-100!' : '';
 
-  switch (color) {
-    case 'black':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#0F0F0F]! dark:bg-[#0F0F0F]! text-white! hover:bg-[#0F0F0F]! dark:hover:bg-[#0F0F0F]! border-[#0F0F0F]! dark:border-[#0F0F0F]!`
-        : `${baseClasses} text-[#0F0F0F]! dark:text-[#E5E5E5]! hover:bg-[#0F0F0F]! hover:text-white! dark:hover:bg-[#0F0F0F]! dark:hover:text-white!`;
-    case 'gray':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#4E4E4E]! dark:bg-[#4E4E4E]! text-white! hover:bg-[#3D3D3D]! dark:hover:bg-[#3D3D3D]! border-[#4E4E4E]! dark:border-[#4E4E4E]!`
-        : `${baseClasses} text-[#4E4E4E]! dark:text-[#E5E5E5]! hover:bg-[#4E4E4E]! hover:text-white! dark:hover:bg-[#4E4E4E]! dark:hover:text-white!`;
-    case 'indigo':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#4F46E5]! dark:bg-[#4F46E5]! text-white! hover:bg-[#4338CA]! dark:hover:bg-[#4338CA]! border-[#4F46E5]! dark:border-[#4F46E5]!`
-        : `${baseClasses} text-[#4F46E5]! dark:text-[#6366F1]! hover:bg-[#4F46E5]! hover:text-white! dark:hover:bg-[#4F46E5]! dark:hover:text-white!`;
-    case 'violet':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#8B5CF6]! dark:bg-[#8B5CF6]! text-white! hover:bg-[#7C3AED]! dark:hover:bg-[#7C3AED]! border-[#8B5CF6]! dark:border-[#8B5CF6]!`
-        : `${baseClasses} text-[#8B5CF6]! dark:text-[#A78BFA]! hover:bg-[#8B5CF6]! hover:text-white! dark:hover:bg-[#8B5CF6]! dark:hover:text-white!`;
-    case 'purple':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#5E5ADB]! dark:bg-[#5E5ADB]! text-white! hover:bg-[#4D49C9]! dark:hover:bg-[#4D49C9]! border-[#5E5ADB]! dark:border-[#5E5ADB]!`
-        : `${baseClasses} text-[#5E5ADB]! dark:text-[#5E5ADB]! hover:bg-[#5E5ADB]! hover:text-white! dark:hover:bg-[#5E5ADB]! dark:hover:text-white!`;
-    case 'alpha':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-linear-to-r! from-[#0b3d91]! to-[#d01012]! dark:bg-linear-to-r! dark:from-[#0b3d91]! dark:to-[#d01012]! text-white! hover:opacity-90! border-[#0b3d91]! dark:border-[#0b3d91]!`
-        : `${baseClasses} text-[#d01012]! dark:text-[#3f83f8]! hover:bg-linear-to-r! hover:from-[#0b3d91]! hover:to-[#d01012]! hover:text-white! dark:hover:text-white!`;
-    case 'blue':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#1C7DFF]! dark:bg-[#1C7DFF]! text-white! hover:bg-[#0A6AE9]! dark:hover:bg-[#0A6AE9]! border-[#1C7DFF]! dark:border-[#1C7DFF]!`
-        : `${baseClasses} text-[#1C7DFF]! dark:text-[#4C96FF]! hover:bg-[#1C7DFF]! hover:text-white! dark:hover:bg-[#1C7DFF]! dark:hover:text-white!`;
-    case 'orange':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#FF8C00]! dark:bg-[#FF8C00]! text-white! hover:bg-[#FF7F00]! dark:hover:bg-[#FF7F00]! border-[#FF8C00]! dark:border-[#FF8C00]!`
-        : `${baseClasses} text-[#FF8C00]! dark:text-[#FF8C00]! hover:bg-[#FF8C00]! hover:text-white! dark:hover:bg-[#FF8C00]! dark:hover:text-white!`;
-    case 'gemini':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#1EA896]! dark:bg-[#1EA896]! text-white! hover:bg-[#19967F]! dark:hover:bg-[#19967F]! border-[#1EA896]! dark:border-[#1EA896]!`
-        : `${baseClasses} text-[#1EA896]! dark:text-[#34C0AE]! hover:bg-[#1EA896]! hover:text-white! dark:hover:bg-[#1EA896]! dark:hover:text-white!`;
-    case 'vercel-gray':
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-[#27272A]! dark:bg-[#27272A]! text-white! hover:bg-[#18181B]! dark:hover:bg-[#18181B]! border-[#27272A]! dark:border-[#27272A]!`
-        : `${baseClasses} text-[#27272A]! dark:text-[#A1A1AA]! hover:bg-[#27272A]! hover:text-white! dark:hover:bg-[#27272A]! dark:hover:text-white!`;
-    default:
-      return isSelected
-        ? `${baseClasses} ${selectedClasses} bg-neutral-500! dark:bg-neutral-700! text-white! hover:bg-neutral-600! dark:hover:bg-neutral-800! border-neutral-500! dark:border-neutral-700!`
-        : `${baseClasses} text-neutral-600! dark:text-neutral-300! hover:bg-neutral-500! hover:text-white! dark:hover:bg-neutral-700! dark:hover:text-white!`;
-  }
-};
 
 const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   selectedModel,
@@ -444,7 +346,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   }, []);
 
   const selectedModelData = availableModels.find((model) => model.value === selectedModel);
-  const [isOpen, setIsOpen] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
@@ -469,96 +370,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
     acc[category].push(model);
     return acc;
   }, {} as Record<string, typeof availableModels>);
-
-  // Get hover color classes based on model color
-  const getHoverColorClasses = (modelColor: string) => {
-    switch (modelColor) {
-      case 'black':
-        return 'hover:bg-black/20! dark:hover:bg-black/20!';
-      case 'gray':
-        return 'hover:bg-gray-500/20! dark:hover:bg-gray-400/20!';
-      case 'indigo':
-        return 'hover:bg-indigo-500/20! dark:hover:bg-indigo-400/20!';
-      case 'violet':
-        return 'hover:bg-violet-500/20! dark:hover:bg-violet-400/20!';
-      case 'purple':
-        return 'hover:bg-purple-500/20! dark:hover:bg-purple-400/20!';
-      case 'orange':
-        return 'hover:bg-orange-500/20! dark:hover:bg-orange-400/20!';
-      case 'gemini':
-        return 'hover:bg-teal-500/20! dark:hover:bg-teal-400/20!';
-      case 'blue':
-        return 'hover:bg-blue-500/20! dark:hover:bg-blue-400/20!';
-      case 'vercel-gray':
-        return 'hover:bg-zinc-500/20! dark:hover:bg-zinc-400/20!';
-      default:
-        return 'hover:bg-neutral-500/20! dark:hover:bg-neutral-400/20!';
-    }
-  };
-
-  // Update getCapabilityColors to handle PDF capability
-  const getCapabilityColors = (capability: string) => {
-    if (capability === 'reasoning') {
-      return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700';
-    } else if (capability === 'vision') {
-      return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700';
-    } else if (capability === 'pdf') {
-      return 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800/50';
-    }
-    return '';
-  };
-
-  // Style the Select component's internal arrow to match model color
-  const getSelectArrowColorClasses = (color: string) => {
-    switch (color) {
-      case 'black':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'gray':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'indigo':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'violet':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'purple':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'orange':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'gemini':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'blue':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      case 'vercel-gray':
-        return '[&>svg]:text-white! dark:[&>svg]:text-white!';
-      default:
-        return '[&>svg]:text-neutral-600! dark:[&>svg]:text-neutral-300!';
-    }
-  };
-
-  // Style the Select component's check icon to match model color
-  const getSelectCheckColorClasses = (color: string) => {
-    switch (color) {
-      case 'black':
-        return '[&>span>svg]:text-[#0F0F0F]! dark:[&>span>svg]:text-[#E5E5E5]!';
-      case 'gray':
-        return '[&>span>svg]:text-[#4E4E4E]! dark:[&>span>svg]:text-[#E5E5E5]!';
-      case 'indigo':
-        return '[&>span>svg]:text-[#4F46E5]! dark:[&>span>svg]:text-[#6366F1]!';
-      case 'violet':
-        return '[&>span>svg]:text-[#8B5CF6]! dark:[&>span>svg]:text-[#A78BFA]!';
-      case 'purple':
-        return '[&>span>svg]:text-[#5E5ADB]! dark:[&>span>svg]:text-[#5E5ADB]!';
-      case 'orange':
-        return '[&>span>svg]:text-[#FF8C00]! dark:[&>span>svg]:text-[#FF8C00]!';
-      case 'gemini':
-        return '[&>span>svg]:text-[#1EA896]! dark:[&>span>svg]:text-[#34C0AE]!';
-      case 'blue':
-        return '[&>span>svg]:text-[#1C7DFF]! dark:[&>span>svg]:text-[#4C96FF]!';
-      case 'vercel-gray':
-        return '[&>span>svg]:text-[#27272A]! dark:[&>span>svg]:text-[#A1A1AA]!';
-      default:
-        return '[&>span>svg]:text-neutral-600! dark:[&>span>svg]:text-neutral-300!';
-    }
-  };
 
   const handleModelChange = (value: string) => {
     const model = availableModels.find((m) => m.value === value);
@@ -598,75 +409,36 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
         <SelectTrigger
           size="sm"
           className={cn(
-            'flex items-center gap-2 p-2 h-8 w-fit',
+            'flex items-center gap-2 px-3 h-8 w-fit',
             'rounded-full transition-all duration-200',
-            'border border-neutral-200 dark:border-neutral-800',
-            'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
-            getColorClasses(selectedModelData?.color || 'neutral', true),
+            'border border-neutral-300 dark:border-neutral-700',
+            'hover:shadow-sm hover:border-neutral-400 dark:hover:border-neutral-600',
+            'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100',
+            'shadow-sm',
             isProcessing && 'opacity-50 pointer-events-none',
             'ring-0! outline-hidden!',
-            'group',
-            // Style the internal arrow to match model color
-            getSelectArrowColorClasses(selectedModelData?.color || 'neutral'),
             className,
           )}
         >
           <SelectValue asChild>
-            <div className="relative flex items-center gap-2">
-              {selectedModelData &&
-                (typeof selectedModelData.icon === 'string' ? (
-                  <img
-                    src={selectedModelData.icon}
-                    alt={selectedModelData.label}
-                    className={cn(
-                      'w-3.5 h-3.5 object-contain transition-all duration-300',
-                      'group-hover:scale-110 group-hover:rotate-6',
-                      selectedModelData.iconClass,
-                    )}
-                  />
-                ) : (
-                  <selectedModelData.icon
-                    className={cn(
-                      'w-3.5 h-3.5 transition-all duration-300',
-                      'group-hover:scale-110 group-hover:rotate-6',
-                      selectedModelData.iconClass,
-                    )}
-                  />
-                ))}
-              <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium overflow-hidden">
-                <motion.div
-                  variants={{
-                    initial: { opacity: 0, y: 10 },
-                    animate: { opacity: 1, y: 0 },
-                    exit: { opacity: 0, y: -10 },
-                  }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 30,
-                    mass: 0.5,
-                  }}
-                  className="whitespace-nowrap"
-                >
-                  {selectedModelData?.label || ''}
-                </motion.div>
-              </span>
-            </div>
+            <span className="text-xs font-medium whitespace-nowrap">
+              {selectedModelData?.label || 'Select model'}
+            </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
-          className="w-[260px] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+          className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
           align="start"
           side="bottom"
-          sideOffset={0}
+          sideOffset={4}
         >
           {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
             <SelectGroup key={category}>
               {categoryIndex > 0 && (
-                <div className="mt-0.5 mb-0.5 border-t border-neutral-200 dark:border-neutral-800" />
+                <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
               )}
-              <SelectLabel className="px-1.5 py-0.5 text-xs sm:text-[9px] font-medium text-neutral-500 dark:text-neutral-400">
-                {category} Models
+              <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                {category}
               </SelectLabel>
               {categoryModels.map((model) => {
                 const isProModel = model.pro;
@@ -676,16 +448,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 const isLocked = !canUseModel || requiresAuth;
 
                 if (isLocked) {
-                  // Render locked models as non-selectable divs that show dialogs on click
                   return (
                     <div
                       key={model.value}
                       className={cn(
-                        'flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs cursor-pointer',
+                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
                         'transition-all duration-200',
-                        'group/item',
-                        'opacity-50 hover:opacity-70',
-                        getHoverColorClasses(model.color),
+                        'opacity-50 hover:opacity-70 hover:bg-neutral-50 dark:hover:bg-neutral-800',
                       )}
                       onClick={() => {
                         if (requiresAuth) {
@@ -697,97 +466,17 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                         }
                       }}
                     >
-                      <div
-                        className={cn(
-                          'flex items-center justify-center size-7 rounded-md',
-                          'transition-all duration-300',
-                          'group-hover/item:scale-110 group-hover/item:rotate-6',
-                          'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700',
-                        )}
-                      >
-                        {typeof model.icon === 'string' ? (
-                          <img
-                            src={model.icon}
-                            alt={model.label}
-                            className={cn(
-                              'w-4 h-4 object-contain',
-                              'transition-all duration-300',
-                              'group-hover/item:scale-110 group-hover/item:rotate-12',
-                              model.iconClass,
-                              model.value === 'scira-optimus' && 'invert',
-                            )}
-                          />
-                        ) : (
-                          <model.icon
-                            className={cn(
-                              'size-4',
-                              'transition-all duration-300',
-                              'group-hover/item:scale-110 group-hover/item:rotate-12',
-                              model.iconClass,
-                            )}
-                          />
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-0 min-w-0 flex-1">
+                      <div className="flex flex-col min-w-0 flex-1">
                         <div className="font-medium truncate text-[11px] flex items-center gap-1">
                           {model.label}
                           {requiresAuth ? (
-                            <LockIcon className="size-3 text-neutral-500" />
+                            <LockIcon className="size-3 text-neutral-400" />
                           ) : (
-                            <Crown className="size-3 text-neutral-500" />
+                            <Crown className="size-3 text-neutral-400" />
                           )}
                         </div>
-                        <div className="text-[9px] opacity-70 truncate leading-tight">{model.description}</div>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          {(model.vision || model.reasoning || model.pdf) && (
-                            <div className="flex gap-1">
-                              {model.vision && (
-                                <div
-                                  className={cn(
-                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                    getCapabilityColors('vision'),
-                                  )}
-                                >
-                                  <EyeIcon className="size-2.5" />
-                                  <span>Vision</span>
-                                </div>
-                              )}
-                              {model.reasoning && (
-                                <div
-                                  className={cn(
-                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                    getCapabilityColors('reasoning'),
-                                  )}
-                                >
-                                  <BrainCircuit className="size-2.5" />
-                                  <span>Reasoning</span>
-                                </div>
-                              )}
-                              {model.pdf && (
-                                <div
-                                  className={cn(
-                                    'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                    getCapabilityColors('pdf'),
-                                  )}
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="size-2.5"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                  </svg>
-                                  <span>PDF</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                          {model.description}
                         </div>
                       </div>
                     </div>
@@ -799,50 +488,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                     key={model.value}
                     value={model.value}
                     className={cn(
-                      'flex items-center gap-2 px-1.5 py-1.5 rounded-md text-xs',
+                      'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
                       'transition-all duration-200',
-                      'group/item',
-                      selectedModel === model.value
-                        ? getColorClasses(model.color, true)
-                        : getHoverColorClasses(model.color),
-                      // Style the check icon to match model color
-                      getSelectCheckColorClasses(model.color),
+                      'hover:bg-neutral-50 dark:hover:bg-neutral-800',
+                      'data-[state=checked]:bg-neutral-100 dark:data-[state=checked]:bg-neutral-800',
                     )}
                   >
-                    <div
-                      className={cn(
-                        'flex items-center justify-center size-7 rounded-md',
-                        'transition-all duration-300',
-                        'group-hover/item:scale-110 group-hover/item:rotate-6',
-                        selectedModel === model.value
-                          ? 'bg-white/20 dark:bg-white/10'
-                          : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700',
-                      )}
-                    >
-                      {typeof model.icon === 'string' ? (
-                        <img
-                          src={model.icon}
-                          alt={model.label}
-                          className={cn(
-                            'w-4 h-4 object-contain',
-                            'transition-all duration-300',
-                            'group-hover/item:scale-110 group-hover/item:rotate-12',
-                            model.iconClass,
-                            model.value === 'scira-optimus' && 'invert',
-                          )}
-                        />
-                      ) : (
-                        <model.icon
-                          className={cn(
-                            'size-4',
-                            'transition-all duration-300',
-                            'group-hover/item:scale-110 group-hover/item:rotate-12',
-                            model.iconClass,
-                          )}
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-0 min-w-0 flex-1">
+                    <div className="flex flex-col min-w-0 flex-1">
                       <div className="font-medium truncate text-[11px] flex items-center gap-1">
                         {model.label}
                         {(() => {
@@ -851,64 +503,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                           const requiresPro = isProModel && !isProUser;
 
                           if (requiresAuth) {
-                            return <LockIcon className="size-3 text-neutral-500" />;
+                            return <LockIcon className="size-3 text-neutral-400" />;
                           } else if (requiresPro) {
-                            return <Crown className="size-3 text-neutral-500" />;
+                            return <Crown className="size-3 text-neutral-400" />;
                           }
                           return null;
                         })()}
                       </div>
-                      <div className="text-[9px] opacity-70 truncate leading-tight">{model.description}</div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        {(model.vision || model.reasoning || model.pdf) && (
-                          <div className="flex gap-1">
-                            {model.vision && (
-                              <div
-                                className={cn(
-                                  'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                  getCapabilityColors('vision'),
-                                )}
-                              >
-                                <EyeIcon className="size-2.5" />
-                                <span>Vision</span>
-                              </div>
-                            )}
-                            {model.reasoning && (
-                              <div
-                                className={cn(
-                                  'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                  getCapabilityColors('reasoning'),
-                                )}
-                              >
-                                <BrainCircuit className="size-2.5" />
-                                <span>Reasoning</span>
-                              </div>
-                            )}
-                            {model.pdf && (
-                              <div
-                                className={cn(
-                                  'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium',
-                                  getCapabilityColors('pdf'),
-                                )}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="size-2.5"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <span>PDF</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                      <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                        {model.description}
                       </div>
                     </div>
                   </SelectItem>
@@ -921,7 +524,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
 
       {/* Upgrade Dialog */}
       <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+        <DialogContent className="sm:max-w-md p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
           <div className="p-6 space-y-5">
             {/* Header */}
             <div className="space-y-3">
@@ -1378,40 +981,8 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
   modelColor = 'default',
   notificationType = 'model',
 }) => {
-  // Icon color is always white for better contrast on colored backgrounds
-  const getIconColorClass = () => 'text-white';
-
-  // Get background color for model notifications only
-  const getModelBgClass = (color: string) => {
-    switch (color) {
-      case 'black':
-        return 'bg-[#0F0F0F] dark:bg-[#0F0F0F] border-[#0F0F0F] dark:border-[#0F0F0F]';
-      case 'gray':
-        return 'bg-[#4E4E4E] dark:bg-[#4E4E4E] border-[#4E4E4E] dark:border-[#4E4E4E]';
-      case 'indigo':
-        return 'bg-[#4F46E5] dark:bg-[#4F46E5] border-[#4F46E5] dark:border-[#4F46E5]';
-      case 'violet':
-        return 'bg-[#8B5CF6] dark:bg-[#8B5CF6] border-[#8B5CF6] dark:border-[#8B5CF6]';
-      case 'purple':
-        return 'bg-[#5E5ADB] dark:bg-[#5E5ADB] border-[#5E5ADB] dark:border-[#5E5ADB]';
-      case 'orange':
-        return 'bg-[#FF8C00] dark:bg-[#FF8C00] border-[#FF8C00] dark:border-[#FF8C00]';
-      case 'gemini':
-        return 'bg-[#1EA896] dark:bg-[#1EA896] border-[#1EA896] dark:border-[#1EA896]';
-      case 'blue':
-        return 'bg-[#1C7DFF] dark:bg-[#1C7DFF] border-[#1C7DFF] dark:border-[#1C7DFF]';
-      case 'vercel-gray':
-        return 'bg-[#27272A] dark:bg-[#27272A] border-[#27272A] dark:border-[#27272A]';
-      default:
-        return 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
-    }
-  };
-
-  // For model notifications, use model colors. For group notifications, use default background.
-  const useModelColor = notificationType === 'model' && modelColor !== 'default';
-  const bgColorClass = useModelColor
-    ? getModelBgClass(modelColor)
-    : 'bg-neutral-100 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700';
+  // Use simple neutral colors for all notifications
+  const bgColorClass = 'bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800';
 
   return (
     <AnimatePresence>
@@ -1433,29 +1004,19 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
             className={cn(
               'flex items-center gap-2 p-2 py-1 sm:p-2.5 sm:py-2 rounded-t-lg border border-b-0 shadow-xs backdrop-blur-xs',
               bgColorClass,
-              useModelColor ? 'text-white' : 'text-neutral-900 dark:text-neutral-100',
+              'text-neutral-900 dark:text-neutral-100',
             )}
           >
             {icon && (
-              <span className={cn('shrink-0 size-3.5 sm:size-4', useModelColor ? getIconColorClass() : 'text-primary')}>
+              <span className={cn('shrink-0 size-3.5 sm:size-4', 'text-neutral-600 dark:text-neutral-400')}>
                 {icon}
               </span>
             )}
             <div className="flex flex-col items-start sm:flex-row sm:items-center sm:flex-wrap gap-x-1.5 gap-y-0.5">
-              <span
-                className={cn(
-                  'font-semibold text-xs sm:text-sm',
-                  useModelColor ? 'text-white' : 'text-neutral-900 dark:text-neutral-100',
-                )}
-              >
+              <span className="font-semibold text-xs sm:text-sm text-neutral-900 dark:text-neutral-100">
                 {title}
               </span>
-              <span
-                className={cn(
-                  'text-[10px] sm:text-xs leading-tight',
-                  useModelColor ? 'text-white/80' : 'text-neutral-600 dark:text-neutral-400',
-                )}
-              >
+              <span className="text-[10px] sm:text-xs leading-tight text-neutral-600 dark:text-neutral-400">
                 {description}
               </span>
             </div>
@@ -1932,12 +1493,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           showSwitchNotification(
             compatibleModel.label,
             'Switched to a model that supports PDF documents',
-            typeof compatibleModel.icon === 'string' ? (
-              <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" />
-            ) : (
-              <compatibleModel.icon className="size-4" />
-            ),
-            compatibleModel.color,
+            undefined,
+            undefined,
             'model',
           );
         } else {
@@ -2191,12 +1748,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           showSwitchNotification(
             compatibleModel.label,
             'Switched to a model that supports PDF documents',
-            typeof compatibleModel.icon === 'string' ? (
-              <img src={compatibleModel.icon} alt={compatibleModel.label} className="size-4 object-contain" />
-            ) : (
-              <compatibleModel.icon className="size-4" />
-            ),
-            compatibleModel.color,
+            undefined,
+            undefined,
             'model',
           );
         } else {
@@ -2286,12 +1839,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           showSwitchNotification(
             modelData.label,
             `Vision model enabled - you can now attach images${modelData.pdf ? ' and PDFs' : ''}`,
-            typeof modelData.icon === 'string' ? (
-              <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" />
-            ) : (
-              <modelData.icon className="size-4" />
-            ),
-            modelData.color,
+            undefined,
+            undefined,
             'model', // Explicitly mark as model notification
           );
         }
@@ -2387,12 +1936,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           showSwitchNotification(
             modelData.label,
             `Vision model enabled - you can now attach images${supportsPdfs ? ' and PDFs' : ''}`,
-            typeof modelData.icon === 'string' ? (
-              <img src={modelData.icon} alt={modelData.label} className="size-4 object-contain" />
-            ) : (
-              <modelData.icon className="size-4" />
-            ),
-            modelData.color,
+            undefined,
+            undefined,
             'model', // Explicitly mark as model notification
           );
         }
@@ -2699,11 +2244,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               title={switchNotification.title}
               description={switchNotification.description}
               isVisible={switchNotification.show}
-              modelColor={
-                switchNotification.notificationType === 'model'
-                  ? models.find((m) => m.value === selectedModel)?.color
-                  : selectedGroup
-              }
+              modelColor={selectedGroup}
               notificationType={switchNotification.notificationType}
             />
 
@@ -2811,12 +2352,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           isVisionModel
                             ? 'Vision model enabled - you can now attach images and PDFs'
                             : model.description,
-                          typeof model.icon === 'string' ? (
-                            <img src={model.icon} alt={model.label} className="size-4 object-contain" />
-                          ) : (
-                            <model.icon className="size-4" />
-                          ),
-                          model.color,
+                          undefined,
+                          undefined,
                           'model', // Explicitly mark as model notification
                         );
                       }}

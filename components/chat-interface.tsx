@@ -250,10 +250,13 @@ const ChatInterface = memo(
       fetchSubscription();
     }, [user, subscriptionData, subscriptionLoading]);
 
-    // Check if user has exceeded daily limit
+    // Check Pro status first - Pro users bypass all limit checks
     const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-    const hasExceededLimit = Boolean(!isProUser && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT);
-    const isLimitBlocked = hasExceededLimit && Boolean(user); // Only block authenticated users
+    
+    // Only check limits for non-Pro users (or when we don't have subscription data yet)
+    const shouldCheckLimits = user && !isProUser && !subscriptionLoading && subscriptionData !== null;
+    const hasExceededLimit = shouldCheckLimits && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+    const isLimitBlocked = Boolean(hasExceededLimit);
 
     // Timer for sign-in prompt for unauthenticated users
     useEffect(() => {
