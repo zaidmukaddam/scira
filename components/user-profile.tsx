@@ -46,11 +46,12 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 };
 
 // Update the component to use memo
-const UserProfile = memo(({ className, user, subscriptionData, subscriptionLoading }: { 
+const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProStatusLoading }: { 
   className?: string; 
   user?: User | null;
   subscriptionData?: any;
-  subscriptionLoading?: boolean;
+  isProUser?: boolean;
+  isProStatusLoading?: boolean;
 }) => {
   const [signingOut, setSigningOut] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -62,8 +63,8 @@ const UserProfile = memo(({ className, user, subscriptionData, subscriptionLoadi
   const currentUser = user || session?.user;
   const isAuthenticated = !!(user || session);
 
-  // Determine subscription status
-  const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  // Use passed Pro status instead of calculating it
+  const hasActiveSubscription = isProUser;
 
   if (isPending && !user) {
     return (
@@ -173,36 +174,50 @@ const UserProfile = memo(({ className, user, subscriptionData, subscriptionLoadi
           )}
           <DropdownMenuSeparator />
 
-          {/* Subscription Status - only show if authenticated and we have subscription data */}
-          {isAuthenticated && subscriptionData && (
+          {/* Subscription Status - show loading or actual status */}
+          {isAuthenticated && (
             <>
-              {hasActiveSubscription ? (
+              {isProStatusLoading ? (
                 <div className="px-3 py-2">
                   <div className="flex items-center gap-2.5 text-sm">
                     <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                      <Crown className="size-3.5 text-foreground" />
+                      <div className="w-3 h-3 rounded-full bg-muted animate-pulse" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-medium text-foreground text-sm">Scira Pro</span>
-                      <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
+                      <div className="w-16 h-3 bg-muted rounded animate-pulse" />
+                      <div className="w-20 h-2 bg-muted/50 rounded animate-pulse mt-1" />
                     </div>
                   </div>
                 </div>
-              ) : (
-                <DropdownMenuItem
-                  className="cursor-pointer flex items-center gap-2.5 py-1.5"
-                  onClick={() => router.push("/pricing")}
-                >
-                  <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                    <Lightning className="size-3.5" />
+              ) : subscriptionData ? (
+                hasActiveSubscription ? (
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                        <Crown className="size-3.5 text-foreground" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground text-sm">Scira Pro</span>
+                        <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">Upgrade to Pro</span>
-                    <span className="text-[10px] text-muted-foreground">Unlimited searches & premium models</span>
-                  </div>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
+                ) : (
+                  <DropdownMenuItem
+                    className="cursor-pointer flex items-center gap-2.5 py-1.5"
+                    onClick={() => router.push("/pricing")}
+                  >
+                    <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                      <Lightning className="size-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">Upgrade to Pro</span>
+                      <span className="text-[10px] text-muted-foreground">Unlimited searches & premium models</span>
+                    </div>
+                  </DropdownMenuItem>
+                )
+              ) : null}
+              {(subscriptionData || isProStatusLoading) && <DropdownMenuSeparator />}
             </>
           )}
 

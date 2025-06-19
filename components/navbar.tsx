@@ -34,7 +34,8 @@ interface NavbarProps {
     onHistoryClick: () => void;
     isOwner?: boolean;
     subscriptionData?: any;
-    subscriptionLoading?: boolean;
+    isProUser?: boolean;
+    isProStatusLoading?: boolean;
 }
 
 const Navbar = memo(({
@@ -47,7 +48,8 @@ const Navbar = memo(({
     onHistoryClick,
     isOwner = true,
     subscriptionData,
-    subscriptionLoading
+    isProUser,
+    isProStatusLoading
 }: NavbarProps) => {
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -55,8 +57,8 @@ const Navbar = memo(({
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
 
-    // Determine subscription status
-    const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+    // Use passed Pro status instead of calculating it
+    const hasActiveSubscription = isProUser;
 
     const handleCopyLink = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -108,16 +110,6 @@ const Navbar = memo(({
         }
     };
 
-    const visibilityContent = useMemo(() => {
-        const isPrivate = selectedVisibilityType === 'private';
-        return {
-            icon: isPrivate ? <Lock className="h-3 w-3" /> : <GlobeHemisphereWest className="h-3 w-3" />,
-            label: 'Share',
-            tooltip: isPrivate 
-                ? 'This chat is private and only visible to you' 
-                : 'This chat is publicly accessible via link'
-        };
-    }, [selectedVisibilityType]);
 
     return (
         <div className={cn(
@@ -373,38 +365,52 @@ const Navbar = memo(({
                     </>
                 )}
 
-                {/* Subscription Status - only show if we have subscription data */}
-                {user && subscriptionData && (
+                {/* Subscription Status - show loading or actual status */}
+                {user && (
                     <>
-                        {hasActiveSubscription ? (
+                        {isProStatusLoading ? (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-                                        <Crown size={16} className="text-foreground" />
-                                        <span className="text-sm font-medium text-foreground hidden sm:inline">Pro</span>
+                                        <div className="w-4 h-4 rounded-full bg-muted animate-pulse" />
+                                        <div className="w-8 h-3 bg-muted rounded animate-pulse hidden sm:block" />
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" sideOffset={4}>
-                                    Pro Subscribed - Unlimited access
+                                    Loading subscription status...
                                 </TooltipContent>
                             </Tooltip>
-                        ) : (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm border-border hover:bg-muted/50 transition-colors focus:outline-none"
-                                        onClick={() => router.push("/pricing")}
-                                    >
-                                        <Lightning size={16} />
-                                        <span className="text-sm font-medium hidden sm:inline">Upgrade</span>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" sideOffset={4}>
-                                    Upgrade to Pro for unlimited searches
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
+                        ) : subscriptionData ? (
+                            hasActiveSubscription ? (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
+                                            <Crown size={16} className="text-foreground" />
+                                            <span className="text-sm font-medium text-foreground hidden sm:inline">Pro</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" sideOffset={4}>
+                                        Pro Subscribed - Unlimited access
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm border-border hover:bg-muted/50 transition-colors focus:outline-none"
+                                            onClick={() => router.push("/pricing")}
+                                        >
+                                            <Lightning size={16} />
+                                            <span className="text-sm font-medium hidden sm:inline">Upgrade</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" sideOffset={4}>
+                                        Upgrade to Pro for unlimited searches
+                                    </TooltipContent>
+                                </Tooltip>
+                            )
+                        ) : null}
                     </>
                 )}
 
@@ -412,7 +418,7 @@ const Navbar = memo(({
                 <ChatHistoryButton onClick={onHistoryClick} />
 
                 {/* Memoized UserProfile component */}
-                <UserProfile user={user} subscriptionData={subscriptionData} subscriptionLoading={subscriptionLoading} />
+                <UserProfile user={user} subscriptionData={subscriptionData} isProUser={isProUser} isProStatusLoading={isProStatusLoading} />
             </div>
         </div>
     );

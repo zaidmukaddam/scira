@@ -144,6 +144,7 @@ const ChatInterface = memo(
 
     // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
+    const { user, subscriptionData, isProUser: isUserPro, isLoading: proStatusLoading, shouldCheckLimits: shouldCheckUserLimits } = useProUserStatus();
 
     const initialState = useMemo(
       () => ({
@@ -165,7 +166,6 @@ const ChatInterface = memo(
     const isAutoScrollingRef = useRef(false);
     
     // Use clean React Query hooks for all data fetching
-    const { user, subscriptionData, isProUser: isUserPro, isLoading: proStatusLoading, shouldCheckLimits: shouldCheckUserLimits } = useProUserStatus();
     const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
 
     // Generate random UUID once for greeting selection
@@ -215,7 +215,8 @@ const ChatInterface = memo(
     const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
 
     // Pro users bypass all limit checks - much cleaner!
-    const hasExceededLimit = shouldCheckUserLimits && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+    // Only check limits when we're not loading Pro status (prevents flash of limit UI)
+    const hasExceededLimit = shouldCheckUserLimits && !proStatusLoading && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
 
     // Timer for sign-in prompt for unauthenticated users
@@ -264,7 +265,6 @@ const ChatInterface = memo(
         api: '/api/search',
         experimental_throttle: 500,
         sendExtraMessageFields: true,
-        // generateId: () => uuidv4(),
         maxSteps: 5,
         body: {
           id: chatId,
@@ -558,7 +558,8 @@ const ChatInterface = memo(
             onHistoryClick={() => setCommandDialogOpen(true)}
             isOwner={isOwner}
             subscriptionData={subscriptionData}
-            subscriptionLoading={proStatusLoading}
+            isProUser={isUserPro}
+            isProStatusLoading={proStatusLoading}
           />
 
           {/* Chat History Dialog */}
