@@ -103,17 +103,17 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               {isAuthenticated ? (
-                <Button variant="ghost" size="sm" className={cn("", signingOut && "animate-pulse", className)} asChild>
-                  <Avatar className="size-6">
+                <Button variant="ghost" size="icon" className={cn("h-8 w-8", signingOut && "animate-pulse", className)} asChild>
+                  <Avatar className="size-7">
                     <AvatarImage src={currentUser?.image ?? ""} alt={currentUser?.name ?? ""} className="rounded-full" />
-                    <AvatarFallback className="rounded-full text-xs">{currentUser?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="rounded-full text-sm">{currentUser?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               ) : (
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className={cn("", signingIn && "animate-pulse", className)}
+                  size="icon"
+                  className={cn("h-8 w-8", signingIn && "animate-pulse", className)}
                 >
                   <UserCircle size={16} />
                 </Button>
