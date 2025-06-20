@@ -34,7 +34,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
-    'scira-mistral': mistral('ministral-8b-latest'),
+    'scira-mistral': mistral('mistral-small-latest'),
     'scira-google-lite': google('gemini-2.5-flash-lite-preview-06-17'),
     'scira-google': google('gemini-2.5-flash'),
     'scira-google-pro': google('gemini-2.5-pro'),

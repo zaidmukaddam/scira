@@ -19,7 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown, LockIcon } from '@phosphor-icons/react';
+import { Crown, LockIcon, MicrophoneIcon } from '@phosphor-icons/react';
 import {
   Select,
   SelectContent,
@@ -178,6 +178,17 @@ const models = [
     experimental: false,
     category: 'Mini',
     pdf: false,
+    pro: false,
+  },
+  {
+    value: 'scira-mistral',
+    label: 'Mistral Small',
+    description: "Mistral's small model",
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: true,
     pro: false,
   },
   {
@@ -708,15 +719,6 @@ const StopIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
-const MicrophoneIcon = ({ size = 16 }: { size?: number }) => {
-  return (
-    <svg height={size} viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M8 1C6.89543 1 6 1.89543 6 3V8C6 9.10457 6.89543 10 8 10C9.10457 10 10 9.10457 10 8V3C10 1.89543 9.10457 1 8 1ZM8 2C8.55228 2 9 2.44772 9 3V8C9 8.55228 8.55228 9 8 9C7.44772 9 7 8.55228 7 8V3C7 2.44772 7.44772 2 8 2Z" fill="currentColor"/>
-      <path fillRule="evenodd" clipRule="evenodd" d="M4 7C4.55228 7 5 7.44772 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 7.44772 11.4477 7 12 7C12.5523 7 13 7.44772 13 8C13 10.2091 11.2091 12 9 12V13H11C11.5523 13 12 13.4477 12 14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14C4 13.4477 4.44772 13 5 13H7V12C4.79086 12 3 10.2091 3 8C3 7.44772 3.44772 7 4 7Z" fill="currentColor"/>
-    </svg>
-  );
-};
-
 const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
@@ -1213,20 +1215,26 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
           {visibleGroups.map((group, index, filteredGroups) => {
             const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
             const isLastItem = index === filteredGroups.length - 1;
+
+            // Only render if the item should be shown
+            if (!showItem) return null;
+
             return (
               <motion.div
                 key={group.id}
                 layout={false}
+                initial={{ width: 0, opacity: 0 }}
                 animate={{
-                  width: showItem ? '28px' : 0,
-                  opacity: showItem ? 1 : 0,
-                  marginRight: showItem && isLastItem && isExpanded ? '2px' : 0,
+                  width: '32px',
+                  opacity: 1,
+                  marginRight: isLastItem && isExpanded ? '2px' : 0,
                 }}
+                exit={{ width: 0, opacity: 0 }}
                 transition={{
                   duration: 0.15,
                   ease: 'easeInOut',
                 }}
-                className={cn('m-0!', isLastItem && isExpanded && showItem ? 'pr-0.5' : '')}
+                className={cn('flex-shrink-0', isLastItem && isExpanded ? 'pr-0.5' : '')}
               >
                 <ToolbarButton
                   group={group}
@@ -1307,7 +1315,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-
 
   async function handleRecord() {
     if (isRecording && mediaRecorder) {
@@ -2591,10 +2598,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <TooltipTrigger asChild>
                           <Button
                             className={cn(
-                              "rounded-full p-1.5 h-8 w-8 transition-colors duration-200",
+                              'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
                               isRecording
-                                ? "bg-red-500 hover:bg-red-600 text-white"
-                                : "bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
                             )}
                             onClick={(event) => {
                               event.preventDefault();
@@ -2625,10 +2632,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     ) : (
                       <Button
                         className={cn(
-                          "rounded-full p-1.5 h-8 w-8 transition-colors duration-200",
+                          'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
                           isRecording
-                            ? "bg-red-500 hover:bg-red-600 text-white"
-                            : "bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
                         )}
                         onClick={(event) => {
                           event.preventDefault();
