@@ -144,7 +144,7 @@ const ChatInterface = memo(
 
     // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
-    const { user, subscriptionData, isProUser: isUserPro, isLoading: proStatusLoading, shouldCheckLimits: shouldCheckUserLimits } = useProUserStatus();
+    const { user, subscriptionData, isProUser: isUserPro, isLoading: proStatusLoading, shouldCheckLimits: shouldCheckUserLimits, shouldBypassLimitsForModel } = useProUserStatus();
 
     const initialState = useMemo(
       () => ({
@@ -216,7 +216,9 @@ const ChatInterface = memo(
 
     // Pro users bypass all limit checks - much cleaner!
     // Only check limits when we're not loading Pro status (prevents flash of limit UI)
-    const hasExceededLimit = shouldCheckUserLimits && !proStatusLoading && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+    // Also bypass limits for registered users using free unlimited models
+    const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
+    const hasExceededLimit = shouldCheckUserLimits && !proStatusLoading && !shouldBypassLimits && usageData && usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
 
     // Timer for sign-in prompt for unauthenticated users

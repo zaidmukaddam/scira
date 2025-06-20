@@ -120,21 +120,22 @@ const Navbar = memo(({
                     ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
                     : "bg-background")
         )}>
-            <div className={cn("flex items-center gap-4", isDialogOpen ? "pointer-events-auto" : "")}>
+            <div className={cn("flex items-center gap-3", isDialogOpen ? "pointer-events-auto" : "")}>
                 <Link href="/new">
                     <Button
                         type="button"
-                        variant={'secondary'}
-                        className="rounded-full bg-accent hover:bg-accent/80 backdrop-blur-xs group transition-all hover:scale-105 pointer-events-auto"
+                        variant="secondary"
+                        size="sm"
+                        className="rounded-full bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
                     >
-                        <Plus size={18} className="group-hover:rotate-90 transition-all m-1.5" />
-                        <span className="text-sm ml-2 group-hover:block hidden animate-in fade-in duration-300">
+                        <Plus size={16} className="group-hover:rotate-90 transition-all" />
+                        <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">
                             New
                         </span>
                     </Button>
                 </Link>
             </div>
-            <div className={cn('flex items-center space-x-2', isDialogOpen ? "pointer-events-auto" : "")}>
+            <div className={cn('flex items-center gap-2', isDialogOpen ? "pointer-events-auto" : "")}>
                 {/* Visibility indicator or toggle based on authentication and ownership */}
                 {chatId && (
                     <>
@@ -147,24 +148,25 @@ const Navbar = memo(({
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 variant="secondary"
-                                                className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900/80 border border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors focus:outline-none! focus:ring-0!"
+                                                size="sm"
+                                                className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                                 disabled={isChangingVisibility}
                                             >
                                                 {isChangingVisibility ? (
                                                     <>
-                                                        <ClassicLoader size="sm" className="text-blue-600 dark:text-blue-300" />
-                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Saving...</span>
+                                                        <ClassicLoader size="sm" className="text-blue-600 dark:text-blue-400" />
+                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Saving...</span>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
-                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Shared</span>
-                                                        <Copy size={14} className="ml-1.5 text-blue-600 dark:text-blue-300 opacity-80" />
+                                                        <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
+                                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                                                        <Copy size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
                                                     </>
                                                 )}
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-70 p-3">
+                                        <DropdownMenuContent align="end" className="w-72 p-3">
                                             <div className="space-y-3">
                                                 <header className="flex justify-between items-center">
                                                     <h4 className="text-sm font-medium">Share Link</h4>
@@ -172,7 +174,7 @@ const Navbar = memo(({
                                                         <Button
                                                             variant="secondary"
                                                             size="sm"
-                                                            className="h-7 text-xs focus:outline-none"
+                                                            className="h-7 text-xs"
                                                             onClick={() => handleVisibilityChange('private')}
                                                             disabled={isChangingVisibility}
                                                         >
@@ -182,7 +184,7 @@ const Navbar = memo(({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-7 w-7 focus:outline-none"
+                                                            className="size-7"
                                                             onClick={() => setDropdownOpen(false)}
                                                             disabled={isChangingVisibility}
                                                         >
@@ -201,7 +203,7 @@ const Navbar = memo(({
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        className="h-7 w-7 focus:outline-none"
+                                                        className="size-7"
                                                         onClick={handleCopyLink}
                                                         title="Copy to clipboard"
                                                     >
@@ -218,8 +220,6 @@ const Navbar = memo(({
                                                         <p className="text-xs text-muted-foreground">
                                                             Anyone with this link can view this page
                                                         </p>
-
-
                                                     </div>
 
                                                     <div className="flex justify-center gap-2 pt-1">
@@ -227,7 +227,7 @@ const Navbar = memo(({
                                                             <Button
                                                                 variant="outline"
                                                                 size="icon"
-                                                                className="h-8 w-8 focus:outline-none"
+                                                                className="size-8"
                                                                 onClick={() => {
                                                                     navigator.share({
                                                                         title: 'Shared Page',
@@ -235,35 +235,35 @@ const Navbar = memo(({
                                                                     }).catch(console.error);
                                                                 }}
                                                             >
-                                                                <Share size={18} />
+                                                                <Share size={16} />
                                                             </Button>
                                                         )}
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
-                                                            className="h-8 w-8 focus:outline-none"
+                                                            className="size-8"
                                                             onClick={handleShareLinkedIn}
                                                             title="Share on LinkedIn"
                                                         >
-                                                            <LinkedinLogo size={18} />
+                                                            <LinkedinLogo size={16} />
                                                         </Button>
                                                         <Button
-                                                            variant="outline"
+                                                            variant="outline" 
                                                             size="icon"
-                                                            className="h-8 w-8 focus:outline-none"
+                                                            className="size-8"
                                                             onClick={handleShareTwitter}
                                                             title="Share on X (Twitter)"
                                                         >
-                                                            <XLogo size={18} />
+                                                            <XLogo size={16} />
                                                         </Button>
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
-                                                            className="h-8 w-8 focus:outline-none"
+                                                            className="size-8"
                                                             onClick={handleShareReddit}
                                                             title="Share on Reddit"
                                                         >
-                                                            <RedditLogo size={18} />
+                                                            <RedditLogo size={16} />
                                                         </Button>
                                                     </div>
                                                 </footer>
@@ -276,30 +276,31 @@ const Navbar = memo(({
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 variant="secondary"
-                                                className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors focus:outline-none"
+                                                size="sm"
+                                                className="pointer-events-auto bg-muted/50 border border-border hover:bg-muted/70 transition-colors"
                                                 disabled={isChangingVisibility}
                                             >
                                                 {isChangingVisibility ? (
                                                     <>
-                                                        <ClassicLoader size="sm" className="text-neutral-500" />
-                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Saving...</span>
+                                                        <ClassicLoader size="sm" className="text-muted-foreground" />
+                                                        <span className="text-sm font-medium text-muted-foreground">Saving...</span>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Share size={16} className="text-neutral-500" />
-                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Share</span>
+                                                        <Share size={16} className="text-muted-foreground" />
+                                                        <span className="text-sm font-medium text-muted-foreground">Share</span>
                                                     </>
                                                 )}
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-70 p-3">
+                                        <DropdownMenuContent align="end" className="w-72 p-3">
                                             <div className="space-y-3">
                                                 <header className="flex justify-between items-center">
                                                     <h4 className="text-sm font-medium">Share</h4>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-7 w-7 focus:outline-none"
+                                                        className="size-7"
                                                         onClick={() => setPrivateDropdownOpen(false)}
                                                         disabled={isChangingVisibility}
                                                     >
@@ -320,7 +321,7 @@ const Navbar = memo(({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="text-xs focus:outline-none"
+                                                        className="text-xs"
                                                         onClick={() => setPrivateDropdownOpen(false)}
                                                         disabled={isChangingVisibility}
                                                     >
@@ -329,7 +330,7 @@ const Navbar = memo(({
                                                     <Button
                                                         variant="default"
                                                         size="sm"
-                                                        className="text-xs focus:outline-none"
+                                                        className="text-xs"
                                                         onClick={() => handleVisibilityChange('public')}
                                                         disabled={isChangingVisibility}
                                                     >
@@ -349,11 +350,12 @@ const Navbar = memo(({
                                     <TooltipTrigger asChild>
                                         <Button
                                             variant="secondary"
-                                            className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-700 opacity-80 cursor-not-allowed focus:outline-none"
+                                            size="sm"
+                                            className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
                                             disabled
                                         >
-                                            <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-300" />
-                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">Shared</span>
+                                            <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
+                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>
@@ -372,7 +374,7 @@ const Navbar = memo(({
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-                                        <div className="w-4 h-4 rounded-full bg-muted animate-pulse" />
+                                        <div className="size-4 rounded-full bg-muted animate-pulse" />
                                         <div className="w-8 h-3 bg-muted rounded animate-pulse hidden sm:block" />
                                     </div>
                                 </TooltipTrigger>
@@ -398,11 +400,12 @@ const Navbar = memo(({
                                     <TooltipTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 text-sm border-border hover:bg-muted/50 transition-colors focus:outline-none"
+                                            size="sm"
+                                            className="pointer-events-auto"
                                             onClick={() => router.push("/pricing")}
                                         >
                                             <Lightning size={16} />
-                                            <span className="text-sm font-medium hidden sm:inline">Upgrade</span>
+                                            <span className="text-sm font-medium hidden sm:inline ml-1">Upgrade</span>
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>

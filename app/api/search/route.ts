@@ -363,7 +363,11 @@ export async function POST(req: Request) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
 
-    if (!isProUser && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
+    // Check if user should bypass limits for free unlimited models
+    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+    const shouldBypassLimits = freeUnlimitedModels.includes(model);
+
+    if (!isProUser && !shouldBypassLimits && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
       return new ChatSDKError(
         'upgrade_required:chat',
         `Daily search limit of ${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} exceeded`,
@@ -421,7 +425,11 @@ export async function POST(req: Request) {
     });
 
     // Track message usage for rate limiting (deletion-proof)
-    await incrementMessageUsage({ userId: user.id });
+    // Only track usage for models that are not free unlimited
+    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+    if (!freeUnlimitedModels.includes(model)) {
+      await incrementMessageUsage({ userId: user.id });
+    }
 
     console.log('--------------------------------');
     console.log('Messages saved: ', messages);
@@ -480,7 +488,7 @@ export async function POST(req: Request) {
           xai: {
             ...(model === 'scira-default'
               ? {
-                  reasoningEffort: 'low',
+                  reasoningEffort: 'high',
                 }
               : {}),
           },

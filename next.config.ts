@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   transpilePackages: ['geist'],
   output: 'standalone',

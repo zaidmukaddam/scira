@@ -216,105 +216,62 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     }, []);
 
     return (
-      <div className="group my-5 relative">
-        <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
-            <div className="px-2 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-400">
-              {language || 'text'}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={toggleWrap}
-                className={`
-                  px-2 py-1
-                  rounded text-xs font-medium
-                  transition-all duration-200
-                  ${isWrapped ? 'text-primary' : 'text-neutral-500 dark:text-neutral-400'}
-                  hover:bg-neutral-200 dark:hover:bg-neutral-700
-                  flex items-center gap-1.5
-                `}
-                aria-label="Toggle line wrapping"
-              >
-                {isWrapped ? (
-                  <>
-                    <ArrowLeftRight className="h-3 w-3" />
-                    <span className="hidden sm:inline">Unwrap</span>
-                  </>
-                ) : (
-                  <>
-                    <WrapText className="h-3 w-3" />
-                    <span className="hidden sm:inline">Wrap</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleCopy}
-                className={`
-                  px-2 py-1
-                  rounded text-xs font-medium
-                  transition-all duration-200
-                  ${isCopied ? 'text-primary dark:text-primary' : 'text-neutral-500 dark:text-neutral-400'}
-                  hover:bg-neutral-200 dark:hover:bg-neutral-700
-                  flex items-center gap-1.5
-                `}
-                aria-label="Copy code"
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-3 w-3" />
-                    <span className="hidden sm:inline">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3 w-3" />
-                    <span className="hidden sm:inline">Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-          <SyntaxHighlighter
-            language={language || 'text'}
-            style={resolvedTheme === 'dark' ? oneDark : oneLight}
-            customStyle={{
-              margin: 0,
-              padding: '0.75rem 0.25rem 0.75rem',
-              backgroundColor: resolvedTheme === 'dark' ? '#171717' : 'transparent',
-              color: resolvedTheme === 'dark' ? '#e5e5e5' : '#171717',
-              borderRadius: 0,
-              borderBottomLeftRadius: '0.375rem',
-              borderBottomRightRadius: '0.375rem',
-              fontFamily: geistMono.style.fontFamily,
-            }}
-            showLineNumbers={true}
-            lineNumberStyle={{
-              textAlign: 'right',
-              color: resolvedTheme === 'dark' ? '#6b7280' : '#808080',
-              backgroundColor: 'transparent',
-              fontStyle: 'normal',
-              marginRight: '1em',
-              paddingRight: '0.5em',
-              fontFamily: geistMono.style.fontFamily,
-              minWidth: '2em'
-            }}
-            lineNumberContainerStyle={{
-              backgroundColor: resolvedTheme === 'dark' ? '#171717' : '#f5f5f5',
-              float: 'left'
-            }}
-            wrapLongLines={isWrapped}
-            codeTagProps={{
-              style: {
-                fontFamily: geistMono.style.fontFamily, 
-                fontSize: '0.85em',
-                whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
-                overflowWrap: isWrapped ? 'break-word' : 'normal',
-                wordBreak: isWrapped ? 'break-word' : 'keep-all'
-              }
-            }}
+      <div className="group relative my-5 rounded-md border border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50/50 dark:bg-neutral-900/50 overflow-hidden">
+        {/* Floating Controls */}
+        <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={toggleWrap}
+            className={cn(
+              "p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors",
+              isWrapped ? "text-blue-600 dark:text-blue-400" : "text-neutral-500 dark:text-neutral-400"
+            )}
+            title={isWrapped ? "Disable wrap" : "Enable wrap"}
           >
-            {children}
-          </SyntaxHighlighter>
+            {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={cn(
+              "p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors",
+              isCopied ? "text-green-600 dark:text-green-400" : "text-neutral-500 dark:text-neutral-400"
+            )}
+            title={isCopied ? "Copied!" : "Copy code"}
+          >
+            {isCopied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
         </div>
+
+        <SyntaxHighlighter
+          language={language || 'text'}
+          style={resolvedTheme === 'dark' ? oneDark : oneLight}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            backgroundColor: 'transparent',
+            fontSize: '0.775rem',
+            lineHeight: '1.5',
+            fontFamily: geistMono.style.fontFamily,
+          }}
+          showLineNumbers={true}
+          lineNumberStyle={{
+            color: resolvedTheme === 'dark' ? '#525252' : '#a3a3a3',
+            paddingRight: '1rem',
+            minWidth: '2rem',
+            textAlign: 'right',
+            userSelect: 'none',
+            fontFamily: geistMono.style.fontFamily,
+          }}
+          codeTagProps={{
+            style: {
+              fontFamily: geistMono.style.fontFamily,
+              whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+              wordBreak: 'normal',
+              overflowWrap: isWrapped ? 'break-word' : 'normal',
+            }
+          }}
+        >
+          {children}
+        </SyntaxHighlighter>
       </div>
     );
   };

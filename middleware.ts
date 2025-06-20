@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
 const authRoutes = ['/sign-in', '/sign-up'];
+const protectedRoutes = ['/settings'];
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -23,6 +24,10 @@ export async function middleware(request: NextRequest) {
     console.log('Redirecting to home');
     console.log('Session cookie: ', sessionCookie);
     return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  if (!sessionCookie && protectedRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
   return NextResponse.next();

@@ -541,6 +541,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Handle chat deletion with inline confirmation
   const handleDeleteChat = useCallback((e: React.MouseEvent | KeyboardEvent, id: string, title: string) => {
     e.stopPropagation();
+    console.log('SETTING DELETING CHAT ID:', id);
     setDeletingChatId(id);
   }, []);
 
@@ -567,15 +568,23 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Cancel deletion
   const cancelDeleteChat = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('CANCELING DELETION');
     setDeletingChatId(null);
   }, []);
 
   // Handle chat title editing
   const handleEditTitle = useCallback((e: React.MouseEvent | KeyboardEvent, id: string, currentTitle: string) => {
     e.stopPropagation();
+    
+    // Prevent editing if chat is in deleting state
+    if (deletingChatId === id) {
+      console.warn('Cannot edit title while chat is in deleting state');
+      return;
+    }
+    
     setEditingChatId(id);
     setEditingTitle(currentTitle || "");
-  }, []);
+  }, [deletingChatId]);
 
   // Save edited title
   const saveEditedTitle = useCallback(async (e: React.MouseEvent | React.KeyboardEvent, id: string) => {
@@ -651,6 +660,15 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     const isDeleting = deletingChatId === chat.id;
     const isEditing = editingChatId === chat.id;
     const displayTitle = chat.title || "Untitled Conversation";
+
+    // Comprehensive debug logging
+    console.log(`RENDER CHAT ${chat.id}:`, {
+      isDeleting,
+      isEditing,
+      deletingChatId,
+      editingChatId,
+      willShowNormalActions: !isDeleting && !isEditing
+    });
 
     return (
       <CommandItem
@@ -767,6 +785,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             ) : (
               // Normal state actions
               <>
+                {console.log(`RENDERING NORMAL ACTIONS for chat ${chat.id}`)}
                 {/* Timestamp - more compact */}
                 <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
                   {formatCompactTime(new Date(chat.createdAt))}
@@ -778,11 +797,21 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   size="icon"
                   className={cn(
                     "transition-colors hover:text-blue-600 h-7 w-7 flex-shrink-0",
-                    isCurrentChat ? "text-blue-600/70 hover:text-blue-600" : ""
+                    isCurrentChat ? "text-blue-600/70 hover:text-blue-600" : "",
+                    !!deletingChatId && "pointer-events-none opacity-50 bg-red-100 dark:bg-red-900"
                   )}
-                  onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
+                  onClick={(e) => {
+                    console.log(`EDIT BUTTON CLICKED for chat ${chat.id}, deletingChatId: ${deletingChatId}`);
+                    if (!!deletingChatId) {
+                      console.log('BLOCKED: A chat is in deletion mode!');
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return;
+                    }
+                    handleEditTitle(e, chat.id, chat.title);
+                  }}
                   aria-label={`Edit title of ${displayTitle}`}
-                  disabled={navigating === chat.id || updateTitleMutation.isPending}
+                  disabled={navigating === chat.id || updateTitleMutation.isPending || !!deletingChatId}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

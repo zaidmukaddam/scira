@@ -2022,7 +2022,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      if (isLimitBlocked) {
+      // Check if user should bypass limits for this model
+      const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+      const shouldBypassLimitsForThisModel = user && freeUnlimitedModels.includes(selectedModel);
+
+      if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
         toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
         return;
       }
@@ -2069,6 +2073,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       selectedModel,
       setHasSubmitted,
       isLimitBlocked,
+      user,
     ],
   );
 
@@ -2099,14 +2104,20 @@ const FormComponent: React.FC<FormComponentProps> = ({
       event.preventDefault();
       if (status === 'submitted' || status === 'streaming') {
         toast.error('Please wait for the response to complete!');
-      } else if (isLimitBlocked) {
-        toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
       } else {
-        submitForm();
-        if (width && width > 768) {
-          setTimeout(() => {
-            inputRef.current?.focus();
-          }, 100);
+        // Check if user should bypass limits for this model
+        const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+        const shouldBypassLimitsForThisModel = user && freeUnlimitedModels.includes(selectedModel);
+
+        if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
+          toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+        } else {
+          submitForm();
+          if (width && width > 768) {
+            setTimeout(() => {
+              inputRef.current?.focus();
+            }, 100);
+          }
         }
       }
     }

@@ -265,6 +265,7 @@ function UsageSection() {
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-muted-foreground leading-tight">Today&apos;s Searches</span>
+                <span className="text-[10px] text-muted-foreground/70">(Other models)</span>
               </div>
               <MagnifyingGlass className="h-6 w-6 text-muted-foreground flex-shrink-0" />
             </div>
@@ -274,6 +275,20 @@ function UsageSection() {
               ) : (
                 <span className="text-xl font-bold leading-tight">{searchCount?.count || 0}</span>
               )}
+            </div>
+          </div>
+
+          {/* Free Unlimited Models */}
+          <div className="p-4 border rounded-lg bg-card h-32 flex flex-col justify-between">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-muted-foreground leading-tight">Grok 3 Mini & Vision</span>
+                <span className="text-[10px] text-muted-foreground/70">Unlimited access</span>
+              </div>
+              <Sparkle className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+            </div>
+            <div className="mt-auto">
+              <span className="text-xl font-bold leading-tight">∞</span>
             </div>
           </div>
 
@@ -301,6 +316,7 @@ function UsageSection() {
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-muted-foreground leading-tight">Daily Limit</span>
+                <span className="text-[10px] text-muted-foreground/70">(Other models)</span>
               </div>
               <Shield className="h-6 w-6 text-muted-foreground flex-shrink-0" />
             </div>
@@ -314,34 +330,26 @@ function UsageSection() {
               )}
             </div>
           </div>
-
-          {/* Remaining */}
-          <div className="p-4 border rounded-lg bg-card h-32 flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground leading-tight">Remaining</span>
-              </div>
-              <TrendUp className="h-6 w-6 text-muted-foreground flex-shrink-0" />
-            </div>
-            <div className="mt-auto">
-              {usageLoading ? (
-                <Skeleton className="h-7 w-10" />
-              ) : (
-                <span className="text-xl font-bold leading-tight">
-                  {isProUser ? '∞' : Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Usage Progress Bars for Free Users */}
         {!usageLoading && !isProUser && (
           <div className="space-y-4">
+            {/* Free Unlimited Models Notice */}
+            <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800 dark:text-green-200 mb-2">
+                <Sparkle className="h-4 w-4" />
+                <span className="text-sm font-medium">Unlimited Access Available</span>
+              </div>
+              <p className="text-xs text-green-700 dark:text-green-300">
+                You have unlimited access to Grok 3 Mini and Grok 2 Vision models. Daily limits only apply to other AI models.
+              </p>
+            </div>
+
             {/* Regular Search Usage */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Regular Search Usage</span>
+                <span>Search Usage (Other Models Only)</span>
                 {usageLoading ? <Skeleton className="h-4 w-16" /> : <span>{usagePercentage.toFixed(1)}% used</span>}
               </div>
               {usageLoading ? (
@@ -349,18 +357,26 @@ function UsageSection() {
               ) : (
                 <Progress value={usagePercentage} className="h-3" />
               )}
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {searchCount?.count || 0} of {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used today
+                </span>
+                <span>
+                  {Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} remaining
+                </span>
+              </div>
               {!usageLoading && usagePercentage > 80 && (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                     <MagnifyingGlass className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                      {usagePercentage >= 100 ? 'Daily limit reached!' : 'Approaching daily limit'}
+                      {usagePercentage >= 100 ? 'Daily limit reached for other models!' : 'Approaching daily limit for other models'}
                     </span>
                   </div>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                     {usagePercentage >= 100
-                      ? 'Upgrade to Pro for unlimited searches and advanced features.'
-                      : 'Consider upgrading to Pro to avoid hitting your daily limit.'}
+                      ? 'You can still use Grok 3 Mini & Vision unlimited. Upgrade to Pro for unlimited access to all models.'
+                      : 'Remember: Grok 3 Mini & Vision are always unlimited. Upgrade to Pro for unlimited access to all models.'}
                   </p>
                 </div>
               )}
@@ -432,17 +448,17 @@ function UsageSection() {
                 <div className="p-4 border rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <MagnifyingGlass className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium text-sm">Unlimited Searches</span>
+                    <span className="font-medium text-sm">Unlimited All Models</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">No daily limits on your searches</p>
+                  <p className="text-xs text-muted-foreground">No limits on any AI model, including premium ones</p>
                 </div>
 
                 <div className="p-4 border rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkle className="h-4 w-4 text-gray-600" />
-                    <span className="font-medium text-sm">Premium Tools</span>
+                    <Sparkle className="h-4 w-4 text-purple-600" />
+                    <span className="font-medium text-sm">Premium AI Models</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Access to advanced search and analysis tools</p>
+                  <p className="text-xs text-muted-foreground">Access to Claude, GPT-4, and advanced analysis tools</p>
                 </div>
 
                 <div className="p-4 border rounded-lg">

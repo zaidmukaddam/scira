@@ -795,7 +795,11 @@ export default function AboutPage() {
                                     <ul className="space-y-3">
                                         <li className="flex items-center text-[15px]">
                                             <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                                            <span className="text-zinc-700 dark:text-zinc-300">Limited daily searches</span>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Limited daily searches (other models)</span>
+                                        </li>
+                                        <li className="flex items-center text-[15px]">
+                                            <div className="w-1 h-1 bg-green-500 dark:bg-green-400 rounded-full mr-4 flex-shrink-0"></div>
+                                            <span className="text-zinc-700 dark:text-zinc-300">Unlimited Grok 3 Mini & Grok 2 Vision</span>
                                         </li>
                                         <li className="flex items-center text-[15px]">
                                             <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
@@ -885,6 +889,32 @@ export default function AboutPage() {
                                         >
                                             Request Student Discount
                                         </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Free Unlimited Models Highlight */}
+                        <div className="max-w-3xl mx-auto bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mt-8">
+                            <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                                <div className="p-2 rounded-md bg-green-100 dark:bg-green-900 flex-shrink-0">
+                                    <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                </div>
+                                <div className="flex-1 space-y-2 text-center sm:text-left">
+                                    <h3 className="font-medium text-base text-green-800 dark:text-green-200">
+                                        Free Unlimited Access to Advanced Models
+                                    </h3>
+                                    <p className="text-sm text-green-700 dark:text-green-300">
+                                        Registered users get unlimited access to Grok 3 Mini and Grok 2 Vision models - no daily limits, no restrictions. Perfect for students, researchers, and professionals who need reliable AI assistance without breaking the bank.
+                                    </p>
+                                    <div className="pt-1">
+                                        <Button
+                                            variant="outline"
+                                            className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900"
+                                            onClick={() => router.push('/sign-up')}
+                                        >
+                                            Create Free Account
+                                        </Button>
                                     </div>
                                 </div>
                             </div>

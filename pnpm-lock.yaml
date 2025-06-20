@@ -234,8 +234,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(react@18.3.1)
       mem0ai:
-        specifier: ^2.1.30
-        version: 2.1.30(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@cloudflare/workers-types@4.20250607.0)(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@5.1.1(ws@8.18.1)(zod@3.25.63)))(@mistralai/mistralai@1.5.2(zod@3.25.63))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1)
+        specifier: ^2.1.31
+        version: 2.1.31(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@cloudflare/workers-types@4.20250607.0)(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@5.1.1(ws@8.18.1)(zod@3.25.63)))(@mistralai/mistralai@1.5.2(zod@3.25.63))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1)
       motion:
         specifier: ^12.18.1
         version: 12.18.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -296,6 +296,9 @@ importers:
       resumable-stream:
         specifier: ^2.2.0
         version: 2.2.0
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
       sonner:
         specifier: ^2.0.5
         version: 2.0.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5186,8 +5189,8 @@ packages:
   mdurl@2.0.0:
     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
 
-  mem0ai@2.1.30:
-    resolution: {integrity: sha512-uOIPWlzXMPG+V67wKg9vDJRPLumOL95H8j+lqi35Zq7YVNe0fBD2hNMRaGpxYF7ZYJFDQwI9BX6ZvHx7uWKn+Q==}
+  mem0ai@2.1.31:
+    resolution: {integrity: sha512-YbSq5P70HsxAhMo9xrJlcT2EVpkzQZjGW9i/GMQk5Vo9Q01dwLZ97jNqwbfTBA6U6hK2kBvowQMYLLFHnfvukA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@anthropic-ai/sdk': ^0.40.1
@@ -6158,6 +6161,9 @@ packages:
   serialize-to-js@3.1.2:
     resolution: {integrity: sha512-owllqNuDDEimQat7EPG0tH7JjO090xKNzUtYz6X+Sk2BXDnOCilDdNLwjWeFywG9xkJul1ULvtUQa9O4pUaY0w==}
     engines: {node: '>=4.0.0'}
+
+  server-only@0.0.1:
+    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
 
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
@@ -12500,7 +12506,7 @@ snapshots:
 
   mdurl@2.0.0: {}
 
-  mem0ai@2.1.30(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@cloudflare/workers-types@4.20250607.0)(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@5.1.1(ws@8.18.1)(zod@3.25.63)))(@mistralai/mistralai@1.5.2(zod@3.25.63))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1):
+  mem0ai@2.1.31(@anthropic-ai/sdk@0.18.0(encoding@0.1.13))(@cloudflare/workers-types@4.20250607.0)(@google/genai@0.7.0(encoding@0.1.13))(@langchain/core@0.3.44(openai@5.1.1(ws@8.18.1)(zod@3.25.63)))(@mistralai/mistralai@1.5.2(zod@3.25.63))(@qdrant/js-client-rest@1.13.0(typescript@5.8.2))(@supabase/supabase-js@2.49.4)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.14)(pg@8.11.3)(redis@4.7.0)(sqlite3@5.1.7)(ws@8.18.1):
     dependencies:
       '@anthropic-ai/sdk': 0.18.0(encoding@0.1.13)
       '@cloudflare/workers-types': 4.20250607.0
@@ -13655,6 +13661,8 @@ snapshots:
   semver@7.7.1: {}
 
   serialize-to-js@3.1.2: {}
+
+  server-only@0.0.1: {}
 
   set-blocking@2.0.0:
     optional: true

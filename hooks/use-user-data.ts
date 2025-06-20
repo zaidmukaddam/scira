@@ -35,6 +35,13 @@ export function useProUserStatus() {
   const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
   const isLoading = userLoading || (user && subscriptionLoading);
   
+  // Helper function to check if user should have unlimited access for specific models
+  const shouldBypassLimitsForModel = (selectedModel: string) => {
+    // Free unlimited models for registered users
+    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+    return user && freeUnlimitedModels.includes(selectedModel);
+  };
+  
   return {
     user: (user || null) as User | null,
     subscriptionData,
@@ -42,5 +49,6 @@ export function useProUserStatus() {
     isLoading: Boolean(isLoading),
     // Pro users should never see limit checks
     shouldCheckLimits: !isLoading && user && !isProUser,
+    shouldBypassLimitsForModel,
   };
 } 

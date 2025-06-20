@@ -127,7 +127,7 @@ export default function TermsPage() {
             Scira AI offers both free and paid subscription plans. For detailed pricing information, visit our <Link href="/pricing" className="underline">Pricing page</Link>.
           </p>
           <ul>
-            <li><strong>Free Plan:</strong> Includes limited searches per month with basic AI models</li>
+            <li><strong>Free Plan:</strong> Includes limited daily searches for most AI models, with unlimited access to Grok 3 Mini and Grok 2 Vision models for registered users</li>
             <li><strong>Scira Pro:</strong> $15/month subscription with unlimited searches and access to all AI models</li>
           </ul>
           <p>

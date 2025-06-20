@@ -288,15 +288,15 @@ export default function PricingTable({
               <ul className="space-y-4">
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT} normal searches per day</span>
+                  <span className="text-zinc-700 dark:text-zinc-300">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day (other models)</span>
+                </li>
+                <li className="flex items-center text-[15px]">
+                  <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                  <span className="text-zinc-700 dark:text-zinc-300">Unlimited Grok 3 Mini & Grok 2 Vision</span>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
                   <span className="text-zinc-700 dark:text-zinc-300">{SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches per month</span>
-                </li>
-                <li className="flex items-center text-[15px]">
-                  <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">Basic AI models</span>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
