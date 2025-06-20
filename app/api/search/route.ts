@@ -696,7 +696,9 @@ export async function POST(req: Request) {
                       try {
                         const { object } = await generateObject({
                           model: scira.languageModel('scira-g2'),
-                          prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query} and contains this content: ${result.content.substring(0, 500)}...`,
+                          prompt: `Complete the following financial report with an appropriate title. The report is about ${
+                            group.query
+                          } and contains this content: ${result.content.substring(0, 500)}...`,
                           schema: z.object({
                             title: z.string().describe('A descriptive title for the financial report'),
                           }),
@@ -736,7 +738,11 @@ ${stock_symbols
     (symbol) => `
 # Convert datetime64 index to strings to make it serializable
 ${symbol.toLowerCase().replace('.', '')}.index = ${symbol.toLowerCase().replace('.', '')}.index.strftime('%Y-%m-%d')
-plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol.toLowerCase().replace('.', '')}['Close'], label='${symbol} ${formattedCurrencySymbols[stock_symbols.indexOf(symbol)]}', color='blue')
+plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol
+      .toLowerCase()
+      .replace('.', '')}['Close'], label='${symbol} ${
+      formattedCurrencySymbols[stock_symbols.indexOf(symbol)]
+    }', color='blue')
 `,
   )
   .join('\n')}
@@ -925,10 +931,7 @@ print(f"Converted amount: {converted_amount}")
                 .describe(
                   'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles like "@elonmusk" or "@openai"',
                 ),
-              maxResults: z
-                .number()
-                .nullable()
-                .describe('Maximum number of search results to return (default 15)'),
+              maxResults: z.number().nullable().describe('Maximum number of search results to return (default 15)'),
             }),
             execute: async ({
               query,
@@ -1207,7 +1210,9 @@ print(f"Converted amount: {converted_amount}")
               try {
                 // First do a multi-search to get the top result
                 const searchResponse = await fetch(
-                  `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=1&include_adult=false`,
+                  `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(
+                    query,
+                  )}&language=en-US&page=1&include_adult=false`,
                   {
                     method: 'GET',
                     headers: {
@@ -1600,7 +1605,9 @@ print(f"Converted amount: {converted_amount}")
 
                   // Geocode the location name using Open Meteo API
                   const geocodingResponse = await fetch(
-                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`,
+                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+                      location,
+                    )}&count=1&language=en&format=json`,
                   );
 
                   const geocodingData = await geocodingResponse.json();
@@ -1787,7 +1794,9 @@ print(f"Converted amount: {converted_amount}")
                 // Determine search type and build URL
                 if (query) {
                   // Forward geocoding
-                  url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${googleApiKey}`;
+                  url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                    query,
+                  )}&key=${googleApiKey}`;
                   searchType = 'forward';
                 } else if (latitude !== undefined && longitude !== undefined) {
                   // Reverse geocoding
@@ -1890,7 +1899,9 @@ print(f"Converted amount: {converted_amount}")
 
                 // If coordinates not provided, geocode the location
                 if (!searchLat || !searchLng) {
-                  const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${googleApiKey}`;
+                  const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                    location,
+                  )}&key=${googleApiKey}`;
                   const geocodeResponse = await fetch(geocodeUrl);
                   const geocodeData = await geocodeResponse.json();
 
@@ -1908,7 +1919,10 @@ print(f"Converted amount: {converted_amount}")
                 }
 
                 // Build nearby search URL
-                let nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${searchLat},${searchLng}&radius=${Math.min(radius, 50000)}&type=${type}&key=${googleApiKey}`;
+                let nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${searchLat},${searchLng}&radius=${Math.min(
+                  radius,
+                  50000,
+                )}&type=${type}&key=${googleApiKey}`;
 
                 if (keyword) {
                   nearbyUrl += `&keyword=${encodeURIComponent(keyword)}`;
@@ -2404,7 +2418,11 @@ print(f"Converted amount: {converted_amount}")
               'Do not use print statements stock chart tool.',
               `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
               `For the web search make multiple queries to get the best results.`,
-              `Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+              `Today's date is ${new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}`,
             ].join('\n'),
           });
 

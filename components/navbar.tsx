@@ -248,7 +248,7 @@ const Navbar = memo(({
                                                             <LinkedinLogo size={16} />
                                                         </Button>
                                                         <Button
-                                                            variant="outline" 
+                                                            variant="outline"
                                                             size="icon"
                                                             className="size-8"
                                                             onClick={handleShareTwitter}

@@ -103,24 +103,24 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               {isAuthenticated ? (
-                <Button variant="ghost" className={cn("size-10 aspect-square p-1.5", signingOut && "animate-pulse", className)} asChild>
-                  <Avatar>
+                <Button variant="ghost" size="sm" className={cn("", signingOut && "animate-pulse", className)} asChild>
+                  <Avatar className="size-6">
                     <AvatarImage src={currentUser?.image ?? ""} alt={currentUser?.name ?? ""} className="rounded-full" />
-                    <AvatarFallback className="rounded-full">{currentUser?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="rounded-full text-xs">{currentUser?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               ) : (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className={cn("size-10 aspect-square p-1.5", signingIn && "animate-pulse", className)}
+                  size="sm"
+                  className={cn("", signingIn && "animate-pulse", className)}
                 >
-                  <UserCircle className="size-5" />
+                  <UserCircle size={16} />
                 </Button>
               )}
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent className="z-60">
+          <TooltipContent side="bottom" sideOffset={4}>
             {isAuthenticated ? "Account" : "Sign In"}
           </TooltipContent>
         </Tooltip>
@@ -138,21 +138,23 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
                     <div className={`text-xs text-muted-foreground ${showEmail ? "" : "max-w-[160px] truncate"}`} title={currentUser?.email || ""}>
                       {formatEmail(currentUser?.email)}
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowEmail(!showEmail);
                       }}
-                      className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded-sm"
+                      className="size-6 text-muted-foreground hover:text-foreground"
                     >
                       {showEmail ?
-                        <EyeSlash className="size-3" /> :
-                        <Eye className="size-3" />
+                        <EyeSlash size={12} /> :
+                        <Eye size={12} />
                       }
                       <span className="sr-only">
                         {showEmail ? "Hide email" : "Show email"}
                       </span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -162,7 +164,7 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
               <div className="flex items-center gap-2">
                 <Avatar className="size-8 shrink-0">
                   <AvatarFallback className="rounded-full">
-                    <UserCircle className="size-5" />
+                    <UserCircle size={18} />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
@@ -180,8 +182,8 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
               {isProStatusLoading ? (
                 <div className="px-3 py-2">
                   <div className="flex items-center gap-2.5 text-sm">
-                    <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-muted animate-pulse" />
+                    <div className="size-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                      <div className="size-3 rounded-full bg-muted animate-pulse" />
                     </div>
                     <div className="flex flex-col">
                       <div className="w-16 h-3 bg-muted rounded animate-pulse" />
@@ -193,8 +195,8 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
                 hasActiveSubscription ? (
                   <div className="px-3 py-2">
                     <div className="flex items-center gap-2.5 text-sm">
-                      <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                        <Crown className="size-3.5 text-foreground" />
+                      <div className="size-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                        <Crown size={14} className="text-foreground" />
                       </div>
                       <div className="flex flex-col">
                         <span className="font-medium text-foreground text-sm">Scira Pro</span>
@@ -207,8 +209,8 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
                     className="cursor-pointer flex items-center gap-2.5 py-1.5"
                     onClick={() => router.push("/pricing")}
                   >
-                    <div className="w-6 h-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                      <Lightning className="size-3.5" />
+                    <div className="size-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
+                      <Lightning size={14} />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">Upgrade to Pro</span>
@@ -225,7 +227,7 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
             <>
               <DropdownMenuItem className="cursor-pointer" asChild>
                 <Link href="/settings" className="w-full flex items-center gap-2">
-                  <Gear className="size-4" />
+                  <Gear size={16} />
                   <span>Settings</span>
                 </Link>
               </DropdownMenuItem>
@@ -235,7 +237,7 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
             <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-2">
-                <Sun className="size-4" />
+                <Sun size={16} />
                 <span className="text-sm">Theme</span>
               </div>
               <ThemeSwitcher />
@@ -246,19 +248,19 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           {/* About and Information */}
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/about" className="w-full flex items-center gap-2">
-              <Info className="size-4" />
+              <Info size={16} />
               <span>About</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/terms" className="w-full flex items-center gap-2">
-              <FileText className="size-4" />
+              <FileText size={16} />
               <span>Terms</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href="/privacy-policy" className="w-full flex items-center gap-2">
-              <Shield className="size-4" />
+              <Shield size={16} />
               <span>Privacy</span>
             </Link>
           </DropdownMenuItem>
@@ -267,19 +269,19 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           {/* Social and External Links */}
           <DropdownMenuItem className="cursor-pointer" asChild>
             <a href={"https://git.new/scira"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
-              <GithubLogo className="size-4" />
+              <GithubLogo size={16} />
               <span>Github</span>
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <a href={"https://x.com/sciraai"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
-              <XLogo className="size-4" />
+              <XLogo size={16} />
               <span>X.com</span>
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" asChild>
             <a href={"https://www.instagram.com/scira.ai"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
-              <InstagramLogoIcon className="size-4" />
+              <InstagramLogoIcon size={16} />
               <span>Instagram</span>
             </a>
           </DropdownMenuItem>

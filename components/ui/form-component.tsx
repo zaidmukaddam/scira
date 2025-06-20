@@ -325,8 +325,6 @@ const models = [
   },
 ];
 
-
-
 const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   selectedModel,
   setSelectedModel,
@@ -421,9 +419,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           )}
         >
           <SelectValue asChild>
-            <span className="text-xs font-medium whitespace-nowrap">
-              {selectedModelData?.label || 'Select model'}
-            </span>
+            <span className="text-xs font-medium whitespace-nowrap">{selectedModelData?.label || 'Select model'}</span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
@@ -434,9 +430,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
         >
           {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
             <SelectGroup key={category}>
-              {categoryIndex > 0 && (
-                <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
-              )}
+              {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
               <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 {category} Models
               </SelectLabel>
@@ -638,7 +632,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Gemini 2.5 Flash Lite and GPT-4o Mini</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Gemini 2.5 Flash Lite and GPT-4o Mini
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -708,6 +704,15 @@ const StopIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg height={size} viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
       <path fillRule="evenodd" clipRule="evenodd" d="M3 3H13V13H3V3Z" fill="currentColor"></path>
+    </svg>
+  );
+};
+
+const MicrophoneIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg height={size} viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M8 1C6.89543 1 6 1.89543 6 3V8C6 9.10457 6.89543 10 8 10C9.10457 10 10 9.10457 10 8V3C10 1.89543 9.10457 1 8 1ZM8 2C8.55228 2 9 2.44772 9 3V8C9 8.55228 8.55228 9 8 9C7.44772 9 7 8.55228 7 8V3C7 2.44772 7.44772 2 8 2Z" fill="currentColor"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M4 7C4.55228 7 5 7.44772 5 8C5 9.65685 6.34315 11 8 11C9.65685 11 11 9.65685 11 8C11 7.44772 11.4477 7 12 7C12.5523 7 13 7.44772 13 8C13 10.2091 11.2091 12 9 12V13H11C11.5523 13 12 13.4477 12 14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14C4 13.4477 4.44772 13 5 13H7V12C4.79086 12 3 10.2091 3 8C3 7.44772 3.44772 7 4 7Z" fill="currentColor"/>
     </svg>
   );
 };
@@ -1013,9 +1018,7 @@ const SwitchNotification: React.FC<SwitchNotificationProps> = ({
               </span>
             )}
             <div className="flex flex-col items-start sm:flex-row sm:items-center sm:flex-wrap gap-x-1.5 gap-y-0.5">
-              <span className="font-semibold text-xs sm:text-sm text-neutral-900 dark:text-neutral-100">
-                {title}
-              </span>
+              <span className="font-semibold text-xs sm:text-sm text-neutral-900 dark:text-neutral-100">{title}</span>
               <span className="text-[10px] sm:text-xs leading-tight text-neutral-600 dark:text-neutral-400">
                 {description}
               </span>
@@ -1170,7 +1173,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
   // Handle group selection and close expansion
   const handleGroupSelect = (group: SearchGroup, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the container's click handler
-    
+
     if (group.id === selectedGroup && !isExpanded) {
       // If clicking on the currently selected group when collapsed, expand instead
       setIsExpanded(true);
@@ -1181,7 +1184,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
     }
   };
 
-      return (
+  return (
     <motion.div
       ref={containerRef}
       layout={false}
@@ -1301,6 +1304,67 @@ const FormComponent: React.FC<FormComponentProps> = ({
     notificationType: 'model',
     visibilityTimeout: undefined,
   });
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+
+
+  async function handleRecord() {
+    if (isRecording && mediaRecorder) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream);
+        setMediaRecorder(recorder);
+
+        recorder.addEventListener('dataavailable', async (event) => {
+          if (event.data.size > 0) {
+            const audioBlob = event.data;
+
+            try {
+              const formData = new FormData();
+              formData.append('audio', audioBlob, 'recording.webm');
+              const response = await fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData,
+              });
+
+              if (!response.ok) {
+                throw new Error(`Transcription failed: ${response.statusText}`);
+              }
+
+              const data = await response.json();
+
+              if (data.text) {
+                setInput(data.text);
+              } else {
+                console.error('Transcription response did not contain text:', data);
+              }
+            } catch (error) {
+              console.error('Error during transcription request:', error);
+            } finally {
+              setIsRecording(false);
+              setMediaRecorder(null);
+              stream.getTracks().forEach((track) => track.stop());
+            }
+          }
+        });
+
+        recorder.addEventListener('stop', () => {
+          stream.getTracks().forEach((track) => track.stop());
+        });
+
+        recorder.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        setIsRecording(false);
+      }
+    }
+  }
 
   const showSwitchNotification = (
     title: string,
@@ -2022,6 +2086,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
+      if (isRecording) {
+        toast.error('Please stop recording before submitting!');
+        return;
+      }
+
       // Check if user should bypass limits for this model
       const freeUnlimitedModels = ['scira-default', 'scira-vision'];
       const shouldBypassLimitsForThisModel = user && freeUnlimitedModels.includes(selectedModel);
@@ -2104,6 +2173,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
       event.preventDefault();
       if (status === 'submitted' || status === 'streaming') {
         toast.error('Please wait for the response to complete!');
+      } else if (isRecording) {
+        toast.error('Please stop recording before submitting!');
       } else {
         // Check if user should bypass limits for this model
         const freeUnlimitedModels = ['scira-default', 'scira-vision'];
@@ -2260,64 +2331,93 @@ const FormComponent: React.FC<FormComponentProps> = ({
             />
 
             <div className="rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
-              <Textarea
-                ref={inputRef}
-                placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
-                value={input}
-                onChange={handleInput}
-                disabled={isProcessing}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                onInput={(e) => {
-                  // Auto-resize textarea based on content
-                  const target = e.target as HTMLTextAreaElement;
+              {isRecording ? (
+                <Textarea
+                  ref={inputRef}
+                  placeholder=""
+                  value="◉ Recording..."
+                  disabled={true}
+                  className={cn(
+                    'w-full rounded-lg rounded-b-none md:text-base!',
+                    'text-base leading-relaxed',
+                    'bg-neutral-100 dark:bg-neutral-900',
+                    'border-0!',
+                    'text-neutral-600 dark:text-neutral-400', // Different text color for recording
+                    'focus:ring-0! focus-visible:ring-0!',
+                    'px-4! py-4!',
+                    'touch-manipulation',
+                    'whatsize',
+                    'text-center', // Center the recording text
+                    'cursor-not-allowed',
+                  )}
+                  style={{
+                    WebkitUserSelect: 'text',
+                    WebkitTouchCallout: 'none',
+                    minHeight: width && width < 768 ? '40px' : undefined,
+                    resize: 'none',
+                  }}
+                  rows={1}
+                />
+              ) : (
+                <Textarea
+                  ref={inputRef}
+                  placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
+                  value={input}
+                  onChange={handleInput}
+                  disabled={isProcessing}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                  onInput={(e) => {
+                    // Auto-resize textarea based on content
+                    const target = e.target as HTMLTextAreaElement;
 
-                  // Reset height to auto first to get the actual scroll height
-                  target.style.height = 'auto';
+                    // Reset height to auto first to get the actual scroll height
+                    target.style.height = 'auto';
 
-                  const scrollHeight = target.scrollHeight;
-                  const maxHeight = width && width < 768 ? 200 : 300; // Increased max height for desktop
+                    const scrollHeight = target.scrollHeight;
+                    const maxHeight = width && width < 768 ? 200 : 300; // Increased max height for desktop
 
-                  if (scrollHeight > maxHeight) {
-                    target.style.height = `${maxHeight}px`;
-                    target.style.overflowY = 'auto';
-                  } else {
-                    target.style.height = `${scrollHeight}px`;
-                    target.style.overflowY = 'hidden';
-                  }
-
-                  // Ensure the cursor position is visible by scrolling to bottom if needed
-                  requestAnimationFrame(() => {
-                    const cursorPosition = target.selectionStart;
-                    if (cursorPosition === target.value.length) {
-                      target.scrollTop = target.scrollHeight;
+                    if (scrollHeight > maxHeight) {
+                      target.style.height = `${maxHeight}px`;
+                      target.style.overflowY = 'auto';
+                    } else {
+                      target.style.height = `${scrollHeight}px`;
+                      target.style.overflowY = 'hidden';
                     }
-                  });
-                }}
-                className={cn(
-                  'w-full rounded-lg rounded-b-none md:text-base!',
-                  'text-base leading-relaxed',
-                  'bg-neutral-100 dark:bg-neutral-900',
-                  'border-0!',
-                  'text-neutral-900 dark:text-neutral-100',
-                  'focus:ring-0! focus-visible:ring-0!',
-                  'px-4! py-4!',
-                  'touch-manipulation',
-                  'whatsize',
-                )}
-                style={{
-                  WebkitUserSelect: 'text',
-                  WebkitTouchCallout: 'none',
-                  minHeight: width && width < 768 ? '40px' : undefined,
-                  resize: 'none',
-                }}
-                rows={1}
-                autoFocus={width ? width > 768 : true}
-                onCompositionStart={() => (isCompositionActive.current = true)}
-                onCompositionEnd={() => (isCompositionActive.current = false)}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePaste}
-              />
+
+                    // Ensure the cursor position is visible by scrolling to bottom if needed
+                    requestAnimationFrame(() => {
+                      const cursorPosition = target.selectionStart;
+                      if (cursorPosition === target.value.length) {
+                        target.scrollTop = target.scrollHeight;
+                      }
+                    });
+                  }}
+                  className={cn(
+                    'w-full rounded-lg rounded-b-none md:text-base!',
+                    'text-base leading-relaxed',
+                    'bg-neutral-100 dark:bg-neutral-900',
+                    'border-0!',
+                    'text-neutral-900 dark:text-neutral-100',
+                    'focus:ring-0! focus-visible:ring-0!',
+                    'px-4! py-4!',
+                    'touch-manipulation',
+                    'whatsize',
+                  )}
+                  style={{
+                    WebkitUserSelect: 'text',
+                    WebkitTouchCallout: 'none',
+                    minHeight: width && width < 768 ? '40px' : undefined,
+                    resize: 'none',
+                  }}
+                  rows={1}
+                  autoFocus={width ? width > 768 : true}
+                  onCompositionStart={() => (isCompositionActive.current = true)}
+                  onCompositionEnd={() => (isCompositionActive.current = false)}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                />
+              )}
 
               {/* Toolbar as a separate block - no absolute positioning */}
               <div
@@ -2484,6 +2584,64 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Voice Recording Button */}
+                  {!(isMobile && isGroupSelectorExpanded) &&
+                    (!isMobile ? (
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            className={cn(
+                              "rounded-full p-1.5 h-8 w-8 transition-colors duration-200",
+                              isRecording
+                                ? "bg-red-500 hover:bg-red-600 text-white"
+                                : "bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                            )}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleRecord();
+                            }}
+                            variant="outline"
+                            disabled={isProcessing}
+                          >
+                            <MicrophoneIcon size={14} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          sideOffset={6}
+                          className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium text-[11px]">
+                              {isRecording ? 'Stop Recording' : 'Voice Input'}
+                            </span>
+                            <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                              {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                            </span>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        className={cn(
+                          "rounded-full p-1.5 h-8 w-8 transition-colors duration-200",
+                          isRecording
+                            ? "bg-red-500 hover:bg-red-600 text-white"
+                            : "bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                        )}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleRecord();
+                        }}
+                        variant="outline"
+                        disabled={isProcessing}
+                      >
+                        <MicrophoneIcon size={14} />
+                      </Button>
+                    ))}
+
                   {hasVisionSupport(selectedModel) &&
                     !(isMobile && isGroupSelectorExpanded) &&
                     (!isMobile ? (
@@ -2583,7 +2741,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             (input.length === 0 && attachments.length === 0) ||
                             uploadQueue.length > 0 ||
                             status !== 'ready' ||
-                            isLimitBlocked
+                            isLimitBlocked ||
+                            isRecording
                           }
                         >
                           <ArrowUpIcon size={14} />
@@ -2609,7 +2768,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         (input.length === 0 && attachments.length === 0) ||
                         uploadQueue.length > 0 ||
                         status !== 'ready' ||
-                        isLimitBlocked
+                        isLimitBlocked ||
+                        isRecording
                       }
                     >
                       <ArrowUpIcon size={14} />
