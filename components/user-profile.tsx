@@ -68,7 +68,7 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
 
   if (isPending && !user) {
     return (
-      <div className="size-10 aspect-square flex items-center justify-center p-3 pl-0">
+      <div className="h-8 w-8 flex items-center justify-center">
         <div className="size-4 rounded-full bg-muted/50 animate-pulse"></div>
       </div>
     );

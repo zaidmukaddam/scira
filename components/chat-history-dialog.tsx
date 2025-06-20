@@ -1050,11 +1050,12 @@ export function ChatHistoryButton({ onClick }: { onClick: () => void }) {
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onClick}
+          className="size-8 p-0! m-0!"
           aria-label="Chat History"
         >
-          <ListMagnifyingGlass size={16} />
+          <ListMagnifyingGlass className="size-6"/>
           <span className="sr-only">Chat History</span>
         </Button>
       </TooltipTrigger>
