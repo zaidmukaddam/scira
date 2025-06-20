@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, memo, useEffect } from "react";
+import React, { useState, memo } from "react";
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -103,7 +103,7 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               {isAuthenticated ? (
-                <Button variant="ghost" size="icon" className={cn("h-8 w-8", signingOut && "animate-pulse", className)} asChild>
+                <Button variant="ghost" size="sm" className={cn("p-0! m-0!", signingOut && "animate-pulse", className)} asChild>
                   <Avatar className="size-7">
                     <AvatarImage src={currentUser?.image ?? ""} alt={currentUser?.name ?? ""} className="rounded-full" />
                     <AvatarFallback className="rounded-full text-sm">{currentUser?.name?.charAt(0)}</AvatarFallback>
@@ -112,10 +112,10 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
               ) : (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className={cn("h-8 w-8", signingIn && "animate-pulse", className)}
+                  size="sm"
+                  className={cn("p-0! m-0! hover:bg-transparent!", signingIn && "animate-pulse", className)}
                 >
-                  <UserCircle size={16} />
+                  <UserCircle className="size-6" />
                 </Button>
               )}
             </DropdownMenuTrigger>
@@ -316,13 +316,15 @@ const UserProfile = memo(({ className, user, subscriptionData, isProUser, isProS
                   },
                   onSuccess: () => {
                     setSigningOut(false);
+                    localStorage.clear();
                     toast.success("Signed out successfully");
                     toast.dismiss();
-                    router.push("/new");
+                    window.location.href = "/new";
                   },
                   onError: () => {
                     setSigningOut(false);
                     toast.error("Failed to sign out");
+                    window.location.reload();
                   },
                 }
               })}

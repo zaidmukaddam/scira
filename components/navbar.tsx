@@ -386,9 +386,9 @@ const Navbar = memo(({
                             hasActiveSubscription ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-                                            <Crown size={16} className="text-foreground" />
-                                            <span className="text-sm font-medium text-foreground hidden sm:inline">Pro</span>
+                                        <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-1.5 bg-muted/50 border border-border">
+                                            <Crown size={14} className="text-foreground" />
+                                            <span className="text-xs font-medium text-foreground hidden sm:inline">Pro</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" sideOffset={4}>
@@ -401,7 +401,7 @@ const Navbar = memo(({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="pointer-events-auto"
+                                            className="pointer-events-auto p-0 px-1"
                                             onClick={() => router.push("/pricing")}
                                         >
                                             <Lightning size={16} />
