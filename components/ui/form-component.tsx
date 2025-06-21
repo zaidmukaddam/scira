@@ -418,7 +418,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
         <SelectTrigger
           size="sm"
           className={cn(
-            'flex items-center gap-2 px-3 h-8 w-fit',
+            'flex items-center gap-2 w-fit',
+            'px-3 h-8', // Desktop size
+            'sm:px-3 sm:h-8', // Ensure desktop size on small screens and up
+            'px-2 h-7', // Mobile override - smaller size
             'rounded-full transition-all duration-200',
             'border border-neutral-300 dark:border-neutral-700',
             'hover:shadow-sm hover:border-neutral-400 dark:hover:border-neutral-600',
@@ -430,7 +433,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           )}
         >
           <SelectValue asChild>
-            <span className="text-xs font-medium whitespace-nowrap">{selectedModelData?.label || 'Select model'}</span>
+            <span className={cn(
+              'font-medium whitespace-nowrap',
+              'text-xs', // Desktop
+              'sm:text-xs', // Ensure desktop size on small screens and up  
+              'text-[10px]' // Mobile override - smaller text
+            )}>
+              {selectedModelData?.label || 'Select model'}
+            </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
@@ -2429,16 +2439,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
               {/* Toolbar as a separate block - no absolute positioning */}
               <div
                 className={cn(
-                  'flex justify-between items-center p-2 rounded-t-none rounded-b-lg',
+                  'flex justify-between items-center rounded-t-none rounded-b-lg',
                   'bg-neutral-100 dark:bg-neutral-900',
                   'border-t-0 border-neutral-200! dark:border-neutral-700!',
+                  'p-2 gap-1', // Reduced padding and gap for mobile
+                  isMobile ? 'px-2 py-1.5' : 'p-2', // Even smaller padding on mobile
                   isProcessing ? 'opacity-20! cursor-not-allowed!' : '',
                 )}
               >
-                <div className={cn('flex items-center gap-2', isMobile && 'overflow-hidden')}>
+                <div className={cn(
+                  'flex items-center', 
+                  isMobile ? 'gap-1 overflow-hidden flex-1 min-w-0' : 'gap-2'
+                )}>
                   <div
                     className={cn(
-                      'transition-all duration-100',
+                      'transition-all duration-100 flex-shrink-0',
                       selectedGroup !== 'extreme' ? 'opacity-100 visible w-auto' : 'opacity-0 invisible w-0',
                     )}
                   >
@@ -2452,7 +2467,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
                   <div
                     className={cn(
-                      'transition-all duration-300',
+                      'transition-all duration-300 flex-shrink-0',
                       isMobile && isGroupSelectorExpanded ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto',
                     )}
                   >
@@ -2482,7 +2497,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
                   <div
                     className={cn(
-                      'transition-all duration-300',
+                      'transition-all duration-300 flex-shrink-0',
                       isMobile && isGroupSelectorExpanded ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto',
                     )}
                   >
@@ -2574,7 +2589,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           );
                         }}
                         className={cn(
-                          'flex items-center gap-2 p-2 sm:px-3 h-8',
+                          'flex items-center p-1.5 h-7 min-w-7', // Smaller on mobile
                           'rounded-full transition-all duration-300',
                           'border border-neutral-200 dark:border-neutral-800',
                           'hover:shadow-md',
@@ -2583,14 +2598,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             : 'bg-white dark:bg-neutral-900 text-neutral-500',
                         )}
                       >
-                        <TelescopeIcon className="h-3.5 w-3.5" />
-                        <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                        <TelescopeIcon className="h-3 w-3" />
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className={cn(
+                  'flex items-center flex-shrink-0',
+                  isMobile ? 'gap-1' : 'gap-2'
+                )}>
                   {/* Voice Recording Button */}
                   {!(isMobile && isGroupSelectorExpanded) &&
                     (!isMobile ? (
@@ -2632,7 +2649,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     ) : (
                       <Button
                         className={cn(
-                          'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
+                          'rounded-full p-1 h-7 w-7 transition-colors duration-200', // Smaller on mobile
                           isRecording
                             ? 'bg-red-500 hover:bg-red-600 text-white'
                             : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
@@ -2645,7 +2662,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         variant="outline"
                         disabled={isProcessing}
                       >
-                        <MicrophoneIcon size={14} />
+                        <MicrophoneIcon size={12} className={isRecording ? 'animate-pulse bg-red-500 text-white hover:text-white' : ''} />
                       </Button>
                     ))}
 
@@ -2684,7 +2701,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </Tooltip>
                     ) : (
                       <Button
-                        className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                        className="rounded-full p-1 h-7 w-7 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600" // Smaller on mobile
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2693,7 +2710,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         variant="outline"
                         disabled={isProcessing}
                       >
-                        <PaperclipIcon size={14} />
+                        <PaperclipIcon size={12} />
                       </Button>
                     ))}
 
@@ -2723,7 +2740,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </Tooltip>
                     ) : (
                       <Button
-                        className="rounded-full p-1.5 h-8 w-8"
+                        className="rounded-full p-1 h-7 w-7" // Smaller on mobile
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2731,7 +2748,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         }}
                         variant="destructive"
                       >
-                        <StopIcon size={14} />
+                        <StopIcon size={12} />
                       </Button>
                     )
                   ) : !isMobile ? (
@@ -2765,7 +2782,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </Tooltip>
                   ) : (
                     <Button
-                      className="rounded-full p-1.5 h-8 w-8"
+                      className="rounded-full p-1 h-7 w-7" // Smaller on mobile
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -2779,7 +2796,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         isRecording
                       }
                     >
-                      <ArrowUpIcon size={14} />
+                      <ArrowUpIcon size={12} />
                     </Button>
                   )}
                 </div>
