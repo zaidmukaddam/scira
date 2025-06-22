@@ -391,6 +391,11 @@ export async function incrementMessageUsage({ userId }: { userId: string }) {
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     endOfDay.setHours(0, 0, 0, 0);
 
+    // Clean up previous day entries for this user
+    await db
+      .delete(messageUsage)
+      .where(and(eq(messageUsage.userId, userId), lt(messageUsage.date, today)));
+
     const existingUsage = await getMessageUsageByUserId({ userId });
 
     if (existingUsage) {
