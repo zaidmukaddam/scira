@@ -70,10 +70,15 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - **MCP server search**: Search for Model Context Protocol servers using Smithery Registry
 
 ### Search Groups
-- **Default**: General-purpose search with core AI capabilities
-- **Vision**: Image analysis and visual content understanding
-- **Research**: Academic papers, in-depth analysis, and scholarly content
-- **Extreme**: Advanced multi-step reasoning and comprehensive research
+- **Web**: Search across the entire internet powered by Tavily
+- **Memory**: Your personal memory companion (requires authentication)
+- **Analysis**: Code execution, stock charts, and currency conversion
+- **Chat**: Direct conversation with AI models
+- **X**: Search X (Twitter) posts
+- **Reddit**: Search Reddit posts
+- **Academic**: Search academic papers powered by Exa
+- **YouTube**: Search YouTube videos powered by Exa
+- **Extreme**: Deep research with multiple sources and analysis
 
 ## LLM Models Supported
 - **xAI**: Grok 3, Grok 3 Mini, Grok 2 Vision
