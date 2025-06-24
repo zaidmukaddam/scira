@@ -56,7 +56,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       return <p className="mb-3 last:mb-0">{text}</p>;
     },
     heading(text: ReactNode, level: number) {
-      const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+      const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const classes = {
         h1: "text-base font-bold mb-3 mt-4",
         h2: "text-sm font-bold mb-2 mt-4",

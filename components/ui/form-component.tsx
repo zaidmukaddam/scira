@@ -876,163 +876,27 @@ interface FormComponentProps {
   isLimitBlocked?: boolean;
 }
 
-interface SwitchNotificationProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  isVisible: boolean;
-  modelColor?: string;
-  notificationType?: 'model' | 'group';
-}
 
-const SwitchNotification: React.FC<SwitchNotificationProps> = ({
-  icon,
-  title,
-  description,
-  isVisible,
-  modelColor = 'default',
-  notificationType = 'model',
-}) => {
-  // Use simple neutral colors for all notifications
-  const bgColorClass = 'bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800';
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{
-            opacity: { duration: 0.2 },
-            height: { duration: 0.2 },
-          }}
-          className={cn(
-            'w-[97%] max-w-2xl overflow-hidden mx-auto z-0',
-            'text-sm text-neutral-700 dark:text-neutral-300 -mb-[0.499px]',
-          )}
-        >
-          <div
-            className={cn(
-              'flex items-center gap-2 p-2 py-1 sm:p-2.5 sm:py-2 rounded-t-lg border border-b-0 shadow-xs backdrop-blur-xs',
-              bgColorClass,
-              'text-neutral-900 dark:text-neutral-100',
-            )}
-          >
-            {icon && (
-              <span className={cn('shrink-0 size-3.5 sm:size-4', 'text-neutral-600 dark:text-neutral-400')}>
-                {icon}
-              </span>
-            )}
-            <div className="flex flex-col items-start sm:flex-row sm:items-center sm:flex-wrap gap-x-1.5 gap-y-0.5">
-              <span className="font-semibold text-xs sm:text-sm text-neutral-900 dark:text-neutral-100">{title}</span>
-              <span className="text-[10px] sm:text-xs leading-tight text-neutral-600 dark:text-neutral-400">
-                {description}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
 
 interface GroupSelectorProps {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
   status: 'submitted' | 'streaming' | 'ready' | 'error';
-  onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface ToolbarButtonProps {
-  group: SearchGroup;
-  isSelected: boolean;
-  onClick: (e: React.MouseEvent) => void;
-}
-
-const ToolbarButton = ({ group, isSelected, onClick }: ToolbarButtonProps) => {
-  const Icon = group.icon;
-  const { width } = useWindowSize();
-  const isMobile = width ? width < 768 : false;
-
-  const commonClassNames = cn(
-    'relative flex items-center justify-center',
-    'size-8',
-    'rounded-full',
-    'transition-colors duration-300',
-    isSelected
-      ? 'bg-neutral-500 dark:bg-neutral-600 text-white dark:text-neutral-300'
-      : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/80',
-  );
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onClick(e);
-  };
-
-  // Use regular button for mobile without tooltip
-  if (isMobile) {
-    return (
-      <button onClick={handleClick} className={commonClassNames} style={{ WebkitTapHighlightColor: 'transparent' }}>
-        <Icon className="size-4" />
-      </button>
-    );
-  }
-
-  // With tooltip for desktop
-  return (
-    <Tooltip delayDuration={100}>
-      <TooltipTrigger asChild>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleClick}
-          className={commonClassNames}
-        >
-          <Icon className="size-4" />
-        </motion.button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        sideOffset={6}
-        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
-      >
-        <div className="flex flex-col gap-0.5">
-          <span className="font-medium text-[11px]">{group.name}</span>
-          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">{group.description}</span>
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-};
-
-interface SelectionContentProps {
-  selectedGroup: SearchGroupId;
-  onGroupSelect: (group: SearchGroup) => void;
-  status: 'submitted' | 'streaming' | 'ready' | 'error';
-  onExpandChange?: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange }: SelectionContentProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const GroupSelector: React.FC<GroupSelectorProps> = ({
+  selectedGroup,
+  onGroupSelect,
+  status,
+}) => {
   const isProcessing = status === 'submitted' || status === 'streaming';
+  const { data: session } = useSession();
   const { width } = useWindowSize();
   const isMobile = width ? width < 768 : false;
-  const { data: session } = useSession();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Notify parent component when expansion state changes
-  useEffect(() => {
-    if (onExpandChange) {
-      // Only notify about expansion on mobile devices
-      onExpandChange(isMobile ? isExpanded : false);
-    }
-  }, [isExpanded, onExpandChange, isMobile]);
 
   // If user is not authenticated and selectedGroup is memory, switch to web
   useEffect(() => {
     if (!session && selectedGroup === 'memory') {
-      // Find a group object with id 'web'
       const webGroup = searchGroups.find((group) => group.id === 'web');
       if (webGroup) {
         onGroupSelect(webGroup);
@@ -1040,133 +904,100 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
     }
   }, [session, selectedGroup, onGroupSelect]);
 
-  // Close expansion when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsExpanded(false);
-      }
-    };
-
-    if (isExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isExpanded]);
-
   // Filter groups based on authentication status
   const visibleGroups = searchGroups.filter((group) => {
-    // Only show groups that are marked as visible
     if (!group.show) return false;
-
-    // If the group requires authentication and user is not authenticated, hide it
     if ('requireAuth' in group && group.requireAuth && !session) return false;
-
     return true;
   });
 
-  // Handle clicking to toggle expansion
-  const handleToggleExpansion = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isProcessing) {
-      setIsExpanded(!isExpanded);
-    }
-  };
+  const selectedGroupData = visibleGroups.find((group) => group.id === selectedGroup);
 
-  // Handle group selection and close expansion
-  const handleGroupSelect = (group: SearchGroup, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the container's click handler
-
-    if (group.id === selectedGroup && !isExpanded) {
-      // If clicking on the currently selected group when collapsed, expand instead
-      setIsExpanded(true);
-    } else {
-      // Otherwise, select the group and close expansion
+  const handleGroupChange = (value: string) => {
+    const group = visibleGroups.find((g) => g.id === value);
+    if (group) {
       onGroupSelect(group);
-      setIsExpanded(false);
     }
   };
 
   return (
-    <motion.div
-      ref={containerRef}
-      layout={false}
-      initial={false}
-      animate={{
-        width: isExpanded && !isProcessing ? 'auto' : '30px',
-        gap: isExpanded && !isProcessing ? '0.5rem' : 0,
-        paddingRight: isExpanded && !isProcessing ? '0.4rem' : 0,
-      }}
-      transition={{
-        duration: 0.2,
-        ease: 'easeInOut',
-      }}
-      className={cn(
-        'inline-flex items-center min-w-[38px] p-0.5',
-        'rounded-full border border-neutral-200 dark:border-neutral-800',
-        'bg-white dark:bg-neutral-900 shadow-xs overflow-visible',
-        'relative z-10',
-        isProcessing && 'opacity-50 pointer-events-none',
-        'cursor-pointer', // Add cursor pointer to indicate clickability
-      )}
-      onClick={handleToggleExpansion}
-    >
-      <TooltipProvider>
-        <AnimatePresence initial={false}>
-          {visibleGroups.map((group, index, filteredGroups) => {
-            const showItem = (isExpanded && !isProcessing) || selectedGroup === group.id;
-            const isLastItem = index === filteredGroups.length - 1;
-
-            // Only render if the item should be shown
-            if (!showItem) return null;
-
+    <Select value={selectedGroup} onValueChange={handleGroupChange} disabled={isProcessing}>
+      <SelectTrigger
+        size="sm"
+        className={cn(
+          'flex items-center gap-2 w-fit',
+          'px-3 h-8', // Desktop size
+          'sm:px-3 sm:h-8', // Ensure desktop size on small screens and up
+          'px-2 h-7', // Mobile override - smaller size
+          'rounded-full transition-all duration-200',
+          'border border-neutral-300 dark:border-neutral-700',
+          'hover:shadow-none hover:border-neutral-400 dark:hover:border-neutral-600',
+          'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100',
+          'shadow-none',
+          isProcessing && 'opacity-50 pointer-events-none',
+          'ring-0! outline-none!',
+        )}
+      >
+        <SelectValue asChild>
+          <span className={cn(
+            'font-medium whitespace-nowrap flex items-center gap-1.5',
+            'text-xs', // Desktop
+            'sm:text-xs', // Ensure desktop size on small screens and up  
+            'text-[10px]' // Mobile override - smaller text
+          )}>
+            {selectedGroupData && (
+              <>
+                <selectedGroupData.icon className={cn(
+                  'size-3.5', // Desktop
+                  'sm:size-3.5', // Ensure desktop size on small screens and up
+                  'size-3' // Mobile override - smaller icon
+                )} />
+                {selectedGroupData.name}
+              </>
+            )}
+          </span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent
+        className="w-[12em] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
+        align="start"
+        side="bottom"
+        sideOffset={4}
+      >
+        <SelectGroup>
+          <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+            Search Mode
+          </SelectLabel>
+          {visibleGroups.map((group) => {
+            const Icon = group.icon;
             return (
-              <motion.div
+              <SelectItem
                 key={group.id}
-                layout={false}
-                initial={{ width: 0, opacity: 0 }}
-                animate={{
-                  width: '32px',
-                  opacity: 1,
-                  marginRight: isLastItem && isExpanded ? '2px' : 0,
-                }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{
-                  duration: 0.15,
-                  ease: 'easeInOut',
-                }}
-                className={cn('flex-shrink-0', isLastItem && isExpanded ? 'pr-0.5' : '')}
+                value={group.id}
+                className={cn(
+                  'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
+                  'transition-all duration-200',
+                  'hover:bg-neutral-50 dark:hover:bg-neutral-800',
+                  'data-[state=checked]:bg-neutral-100 dark:data-[state=checked]:bg-neutral-800',
+                )}
               >
-                <ToolbarButton
-                  group={group}
-                  isSelected={selectedGroup === group.id}
-                  onClick={(e) => {
-                    if (!isProcessing) {
-                      handleGroupSelect(group, e);
-                    }
-                  }}
-                />
-              </motion.div>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
+                      {group.name}
+                    </div>
+                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap">
+                      {group.description}
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
             );
           })}
-        </AnimatePresence>
-      </TooltipProvider>
-    </motion.div>
-  );
-};
-
-const GroupSelector = ({ selectedGroup, onGroupSelect, status, onExpandChange }: GroupSelectorProps) => {
-  return (
-    <SelectionContent
-      selectedGroup={selectedGroup}
-      onGroupSelect={onGroupSelect}
-      status={status}
-      onExpandChange={onExpandChange}
-    />
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 };
 
@@ -1201,22 +1032,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [isGroupSelectorExpanded, setIsGroupSelectorExpanded] = useState(false);
-  const [switchNotification, setSwitchNotification] = useState<{
-    show: boolean;
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    notificationType?: 'model' | 'group';
-    visibilityTimeout?: NodeJS.Timeout;
-  }>({
-    show: false,
-    icon: null,
-    title: '',
-    description: '',
-    notificationType: 'model',
-    visibilityTimeout: undefined,
-  });
 
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -1278,44 +1093,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }
   }
 
-  const showSwitchNotification = (
-    title: string,
-    description: string,
-    icon?: React.ReactNode,
-    color?: string,
-    type: 'model' | 'group' = 'model',
-  ) => {
-    // Clear any existing timeout to prevent conflicts
-    if (switchNotification.visibilityTimeout) {
-      clearTimeout(switchNotification.visibilityTimeout);
-    }
 
-    setSwitchNotification({
-      show: true,
-      icon: icon || null,
-      title,
-      description,
-      notificationType: type,
-      visibilityTimeout: undefined,
-    });
-
-    // Auto hide after 3 seconds
-    const timeout = setTimeout(() => {
-      setSwitchNotification((prev) => ({ ...prev, show: false }));
-    }, 3000);
-
-    // Update the timeout reference
-    setSwitchNotification((prev) => ({ ...prev, visibilityTimeout: timeout }));
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (switchNotification.visibilityTimeout) {
-        clearTimeout(switchNotification.visibilityTimeout);
-      }
-    };
-  }, [switchNotification.visibilityTimeout]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
@@ -1342,14 +1120,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (group: SearchGroup) => {
       setSelectedGroup(group.id);
       inputRef.current?.focus();
-
-      showSwitchNotification(
-        group.name,
-        group.description,
-        <group.icon className="size-4" />,
-        group.id, // Use the group ID directly as the color code
-        'group', // Specify this is a group notification
-      );
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [setSelectedGroup, inputRef],
@@ -1466,13 +1236,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (compatibleModel) {
           console.log('Switching to compatible model:', compatibleModel.value);
           setSelectedModel(compatibleModel.value);
-          showSwitchNotification(
-            compatibleModel.label,
-            'Switched to a model that supports PDF documents',
-            undefined,
-            undefined,
-            'model',
-          );
         } else {
           console.warn('No PDF-compatible model found');
           toast.error('PDFs are only supported by Gemini and Claude models');
@@ -1721,13 +1484,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
           console.log('Switching to compatible model:', compatibleModel.value);
           setSelectedModel(compatibleModel.value);
           toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
-          showSwitchNotification(
-            compatibleModel.label,
-            'Switched to a model that supports PDF documents',
-            undefined,
-            undefined,
-            'model',
-          );
         } else {
           console.warn('No PDF-compatible model found');
           toast.error('PDFs are only supported by Gemini and Claude models');
@@ -1811,15 +1567,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setSelectedModel(visionModel);
 
         const modelData = models.find((m) => m.value === visionModel);
-        if (modelData) {
-          showSwitchNotification(
-            modelData.label,
-            `Vision model enabled - you can now attach images${modelData.pdf ? ' and PDFs' : ''}`,
-            undefined,
-            undefined,
-            'model', // Explicitly mark as model notification
-          );
-        }
       }
 
       // Set upload queue immediately
@@ -1907,16 +1654,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setSelectedModel(visionModel);
 
         const modelData = models.find((m) => m.value === visionModel);
-        if (modelData) {
-          const supportsPdfs = supportsPdfAttachments(visionModel);
-          showSwitchNotification(
-            modelData.label,
-            `Vision model enabled - you can now attach images${supportsPdfs ? ' and PDFs' : ''}`,
-            undefined,
-            undefined,
-            'model', // Explicitly mark as model notification
-          );
-        }
       }
 
       // Use filtered files if we found oversized ones
@@ -2231,17 +1968,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             </div>
           )}
 
-          {/* Form container with switch notification */}
+          {/* Form container */}
           <div className="relative">
-            <SwitchNotification
-              icon={switchNotification.icon}
-              title={switchNotification.title}
-              description={switchNotification.description}
-              isVisible={switchNotification.show}
-              modelColor={selectedGroup}
-              notificationType={switchNotification.notificationType}
-            />
-
             <div className="rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
               {isRecording ? (
                 <Textarea
@@ -2356,14 +2084,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       selectedGroup={selectedGroup}
                       onGroupSelect={handleGroupSelect}
                       status={status}
-                      onExpandChange={setIsGroupSelectorExpanded}
                     />
                   </div>
 
                   <div
                     className={cn(
                       'transition-all duration-300 flex-shrink-0',
-                      isMobile && isGroupSelectorExpanded ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto',
+                      'opacity-100 visible w-auto',
                     )}
                   >
                     <ModelSwitcher
@@ -2375,15 +2102,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       onModelSelect={(model) => {
                         // Show additional info about image attachments for vision models
                         const isVisionModel = model.vision === true;
-                        showSwitchNotification(
-                          model.label,
-                          isVisionModel
-                            ? 'Vision model enabled - you can now attach images and PDFs'
-                            : model.description,
-                          undefined,
-                          undefined,
-                          'model', // Explicitly mark as model notification
-                        );
+                       
                       }}
                       subscriptionData={subscriptionData}
                       user={user}
@@ -2393,7 +2112,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   <div
                     className={cn(
                       'transition-all duration-300 flex-shrink-0',
-                      isMobile && isGroupSelectorExpanded ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto',
+                      'opacity-100 visible w-auto',
                     )}
                   >
                     {!isMobile ? (
@@ -2414,18 +2133,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                   ? 'Standard web search mode is now active'
                                   : 'Enhanced deep research mode is now active';
 
-                              // Use appropriate colors for groups that don't conflict with model colors
-                              showSwitchNotification(
-                                newModeText,
-                                description,
-                                selectedGroup === 'extreme' ? (
-                                  <Globe className="size-4" />
-                                ) : (
-                                  <TelescopeIcon className="size-4" />
-                                ),
-                                newMode, // Use the new mode as the color identifier
-                                'group', // Specify this is a group notification
-                              );
+                              
                             }}
                             className={cn(
                               'flex items-center gap-2 p-2 sm:px-3 h-8',
@@ -2471,17 +2179,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                               : 'Enhanced deep research mode is now active';
 
                           // Use appropriate colors for groups that don't conflict with model colors
-                          showSwitchNotification(
-                            newModeText,
-                            description,
-                            selectedGroup === 'extreme' ? (
-                              <Globe className="size-4" />
-                            ) : (
-                              <TelescopeIcon className="size-4" />
-                            ),
-                            newMode, // Use the new mode as the color identifier
-                            'group', // Specify this is a group notification
-                          );
+                          
                         }}
                         className={cn(
                           'flex items-center p-1.5 h-7 min-w-7', // Smaller on mobile
@@ -2504,7 +2202,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   isMobile ? 'gap-1' : 'gap-2'
                 )}>
                   {/* Voice Recording Button */}
-                  {!(isMobile && isGroupSelectorExpanded) &&
+                  {
                     (!isMobile ? (
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger asChild>
@@ -2562,7 +2260,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     ))}
 
                   {hasVisionSupport(selectedModel) &&
-                    !(isMobile && isGroupSelectorExpanded) &&
+                    !(isMobile) &&
                     (!isMobile ? (
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger asChild>

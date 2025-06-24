@@ -477,7 +477,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         : <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">{text}</a>;
     },
     heading(children, level) {
-      const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+      const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const sizeClasses = {
         1: "text-2xl md:text-3xl font-extrabold mt-4 mb-4",
         2: "text-xl md:text-2xl font-bold mt-4 mb-3",

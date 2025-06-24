@@ -106,7 +106,7 @@ export async function getCurrentUser() {
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-g2'),
+    model: scira.languageModel('scira-llama-4'),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long

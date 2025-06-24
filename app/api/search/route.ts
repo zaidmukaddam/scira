@@ -8,7 +8,7 @@ import {
 } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
-import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
+import { Daytona } from '@daytonaio/sdk';
 import { tavily } from '@tavily/core';
 import {
   convertToCoreMessages,
@@ -473,12 +473,12 @@ export async function POST(req: Request) {
           openai: {
             ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
-                  reasoningEffort: 'low',
+                  reasoningEffort: 'medium',
                   strictSchemas: true,
                   reasoningSummary: 'detailed',
                 }
               : {}),
-            ...(model === 'scira-4o'
+            ...(model === 'scira-4o-mini'
               ? {
                   parallelToolCalls: false,
                   strictSchemas: true,
@@ -759,7 +759,7 @@ plt.show()`;
 
               const daytona = new Daytona({
                 apiKey: serverEnv.DAYTONA_API_KEY,
-                target: SandboxTargetRegion.US,
+                target: 'us',
               });
               const sandbox = await daytona.create({
                 image: 'scira-analysis:1749316515',
@@ -856,7 +856,7 @@ print(f"Converted amount: {converted_amount}")
 
               const daytona = new Daytona({
                 apiKey: serverEnv.DAYTONA_API_KEY,
-                target: SandboxTargetRegion.US,
+                target: 'us',
               });
               const sandbox = await daytona.create({
                 image: 'scira-analysis:1749316515',
@@ -1713,18 +1713,22 @@ print(f"Converted amount: {converted_amount}")
 
               const daytona = new Daytona({
                 apiKey: serverEnv.DAYTONA_API_KEY,
-                target: SandboxTargetRegion.US,
+                target: 'us',
               });
-              const sandbox = await daytona.create({
-                image: 'scira-analysis:1749316515',
-                language: 'python',
-                resources: {
-                  cpu: 4,
-                  memory: 8,
-                  disk: 10,
+              const sandbox = await daytona.create(
+                {
+                  image: 'scira-analysis:1749316515',
+                  language: 'python',
+                  resources: {
+                    cpu: 4,
+                    memory: 8,
+                    disk: 10,
+                  },
                 },
-                timeout: 300,
-              });
+                {
+                  timeout: 300,
+                },
+              );
 
               const execution = await sandbox.process.codeRun(code);
 

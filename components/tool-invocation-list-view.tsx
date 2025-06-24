@@ -1461,7 +1461,7 @@ const ToolInvocationListView = memo(
                     // Live Clock component that updates every second
                     const LiveClock = memo(() => {
                         const [time, setTime] = useState(() => new Date());
-                        const timerRef = useRef<NodeJS.Timeout>();
+                        const timerRef = useRef<NodeJS.Timeout | null>(null);
 
                         useEffect(() => {
                             // Sync with the nearest second

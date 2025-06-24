@@ -9,14 +9,14 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 
 // Third-party library imports
 import { useChat, UseChatOptions } from '@ai-sdk/react';
-import { Crown, Sparkle, Check } from '@phosphor-icons/react';
+import { Crown, Sparkle } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 // Internal app imports
-import { getCurrentUser, suggestQuestions, updateChatVisibility, getSubDetails } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility } from '@/app/actions';
 
 // Component imports
 import { ChatHistoryDialog } from '@/components/chat-history-dialog';
@@ -36,7 +36,6 @@ import { useProUserStatus } from '@/hooks/use-user-data';
 
 // Utility and type imports
 import { SEARCH_LIMITS } from '@/lib/constants';
-import { User } from '@/lib/db/schema';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
 
@@ -169,7 +168,7 @@ const ChatInterface = memo(
     initialMessages,
     initialVisibility = 'private',
     isOwner = true,
-  }: ChatInterfaceProps): JSX.Element => {
+  }: ChatInterfaceProps): React.JSX.Element => {
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
@@ -196,8 +195,8 @@ const ChatInterface = memo(
     const bottomRef = useRef<HTMLDivElement>(null);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null!);
+    const inputRef = useRef<HTMLTextAreaElement>(null!);
     const initializedRef = useRef(false);
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
     const [hasSubmitted, setHasSubmitted] = React.useState(false);

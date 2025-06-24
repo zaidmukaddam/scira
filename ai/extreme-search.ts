@@ -6,7 +6,7 @@
 // ----> Return all collected sources and research data to the user
 
 import Exa from "exa-js";
-import { Daytona, SandboxTargetRegion } from '@daytonaio/sdk';
+import { Daytona } from '@daytonaio/sdk';
 import { DataStreamWriter, generateObject, generateText, tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
@@ -40,11 +40,12 @@ const pythonLibsAvailable = [
 
 const daytona = new Daytona({
     apiKey: serverEnv.DAYTONA_API_KEY,
-    target: SandboxTargetRegion.US,
+    target: 'us',
 });
 
 const runCode = async (code: string, installLibs: string[] = []) => {
     const sandbox = await daytona.create({
+        image: 'scira-analysis:1749316515',
         language: 'python',
         resources: {
             cpu: 2,
