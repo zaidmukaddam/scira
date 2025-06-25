@@ -21,10 +21,10 @@ import { TextLoop } from '@/components/core/text-loop';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { TavilyLogo } from '@/components/logos/tavily-logo';
+import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
 import { useRouter } from 'next/navigation';
 import { GithubLogo, XLogo } from '@phosphor-icons/react';
 import { Badge } from "@/components/ui/badge"
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { ProAccordion, ProAccordionItem, ProAccordionTrigger, ProAccordionContent } from "@/components/ui/pro-accordion"
 
 const container = {
@@ -374,34 +374,95 @@ export default function AboutPage() {
             </section>
 
             {/* Powered By Section */}
-            <section className="py-24 px-4 bg-background">
-                <div className="container max-w-screen-xl mx-auto">
+            <section className="py-24 px-4 bg-gradient-to-b from-background to-accent/10">
+                <div className="container max-w-screen-2xl mx-auto !w-full">
                     <motion.div 
-                        className="max-w-3xl mx-auto space-y-12"
+                        className="max-w-6xl mx-auto space-y-16"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                     >
-                        <div className="text-center space-y-4">
-                            <h2 className="text-3xl font-medium tracking-tight">Powered By</h2>
-                            <p className="text-muted-foreground max-w-2xl mx-auto">
-                                Built with cutting-edge technology from industry leaders
-                            </p>
+                        <div className="text-center space-y-6">
+                            <motion.h2 
+                                className="text-4xl font-medium tracking-tight"
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                Powered By Industry Leaders
+                            </motion.h2>
+                            <motion.p 
+                                className="text-muted-foreground max-w-3xl mx-auto text-lg leading-relaxed"
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                Built with cutting-edge technology from the world&apos;s most innovative companies
+                            </motion.p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-8 rounded-xl bg-card border border-border flex flex-col items-center justify-center gap-4 shadow-sm">
-                                <VercelLogo />
-                                <p className="text-muted-foreground text-center">
-                                    Powered by Vercel&apos;s AI SDK
-                                </p>
-                            </div>
-                            <div className="p-8 rounded-xl bg-card border border-border flex flex-col items-center justify-center gap-4 shadow-sm">
-                                <TavilyLogo />
-                                <p className="text-muted-foreground text-center">
-                                    Search grounding powered by Tavily AI
-                                </p>
-                            </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+                            <motion.div 
+                                className="group relative p-12 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 flex flex-col items-center justify-center gap-8 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[240px] overflow-hidden"
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+                                    <VercelLogo />
+                                </div>
+                                <div className="relative z-10 text-center space-y-2">
+                                    <h3 className="font-semibold text-lg">Vercel AI SDK</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Advanced AI framework powering intelligent responses
+                                    </p>
+                                </div>
+                            </motion.div>
+                            
+                            <motion.div 
+                                className="group relative p-12 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 flex flex-col items-center justify-center gap-8 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[240px] overflow-hidden"
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+                                    <TavilyLogo />
+                                </div>
+                                <div className="relative z-10 text-center space-y-2">
+                                    <h3 className="font-semibold text-lg">Tavily Search</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Real-time search grounding with reliable sources
+                                    </p>
+                                </div>
+                            </motion.div>
+                            
+                            <motion.div 
+                                className="group relative p-12 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 flex flex-col items-center justify-center gap-8 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[240px] overflow-hidden"
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+                                    <ElevenLabsLogo />
+                                </div>
+                                <div className="relative z-10 text-center space-y-2">
+                                    <h3 className="font-semibold text-lg">ElevenLabs Voice</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Natural voice synthesis with human-like quality
+                                    </p>
+                                </div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 </div>
