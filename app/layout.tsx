@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { BotIdClient } from 'botid/client';
 import { Geist } from 'next/font/google';
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -85,6 +86,17 @@ const geist = Geist({
   display: 'swap',
 });
 
+const protectedRoutes = [
+  {
+    path: '/api/search',
+    method: 'POST',
+  },
+  {
+    path: '/api/auth',
+    method: 'POST',
+  }
+];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -92,6 +104,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <BotIdClient protect={protectedRoutes} />
+      </head>
       <body className={`${geist.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>

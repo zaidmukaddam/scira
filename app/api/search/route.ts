@@ -47,6 +47,7 @@ import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 import { getTweet } from 'react-tweet/api';
+import { checkBotId } from 'botid/server';
 
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
@@ -311,6 +312,11 @@ const exa = new Exa(serverEnv.EXA_API_KEY);
 export async function POST(req: Request) {
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
+  const verification = await checkBotId();
+
+  if (verification.isBot && !verification.isGoodBot) {
+    return new ChatSDKError('forbidden:api', 'Bot access denied').toResponse();
+  }
 
   console.log('--------------------------------');
   console.log('Location: ', latitude, longitude);
@@ -914,14 +920,16 @@ print(f"Converted amount: {converted_amount}")
           x_search: tool({
             description: 'Search X (formerly Twitter) posts using xAI Live Search.',
             parameters: z.object({
-              query: z.string().describe('The search query for X posts'),
+              query: z.string().describe('The search query for X posts').nullable(),
               startDate: z
                 .string()
+                .nullable()
                 .describe(
                   'The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)',
                 ),
               endDate: z
                 .string()
+                .nullable()
                 .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
               xHandles: z
                 .array(z.string())
@@ -938,18 +946,18 @@ print(f"Converted amount: {converted_amount}")
               xHandles,
               maxResults = 15,
             }: {
-              query: string;
-              startDate: string;
-              endDate: string;
+              query: string | null;
+              startDate: string | null;
+              endDate: string | null;
               xHandles: string[] | null;
               maxResults: number | null;
             }) => {
               try {
                 const searchParameters: any = {
                   mode: 'on',
-                  from_date: startDate,
-                  to_date: endDate,
-                  max_search_results: maxResults! < 5 ? 5 : maxResults,
+                  ...(startDate && { from_date: startDate }),
+                  ...(endDate && { to_date: endDate }),
+                  ...(maxResults && { max_search_results: maxResults }),
                   return_citations: true,
                   sources: [
                     xHandles && xHandles.length > 0
@@ -968,8 +976,7 @@ print(f"Converted amount: {converted_amount}")
                     Authorization: `Bearer ${serverEnv.XAI_API_KEY}`,
                   },
                   body: JSON.stringify({
-                    model: 'grok-3-mini',
-                    temperature: 0.5,
+                    model: 'grok-3-latest',
                     messages: [
                       {
                         role: 'system',
@@ -977,7 +984,7 @@ print(f"Converted amount: {converted_amount}")
                       },
                       {
                         role: 'user',
-                        content: `${query}.`,
+                        content: `${query}`,
                       },
                     ],
                     search_parameters: searchParameters,

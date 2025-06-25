@@ -67,6 +67,7 @@
     "ai": "^4.3.16",
     "axios": "^1.10.0",
     "better-auth": "^1.2.10",
+    "botid": "^1.2.0",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

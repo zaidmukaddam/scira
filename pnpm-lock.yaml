@@ -173,6 +173,9 @@ importers:
       better-auth:
         specifier: ^1.2.10
         version: 1.2.10
+      botid:
+        specifier: ^1.2.0
+        version: 1.2.0(@aws-sdk/credential-provider-web-identity@3.835.0)(next@15.4.0-canary.94(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       canvas-confetti:
         specifier: ^1.9.3
         version: 1.9.3
@@ -3558,6 +3561,15 @@ packages:
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
+
+  botid@1.2.0:
+    resolution: {integrity: sha512-dqrQFLYe0uj9l9yvcunxbcn847dZrPD7cmGrITAU3v8S6Hu8Atdc7mEG97pdYfP2cqzJicLMvdVkKu9PCNqDpw==}
+    peerDependencies:
+      next: '*'
+      react: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      next:
+        optional: true
 
   bowser@2.11.0:
     resolution: {integrity: sha512-AlcaJBi/pqqJBIQ8U9Mcpc9i8Aqxn88Skv5d+xBX006BY5u8N3mGLHa5Lgppa7L/HfwgwLgZ6NYs+Ag6uUmJRA==}
@@ -10606,6 +10618,15 @@ snapshots:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.2
+
+  botid@1.2.0(@aws-sdk/credential-provider-web-identity@3.835.0)(next@15.4.0-canary.94(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0):
+    dependencies:
+      '@vercel/functions': 2.2.2(@aws-sdk/credential-provider-web-identity@3.835.0)
+      react: 19.1.0
+    optionalDependencies:
+      next: 15.4.0-canary.94(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-web-identity'
 
   bowser@2.11.0: {}
 

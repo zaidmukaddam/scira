@@ -113,6 +113,9 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case 'rate_limit:model':
       return 'You have reached the usage limit for this AI model. Upgrade to Pro for unlimited access.';
 
+    case 'forbidden:api':
+      return 'Access denied';
+
     default:
       return 'Something went wrong. Please try again later.';
   }
