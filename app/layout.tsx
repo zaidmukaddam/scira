@@ -94,7 +94,23 @@ const protectedRoutes = [
   {
     path: '/api/auth',
     method: 'POST',
-  }
+  },
+  {
+    path: '/api/upload',
+    method: 'POST',
+  },
+  {
+    path: '/api/subscription',
+    method: 'POST',
+  },
+  {
+    path: '/api/subscription',
+    method: 'GET',
+  },
+  {
+    path: '/api/transcribe',
+    method: 'POST',
+  },
 ];
 
 export default function RootLayout({

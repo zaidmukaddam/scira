@@ -15,13 +15,13 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
-    optimizePackageImports: ['@phosphor-icons/react'],
+    optimizePackageImports: ['@phosphor-icons/react', 'botid', '@elevenlabs/elevenlabs-js', '@daytonaio/sdk',],
     nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '10mb',
     },
     staleTimes: {
-      dynamic: 30, 
+      dynamic: 30,
       static: 180,
     },
   },
