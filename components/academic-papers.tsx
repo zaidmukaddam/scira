@@ -1,15 +1,15 @@
-import { Book, Calendar, Download, FileText, User2 } from "lucide-react";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import React from "react";
+import { Book, Calendar, Download, FileText, User2 } from 'lucide-react';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import React from 'react';
 
 // CSS for the masking effect
 const styles = {
   maskBottom: {
     WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
     maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
-  }
+  },
 };
 
 interface AcademicResult {
@@ -59,11 +59,8 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 rounded-md text-neutral-700 dark:text-neutral-300">
                         <User2 className="h-3 w-3 text-violet-500" />
                         <span className="line-clamp-1">
-                          {paper.author.split(';')
-                            .slice(0, 2)
-                            .join(', ') +
-                            (paper.author.split(';').length > 2 ? ' et al.' : '')
-                          }
+                          {paper.author.split(';').slice(0, 2).join(', ') +
+                            (paper.author.split(';').length > 2 ? ' et al.' : '')}
                         </span>
                       </div>
                     )}
@@ -78,9 +75,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
 
                   <div className="flex-1 mb-3 overflow-hidden relative">
                     <div className="h-full pr-1 overflow-y-auto" style={styles.maskBottom}>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                        {paper.summary}
-                      </p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">{paper.summary}</p>
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-white dark:from-neutral-900 to-transparent pointer-events-none" />
                   </div>
@@ -118,4 +113,4 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
 };
 
 // Memoize the component for better performance
-export default React.memo(AcademicPapersCard); 
+export default React.memo(AcademicPapersCard);

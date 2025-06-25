@@ -25,7 +25,7 @@ export async function getDiscountConfig(): Promise<DiscountConfig> {
 
   try {
     const edgeDiscountConfig = await get('discount');
-    
+
     if (edgeDiscountConfig && typeof edgeDiscountConfig === 'object') {
       const config = {
         enabled: Boolean((edgeDiscountConfig as any).enabled),
@@ -40,12 +40,12 @@ export async function getDiscountConfig(): Promise<DiscountConfig> {
         buttonText: (edgeDiscountConfig as any).buttonText,
         variant: (edgeDiscountConfig as any).variant || 'default',
       };
-      
+
       // Check if discount has expired
       if (config.expiresAt && config.expiresAt < new Date()) {
         return defaultConfig;
       }
-      
+
       // Only return if enabled and has required fields
       if (config.enabled && config.code && config.message) {
         return config;

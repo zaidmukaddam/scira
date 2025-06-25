@@ -788,15 +788,11 @@ const ChatInterface = memo(
 
             {/* Only show form if user owns the chat OR it's a new private chat */}
             {(messages.length > 0 || hasSubmitted) &&
-              // Show form only if:
-              // 1. User is authenticated AND owns the chat, OR
-              // 2. It's a private chat with no initial chat ID (new chat), OR
-              // 3. User is not authenticated but it's a private chat (anonymous private session)
               ((user && isOwner) ||
                 (selectedVisibilityType === 'private' && !initialChatId) ||
                 (!user && selectedVisibilityType === 'private')) &&
               !isLimitBlocked && (
-                <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
+                <div className="fixed bottom-6 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
                   <FormComponent
                     chatId={chatId}
                     input={input}

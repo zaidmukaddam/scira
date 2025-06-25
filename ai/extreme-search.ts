@@ -103,7 +103,7 @@ const searchWeb = async (
             } : {}),
         });
         console.log(`searchWeb received ${results.length} results from Exa API`);
-        
+
         const mappedResults = results.map((r) => ({
             title: r.title,
             url: r.url,
@@ -111,7 +111,7 @@ const searchWeb = async (
             publishedDate: r.publishedDate,
             favicon: r.favicon,
         })) as SearchResult[];
-        
+
         console.log(`searchWeb returning ${mappedResults.length} results`);
         return mappedResults;
     } catch (error) {
@@ -134,7 +134,7 @@ const getContents = async (links: string[]) => {
             },
         );
         console.log(`getContents received ${result.results.length} results from Exa API`);
-        
+
         const mappedResults = result.results.map(r => ({
             title: r.title,
             url: r.url,
@@ -142,7 +142,7 @@ const getContents = async (links: string[]) => {
             publishedDate: r.publishedDate,
             favicon: r.favicon,
         }));
-        
+
         console.log(`getContents returning ${mappedResults.length} mapped results`);
         return mappedResults;
     } catch (error) {
@@ -372,8 +372,7 @@ ${JSON.stringify(plan.plan)}
                                         content: {
                                             title: content.title,
                                             url: content.url,
-                                            text: content.content.slice(0, 300) + "...", // Truncate for annotation
-                                            full: content.content
+                                            text: content.content.slice(0, 500) + "...", // Truncate for annotation
                                         }
                                     });
                                 });

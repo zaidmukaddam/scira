@@ -211,7 +211,7 @@ export async function POST(req: Request) {
                             max_search_results: maxResults,
                             return_citations: true,
                             sources: [
-                                xHandles && xHandles.length > 0 
+                                xHandles && xHandles.length > 0
                                     ? { type: "x", x_handles: xHandles }
                                     : { type: "x" }
                             ]
@@ -240,7 +240,7 @@ export async function POST(req: Request) {
                         }
 
                         const data = await response.json();
-                        
+
                         return {
                             content: data.choices[0]?.message?.content || '',
                             citations: data.citations || [],

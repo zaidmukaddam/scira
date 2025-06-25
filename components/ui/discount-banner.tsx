@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { X, Copy, Check, Question } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DiscountConfig } from '@/lib/discount';
 import { cn } from '@/lib/utils';
@@ -15,12 +14,7 @@ interface DiscountBannerProps {
   className?: string;
 }
 
-export function DiscountBanner({
-  discountConfig,
-  onClose,
-  onClaim,
-  className
-}: DiscountBannerProps) {
+export function DiscountBanner({ discountConfig, onClose, onClaim, className }: DiscountBannerProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
@@ -80,19 +74,19 @@ export function DiscountBanner({
         originalPrice: discountConfig.originalPrice,
         firstMonthPrice: discountConfig.firstMonthPrice,
         savings: discountConfig.originalPrice - discountConfig.firstMonthPrice,
-        isFirstMonthOnly: true
+        isFirstMonthOnly: true,
       };
     }
-    
+
     if (discountConfig.finalPrice && discountConfig.originalPrice) {
       return {
         originalPrice: discountConfig.originalPrice,
         finalPrice: discountConfig.finalPrice,
         savings: discountConfig.originalPrice - discountConfig.finalPrice,
-        isFirstMonthOnly: false
+        isFirstMonthOnly: false,
       };
     }
-    
+
     if (discountConfig.percentage && discountConfig.originalPrice) {
       const savings = (discountConfig.originalPrice * discountConfig.percentage) / 100;
       const finalPrice = discountConfig.originalPrice - savings;
@@ -101,10 +95,10 @@ export function DiscountBanner({
         finalPrice: finalPrice,
         firstMonthPrice: discountConfig.isFirstMonthOnly ? finalPrice : undefined,
         savings: savings,
-        isFirstMonthOnly: discountConfig.isFirstMonthOnly || false
+        isFirstMonthOnly: discountConfig.isFirstMonthOnly || false,
       };
     }
-    
+
     return null;
   };
 
@@ -115,10 +109,12 @@ export function DiscountBanner({
   }
 
   return (
-    <div className={cn(
-      'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden',
+        className,
+      )}
+    >
       <div className="px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
@@ -172,7 +168,7 @@ export function DiscountBanner({
                 )}
               </div>
             )}
-            
+
             {/* Action buttons and expiry */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
               {discountConfig.code && onClaim && (
@@ -189,16 +185,17 @@ export function DiscountBanner({
                     <>
                       <Copy className="h-4 w-4 flex-shrink-0" />
                       <span className="sm:hidden">Copy {discountConfig.code}</span>
-                      <span className="hidden sm:inline">Copy code: <span className="font-mono text-zinc-900 dark:text-zinc-100">{discountConfig.code}</span></span>
+                      <span className="hidden sm:inline">
+                        Copy code:{' '}
+                        <span className="font-mono text-zinc-900 dark:text-zinc-100">{discountConfig.code}</span>
+                      </span>
                     </>
                   )}
                 </button>
               )}
-              
+
               {timeLeft && timeLeft !== 'Expired' && (
-                <span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                  Expires in {timeLeft}
-                </span>
+                <span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Expires in {timeLeft}</span>
               )}
             </div>
 
@@ -220,20 +217,24 @@ export function DiscountBanner({
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Click upgrade</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Start by clicking the upgrade button</p>
+                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                            Start by clicking the upgrade button
+                          </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2.5">
                         <div className="w-5 h-5 bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-800 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0 mt-0.5">
                           2
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Find discount section</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Look for &quot;Discount&quot; on checkout page</p>
+                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                            Look for &quot;Discount&quot; on checkout page
+                          </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2.5">
                         <div className="w-5 h-5 bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-800 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0 mt-0.5">
                           3
@@ -241,18 +242,23 @@ export function DiscountBanner({
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Enter code</p>
                           <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
-                            Paste: <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 rounded">{discountConfig.code}</span>
+                            Paste:{' '}
+                            <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 rounded">
+                              {discountConfig.code}
+                            </span>
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2.5">
                         <div className="w-5 h-5 bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-800 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0 mt-0.5">
                           4
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">Click apply</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">Click &quot;Apply&quot; to activate discount</p>
+                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                            Click &quot;Apply&quot; to activate discount
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -261,7 +267,7 @@ export function DiscountBanner({
               </Accordion>
             )}
           </div>
-          
+
           {onClose && (
             <button
               onClick={handleClose}
@@ -277,4 +283,4 @@ export function DiscountBanner({
   );
 }
 
-export default DiscountBanner; 
+export default DiscountBanner;

@@ -1,14 +1,8 @@
-"use client";
+'use client';
 
 import { useEffect } from 'react';
 
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -37,7 +31,7 @@ export default function GlobalError({
             >
               ⚠️
             </div>
-            
+
             <h1
               style={{
                 fontSize: '32px',
@@ -48,7 +42,7 @@ export default function GlobalError({
             >
               Critical Error
             </h1>
-            
+
             <p
               style={{
                 fontSize: '16px',
@@ -59,7 +53,7 @@ export default function GlobalError({
             >
               A critical error occurred. Please try refreshing the page.
             </p>
-            
+
             <button
               onClick={reset}
               style={{
@@ -83,4 +77,4 @@ export default function GlobalError({
       </body>
     </html>
   );
-} 
+}

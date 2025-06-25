@@ -34,7 +34,7 @@ export interface MemoryResponse {
  */
 export async function addMemory(content: string) {
   const user = await getUser();
-  
+
   if (!user) {
     throw new Error('Authentication required');
   }
@@ -42,8 +42,8 @@ export async function addMemory(content: string) {
   try {
     const response = await memoryClient.add([{
       role: "user",
-    content: content
-    }], { 
+      content: content
+    }], {
       user_id: user.id,
       app_id: "scira"
     });
@@ -60,7 +60,7 @@ export async function addMemory(content: string) {
  */
 export async function searchMemories(query: string, page = 1, pageSize = 20): Promise<MemoryResponse> {
   const user = await getUser();
-  
+
   if (!user) {
     throw new Error('Authentication required');
   }
@@ -92,28 +92,28 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
         page: page
       })
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Search API error:', errorText);
       throw new Error(`Failed to search memories: ${response.statusText}`);
     }
-    
+
     const results = await response.json();
 
     console.log("[searchMemories] results", results);
-    
+
     // Process the results to ensure we return a consistent structure
     if (Array.isArray(results)) {
-      return { 
+      return {
         memories: results as unknown as MemoryItem[],
         total: results.length
       };
     } else if (results && typeof results === 'object' && 'memories' in results) {
       const memories = (results as any).memories || [];
-      return { 
+      return {
         memories: memories,
-        total: (results as any).total || memories.length 
+        total: (results as any).total || memories.length
       };
     }
     return { memories: [], total: 0 };
@@ -129,7 +129,7 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
  */
 export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryResponse> {
   const user = await getUser();
-  
+
   if (!user) {
     throw new Error('Authentication required');
   }
@@ -153,28 +153,28 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
         page_size: pageSize
       })
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Get memories API error:', errorText);
       throw new Error(`Failed to fetch memories: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
 
     console.log("[getAllMemories] data", data);
-    
+
     // Process the result to ensure we return a consistent structure
     if (Array.isArray(data)) {
-      return { 
+      return {
         memories: data as MemoryItem[],
         total: data.length
       };
     } else if (data && typeof data === 'object' && 'memories' in data) {
       const memories = (data as any).memories || [];
-      return { 
+      return {
         memories: memories,
-        total: (data as any).total || memories.length 
+        total: (data as any).total || memories.length
       };
     }
     return { memories: [], total: 0 };
@@ -189,7 +189,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
  */
 export async function deleteMemory(memoryId: string) {
   const user = await getUser();
-  
+
   if (!user) {
     throw new Error('Authentication required');
   }
@@ -203,13 +203,13 @@ export async function deleteMemory(memoryId: string) {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Delete memory API error:', errorText);
       throw new Error(`Failed to delete memory: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {

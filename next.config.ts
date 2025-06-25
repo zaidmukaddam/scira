@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
-            exclude: ['error'],
-          }
+          exclude: ['error'],
+        }
         : false,
   },
   experimental: {
@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
     staleTimes: {
-      dynamic: 30,
+      dynamic: 30, 
       static: 180,
     },
   },

@@ -1,34 +1,33 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Share } from 'lucide-react'
-import { useLocalStorage } from '@/hooks/use-local-storage'
-import Image from 'next/image'
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Share } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import Image from 'next/image';
 
 export function InstallPrompt() {
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [isDismissed, setIsDismissed] = useLocalStorage('installPromptDismissed', false)
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isDismissed, setIsDismissed] = useLocalStorage('installPromptDismissed', false);
 
   useEffect(() => {
-    if (isDismissed) return
+    if (isDismissed) return;
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
-      !(navigator as any).standalone && 
-      !('MSStream' in window)
-    
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(navigator as any).standalone && !('MSStream' in window);
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
     if (isIOS && !isStandalone) {
-      const timer = setTimeout(() => setShowPrompt(true), 1500)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(() => setShowPrompt(true), 1500);
+      return () => clearTimeout(timer);
     }
-  }, [isDismissed])
+  }, [isDismissed]);
 
   const handleDismiss = () => {
-    setShowPrompt(false)
-    setIsDismissed(true)
-  }
+    setShowPrompt(false);
+    setIsDismissed(true);
+  };
 
   return (
     <AnimatePresence>
@@ -42,17 +41,18 @@ export function InstallPrompt() {
         >
           <div className="flex items-start justify-between gap-3">
             {/* App Icon */}
-            <Image src="/apple-icon.png" alt="App Icon" width={40} height={40} className="rounded-md flex-shrink-0 mt-0.5" />
+            <Image
+              src="/apple-icon.png"
+              alt="App Icon"
+              width={40}
+              height={40}
+              className="rounded-md flex-shrink-0 mt-0.5"
+            />
 
             <div className="flex-grow">
-              <p className="text-sm font-semibold text-foreground">
-                Install Scira on your device
-              </p>
+              <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
-                Tap{' '}
-                <Share className="w-3 h-3 text-primary" />
-                {' '}
-                then &quot;Add to Home Screen&quot;{' '}
+                Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}
                 <span role="img" aria-label="plus icon" className="text-primary font-medium">
                   ➕
                 </span>
@@ -68,12 +68,12 @@ export function InstallPrompt() {
               aria-label="Close install prompt"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
               </svg>
             </motion.button>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
-  )
-} 
+  );
+}

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import confetti from "canvas-confetti";
+import { Button } from '@/components/ui/button';
+import { Check, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import confetti from 'canvas-confetti';
 
 export default function SuccessPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function SuccessPage() {
     confetti({
       particleCount: 100,
       spread: 70,
-      origin: { y: 0.6 }
+      origin: { y: 0.6 },
     });
 
     // Side cannons
@@ -30,7 +30,7 @@ export default function SuccessPage() {
         spread: 55,
         startVelocity: 60,
         origin: { x: 0, y: 0.5 },
-        colors: colors
+        colors: colors,
       });
       confetti({
         particleCount: 2,
@@ -38,7 +38,7 @@ export default function SuccessPage() {
         spread: 55,
         startVelocity: 60,
         origin: { x: 1, y: 0.5 },
-        colors: colors
+        colors: colors,
       });
 
       requestAnimationFrame(frame);
@@ -59,16 +59,12 @@ export default function SuccessPage() {
         </div>
 
         {/* Content */}
-        <h1 className="text-2xl font-light text-zinc-900 mb-4 tracking-tight">
-          Welcome to Scira Pro
-        </h1>
-        <p className="text-zinc-600 mb-8">
-          Your subscription is active. Start unlimited searching.
-        </p>
+        <h1 className="text-2xl font-light text-zinc-900 mb-4 tracking-tight">Welcome to Scira Pro</h1>
+        <p className="text-zinc-600 mb-8">Your subscription is active. Start unlimited searching.</p>
 
         {/* Action */}
         <Button
-          onClick={() => router.push("/")}
+          onClick={() => router.push('/')}
           className="bg-black hover:bg-zinc-800 text-white h-9 px-6 text-sm font-normal"
         >
           Start searching

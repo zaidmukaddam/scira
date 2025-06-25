@@ -7,7 +7,9 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",
-    "knip": "knip"
+    "knip": "knip",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
@@ -18,9 +20,8 @@
     "@ai-sdk/react": "^1.2.12",
     "@ai-sdk/ui-utils": "^1.2.11",
     "@ai-sdk/xai": "^1.2.16",
-    "@aws-sdk/client-s3": "^3.826.0",
     "@babel/runtime": ">=7.27.0",
-    "@daytonaio/sdk": "^0.21.3",
+    "@daytonaio/sdk": "^0.21.4",
     "@elevenlabs/elevenlabs-js": "^2.4.0",
     "@foobar404/wave": "^2.0.5",
     "@neondatabase/serverless": "^1.0.1",
@@ -89,7 +90,7 @@
     "marked-react": "^3.0.0",
     "mem0ai": "^2.1.31",
     "motion": "^12.18.1",
-    "next": "15.4.0-canary.94",
+    "next": "15.4.0-canary.95",
     "next-themes": "0.4.6",
     "nuqs": "^2.4.3",
     "postgres": "^3.4.7",

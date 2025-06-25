@@ -1,8 +1,8 @@
-import { Input } from "@/components/ui/input"; 
-import { Button } from "@/components/ui/button";
-import { Loader2, ArrowUpDown } from "lucide-react";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, ArrowUpDown } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CurrencyConverterProps {
   toolInvocation: any;
@@ -10,7 +10,7 @@ interface CurrencyConverterProps {
 }
 
 export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterProps) => {
-  const [amount, setAmount] = useState<string>(toolInvocation.args.amount || "1");
+  const [amount, setAmount] = useState<string>(toolInvocation.args.amount || '1');
   const [error, setError] = useState<string | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
 
@@ -20,7 +20,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
       setAmount(value);
       setError(null);
     } else {
-      setError("Please enter a valid number");
+      setError('Please enter a valid number');
     }
   };
 
@@ -30,13 +30,13 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
 
   const fromCurrency = isSwapped ? toolInvocation.args.to : toolInvocation.args.from;
   const toCurrency = isSwapped ? toolInvocation.args.from : toolInvocation.args.to;
-  
-  const convertedAmount = result?.convertedAmount ? 
-    (isSwapped ? 
-      (parseFloat(amount) / result.forwardRate) : 
-      (result.convertedAmount / result.amount) * parseFloat(amount)
-    ) : null;
-  
+
+  const convertedAmount = result?.convertedAmount
+    ? isSwapped
+      ? parseFloat(amount) / result.forwardRate
+      : (result.convertedAmount / result.amount) * parseFloat(amount)
+    : null;
+
   const exchangeRate = isSwapped ? result?.reverseRate : result?.forwardRate;
 
   return (
@@ -44,7 +44,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
       {/* Currency Converter - Responsive Layout */}
       <div className="flex items-center gap-3 sm:flex-row">
         {/* Mobile: Side Layout, Desktop: Horizontal Layout */}
-        
+
         {/* Currency Inputs Container - Mobile Stacked */}
         <div className="flex-1 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
           {/* From Currency Input */}
@@ -62,7 +62,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
               </span>
             </div>
           </div>
-          
+
           {/* Swap Button - Desktop Only (Hidden on Mobile) */}
           <div className="hidden sm:flex">
             <Button
@@ -74,7 +74,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
               <ArrowUpDown className="h-3.5 w-3.5 text-neutral-500" />
             </Button>
           </div>
-          
+
           {/* To Currency Output */}
           <div className="h-11 sm:h-12 px-2.5 sm:px-3 border border-neutral-200 dark:border-neutral-800 rounded-md bg-neutral-50 dark:bg-neutral-900 flex items-center sm:flex-1">
             <span className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mr-2 sm:mr-3 shrink-0">
@@ -87,14 +87,14 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
               </div>
             ) : (
               <span className="text-sm sm:text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                {convertedAmount?.toLocaleString(undefined, { 
-                  minimumFractionDigits: 2, 
-                  maximumFractionDigits: 4 
+                {convertedAmount?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 4,
                 })}
               </span>
             )}
           </div>
-          
+
           {/* Error Message */}
           <AnimatePresence>
             {error && (
@@ -131,10 +131,12 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
           className="mt-3 text-xs text-neutral-500 dark:text-neutral-400 text-center px-2"
         >
           <span className="inline-block">
-            1 {fromCurrency} = {exchangeRate?.toLocaleString(undefined, { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 4 
-            })} {toCurrency}
+            1 {fromCurrency} ={' '}
+            {exchangeRate?.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 4,
+            })}{' '}
+            {toCurrency}
           </span>
         </motion.div>
       )}

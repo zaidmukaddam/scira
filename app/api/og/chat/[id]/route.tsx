@@ -5,28 +5,26 @@ import { format } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Get chat data with user information
     const id = (await params).id;
     const chatWithUser = await getChatWithUserById({ id });
-    
+
     // Read the background image
     const bgImagePath = path.join(process.cwd(), 'public', 'og-bg.png');
     const bgImageData = await fs.promises.readFile(bgImagePath);
     const bgImageBase64 = `data:image/png;base64,${bgImageData.toString('base64')}`;
-    
+
     // Read the Scira logo
     const logoPath = path.join(process.cwd(), 'public', 'scira.png');
     const logoData = await fs.promises.readFile(logoPath);
     const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
-    
+
     // Load custom fonts
     const geistFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Geist-Regular.ttf');
     const syneFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Syne-Bold.ttf');
-    
+
     const geistFontData = await fs.promises.readFile(geistFontPath);
     const syneFontData = await fs.promises.readFile(syneFontPath);
 
@@ -61,7 +59,15 @@ export async function GET(
                 zIndex: 1,
               }}
             />
-            <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div
+              style={{
+                position: 'relative',
+                zIndex: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
               <img
                 src={logoBase64}
                 width={140}
@@ -101,7 +107,7 @@ export async function GET(
               style: 'normal',
             },
           ],
-        }
+        },
       );
     }
 
@@ -136,7 +142,7 @@ export async function GET(
               zIndex: 1,
             }}
           />
-          
+
           {/* Content container */}
           <div
             style={{
@@ -222,7 +228,7 @@ export async function GET(
               >
                 {chatWithUser.title}
               </div>
-              
+
               {/* Article metadata */}
               <div
                 style={{
@@ -240,12 +246,14 @@ export async function GET(
                   <span style={{ opacity: 0.7 }}>By</span>
                   <span style={{ fontWeight: 600 }}>{chatWithUser.userName}</span>
                 </div>
-                <div style={{ 
-                  width: '6px', 
-                  height: '6px', 
-                  backgroundColor: 'rgba(255,255,255,0.6)', 
-                  borderRadius: '50%' 
-                }} />
+                <div
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    backgroundColor: 'rgba(255,255,255,0.6)',
+                    borderRadius: '50%',
+                  }}
+                />
                 <div>{formattedDate}</div>
               </div>
             </div>
@@ -289,10 +297,10 @@ export async function GET(
             style: 'normal',
           },
         ],
-      }
+      },
     );
   } catch (error) {
     console.error('Error generating OG image:', error);
     return new Response('Error generating OG image', { status: 500 });
   }
-} 
+}

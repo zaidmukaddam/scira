@@ -6,17 +6,17 @@ import { auth } from '@/lib/auth';
 
 // File validation schema
 const FileSchema = z.object({
-  file: z
-    .instanceof(Blob)
-    .refine((file) => file.size <= 5 * 1024 * 1024, {
-      message: 'File size should be less than 5MB',
-    })
-    .refine((file) => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-      return validTypes.includes(file.type);
-    }, {
-      message: 'File type should be JPEG, PNG, GIF or PDF',
-    }),
+    file: z
+        .instanceof(Blob)
+        .refine((file) => file.size <= 5 * 1024 * 1024, {
+            message: 'File size should be less than 5MB',
+        })
+        .refine((file) => {
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+            return validTypes.includes(file.type);
+        }, {
+            message: 'File type should be JPEG, PNG, GIF or PDF',
+        }),
 });
 
 export async function POST(request: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         console.warn('Error checking authentication:', error);
         // Continue as unauthenticated
     }
-    
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -45,14 +45,14 @@ export async function POST(request: NextRequest) {
         const errorMessage = validatedFile.error.errors
             .map((error) => error.message)
             .join(', ');
-        
+
         return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     try {
         // Use a different prefix for authenticated vs unauthenticated uploads
         const prefix = isAuthenticated ? 'auth' : 'public';
-        
+
         const blob = await put(`mplx/${prefix}.${file.name.split('.').pop()}`, file, {
             access: 'public',
             addRandomSuffix: true,

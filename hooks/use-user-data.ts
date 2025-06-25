@@ -31,17 +31,17 @@ export function useSubscriptionData(user: User | null) {
 export function useProUserStatus() {
   const { data: user, isLoading: userLoading } = useUserData();
   const { data: subscriptionData, isLoading: subscriptionLoading } = useSubscriptionData(user || null);
-  
+
   const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
   const isLoading = userLoading || (user && subscriptionLoading);
-  
+
   // Helper function to check if user should have unlimited access for specific models
   const shouldBypassLimitsForModel = (selectedModel: string) => {
     // Free unlimited models for registered users
     const freeUnlimitedModels = ['scira-default', 'scira-vision'];
     return user && freeUnlimitedModels.includes(selectedModel);
   };
-  
+
   return {
     user: (user || null) as User | null,
     subscriptionData,

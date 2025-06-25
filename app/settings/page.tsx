@@ -342,7 +342,8 @@ function UsageSection() {
                 <span className="text-sm font-medium">Unlimited Access Available</span>
               </div>
               <p className="text-xs text-green-700 dark:text-green-300">
-                You have unlimited access to Grok 3 Mini and Grok 2 Vision models. Daily limits only apply to other AI models.
+                You have unlimited access to Grok 3 Mini and Grok 2 Vision models. Daily limits only apply to other AI
+                models.
               </p>
             </div>
 
@@ -361,16 +362,16 @@ function UsageSection() {
                 <span>
                   {searchCount?.count || 0} of {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used today
                 </span>
-                <span>
-                  {Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} remaining
-                </span>
+                <span>{Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} remaining</span>
               </div>
               {!usageLoading && usagePercentage > 80 && (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                     <MagnifyingGlass className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                      {usagePercentage >= 100 ? 'Daily limit reached for other models!' : 'Approaching daily limit for other models'}
+                      {usagePercentage >= 100
+                        ? 'Daily limit reached for other models!'
+                        : 'Approaching daily limit for other models'}
                     </span>
                   </div>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">

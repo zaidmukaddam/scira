@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { MonitorIcon, MoonStarIcon, SunIcon } from "lucide-react";
-import { motion } from "motion/react";
-import { useTheme } from "next-themes";
-import type { JSX } from "react";
-import React, { useEffect, useState } from "react";
+import { MonitorIcon, MoonStarIcon, SunIcon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useTheme } from 'next-themes';
+import type { JSX } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 function ThemeOption({
   icon,
@@ -22,10 +22,10 @@ function ThemeOption({
   return (
     <button
       className={cn(
-        "relative flex size-7 cursor-default items-center justify-center rounded-full transition-all [&_svg]:size-4",
+        'relative flex size-7 cursor-default items-center justify-center rounded-full transition-all [&_svg]:size-4',
         isActive
-          ? "text-zinc-950 dark:text-zinc-50"
-          : "text-zinc-400 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-50"
+          ? 'text-zinc-950 dark:text-zinc-50'
+          : 'text-zinc-400 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-50',
       )}
       role="radio"
       aria-checked={isActive}
@@ -37,7 +37,7 @@ function ThemeOption({
       {isActive && (
         <motion.div
           layoutId="theme-option"
-          transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
+          transition={{ type: 'spring', bounce: 0.3, duration: 0.6 }}
           className="absolute inset-0 rounded-full border border-zinc-200 dark:border-zinc-700"
         />
       )}
@@ -48,15 +48,15 @@ function ThemeOption({
 const THEME_OPTIONS = [
   {
     icon: <MonitorIcon />,
-    value: "system",
+    value: 'system',
   },
   {
     icon: <SunIcon />,
-    value: "light",
+    value: 'light',
   },
   {
     icon: <MoonStarIcon />,
-    value: "dark",
+    value: 'dark',
   },
 ];
 

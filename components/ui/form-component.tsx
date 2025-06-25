@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown, LockIcon, MicrophoneIcon } from '@phosphor-icons/react';
+import { Crown, LockIcon, MicrophoneIcon, Cpu } from '@phosphor-icons/react';
 import {
   Select,
   SelectContent,
@@ -143,7 +143,7 @@ const models = [
   },
   {
     value: 'scira-google',
-    label: 'Gemini 2.5 Flash (Thinking)',
+    label: 'Gemini 2.5 Flash',
     description: "Google's advanced small reasoning model",
     vision: true,
     reasoning: true,
@@ -154,7 +154,7 @@ const models = [
   },
   {
     value: 'scira-google-pro',
-    label: 'Gemini 2.5 Pro (Preview)',
+    label: 'Gemini 2.5 Pro',
     description: "Google's advanced reasoning model",
     vision: true,
     reasoning: true,
@@ -314,9 +314,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           size="sm"
           className={cn(
             'flex items-center gap-2 w-fit',
-            'px-3 h-8', // Desktop size
-            'sm:px-3 sm:h-8', // Ensure desktop size on small screens and up
-            'px-2 h-7', // Mobile override - smaller size
+            'px-3 h-8',
             'rounded-full transition-all duration-200',
             'border border-neutral-300 dark:border-neutral-700',
             'hover:shadow-none hover:border-neutral-400 dark:hover:border-neutral-600',
@@ -328,13 +326,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           )}
         >
           <SelectValue asChild>
-            <span className={cn(
-              'font-medium whitespace-nowrap',
-              'text-xs', // Desktop
-              'sm:text-xs', // Ensure desktop size on small screens and up  
-              'text-[10px]' // Mobile override - smaller text
-            )}>
-              {selectedModelData?.label || 'Select model'}
+            <span className="flex items-center">
+              <Cpu className="size-3.5 text-neutral-600 dark:text-neutral-400" />
             </span>
           </SelectValue>
         </SelectTrigger>
@@ -876,23 +869,15 @@ interface FormComponentProps {
   isLimitBlocked?: boolean;
 }
 
-
-
 interface GroupSelectorProps {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
   status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
-const GroupSelector: React.FC<GroupSelectorProps> = ({
-  selectedGroup,
-  onGroupSelect,
-  status,
-}) => {
+const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSelect, status }) => {
   const isProcessing = status === 'submitted' || status === 'streaming';
   const { data: session } = useSession();
-  const { width } = useWindowSize();
-  const isMobile = width ? width < 768 : false;
 
   // If user is not authenticated and selectedGroup is memory, switch to web
   useEffect(() => {
@@ -926,9 +911,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         size="sm"
         className={cn(
           'flex items-center gap-2 w-fit',
-          'px-3 h-8', // Desktop size
-          'sm:px-3 sm:h-8', // Ensure desktop size on small screens and up
-          'px-2 h-7', // Mobile override - smaller size
+          'px-3 h-8',
           'rounded-full transition-all duration-200',
           'border border-neutral-300 dark:border-neutral-700',
           'hover:shadow-none hover:border-neutral-400 dark:hover:border-neutral-600',
@@ -939,19 +922,10 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         )}
       >
         <SelectValue asChild>
-          <span className={cn(
-            'font-medium whitespace-nowrap flex items-center gap-1.5',
-            'text-xs', // Desktop
-            'sm:text-xs', // Ensure desktop size on small screens and up  
-            'text-[10px]' // Mobile override - smaller text
-          )}>
+          <span className={cn('font-medium whitespace-nowrap flex items-center gap-1.5', 'text-xs')}>
             {selectedGroupData && (
               <>
-                <selectedGroupData.icon className={cn(
-                  'size-3.5', // Desktop
-                  'sm:size-3.5', // Ensure desktop size on small screens and up
-                  'size-3' // Mobile override - smaller icon
-                )} />
+                <selectedGroupData.icon className={cn('size-3.5')} />
                 {selectedGroupData.name}
               </>
             )}
@@ -1092,8 +1066,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
     }
   }
-
-
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
@@ -1799,9 +1771,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     onSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>);
     resetSuggestedQuestions();
 
-    if (width && width > 768) {
-      inputRef.current?.focus();
-    }
+    inputRef.current?.focus();
   }, [onSubmit, resetSuggestedQuestions, width, inputRef]);
 
   const triggerFileInput = useCallback(() => {
@@ -1833,11 +1803,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
           toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
         } else {
           submitForm();
-          if (width && width > 768) {
-            setTimeout(() => {
-              inputRef.current?.focus();
-            }, 100);
-          }
+          setTimeout(() => {
+            inputRef.current?.focus();
+          }, 100);
         }
       }
     }
@@ -1845,7 +1813,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const isProcessing = status === 'submitted' || status === 'streaming';
   const hasInteracted = messages.length > 0;
-  const isMobile = width ? width < 768 : false;
 
   // Auto-resize function for textarea
   const resizeTextarea = useCallback(() => {
@@ -1857,7 +1824,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     target.style.height = 'auto';
 
     const scrollHeight = target.scrollHeight;
-    const maxHeight = width && width < 768 ? 200 : 300;
+    const maxHeight = 300;
 
     if (scrollHeight > maxHeight) {
       target.style.height = `${maxHeight}px`;
@@ -1993,7 +1960,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   style={{
                     WebkitUserSelect: 'text',
                     WebkitTouchCallout: 'none',
-                    minHeight: width && width < 768 ? '40px' : undefined,
+                    minHeight: undefined,
                     resize: 'none',
                   }}
                   rows={1}
@@ -2015,7 +1982,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     target.style.height = 'auto';
 
                     const scrollHeight = target.scrollHeight;
-                    const maxHeight = width && width < 768 ? 200 : 300; // Increased max height for desktop
+                    const maxHeight = 300; // Increased max height for desktop
 
                     if (scrollHeight > maxHeight) {
                       target.style.height = `${maxHeight}px`;
@@ -2047,11 +2014,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   style={{
                     WebkitUserSelect: 'text',
                     WebkitTouchCallout: 'none',
-                    minHeight: width && width < 768 ? '40px' : undefined,
+                    minHeight: undefined,
                     resize: 'none',
                   }}
                   rows={1}
-                  autoFocus={width ? width > 768 : true}
+                  autoFocus={true}
                   onCompositionStart={() => (isCompositionActive.current = true)}
                   onCompositionEnd={() => (isCompositionActive.current = false)}
                   onKeyDown={handleKeyDown}
@@ -2065,34 +2032,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   'flex justify-between items-center rounded-t-none rounded-b-lg',
                   'bg-neutral-100 dark:bg-neutral-900',
                   'border-t-0 border-neutral-200! dark:border-neutral-700!',
-                  'p-2 gap-1', // Reduced padding and gap for mobile
-                  isMobile ? 'px-2 py-1.5' : 'p-2', // Even smaller padding on mobile
+                  'p-2 gap-2',
                   isProcessing ? 'opacity-20! cursor-not-allowed!' : '',
                 )}
               >
-                <div className={cn(
-                  'flex items-center', 
-                  isMobile ? 'gap-1 overflow-hidden flex-1 min-w-0' : 'gap-2'
-                )}>
+                <div className={cn('flex items-center gap-2')}>
                   <div
                     className={cn(
                       'transition-all duration-100 flex-shrink-0',
                       selectedGroup !== 'extreme' ? 'opacity-100 visible w-auto' : 'opacity-0 invisible w-0',
                     )}
                   >
-                    <GroupSelector
-                      selectedGroup={selectedGroup}
-                      onGroupSelect={handleGroupSelect}
-                      status={status}
-                    />
+                    <GroupSelector selectedGroup={selectedGroup} onGroupSelect={handleGroupSelect} status={status} />
                   </div>
 
-                  <div
-                    className={cn(
-                      'transition-all duration-300 flex-shrink-0',
-                      'opacity-100 visible w-auto',
-                    )}
-                  >
+                  <div className={cn('transition-all duration-300 flex-shrink-0', 'opacity-100 visible w-auto')}>
                     <ModelSwitcher
                       selectedModel={selectedModel}
                       setSelectedModel={setSelectedModel}
@@ -2100,149 +2054,64 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       messages={messages}
                       status={status}
                       onModelSelect={(model) => {
-                        // Show additional info about image attachments for vision models
-                        const isVisionModel = model.vision === true;
-                       
+                        setSelectedModel(model.value);
+                        const isVisionModel = hasVisionSupport(model.value);
+                        toast.message(`Switched to ${model.label}`, {
+                          description: isVisionModel ? 'You can now upload images to the model.' : undefined,
+                        });
                       }}
                       subscriptionData={subscriptionData}
                       user={user}
                     />
                   </div>
 
-                  <div
-                    className={cn(
-                      'transition-all duration-300 flex-shrink-0',
-                      'opacity-100 visible w-auto',
-                    )}
-                  >
-                    {!isMobile ? (
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
-                              setSelectedGroup(newMode);
-
-                              // Enhanced notification messages
-                              const newModeText =
-                                selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
-                              const description =
-                                selectedGroup === 'extreme'
-                                  ? 'Standard web search mode is now active'
-                                  : 'Enhanced deep research mode is now active';
-
-                              
-                            }}
-                            className={cn(
-                              'flex items-center gap-2 p-2 sm:px-3 h-8',
-                              'rounded-full transition-all duration-300',
-                              'border border-neutral-200 dark:border-neutral-800',
-                              'hover:shadow-md',
-                              selectedGroup === 'extreme'
-                                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                                : 'bg-white dark:bg-neutral-900 text-neutral-500',
-                            )}
-                          >
-                            <TelescopeIcon className="h-3.5 w-3.5" />
-                            <span className="hidden sm:block text-xs font-medium">Extreme</span>
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="bottom"
-                          sideOffset={6}
-                          className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-[11px]">Extreme Mode</span>
-                            <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                              Deep research with multiple sources and analysis
-                            </span>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
-                          setSelectedGroup(newMode);
-
-                          // Enhanced notification messages
-                          const newModeText =
-                            selectedGroup === 'extreme' ? 'Switched to Web Search' : 'Switched to Extreme Mode';
-                          const description =
+                  <div className={cn('transition-all duration-300 flex-shrink-0', 'opacity-100 visible w-auto')}>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
+                            setSelectedGroup(newMode);
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 p-2 sm:px-3 h-8',
+                            'rounded-full transition-all duration-300',
+                            'border border-neutral-200 dark:border-neutral-800',
+                            'hover:shadow-md',
                             selectedGroup === 'extreme'
-                              ? 'Standard web search mode is now active'
-                              : 'Enhanced deep research mode is now active';
-
-                          // Use appropriate colors for groups that don't conflict with model colors
-                          
-                        }}
-                        className={cn(
-                          'flex items-center p-1.5 h-7 min-w-7', // Smaller on mobile
-                          'rounded-full transition-all duration-300',
-                          'border border-neutral-200 dark:border-neutral-800',
-                          'hover:shadow-md',
-                          selectedGroup === 'extreme'
-                            ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                            : 'bg-white dark:bg-neutral-900 text-neutral-500',
-                        )}
+                              ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                              : 'bg-white dark:bg-neutral-900 text-neutral-500',
+                          )}
+                        >
+                          <TelescopeIcon className="h-3.5 w-3.5" />
+                          <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
                       >
-                        <TelescopeIcon className="h-3 w-3" />
-                      </button>
-                    )}
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">Extreme Mode</span>
+                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                            Deep research with multiple sources and analysis
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
 
-                <div className={cn(
-                  'flex items-center flex-shrink-0',
-                  isMobile ? 'gap-1' : 'gap-2'
-                )}>
+                <div className={cn('flex items-center flex-shrink-0 gap-2')}>
                   {/* Voice Recording Button */}
-                  {
-                    (!isMobile ? (
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            className={cn(
-                              'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
-                              isRecording
-                                ? 'bg-red-500 hover:bg-red-600 text-white'
-                                : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
-                            )}
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              handleRecord();
-                            }}
-                            variant="outline"
-                            disabled={isProcessing}
-                          >
-                            <MicrophoneIcon size={14} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="bottom"
-                          sideOffset={6}
-                          className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-[11px]">
-                              {isRecording ? 'Stop Recording' : 'Voice Input'}
-                            </span>
-                            <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                              {isRecording ? 'Click to stop recording' : 'Record your voice message'}
-                            </span>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
                       <Button
                         className={cn(
-                          'rounded-full p-1 h-7 w-7 transition-colors duration-200', // Smaller on mobile
+                          'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
                           isRecording
                             ? 'bg-red-500 hover:bg-red-600 text-white'
                             : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
@@ -2255,96 +2124,82 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         variant="outline"
                         disabled={isProcessing}
                       >
-                        <MicrophoneIcon size={12} className={isRecording ? 'animate-pulse bg-red-500 text-white hover:text-white' : ''} />
+                        <MicrophoneIcon size={14} />
                       </Button>
-                    ))}
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      sideOffset={6}
+                      className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-[11px]">
+                          {isRecording ? 'Stop Recording' : 'Voice Input'}
+                        </span>
+                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                          {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                        </span>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
 
-                  {hasVisionSupport(selectedModel) &&
-                    !(isMobile) &&
-                    (!isMobile ? (
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              triggerFileInput();
-                            }}
-                            variant="outline"
-                            disabled={isProcessing}
-                          >
-                            <PaperclipIcon size={14} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="bottom"
-                          sideOffset={6}
-                          className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                  {hasVisionSupport(selectedModel) && (
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            triggerFileInput();
+                          }}
+                          variant="outline"
+                          disabled={isProcessing}
                         >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-[11px]">Attach File</span>
-                            <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                              {supportsPdfAttachments(selectedModel)
-                                ? 'Upload an image or PDF document'
-                                : 'Upload an image'}
-                            </span>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Button
-                        className="rounded-full p-1 h-7 w-7 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600" // Smaller on mobile
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          triggerFileInput();
-                        }}
-                        variant="outline"
-                        disabled={isProcessing}
+                          <PaperclipIcon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                       >
-                        <PaperclipIcon size={12} />
-                      </Button>
-                    ))}
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">Attach File</span>
+                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                            {supportsPdfAttachments(selectedModel)
+                              ? 'Upload an image or PDF document'
+                              : 'Upload an image'}
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
 
                   {isProcessing ? (
-                    !isMobile ? (
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            className="rounded-full p-1.5 h-8 w-8"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              stop();
-                            }}
-                            variant="destructive"
-                          >
-                            <StopIcon size={14} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="bottom"
-                          sideOffset={6}
-                          className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="rounded-full p-1.5 h-8 w-8"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            stop();
+                          }}
+                          variant="destructive"
                         >
-                          <span className="font-medium text-[11px]">Stop Generation</span>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Button
-                        className="rounded-full p-1 h-7 w-7" // Smaller on mobile
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          stop();
-                        }}
-                        variant="destructive"
+                          <StopIcon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                       >
-                        <StopIcon size={12} />
-                      </Button>
-                    )
-                  ) : !isMobile ? (
+                        <span className="font-medium text-[11px]">Stop Generation</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
@@ -2373,24 +2228,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <span className="font-medium text-[11px]">Send Message</span>
                       </TooltipContent>
                     </Tooltip>
-                  ) : (
-                    <Button
-                      className="rounded-full p-1 h-7 w-7" // Smaller on mobile
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        submitForm();
-                      }}
-                      disabled={
-                        (input.length === 0 && attachments.length === 0) ||
-                        uploadQueue.length > 0 ||
-                        status !== 'ready' ||
-                        isLimitBlocked ||
-                        isRecording
-                      }
-                    >
-                      <ArrowUpIcon size={12} />
-                    </Button>
                   )}
                 </div>
               </div>

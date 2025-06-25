@@ -124,9 +124,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
     if (isMobile) {
       return (
         <Drawer open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-          <DrawerContent className="max-h-[85vh] overflow-y-auto">
-            {content}
-          </DrawerContent>
+          <DrawerContent className="max-h-[85vh] overflow-y-auto">{content}</DrawerContent>
         </Drawer>
       );
     }
@@ -150,9 +148,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
             )}
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold">
-              Trending {type === 'movie' ? 'Movies' : 'Shows'}
-            </h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Trending {type === 'movie' ? 'Movies' : 'Shows'}</h2>
             <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">Top picks for today</p>
           </div>
         </div>
@@ -167,9 +163,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
 
       <div
         className={`grid ${
-          isMobile
-            ? 'grid-cols-2 gap-2'
-            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4'
+          isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4'
         } px-4 sm:px-0`}
       >
         {displayedResults.map((item, index) => (
@@ -207,9 +201,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                 <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                   <div className="flex items-center gap-1.5 text-yellow-400 mb-1.5">
                     <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
-                    <span className="text-xs sm:text-sm font-medium text-white">
-                      {item.vote_average.toFixed(1)}
-                    </span>
+                    <span className="text-xs sm:text-sm font-medium text-white">{item.vote_average.toFixed(1)}</span>
                   </div>
                   <h3 className="text-white text-sm sm:text-base font-medium line-clamp-2 mb-1">
                     {item.title || item.name}
@@ -229,9 +221,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
           <DrawerContent className="bg-white dark:bg-neutral-900">
             <div className="flex flex-col h-[90vh]">
               <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
-                <h3 className="text-lg font-semibold">
-                  All Trending {type === 'movie' ? 'Movies' : 'Shows'}
-                </h3>
+                <h3 className="text-lg font-semibold">All Trending {type === 'movie' ? 'Movies' : 'Shows'}</h3>
                 <button
                   onClick={() => setShowAll(false)}
                   className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full"
@@ -279,9 +269,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                           <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                             <div className="flex items-center gap-1.5 text-yellow-400 mb-1.5">
                               <Star className="w-3 h-3 fill-current" />
-                              <span className="text-xs font-medium text-white">
-                                {item.vote_average.toFixed(1)}
-                              </span>
+                              <span className="text-xs font-medium text-white">{item.vote_average.toFixed(1)}</span>
                             </div>
                             <h3 className="text-white text-sm font-medium line-clamp-2 mb-1">
                               {item.title || item.name}

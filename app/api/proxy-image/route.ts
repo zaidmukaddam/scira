@@ -15,15 +15,15 @@ const USER_AGENTS = [
 
 async function fetchWithRetry(url: string, validateOnly: boolean, maxRetries = 3): Promise<Response> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000); // Increased to 10 seconds
-            
+
             // Rotate user agents and add more realistic headers
             const userAgent = USER_AGENTS[attempt % USER_AGENTS.length];
-            
+
             const response = await fetch(url, {
                 signal: controller.signal,
                 headers: {
@@ -41,67 +41,67 @@ async function fetchWithRetry(url: string, validateOnly: boolean, maxRetries = 3
                 redirect: 'follow',
                 next: { revalidate: 0 } // Don't cache the response
             });
-            
+
             clearTimeout(timeout);
-            
+
             // If we get a successful response, return it
             if (response.ok) {
                 return response;
             }
-            
+
             // If we get a client error (4xx), don't retry
             if (response.status >= 400 && response.status < 500) {
                 return response;
             }
-            
+
             // For server errors (5xx), retry with next user agent
             throw new Error(`Server error: ${response.status} ${response.statusText}`);
-            
+
         } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
-            
+
             // If it's an AbortError, don't retry
             if (lastError.name === 'AbortError') {
                 throw new Error('Request timeout');
             }
-            
+
             // Wait before retrying (exponential backoff)
             if (attempt < maxRetries - 1) {
                 await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
             }
         }
     }
-    
+
     throw lastError || new Error('All retry attempts failed');
 }
 
 export async function GET(request: NextRequest) {
     // Extract the URL from the query parameters
     const url = request.nextUrl.searchParams.get('url');
-    
+
     if (!url) {
         return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
     }
-    
+
     // Validate URL format
     try {
         new URL(url);
     } catch {
         return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
     }
-    
+
     try {
         const validateOnly = request.headers.get('x-validate-only') === 'true';
         const response = await fetchWithRetry(url, validateOnly);
-        
+
         // Capture the final URL after any redirects
         const finalUrl = response.redirected ? response.url : url;
-        
+
         // If we only want to validate the image exists, we can return the headers
         if (validateOnly) {
             const contentType = response.headers.get('content-type');
             const status = response.status;
-            
+
             return NextResponse.json({
                 valid: response.ok && contentType?.startsWith('image/'),
                 status,
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
                 }
             });
         }
-        
+
         // Check if the response is actually an image
         const contentType = response.headers.get('content-type');
         if (!contentType?.startsWith('image/')) {
@@ -124,11 +124,11 @@ export async function GET(request: NextRequest) {
                 { status: 400 }
             );
         }
-        
+
         // Otherwise, proxy the image data
         // Get the response data
         const blob = await response.blob();
-        
+
         // Return the response with the appropriate content type
         return new NextResponse(blob, {
             headers: {
@@ -141,11 +141,11 @@ export async function GET(request: NextRequest) {
         });
     } catch (error) {
         console.error('Proxy image error:', error);
-        
+
         // Determine appropriate status code based on error type
         let status = 500;
         let errorMessage = 'Failed to fetch image';
-        
+
         if (error instanceof Error) {
             if (error.message.includes('timeout')) {
                 status = 408;
@@ -158,11 +158,11 @@ export async function GET(request: NextRequest) {
                 errorMessage = 'Network error';
             }
         }
-        
+
         // Return appropriate error response
         return NextResponse.json(
-            { 
-                error: errorMessage, 
+            {
+                error: errorMessage,
                 message: error instanceof Error ? error.message : String(error),
                 url: url
             },
@@ -176,11 +176,11 @@ export async function HEAD(request: NextRequest) {
     // Set validate-only to true and delegate to GET handler
     const headers = new Headers(request.headers);
     headers.set('x-validate-only', 'true');
-    
+
     const modifiedRequest = new Request(request.url, {
         method: 'GET',
         headers,
     });
-    
+
     return GET(modifiedRequest as NextRequest);
 } 

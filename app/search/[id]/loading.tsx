@@ -26,11 +26,9 @@ export default function Loading() {
       {/* Main content area */}
       <div className="w-full p-2 sm:p-4 mt-20 sm:mt-16 flex flex-col">
         <div className="w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300">
-          
           {/* Messages skeleton */}
           <div className="space-y-0 mb-32 flex flex-col">
             <div className="flex-grow">
-              
               {/* User message skeleton */}
               <div className="mb-2">
                 <div className="flex justify-start">
@@ -112,16 +110,23 @@ export default function Loading() {
                     </div>
                   </div>
                   <div className="flex space-x-2 ml-8 mt-2">
-                    <div className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div
+                      className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <div
+                      className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <div
+                      className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    />
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
-
         </div>
 
         {/* Fixed form skeleton at bottom */}
@@ -171,8 +176,7 @@ export default function Loading() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
-} 
+}

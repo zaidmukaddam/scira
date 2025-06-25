@@ -11,11 +11,7 @@ import Marked, { ReactRenderer } from 'marked-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 import { Check, Copy, WrapText, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -50,7 +46,7 @@ const citationSources: CitationSourceConfig[] = [
     urlGenerator: (title: string, source: string) => {
       const searchTerm = `${title} ${source.replace(/\s+[-–—]\s+Wikipedia/i, '')}`.trim();
       return `https://en.wikipedia.org/wiki/${encodeURIComponent(searchTerm.replace(/\s+/g, '_'))}`;
-    }
+    },
   },
   {
     name: 'arXiv',
@@ -58,7 +54,7 @@ const citationSources: CitationSourceConfig[] = [
     urlGenerator: (title: string, source: string) => {
       const match = source.match(/arXiv:(\d+\.\d+)/i);
       return match ? `https://arxiv.org/abs/${match[1]}` : null;
-    }
+    },
   },
   {
     name: 'GitHub',
@@ -66,7 +62,7 @@ const citationSources: CitationSourceConfig[] = [
     urlGenerator: (title: string, source: string) => {
       const match = source.match(/(https?:\/\/github\.com\/[^\/]+\/[^\/\s]+)/i);
       return match ? match[1] : null;
-    }
+    },
   },
   {
     name: 'DOI',
@@ -74,19 +70,19 @@ const citationSources: CitationSourceConfig[] = [
     urlGenerator: (title: string, source: string) => {
       const match = source.match(/doi:(\S+)/i);
       return match ? `https://doi.org/${match[1]}` : null;
-    }
-  }
+    },
+  },
 ];
 
 // Helper function to process citations
-const processCitation = (title: string, source: string): { text: string, url: string } | null => {
+const processCitation = (title: string, source: string): { text: string; url: string } | null => {
   for (const citationSource of citationSources) {
     if (citationSource.pattern.test(source)) {
       const url = citationSource.urlGenerator(title, source);
       if (url) {
         return {
           text: `${title} - ${source}`,
-          url
+          url,
         };
       }
     }
@@ -115,40 +111,40 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
-    
+
     // First, extract and protect LaTeX blocks
-    const latexBlocks: Array<{id: string, content: string, isBlock: boolean}> = [];
+    const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
     let modifiedContent = content;
-    
+
     // Extract block equations first (they need to be standalone)
     const blockPatterns = [
       { pattern: /\\\[([\s\S]*?)\\\]/g, isBlock: true },
-      { pattern: /\$\$([\s\S]*?)\$\$/g, isBlock: true }
+      { pattern: /\$\$([\s\S]*?)\$\$/g, isBlock: true },
     ];
-    
-    blockPatterns.forEach(({pattern, isBlock}) => {
+
+    blockPatterns.forEach(({ pattern, isBlock }) => {
       modifiedContent = modifiedContent.replace(pattern, (match) => {
         const id = `LATEXBLOCK${latexBlocks.length}END`;
         latexBlocks.push({ id, content: match, isBlock });
         return id;
       });
     });
-    
+
     // Extract inline equations - improved regex to handle complex cases
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
       // Better inline LaTeX regex that handles nested braces and special chars
-      { pattern: /\$(?!\d)(?:[^\$\\]|\\.|\\\{[^}]*\})*\$/g, isBlock: false }
+      { pattern: /\$(?!\d)(?:[^\$\\]|\\.|\\\{[^}]*\})*\$/g, isBlock: false },
     ];
-    
-    inlinePatterns.forEach(({pattern, isBlock}) => {
+
+    inlinePatterns.forEach(({ pattern, isBlock }) => {
       modifiedContent = modifiedContent.replace(pattern, (match) => {
         const id = `LATEXINLINE${latexBlocks.length}END`;
         latexBlocks.push({ id, content: match, isBlock });
         return id;
       });
     });
-    
+
     // Now process citations (LaTeX is already protected)
     // Process standard markdown links
     const stdLinkRegex = /\[([^\]]+)\]\(((?:\([^()]*\)|[^()])*)\)/g;
@@ -156,18 +152,19 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       citations.push({ text, link: url });
       return `[${text}](${url})`;
     });
-    
+
     // Process references followed by URLs
-    const refWithUrlRegex = /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
+    const refWithUrlRegex =
+      /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
     modifiedContent = modifiedContent.replace(refWithUrlRegex, (match, docType, bracketText, plainText, url) => {
       const text = bracketText || plainText;
       const fullText = (docType ? `[${docType}] ` : '') + text;
       const cleanUrl = url.replace(/[.,;:]+$/, '');
-      
+
       citations.push({ text: fullText.trim(), link: cleanUrl });
       return `[${fullText.trim()}](${cleanUrl})`;
     });
-    
+
     // Process quoted paper titles
     const quotedTitleRegex = /"([^"]+)"(?:\s+([^.!?\n]+?)(?:\s+[-–—]\s+(?:[A-Z][a-z]+(?:\.[a-z]+)?|\w+:\S+)))/g;
     modifiedContent = modifiedContent.replace(quotedTitleRegex, (match, title, source) => {
@@ -178,21 +175,21 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       }
       return match;
     });
-    
+
     // Process raw URLs to documents
     const rawUrlRegex = /(https?:\/\/[^\s]+\.(?:pdf|doc|docx|ppt|pptx|xls|xlsx))\b/gi;
     modifiedContent = modifiedContent.replace(rawUrlRegex, (match, url) => {
       const filename = url.split('/').pop() || url;
-      const alreadyLinked = citations.some(citation => citation.link === url);
+      const alreadyLinked = citations.some((citation) => citation.link === url);
       if (!alreadyLinked) {
         citations.push({ text: filename, link: url });
       }
       return match;
     });
-    
+
     return [modifiedContent, citations, latexBlocks];
   }, [content]);
-  
+
   const citationLinks = extractedCitations;
 
   interface CodeBlockProps {
@@ -212,7 +209,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     }, [children]);
 
     const toggleWrap = useCallback(() => {
-      setIsWrapped(prev => !prev);
+      setIsWrapped((prev) => !prev);
     }, []);
 
     return (
@@ -222,20 +219,20 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           <button
             onClick={toggleWrap}
             className={cn(
-              "p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors",
-              isWrapped ? "text-blue-600 dark:text-blue-400" : "text-neutral-500 dark:text-neutral-400"
+              'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
+              isWrapped ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 dark:text-neutral-400',
             )}
-            title={isWrapped ? "Disable wrap" : "Enable wrap"}
+            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
           >
             {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
           </button>
           <button
             onClick={handleCopy}
             className={cn(
-              "p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors",
-              isCopied ? "text-green-600 dark:text-green-400" : "text-neutral-500 dark:text-neutral-400"
+              'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
+              isCopied ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400',
             )}
-            title={isCopied ? "Copied!" : "Copy code"}
+            title={isCopied ? 'Copied!' : 'Copy code'}
           >
             {isCopied ? <Check size={12} /> : <Copy size={12} />}
           </button>
@@ -267,7 +264,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
               wordBreak: 'normal',
               overflowWrap: isWrapped ? 'break-word' : 'normal',
-            }
+            },
           }}
         >
           {children}
@@ -278,7 +275,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   CodeBlock.displayName = 'CodeBlock';
 
-  const LinkPreview = ({ href, title }: { href: string, title?: string }) => {
+  const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
     const domain = new URL(href).hostname;
 
     return (
@@ -295,9 +292,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         </div>
         {title && (
           <div className="px-2 pb-2 pt-1">
-            <h3 className="font-normal text-sm m-0 text-neutral-700 dark:text-neutral-200 line-clamp-3">
-              {title}
-            </h3>
+            <h3 className="font-normal text-sm m-0 text-neutral-700 dark:text-neutral-200 line-clamp-3">{title}</h3>
           </div>
         )}
       </div>
@@ -314,9 +309,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className={isCitation
-              ? "cursor-pointer text-xs no-underline text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline"
-              : "text-primary bg-primary/10 dark:text-primary-light no-underline hover:underline font-medium"}
+            className={
+              isCitation
+                ? 'cursor-pointer text-xs no-underline text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline'
+                : 'text-primary bg-primary/10 dark:text-primary-light no-underline hover:underline font-medium'
+            }
           >
             {text}
           </Link>
@@ -335,7 +332,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   const generateKey = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  }
+  };
 
   const renderCitation = (index: number, citationText: string, href: string) => {
     return (
@@ -350,48 +347,48 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       // Check if this text contains any LaTeX placeholders
       const blockPattern = /LATEXBLOCK(\d+)END/g;
       const inlinePattern = /LATEXINLINE(\d+)END/g;
-      
+
       // If no LaTeX placeholders, return text as-is
       if (!blockPattern.test(text) && !inlinePattern.test(text)) {
         return text;
       }
-      
+
       // Reset regex state
       blockPattern.lastIndex = 0;
       inlinePattern.lastIndex = 0;
-      
+
       // Process the text to replace placeholders with LaTeX components
       let processedText = text;
       const components: any[] = [];
       let lastEnd = 0;
-      
+
       // Collect all matches (both block and inline)
-      const allMatches: Array<{match: RegExpExecArray, isBlock: boolean}> = [];
-      
+      const allMatches: Array<{ match: RegExpExecArray; isBlock: boolean }> = [];
+
       let match;
       while ((match = blockPattern.exec(text)) !== null) {
         allMatches.push({ match, isBlock: true });
       }
-      
+
       while ((match = inlinePattern.exec(text)) !== null) {
         allMatches.push({ match, isBlock: false });
       }
-      
+
       // Sort matches by position
       allMatches.sort((a, b) => a.match.index - b.match.index);
-      
+
       // Process matches in order
       allMatches.forEach(({ match, isBlock }) => {
         const fullMatch = match[0];
         const start = match.index;
-        
+
         // Add text before this match
         if (start > lastEnd) {
           components.push(text.slice(lastEnd, start));
         }
-        
+
         // Find the corresponding LaTeX block
-        const latexBlock = latexBlocks.find(block => block.id === fullMatch);
+        const latexBlock = latexBlocks.find((block) => block.id === fullMatch);
         if (latexBlock) {
           if (isBlock) {
             // Don't wrap block equations in div here - let paragraph handler do it
@@ -400,12 +397,12 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
                 key={`latex-${components.length}-${generateKey()}`}
                 delimiters={[
                   { left: '$$', right: '$$', display: true },
-                  { left: '\\[', right: '\\]', display: true }
+                  { left: '\\[', right: '\\]', display: true },
                 ]}
                 strict={false}
               >
                 {latexBlock.content}
-              </Latex>
+              </Latex>,
             );
           } else {
             components.push(
@@ -413,26 +410,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
                 key={`latex-${components.length}-${generateKey()}`}
                 delimiters={[
                   { left: '$', right: '$', display: false },
-                  { left: '\\(', right: '\\)', display: false }
+                  { left: '\\(', right: '\\)', display: false },
                 ]}
                 strict={false}
               >
                 {latexBlock.content}
-              </Latex>
+              </Latex>,
             );
           }
         } else {
           components.push(fullMatch); // fallback
         }
-        
+
         lastEnd = start + fullMatch.length;
       });
-      
+
       // Add any remaining text
       if (lastEnd < text.length) {
         components.push(text.slice(lastEnd));
       }
-      
+
       return components.length === 1 ? components[0] : <>{components}</>;
     },
     paragraph(children) {
@@ -440,7 +437,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       if (typeof children === 'string') {
         const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
         if (blockMatch) {
-          const latexBlock = latexBlocks.find(block => block.id === children);
+          const latexBlock = latexBlocks.find((block) => block.id === children);
           if (latexBlock && latexBlock.isBlock) {
             // Render block equations outside of paragraph tags
             return (
@@ -448,7 +445,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
                 <Latex
                   delimiters={[
                     { left: '$$', right: '$$', display: true },
-                    { left: '\\[', right: '\\]', display: true }
+                    { left: '\\[', right: '\\]', display: true },
                   ]}
                   strict={false}
                 >
@@ -459,33 +456,42 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           }
         }
       }
-      
+
       return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
     },
     code(children, language) {
-      return <CodeBlock language={language} key={generateKey()}>{String(children)}</CodeBlock>;
+      return (
+        <CodeBlock language={language} key={generateKey()}>
+          {String(children)}
+        </CodeBlock>
+      );
     },
     link(href, text) {
-      const citationIndex = citationLinks.findIndex(link => link.link === href);
+      const citationIndex = citationLinks.findIndex((link) => link.link === href);
       if (citationIndex !== -1) {
         // For citations, show the citation text in the hover card
         const citationText = citationLinks[citationIndex].text;
         return renderCitation(citationIndex, citationText, href);
       }
-      return isValidUrl(href)
-        ? renderHoverCard(href, text)
-        : <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">{text}</a>;
+      return isValidUrl(href) ? (
+        renderHoverCard(href, text)
+      ) : (
+        <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">
+          {text}
+        </a>
+      );
     },
     heading(children, level) {
       const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
-      const sizeClasses = {
-        1: "text-2xl md:text-3xl font-extrabold mt-4 mb-4",
-        2: "text-xl md:text-2xl font-bold mt-4 mb-3",
-        3: "text-lg md:text-xl font-semibold mt-4 mb-3",
-        4: "text-base md:text-lg font-medium mt-4 mb-2",
-        5: "text-sm md:text-base font-medium mt-4 mb-2",
-        6: "text-xs md:text-sm font-medium mt-4 mb-2",
-      }[level] || "";
+      const sizeClasses =
+        {
+          1: 'text-2xl md:text-3xl font-extrabold mt-4 mb-4',
+          2: 'text-xl md:text-2xl font-bold mt-4 mb-3',
+          3: 'text-lg md:text-xl font-semibold mt-4 mb-3',
+          4: 'text-base md:text-lg font-medium mt-4 mb-2',
+          5: 'text-sm md:text-base font-medium mt-4 mb-2',
+          6: 'text-xs md:text-sm font-medium mt-4 mb-2',
+        }[level] || '';
 
       return (
         <HeadingTag className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}>
@@ -496,7 +502,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     list(children, ordered) {
       const ListTag = ordered ? 'ol' : 'ul';
       return (
-        <ListTag className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${ordered ? 'list-decimal' : 'list-disc'}`}>
+        <ListTag
+          className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${
+            ordered ? 'list-decimal' : 'list-disc'
+          }`}
+        >
           {children}
         </ListTag>
       );
@@ -518,9 +528,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         <div className="w-full my-6">
           <div className="overflow-hidden rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse m-0!">
-                {children}
-              </table>
+              <table className="w-full border-collapse m-0!">{children}</table>
             </div>
           </div>
         </div>
@@ -528,73 +536,63 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     },
     tableRow(children) {
       const currentRow = tableRowCounter;
-      setTableRowCounter(prev => prev + 1);
-      
+      setTableRowCounter((prev) => prev + 1);
+
       // Skip zebra striping for header rows
       const isEvenRow = currentRow > 0 && currentRow % 2 === 0;
-      
+
       return (
-        <tr className={cn(
-          "border-b border-neutral-200 dark:border-neutral-700 last:border-b-0",
-          "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-200",
-          isEvenRow && "bg-neutral-50/50 dark:bg-neutral-800/30"
-        )}>
+        <tr
+          className={cn(
+            'border-b border-neutral-200 dark:border-neutral-700 last:border-b-0',
+            'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-200',
+            isEvenRow && 'bg-neutral-50/50 dark:bg-neutral-800/30',
+          )}
+        >
           {children}
         </tr>
       );
     },
     tableCell(children, flags) {
-      const alignClass = flags.align 
-        ? `text-${flags.align}` 
-        : 'text-left';
+      const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
       const isHeader = flags.header;
 
       return isHeader ? (
-        <th className={cn(
-          "px-4 py-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50",
-          "bg-neutral-100 dark:bg-neutral-800",
-          "border-b border-neutral-200 dark:border-neutral-700",
-          "break-words",
-          alignClass
-        )}>
-          <div className="font-medium">
-            {children}
-          </div>
+        <th
+          className={cn(
+            'px-4 py-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50',
+            'bg-neutral-100 dark:bg-neutral-800',
+            'border-b border-neutral-200 dark:border-neutral-700',
+            'break-words',
+            alignClass,
+          )}
+        >
+          <div className="font-medium">{children}</div>
         </th>
       ) : (
-        <td className={cn(
-          "px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300",
-          "border-r border-neutral-100 dark:border-neutral-800 last:border-r-0",
-          "break-words",
-          alignClass
-        )}>
-          <div className="leading-relaxed">
-            {children}
-          </div>
+        <td
+          className={cn(
+            'px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300',
+            'border-r border-neutral-100 dark:border-neutral-800 last:border-r-0',
+            'break-words',
+            alignClass,
+          )}
+        >
+          <div className="leading-relaxed">{children}</div>
         </td>
       );
     },
     tableHeader(children) {
-      return (
-        <thead>
-          {children}
-        </thead>
-      );
+      return <thead>{children}</thead>;
     },
     tableBody(children) {
-      return (
-        <tbody>
-          {children}
-        </tbody>
-      );
+      return <tbody>{children}</tbody>;
     },
   };
 
   return (
     <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
-      <Marked renderer={renderer}>
-        {processedContent}
-      </Marked>
+      <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );
 };
@@ -613,17 +611,13 @@ export const CopyButton = ({ text }: { text: string }) => {
         await navigator.clipboard.writeText(text);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-        toast.success("Copied to clipboard");
+        toast.success('Copied to clipboard');
       }}
       className="h-8 px-2 text-xs rounded-full"
     >
-      {isCopied ? (
-        <Check className="h-4 w-4" />
-      ) : (
-        <Copy className="h-4 w-4" />
-      )}
+      {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
     </Button>
   );
 };
 
-export { MarkdownRenderer, preprocessLaTeX }; 
+export { MarkdownRenderer, preprocessLaTeX };

@@ -4,9 +4,26 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Download, X, ExternalLink, Maximize2, FileText, Plus, AlignLeft, AlertCircle, RefreshCw, LogIn } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Copy,
+  Download,
+  X,
+  ExternalLink,
+  Maximize2,
+  FileText,
+  Plus,
+  AlignLeft,
+  AlertCircle,
+  RefreshCw,
+  LogIn,
+} from 'lucide-react';
 import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { deleteTrailingMessages } from '@/app/actions';
@@ -28,7 +45,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   error,
   handleRetry,
   user,
-  selectedVisibilityType
+  selectedVisibilityType,
 }) => {
   let parsedError: any = null;
   let isChatSDKError = false;
@@ -56,17 +73,19 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
       isChatSDKError = false;
     }
   }
-  
+
   // Get error details
   const errorIcon = getErrorIcon(parsedError as any);
   const errorMessage = isChatSDKError
     ? parsedError.message
-    : (typeof error === 'string' ? error : (error as any).message || "Something went wrong while processing your message");
-  const errorCause = isChatSDKError
-    ? parsedError.cause
-    : (typeof error === 'string' ? undefined : (error as any).cause);
+    : typeof error === 'string'
+    ? error
+    : (error as any).message || 'Something went wrong while processing your message';
+  const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
   const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
-  const actions = isChatSDKError ? getErrorActions(parsedError as any) : { primary: { label: 'Try Again', action: 'retry' } };
+  const actions = isChatSDKError
+    ? getErrorActions(parsedError as any)
+    : { primary: { label: 'Try Again', action: 'retry' } };
 
   // Get icon component based on error type
   const getIconComponent = () => {
@@ -92,7 +111,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           iconBg: 'bg-blue-100 dark:bg-blue-700/50',
           title: 'text-blue-700 dark:text-blue-300',
           text: 'text-blue-600/80 dark:text-blue-400/80',
-          button: 'bg-blue-600 hover:bg-blue-700 text-white'
+          button: 'bg-blue-600 hover:bg-blue-700 text-white',
         };
       case 'upgrade':
         return {
@@ -101,7 +120,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           iconBg: 'bg-amber-100 dark:bg-amber-700/50',
           title: 'text-amber-700 dark:text-amber-300',
           text: 'text-amber-600/80 dark:text-amber-400/80',
-          button: 'bg-amber-600 hover:bg-amber-700 text-white'
+          button: 'bg-amber-600 hover:bg-amber-700 text-white',
         };
       case 'warning':
         return {
@@ -110,7 +129,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           iconBg: 'bg-orange-100 dark:bg-orange-700/50',
           title: 'text-orange-700 dark:text-orange-300',
           text: 'text-orange-600/80 dark:text-orange-400/80',
-          button: 'bg-orange-600 hover:bg-orange-700 text-white'
+          button: 'bg-orange-600 hover:bg-orange-700 text-white',
         };
       default:
         return {
@@ -119,7 +138,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           iconBg: 'bg-red-100 dark:bg-red-700/50',
           title: 'text-red-700 dark:text-red-300',
           text: 'text-red-600/80 dark:text-red-400/80',
-          button: 'bg-red-600 hover:bg-red-700 text-white'
+          button: 'bg-red-600 hover:bg-red-700 text-white',
         };
     }
   };
@@ -163,25 +182,23 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
       <div className={`rounded-lg border ${colors.border} bg-white dark:bg-neutral-900 shadow-sm overflow-hidden`}>
         <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
           <div className="mt-0.5">
-            <div className={`${colors.iconBg} p-1.5 rounded-full`}>
-              {getIconComponent()}
-            </div>
+            <div className={`${colors.iconBg} p-1.5 rounded-full`}>{getIconComponent()}</div>
           </div>
           <div className="flex-1">
             <h3 className={`font-medium ${colors.title}`}>
               {isChatSDKError && isSignInRequired(parsedError as any) && 'Sign In Required'}
-              {isChatSDKError && (isProRequired(parsedError as any) || isRateLimited(parsedError as any)) && 'Upgrade Required'}
-              {isChatSDKError && !isSignInRequired(parsedError as any) && !isProRequired(parsedError as any) && !isRateLimited(parsedError as any) && 'Error'}
+              {isChatSDKError &&
+                (isProRequired(parsedError as any) || isRateLimited(parsedError as any)) &&
+                'Upgrade Required'}
+              {isChatSDKError &&
+                !isSignInRequired(parsedError as any) &&
+                !isProRequired(parsedError as any) &&
+                !isRateLimited(parsedError as any) &&
+                'Error'}
               {!isChatSDKError && 'Error'}
             </h3>
-            <p className={`text-sm ${colors.text} mt-0.5`}>
-              {errorMessage}
-            </p>
-            {errorCode && (
-              <p className={`text-xs ${colors.text} mt-1 font-mono`}>
-                Error Code: {errorCode}
-              </p>
-            )}
+            <p className={`text-sm ${colors.text} mt-0.5`}>{errorMessage}</p>
+            {errorCode && <p className={`text-xs ${colors.text} mt-1 font-mono`}>Error Code: {errorCode}</p>}
           </div>
         </div>
 
@@ -194,36 +211,31 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
           <div className="flex items-center justify-between">
             <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-              {(!user && selectedVisibilityType === 'public')
-                ? "Please sign in to retry or try a different prompt"
-                : "You can retry your request or try a different approach"
-              }
+              {!user && selectedVisibilityType === 'public'
+                ? 'Please sign in to retry or try a different prompt'
+                : 'You can retry your request or try a different approach'}
             </p>
-                         <div className="flex gap-2">
-               {actions.secondary && canPerformAction(actions.secondary.action) && (
-                 <Button
-                   onClick={() => handleAction(actions.secondary!.action)}
-                   variant="outline"
-                   size="sm"
-                   className="text-xs"
-                 >
-                   {actions.secondary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
-                   {actions.secondary.label}
-                 </Button>
-               )}
-               {actions.primary && canPerformAction(actions.primary.action) && (
-                 <Button
-                   onClick={() => handleAction(actions.primary!.action)}
-                   className={colors.button}
-                   size="sm"
-                 >
-                   {actions.primary.action === 'signin' && <LogIn className="mr-2 h-3.5 w-3.5" />}
-                   {actions.primary.action === 'upgrade' && <Crown className="mr-2 h-3.5 w-3.5" />}
-                   {actions.primary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
-                   {actions.primary.label}
-                 </Button>
-               )}
-             </div>
+            <div className="flex gap-2">
+              {actions.secondary && canPerformAction(actions.secondary.action) && (
+                <Button
+                  onClick={() => handleAction(actions.secondary!.action)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  {actions.secondary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                  {actions.secondary.label}
+                </Button>
+              )}
+              {actions.primary && canPerformAction(actions.primary.action) && (
+                <Button onClick={() => handleAction(actions.primary!.action)} className={colors.button} size="sm">
+                  {actions.primary.action === 'signin' && <LogIn className="mr-2 h-3.5 w-3.5" />}
+                  {actions.primary.action === 'upgrade' && <Crown className="mr-2 h-3.5 w-3.5" />}
+                  {actions.primary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                  {actions.primary.label}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -242,7 +254,7 @@ interface MessageProps {
     messageIndex: number,
     partIndex: number,
     parts: MessagePart[],
-    message: any
+    message: any,
   ) => React.ReactNode;
   status: string;
   messages: any[];
@@ -302,56 +314,59 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
 
   return (
     <div className="group relative">
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        if (!draftContent.trim()) {
-          toast.error("Please enter a valid message.");
-          return;
-        }
-
-        try {
-          setIsSubmitting(true);
-
-          // Step 1: Delete trailing messages if message has an ID (same as rewrite logic)
-          if (message.id) {
-            await deleteTrailingMessages({
-              id: message.id,
-            });
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!draftContent.trim()) {
+            toast.error('Please enter a valid message.');
+            return;
           }
 
-          // Step 2: Update local state to include only messages up to and including the edited message (same as rewrite logic)
-          const newMessages = [];
-          // Find the index of the message being edited
-          for (let i = 0; i < messages.length; i++) {
-            if (messages[i].id === message.id) {
-              // Add the updated message
-              const updatedMessage = {
-                ...message,
-                content: draftContent.trim(),
-                parts: [{ type: 'text', text: draftContent.trim() }],
-              };
-              newMessages.push(updatedMessage);
-              break;
-            } else {
-              newMessages.push(messages[i]);
+          try {
+            setIsSubmitting(true);
+
+            // Step 1: Delete trailing messages if message has an ID (same as rewrite logic)
+            if (message.id) {
+              await deleteTrailingMessages({
+                id: message.id,
+              });
             }
+
+            // Step 2: Update local state to include only messages up to and including the edited message (same as rewrite logic)
+            const newMessages = [];
+            // Find the index of the message being edited
+            for (let i = 0; i < messages.length; i++) {
+              if (messages[i].id === message.id) {
+                // Add the updated message
+                const updatedMessage = {
+                  ...message,
+                  content: draftContent.trim(),
+                  parts: [{ type: 'text', text: draftContent.trim() }],
+                };
+                newMessages.push(updatedMessage);
+                break;
+              } else {
+                newMessages.push(messages[i]);
+              }
+            }
+
+            // Step 3: Update UI state (same as rewrite logic)
+            setMessages(newMessages);
+            setSuggestedQuestions([]);
+
+            setMode('view');
+
+            // Step 4: Reload to generate new response (same as rewrite logic)
+            await reload();
+          } catch (error) {
+            console.error('Error updating message:', error);
+            toast.error('Failed to update message. Please try again.');
+          } finally {
+            setIsSubmitting(false);
           }
-
-          // Step 3: Update UI state (same as rewrite logic)
-          setMessages(newMessages);
-          setSuggestedQuestions([]);
-
-          setMode('view');
-          
-          // Step 4: Reload to generate new response (same as rewrite logic)
-          await reload();
-        } catch (error) {
-          console.error("Error updating message:", error);
-          toast.error("Failed to update message. Please try again.");
-        } finally {
-          setIsSubmitting(false);
-        }
-      }} className="w-full">
+        }}
+        className="w-full"
+      >
         <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-neutral-50/30 dark:bg-neutral-800/30">
           <Textarea
             ref={textareaRef}
@@ -362,7 +377,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             placeholder="Edit your message..."
             style={{
               lineHeight: '1.625',
-              fontSize: '1.125rem'
+              fontSize: '1.125rem',
             }}
           />
 
@@ -409,7 +424,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 if (messageIndex !== -1) {
                   const updatedMessage = {
                     ...message,
-                    experimental_attachments: updatedAttachments
+                    experimental_attachments: updatedAttachments,
                   };
                   const updatedMessages = [...messages];
                   updatedMessages[messageIndex] = updatedMessage;
@@ -446,7 +461,7 @@ export const Message: React.FC<MessageProps> = ({
   error,
   isMissingAssistantResponse,
   handleRetry,
-  isOwner = true
+  isOwner = true,
 }) => {
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
@@ -465,17 +480,20 @@ export const Message: React.FC<MessageProps> = ({
     }
   }, [message.content]);
 
-  const handleSuggestedQuestionClick = useCallback(async (question: string) => {
-    // Only proceed if user is authenticated for public chats
-    if (selectedVisibilityType === 'public' && !user) return;
+  const handleSuggestedQuestionClick = useCallback(
+    async (question: string) => {
+      // Only proceed if user is authenticated for public chats
+      if (selectedVisibilityType === 'public' && !user) return;
 
-    setSuggestedQuestions([]);
+      setSuggestedQuestions([]);
 
-    await append({
-      content: question.trim(),
-      role: 'user'
-    });
-  }, [append, setSuggestedQuestions, user, selectedVisibilityType]);
+      await append({
+        content: question.trim(),
+        role: 'user',
+      });
+    },
+    [append, setSuggestedQuestions, user, selectedVisibilityType],
+  );
 
   if (message.role === 'user') {
     // Check if the message has parts that should be rendered
@@ -502,7 +520,9 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                          className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                            !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                          }`}
                         >
                           <MarkdownRenderer content={preprocessLaTeX(part.text)} />
 
@@ -519,7 +539,9 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                      className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                        !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                      }`}
                     >
                       <MarkdownRenderer content={preprocessLaTeX(message.content)} />
 
@@ -536,13 +558,9 @@ export const Message: React.FC<MessageProps> = ({
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                        aria-label={isExpanded ? "Show less" : "Show more"}
+                        aria-label={isExpanded ? 'Show less' : 'Show more'}
                       >
-                        {isExpanded ? (
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        )}
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       </Button>
                     </div>
                   )}
@@ -583,9 +601,13 @@ export const Message: React.FC<MessageProps> = ({
                       size="icon"
                       onClick={() => {
                         navigator.clipboard.writeText(message.content);
-                        toast.success("Copied to clipboard");
+                        toast.success('Copied to clipboard');
                       }}
-                      className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                      className={`h-7 w-7 ${
+                        (!user || !isOwner) && selectedVisibilityType === 'public'
+                          ? 'rounded-md'
+                          : 'rounded-r-md rounded-l-none'
+                      } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                       aria-label="Copy message"
                     >
                       <Copy className="h-3.5 w-3.5" />
@@ -620,7 +642,9 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''}`}
+                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                    !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                  }`}
                 >
                   <MarkdownRenderer content={preprocessLaTeX(message.content)} />
 
@@ -636,13 +660,9 @@ export const Message: React.FC<MessageProps> = ({
                       size="sm"
                       onClick={() => setIsExpanded(!isExpanded)}
                       className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                      aria-label={isExpanded ? "Show less" : "Show more"}
+                      aria-label={isExpanded ? 'Show less' : 'Show more'}
                     >
-                      {isExpanded ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
+                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </Button>
                   </div>
                 )}
@@ -683,9 +703,13 @@ export const Message: React.FC<MessageProps> = ({
                     size="icon"
                     onClick={() => {
                       navigator.clipboard.writeText(message.content);
-                      toast.success("Copied to clipboard");
+                      toast.success('Copied to clipboard');
                     }}
-                    className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public' ? 'rounded-md' : 'rounded-r-md rounded-l-none'} text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                    className={`h-7 w-7 ${
+                      (!user || !isOwner) && selectedVisibilityType === 'public'
+                        ? 'rounded-md'
+                        : 'rounded-r-md rounded-l-none'
+                    } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                     aria-label="Copy message"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -708,13 +732,7 @@ export const Message: React.FC<MessageProps> = ({
     return (
       <div className={isLastAssistantMessage ? 'min-h-[calc(100vh-18rem)]' : ''}>
         {message.parts?.map((part: MessagePart, partIndex: number) =>
-          renderPart(
-            part,
-            index,
-            partIndex,
-            message.parts as MessagePart[],
-            message,
-          )
+          renderPart(part, index, partIndex, message.parts as MessagePart[], message),
         )}
 
         {/* Show retry option when assistant response is missing (not an error status) */}
@@ -728,9 +746,7 @@ export const Message: React.FC<MessageProps> = ({
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-medium text-amber-700 dark:text-amber-300">
-                    Incomplete Response
-                  </h3>
+                  <h3 className="font-medium text-amber-700 dark:text-amber-300">Incomplete Response</h3>
                   <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-0.5">
                     The assistant response appears to be incomplete or empty.
                   </p>
@@ -739,17 +755,12 @@ export const Message: React.FC<MessageProps> = ({
 
               <div className="px-4 py-3 flex items-center justify-between">
                 <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-                  {(!user && selectedVisibilityType === 'public')
-                    ? "Please sign in to retry or try a different prompt"
-                    : "Try regenerating the response or rephrase your question"
-                  }
+                  {!user && selectedVisibilityType === 'public'
+                    ? 'Please sign in to retry or try a different prompt'
+                    : 'Try regenerating the response or rephrase your question'}
                 </p>
                 {(user || selectedVisibilityType === 'private') && (
-                  <Button
-                    onClick={handleRetry}
-                    className="bg-amber-600 hover:bg-amber-700 text-white"
-                    size="sm"
-                  >
+                  <Button onClick={handleRetry} className="bg-amber-600 hover:bg-amber-700 text-white" size="sm">
                     <RefreshCw className="mr-2 h-3.5 w-3.5" />
                     Generate Response
                   </Button>
@@ -761,13 +772,16 @@ export const Message: React.FC<MessageProps> = ({
 
         {/* Display error message with retry button */}
         {error && (
-          <EnhancedErrorDisplay error={error} handleRetry={handleRetry} user={user} selectedVisibilityType={selectedVisibilityType} />
+          <EnhancedErrorDisplay
+            error={error}
+            handleRetry={handleRetry}
+            user={user}
+            selectedVisibilityType={selectedVisibilityType}
+          />
         )}
 
         {suggestedQuestions.length > 0 && (user || selectedVisibilityType === 'private') && status !== 'streaming' && (
-          <div
-            className="w-full max-w-xl sm:max-w-2xl mt-3"
-          >
+          <div className="w-full max-w-xl sm:max-w-2xl mt-3">
             <div className="flex items-center gap-1.5 mb-2 px-3">
               <AlignLeft size={16} className="text-neutral-600 dark:text-neutral-400" />
               <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">Suggested questions</h2>
@@ -796,15 +810,15 @@ export const Message: React.FC<MessageProps> = ({
 // Editable attachments badge component for edit mode
 export const EditableAttachmentsBadge = ({
   attachments,
-  onRemoveAttachment
+  onRemoveAttachment,
 }: {
   attachments: any[];
   onRemoveAttachment: (index: number) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const fileAttachments = attachments.filter(att =>
-    att.contentType?.startsWith('image/') || att.contentType === 'application/pdf'
+  const fileAttachments = attachments.filter(
+    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
   );
 
   if (fileAttachments.length === 0) return null;
@@ -817,9 +831,7 @@ export const EditableAttachmentsBadge = ({
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
-          const truncatedName = fileName.length > 15
-            ? fileName.substring(0, 12) + '...'
-            : fileName;
+          const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
 
           const isImage = attachment.contentType?.startsWith('image/');
 
@@ -855,11 +867,7 @@ export const EditableAttachmentsBadge = ({
                       <path d="M12 18v-5"></path>
                     </svg>
                   ) : isImage ? (
-                    <img
-                      src={attachment.url}
-                      alt={fileName}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -907,7 +915,7 @@ export const EditableAttachmentsBadge = ({
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success("File URL copied to clipboard");
+                    toast.success('File URL copied to clipboard');
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
                   title="Copy link"
@@ -938,7 +946,10 @@ export const EditableAttachmentsBadge = ({
                   </a>
                 )}
 
-                <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+                >
                   {selectedIndex + 1} of {fileAttachments.length}
                 </Badge>
               </div>
@@ -1018,7 +1029,7 @@ export const EditableAttachmentsBadge = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex(prev => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
+                      onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
                       className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -1026,7 +1037,7 @@ export const EditableAttachmentsBadge = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex(prev => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
+                      onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -1043,10 +1054,11 @@ export const EditableAttachmentsBadge = ({
                     <button
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                        : 'opacity-70 hover:opacity-100'
-                        }`}
+                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
+                        selectedIndex === idx
+                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
                     >
                       {isPdf(attachment) ? (
                         <div className="h-full w-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
@@ -1085,9 +1097,7 @@ export const EditableAttachmentsBadge = ({
                   {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
                 </span>
                 {fileAttachments[selectedIndex].size && (
-                  <span>
-                    {Math.round(fileAttachments[selectedIndex].size / 1024)} KB
-                  </span>
+                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
                 )}
               </div>
             </footer>
@@ -1102,8 +1112,8 @@ export const EditableAttachmentsBadge = ({
 export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const fileAttachments = attachments.filter(att =>
-    att.contentType?.startsWith('image/') || att.contentType === 'application/pdf'
+  const fileAttachments = attachments.filter(
+    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
   );
 
   if (fileAttachments.length === 0) return null;
@@ -1116,9 +1126,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
-          const truncatedName = fileName.length > 15
-            ? fileName.substring(0, 12) + '...'
-            : fileName;
+          const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
 
           const fileExtension = fileName.split('.').pop()?.toLowerCase();
           const isImage = attachment.contentType?.startsWith('image/');
@@ -1152,11 +1160,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <path d="M12 18v-5"></path>
                   </svg>
                 ) : isImage ? (
-                  <img
-                    src={attachment.url}
-                    alt={fileName}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1177,9 +1181,9 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
               </div>
               <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
                 {truncatedName}
-                {fileExtension && !isPdf(attachment) && !isImage &&
+                {fileExtension && !isPdf(attachment) && !isImage && (
                   <span className="text-neutral-500 dark:text-neutral-400 ml-0.5">.{fileExtension}</span>
-                }
+                )}
               </span>
             </button>
           );
@@ -1196,7 +1200,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success("File URL copied to clipboard");
+                    toast.success('File URL copied to clipboard');
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
                   title="Copy link"
@@ -1227,7 +1231,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   </a>
                 )}
 
-                <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+                >
                   {selectedIndex + 1} of {fileAttachments.length}
                 </Badge>
               </div>
@@ -1307,7 +1314,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex(prev => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
+                      onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
                       className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -1315,7 +1322,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex(prev => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
+                      onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -1332,10 +1339,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <button
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                        : 'opacity-70 hover:opacity-100'
-                        }`}
+                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
+                        selectedIndex === idx
+                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
                     >
                       {isPdf(attachment) ? (
                         <div className="h-full w-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
@@ -1374,9 +1382,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
                 </span>
                 {fileAttachments[selectedIndex].size && (
-                  <span>
-                    {Math.round(fileAttachments[selectedIndex].size / 1024)} KB
-                  </span>
+                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
                 )}
               </div>
             </footer>
@@ -1385,4 +1391,4 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
       </Dialog>
     </>
   );
-}; 
+};

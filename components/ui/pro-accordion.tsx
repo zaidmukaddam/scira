@@ -1,48 +1,37 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { PlusIcon } from "lucide-react"
+import * as React from 'react';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import { PlusIcon } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
 const ProAccordion = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Root>,
+  React.ComponentRef<typeof AccordionPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Root>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Root
-    ref={ref}
-    className={cn("w-full", className)}
-    {...props}
-  />
-))
-ProAccordion.displayName = "ProAccordion"
+  <AccordionPrimitive.Root ref={ref} className={cn('w-full', className)} {...props} />
+));
+ProAccordion.displayName = 'ProAccordion';
 
 const ProAccordionItem = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Item>,
+  React.ComponentRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item
-    ref={ref}
-    className={cn(
-      "border-b border-border transition-all",
-      className
-    )}
-    {...props}
-  />
-))
-ProAccordionItem.displayName = "ProAccordionItem"
+  <AccordionPrimitive.Item ref={ref} className={cn('border-b border-border transition-all', className)} {...props} />
+));
+ProAccordionItem.displayName = 'ProAccordionItem';
 
 const ProAccordionTrigger = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Trigger>,
+  React.ComponentRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-6 text-left text-base font-medium text-foreground outline-none transition-all hover:text-foreground/80",
-        className
+        'flex flex-1 items-center justify-between py-6 text-left text-base font-medium text-foreground outline-none transition-all hover:text-foreground/80',
+        className,
       )}
       {...props}
     >
@@ -52,11 +41,11 @@ const ProAccordionTrigger = React.forwardRef<
       </div>
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
-))
-ProAccordionTrigger.displayName = "ProAccordionTrigger"
+));
+ProAccordionTrigger.displayName = 'ProAccordionTrigger';
 
 const ProAccordionContent = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Content>,
+  React.ComponentRef<typeof AccordionPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Content
@@ -64,11 +53,9 @@ const ProAccordionContent = React.forwardRef<
     className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden transition-all"
     {...props}
   >
-    <div className={cn("pb-6 pt-0 text-muted-foreground", className)}>
-      {children}
-    </div>
+    <div className={cn('pb-6 pt-0 text-muted-foreground', className)}>{children}</div>
   </AccordionPrimitive.Content>
-))
-ProAccordionContent.displayName = "ProAccordionContent"
+));
+ProAccordionContent.displayName = 'ProAccordionContent';
 
-export { ProAccordion, ProAccordionItem, ProAccordionTrigger, ProAccordionContent } 
+export { ProAccordion, ProAccordionItem, ProAccordionTrigger, ProAccordionContent };

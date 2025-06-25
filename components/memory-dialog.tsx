@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
@@ -8,22 +8,16 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
 import { Loader2, Search, Trash2, CalendarIcon } from 'lucide-react';
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { Memory } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 export function MemoryDialog() {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
-  
+
   // Infinite query for memories with pagination
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['memories'],
     queryFn: async ({ pageParam }) => {
       const pageNumber = pageParam as number;
@@ -96,18 +90,18 @@ export function MemoryDialog() {
   const getMemoryContent = (memory: MemoryItem): string => {
     if (memory.memory) return memory.memory;
     if (memory.name) return memory.name;
-    return "No content available";
+    return 'No content available';
   };
 
   // Determine which memories to display
-  const displayedMemories = searchQuery.trim() && searchResults
-    ? searchResults.memories
-    : data?.pages.flatMap(page => page.memories) || [];
+  const displayedMemories =
+    searchQuery.trim() && searchResults ? searchResults.memories : data?.pages.flatMap((page) => page.memories) || [];
 
   // Calculate total memories
-  const totalMemories = searchQuery.trim() && searchResults
-    ? searchResults.total
-    : data?.pages.reduce((acc, page) => acc + page.memories.length, 0) || 0;
+  const totalMemories =
+    searchQuery.trim() && searchResults
+      ? searchResults.total
+      : data?.pages.reduce((acc, page) => acc + page.memories.length, 0) || 0;
 
   return (
     <DialogContent className="sm:max-w-[650px] max-h-[85vh] flex flex-col p-6">
@@ -129,17 +123,8 @@ export function MemoryDialog() {
             placeholder="Search memories..."
             className="flex-1"
           />
-          <Button 
-            type="submit" 
-            size="icon" 
-            variant="secondary"
-            disabled={isSearching || !searchQuery.trim()}
-          >
-            {isSearching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
+          <Button type="submit" size="icon" variant="secondary" disabled={isSearching || !searchQuery.trim()}>
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </Button>
         </form>
 
@@ -148,12 +133,7 @@ export function MemoryDialog() {
             {totalMemories} {totalMemories === 1 ? 'memory' : 'memories'} found
           </span>
           {searchQuery.trim() && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs h-7 px-2"
-              onClick={handleClearSearch}
-            >
+            <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={handleClearSearch}>
               Clear search
             </Button>
           )}
@@ -169,28 +149,20 @@ export function MemoryDialog() {
             <div className="flex flex-col justify-center items-center h-[350px] py-12 px-4 border border-dashed rounded-lg bg-muted/50 m-1">
               <Memory className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="font-medium">No memories found</p>
-              {searchQuery && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Try a different search term
-                </p>
-              )}
+              {searchQuery && <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>}
               {!searchQuery && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Memories will appear here when you save them
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Memories will appear here when you save them</p>
               )}
             </div>
           ) : (
             <div className="space-y-3">
               {displayedMemories.map((memory: MemoryItem) => (
-                <div 
-                  key={memory.id} 
+                <div
+                  key={memory.id}
                   className="group relative p-4 rounded-lg border bg-card transition-all hover:shadow-sm"
                 >
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {getMemoryContent(memory)}
-                    </p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{getMemoryContent(memory)}</p>
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <CalendarIcon className="h-3 w-3" />
@@ -201,8 +173,8 @@ export function MemoryDialog() {
                         size="icon"
                         onClick={() => handleDeleteMemory(memory.id)}
                         className={cn(
-                          "h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-                          "transition-opacity opacity-0 group-hover:opacity-100"
+                          'h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                          'transition-opacity opacity-0 group-hover:opacity-100',
                         )}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -237,4 +209,4 @@ export function MemoryDialog() {
       </div>
     </DialogContent>
   );
-} 
+}

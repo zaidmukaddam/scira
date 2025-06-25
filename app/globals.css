@@ -73,14 +73,18 @@
 }
 
 @layer utilities {
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* Internet Explorer 10+ */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Safari and Chrome */
+    display: none;
+    /* Safari and Chrome */
   }
 
   /* Tweet wrapper styling for horizontal layout */
@@ -331,6 +335,7 @@
 
 /* Custom styles for Mapbox */
 @layer utilities {
+
   /* Mapbox popup styles */
   .mapboxgl-popup {
     z-index: 12 !important;
@@ -361,7 +366,7 @@
     @apply outline-none;
   }
 
-  .custom-marker:focus > div {
+  .custom-marker:focus>div {
     @apply ring-2 ring-blue-500 ring-offset-2;
   }
 
