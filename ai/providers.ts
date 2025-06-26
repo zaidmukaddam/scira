@@ -45,9 +45,6 @@ export const scira = customProvider({
     'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
       parallelToolCalls: false,
     }),
-    'scira-comp-mini': groq('compound-beta-mini', {
-      parallelToolCalls: false,
-    }),
   },
 });
 
