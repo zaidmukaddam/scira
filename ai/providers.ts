@@ -240,15 +240,4 @@ export const models = [
     pdf: false,
     pro: false,
   },
-  {
-    value: 'scira-comp-mini',
-    label: 'Compound Beta Mini',
-    description: "Compound's advanced reasoning model",
-    vision: false,
-    reasoning: true,
-    experimental: true,
-    category: 'Experimental',
-    pdf: false,
-    pro: false,
-  },
 ];
