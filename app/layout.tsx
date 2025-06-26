@@ -1,14 +1,15 @@
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import { BotIdClient } from 'botid/client';
-import { Geist } from 'next/font/google';
+import './globals.css';
 import 'katex/dist/katex.min.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
+
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Metadata, Viewport } from 'next';
-import { Syne } from 'next/font/google';
+import { Be_Vietnam_Pro, Geist } from 'next/font/google';
+
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
-import './globals.css';
+
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
@@ -72,13 +73,6 @@ export const viewport: Viewport = {
   ],
 };
 
-const syne = Syne({
-  subsets: ['latin'],
-  variable: '--font-syne',
-  preload: true,
-  display: 'swap',
-});
-
 const geist = Geist({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -86,32 +80,13 @@ const geist = Geist({
   display: 'swap',
 });
 
-const protectedRoutes = [
-  {
-    path: '/api/search',
-    method: 'POST',
-  },
-  {
-    path: '/api/auth',
-    method: 'POST',
-  },
-  {
-    path: '/api/upload',
-    method: 'POST',
-  },
-  {
-    path: '/api/subscription',
-    method: 'POST',
-  },
-  {
-    path: '/api/subscription',
-    method: 'GET',
-  },
-  {
-    path: '/api/transcribe',
-    method: 'POST',
-  },
-];
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['latin'],
+  variable: '--font-be-vietnam-pro',
+  preload: true,
+  display: 'swap',
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+});
 
 export default function RootLayout({
   children,
@@ -120,10 +95,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <BotIdClient protect={protectedRoutes} />
-      </head>
-      <body className={`${geist.variable} ${syne.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${geist.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />

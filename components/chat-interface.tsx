@@ -675,7 +675,7 @@ const ChatInterface = memo(
             <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
               {status === 'ready' && messages.length === 0 && (
                 <div className="text-center">
-                  <h1 className="text-2xl sm:text-4xl mb-4 sm:mb-6 text-neutral-800 dark:text-neutral-100 font-syne!">
+                  <h1 className="text-2xl sm:text-4xl mb-4 sm:mb-6 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro!">
                     {user ? personalizedGreeting : 'What do you want to explore?'}
                   </h1>
                 </div>

@@ -47,13 +47,13 @@ const SciraLogoHeader = () => (
     <Image
       src="/scira.png"
       alt="Scira"
-      className="size-6 invert dark:invert-0"
+      className="size-7 invert dark:invert-0"
       width={100}
       height={100}
       unoptimized
       quality={100}
     />
-    <h2 className="text-lg font-semibold font-syne text-neutral-800 dark:text-neutral-200">Scira AI</h2>
+    <h2 className="text-xl font-semibold font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira AI</h2>
   </div>
 );
 
@@ -125,25 +125,24 @@ const Messages: React.FC<MessagesProps> = ({
   const isMissingAssistantResponse = useMemo(() => {
     const lastMessage = memoizedMessages[memoizedMessages.length - 1];
 
-    // Case 1: Last message is user and no assistant response
+    // Case 1: Last message is user and no assistant response yet
     if (lastMessage?.role === 'user' && status === 'ready' && !error) {
       return true;
     }
 
-    // Case 2: Last message is assistant but is completely empty (no meaningful content)
+    // Case 2: Last message is assistant but lacks **visible** content
     if (lastMessage?.role === 'assistant' && status === 'ready' && !error) {
       const parts = lastMessage.parts || [];
 
-      // Check if message has any meaningful content
-      const hasTextContent = parts.some((part: any) => part.type === 'text' && part.text && part.text.trim() !== '');
+      // Only count content that the user can actually see (text or tool invocation)
+      const hasVisibleText = parts.some((part: any) => part.type === 'text' && part.text && part.text.trim() !== '');
       const hasToolInvocations = parts.some((part: any) => part.type === 'tool-invocation');
-      const hasReasoningContent = parts.some((part: any) => part.type === 'reasoning');
 
-      // Also check legacy content field
+      // Legacy content field support
       const hasLegacyContent = lastMessage.content && lastMessage.content.trim() !== '';
 
-      // If there's no meaningful content at all, show retry
-      if (!hasTextContent && !hasToolInvocations && !hasReasoningContent && !hasLegacyContent) {
+      // If there is NO visible content at all, we consider the response incomplete
+      if (!hasVisibleText && !hasToolInvocations && !hasLegacyContent) {
         return true;
       }
     }
@@ -538,6 +537,41 @@ const Messages: React.FC<MessagesProps> = ({
 
       <div ref={reasoningScrollRef} />
       <div ref={messagesEndRef} />
+
+      {/* Show global incomplete-response banner when the last message is a user message and no assistant reply is present */}
+      {isMissingAssistantResponse && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
+        <div className="mt-3">
+          <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
+            <div className="bg-amber-50 dark:bg-amber-900/30 px-4 py-3 border-b border-amber-200 dark:border-amber-800 flex items-start gap-3">
+              <div className="mt-0.5">
+                <div className="bg-amber-100 dark:bg-amber-700/50 p-1.5 rounded-full">
+                  <AlertCircle className="h-4 w-4 text-amber-500 dark:text-amber-300" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-medium text-amber-700 dark:text-amber-300">Incomplete Response</h3>
+                <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                  The assistant response appears to be missing.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 flex items-center justify-between">
+              <p className="text-neutral-500 dark:text-neutral-400 text-xs">
+                {!user && selectedVisibilityType === 'public'
+                  ? 'Please sign in to retry or try a different prompt'
+                  : 'Try regenerating the response or rephrase your question'}
+              </p>
+              {(user || selectedVisibilityType === 'private') && (
+                <Button onClick={handleRetry} className="bg-amber-600 hover:bg-amber-700 text-white" size="sm">
+                  <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                  Generate Response
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Show global error when there is no assistant message to display it */}
       {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (

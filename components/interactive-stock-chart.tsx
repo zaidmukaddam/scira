@@ -8,30 +8,30 @@ import { ChartBar } from '@phosphor-icons/react';
 
 // Currency symbol mapping with modern design tokens
 const CURRENCY_SYMBOLS = {
-  USD: '$', // US Dollar
-  EUR: '€', // Euro
-  GBP: '£', // British Pound
-  JPY: '¥', // Japanese Yen
-  CNY: '¥', // Chinese Yuan
-  INR: '₹', // Indian Rupee
-  RUB: '₽', // Russian Ruble
-  KRW: '₩', // South Korean Won
-  BTC: '₿', // Bitcoin
-  THB: '฿', // Thai Baht
-  BRL: 'R$', // Brazilian Real
-  PHP: '₱', // Philippine Peso
-  ILS: '₪', // Israeli Shekel
-  TRY: '₺', // Turkish Lira
-  NGN: '₦', // Nigerian Naira
-  VND: '₫', // Vietnamese Dong
-  ARS: '$', // Argentine Peso
-  ZAR: 'R', // South African Rand
-  AUD: 'A$', // Australian Dollar
-  CAD: 'C$', // Canadian Dollar
-  SGD: 'S$', // Singapore Dollar
-  HKD: 'HK$', // Hong Kong Dollar
-  NZD: 'NZ$', // New Zealand Dollar
-  MXN: 'Mex$', // Mexican Peso
+  USD: '$', 
+  EUR: '€', 
+  GBP: '£', 
+  JPY: '¥', 
+  CNY: '¥', 
+  INR: '₹', 
+  RUB: '₽', 
+  KRW: '₩', 
+  BTC: '₿', 
+  THB: '฿', 
+  BRL: 'R$', 
+  PHP: '₱', 
+  ILS: '₪', 
+  TRY: '₺', 
+  NGN: '₦', 
+  VND: '₫', 
+  ARS: '$', 
+  ZAR: 'R', 
+  AUD: 'A$', 
+  CAD: 'C$', 
+  SGD: 'S$', 
+  HKD: 'HK$', 
+  NZD: 'NZ$', 
+  MXN: 'Mex$', 
 } as const;
 
 // Simple color palette

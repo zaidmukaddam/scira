@@ -47,7 +47,6 @@ import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 import { getTweet } from 'react-tweet/api';
-import { checkBotId } from 'botid/server';
 
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
@@ -80,32 +79,31 @@ function getStreamContext() {
   return globalStreamContext;
 }
 
-// Add currency symbol mapping at the top of the file
 const CURRENCY_SYMBOLS = {
-  USD: '$', // US Dollar
-  EUR: '€', // Euro
-  GBP: '£', // British Pound
-  JPY: '¥', // Japanese Yen
-  CNY: '¥', // Chinese Yuan
-  INR: '₹', // Indian Rupee
-  RUB: '₽', // Russian Ruble
-  KRW: '₩', // South Korean Won
-  BTC: '₿', // Bitcoin
-  THB: '฿', // Thai Baht
-  BRL: 'R$', // Brazilian Real
-  PHP: '₱', // Philippine Peso
-  ILS: '₪', // Israeli Shekel
-  TRY: '₺', // Turkish Lira
-  NGN: '₦', // Nigerian Naira
-  VND: '₫', // Vietnamese Dong
-  ARS: '$', // Argentine Peso
-  ZAR: 'R', // South African Rand
-  AUD: 'A$', // Australian Dollar
-  CAD: 'C$', // Canadian Dollar
-  SGD: 'S$', // Singapore Dollar
-  HKD: 'HK$', // Hong Kong Dollar
-  NZD: 'NZ$', // New Zealand Dollar
-  MXN: 'Mex$', // Mexican Peso
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  CNY: '¥',
+  INR: '₹',
+  RUB: '₽',
+  KRW: '₩',
+  BTC: '₿',
+  THB: '฿',
+  BRL: 'R$',
+  PHP: '₱',
+  ILS: '₪',
+  TRY: '₺',
+  NGN: '₦',
+  VND: '₫',
+  ARS: '$',
+  ZAR: 'R',
+  AUD: 'A$',
+  CAD: 'C$',
+  SGD: 'S$',
+  HKD: 'HK$',
+  NZD: 'NZ$',
+  MXN: 'Mex$',
 } as const;
 
 interface GoogleResult {
@@ -312,11 +310,6 @@ const exa = new Exa(serverEnv.EXA_API_KEY);
 export async function POST(req: Request) {
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
-  const verification = await checkBotId();
-
-  if (verification.isBot && !verification.isGoodBot) {
-    return new ChatSDKError('forbidden:api', 'Bot access denied').toResponse();
-  }
 
   console.log('--------------------------------');
   console.log('Location: ', latitude, longitude);
@@ -430,12 +423,7 @@ export async function POST(req: Request) {
       ],
     });
 
-    // Track message usage for rate limiting (deletion-proof)
-    // Only track usage for models that are not free unlimited
-    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
-    if (!freeUnlimitedModels.includes(model)) {
-      await incrementMessageUsage({ userId: user.id });
-    }
+
 
     console.log('--------------------------------');
     console.log('Messages saved: ', messages);
@@ -2459,12 +2447,25 @@ print(f"Converted amount: {converted_amount}")
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
 
+          // Track message usage for rate limiting (deletion-proof)
+          // Only track usage for models that are not free unlimited
+          if (user?.id) {
+            try {
+              const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+              if (!freeUnlimitedModels.includes(model)) {
+                await incrementMessageUsage({ userId: user.id });
+              }
+            } catch (error) {
+              console.error('Failed to track message usage:', error);
+            }
+          }
+
           // Track extreme search usage if it was used successfully
           if (user?.id && group === 'extreme') {
             try {
               // Check if extreme_search tool was actually called
-              const extremeSearchUsed = event.steps?.some((step: any) =>
-                step.toolCalls?.some((toolCall: any) => toolCall.toolName === 'extreme_search'),
+              const extremeSearchUsed = event.steps?.some((step) =>
+                step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
               );
 
               if (extremeSearchUsed) {

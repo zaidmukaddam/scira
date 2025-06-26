@@ -176,10 +176,10 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
       {/* Header */}
       <div className="max-w-3xl mx-auto px-6 pt-8 pb-16">
         <div className="text-center">
-          <h1 className="text-[2.5rem] font-black font-syne text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.02em] leading-tight">
+          <h1 className="text-[2.5rem] font-black font-be-vietnam-pro text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.02em] leading-tight">
             Pricing
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-syne leading-relaxed">
+          <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-be-vietnam-pro leading-relaxed">
             Choose the plan that works best for you
           </p>
         </div>

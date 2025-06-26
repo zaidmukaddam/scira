@@ -373,7 +373,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             value={draftContent}
             onChange={handleInput}
             autoFocus
-            className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-[syne] min-h-[auto] transition-colors rounded-sm"
+            className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
             placeholder="Edit your message..."
             style={{
               lineHeight: '1.625',
@@ -480,6 +480,29 @@ export const Message: React.FC<MessageProps> = ({
     }
   }, [message.content]);
 
+  // Dynamic font size based on content length
+  const getDynamicFontSize = (content: string) => {
+    const length = content.trim().length;
+    const lines = content.split('\n').length;
+    
+    // Very short messages (like single words or short phrases)
+    if (length <= 50 && lines === 1) {
+      return '[&>*]:text-2xl'; // text-2xl
+    }
+    // Short messages (one line, moderate length)
+    else if (length <= 120 && lines === 1) {
+      return '[&>*]:text-xl'; // text-xl
+    }
+    // Medium messages (2-3 lines or longer single line)
+    else if (lines <= 3 || length <= 200) {
+      return '[&>*]:text-lg'; // text-lg (current default)
+    }
+    // Longer messages
+    else {
+      return '[&>*]:text-base'; // text-base (smaller)
+    }
+  };
+
   const handleSuggestedQuestionClick = useCallback(
     async (question: string) => {
       // Only proceed if user is authenticated for public chats
@@ -520,7 +543,7 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-syne! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                          className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
@@ -539,7 +562,7 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                      className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
@@ -642,7 +665,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-[syne]! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
@@ -733,41 +756,6 @@ export const Message: React.FC<MessageProps> = ({
       <div className={isLastAssistantMessage ? 'min-h-[calc(100vh-18rem)]' : ''}>
         {message.parts?.map((part: MessagePart, partIndex: number) =>
           renderPart(part, index, partIndex, message.parts as MessagePart[], message),
-        )}
-
-        {/* Show retry option when assistant response is missing (not an error status) */}
-        {isMissingAssistantResponse && (
-          <div className="mt-3">
-            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
-              <div className="bg-amber-50 dark:bg-amber-900/30 px-4 py-3 border-b border-amber-200 dark:border-amber-800 flex items-start gap-3">
-                <div className="mt-0.5">
-                  <div className="bg-amber-100 dark:bg-amber-700/50 p-1.5 rounded-full">
-                    <AlertCircle className="h-4 w-4 text-amber-500 dark:text-amber-300" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-medium text-amber-700 dark:text-amber-300">Incomplete Response</h3>
-                  <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-                    The assistant response appears to be incomplete or empty.
-                  </p>
-                </div>
-              </div>
-
-              <div className="px-4 py-3 flex items-center justify-between">
-                <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-                  {!user && selectedVisibilityType === 'public'
-                    ? 'Please sign in to retry or try a different prompt'
-                    : 'Try regenerating the response or rephrase your question'}
-                </p>
-                {(user || selectedVisibilityType === 'private') && (
-                  <Button onClick={handleRetry} className="bg-amber-600 hover:bg-amber-700 text-white" size="sm">
-                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    Generate Response
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Display error message with retry button */}

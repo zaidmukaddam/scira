@@ -38,7 +38,7 @@ export default function TermsPage() {
           >
             {/* Logo */}
             <motion.div variants={item} className="text-center">
-              <Link href="/" className="inline-flex items-center gap-3 font-syne font-bold">
+              <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-white/90 dark:bg-black/90 shadow-sm flex items-center justify-center border border-neutral-200 dark:border-neutral-800">
                   <NextImage
                     src="/scira.png"
@@ -66,7 +66,7 @@ export default function TermsPage() {
 
       {/* Main Content */}
       <div className="py-16 px-4">
-        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-syne prose-p:text-neutral-600 dark:prose-p:text-neutral-400 prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:no-underline hover:prose-a:text-black dark:hover:prose-a:text-white prose-headings:tracking-tight">
+        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-neutral-600 dark:prose-p:text-neutral-400 prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:no-underline hover:prose-a:text-black dark:hover:prose-a:text-white prose-headings:tracking-tight">
           <p className="text-lg">
             Welcome to Scira AI. These Terms of Service govern your use of our website and services. By using Scira AI,
             you agree to these terms in full. If you disagree with any part of these terms, please do not use our

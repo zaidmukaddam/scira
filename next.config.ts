@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next';
-import { withBotId } from 'botid/next/config';
 import './env/server';
 import './env/client';
 
@@ -162,4 +161,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBotId(nextConfig);
+export default nextConfig;
