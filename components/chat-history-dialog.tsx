@@ -4,8 +4,27 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { redirect } from 'next/navigation';
 import { usePathname, useRouter } from 'next/navigation';
-import { CommandDialog, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
-import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from 'lucide-react';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandInput,
+} from '@/components/ui/command';
+import {
+  Trash,
+  ArrowUpRight,
+  History,
+  Globe,
+  Lock,
+  Search,
+  Calendar,
+  Hash,
+  Check,
+  X,
+  Pencil,
+} from 'lucide-react';
 import { ListMagnifyingGlass } from '@phosphor-icons/react';
 import {
   isToday,

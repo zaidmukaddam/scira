@@ -130,11 +130,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       });
     });
 
-    // Extract inline equations - improved regex to handle complex cases
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
-      // Better inline LaTeX regex that handles nested braces and special chars
-      { pattern: /\$(?!\d)(?:[^\$\\]|\\.|\\\{[^}]*\})*\$/g, isBlock: false },
+      { pattern: /\$(?![{#\w])[^\$\n]+?\$(?!\w)/g, isBlock: false },
     ];
 
     inlinePatterns.forEach(({ pattern, isBlock }) => {

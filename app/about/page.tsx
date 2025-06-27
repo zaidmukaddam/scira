@@ -166,13 +166,12 @@ export default function AboutPage() {
             <Image
               src="/scira.png"
               alt="Scira"
-              width={32}
-              height={32}
-              className="h-8 w-8 invert dark:invert-0"
-              unoptimized
+              width={100}
+              height={100}
+              className="size-7 invert dark:invert-0"
               quality={100}
             />
-            <span className="font-bold text-lg font-syne">Scira</span>
+            <span className="font-normal font-be-vietnam-pro">Scira</span>
           </Link>
 
           <nav className="flex items-center gap-8">
@@ -218,20 +217,19 @@ export default function AboutPage() {
                 <Image
                   src="/scira.png"
                   alt="Scira"
-                  width={56}
-                  height={56}
-                  className="h-14 w-14 invert dark:invert-0"
-                  unoptimized
+                  width={100}
+                  height={100}
+                  className="size-14 invert dark:invert-0"
                   quality={100}
                 />
-                <span className="text-4xl font-bold tracking-tight font-syne">Scira</span>
+                <span className="text-4xl font-medium tracking-tight font-be-vietnam-pro">Scira</span>
               </Link>
             </motion.div>
 
             {/* Headline */}
             <motion.h1
               variants={item}
-              className="text-2xl sm:text-3xl font-medium tracking-tight text-balance font-syne"
+              className="text-2xl sm:text-3xl font-normal tracking-tight text-balance font-be-vietnam-pro"
             >
               Minimalistic Open Source AI-Powered Search Engine
             </motion.h1>
@@ -964,16 +962,16 @@ export default function AboutPage() {
             </div>
 
             {/* Free Unlimited Models Highlight */}
-            <div className="max-w-3xl mx-auto bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mt-8">
+            <div className="max-w-3xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 mt-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-                <div className="p-2 rounded-md bg-green-100 dark:bg-green-900 flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="p-2 rounded-md bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
+                  <Sparkles className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                 </div>
                 <div className="flex-1 space-y-2 text-center sm:text-left">
-                  <h3 className="font-medium text-base text-green-800 dark:text-green-200">
+                  <h3 className="font-medium text-base">
                     Free Unlimited Access to Advanced Models
                   </h3>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Registered users get unlimited access to Grok 3 Mini and Grok 2 Vision models - no daily limits, no
                     restrictions. Perfect for students, researchers, and professionals who need reliable AI assistance
                     without breaking the bank.
@@ -981,7 +979,7 @@ export default function AboutPage() {
                   <div className="pt-1">
                     <Button
                       variant="outline"
-                      className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900"
+                      className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       onClick={() => router.push('/sign-up')}
                     >
                       Create Free Account

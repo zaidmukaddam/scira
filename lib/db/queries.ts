@@ -78,6 +78,8 @@ export async function getChatsByUserId({
   startingAfter: string | null;
   endingBefore: string | null;
 }) {
+  'use cache';
+
   try {
     const extendedLimit = limit + 1;
 
@@ -123,6 +125,8 @@ export async function getChatsByUserId({
 }
 
 export async function getChatById({ id }: { id: string }) {
+  'use cache';
+  
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -173,6 +177,8 @@ export async function getMessagesByChatId({
   limit?: number;
   offset?: number;
 }) {
+  'use cache';
+
   try {
     return await db
       .select()

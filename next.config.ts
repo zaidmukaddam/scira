@@ -14,14 +14,15 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
+    useCache: true,
     optimizePackageImports: ['@phosphor-icons/react', 'botid', '@elevenlabs/elevenlabs-js', '@daytonaio/sdk',],
     nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '10mb',
     },
     staleTimes: {
-      dynamic: 30,
-      static: 180,
+      dynamic: 300,
+      static: 300,
     },
   },
   transpilePackages: ['geist'],

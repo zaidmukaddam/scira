@@ -26,6 +26,8 @@ export type SubscriptionDetailsResult = {
 };
 
 export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResult> {
+  'use server';
+
   try {
     const session = await auth.api.getSession({
       headers: await headers(),

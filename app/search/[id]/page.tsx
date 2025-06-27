@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: 'A search in scira.ai',
     openGraph: {
       title: title,
-      url: `https://scira.ai/s/${id}`,
+      url: `https://scira.ai/search/${id}`,
       description: 'A search in scira.ai',
       siteName: 'scira.ai',
       images: [
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://scira.ai/s/${id}`,
+      url: `https://scira.ai/search/${id}`,
       description: 'A search in scira.ai',
       siteName: 'scira.ai',
       creator: '@sciraai',
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ],
     },
     alternates: {
-      canonical: `https://scira.ai/s/${id}`,
+      canonical: `https://scira.ai/search/${id}`,
     },
   } as Metadata;
 }
