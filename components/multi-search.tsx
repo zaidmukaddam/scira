@@ -7,7 +7,6 @@ import {
   Search,
   ExternalLink,
   Calendar,
-  ImageIcon,
   X,
   ChevronLeft,
   ChevronRight,
@@ -106,10 +105,12 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         <div className="relative w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
           {faviconUrl ? (
-            <img
+            <Image
               src={faviconUrl}
               alt=""
-              className={cn('w-6 h-6 object-contain', !imageLoaded && 'opacity-0')}
+              width={24}
+              height={24}
+              className={cn('object-contain', !imageLoaded && 'opacity-0')}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
                 setImageLoaded(true);
@@ -265,10 +266,11 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
               {state.error ? (
                 <PlaceholderImage variant="compact" />
               ) : (
-                <img
+                <Image
                   src={image.url}
                   alt={image.description || ''}
-                  className={cn('w-full h-full object-cover', !state.loaded && 'opacity-0')}
+                  fill
+                  className={cn('object-cover', !state.loaded && 'opacity-0')}
                   onLoad={() => updateImageState(index, { loaded: true })}
                   onError={() => updateImageState(index, { error: true, loaded: true })}
                 />
@@ -330,17 +332,22 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                     <PlaceholderImage />
                   </motion.div>
                 ) : (
-                  <motion.img
+                  <motion.div
                     key={selectedImage}
-                    src={images[selectedImage].url}
-                    alt={images[selectedImage].description || ''}
-                    className="w-full h-full object-contain rounded-lg"
+                    className="relative w-full h-full"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    onError={() => updateImageState(selectedImage, { error: true, loaded: true })}
-                  />
+                  >
+                    <Image
+                      src={images[selectedImage].url}
+                      alt={images[selectedImage].description || ''}
+                      fill
+                      className="object-contain rounded-lg"
+                      onError={() => updateImageState(selectedImage, { error: true, loaded: true })}
+                    />
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -487,12 +494,6 @@ const LoadingState: React.FC<{
 
       {/* Images skeleton */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Images</h3>
-          <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-            <div className="w-2 h-2 rounded-full bg-neutral-300 dark:bg-neutral-600 animate-pulse" />
-          </Badge>
-        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[200px] md:h-[240px]">
           {[...Array(5)].map((_, i) => (
             <motion.div
@@ -528,8 +529,8 @@ const MultiSearch: React.FC<{
   const allResults = result.searches.flatMap((search) => search.results);
   const totalResults = allResults.length;
 
-  // Get preview results
-  const previewResults = allResults.slice(0, PREVIEW_SOURCE_COUNT);
+  // Show all results in horizontal scroll
+  const previewResults = allResults;
 
   return (
     <div className="w-full space-y-4">
@@ -591,10 +592,10 @@ const MultiSearch: React.FC<{
                 ))}
               </div>
 
-              {/* View all button */}
-              {totalResults > PREVIEW_SOURCE_COUNT && (
+              {/* View detailed sources button */}
+              {totalResults > 0 && (
                 <Button variant="outline" className="w-full rounded-lg" onClick={() => setSourcesOpen(true)}>
-                  View all {totalResults} sources
+                  View detailed sources
                   <ArrowUpRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
@@ -606,12 +607,6 @@ const MultiSearch: React.FC<{
       {/* Images */}
       {allImages.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Images</h3>
-            <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-              {allImages.length}
-            </Badge>
-          </div>
           <ImageGallery images={allImages} />
         </div>
       )}
