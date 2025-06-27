@@ -24,6 +24,8 @@ const client = postgres(serverEnv.DATABASE_URL!);
 const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
+  'use cache';
+
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
@@ -137,6 +139,8 @@ export async function getChatById({ id }: { id: string }) {
 }
 
 export async function getChatWithUserById({ id }: { id: string }) {
+  'use cache';
+
   try {
     const [result] = await db
       .select({
@@ -193,6 +197,8 @@ export async function getMessagesByChatId({
 }
 
 export async function getMessageById({ id }: { id: string }) {
+  'use cache';
+
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
@@ -272,6 +278,8 @@ export async function createStreamId({ streamId, chatId }: { streamId: string; c
 }
 
 export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
+  'use cache';
+
   try {
     const streamIds = await db
       .select({ id: stream.id })
@@ -287,6 +295,8 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
 }
 
 export async function getExtremeSearchUsageByUserId({ userId }: { userId: string }) {
+  'use cache';
+
   try {
     const now = new Date();
     // Start of current month
@@ -364,6 +374,8 @@ export async function getExtremeSearchCount({ userId }: { userId: string }): Pro
 }
 
 export async function getMessageUsageByUserId({ userId }: { userId: string }) {
+  'use cache';
+
   try {
     const now = new Date();
     // Start of current day

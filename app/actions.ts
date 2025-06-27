@@ -29,7 +29,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-g2'),
+    model: scira.languageModel('scira-fast'),
     temperature: 0,
     maxTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
@@ -106,7 +106,7 @@ export async function getCurrentUser() {
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-llama-4'),
+    model: scira.languageModel('scira-fast'),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
@@ -302,6 +302,7 @@ const groupInstructions = {
      - Responses must be informative, long and very detailed which address the question's answer straight forward
      - Maintain the language of the user's message and do not change it
      - Use structured answers with markdown format and tables too
+     - never mention yourself in the response the user is here for answers and not for you
      - First give the question's answer straight forward and then start with markdown format
      - NEVER begin responses with phrases like "According to my search" or "Based on the information I found"
      - ⚠️ CITATIONS ARE MANDATORY - Every factual claim must have a citation

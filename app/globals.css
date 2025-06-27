@@ -187,6 +187,51 @@
     @apply bg-background text-foreground;
   }
 
+  /* Custom thin scrollbar without forcing visibility */
+  html, body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(163, 163, 163, 0.3) transparent;
+  }
+
+  /* Webkit browsers custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(163, 163, 163, 0.3);
+    border-radius: 4px;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(163, 163, 163, 0.5);
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(115, 115, 115, 0.4);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(115, 115, 115, 0.6);
+  }
+
+  /* Firefox dark mode */
+  .dark {
+    scrollbar-color: rgba(115, 115, 115, 0.4) transparent;
+  }
+
+  /* Reserve space for scrollbar on specific containers to prevent shifts */
+  .stable-scrollbar {
+    scrollbar-gutter: stable;
+  }
+
   [role="button"],
   button {
     cursor: pointer;

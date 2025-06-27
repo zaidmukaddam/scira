@@ -607,7 +607,7 @@ const ChatInterface = memo(
 
     return (
       <TooltipProvider>
-        <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500">
+        <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden">
           <Navbar
             isDialogOpen={anyDialogOpen}
             chatId={initialChatId || (messages.length > 0 ? chatId : null)}

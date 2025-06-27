@@ -373,11 +373,10 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             value={draftContent}
             onChange={handleInput}
             autoFocus
-            className="prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none [&>*]:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
+            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
             placeholder="Edit your message..."
             style={{
               lineHeight: '1.625',
-              fontSize: '1.125rem',
             }}
           />
 
@@ -480,26 +479,26 @@ export const Message: React.FC<MessageProps> = ({
     }
   }, [message.content]);
 
-  // Dynamic font size based on content length
+  // Dynamic font size based on content length with mobile responsiveness
   const getDynamicFontSize = (content: string) => {
     const length = content.trim().length;
     const lines = content.split('\n').length;
     
     // Very short messages (like single words or short phrases)
     if (length <= 50 && lines === 1) {
-      return '[&>*]:text-2xl'; // text-2xl
+      return '[&>*]:text-xl sm:[&>*]:text-2xl'; // Smaller on mobile
     }
     // Short messages (one line, moderate length)
     else if (length <= 120 && lines === 1) {
-      return '[&>*]:text-xl'; // text-xl
+      return '[&>*]:text-lg sm:[&>*]:text-xl'; // Smaller on mobile
     }
     // Medium messages (2-3 lines or longer single line)
     else if (lines <= 3 || length <= 200) {
-      return '[&>*]:text-lg'; // text-lg (current default)
+      return '[&>*]:text-base sm:[&>*]:text-lg'; // Smaller on mobile
     }
     // Longer messages
     else {
-      return '[&>*]:text-base'; // text-base (smaller)
+      return '[&>*]:text-sm sm:[&>*]:text-base'; // Even smaller on mobile
     }
   };
 
@@ -543,7 +542,7 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
@@ -562,7 +561,7 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
@@ -588,7 +587,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
+                  <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
@@ -665,7 +664,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-neutral dark:prose-invert prose-p:my-2 prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative ${
+                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
@@ -690,7 +689,7 @@ export const Message: React.FC<MessageProps> = ({
                   </div>
                 )}
 
-                <div className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-x-0 translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
+                <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                   {/* Only show edit button for owners OR unauthenticated users on private chats */}
                   {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                     <>

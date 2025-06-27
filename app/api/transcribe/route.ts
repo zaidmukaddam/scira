@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+
+import { elevenlabs } from '@ai-sdk/elevenlabs';
+import { experimental_transcribe as transcribe } from 'ai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,13 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No audio file found in form data.' }, { status: 400 });
     }
 
-    const client = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
-    const transcription = await client.speechToText.convert({
-      modelId: 'scribe_v1',
-      file: audio,
+    const result = await transcribe({
+      model: elevenlabs.transcription('scribe_v1'),
+      audio: await audio.arrayBuffer(),
     });
 
-    return NextResponse.json({ text: transcription.text });
+    console.log(result);
+
+    return NextResponse.json({ text: result.text });
   } catch (error) {
     console.error('Error processing transcription request:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

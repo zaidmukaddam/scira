@@ -444,6 +444,7 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
+        maxTokens: 12000,
         ...(model.includes('scira-qwq') || model.includes('scira-qwen-32b')
           ? {
             temperature: 0.6,
@@ -689,7 +690,7 @@ export async function POST(req: Request) {
                     if (!result.title || result.title.trim() === '') {
                       try {
                         const { object } = await generateObject({
-                          model: scira.languageModel('scira-g2'),
+                          model: scira.languageModel('scira-fast'),
                           prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query
                             } and contains this content: ${result.content.substring(0, 500)}...`,
                           schema: z.object({

@@ -132,7 +132,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
-      { pattern: /\$(?![{#\w])[^\$\n]+?\$(?!\w)/g, isBlock: false },
+      { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
     ];
 
     inlinePatterns.forEach(({ pattern, isBlock }) => {

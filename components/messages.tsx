@@ -53,7 +53,7 @@ const SciraLogoHeader = () => (
       unoptimized
       quality={100}
     />
-    <h2 className="text-xl font-semibold font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira AI</h2>
+    <h2 className="text-xl font-semibold font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2>
   </div>
 );
 

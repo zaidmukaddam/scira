@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback, useEffect, SVGProps, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
@@ -60,7 +60,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
     return models;
   }, []);
 
-  const selectedModelData = availableModels.find((model) => model.value === selectedModel);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
@@ -766,13 +765,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
                   'data-[state=checked]:bg-neutral-100 dark:data-[state=checked]:bg-neutral-800',
                 )}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
                   <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
                       {group.name}
                     </div>
-                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap">
+                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
                       {group.description}
                     </div>
                   </div>
