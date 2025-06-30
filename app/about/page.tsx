@@ -241,7 +241,7 @@ export default function AboutPage() {
             </motion.p>
 
             {/* Search Box */}
-            <motion.form variants={item} className="max-w-xl mx-auto w-full" onSubmit={handleSearch}>
+            <motion.form variants={item} className="max-w-4xl mx-auto w-full" onSubmit={handleSearch}>
               <div className="relative">
                 <input
                   type="text"
@@ -600,21 +600,40 @@ export default function AboutPage() {
 
       {/* Community Recognition Section */}
       <section className="py-24 px-4 bg-gradient-to-b from-accent/10 to-background">
-        <div className="container max-w-screen-xl mx-auto">
+        <div className="container max-w-7xl mx-auto w-full">
           <motion.div
-            className="max-w-3xl mx-auto space-y-12"
+            className="w-full space-y-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-medium tracking-tight">Community Recognition</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-muted-foreground">
                 Join thousands of developers and researchers who trust Scira
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <motion.div
+                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
+                whileHover={{ y: -2 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <img 
+                      src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png" 
+                      alt="Tiny Startups #1 Product" 
+                      className="h-10 w-10 object-contain" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-medium">#1 Product of the Week</h3>
+                    <p className="text-sm text-muted-foreground">Tiny Startups</p>
+                  </div>
+                </div>
+              </motion.div>
               <motion.div
                 className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
                 whileHover={{ y: -2 }}
@@ -640,7 +659,7 @@ export default function AboutPage() {
                     <GithubLogo className="h-10 w-10" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-medium">7,000+ Stars</h3>
+                    <h3 className="font-medium">8,000+ Stars</h3>
                     <p className="text-sm text-muted-foreground">GitHub</p>
                   </div>
                 </div>
