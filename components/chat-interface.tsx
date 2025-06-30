@@ -90,7 +90,12 @@ const LaunchBadge = ({ open, onOpenChange }: { open: boolean; onOpenChange: (ope
             <img 
               src="/Launch_SVG_Dark.svg" 
               alt="Launch" 
-              className="w-8 h-8"
+              className="w-8 h-8 hidden dark:block"
+            />
+            <img 
+              src="/Launch_SVG_Light.svg" 
+              alt="Launch" 
+              className="w-8 h-8 block dark:hidden"
             />
           </div>
           <div className="flex-1 min-w-0">
