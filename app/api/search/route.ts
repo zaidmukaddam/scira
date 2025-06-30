@@ -459,12 +459,6 @@ export async function POST(req: Request) {
         system: instructions + `\n\nThe user's location is ${latitude}, ${longitude}.`,
         toolChoice: 'auto',
         providerOptions: {
-          google: {
-            thinkingConfig: {
-              includeThoughts: true,
-              thinkingBudget: 10000,
-            },
-          },
           openai: {
             ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
@@ -483,7 +477,7 @@ export async function POST(req: Request) {
           xai: {
             ...(model === 'scira-default'
               ? {
-                reasoningEffort: 'high',
+                reasoningEffort: 'low',
               }
               : {}),
           },
@@ -690,7 +684,7 @@ export async function POST(req: Request) {
                     if (!result.title || result.title.trim() === '') {
                       try {
                         const { object } = await generateObject({
-                          model: scira.languageModel('scira-fast'),
+                          model: scira.languageModel('scira-nano'),
                           prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query
                             } and contains this content: ${result.content.substring(0, 500)}...`,
                           schema: z.object({
@@ -754,16 +748,12 @@ plt.show()`;
                 apiKey: serverEnv.DAYTONA_API_KEY,
                 target: 'us',
               });
-              const sandbox = await daytona.create({
-                image: 'scira-analysis:1749316515',
-                language: 'python',
-                resources: {
-                  cpu: 2,
-                  memory: 5,
-                  disk: 10,
-                },
-                autoStopInterval: 0,
-              });
+
+              const sandbox = await daytona.create(
+                {
+                  snapshot: 'scira-analysis:1751171803',
+                }
+              );
 
               const execution = await sandbox.process.codeRun(code);
               let message = '';
@@ -851,16 +841,11 @@ print(f"Converted amount: {converted_amount}")
                 apiKey: serverEnv.DAYTONA_API_KEY,
                 target: 'us',
               });
-              const sandbox = await daytona.create({
-                image: 'scira-analysis:1749316515',
-                language: 'python',
-                resources: {
-                  cpu: 2,
-                  memory: 5,
-                  disk: 10,
-                },
-                autoStopInterval: 0,
-              });
+              const sandbox = await daytona.create(
+                {
+                  snapshot: 'scira-analysis:1751171803',
+                }
+              );
 
               const execution = await sandbox.process.codeRun(code);
               let message = '';
@@ -1709,18 +1694,10 @@ print(f"Converted amount: {converted_amount}")
                 apiKey: serverEnv.DAYTONA_API_KEY,
                 target: 'us',
               });
+
               const sandbox = await daytona.create(
                 {
-                  image: 'scira-analysis:1749316515',
-                  language: 'python',
-                  resources: {
-                    cpu: 4,
-                    memory: 8,
-                    disk: 10,
-                  },
-                },
-                {
-                  timeout: 300,
+                  snapshot: 'scira-analysis:1751171803',
                 },
               );
 
@@ -1769,7 +1746,6 @@ print(f"Converted amount: {converted_amount}")
               };
             },
           }),
-          // Improved geocoding tool - combines forward and reverse geocoding in one tool
           find_place_on_map: tool({
             description:
               'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
@@ -1854,8 +1830,6 @@ print(f"Converted amount: {converted_amount}")
               }
             },
           }),
-
-          // Improved nearby search using Google Places Nearby Search API
           nearby_places_search: tool({
             description: 'Search for nearby places using Google Places Nearby Search API.',
             parameters: z.object({
@@ -2076,19 +2050,264 @@ print(f"Converted amount: {converted_amount}")
             },
           }),
           track_flight: tool({
-            description: 'Track flight information and status',
+            description: 'Track flight information and status using airline code and flight number',
             parameters: z.object({
-              flight_number: z.string().describe('The flight number to track'),
+              carrierCode: z.string().describe('The 2-letter airline carrier code (e.g., UL for SriLankan Airlines)'),
+              flightNumber: z.string().describe('The flight number without carrier code (e.g., 604)'),
+              scheduledDepartureDate: z.string().describe('The scheduled departure date in YYYY-MM-DD format (e.g., 2025-07-01)'),
             }),
-            execute: async ({ flight_number }: { flight_number: string }) => {
+            execute: async ({
+              carrierCode,
+              flightNumber,
+              scheduledDepartureDate
+            }: {
+              carrierCode: string;
+              flightNumber: string;
+              scheduledDepartureDate: string;
+            }) => {
+              const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                  grant_type: 'client_credentials',
+                  client_id: serverEnv.AMADEUS_API_KEY,
+                  client_secret: serverEnv.AMADEUS_API_SECRET,
+                }),
+              });
+
+              const tokenData = await tokenResponse.json();
+              console.log(tokenData);
+
+              const accessToken = tokenData.access_token;
+
               try {
                 const response = await fetch(
-                  `https://api.aviationstack.com/v1/flights?access_key=${serverEnv.AVIATION_STACK_API_KEY}&flight_iata=${flight_number}`,
+                  `https://test.api.amadeus.com/v2/schedule/flights?carrierCode=${carrierCode}&flightNumber=${flightNumber}&scheduledDepartureDate=${scheduledDepartureDate}`,
+                  {
+                    headers: {
+                      'Accept': 'application/vnd.amadeus+json',
+                      'Authorization': `Bearer ${accessToken}`,
+                    },
+                  }
                 );
-                return await response.json();
+
+                if (!response.ok) {
+                  throw new Error(`Amadeus API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Transform Amadeus API response to match expected structure
+                if (data.data && data.data.length > 0) {
+                  const flight = data.data[0];
+                  const departure = flight.flightPoints[0];
+                  const arrival = flight.flightPoints[1];
+
+                  return {
+                    data: [{
+                      flight_date: flight.scheduledDepartureDate,
+                      flight_status: 'scheduled', // Amadeus API doesn't provide real-time status in schedule endpoint
+                      departure: {
+                        airport: departure.iataCode,
+                        timezone: departure.departure.timings[0].value.slice(-6), // Extract timezone
+                        iata: departure.iataCode,
+                        terminal: null,
+                        gate: null,
+                        delay: null,
+                        scheduled: departure.departure.timings[0].value,
+                      },
+                      arrival: {
+                        airport: arrival.iataCode,
+                        timezone: arrival.arrival.timings[0].value.slice(-6), // Extract timezone
+                        iata: arrival.iataCode,
+                        terminal: null,
+                        gate: null,
+                        delay: null,
+                        scheduled: arrival.arrival.timings[0].value,
+                      },
+                      airline: {
+                        name: carrierCode, // We'll use carrier code as name for now
+                        iata: carrierCode,
+                      },
+                      flight: {
+                        number: flightNumber,
+                        iata: `${carrierCode}${flightNumber}`,
+                        duration: flight.legs[0]?.scheduledLegDuration ?
+                          (() => {
+                            const duration = flight.legs[0].scheduledLegDuration;
+                            const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                            if (matches) {
+                              const hours = parseInt(matches[1] || '0');
+                              const minutes = parseInt(matches[2] || '0');
+                              return hours * 60 + minutes;
+                            }
+                            return null;
+                          })() : null,
+                      },
+                      // Additional Amadeus-specific data
+                      amadeus_data: {
+                        aircraft_type: flight.legs[0]?.aircraftEquipment?.aircraftType,
+                        operating_flight: flight.segments[0]?.partnership?.operatingFlight,
+                        segment_duration: flight.segments[0]?.scheduledSegmentDuration,
+                      }
+                    }],
+                    // Include original Amadeus response for reference
+                    amadeus_response: data
+                  };
+                }
+
+                return { data: [], error: 'No flight data found' };
               } catch (error) {
                 console.error('Flight tracking error:', error);
-                throw error;
+                return {
+                  data: [],
+                  error: error instanceof Error ? error.message : 'Flight tracking failed'
+                };
+              }
+            },
+          }),
+          coin_data: tool({
+            description: 'Get comprehensive coin data including metadata and market data by coin ID.',
+            parameters: z.object({
+              coinId: z.string().describe('The coin ID (e.g., bitcoin, ethereum, solana)'),
+              localization: z.boolean().nullable().describe('Include all localized languages in response (default: true)'),
+              tickers: z.boolean().nullable().describe('Include tickers data (default: true)'),
+              marketData: z.boolean().nullable().describe('Include market data (default: true)'),
+              communityData: z.boolean().nullable().describe('Include community data (default: true)'),
+              developerData: z.boolean().nullable().describe('Include developer data (default: true)'),
+            }),
+            execute: async ({
+              coinId,
+              localization,
+              tickers,
+              marketData,
+              communityData,
+              developerData,
+            }: {
+              coinId: string;
+              localization?: boolean | null;
+              tickers?: boolean | null;
+              marketData?: boolean | null;
+              communityData?: boolean | null;
+              developerData?: boolean | null;
+            }) => {
+              console.log('Fetching coin data for:', coinId);
+
+              try {
+                const params = new URLSearchParams({
+                  localization: localization?.toString() || 'true',
+                  tickers: tickers?.toString() || 'true',
+                  market_data: marketData?.toString() || 'true',
+                  community_data: communityData?.toString() || 'true',
+                  developer_data: developerData?.toString() || 'true',
+                  sparkline: 'false',
+                });
+
+                const url = `https://api.coingecko.com/api/v3/coins/${coinId}?${params.toString()}`;
+
+                const response = await fetch(url, {
+                  headers: {
+                    'Accept': 'application/json',
+                    'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                  },
+                });
+
+                if (!response.ok) {
+                  throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                return {
+                  success: true,
+                  coinId,
+                  data: data,
+                  source: 'CoinGecko API',
+                  url: `https://www.coingecko.com/en/coins/${coinId}`,
+                };
+              } catch (error) {
+                console.error('Coin data error:', error);
+                return {
+                  success: false,
+                  error: error instanceof Error ? error.message : 'Unknown error occurred',
+                  coinId,
+                };
+              }
+            },
+          }),
+          coin_data_by_contract: tool({
+            description: 'Get coin data by token contract address on a specific platform.',
+            parameters: z.object({
+              platformId: z.string().describe('The platform ID (e.g., ethereum, binance-smart-chain, polygon-pos)'),
+              contractAddress: z.string().describe('The contract address of the token'),
+              localization: z.boolean().nullable().describe('Include all localized languages in response (default: true)'),
+              tickers: z.boolean().nullable().describe('Include tickers data (default: true)'),
+              marketData: z.boolean().nullable().describe('Include market data (default: true)'),
+              communityData: z.boolean().nullable().describe('Include community data (default: true)'),
+              developerData: z.boolean().nullable().describe('Include developer data (default: true)'),
+            }),
+            execute: async ({
+              platformId,
+              contractAddress,
+              localization,
+              tickers,
+              marketData,
+              communityData,
+              developerData,
+            }: {
+              platformId: string;
+              contractAddress: string;
+              localization?: boolean | null;
+              tickers?: boolean | null;
+              marketData?: boolean | null;
+              communityData?: boolean | null;
+              developerData?: boolean | null;
+            }) => {
+              console.log('Fetching coin data for contract:', contractAddress, 'on', platformId);
+
+              try {
+                const params = new URLSearchParams({
+                  localization: localization?.toString() || 'true',
+                  tickers: tickers?.toString() || 'true',
+                  market_data: marketData?.toString() || 'true',
+                  community_data: communityData?.toString() || 'true',
+                  developer_data: developerData?.toString() || 'true',
+                  sparkline: 'false',
+                });
+
+                const url = `https://api.coingecko.com/api/v3/coins/${platformId}/contract/${contractAddress}?${params.toString()}`;
+
+                const response = await fetch(url, {
+                  headers: {
+                    'Accept': 'application/json',
+                    'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                  },
+                });
+
+                if (!response.ok) {
+                  throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                return {
+                  success: true,
+                  contractAddress,
+                  platformId,
+                  data: data,
+                  source: 'CoinGecko API',
+                  url: data.links?.homepage?.[0] || `https://www.coingecko.com`,
+                };
+              } catch (error) {
+                console.error('Contract coin data error:', error);
+                return {
+                  success: false,
+                  error: error instanceof Error ? error.message : 'Unknown error occurred',
+                  contractAddress,
+                  platformId,
+                };
               }
             },
           }),
@@ -2387,6 +2606,96 @@ print(f"Converted amount: {converted_amount}")
               } catch (error) {
                 console.error('Reddit search error:', error);
                 throw error;
+              }
+            },
+          }),
+
+          coin_ohlc: tool({
+            description: 'Get coin OHLC (Open, High, Low, Close) data for candlestick charts with comprehensive coin data.',
+            parameters: z.object({
+              coinId: z.string().describe('The coin ID (e.g., bitcoin, ethereum, solana)'),
+              vsCurrency: z.string().default('usd').describe('The target currency of market data (usd, eur, jpy, etc.)'),
+              days: z.number().describe('Data up to number of days ago (1/7/14/30/90/180/365/max)'),
+            }),
+            execute: async ({
+              coinId,
+              vsCurrency = 'usd',
+              days,
+            }: {
+              coinId: string;
+              vsCurrency?: string;
+              days: number;
+            }) => {
+              console.log('Coin OHLC with Data - Coin ID:', coinId);
+              console.log('VS Currency:', vsCurrency);
+              console.log('Days:', days);
+
+              try {
+                // Fetch both OHLC chart data and comprehensive coin data in parallel
+                const [ohlcResponse, coinDataResponse] = await Promise.all([
+                  fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`, {
+                    headers: {
+                      'Accept': 'application/json',
+                      'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                    },
+                  }),
+                  fetch(`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false`, {
+                    headers: {
+                      'Accept': 'application/json',
+                      'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                    },
+                  })
+                ]);
+
+                if (!ohlcResponse.ok) {
+                  throw new Error(`CoinGecko OHLC API error: ${ohlcResponse.status} ${ohlcResponse.statusText}`);
+                }
+
+                if (!coinDataResponse.ok) {
+                  throw new Error(`CoinGecko Coin Data API error: ${coinDataResponse.status} ${coinDataResponse.statusText}`);
+                }
+
+                const [ohlcData, coinData] = await Promise.all([
+                  ohlcResponse.json(),
+                  coinDataResponse.json()
+                ]);
+
+                // Transform OHLC data for charting
+                const formattedOhlcData = ohlcData.map(([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
+                  timestamp,
+                  date: new Date(timestamp).toISOString(),
+                  open: open,
+                  high: high,
+                  low: low,
+                  close: close,
+                }));
+
+                return {
+                  success: true,
+                  coinId,
+                  vsCurrency,
+                  days,
+                  // Chart data for display
+                  chart: {
+                    title: `${coinData.name || coinId.charAt(0).toUpperCase() + coinId.slice(1)} OHLC Chart`,
+                    type: 'candlestick',
+                    data: formattedOhlcData,
+                    elements: formattedOhlcData,
+                    x_scale: 'datetime',
+                    y_scale: 'linear',
+                  },
+                  // Comprehensive coin data
+                  coinData: coinData,
+                  source: 'CoinGecko API',
+                  url: `https://www.coingecko.com/en/coins/${coinId}`,
+                };
+              } catch (error) {
+                console.error('Coin OHLC with Data error:', error);
+                return {
+                  success: false,
+                  error: error instanceof Error ? error.message : 'Unknown error occurred',
+                  coinId,
+                };
               }
             },
           }),

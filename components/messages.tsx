@@ -53,7 +53,7 @@ const SciraLogoHeader = () => (
       unoptimized
       quality={100}
     />
-    <h2 className="text-xl font-semibold font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2>
+    <h2 className="text-xl font-normal font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2>
   </div>
 );
 
@@ -295,7 +295,7 @@ const Messages: React.FC<MessagesProps> = ({
                         error: 'Failed to share chat',
                       });
                     }}
-                    className="h-8 px-2 text-xs rounded-full"
+                    className="h-8 px-2 text-xs rounded-full shadow-none"
                   >
                     <Share className="size-4.5! mr-2 font-bold fill-neutral-900 dark:fill-neutral-100" />
                     Share
@@ -370,7 +370,6 @@ const Messages: React.FC<MessagesProps> = ({
           <ToolInvocationListView
             key={`${messageIndex}-${partIndex}-tool`}
             toolInvocations={[part.toolInvocation]}
-            message={message}
             annotations={message.annotations}
           />
         );

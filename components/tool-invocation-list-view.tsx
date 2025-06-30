@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Wave } from '@foobar404/wave';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
@@ -18,7 +18,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Icons
@@ -28,6 +27,7 @@ import {
   ChevronDown,
   Cloud,
   Copy,
+  DollarSign,
   ExternalLink,
   Film,
   Globe,
@@ -62,6 +62,9 @@ import MemoryManager from '@/components/memory-manager';
 import MCPServerList from '@/components/mcp-server-list';
 import RedditSearch from '@/components/reddit-search';
 import XSearch from '@/components/x-search';
+import { CryptoTickers, CryptoChart } from '@/components/crypto-charts';
+import { CoinData } from '@/components/crypto-coin-data';
+import { OnChainTokenPrice } from '@/components/onchain-crypto-components';
 
 // Actions
 import { generateSpeech } from '@/app/actions';
@@ -628,15 +631,7 @@ CopyButton.displayName = 'CopyButton';
 
 // Now let's add the ToolInvocationListView
 const ToolInvocationListView = memo(
-  ({
-    toolInvocations,
-    message,
-    annotations,
-  }: {
-    toolInvocations: ToolInvocation[];
-    message: UIMessage;
-    annotations: any;
-  }) => {
+  ({ toolInvocations, annotations }: { toolInvocations: ToolInvocation[]; annotations: any }) => {
     const renderToolInvocation = useCallback(
       (toolInvocation: ToolInvocation, index: number) => {
         const args = JSON.parse(JSON.stringify(toolInvocation.args));
@@ -1359,7 +1354,9 @@ const ToolInvocationListView = memo(
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <Plane className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
-                  <span className="text-neutral-700 dark:text-neutral-300 text-lg">Tracking flight...</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 text-lg">
+                    Tracking flight {args.carrierCode}{args.flightNumber}...
+                  </span>
                 </div>
                 <div className="flex space-x-1">
                   {[0, 1, 2].map((index) => (
@@ -1379,10 +1376,6 @@ const ToolInvocationListView = memo(
                 </div>
               </div>
             );
-          }
-
-          if (result.error) {
-            return <div className="text-red-500 dark:text-red-400">Error tracking flight: {result.error}</div>;
           }
 
           return (
@@ -1578,6 +1571,69 @@ const ToolInvocationListView = memo(
           return <XSearch result={result} args={args} />;
         }
 
+        if (toolInvocation.toolName === 'coin_tickers') {
+          if (!result) {
+            return <SearchLoadingState icon={DollarSign} text="Fetching crypto ticker data..." color="orange" />;
+          }
+
+          return <CryptoTickers result={result} coinId={args.coinId} />;
+        }
+
+        if (toolInvocation.toolName === 'coin_chart_range') {
+          if (!result) {
+            return <SearchLoadingState icon={TrendingUpIcon} text="Loading crypto price chart..." color="blue" />;
+          }
+
+          return <CryptoChart result={result} coinId={args.coinId} chartType="candlestick" />;
+        }
+
+        if (toolInvocation.toolName === 'coin_ohlc') {
+          if (!result) {
+            return <SearchLoadingState icon={TrendingUpIcon} text="Loading OHLC candlestick data..." color="green" />;
+          }
+
+          // Enhanced result with coin data integrated
+          const enhancedResult = {
+            ...result,
+            // Add essential coin details to chart result
+            coinData: result.coinData
+          };
+
+          return <CryptoChart result={enhancedResult} coinId={args.coinId} chartType="candlestick" />;
+        }
+
+        if (toolInvocation.toolName === 'contract_chart') {
+          if (!result) {
+            return <SearchLoadingState icon={TrendingUpIcon} text="Loading contract chart data..." color="violet" />;
+          }
+
+          return <CryptoChart result={result} coinId={args.contractAddress} chartType="line" />;
+        }
+
+        if (toolInvocation.toolName === 'coin_data') {
+          if (!result) {
+            return <SearchLoadingState icon={DollarSign} text="Fetching comprehensive coin data..." color="blue" />;
+          }
+
+          return <CoinData result={result} coinId={args.coinId} />;
+        }
+
+        if (toolInvocation.toolName === 'coin_data_by_contract') {
+          if (!result) {
+            return <SearchLoadingState icon={DollarSign} text="Fetching token data by contract..." color="violet" />;
+          }
+
+          return <CoinData result={result} contractAddress={args.contractAddress} />;
+        }
+
+        if (toolInvocation.toolName === 'onchain_token_price') {
+          if (!result) {
+            return <SearchLoadingState icon={DollarSign} text="Fetching onchain token prices..." color="blue" />;
+          }
+
+          return <OnChainTokenPrice result={result} network={args.network} addresses={args.addresses} />;
+        }
+
         return null;
       },
       [annotations],
@@ -1765,11 +1821,7 @@ const ToolInvocationListView = memo(
     );
   },
   (prevProps, nextProps) => {
-    return (
-      prevProps.toolInvocations === nextProps.toolInvocations &&
-      prevProps.message === nextProps.message &&
-      prevProps.annotations === nextProps.annotations
-    );
+    return prevProps.toolInvocations === nextProps.toolInvocations && prevProps.annotations === nextProps.annotations;
   },
 );
 

@@ -206,9 +206,6 @@ const ChatInterface = memo(
     // Use clean React Query hooks for all data fetching
     const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
 
-    // Generate random UUID once for greeting selection
-    const greetingUuidRef = useRef<string>(uuidv4());
-
     // Add upgrade dialog state
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [hasShownUpgradeDialog, setHasShownUpgradeDialog] = useLocalStorage('scira-upgrade-prompt-shown', false);
@@ -216,37 +213,6 @@ const ChatInterface = memo(
     // Add changelog dialog state
     const [showChangelogDialog, setShowChangelogDialog] = useState(false);
     const [hasShownChangelogDialog, setHasShownChangelogDialog] = useLocalStorage('scira-changelog-shown', false);
-
-    // Memoized greeting to prevent flickering
-    const personalizedGreeting = useMemo(() => {
-      if (!user?.name) return 'What do you want to explore?';
-
-      const firstName = user.name.trim().split(' ')[0];
-      if (!firstName) return 'What do you want to explore?';
-
-      // Show upgrade message when upgrade dialog is displayed
-      if (showUpgradeDialog) {
-        return `Hey ${firstName}, Time to go Pro!`;
-      }
-
-      const greetings = [
-        `Hey ${firstName}! Let's dive in!`,
-        `${firstName}, what's the question?`,
-        `Ready ${firstName}? Ask me anything!`,
-        `Go ahead ${firstName}, I'm listening!`,
-        `${firstName}, fire away!`,
-        `What's cooking, ${firstName}?`,
-        `${firstName}, let's explore together!`,
-        `Hit me ${firstName}!`,
-        `${firstName}, what's the mystery?`,
-        `Shoot ${firstName}, what's up?`,
-      ];
-
-      // Use user ID + random UUID for truly random but stable greeting
-      const seed = user.id + greetingUuidRef.current;
-      const seedHash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return greetings[seedHash % greetings.length];
-    }, [user?.name, user?.id, showUpgradeDialog]);
 
     // Sign-in prompt dialog state
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
@@ -606,260 +572,225 @@ const ChatInterface = memo(
     );
 
     return (
-      <TooltipProvider>
-        <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden">
-          <Navbar
-            isDialogOpen={anyDialogOpen}
-            chatId={initialChatId || (messages.length > 0 ? chatId : null)}
-            selectedVisibilityType={selectedVisibilityType}
-            onVisibilityChange={handleVisibilityChange}
-            status={status}
-            user={user}
-            onHistoryClick={() => setCommandDialogOpen(true)}
-            isOwner={isOwner}
-            subscriptionData={subscriptionData}
-            isProUser={isUserPro}
-            isProStatusLoading={proStatusLoading}
-          />
+      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-neutral-300 dark:!scrollbar-thumb-neutral-700 !scrollbar-track-transparent hover:!scrollbar-thumb-neutral-400 dark:!hover:scrollbar-thumb-neutral-600">
+        <Navbar
+          isDialogOpen={anyDialogOpen}
+          chatId={initialChatId || (messages.length > 0 ? chatId : null)}
+          selectedVisibilityType={selectedVisibilityType}
+          onVisibilityChange={handleVisibilityChange}
+          status={status}
+          user={user}
+          onHistoryClick={() => setCommandDialogOpen(true)}
+          isOwner={isOwner}
+          subscriptionData={subscriptionData}
+          isProUser={isUserPro}
+          isProStatusLoading={proStatusLoading}
+        />
 
-          {/* Chat History Dialog */}
-          <ChatHistoryDialog
-            open={commandDialogOpen}
-            onOpenChange={(open) => {
-              setCommandDialogOpen(open);
-              setAnyDialogOpen(open);
-            }}
-            user={user}
-          />
+        {/* Chat History Dialog */}
+        <ChatHistoryDialog
+          open={commandDialogOpen}
+          onOpenChange={(open) => {
+            setCommandDialogOpen(open);
+            setAnyDialogOpen(open);
+          }}
+          user={user}
+        />
 
-          {/* Sign-in Prompt Dialog */}
-          <SignInPromptDialog
-            open={showSignInPrompt}
-            onOpenChange={(open) => {
-              setShowSignInPrompt(open);
-              if (!open) {
-                setHasShownSignInPrompt(true);
-              }
-            }}
-          />
+        {/* Sign-in Prompt Dialog */}
+        <SignInPromptDialog
+          open={showSignInPrompt}
+          onOpenChange={(open) => {
+            setShowSignInPrompt(open);
+            if (!open) {
+              setHasShownSignInPrompt(true);
+            }
+          }}
+        />
 
-          {/* Post-Message Upgrade Dialog */}
-          <PostMessageUpgradeDialog
-            open={showUpgradeDialog}
-            onOpenChange={(open) => {
-              setShowUpgradeDialog(open);
-              if (!open) {
-                setHasShownUpgradeDialog(true);
-              }
-            }}
-          />
+        {/* Post-Message Upgrade Dialog */}
+        <PostMessageUpgradeDialog
+          open={showUpgradeDialog}
+          onOpenChange={(open) => {
+            setShowUpgradeDialog(open);
+            if (!open) {
+              setHasShownUpgradeDialog(true);
+            }
+          }}
+        />
 
-          {/* Changelog Dialog */}
-          <ChangelogDialog
-            open={showChangelogDialog}
-            onOpenChange={(open) => {
-              setShowChangelogDialog(open);
-              if (!open) {
-                setHasShownChangelogDialog(true);
-              }
-            }}
-          />
+        {/* Changelog Dialog */}
+        <ChangelogDialog
+          open={showChangelogDialog}
+          onOpenChange={(open) => {
+            setShowChangelogDialog(open);
+            if (!open) {
+              setHasShownChangelogDialog(true);
+            }
+          }}
+        />
 
-          <div
-            className={`w-full p-2 sm:p-4 ${
-              status === 'ready' && messages.length === 0
-                ? 'min-h-screen! flex! flex-col! items-center! justify-center!' // Center everything when no messages
-                : 'mt-20! sm:mt-16! flex flex-col!' // Add top margin when showing messages
-            }`}
-          >
-            <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
-              {status === 'ready' && messages.length === 0 && (
-                <div className="text-center">
-                  <h1 className="text-2xl sm:text-4xl mb-4 sm:mb-6 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro!">
-                    {user ? personalizedGreeting : 'What do you want to explore?'}
-                  </h1>
-                </div>
-              )}
+        <div
+          className={`w-full p-2 sm:p-4 ${
+            status === 'ready' && messages.length === 0
+              ? 'min-h-screen! flex! flex-col! items-center! justify-center!' // Center everything when no messages
+              : 'mt-20! sm:mt-16! flex flex-col!' // Add top margin when showing messages
+          }`}
+        >
+          <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
+            {status === 'ready' && messages.length === 0 && (
+              <div className="text-center">
+                <h1 className="text-2xl sm:text-5xl mb-4 sm:mb-6 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro! font-light tracking-tighter">
+                  scira
+                </h1>
+              </div>
+            )}
 
-              {messages.length === 0 &&
-                !hasSubmitted &&
-                // Show initial form only if:
-                // 1. User is authenticated AND owns the chat, OR
-                // 2. It's a new chat (no initialChatId), OR
-                // 3. User is not authenticated but it's a private chat (anonymous private session)
-                ((user && isOwner) || !initialChatId || (!user && selectedVisibilityType === 'private')) &&
-                !isLimitBlocked && (
-                  <div className={cn('mt-4!')}>
-                    <FormComponent
-                      chatId={chatId}
-                      user={user!}
-                      subscriptionData={subscriptionData}
-                      input={input}
-                      setInput={setInput}
-                      attachments={attachments}
-                      setAttachments={setAttachments}
-                      handleSubmit={handleSubmit}
-                      fileInputRef={fileInputRef}
-                      inputRef={inputRef}
-                      stop={stop}
-                      messages={messages as any}
-                      append={append}
-                      selectedModel={selectedModel}
-                      setSelectedModel={handleModelChange}
-                      resetSuggestedQuestions={resetSuggestedQuestions}
-                      lastSubmittedQueryRef={lastSubmittedQueryRef}
-                      selectedGroup={selectedGroup}
-                      setSelectedGroup={setSelectedGroup}
-                      showExperimentalModels={true}
-                      status={status}
-                      setHasSubmitted={setHasSubmitted}
-                      isLimitBlocked={isLimitBlocked}
-                    />
+            {/* Show initial limit exceeded message */}
+            {status === 'ready' && messages.length === 0 && isLimitBlocked && (
+              <div className="mt-8 p-6 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl max-w-lg mx-auto">
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 text-neutral-600 dark:text-neutral-400">
+                    <Crown className="h-4 w-4" />
+                    <span className="text-sm font-medium">Daily limit reached</span>
                   </div>
-                )}
-
-              {/* Show initial limit exceeded message */}
-              {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-                <div className="mt-8 p-6 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl max-w-lg mx-auto">
-                  <div className="text-center space-y-4">
-                    <div className="flex items-center justify-center gap-2 text-neutral-600 dark:text-neutral-400">
-                      <Crown className="h-4 w-4" />
-                      <span className="text-sm font-medium">Daily limit reached</span>
-                    </div>
-                    <div>
-                      <p className="text-neutral-700 dark:text-neutral-300 mb-2">
-                        You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
-                      </p>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        Upgrade to continue with unlimited searches and premium features.
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          refetchUsage();
-                        }}
-                        size="sm"
-                        className="flex-1"
-                      >
-                        Refresh
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          window.location.href = '/pricing';
-                        }}
-                        size="sm"
-                        className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
-                      >
-                        <Crown className="h-3 w-3 mr-1.5" />
-                        Upgrade
-                      </Button>
-                    </div>
+                  <div>
+                    <p className="text-neutral-700 dark:text-neutral-300 mb-2">
+                      You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
+                    </p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Upgrade to continue with unlimited searches and premium features.
+                    </p>
                   </div>
-                </div>
-              )}
-
-              {/* Use the Messages component */}
-              {messages.length > 0 && (
-                <Messages
-                  messages={messages}
-                  lastUserMessageIndex={lastUserMessageIndex}
-                  input={input}
-                  setInput={setInput}
-                  setMessages={setMessages}
-                  append={append}
-                  reload={reload}
-                  suggestedQuestions={suggestedQuestions}
-                  setSuggestedQuestions={setSuggestedQuestions}
-                  status={status}
-                  error={error ?? null}
-                  user={user}
-                  selectedVisibilityType={selectedVisibilityType}
-                  chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
-                  onVisibilityChange={handleVisibilityChange}
-                  initialMessages={initialMessages}
-                  isOwner={isOwner}
-                />
-              )}
-
-              <div ref={bottomRef} />
-            </div>
-
-            {/* Only show form if user owns the chat OR it's a new private chat */}
-            {(messages.length > 0 || hasSubmitted) &&
-              ((user && isOwner) ||
-                (selectedVisibilityType === 'private' && !initialChatId) ||
-                (!user && selectedVisibilityType === 'private')) &&
-              !isLimitBlocked && (
-                <div className="fixed bottom-6 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
-                  <FormComponent
-                    chatId={chatId}
-                    input={input}
-                    user={user!}
-                    subscriptionData={subscriptionData}
-                    setInput={setInput}
-                    attachments={attachments}
-                    setAttachments={setAttachments}
-                    handleSubmit={handleSubmit}
-                    fileInputRef={fileInputRef}
-                    inputRef={inputRef}
-                    stop={stop}
-                    messages={messages as any}
-                    append={append}
-                    selectedModel={selectedModel}
-                    setSelectedModel={handleModelChange}
-                    resetSuggestedQuestions={resetSuggestedQuestions}
-                    lastSubmittedQueryRef={lastSubmittedQueryRef}
-                    selectedGroup={selectedGroup}
-                    setSelectedGroup={setSelectedGroup}
-                    showExperimentalModels={false}
-                    status={status}
-                    setHasSubmitted={setHasSubmitted}
-                    isLimitBlocked={isLimitBlocked}
-                  />
-                </div>
-              )}
-
-            {/* Show limit exceeded message */}
-            {isLimitBlocked && messages.length > 0 && (
-              <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
-                <div className="p-3 bg-neutral-50 dark:bg-neutral-900/95 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg shadow-sm backdrop-blur-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
-                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
-                        Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          refetchUsage();
-                        }}
-                        className="h-7 px-2 text-xs"
-                      >
-                        Refresh
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          window.location.href = '/pricing';
-                        }}
-                        className="h-7 px-3 text-xs bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
-                      >
-                        Upgrade
-                      </Button>
-                    </div>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        refetchUsage();
+                      }}
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Refresh
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        window.location.href = '/pricing';
+                      }}
+                      size="sm"
+                      className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                    >
+                      <Crown className="h-3 w-3 mr-1.5" />
+                      Upgrade
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Use the Messages component */}
+            {messages.length > 0 && (
+              <Messages
+                messages={messages}
+                lastUserMessageIndex={lastUserMessageIndex}
+                input={input}
+                setInput={setInput}
+                setMessages={setMessages}
+                append={append}
+                reload={reload}
+                suggestedQuestions={suggestedQuestions}
+                setSuggestedQuestions={setSuggestedQuestions}
+                status={status}
+                error={error ?? null}
+                user={user}
+                selectedVisibilityType={selectedVisibilityType}
+                chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
+                onVisibilityChange={handleVisibilityChange}
+                initialMessages={initialMessages}
+                isOwner={isOwner}
+              />
+            )}
+
+            <div ref={bottomRef} />
           </div>
+
+          {/* Single Form Component with dynamic positioning */}
+          {((user && isOwner) || !initialChatId || (!user && selectedVisibilityType === 'private')) &&
+            !isLimitBlocked && (
+              <div
+                className={cn(
+                  'transition-all duration-500 w-full max-w-[95%] sm:max-w-2xl mx-auto',
+                  messages.length === 0 && !hasSubmitted
+                    ? 'relative' // Centered position when no messages
+                    : 'fixed bottom-6 sm:bottom-4 left-0 right-0 z-20', // Fixed bottom when messages exist
+                )}
+              >
+                <FormComponent
+                  chatId={chatId}
+                  user={user!}
+                  subscriptionData={subscriptionData}
+                  input={input}
+                  setInput={setInput}
+                  attachments={attachments}
+                  setAttachments={setAttachments}
+                  handleSubmit={handleSubmit}
+                  fileInputRef={fileInputRef}
+                  inputRef={inputRef}
+                  stop={stop}
+                  messages={messages as any}
+                  append={append}
+                  selectedModel={selectedModel}
+                  setSelectedModel={handleModelChange}
+                  resetSuggestedQuestions={resetSuggestedQuestions}
+                  lastSubmittedQueryRef={lastSubmittedQueryRef}
+                  selectedGroup={selectedGroup}
+                  setSelectedGroup={setSelectedGroup}
+                  showExperimentalModels={messages.length === 0}
+                  status={status}
+                  setHasSubmitted={setHasSubmitted}
+                  isLimitBlocked={isLimitBlocked}
+                />
+              </div>
+            )}
+
+          {/* Show limit exceeded message */}
+          {isLimitBlocked && messages.length > 0 && (
+            <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-900/95 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg shadow-sm backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                    <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                      Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        refetchUsage();
+                      }}
+                      className="h-7 px-2 text-xs"
+                    >
+                      Refresh
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = '/pricing';
+                      }}
+                      className="h-7 px-3 text-xs bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                    >
+                      Upgrade
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </TooltipProvider>
+      </div>
     );
   },
 );

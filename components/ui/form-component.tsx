@@ -64,7 +64,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
   const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
-  const isProcessing = status === 'submitted' || status === 'streaming';
 
   // Check for attachments in current and previous messages
   const hasAttachments =
@@ -119,30 +118,31 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
 
   return (
     <>
-      <Select value={selectedModel} onValueChange={handleModelChange} disabled={isProcessing}>
+      <Select value={selectedModel} onValueChange={handleModelChange}>
         <SelectTrigger
           size="sm"
           className={cn(
-            'flex items-center gap-2 w-fit',
+            'group flex items-center gap-2 w-fit',
             'px-3 h-8',
             'rounded-full transition-all duration-200',
             'border border-neutral-300 dark:border-neutral-700',
-            'hover:shadow-none hover:border-neutral-400 dark:hover:border-neutral-600',
-            'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100',
-            'shadow-none',
-            isProcessing && 'opacity-50 pointer-events-none',
+            'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
+            'text-neutral-900 dark:text-neutral-100',
+            'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
+            'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
+            'active:[box-shadow:none]',
             'ring-0! outline-none!',
             className,
           )}
         >
           <SelectValue asChild>
-            <span className="flex items-center">
+            <span className="flex items-center group-active:[transform:translate3d(0,1px,0)]">
               <Cpu className="size-3.5 text-neutral-600 dark:text-neutral-400" />
             </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
-          className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
+          className="w-[240px] p-1 font-sans rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
           align="start"
           side="bottom"
           sideOffset={4}
@@ -167,7 +167,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                       className={cn(
                         'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
                         'transition-all duration-200',
-                        'opacity-50 hover:opacity-70 hover:bg-neutral-50 dark:hover:bg-neutral-800',
+                        'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
                       )}
                       onClick={() => {
                         if (requiresAuth) {
@@ -203,8 +203,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                     className={cn(
                       'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
                       'transition-all duration-200',
-                      'hover:bg-neutral-50 dark:hover:bg-neutral-800',
-                      'data-[state=checked]:bg-neutral-100 dark:data-[state=checked]:bg-neutral-800',
+                      'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                      'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
                     )}
                   >
                     <div className="flex flex-col min-w-0 flex-1">
@@ -686,7 +686,6 @@ interface GroupSelectorProps {
 }
 
 const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSelect, status }) => {
-  const isProcessing = status === 'submitted' || status === 'streaming';
   const { data: session } = useSession();
 
   // If user is not authenticated and selectedGroup is memory, switch to web
@@ -716,23 +715,29 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
   };
 
   return (
-    <Select value={selectedGroup} onValueChange={handleGroupChange} disabled={isProcessing}>
+    <Select value={selectedGroup} onValueChange={handleGroupChange}>
       <SelectTrigger
         size="sm"
         className={cn(
-          'flex items-center gap-2 w-fit',
+          'group flex items-center gap-2 w-fit',
           'px-3 h-8',
           'rounded-full transition-all duration-200',
           'border border-neutral-300 dark:border-neutral-700',
-          'hover:shadow-none hover:border-neutral-400 dark:hover:border-neutral-600',
-          'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100',
-          'shadow-none',
-          isProcessing && 'opacity-50 pointer-events-none',
+          'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
+          'text-neutral-900 dark:text-neutral-100',
+          'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
+          'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
+          'active:[box-shadow:none]',
           'ring-0! outline-none!',
         )}
       >
         <SelectValue asChild>
-          <span className={cn('font-medium whitespace-nowrap flex items-center gap-1.5', 'text-xs')}>
+          <span
+            className={cn(
+              'font-medium whitespace-nowrap flex items-center gap-1.5 group-active:[transform:translate3d(0,1px,0)]',
+              'text-xs',
+            )}
+          >
             {selectedGroupData && (
               <>
                 <selectedGroupData.icon className={cn('size-3.5')} />
@@ -743,7 +748,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
         </SelectValue>
       </SelectTrigger>
       <SelectContent
-        className="w-[12em] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
+        className="w-[12em] p-1 font-sans rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
         align="start"
         side="bottom"
         sideOffset={4}
@@ -761,8 +766,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
                 className={cn(
                   'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
                   'transition-all duration-200',
-                  'hover:bg-neutral-50 dark:hover:bg-neutral-800',
-                  'data-[state=checked]:bg-neutral-100 dark:data-[state=checked]:bg-neutral-800',
+                  'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                  'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
@@ -803,7 +808,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   lastSubmittedQueryRef,
   selectedGroup,
   setSelectedGroup,
-  showExperimentalModels,
   messages,
   status,
   setHasSubmitted,
@@ -1348,7 +1352,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         console.log('Switching to vision model:', visionModel);
         setSelectedModel(visionModel);
 
-        const modelData = models.find((m) => m.value === visionModel);
       }
 
       // Set upload queue immediately
@@ -1435,7 +1438,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         const visionModel = getFirstVisionModel();
         setSelectedModel(visionModel);
 
-        const modelData = models.find((m) => m.value === visionModel);
       }
 
       // Use filtered files if we found oversized ones
@@ -1781,7 +1783,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
                   value={input}
                   onChange={handleInput}
-                  disabled={isProcessing}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                   onInput={(e) => {
@@ -1843,7 +1844,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   'bg-neutral-100 dark:bg-neutral-900',
                   'border-t-0 border-neutral-200! dark:border-neutral-700!',
                   'p-2 gap-2',
-                  isProcessing ? 'opacity-20! cursor-not-allowed!' : '',
                 )}
               >
                 <div className={cn('flex items-center gap-2')}>
@@ -1886,17 +1886,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             setSelectedGroup(newMode);
                           }}
                           className={cn(
-                            'flex items-center gap-2 p-2 sm:px-3 h-8',
-                            'rounded-full transition-all duration-300',
-                            'border border-neutral-200 dark:border-neutral-800',
-                            'hover:shadow-md',
+                            'group flex items-center gap-2 p-2 sm:px-3 h-8',
+                            'rounded-full transition-all duration-200',
+                            'border',
                             selectedGroup === 'extreme'
-                              ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                              : 'bg-white dark:bg-neutral-900 text-neutral-500',
+                              ? 'border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none]'
+                              : 'border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-600 dark:text-neutral-400 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none]',
                           )}
                         >
-                          <TelescopeIcon className="h-3.5 w-3.5" />
-                          <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                          <span className="group-active:[transform:translate3d(0,1px,0)] flex items-center gap-2">
+                            <TelescopeIcon className="h-3.5 w-3.5" />
+                            <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                          </span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent
@@ -1916,58 +1917,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
 
                 <div className={cn('flex items-center flex-shrink-0 gap-2')}>
-                  {/* Voice Recording Button */}
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className={cn(
-                          'rounded-full p-1.5 h-8 w-8 transition-colors duration-200',
-                          isRecording
-                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                            : 'bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600',
-                        )}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleRecord();
-                        }}
-                        variant="outline"
-                        disabled={isProcessing}
-                      >
-                        <MicrophoneIcon size={14} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      sideOffset={6}
-                      className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-[11px]">
-                          {isRecording ? 'Stop Recording' : 'Voice Input'}
-                        </span>
-                        <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                          {isRecording ? 'Click to stop recording' : 'Record your voice message'}
-                        </span>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-
                   {hasVisionSupport(selectedModel) && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <Button
-                          className="rounded-full p-1.5 h-8 w-8 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600"
+                        <button
+                          className="group rounded-full p-2 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-700 dark:text-neutral-300 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none] transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             triggerFileInput();
                           }}
-                          variant="outline"
-                          disabled={isProcessing}
                         >
-                          <PaperclipIcon size={14} />
-                        </Button>
+                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                            <PaperclipIcon size={14} />
+                          </span>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -1989,17 +1953,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   {isProcessing ? (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <Button
-                          className="rounded-full p-1.5 h-8 w-8"
+                        <button
+                          className="group rounded-full p-2 h-8 w-8 border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none] transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             stop();
                           }}
-                          variant="destructive"
                         >
-                          <StopIcon size={14} />
-                        </Button>
+                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                            <StopIcon size={14} />
+                          </span>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -2009,11 +1974,49 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <span className="font-medium text-[11px]">Stop Generation</span>
                       </TooltipContent>
                     </Tooltip>
-                  ) : (
+                  ) : input.length === 0 && attachments.length === 0 ? (
+                    /* Show Voice Recording Button when no input */
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <Button
-                          className="rounded-full p-1.5 h-8 w-8"
+                        <button
+                          className={cn(
+                            'group rounded-full p-2 h-8 w-8 backdrop-blur-2xl transition-all duration-200',
+                            isRecording
+                              ? 'border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-white shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none]'
+                              : 'border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none]',
+                          )}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleRecord();
+                          }}
+                        >
+                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                            <MicrophoneIcon size={14} />
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">
+                            {isRecording ? 'Stop Recording' : 'Voice Input'}
+                          </span>
+                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                            {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    /* Show Send Button when there is input */
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="group rounded-full flex p-2 m-auto h-8 w-8 border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-zinc-400 disabled:hover:via-zinc-500 disabled:hover:to-zinc-600 transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2027,8 +2030,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             isRecording
                           }
                         >
-                          <ArrowUpIcon size={14} />
-                        </Button>
+                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                            <ArrowUpIcon size={14} />
+                          </span>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"

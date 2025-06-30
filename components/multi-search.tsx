@@ -2,23 +2,13 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Globe,
-  Search,
-  ExternalLink,
-  Calendar,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  ArrowUpRight,
-} from 'lucide-react';
+import { Globe, Search, ExternalLink, Calendar, X, ChevronLeft, ChevronRight, Check, ArrowUpRight } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -88,9 +78,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
   const hostname = new URL(result.url).hostname.replace('www.', '');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
         'group relative bg-white dark:bg-neutral-900',
         'border border-neutral-200 dark:border-neutral-800',
@@ -149,7 +137,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
           </time>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
@@ -238,17 +226,14 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
   return (
     <>
       {/* Image Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[200px] md:h-[240px]">
+      <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
         {displayImages.map((image, index) => {
           const state = imageStates[index] || { loaded: false, error: false };
           const isLast = index === displayImages.length - 1;
 
           return (
-            <motion.button
+            <button
               key={index}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 }}
               onClick={() => {
                 setSelectedImage(index);
                 setIsOpen(true);
@@ -282,7 +267,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                   <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
                 </div>
               )}
-            </motion.button>
+            </button>
           );
         })}
       </div>
@@ -293,7 +278,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
           className={cn(
             isMobile ? 'h-[90vh]' : 'w-full! max-w-2xl! h-3/5',
             'p-0 overflow-hidden',
-            !isMobile && 'border border-neutral-200 dark:border-neutral-800 shadow-lg'
+            !isMobile && 'border border-neutral-200 dark:border-neutral-800 shadow-lg',
           )}
         >
           <div className="relative w-full h-full bg-white dark:bg-neutral-900">
@@ -361,7 +346,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                 'bg-white/90 dark:bg-neutral-800/90',
                 'hover:bg-neutral-100 dark:hover:bg-neutral-700',
                 'border border-neutral-200 dark:border-neutral-700',
-                'shadow-sm'
+                'shadow-sm',
               )}
               onClick={() => setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
             >
@@ -375,7 +360,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                 'bg-white/90 dark:bg-neutral-800/90',
                 'hover:bg-neutral-100 dark:hover:bg-neutral-700',
                 'border border-neutral-200 dark:border-neutral-700',
-                'shadow-sm'
+                'shadow-sm',
               )}
               onClick={() => setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
             >
@@ -404,6 +389,16 @@ const LoadingState: React.FC<{
 }> = ({ queries, annotations }) => {
   const completedCount = annotations.length;
   const totalResults = annotations.reduce((sum, a) => sum + a.data.resultsCount, 0);
+  const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
+  const loadingSkeletonRef = React.useRef<HTMLDivElement>(null);
+
+  // Add horizontal scroll support with mouse wheel
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -425,23 +420,40 @@ const LoadingState: React.FC<{
                 </div>
                 <h2 className="font-medium text-sm">Sources</h2>
               </div>
-              <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                {totalResults || '0'}
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
+                  {totalResults || '0'}
                 </Badge>
+                {totalResults > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    View all
+                    <ArrowUpRight className="w-3 h-3 ml-1" />
+                  </Button>
+                )}
+              </div>
             </div>
           </AccordionTrigger>
 
           <AccordionContent className="p-0">
             <div
               className={cn(
-                'p-4 space-y-3',
+                'p-2 space-y-3',
                 'bg-white dark:bg-neutral-900',
                 'border-x border-b border-neutral-200 dark:border-neutral-800',
                 'rounded-b-xl',
               )}
             >
               {/* Query badges */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              <div 
+                ref={loadingQueryTagsRef}
+                className="flex gap-2 overflow-x-auto no-scrollbar"
+                onWheel={handleWheelScroll}
+              >
                 {queries.map((query, i) => {
                   const isCompleted = annotations.some((a) => a.data.query === query);
                   return (
@@ -467,7 +479,11 @@ const LoadingState: React.FC<{
               </div>
 
               {/* Skeleton cards */}
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+              <div 
+                ref={loadingSkeletonRef}
+                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
+                onWheel={handleWheelScroll}
+              >
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
@@ -494,16 +510,13 @@ const LoadingState: React.FC<{
 
       {/* Images skeleton */}
       <div>
-        <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[200px] md:h-[240px]">
+        <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
           {[...Array(5)].map((_, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
               className={cn(
                 'rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse',
-                i === 0 ? 'md:col-span-2 md:row-span-2' : ''
+                i === 0 ? 'md:col-span-2 md:row-span-2' : '',
               )}
             />
           ))}
@@ -520,6 +533,16 @@ const MultiSearch: React.FC<{
   annotations?: QueryCompletion[];
 }> = ({ result, args, annotations = [] }) => {
   const [sourcesOpen, setSourcesOpen] = React.useState(false);
+  const queryTagsRef = React.useRef<HTMLDivElement>(null);
+  const previewResultsRef = React.useRef<HTMLDivElement>(null);
+
+  // Add horizontal scroll support with mouse wheel
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
 
   if (!result) {
     return <LoadingState queries={args.queries} annotations={annotations} />;
@@ -552,23 +575,43 @@ const MultiSearch: React.FC<{
                 </div>
                 <h2 className="font-medium text-sm">Sources</h2>
               </div>
-              <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                {totalResults}
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
+                  {totalResults}
                 </Badge>
+                {totalResults > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSourcesOpen(true);
+                    }}
+                  >
+                    View all
+                    <ArrowUpRight className="w-3 h-3 ml-1" />
+                  </Button>
+                )}
+              </div>
             </div>
           </AccordionTrigger>
 
           <AccordionContent className="p-0">
             <div
               className={cn(
-                'p-4 space-y-3',
+                'p-3 space-y-3',
                 'bg-white dark:bg-neutral-900',
                 'border-x border-b border-neutral-200 dark:border-neutral-800',
                 'rounded-b-xl',
               )}
             >
               {/* Query tags */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              <div 
+                ref={queryTagsRef}
+                className="flex gap-2 overflow-x-auto no-scrollbar"
+                onWheel={handleWheelScroll}
+              >
                 {result.searches.map((search, i) => (
                   <Badge key={i} variant="outline" className="rounded-full text-xs px-3 py-1 shrink-0">
                     <Search className="w-3 h-3 mr-1.5" />
@@ -578,7 +621,11 @@ const MultiSearch: React.FC<{
               </div>
 
               {/* Preview results */}
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+              <div 
+                ref={previewResultsRef}
+                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
+                onWheel={handleWheelScroll}
+              >
                 {previewResults.map((result, i) => (
                   <a
                     key={i}
@@ -586,19 +633,13 @@ const MultiSearch: React.FC<{
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block flex-shrink-0 w-[320px]"
-                    >
+                  >
                     <SourceCard result={result} />
                   </a>
                 ))}
               </div>
 
-              {/* View detailed sources button */}
-              {totalResults > 0 && (
-                <Button variant="outline" className="w-full rounded-lg" onClick={() => setSourcesOpen(true)}>
-                  View detailed sources
-                  <ArrowUpRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
+
             </div>
           </AccordionContent>
         </AccordionItem>

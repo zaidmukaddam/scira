@@ -1,7 +1,8 @@
-from daytona import Daytona, DaytonaConfig, Image, CreateSnapshotParams, Resources
+from daytona import Daytona, DaytonaConfig, Image, CreateSnapshotParams, Resources, CreateSandboxFromSnapshotParams, CodeLanguage
 import time
+import os
 
-daytona = Daytona(DaytonaConfig(api_key="", server_url="https://api.daytona.ai"))
+daytona = Daytona(DaytonaConfig(api_key=os.getenv("DAYTONA_API_KEY")))
 
 # Generate a unique name for the image
 snapshot_name = f"scira-analysis:{int(time.time())}"
@@ -24,10 +25,32 @@ daytona.snapshot.create(
         name=snapshot_name,
         image=image,
         resources=Resources(
-            cpu=1,
-            memory=1,
-            disk=3,
+            cpu=2,
+            memory=4,
+            disk=5,
         ),
+        entrypoint=["sleep", "infinity"],
     ),
     on_logs=print,
 )
+
+sandbox = daytona.create(
+    CreateSandboxFromSnapshotParams(
+        snapshot="scira-analysis:1751171803",
+        language=CodeLanguage.PYTHON,
+    ),
+)
+
+res = sandbox.process.code_run('''
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+NVDA = yf.Ticker("NVDA")
+data = NVDA.history(period="7d")
+print(data)
+
+plt.plot(data['Close'].values)
+plt.show()
+''')
+
+print(res.result)

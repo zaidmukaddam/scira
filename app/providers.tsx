@@ -7,6 +7,7 @@ import { PostHogProvider } from 'posthog-js/react';
 import { ReactNode } from 'react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
 
 if (typeof window !== 'undefined') {
   posthog.init(clientEnv.NEXT_PUBLIC_POSTHOG_KEY!, {
@@ -31,7 +32,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <PostHogProvider client={posthog}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
       </PostHogProvider>
     </QueryClientProvider>

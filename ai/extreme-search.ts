@@ -6,26 +6,11 @@
 // ----> Return all collected sources and research data to the user
 
 import Exa from "exa-js";
-import { Daytona } from '@daytonaio/sdk';
+import { CreateSandboxFromImageParams, Daytona } from '@daytonaio/sdk';
 import { DataStreamWriter, generateObject, generateText, tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 import { scira } from "@/ai/providers";
-
-export const SYSTEM_PROMPT = `You are an expert researcher. Today is ${new Date().toISOString()}. Follow these instructions when responding:
-  - You may be asked to research subjects that is after your knowledge cutoff, assume the user is right when presented with news.
-  - The user is a highly experienced analyst, no need to simplify it, be as detailed as possible and make sure your response is correct.
-  - Be highly organized.
-  - Suggest solutions that I didn't think about.
-  - Be proactive and anticipate my needs.
-  - Treat me as an expert in all subject matter.
-  - Mistakes erode my trust, so be accurate and thorough.
-  - Provide detailed explanations, I'm comfortable with lots of detail.
-  - Value good arguments over authorities, the source is irrelevant.
-  - Consider new technologies and contrarian ideas, not just the conventional wisdom.
-  - You may use high levels of speculation or prediction, just flag it for me.
-  - You must provide links to sources used. Ideally these are inline e.g. [this documentation](https://documentation.com/this)
-  `;
 
 const pythonLibsAvailable = [
     "pandas",
@@ -44,22 +29,17 @@ const daytona = new Daytona({
 });
 
 const runCode = async (code: string, installLibs: string[] = []) => {
-    const sandbox = await daytona.create({
-        image: 'scira-analysis:1749316515',
-        language: 'python',
-        resources: {
-            cpu: 2,
-            memory: 4,
-            disk: 5,
-        },
-        autoStopInterval: 0
-    })
+    const sandbox = await daytona.create(
+        {
+            snapshot: 'scira-analysis:1751171803',
+        }
+    );
 
     if (installLibs.length > 0) {
         await sandbox.process.executeCommand(`pip install ${installLibs.join(" ")}`);
     }
 
-    const result = await sandbox.process.codeRun(code, undefined, 0);
+    const result = await sandbox.process.codeRun(code);
     sandbox.delete();
     return result;
 }
@@ -164,7 +144,7 @@ const extremeSearch = async (
 
     // plan out the research
     const { object: plan } = await generateObject({
-        model: scira.languageModel("scira-grok-3"),
+        model: scira.languageModel("scira-x-fast"),
         schema: z.object({
             plan: z.array(
                 z.object({
@@ -181,12 +161,12 @@ Plan Guidelines:
 - Generate specific, diverse search queries for each aspect
 - Search for relevant information using the web search tool
 - Analyze the results and identify important facts and insights
-- The plan is limited to 15 actions, do not exceed this limit
+- The plan is limited to 15 actions, do not exceed this limit!
 - Follow up with more specific queries as you learn more
+- Add todos for code execution if it is asked for by the user
 - No need to synthesize your findings into a comprehensive response, just return the results
 - The plan should be concise and to the point, no more than 10 items
 - Keep the titles concise and to the point, no more than 70 characters
-- Add todos for code execution if it is relevant to the user's prompt
 - Mention any need for visualizations in the plan
 - Make the plan technical and specific to the topic`,
     });
@@ -206,7 +186,7 @@ Plan Guidelines:
 
     // Create the autonomous research agent with tools
     const { text } = await generateText({
-        model: scira.languageModel("scira-default"),
+        model: scira.languageModel("scira-x-fast"),
         maxSteps: totalTodos + 2,
         system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
@@ -218,6 +198,7 @@ Your main job is to SEARCH extensively and gather comprehensive information. Sea
 
 For searching:
 - PRIORITIZE SEARCH OVER CODE - Search first, search often, search comprehensively
+- Do not run all the queries at once, run them one by one, wait for the results before running the next query
 - Make 3-5 targeted searches per research topic to get different angles and perspectives
 - Search queries should be specific and focused, 5-15 words maximum
 - Vary your search approaches: broad overview → specific details → recent developments → expert opinions
@@ -235,7 +216,7 @@ For searching:
 - Topic: "Company financials" → Search: "Tesla Q3 2024 earnings report", "Tesla revenue growth analysis", "electric vehicle market share 2024"
 - Topic: "Technical implementation" → Search: "React Server Components best practices", "Next.js performance optimization techniques", "modern web development patterns"
 
-### MINIMAL CODE USAGE (5% of your work - USE SPARINGLY):
+
 Only use code when:
 - You need to process or analyze data that was found through searches
 - Mathematical calculations are required that cannot be found through search
@@ -253,19 +234,24 @@ Code guidelines (when absolutely necessary):
 2. Identify key subtopics and drill down with specific searches
 3. Look for recent developments and trends through targeted news/research searches
 4. Cross-validate information with searches from different categories
-5. Only use code if mathematical analysis is needed on the gathered data
+5. Use code execution if mathematical analysis is needed on the gathered data or if you need or are asked to visualize the data
 6. Continue searching to fill any gaps in understanding
 
 For research:
 - Carefully follow the plan, do not skip any steps
 - Do not use the same query twice to avoid duplicates
-- Plan is limited to ${totalTodos} actions with 2 extra actions in case of errors, do not exceed this limit
+- Plan is limited to ${totalTodos} actions with 2 extra actions in case of errors, do not exceed this limit but use to the fullest to get the most information!
 
 Research Plan:
 ${JSON.stringify(plan.plan)}
 `,
         prompt,
         temperature: 0,
+        providerOptions: {
+            xai: {
+                parallel_function_calling: "false"
+            }
+        },
         tools: {
             codeRunner: {
                 description: 'Run Python code in a sandbox',

@@ -14,7 +14,9 @@ const middleware = extractReasoningMiddleware({
 export const scira = customProvider({
   languageModels: {
     'scira-default': xai('grok-3-mini'),
-    'scira-fast': openai.responses('gpt-4.1-nano'),
+    'scira-x-fast-mini': xai('grok-3-mini-fast'),
+    'scira-x-fast': xai('grok-3-fast'),
+    'scira-nano': openai.responses('gpt-4.1-nano'),
     'scira-grok-3': xai('grok-3'),
     'scira-vision': xai('grok-2-vision-1212'),
     'scira-g2': xai('grok-2-latest'),

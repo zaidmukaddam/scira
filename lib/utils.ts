@@ -1,14 +1,14 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { Globe, Book, TelescopeIcon } from 'lucide-react'
+import { Globe, Book, TelescopeIcon, DollarSign } from 'lucide-react'
 import { ChatsCircleIcon, CodeIcon, MemoryIcon, RedditLogoIcon, YoutubeLogoIcon, XLogoIcon } from '@phosphor-icons/react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export type SearchGroupId = 'web' | 'x' | 'academic' | 'youtube' | 'reddit' | 'analysis' | 'chat' | 'extreme' | 'memory';
+export type SearchGroupId = 'web' | 'x' | 'academic' | 'youtube' | 'reddit' | 'analysis' | 'chat' | 'extreme' | 'memory' | 'crypto';
 
 export const searchGroups = [
   {
@@ -31,6 +31,13 @@ export const searchGroups = [
     name: 'Analysis',
     description: 'Code, stock and currency stuff',
     icon: CodeIcon,
+    show: true,
+  },
+  {
+    id: 'crypto' as const,
+    name: 'Crypto',
+    description: 'Cryptocurrency research powered by CoinGecko',
+    icon: DollarSign,
     show: true,
   },
   {

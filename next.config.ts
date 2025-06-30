@@ -15,15 +15,16 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     useCache: true,
-    optimizePackageImports: ['@phosphor-icons/react', 'botid', '@elevenlabs/elevenlabs-js', '@daytonaio/sdk',],
+    optimizePackageImports: ['@phosphor-icons/react', '@daytonaio/sdk'],
     nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '10mb',
     },
     staleTimes: {
-      dynamic: 300,
-      static: 300,
+      dynamic: 10,
+      static: 30,
     },
+    reactCompiler: true,
   },
   transpilePackages: ['geist'],
   output: 'standalone',

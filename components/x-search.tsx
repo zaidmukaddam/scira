@@ -178,7 +178,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
               {/* Horizontal Tweets Row */}
               {tweetCitations.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide rounded-lg">
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none rounded-lg">
                     {displayedTweets.map((citation, index) => (
                       <motion.div
                         key={citation.tweet_id}

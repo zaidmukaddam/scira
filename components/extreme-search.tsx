@@ -2,15 +2,22 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Research } from '@/ai/extreme-search';
 import type { JSONValue, ToolInvocation } from 'ai';
-import { useEffect, useState, memo, useRef, useMemo } from 'react';
+import React, { useEffect, useState, memo, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, ArrowUpRight, Globe, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, ArrowUpRight, Globe, Search, Calendar, ExternalLink } from 'lucide-react';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactECharts, { EChartsOption } from 'echarts-for-react';
 import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface QueryBlockData {
   queryId: string;
@@ -587,6 +594,136 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
 
 ExtremeChart.displayName = 'ExtremeChart';
 
+// Source Card Component for Extreme Search
+const ExtremeSourceCard: React.FC<{ 
+  source: any; 
+  content?: string;
+  onClick?: () => void 
+}> = ({ source, content, onClick }) => {
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  let hostname = '';
+  
+  try {
+    hostname = new URL(source.url).hostname.replace('www.', '');
+  } catch {
+    hostname = source.url;
+  }
+
+  return (
+    <div
+      className={cn(
+        'group relative bg-white dark:bg-neutral-900',
+        'border border-neutral-200 dark:border-neutral-800',
+        'rounded-xl p-4 transition-all duration-200',
+        'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+        onClick && 'cursor-pointer',
+      )}
+      onClick={onClick}
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className="relative w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
+          {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
+          {source.favicon ? (
+            <Image
+              src={source.favicon}
+              alt=""
+              width={24}
+              height={24}
+              className={cn('object-contain', !imageLoaded && 'opacity-0')}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                setImageLoaded(true);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <Globe className="w-5 h-5 text-neutral-400" />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 line-clamp-1 mb-1">
+            {source.title || hostname}
+          </h3>
+          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            <span className="truncate">{hostname}</span>
+            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {content && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed mb-3">
+          {content.length > 150 ? content.substring(0, 150) + '...' : content}
+        </p>
+      )}
+
+      {/* Date if available */}
+      {source.published_date && (
+        <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800">
+          <time className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <Calendar className="w-3 h-3" />
+            {new Date(source.published_date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </time>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Sources Sheet Component for Extreme Search
+const ExtremeSourcesSheet: React.FC<{
+  sources: Array<any>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}> = ({ sources, open, onOpenChange }) => {
+  const isMobile = useIsMobile();
+
+  const SheetWrapper = isMobile ? Drawer : Sheet;
+  const SheetContentWrapper = isMobile ? DrawerContent : SheetContent;
+
+  return (
+    <SheetWrapper open={open} onOpenChange={onOpenChange}>
+      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0')}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {sources.length} research sources
+              </p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-3">
+              {sources.map((source, index) => (
+                <a
+                  key={index}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <ExtremeSourceCard source={source} />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SheetContentWrapper>
+    </SheetWrapper>
+  );
+};
+
 const ExtremeSearchComponent = ({
   toolInvocation,
   annotations,
@@ -601,7 +738,8 @@ const ExtremeSearchComponent = ({
 
   // Add state for accordion sections (default to closed for more compact view)
   const [researchProcessOpen, setResearchProcessOpen] = useState(false);
-  const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [sourcesAccordionOpen, setSourcesAccordionOpen] = useState(true);
+  const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
 
   const latestStatusAnnotation = useMemo(
     () =>
@@ -1159,139 +1297,117 @@ const ExtremeSearchComponent = ({
     </div>
   );
 
+  // Add horizontal scroll support with mouse wheel
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
+
   // Rendering the sources card for result state
-  const renderSources = (uniqueSources: Array<any>) => (
-    <Card className="w-full mx-auto gap-0 py-0 mb-3 shadow-none overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800/50 rounded-lg">
-      <div
-        className="flex items-center justify-between py-2 px-3 border-b border-neutral-200 dark:border-neutral-800/50 cursor-pointer"
-        onClick={() => setSourcesOpen(!sourcesOpen)}
-      >
-        <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
-          <p className="text-xs font-medium text-neutral-900 dark:text-neutral-100">Sources Found</p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {uniqueSources.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-xl">
-              <Search className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
-              <p className="text-[10px] text-neutral-600 dark:text-neutral-300">
-                {uniqueSources.length} Result{uniqueSources.length === 1 ? '' : 's'}
-              </p>
+  const renderSources = (uniqueSources: Array<any>) => {
+    // Get content for sources from timeline data
+    const getSourceContent = (sourceUrl: string) => {
+      return timelineItems
+        .filter((item) => item.type === 'search' && item.searchData)
+        .flatMap((item) => item.searchData!.content.filter((c) => c.url === sourceUrl))[0]?.text || '';
+    };
+
+    // Show first 5 sources in preview
+    const previewSources = uniqueSources.slice(0, 5);
+
+    return (
+      <Card className="w-full mx-auto gap-0 py-0 mb-3 shadow-none overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800/50 rounded-lg">
+        <div
+          className={cn(
+            'flex items-center justify-between py-3 px-4 cursor-pointer',
+            'border-b border-neutral-200 dark:border-neutral-800/50',
+            'data-[state=open]:rounded-b-none',
+          )}
+          onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
+                <Globe className="h-3.5 w-3.5 text-neutral-500" />
+              </div>
+              <h2 className="font-medium text-sm">Sources</h2>
             </div>
-          )}
-          {sourcesOpen ? (
-            <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 ml-1" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 ml-1" />
-          )}
-        </div>
-      </div>
-      <AnimatePresence>
-        {sourcesOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{
-              height: { duration: 0.2, ease: 'easeOut' },
-              opacity: { duration: 0.15 },
-            }}
-          >
-            <CardContent className="p-3 pt-2">
-              {uniqueSources.length > 0 ? (
-                <div className="relative">
-                  <div className="absolute right-1.5 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-neutral-900 via-transparent to-transparent rounded opacity-0 transition-opacity hover:opacity-100" />
-                  <div className="overflow-x-auto pb-2 -mx-3 px-3 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
-                    <div className="flex flex-row gap-3 min-w-min">
-                      {uniqueSources.map((source, index) => {
-                        let displayTitle = 'View Source';
-                        let displayHostname = '';
-                        if (source && source.url) {
-                          try {
-                            const urlObj = new URL(source.url);
-                            displayHostname = urlObj.hostname.replace('www.', '');
-                            displayTitle = source.title || displayHostname;
-                          } catch (e) {
-                            console.warn('Invalid source URL for result display:', source.url);
-                            displayTitle = source.title || source.url;
-                          }
-                        } else if (source && source.title) {
-                          displayTitle = source.title;
-                        } else if (source && source.url) {
-                          displayTitle = source.url;
-                        }
-
-                        const sourceContent =
-                          timelineItems
-                            .filter((item) => item.type === 'search' && item.searchData)
-                            .flatMap((item) => item.searchData!.content.filter((c) => c.url === source.url))[0]?.text ||
-                          '';
-
-                        return (
-                          <motion.div
-                            key={index}
-                            className="flex flex-col min-w-[180px] max-w-[250px] bg-neutral-50 dark:bg-neutral-900 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <div className="flex items-center gap-2 p-2 pb-1.5">
-                              <img
-                                src={source.favicon}
-                                alt=""
-                                className="w-4 h-4 rounded-full flex-shrink-0 opacity-90"
-                                onError={(e) => {
-                                  e.currentTarget.src = 'https://www.google.com/s2/favicons?sz=128&domain=example.com';
-                                  (e.currentTarget as HTMLImageElement).style.filter =
-                                    'grayscale(100%) brightness(150%)';
-                                }}
-                              />
-                              <span
-                                className="truncate text-neutral-900 dark:text-neutral-100 text-xs font-medium flex-1"
-                                title={displayTitle}
-                              >
-                                {displayTitle}
-                              </span>
-                            </div>
-
-                            <div className="px-3 pb-2 text-xs">
-                              <a
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 truncate flex items-center gap-1 group w-fit"
-                              >
-                                {displayHostname}
-                                <ArrowUpRight className="w-3 h-3 opacity-70 group-hover:opacity-100 transition-opacity" />
-                              </a>
-                            </div>
-
-                            {sourceContent && (
-                              <div className="px-3 pb-2 text-[10px] text-neutral-600 dark:text-neutral-400 overflow-y-auto max-h-[70px] leading-relaxed scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
-                                {sourceContent.length > 250 ? sourceContent.substring(0, 250) + '...' : sourceContent}
-                              </div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <motion.p
-                  className="text-neutral-500 dark:text-neutral-400 text-[10px]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
+                {uniqueSources.length}
+              </Badge>
+              {uniqueSources.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSourcesSheetOpen(true);
+                  }}
                 >
-                  No sources found for this research.
-                </motion.p>
+                  View all
+                  <ArrowUpRight className="w-3 h-3 ml-1" />
+                </Button>
               )}
-            </CardContent>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Card>
-  );
+              {sourcesAccordionOpen ? (
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 ml-1" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 ml-1" />
+              )}
+            </div>
+          </div>
+        </div>
+        <AnimatePresence>
+          {sourcesAccordionOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{
+                height: { duration: 0.2, ease: 'easeOut' },
+                opacity: { duration: 0.15 },
+              }}
+            >
+              <CardContent className="p-3 space-y-3">
+                {uniqueSources.length > 0 ? (
+                  <div 
+                    className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
+                    onWheel={handleWheelScroll}
+                  >
+                    {previewSources.map((source, index) => (
+                      <a
+                        key={index}
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block flex-shrink-0 w-[320px]"
+                      >
+                        <ExtremeSourceCard 
+                          source={source} 
+                          content={getSourceContent(source.url)}
+                        />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <motion.p
+                    className="text-neutral-500 dark:text-neutral-400 text-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    No sources found for this research.
+                  </motion.p>
+                )}
+              </CardContent>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    );
+  };
 
   // Collect all charts from code executions for the final result view
   const allCharts = useMemo(() => {
@@ -1404,6 +1520,13 @@ const ExtremeSearchComponent = ({
 
         {/* Then show the sources view */}
         {renderSources(uniqueSources)}
+
+        {/* Sources Sheet */}
+        <ExtremeSourcesSheet 
+          sources={uniqueSources} 
+          open={sourcesSheetOpen} 
+          onOpenChange={setSourcesSheetOpen} 
+        />
       </motion.div>
     );
   }

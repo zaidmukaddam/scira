@@ -16,27 +16,17 @@
   }
 }
 
-::selection {
-  @apply bg-primary/15 text-foreground;
-}
-
 @theme {
   --animate-accordion-down: accordion-down 300ms ease-out;
   --animate-accordion-up: accordion-up 300ms ease-out;
 }
 
 @utility no-scrollbar {
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
-    display: none;
+    display: none !important;
   }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
+  -ms-overflow-style: none !important; 
+  scrollbar-width: none !important;
 }
 
 @utility text-balance {
@@ -73,20 +63,6 @@
 }
 
 @layer utilities {
-
-  /* Hide scrollbar but keep functionality */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    /* Internet Explorer 10+ */
-    scrollbar-width: none;
-    /* Firefox */
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-    /* Safari and Chrome */
-  }
-
   /* Tweet wrapper styling for horizontal layout */
   .tweet-wrapper {
     position: relative;
@@ -180,56 +156,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border no-scrollbar;
   }
 
   body {
-    @apply bg-background text-foreground;
-  }
-
-  /* Custom thin scrollbar without forcing visibility */
-  html, body {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(163, 163, 163, 0.3) transparent;
-  }
-
-  /* Webkit browsers custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: rgba(163, 163, 163, 0.3);
-    border-radius: 4px;
-    background-clip: padding-box;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(163, 163, 163, 0.5);
-  }
-
-  /* Dark mode scrollbar */
-  .dark ::-webkit-scrollbar-thumb {
-    background-color: rgba(115, 115, 115, 0.4);
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(115, 115, 115, 0.6);
-  }
-
-  /* Firefox dark mode */
-  .dark {
-    scrollbar-color: rgba(115, 115, 115, 0.4) transparent;
-  }
-
-  /* Reserve space for scrollbar on specific containers to prevent shifts */
-  .stable-scrollbar {
-    scrollbar-gutter: stable;
+    @apply bg-background text-foreground !scrollbar;
   }
 
   [role="button"],
