@@ -936,23 +936,19 @@ const groupInstructions = {
   - Key metrics in compact format
   - Brief observations only if significant
   - NO verbose analysis unless requested
-
-  ### Display Requirements:
-  - Use compact card layouts
-  - Show price, change %, volume, market cap inline
-  - All charts MUST be candlestick format
-  - Keep descriptions to 1-2 lines max
+  - No images in the response
+  - No tables in the response unless requested
+  - Don't use $ for currency in the response use the short verbose currency format
 
   ### Citations:
-  - Inline only: [CoinGecko](URL)
   - No reference sections
 
-  ### Prohibited:
-  - No price predictions
-  - No investment advice
+  ### Prohibited and Limited:
+  - No to little price predictions
+  - No to little investment advice
   - No repetitive tool calls
-  - No verbose explanations
-  - No line charts - ONLY candlesticks`,
+  - You can only use one tool per response
+  - Some verbose explanations`,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {

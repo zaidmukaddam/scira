@@ -2609,22 +2609,21 @@ print(f"Converted amount: {converted_amount}")
               }
             },
           }),
-
           coin_ohlc: tool({
             description: 'Get coin OHLC (Open, High, Low, Close) data for candlestick charts with comprehensive coin data.',
             parameters: z.object({
               coinId: z.string().describe('The coin ID (e.g., bitcoin, ethereum, solana)'),
-              vsCurrency: z.string().default('usd').describe('The target currency of market data (usd, eur, jpy, etc.)'),
-              days: z.number().describe('Data up to number of days ago (1/7/14/30/90/180/365/max)'),
+              vsCurrency: z.string().nullable().describe('The target currency of market data (usd, eur, jpy, etc.)'),
+              days: z.number().nullable().describe('Data up to number of days ago (1/7/14/30/90/180/365/max)'),
             }),
             execute: async ({
               coinId,
               vsCurrency = 'usd',
-              days,
+              days = 1,
             }: {
               coinId: string;
-              vsCurrency?: string;
-              days: number;
+              vsCurrency?: string | null;
+              days?: number | null;
             }) => {
               console.log('Coin OHLC with Data - Coin ID:', coinId);
               console.log('VS Currency:', vsCurrency);
