@@ -12,6 +12,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Check, Copy, WrapText, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -106,8 +107,6 @@ const preprocessLaTeX = (content: string) => {
 };
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
-  // Table row counter for zebra striping
-  const [tableRowCounter, setTableRowCounter] = useState(0);
 
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
@@ -520,71 +519,38 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       );
     },
     table(children) {
-      // Reset row counter for each table
-      setTableRowCounter(0);
       return (
-        <div className="w-full my-6">
-          <div className="overflow-hidden rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse m-0!">{children}</table>
-            </div>
-          </div>
-        </div>
+        <Table className="!border !rounded-lg !m-0">{children}</Table>
       );
     },
     tableRow(children) {
-      const currentRow = tableRowCounter;
-      setTableRowCounter((prev) => prev + 1);
-
-      // Skip zebra striping for header rows
-      const isEvenRow = currentRow > 0 && currentRow % 2 === 0;
-
-      return (
-        <tr
-          className={cn(
-            'border-b border-neutral-200 dark:border-neutral-700 last:border-b-0',
-            'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-200',
-            isEvenRow && 'bg-neutral-50/50 dark:bg-neutral-800/30',
-          )}
-        >
-          {children}
-        </tr>
-      );
+      return <TableRow>{children}</TableRow>;
     },
     tableCell(children, flags) {
       const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
       const isHeader = flags.header;
 
       return isHeader ? (
-        <th
-          className={cn(
-            'px-4 py-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50',
-            'bg-neutral-100 dark:bg-neutral-800',
-            'border-b border-neutral-200 dark:border-neutral-700',
-            'break-words',
-            alignClass,
-          )}
-        >
-          <div className="font-medium">{children}</div>
-        </th>
+        <TableHead className={cn(
+          alignClass,
+          'border-r border-border last:border-r-0 bg-muted/50 font-semibold !p-2 !m-1 !text-wrap'
+        )}>
+          {children}
+        </TableHead>
       ) : (
-        <td
-          className={cn(
-            'px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300',
-            'border-r border-neutral-100 dark:border-neutral-800 last:border-r-0',
-            'break-words',
-            alignClass,
-          )}
-        >
-          <div className="leading-relaxed">{children}</div>
-        </td>
+        <TableCell className={cn(
+          alignClass,
+          'border-r border-border last:border-r-0 !p-2 !m-1 !text-wrap'
+        )}>
+          {children}
+        </TableCell>
       );
     },
     tableHeader(children) {
-      return <thead>{children}</thead>;
+      return <TableHeader className='!p-1 !m-1'>{children}</TableHeader>;
     },
     tableBody(children) {
-      return <tbody>{children}</tbody>;
+      return <TableBody className='!text-wrap !m-1'>{children}</TableBody>;
     },
   };
 
