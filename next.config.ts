@@ -3,7 +3,6 @@ import './env/server';
 import './env/client';
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['https://localhost:3000'],
   compiler: {
     // if NODE_ENV is production, remove console.log
     removeConsole:
@@ -14,6 +13,7 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
+    webpackMemoryOptimizations: true,
     useCache: true,
     optimizePackageImports: ['@phosphor-icons/react', '@daytonaio/sdk'],
     nodeMiddleware: true,
