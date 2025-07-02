@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { T, useGT, Var, Num } from 'gt-next';
 
 interface AcademicResult {
   title: string;
@@ -58,7 +59,9 @@ const AcademicSourceCard: React.FC<{
             {paper.title}
           </h3>
           <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="truncate">Academic Paper</span>
+            <T>
+              <span className="truncate">Academic Paper</span>
+            </T>
             <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
@@ -113,11 +116,15 @@ const AcademicPapersSheet: React.FC<{
               <div className="p-1.5 rounded-md bg-violet-50 dark:bg-violet-900/20">
                 <Book className="h-4 w-4 text-violet-600 dark:text-violet-400" />
               </div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Academic Papers</h2>
+              <T>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Academic Papers</h2>
+              </T>
             </div>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {papers.length} research papers
-            </p>
+            <T>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <Num>{papers.length}</Num> research papers
+              </p>
+            </T>
           </div>
 
           {/* Content */}
@@ -200,7 +207,9 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
                 <div className="p-1.5 rounded-md bg-violet-50 dark:bg-violet-900/20">
                   <Book className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
                 </div>
-                <h2 className="font-medium text-sm">Academic Papers</h2>
+                <T>
+                  <h2 className="font-medium text-sm">Academic Papers</h2>
+                </T>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
@@ -216,7 +225,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
                       setSourcesSheetOpen(true);
                     }}
                   >
-                    View all
+                    <T>View all</T>
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}

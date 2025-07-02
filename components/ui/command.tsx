@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
+import { T, Var } from "gt-next"
 
 import { cn } from "@/lib/utils"
 import {
@@ -45,8 +46,12 @@ function CommandDialog({
   return (
     <Dialog {...props}>
       <DialogHeader className="sr-only">
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
+        <T>
+          <DialogTitle><Var>{title}</Var></DialogTitle>
+        </T>
+        <T>
+          <DialogDescription><Var>{description}</Var></DialogDescription>
+        </T>
       </DialogHeader>
       <DialogContent
         className={cn("overflow-hidden p-0 border-none sm:max-w-3xl bg-background/95 backdrop-blur-xl", className)}

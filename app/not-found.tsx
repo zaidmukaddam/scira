@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { T } from 'gt-next';
 
 export default function NotFound() {
   return (
@@ -26,17 +27,23 @@ export default function NotFound() {
           />
         </div>
 
-        <h1 className="text-4xl mb-4 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro">Page not found</h1>
-        <p className="text-lg mb-8 text-neutral-600 dark:text-neutral-300">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
-        </p>
+        <T>
+          <h1 className="text-4xl mb-4 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro">Page not found</h1>
+        </T>
+        <T>
+          <p className="text-lg mb-8 text-neutral-600 dark:text-neutral-300">
+            The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          </p>
+        </T>
 
         <div className="flex justify-center">
           <Link href="/">
-            <Button variant="default" className="flex items-center gap-2 px-4 py-2 rounded-full">
-              <ArrowLeft size={18} />
-              <span>Return to home</span>
-            </Button>
+            <T>
+              <Button variant="default" className="flex items-center gap-2 px-4 py-2 rounded-full">
+                <ArrowLeft size={18} />
+                <span>Return to home</span>
+              </Button>
+            </T>
           </Link>
         </div>
       </motion.div>

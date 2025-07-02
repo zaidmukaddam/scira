@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { elevenlabs } from '@ai-sdk/elevenlabs';
 import { experimental_transcribe as transcribe } from 'ai';
+import { getGT } from 'gt-next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,8 @@ export async function POST(request: NextRequest) {
     const audio = formData.get('audio');
 
     if (!audio || !(audio instanceof Blob)) {
-      return NextResponse.json({ error: 'No audio file found in form data.' }, { status: 400 });
+      const t = await getGT();
+      return NextResponse.json({ error: t('No audio file found in form data.') }, { status: 400 });
     }
 
     const result = await transcribe({
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text: result.text });
   } catch (error) {
     console.error('Error processing transcription request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const t = await getGT();
+    return NextResponse.json({ error: t('Internal server error') }, { status: 500 });
   }
 }

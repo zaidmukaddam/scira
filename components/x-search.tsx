@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ExternalLink, Users, MessageCircle } from 'lucide-react';
+import { T, useGT, Var, Num } from 'gt-next';
 
 interface Citation {
   url: string;
@@ -83,6 +84,7 @@ const XSearchLoadingState = () => {
 
 const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const t = useGT();
 
   // Extract tweet IDs from citations
   const tweetCitations = useMemo(() => {
@@ -152,7 +154,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                   <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
                 </div>
                 <div className="text-left min-w-0 flex-1">
-                  <h3 className="font-medium text-sm">X Search Results</h3>
+                  <T>
+                    <h3 className="font-medium text-sm">X Search Results</h3>
+                  </T>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                     {result.query} • {start} - {end}
                   </p>
@@ -206,10 +210,14 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                                   <MessageCircle className="h-4 w-4 text-neutral-500" />
                                 </div>
                               </div>
-                              <p className="font-medium text-sm text-neutral-700 dark:text-neutral-300 mb-1">
-                                +{remainingTweets.length} more posts
-                              </p>
-                              <p className="text-xs text-neutral-500 dark:text-neutral-500">Click to view all</p>
+                              <T>
+                                <p className="font-medium text-sm text-neutral-700 dark:text-neutral-300 mb-1">
+                                  +<Num>{remainingTweets.length}</Num> more posts
+                                </p>
+                              </T>
+                              <T>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-500">Click to view all</p>
+                              </T>
                             </div>
                           </div>
                         </SheetTrigger>
@@ -223,7 +231,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                                 <div className="p-1.5 rounded-md bg-black dark:bg-white">
                                   <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
                                 </div>
-                                <span>All Posts ({tweetCitations.length})</span>
+                                <T>
+                                  <span>All Posts (<Num>{tweetCitations.length}</Num>)</span>
+                                </T>
                               </SheetTitle>
                             </SheetHeader>
                             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -260,10 +270,14 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                       <MessageCircle className="h-4 w-4 text-neutral-500" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">No posts found</h4>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Try adjusting your search parameters
-                      </p>
+                      <T>
+                        <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">No posts found</h4>
+                      </T>
+                      <T>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                          Try adjusting your search parameters
+                        </p>
+                      </T>
                     </div>
                   </div>
                 </div>
@@ -272,9 +286,11 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
               {/* Compact External Links */}
               {result.citations.length > tweetCitations.length && (
                 <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3 mt-3">
-                  <h4 className="font-medium text-xs text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
-                    Related Sources
-                  </h4>
+                  <T>
+                    <h4 className="font-medium text-xs text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
+                      Related Sources
+                    </h4>
+                  </T>
                   <div className="space-y-1">
                     {result.citations
                       .filter((citation) => {

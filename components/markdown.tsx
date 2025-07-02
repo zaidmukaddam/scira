@@ -16,6 +16,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { cn } from '@/lib/utils';
 import { Check, Copy, WrapText, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useGT } from 'gt-next';
 
 interface MarkdownRendererProps {
   content: string;
@@ -198,6 +199,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isWrapped, setIsWrapped] = useState(false);
     const { resolvedTheme } = useTheme();
+    const t = useGT();
 
     const handleCopy = useCallback(async () => {
       await navigator.clipboard.writeText(children);
@@ -219,7 +221,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
               isWrapped ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 dark:text-neutral-400',
             )}
-            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
+            title={isWrapped ? t('Disable wrap') : t('Enable wrap')}
           >
             {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
           </button>
@@ -229,7 +231,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
               'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
               isCopied ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400',
             )}
-            title={isCopied ? 'Copied!' : 'Copy code'}
+            title={isCopied ? t('Copied!') : t('Copy code')}
           >
             {isCopied ? <Check size={12} /> : <Copy size={12} />}
           </button>
@@ -563,6 +565,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
 export const CopyButton = ({ text }: { text: string }) => {
   const [isCopied, setIsCopied] = useState(false);
+  const t = useGT();
 
   return (
     <Button
@@ -575,7 +578,7 @@ export const CopyButton = ({ text }: { text: string }) => {
         await navigator.clipboard.writeText(text);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-        toast.success('Copied to clipboard');
+        toast.success(t('Copied to clipboard'));
       }}
       className="h-8 px-2 text-xs rounded-full"
     >

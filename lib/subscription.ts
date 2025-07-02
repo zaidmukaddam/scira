@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { subscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
-import { subscriptionCache, createSubscriptionKey } from './performance-cache';
+import { getGT } from 'gt-next/server';
 
 export type SubscriptionDetails = {
   id: string;
@@ -29,6 +29,8 @@ export type SubscriptionDetailsResult = {
 export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResult> {
   'use server';
 
+  const t = await getGT();
+
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -38,19 +40,10 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       return { hasSubscription: false };
     }
 
-    // Check cache first
-    const cacheKey = createSubscriptionKey(session.user.id);
-    const cached = subscriptionCache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
     const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, session.user.id));
 
     if (!userSubscriptions.length) {
-      const result = { hasSubscription: false };
-      subscriptionCache.set(cacheKey, result);
-      return result;
+      return { hasSubscription: false };
     }
 
     // Get the most recent active subscription
@@ -69,7 +62,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
         const isCanceled = latestSubscription.status === 'canceled';
 
-        const result = {
+        return {
           hasSubscription: true,
           subscription: {
             id: latestSubscription.id,
@@ -85,22 +78,18 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             organizationId: null,
           },
           error: isCanceled
-            ? 'Subscription has been canceled'
+            ? t('Subscription has been canceled')
             : isExpired
-              ? 'Subscription has expired'
-              : 'Subscription is not active',
-          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as 'CANCELED' | 'EXPIRED' | 'GENERAL',
+              ? t('Subscription has expired')
+              : t('Subscription is not active'),
+          errorType: isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL',
         };
-        subscriptionCache.set(cacheKey, result);
-        return result;
       }
 
-      const fallbackResult = { hasSubscription: false };
-      subscriptionCache.set(cacheKey, fallbackResult);
-      return fallbackResult;
+      return { hasSubscription: false };
     }
 
-    const result = {
+    return {
       hasSubscription: true,
       subscription: {
         id: activeSubscription.id,
@@ -116,13 +105,11 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         organizationId: null,
       },
     };
-    subscriptionCache.set(cacheKey, result);
-    return result;
   } catch (error) {
     console.error('Error fetching subscription details:', error);
     return {
       hasSubscription: false,
-      error: 'Failed to load subscription details',
+      error: t('Failed to load subscription details'),
       errorType: 'GENERAL',
     };
   }

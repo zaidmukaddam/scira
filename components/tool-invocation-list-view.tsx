@@ -69,6 +69,7 @@ import { OnChainTokenPrice } from '@/components/onchain-crypto-components';
 // Actions
 import { generateSpeech } from '@/app/actions';
 import Image from 'next/image';
+import { T, useGT, Var, Num, Plural, Branch } from 'gt-next';
 
 // Interfaces
 interface VideoDetails {
@@ -231,7 +232,7 @@ const NearbySearchSkeleton = ({ type }: { type: string }) => {
           <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
             <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
             <TextShimmer className="text-sm font-medium" duration={2}>
-              {`Finding nearby ${type}...`}
+              <T>Finding nearby <Var>{type}</Var>...</T>
             </TextShimmer>
           </div>
         </div>
@@ -248,6 +249,7 @@ const NearbySearchSkeleton = ({ type }: { type: string }) => {
 
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const t = useGT();
 
   if (!video) return null;
 
@@ -277,7 +279,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
         target="_blank"
         rel="noopener noreferrer"
         className="relative aspect-video block bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
-        aria-label={`Watch ${video.details?.title || 'YouTube video'}`}
+        aria-label={`Watch ${video.details?.title || t('YouTube video')}`}
       >
         {video.details?.thumbnail_url ? (
           <img
@@ -294,7 +296,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
         )}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2">
-            {video.details?.title || 'YouTube Video'}
+            {video.details?.title || t('YouTube Video')}
           </div>
           <div className="rounded-full bg-white/90 p-2">
             <PlayIcon className="h-6 w-6 text-red-600" />
@@ -310,7 +312,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             rel="noopener noreferrer"
             className="text-sm font-medium line-clamp-2 hover:text-red-500 transition-colors dark:text-neutral-100"
           >
-            {video.details?.title || 'YouTube Video'}
+            {video.details?.title || t('YouTube Video')}
           </Link>
 
           {video.details?.author_name && (
@@ -337,13 +339,13 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
               <AccordionItem value="details" className="border-none">
                 <AccordionTrigger className="py-1 hover:no-underline">
                   <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-400">
-                    {isExpanded ? 'Hide details' : 'Show details'}
+                    {isExpanded ? t('Hide details') : t('Show details')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   {video.timestamps && video.timestamps.length > 0 && (
                     <div className="mt-2 space-y-1.5">
-                      <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Key Moments</h4>
+                      <T><h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Key Moments</h4></T>
                       <ScrollArea className="h-[120px]">
                         <div className="pr-4">
                           {video.timestamps.map((timestamp, i) => {
@@ -382,7 +384,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
                   {video.captions && (
                     <div className="mt-3 space-y-1.5">
-                      <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Transcript</h4>
+                      <T><h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Transcript</h4></T>
                       <ScrollArea className="h-[120px]">
                         <div className="text-xs dark:text-neutral-400 text-neutral-600 rounded bg-neutral-50 dark:bg-neutral-800 p-2">
                           <p className="whitespace-pre-wrap">{video.captions}</p>
@@ -433,7 +435,7 @@ const StatusBadge = memo(({ status }: { status: 'running' | 'completed' | 'error
     return (
       <div className="flex items-center gap-1 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded-md text-[9px] font-medium">
         <XCircle className="h-2.5 w-2.5" />
-        <span className="hidden sm:inline">Error</span>
+        <T><span className="hidden sm:inline">Error</span></T>
       </div>
     );
   }
@@ -441,7 +443,7 @@ const StatusBadge = memo(({ status }: { status: 'running' | 'completed' | 'error
   return (
     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20">
       <Loader2 className="h-2.5 w-2.5 animate-spin text-blue-500" />
-      <span className="hidden sm:inline text-[9px] font-medium text-blue-600 dark:text-blue-400">Running</span>
+      <T><span className="hidden sm:inline text-[9px] font-medium text-blue-600 dark:text-blue-400">Running</span></T>
     </div>
   );
 });
@@ -495,6 +497,7 @@ function CodeInterpreterView({
   status?: 'running' | 'completed' | 'error';
   error?: string;
 }) {
+  const t = useGT();
   // Set initial state based on status - expanded while running, collapsed when complete
   const [isExpanded, setIsExpanded] = useState(status !== 'completed');
 
@@ -522,7 +525,7 @@ function CodeInterpreterView({
             </div>
           </div>
           <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-[160px] sm:max-w-xs">
-            {title || 'Code Execution'}
+            {title || t('Code Execution')}
           </h3>
           <StatusBadge status={status || 'completed'} />
         </div>
@@ -551,7 +554,7 @@ function CodeInterpreterView({
             <>
               <div className="border-t border-neutral-200 dark:border-neutral-800 px-2.5 sm:px-3 py-1.5 bg-neutral-50 dark:bg-neutral-800/30">
                 <div className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                  {error ? 'Error Output' : 'Execution Result'}
+                  {error ? t('Error Output') : t('Execution Result')}
                 </div>
               </div>
               <div className="max-w-full overflow-x-auto max-h-60 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
@@ -632,6 +635,7 @@ CopyButton.displayName = 'CopyButton';
 // Now let's add the ToolInvocationListView
 const ToolInvocationListView = memo(
   ({ toolInvocations, annotations }: { toolInvocations: ToolInvocation[]; annotations: any }) => {
+    const t = useGT();
     const renderToolInvocation = useCallback(
       (toolInvocation: ToolInvocation, index: number) => {
         const args = JSON.parse(JSON.stringify(toolInvocation.args));
@@ -639,7 +643,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'find_place_on_map') {
           if (!result) {
-            return <SearchLoadingState icon={MapPin} text="Finding locations..." color="blue" />;
+            return <SearchLoadingState icon={MapPin} text={t('Finding locations...')} color="blue" />;
           }
 
           // Handle error responses
@@ -652,7 +656,7 @@ const ToolInvocationListView = memo(
                       <MapPin className="h-4 w-4 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Location search failed</h3>
+                      <T><h3 className="text-sm font-medium text-red-900 dark:text-red-100">Location search failed</h3></T>
                       <p className="text-xs text-red-700 dark:text-red-300 mt-1">{result.error}</p>
                     </div>
                   </div>
@@ -671,10 +675,12 @@ const ToolInvocationListView = memo(
                       <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">No locations found</h3>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                        Try searching with different keywords or check the spelling.
-                      </p>
+                      <T><h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">No locations found</h3></T>
+                      <T>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                          Try searching with different keywords or check the spelling.
+                        </p>
+                      </T>
                     </div>
                   </div>
                 </div>
@@ -690,10 +696,10 @@ const ToolInvocationListView = memo(
                   <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <div>
                     <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      {places.length} Location{places.length !== 1 ? 's' : ''} Found
+                      <T><Plural n={places.length} one={<><Num>{places.length}</Num> Location Found</>} other={<><Num>{places.length}</Num> Locations Found</>} /></T>
                     </h3>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {result.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
+                      {result.search_type === 'forward' ? t('Address Search') : t('Coordinate Search')}
                     </p>
                   </div>
                 </div>
@@ -762,7 +768,7 @@ const ToolInvocationListView = memo(
                               onClick={() => {
                                 const coords = `${place.location.lat},${place.location.lng}`;
                                 navigator.clipboard.writeText(coords);
-                                toast.success('Coordinates copied!');
+                                toast.success(t('Coordinates copied!'));
                               }}
                               className="h-7 px-2 text-xs"
                             >
@@ -794,7 +800,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'movie_or_tv_search') {
           if (!result) {
-            return <SearchLoadingState icon={Film} text="Discovering entertainment content..." color="violet" />;
+            return <SearchLoadingState icon={Film} text={t('Discovering entertainment content...')} color="violet" />;
           }
 
           return <TMDBResult result={result} />;
@@ -802,21 +808,21 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'trending_movies') {
           if (!result) {
-            return <SearchLoadingState icon={Film} text="Loading trending movies..." color="blue" />;
+            return <SearchLoadingState icon={Film} text={t('Loading trending movies...')} color="blue" />;
           }
           return <TrendingResults result={result} type="movie" />;
         }
 
         if (toolInvocation.toolName === 'trending_tv') {
           if (!result) {
-            return <SearchLoadingState icon={Tv} text="Loading trending TV shows..." color="blue" />;
+            return <SearchLoadingState icon={Tv} text={t('Loading trending TV shows...')} color="blue" />;
           }
           return <TrendingResults result={result} type="tv" />;
         }
 
         if (toolInvocation.toolName === 'youtube_search') {
           if (!result) {
-            return <SearchLoadingState icon={YoutubeIcon} text="Searching YouTube videos..." color="red" />;
+            return <SearchLoadingState icon={YoutubeIcon} text={t('Searching YouTube videos...')} color="red" />;
           }
 
           const youtubeResult = result as YouTubeSearchResponse;
@@ -835,12 +841,16 @@ const ToolInvocationListView = memo(
                     <YoutubeIcon className="h-6 w-6 text-red-600" />
                   </div>
                   <div className="text-center">
-                    <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 mb-1">
-                      No Content Available
-                    </h2>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      The videos found don&apos;t contain any timestamps or transcripts.
-                    </p>
+                    <T>
+                      <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+                        No Content Available
+                      </h2>
+                    </T>
+                    <T>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        The videos found don&apos;t contain any timestamps or transcripts.
+                      </p>
+                    </T>
                   </div>
                 </div>
               </div>
@@ -860,15 +870,17 @@ const ToolInvocationListView = memo(
                         <YoutubeIcon className="h-5 w-5 text-red-600" />
                       </div>
                       <div>
-                        <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 text-left">
-                          YouTube Results
-                        </h2>
+                        <T>
+                          <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 text-left">
+                            YouTube Results
+                          </h2>
+                        </T>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Badge
                             variant="secondary"
                             className="px-2 py-0 h-5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
                           >
-                            {filteredVideos.length} videos with content
+                            <T><Num>{filteredVideos.length}</Num> videos with content</T>
                           </Badge>
                         </div>
                       </div>
@@ -896,7 +908,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'academic_search') {
           if (!result) {
-            return <SearchLoadingState icon={Book} text="Searching academic papers..." color="violet" />;
+            return <SearchLoadingState icon={Book} text={t('Searching academic papers...')} color="violet" />;
           }
 
           return <AcademicPapersCard results={result.results} />;
@@ -913,7 +925,7 @@ const ToolInvocationListView = memo(
               <Card className="w-full my-4 p-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                   <MapPin className="h-5 w-5" />
-                  <span className="font-medium">Nearby search failed</span>
+                  <T><span className="font-medium">Nearby search failed</span></T>
                 </div>
                 <p className="text-sm text-red-500 dark:text-red-300 mt-1">{result.error}</p>
               </Card>
@@ -926,11 +938,13 @@ const ToolInvocationListView = memo(
               <Card className="w-full my-4 p-4 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950">
                 <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                   <MapPin className="h-5 w-5" />
-                  <span className="font-medium">No nearby {args.type} found</span>
+                  <T><span className="font-medium">No nearby <Var>{args.type}</Var> found</span></T>
                 </div>
-                <p className="text-sm text-yellow-500 dark:text-yellow-300 mt-1">
-                  Try expanding the search radius or searching in a different area.
-                </p>
+                <T>
+                  <p className="text-sm text-yellow-500 dark:text-yellow-300 mt-1">
+                    Try expanding the search radius or searching in a different area.
+                  </p>
+                </T>
               </Card>
             );
           }
@@ -1155,7 +1169,7 @@ const ToolInvocationListView = memo(
                     <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
                   </div>
                   <div>
-                    <div className="text-red-700 dark:text-red-300 text-sm font-medium">Error retrieving content</div>
+                    <T><div className="text-red-700 dark:text-red-300 text-sm font-medium">Error retrieving content</div></T>
                     <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">{errorMessage}</div>
                   </div>
                 </div>
@@ -1171,7 +1185,7 @@ const ToolInvocationListView = memo(
                   <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                     <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
                   </div>
-                  <div className="text-amber-700 dark:text-amber-300 text-sm font-medium">No content available</div>
+                  <T><div className="text-amber-700 dark:text-amber-300 text-sm font-medium">No content available</div></T>
                 </div>
               </div>
             );
@@ -1236,11 +1250,11 @@ const ToolInvocationListView = memo(
                   <div className="flex-1 min-w-0">
                     <div className="group">
                       <h2 className="font-medium text-base text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
-                        {result.results[0].title || 'Retrieved Content'}
+                        {result.results[0].title || t('Retrieved Content')}
                       </h2>
                       <div className="hidden group-hover:block absolute bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2 -mt-1 max-w-lg z-10 border border-neutral-200 dark:border-neutral-800">
                         <p className="text-sm text-neutral-900 dark:text-neutral-100">
-                          {result.results[0].title || 'Retrieved Content'}
+                          {result.results[0].title || t('Retrieved Content')}
                         </p>
                       </div>
                     </div>
@@ -1278,7 +1292,7 @@ const ToolInvocationListView = memo(
                 </div>
 
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 line-clamp-2">
-                  {result.results[0].description || 'No description available'}
+                  {result.results[0].description || t('No content available')}
                 </p>
 
                 <div className="mt-3 flex justify-between items-center gap-3">
@@ -1294,7 +1308,7 @@ const ToolInvocationListView = memo(
                         className="inline-flex items-center gap-1.5"
                       >
                         <ArrowUpRight className="h-3 w-3" />
-                        View source
+                        <T>View source</T>
                       </a>
                     </Badge>
 
@@ -1304,7 +1318,7 @@ const ToolInvocationListView = memo(
                         className="rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-0 transition-colors"
                       >
                         <TextIcon className="h-3 w-3 mr-1" />
-                        {result.results.length} pages
+                        <T><Num>{result.results.length}</Num> pages</T>
                       </Badge>
                     )}
                   </div>
@@ -1326,13 +1340,13 @@ const ToolInvocationListView = memo(
                       <AccordionTrigger className="group px-4 py-3 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors no-underline! rounded-t-none! data-[state=open]:rounded-b-none! data-[state=open]:bg-neutral-50 dark:data-[state=open]:bg-neutral-800/50 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-neutral-500 [&>svg]:transition-transform [&>svg]:duration-200">
                         <div className="flex items-center gap-2">
                           <TextIcon className="h-3.5 w-3.5 text-neutral-400" />
-                          <span>{index === 0 ? 'View full content' : `Additional content ${index + 1}`}</span>
+                          <T><Branch branch={(index === 0).toString()} true={<span>View full content</span>} false={<span>Additional content <Var>{index + 1}</Var></span>} /></T>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
                         <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-200 dark:border-neutral-700">
                           <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                            <ReactMarkdown>{resultItem.content || 'No content available'}</ReactMarkdown>
+                            <ReactMarkdown>{resultItem.content || t('No content available')}</ReactMarkdown>
                           </div>
                         </div>
                       </AccordionContent>
@@ -1355,7 +1369,7 @@ const ToolInvocationListView = memo(
                 <div className="flex items-center gap-2">
                   <Plane className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
                   <span className="text-neutral-700 dark:text-neutral-300 text-lg">
-                    Tracking flight {args.carrierCode}{args.flightNumber}...
+                    <T>Tracking flight <Var>{args.carrierCode}{args.flightNumber}</Var>...</T>
                   </span>
                 </div>
                 <div className="flex space-x-1">
@@ -1392,9 +1406,11 @@ const ToolInvocationListView = memo(
                 <div className="h-5 w-5 relative">
                   <div className="absolute inset-0 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-blue-500 dark:border-t-blue-400 animate-spin" />
                 </div>
-                <span className="text-neutral-700 dark:text-neutral-300 text-sm font-medium">
-                  Fetching current time...
-                </span>
+                <T>
+                  <span className="text-neutral-700 dark:text-neutral-300 text-sm font-medium">
+                    Fetching current time...
+                  </span>
+                </T>
               </div>
             );
           }
@@ -1480,9 +1496,11 @@ const ToolInvocationListView = memo(
                   <div className="flex flex-col gap-4 sm:gap-6">
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
-                          Current Time
-                        </h3>
+                        <T>
+                          <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
+                            Current Time
+                          </h3>
+                        </T>
                         <div className="bg-neutral-100 dark:bg-neutral-800 rounded px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
                           <PhosphorClock weight="regular" className="h-3 w-3 text-blue-500" />
                           {result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
@@ -1496,7 +1514,7 @@ const ToolInvocationListView = memo(
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       {result.formatted.iso_local && (
                         <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                          <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
+                          <T><div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div></T>
                           <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
                             {result.formatted.iso_local}
                           </div>
@@ -1505,7 +1523,7 @@ const ToolInvocationListView = memo(
 
                       {result.timestamp && (
                         <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                          <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
+                          <T><div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div></T>
                           <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
                             {result.timestamp}
                           </div>
@@ -1521,14 +1539,14 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'memory_manager') {
           if (!result) {
-            return <SearchLoadingState icon={Memory} text="Managing memories..." color="violet" />;
+            return <SearchLoadingState icon={Memory} text={t('Managing memories...')} color="violet" />;
           }
           return <MemoryManager result={result} />;
         }
 
         if (toolInvocation.toolName === 'mcp_search') {
           if (!result) {
-            return <SearchLoadingState icon={Server} text="Searching MCP servers..." color="blue" />;
+            return <SearchLoadingState icon={Server} text={t('Searching MCP servers...')} color="blue" />;
           }
 
           return (
@@ -1540,10 +1558,12 @@ const ToolInvocationListView = memo(
                       <Server className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-base">MCP Server Results</CardTitle>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Search results for &quot;{result.query}&quot;
-                      </p>
+                      <T><CardTitle className="text-base">MCP Server Results</CardTitle></T>
+                      <T>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                          Search results for &quot;<Var>{result.query}</Var>&quot;
+                        </p>
+                      </T>
                     </div>
                   </div>
                 </CardHeader>
@@ -1557,7 +1577,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'reddit_search') {
           if (!result) {
-            return <SearchLoadingState icon={RedditLogo} text="Searching Reddit..." color="orange" />;
+            return <SearchLoadingState icon={RedditLogo} text={t('Searching Reddit...')} color="orange" />;
           }
 
           return <RedditSearch result={result} args={args} />;
@@ -1565,7 +1585,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'x_search') {
           if (!result) {
-            return <SearchLoadingState icon={XLogo} text="Searching X (Twitter)..." color="gray" />;
+            return <SearchLoadingState icon={XLogo} text={t('Searching X (Twitter)...')} color="gray" />;
           }
 
           return <XSearch result={result} args={args} />;
@@ -1573,7 +1593,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'coin_tickers') {
           if (!result) {
-            return <SearchLoadingState icon={DollarSign} text="Fetching crypto ticker data..." color="orange" />;
+            return <SearchLoadingState icon={DollarSign} text={t('Fetching crypto ticker data...')} color="orange" />;
           }
 
           return <CryptoTickers result={result} coinId={args.coinId} />;
@@ -1581,7 +1601,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'coin_chart_range') {
           if (!result) {
-            return <SearchLoadingState icon={TrendingUpIcon} text="Loading crypto price chart..." color="blue" />;
+            return <SearchLoadingState icon={TrendingUpIcon} text={t('Loading crypto price chart...')} color="blue" />;
           }
 
           return <CryptoChart result={result} coinId={args.coinId} chartType="candlestick" />;
@@ -1589,7 +1609,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'coin_ohlc') {
           if (!result) {
-            return <SearchLoadingState icon={TrendingUpIcon} text="Loading OHLC candlestick data..." color="green" />;
+            return <SearchLoadingState icon={TrendingUpIcon} text={t('Loading OHLC candlestick data...')} color="green" />;
           }
 
           // Enhanced result with coin data integrated
@@ -1604,7 +1624,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'contract_chart') {
           if (!result) {
-            return <SearchLoadingState icon={TrendingUpIcon} text="Loading contract chart data..." color="violet" />;
+            return <SearchLoadingState icon={TrendingUpIcon} text={t('Loading contract chart data...')} color="violet" />;
           }
 
           return <CryptoChart result={result} coinId={args.contractAddress} chartType="line" />;
@@ -1612,7 +1632,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'coin_data') {
           if (!result) {
-            return <SearchLoadingState icon={DollarSign} text="Fetching comprehensive coin data..." color="blue" />;
+            return <SearchLoadingState icon={DollarSign} text={t('Fetching comprehensive coin data...')} color="blue" />;
           }
 
           return <CoinData result={result} coinId={args.coinId} />;
@@ -1620,7 +1640,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'coin_data_by_contract') {
           if (!result) {
-            return <SearchLoadingState icon={DollarSign} text="Fetching token data by contract..." color="violet" />;
+            return <SearchLoadingState icon={DollarSign} text={t('Fetching token data by contract...')} color="violet" />;
           }
 
           return <CoinData result={result} contractAddress={args.contractAddress} />;
@@ -1628,7 +1648,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'onchain_token_price') {
           if (!result) {
-            return <SearchLoadingState icon={DollarSign} text="Fetching onchain token prices..." color="blue" />;
+            return <SearchLoadingState icon={DollarSign} text={t('Fetching onchain token prices...')} color="blue" />;
           }
 
           return <OnChainTokenPrice result={result} network={args.network} addresses={args.addresses} />;
@@ -1640,6 +1660,7 @@ const ToolInvocationListView = memo(
     );
 
     const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
+      const t = useGT();
       const [isPlaying, setIsPlaying] = useState(false);
       const [audioUrl, setAudioUrl] = useState<string | null>(null);
       const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1727,7 +1748,7 @@ const ToolInvocationListView = memo(
               <div className="flex-1 min-w-0 space-y-2">
                 {/* Header with languages */}
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="font-medium text-neutral-900 dark:text-neutral-100">Translation</span>
+                  <T><span className="font-medium text-neutral-900 dark:text-neutral-100">Translation</span></T>
                   <span className="text-neutral-400">•</span>
                   <span className="text-neutral-500 dark:text-neutral-400">
                     {result.detectedLanguage} → {toolInvocation.args.to}

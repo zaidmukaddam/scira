@@ -11,10 +11,12 @@ import { Loader2, Search, Trash2, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Memory } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { T, useGT, Plural } from 'gt-next';
 
 export function MemoryDialog() {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
+  const t = useGT();
 
   // Infinite query for memories with pagination
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
@@ -50,11 +52,11 @@ export function MemoryDialog() {
     mutationFn: deleteMemory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      toast.success('Memory successfully deleted');
+      toast.success(t('Memory successfully deleted'));
     },
     onError: (error) => {
       console.error('Delete memory error:', error);
-      toast.error('Failed to delete memory');
+      toast.error(t('Failed to delete memory'));
     },
   });
 
@@ -106,13 +108,13 @@ export function MemoryDialog() {
   return (
     <DialogContent className="sm:max-w-[650px] max-h-[85vh] flex flex-col p-6">
       <DialogHeader className="pb-4">
-        <DialogTitle className="flex items-center gap-2 text-xl">
+        <T><DialogTitle className="flex items-center gap-2 text-xl">
           <Memory className="h-5 w-5" />
           Your Memories
-        </DialogTitle>
-        <DialogDescription className="text-sm text-muted-foreground">
+        </DialogTitle></T>
+        <T><DialogDescription className="text-sm text-muted-foreground">
           View and manage your saved memories
-        </DialogDescription>
+        </DialogDescription></T>
       </DialogHeader>
 
       <div className="space-y-4">
@@ -120,7 +122,7 @@ export function MemoryDialog() {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search memories..."
+            placeholder={t('Search memories...')}
             className="flex-1"
           />
           <Button type="submit" size="icon" variant="secondary" disabled={isSearching || !searchQuery.trim()}>
@@ -130,11 +132,11 @@ export function MemoryDialog() {
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {totalMemories} {totalMemories === 1 ? 'memory' : 'memories'} found
+            <T><Plural branch={totalMemories} one='{count} memory found' other='{count} memories found' variables={{ count: totalMemories }} /></T>
           </span>
           {searchQuery.trim() && (
             <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={handleClearSearch}>
-              Clear search
+              <T>Clear search</T>
             </Button>
           )}
         </div>
@@ -143,15 +145,15 @@ export function MemoryDialog() {
           {isLoading && !displayedMemories.length ? (
             <div className="flex flex-col justify-center items-center h-[400px]">
               <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mt-4">Loading memories...</p>
+              <T><p className="text-sm text-muted-foreground mt-4">Loading memories...</p></T>
             </div>
           ) : displayedMemories.length === 0 ? (
             <div className="flex flex-col justify-center items-center h-[350px] py-12 px-4 border border-dashed rounded-lg bg-muted/50 m-1">
               <Memory className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="font-medium">No memories found</p>
-              {searchQuery && <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>}
+              <T><p className="font-medium">No memories found</p></T>
+              {searchQuery && <T><p className="text-xs text-muted-foreground mt-1">Try a different search term</p></T>}
               {!searchQuery && (
-                <p className="text-xs text-muted-foreground mt-1">Memories will appear here when you save them</p>
+                <T><p className="text-xs text-muted-foreground mt-1">Memories will appear here when you save them</p></T>
               )}
             </div>
           ) : (
@@ -195,10 +197,10 @@ export function MemoryDialog() {
                     {isFetchingNextPage ? (
                       <>
                         <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                        Loading more...
+                        <T>Loading more...</T>
                       </>
                     ) : (
-                      'Load More'
+                      <T>Load More</T>
                     )}
                   </Button>
                 </div>

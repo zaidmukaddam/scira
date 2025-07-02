@@ -1,0 +1,10 @@
+{
+  "defaultLocale": "en",
+  "files": {
+    "gt": {
+      "output": "public/_gt/[locale].json"
+    }
+  },
+  "framework": "next-app",
+  "_versionId": "617406df8b37d30ee23fa316a5b988f167c507c51214ff68835b8852c30bc0b0"
+}

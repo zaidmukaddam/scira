@@ -6,6 +6,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import Image from 'next/image';
+import { T } from 'gt-next';
 
 interface MediaDetails {
   id: number;
@@ -149,14 +150,18 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
 
           {/* Overview */}
           <div className="space-y-3 max-w-3xl">
-            <h3 className="text-lg font-semibold text-white">Overview</h3>
+            <T>
+              <h3 className="text-lg font-semibold text-white">Overview</h3>
+            </T>
             <p className="text-neutral-300 text-base sm:text-lg leading-relaxed">{media.overview}</p>
           </div>
 
           {/* Cast Section */}
           {media.credits?.cast && media.credits.cast.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Cast</h3>
+              <T>
+                <h3 className="text-lg font-semibold text-white">Cast</h3>
+              </T>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                 {media.credits.cast.slice(0, media.credits.cast.length).map((person) => (
                   <div
@@ -248,7 +253,9 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-black/60 dark:text-white/60">
                   <Users className="w-4 h-4" />
                   <p className="truncate">
-                    <span className="font-medium">Cast: </span>
+                    <T>
+                      <span className="font-medium">Cast: </span>
+                    </T>
                     {media.credits.cast
                       .slice(0, 3)
                       .map((person) => person.name)

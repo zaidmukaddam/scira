@@ -1,0 +1,5522 @@
+{
+  "bea8ca233eb69a3f59622807a5e6061b3bcfeaf10fa6b90fc1ac3f418fc9e572": [
+    "Goku"
+  ],
+  "09c0c407269d99a30938699d175c14a614e90cd0ff9f03c53cecf06c6d68df6b": [
+    "登录"
+  ],
+  "f983162786f12c474c2de771a00a1640d13901ef0fc87ec7d85f5a57ddc56e6f": [
+    "使用您首选的提供商登录您的账户"
+  ],
+  "f445ba047759b4fa71f550d31b20a1a84b4ab246a3e126214565e5f38f7d98a7": [
+    "注册"
+  ],
+  "31023152d0ac99f65201d18af2607c9656fe9b41fd6f4fba4a4e6209800c1ac3": [
+    "使用您首选的提供商注册您的账户"
+  ],
+  "286e34a8c5cff7c190be4bbee9efd3ac1573919fe7c34afee30448adfbf71a7a": [
+    "问任何问题..."
+  ],
+  "949f8989239cc8a6c4956841a3310c09ca8be741a2ca00ed674a6fd90e835a39": [
+    "搜索"
+  ],
+  "2984efdf7267fbdffb67e5fa759df7155a27b4e647a4cb13baeed5c59f0a063a": [
+    "智能理解"
+  ],
+  "1c758392bc820c706bd4f605fadec4945b0c4fbf827678c2165393943ed0d72d": [
+    "使用多个AI模型来理解复杂问题"
+  ],
+  "17c61567061f647705abd8993bd21a2b4fe322e833d38964bdd6aa08404ce06e": [
+    "综合搜索"
+  ],
+  "77423f79c72655f27ffbf08c7c3cdea0666545c8f83fdc9b1dcbd8abac5bbbf2": [
+    "跨多个来源搜索以获得完整答案"
+  ],
+  "2ef905e255c55931ed0565cd0f6e392c01120cb3d39f4040542a4fa2a99e41af": [
+    "图像理解"
+  ],
+  "196639f173b50fb062922b774373058739b82670e68106d9baacabfb7bc5e53e": [
+    "能够理解和解释您分享的图片"
+  ],
+  "29ad2d5998d3253c2c94958c10f752213f3b4eb00c0ec80275e78319764da8ae": [
+    "智能计算"
+  ],
+  "4342099c857ce46b8810d38fd36b8211674496b6cabdebc28a21ef2c49f224c7": [
+    "实时执行复杂计算和分析"
+  ],
+  "55f201bf721bd03031f4824e04230b54b63258e68dee8171bacc78017d36f3e3": [
+    "研究助理"
+  ],
+  "c1f69d23be2e5b91ac0742cf6ae99022d9742c42e3e700c4b8a52124a98537c0": [
+    "帮助查找和解释学术研究"
+  ],
+  "cc25746eee8d5f1b8d84003cd7cc544fc1f36bba79af1eb51e45809da1f8deb4": [
+    "自然对话"
+  ],
+  "cd3ccf73520423eca413ed0e4c285036e848ef61c1980561c4c4951f98d4d3ff": [
+    "以清晰、对话式的方式回应"
+  ],
+  "ba1f1616117b9e2c088d42d48cb557854cf3bdf49c22ba4391e959bd3403cd4e": [
+    "开始使用"
+  ],
+  "7d1243370f4a2193cfc66c8f98eaf0a38c82067ce3356908efa225decad8f353": [
+    "热门"
+  ],
+  "7f802029ee5c49b4cc594325fb371acb709d27a7b837fb2a691af84710db2977": [
+    "Scira Pro"
+  ],
+  "5b29565e79e703b7b3d60ccc67dd167631fcd65f5b7d73943c06010386bb93c7": [
+    "升级到专业版"
+  ],
+  "bfd7a69555a7761751980423b1b3455a7b6e23d51858ef0a7a1bce7f675fa7c4": [
+    "申请学生折扣"
+  ],
+  "e447031d8f9a45d5118ce6b2beb2381fb760377ae9b015b08817a824d712f9c1": [
+    "创建免费账户"
+  ],
+  "47ce1633ead205ae85530d4bb7278de3beb671e9e5965b4182c6283a2aa72282": [
+    "查看完整定价详情"
+  ],
+  "d1e0245c556a2d38658646f2e0b2ce5301497ca58d67bf17d30b8a7e07c56160": "条款与隐私",
+  "62fe1d4da006d93c1975103791b1988f8d854c6f0fc75d1930703ff3be77975e": "请在继续之前查看我们的服务条款和隐私政策。",
+  "f7edbe49a8401269f86f18c614f04f8b1833bc8004900eb3c926a827a1f769db": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "ShieldCheck",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "服务条款"
+      ]
+    }
+  },
+  "079055a461e1a116dc696292a0da0a2e908556756fcb9457b0fc6866376d74ea": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "通过使用 Scira，您同意我们的服务条款，其中概述了使用我们平台的规则。这包括可接受使用的准则、知识产权和责任限制。"
+    }
+  },
+  "e94eb818dbf4ee0d805456c1ab775104d365608eb4271be7d3a25df79a86e9c5": {
+    "type": "Link",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "阅读完整服务条款",
+        {
+          "type": "ArrowUpRight",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        }
+      ]
+    }
+  },
+  "57cfd3d271c50d7aeb96b44402f29bf2117bc13d3fbcef4510ba9bc99aacc10e": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "ShieldCheck",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "隐私政策"
+      ]
+    }
+  },
+  "6438a152b55ce5106eae4cd71101c50385c71020f6f8ffa1e34d2466c5e4d266": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们的隐私政策描述了我们如何收集、使用和保护您的个人信息。我们非常重视您的隐私，并致力于维护您数据的机密性。"
+    }
+  },
+  "358f556e9b0493f6abd6b4f4c2a9c5c2ed2e74867e10ac6310fd8408fd6ead46": {
+    "type": "Link",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "阅读完整隐私政策",
+        {
+          "type": "ArrowUpRight",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        }
+      ]
+    }
+  },
+  "ead78a33c157625a3036714c6ddf40180f45352435d3cfbd24d9821e5d14c7c8": {
+    "type": "label",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我同意服务条款和隐私政策"
+    }
+  },
+  "f21f064d0223631c2b5326277b4fe5bf9c66d03c64bb56aa6bd398ab7736fcae": {
+    "type": "Button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "继续"
+    }
+  },
+  "9b132132b283e891d66a773e32f10513cec85814f5487a873deab14016fcd1ab": {
+    "type": "Link",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "条款"
+    }
+  },
+  "8f95aa144fa0cf24c21c5a5e7c0a7036367af72467e388b2bc65e410f4317059": {
+    "type": "Link",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "隐私"
+    }
+  },
+  "ec7620c560beacd1d66189db4424e033b1ace8888759f44b6b865f6787412ccd": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "GitHub"
+    }
+  },
+  "f77d09aaf174b602e4a1293d8b7b68e6630a19fff17b7f796d9c38a37fdc1983": "极简开源AI驱动搜索引擎",
+  "77ebd301854396d42cf3040d54ea4304337db224de98d73d920e2237aeb8ff20": "一个极简的AI驱动搜索引擎，具备RAG和搜索基础能力。开源且为所有人而构建。",
+  "5f0b23af20f74d15900f2e69a827018ce534f90558d6e80e937c067ea7fdbb8e": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查看源码"
+    }
+  },
+  "b0d92c5caaf437c2dc7941f4a847c33a599a4e7dfa65708299094fda82781bb9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "立即试用"
+    }
+  },
+  "80d9e6b016e5f1a5296f0315d77280cfa7987e07c00513cf33827c80dd9f5a3f": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "RAG 与搜索基础"
+    }
+  },
+  "52d8ece77c3351055f06b61f54c7efc206f5e2d825f3034c6d7de63b22415778": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Scira 结合 RAG 和搜索基础技术，从可靠来源提供准确、最新的答案。"
+    }
+  },
+  "939093899a1f89ed0fc89676aca384a4fe4fd0830bdec5e9b22955abd823e8a3": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "搜索演示"
+    }
+  },
+  "3d37af9194e47a36bb89a5d236e9df8650351980db84cb399118520ff91febba": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查询"
+    }
+  },
+  "709e5dfeee7f0c777ead342d7cff048d721fb994b9fd39b858ca146ca5bfcb13": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "解释量子计算及其现实世界的应用"
+    }
+  },
+  "cb427ed6ea87550a5d7f068758a23ade600ab01b0dd8d07fc552637c5584dc36": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "处理中"
+    }
+  },
+  "e0c9acd75ce0fb6717be400a7695232a0f292cc294d58168af0c3623453b2b0e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "🔍 正在检索相关信息..."
+    }
+  },
+  "5efb2b56a84a75bbb734b496dc1d64edde45f84153b9349a5ceff8a12b8615ae": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "📚 正在处理搜索结果..."
+    }
+  },
+  "e09d00b0ee49bd39ab02e144b8a1fa1993b3c2df6cef4e1ded9593349cddbc7e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "🤖 正在生成回复..."
+    }
+  },
+  "5847a997e5b76c25ba03836a38b35be85c62929b76937e983d74e21225ebc0b4": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "✨ 正在根据上下文进行优化..."
+    }
+  },
+  "28e354e7185490f06c6aab29f1ed8ceb290481490371c5c023cf1e232d7b8476": "正在整合来自多个可靠来源的见解...",
+  "b6d63c8477074d35aa3d81f248d0265bd88850c3102ca817b9467d2ab66c9af3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "响应"
+    }
+  },
+  "047c424c5f392ced04d7bf26d75dd2ef12c902c80a020cb255e97d55c9380ad1": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "量子计算是一项革命性技术，它利用量子力学来解决传统计算机无法高效处理的复杂问题..."
+    }
+  },
+  "bcde7227f3f142d6ff605212fd5302119ee06c21bf8c869382361747131d81dd": "由行业领导者提供支持",
+  "b49265a1cc7906ece1889e7216d8b61385a0b3d25c7944776dff1a8f36782975": "采用来自全球最具创新力公司的尖端技术构建",
+  "a8439a57bb160d3d2d89739c4aa4c9de91c48676e88091ef06624bac234bbe65": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Vercel AI SDK"
+    }
+  },
+  "28d56be3507e11219f6f301aa61ef8f42c9b9b34d6e5db1d144af97fd195eb05": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "驱动智能响应的先进AI框架"
+    }
+  },
+  "951a405a5a0d8682712cd8bcee0747a569495f42733b0161eaaca3c495a60833": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Tavily 搜索"
+    }
+  },
+  "003f91df6268e157e553d7c19a404d8e266e3dd5b4ce3cc4fe4663d22a57e2dd": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "基于可靠来源的实时搜索定位"
+    }
+  },
+  "9dde9439a13273342cdbf843e3e22c3b1610ece0e5e3b7c52ed5c8e3f2fd8319": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "ElevenLabs 语音"
+    }
+  },
+  "1fce4d2b3a5459d994776b1ff82fbaf66364c6621a1a8856fdd7b567754dc4a1": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "具有人类般品质的自然语音合成"
+    }
+  },
+  "2efb481edf3d5f5019fae4aa32f96d63dcf3dc8e6558c950960e49e11a4f2fa9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "已回答的问题"
+    }
+  },
+  "22d8d320abde512dd92c40bc540f33ca0d70351b2dcb90874faf79c72844e9ce": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "活跃用户"
+    }
+  },
+  "6507d1ff7afe492c01f079d7248424cb8f087b52c0c7a092dfc3c99f87493121": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "GitHub 星标"
+    }
+  },
+  "4c0009da231f86339dbd18d6497629635b4df9621b48f85693f354a8ada332e5": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在 Vercel 博客上的特色内容"
+    }
+  },
+  "506b4cb1d7d8886def61c555a0b45560d3e36ef47fb703f3d2b50dd50a38c48a": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "因我们创新性地使用AI技术以及通过Vercel AI SDK对开发者社区的贡献而获得认可。"
+    }
+  },
+  "5c37e2583a13d2e330dd564af6dcef5240246be30d6082952ff1580faf5a15a8": "阅读功能介绍",
+  "06079b152495051ab4b1abb9db3d40acea11f52b39088928fe22ea867c792d21": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "由先进模型驱动"
+    }
+  },
+  "a311d4e2a266aeec0d5fc0bc4f1d8366313bdbf5e224cc214eedf137ad7e9883": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "每个模型都经过精心挑选，各具独特优势"
+    }
+  },
+  "b91ceaf9f79dde9d165368accb8fc345e98822c4460422ff190176ef92f3187d": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "社区认可"
+    }
+  },
+  "a0555bbafb8f083434324e7dcb476903a68c1c0c43cc19f8dca84da1d17cd5b5": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "加入数千名信任 Scira 的开发者和研究人员"
+    }
+  },
+  "8832ef137bf3e5c7c0c4309cef905689befa412e9cffa8daa01506432b3d0e08": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "本周第一产品"
+    }
+  },
+  "e5e044eb0cbde41ea3f4a90646dd131923d7a5b940e28ba847e7626972e7bad0": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "微型初创公司"
+    }
+  },
+  "18eb4e915e73eb0e7114f2c530e360f9f0d74d26d057072d02ef2ff5c00cf8ae": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "#3 本周项目"
+    }
+  },
+  "cd8790e064ffad5b281307023d146b10f0a6ab43a71058df3733ddbb7d0049d3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Peerlist"
+    }
+  },
+  "462f140fb741c047971e55e620b95d95762445a82cfd1e55ace5ba4dcc850384": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "8,000+ 星标"
+    }
+  },
+  "264b1a21b0a42ee3a4c1352eeefa2d9006a9aec78bee26e7e7c3155cfbc47c11": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "10万+ 月活用户"
+    }
+  },
+  "77e844690c3d6a6be715d4d422ad2aec93e8a3ca6aef08b6a126ef637a7bb28f": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "活跃社区"
+    }
+  },
+  "e14da9683e25942b4b5cfa951c48aa6bcd8580a8287a75e92c2440ca656c071a": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "为每个人而构建"
+    }
+  },
+  "84f0dd64ce9c0d2623d3dcbf9262eef6b48f12e784f168c435bafd9b0fad40c1": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无论您需要快速答案还是深入研究，Scira 都能适应您的需求"
+    }
+  },
+  "26d1734b78f5bf12ac6c9459cc48eea765d912ce5a21f3e1732307ae02b7d36b": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学生"
+    }
+  },
+  "6a19306b83050ce26c35738c3a25d555a097ea39eef893fd7f55f5d78eba47b9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "研究论文协助"
+    }
+  },
+  "f74da34eca150d5ef01145ff6938ac8e53386359d7617e9ee59ed51cb83d16a5": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "复杂主题解释"
+    }
+  },
+  "7b18d243a01278bdc7b95d625f766f96f1203ca11fbc97ecb5284f03f61cce07": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数学问题解决"
+    }
+  },
+  "e04dd00706db0fee1d7d48ce741c505ac104b7927d27e14f682200501e98a6e5": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "研究人员"
+    }
+  },
+  "a0058baf01d7c0d75f6174f8762dcdd09e8811dfafb0677ef74d478b1da4ee75": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学术论文分析"
+    }
+  },
+  "3aeded2b5d8e339b39104024ed26de0eabd885b2398c1a9f35c8dfd4103516c9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数据解读"
+    }
+  },
+  "d595063ab79aa2ac3cba0f0c59e313a14720bdafd963845921699d27cad743c5": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "文献综述"
+    }
+  },
+  "c7c4070b562b3df1e7375e02cd39195eb333b53ec14649be4ba68db6d7f16cf9": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "专业人士"
+    }
+  },
+  "429796c85a636bbbd9d7ef2b25b1c867c7a932d3dd4eb6a7a4b476a700aedf54": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "市场调研"
+    }
+  },
+  "38e767bc2c20b2f2a54c74b1a83cbf60ccd46be6fa0fa4dc63f23a399c1ab931": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "技术文档"
+    }
+  },
+  "4a8f2b796450372fc637109bca46dd6eb7968b0ac4291d97fd79918bd20da104": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数据分析"
+    }
+  },
+  "eb28abfedd774e79052ff62ae9ad89ab9bc5549f4da1d731594d5536a7b95848": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "高级功能"
+    }
+  },
+  "c3e3a69d53517c8ae1f5804ac96f25d08890b1a54d62bba64f4fb20bc36332b3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "体验AI驱动功能带来的更智能搜索方式"
+    }
+  },
+  "3bbfb7bde3f1c4c525f9db20002c482ad59565313f366f83155c5545a4fb7c4e": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "价格方案"
+    }
+  },
+  "4b4909fd4ddc2f3ee7e242fd8b31def957aa82004fe2592d5b39a45bb1c29a0d": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "选择最适合您的方案"
+    }
+  },
+  "eb7bc730f8d4293e8f70158ae589b3f36aa4fb7d7a88e938adfbe56c5396c928": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "免费"
+    }
+  },
+  "84d7328f324ce68a5a2fddb1bde708ad2e258d07fc322b33dc58d553838ac491": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "开始使用基本功能"
+    }
+  },
+  "a62871206955c08ea0eab8888d882d635a91803d7accc056eaa2ec6506d9abff": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "每日搜索次数限制（其他模型）"
+    }
+  },
+  "00d38c9c2f067a6da60123c482aa9e5a16cd2efb7599320aeb22aa34e539718b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限制使用 Grok 3 Mini 和 Grok 2 Vision"
+    }
+  },
+  "e32e315d661ea67806305635ae2072b34fb5064bd1d048552251dc066c00c15c": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "基础AI模型"
+    }
+  },
+  "17ce3c69959757dfefb46771f6811e1569ddec5c1253833d6b4dddbd51824ba0": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "搜索历史"
+    }
+  },
+  "c5641f765248a98572b1e236059b4bdc8ccfd1fa324ccc4ccf38e7cd23f88116": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限使用所需的一切"
+    }
+  },
+  "a471a5d5da6039312a60272f3f34471eda90935d012cfe3457d0f240392a8fd4": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "随时取消"
+    }
+  },
+  "18020ae173830008bf5b3712b5771c95318b6e4e0c4f0d9ef6c2096a9aa8ee9e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限搜索"
+    }
+  },
+  "94815bfef70ff463977047bda6bafab93eef42895f13b4d5216d679d45777b4b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "所有AI模型"
+    }
+  },
+  "c31128384fd4b2e67de08d460eb0d894f749ef768c2ac3cd5de1a41322642c29": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "PDF文档分析"
+    }
+  },
+  "9794709c7c5100058689d97a178f50f7fafc0d2b038bdbca112536acaf4587ee": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "优先支持"
+    }
+  },
+  "9bedac6e8a4c1ec7aaa39cee3bd8cb7197a2622b18da1a0c05839bb853adbbc9": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学生折扣：Pro计划优惠$10"
+    }
+  },
+  "6ba589ebd8d504127ddde3accdc7ffac4d9dbe3c917d589441a4fdae430e7580": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学生可以仅需每月5美元获得Pro计划。请发送邮件至zaid@scira.ai，附上您的学生证和简要说明您如何在学习中使用Scira。"
+    }
+  },
+  "a0dc8c531cafedb90c74fd5e005cb5ec570ae756e92495e74c2e94964ed425f2": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "免费无限使用高级模型"
+    }
+  },
+  "a4bb9db80c6faff9b0fad09a152531c145ca6bffa8e352c6eb8167455a220f61": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "注册用户可无限制使用 Grok 3 Mini 和 Grok 2 Vision 模型 - 无每日限制，无使用限制。非常适合需要可靠 AI 助手且预算有限的学生、研究人员和专业人士。"
+    }
+  },
+  "d9238d3f69f9e7fc3347df467652c41eeb1ed629f8dad2c100ac2a7792e03a03": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "常见问题"
+    }
+  },
+  "d6c40e6d3ffca1d631afdb98716032357336ca0f23e998f95af27faa97e0958c": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查找关于 Scira 的常见问题解答"
+    }
+  },
+  "ed558a958fae9deb2d809e95ae587b540f500e0924e2252f34fb0ac4a05c973e": "什么是Scira？",
+  "3717dacb1b83f4f9a4f06ff26f74241df295c76e3d08c38273d9fbf15c91e93c": "Scira 是一个极简主义的开源 AI 驱动搜索引擎，使用 RAG（检索增强生成）和搜索基础技术，从可靠来源提供准确、最新的答案。",
+  "8fcd3f200be44b5e2a7229b7a73984adf310a0c2ed5db3c4ff79dbe81b5f924f": "免费版和专业版计划有什么区别？",
+  "16f19e5f90b4da0420ae6001d1ce8974447fb0f4a4b18648d90375e0a119e4c1": "免费计划提供有限的每日搜索次数和基础AI模型，而专业计划（15美元/月）提供无限搜索、访问所有AI模型、PDF文档分析和优先支持。",
+  "77291f0479f0dcad8f145cfd857f3808632733486976138e077d6b7f98961c14": "有学生折扣吗？",
+  "38ff3c08a694b54d4dac904b9cc0d104dad8629b4b191e7fb8e0aed0881f5f57": "是的，学生可以享受Pro计划10美元的折扣，价格降至每月5美元。如需申请，请发送邮件至zaid@scira.ai，并提供您的学生身份验证详情以及简要描述您如何在学术工作或学习中使用Scira。",
+  "2b4f8705b9b5b35208f4eb13e8cc75b08e6e177fd4f816896863d452bdae44e5": "我可以随时取消订阅吗？",
+  "1782d7bbe24760cb9782b0675f4939d1f9218c51305635129b1beeab359c7e12": "是的，您可以随时取消Pro订阅。您的权益将持续到当前计费周期结束。",
+  "4c9fd9a308b6b1b049f3d2c648ba355aeffaaa36027169cee3cfc391b170de85": "Scira 使用什么 AI 模型？",
+  "96c727fd9b5c23e815e133d4473617fc2dce895ffa8a749ebff71c808d267e0d": "Scira 使用包括 Grok 3.0、Claude 3.7 Sonnet、OpenAI GPT 4o、Gemini 2.5 Pro 等在内的一系列先进 AI 模型，以提供最佳答案。",
+  "66f198469e0b1a58d1dc417f6e933494cfceaf5fc9633566b6416d404c586844": "Scira如何确保信息准确性？",
+  "72ca48cd079175997380de19e2bfa0004015316a4e29a3e8ca9115c48697920d": "Scira 结合 RAG 技术和搜索基础来从可靠来源检索信息，并在提供答案前进行验证。每个回复都包含来源归属。",
+  "dd1dac031d15c09fe69ba9359bc7ca58075803a28d62ac02ccf0f15fec23c54c": "如何申请学生折扣？",
+  "014e020ac1c9df7071b823bbe441b990845c655c27a25f5e9e9d29c5a24c430e": "请发送邮件至 zaid@scira.ai，并附上您的学生证或入学证明副本。在邮件中，请简要描述您如何使用或计划如何使用 Scira 进行学术工作或学习。验证通过后，您将收到一个特殊的折扣码，可享受 Pro 计划 10 美元的优惠。",
+  "579ff32340ece8855d8d1b51c577901115719843a9c66aa1abb0a802033cf3ff": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "还有其他问题？",
+        {
+          "type": "a",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "联系我们"
+          }
+        }
+      ]
+    }
+  },
+  "f95a603cb953d784b234663ca4f9f05da5da5e41eb25b407e79a096f5c028612": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "© ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 版权所有。"
+      ]
+    }
+  },
+  "dce930d99de233a7caea1758c6c83fe21e2641024d063dcb8ebe23cd1c96ec47": "条款",
+  "7a6c957300c408f9c7fbe8a0c99f019703b80841fc37027834b13e461e119075": "隐私",
+  "c2f9457c5eea197a4768e6f1b4f693505f4aee6f1f0dad6d0f91794e598d0dda": [
+    "Scira AI"
+  ],
+  "7c964354d250ac7d478dcd0bb2764ee08e2d7717b6bf0c542dca09b378636bcd": [
+    "极简AI搜索引擎"
+  ],
+  "fcd53a6a82bce3e5809ab4ee52e5375055e7dfda3930dee330e6d3bccff79a1d": [
+    "由"
+  ],
+  "958ca9276bb8e303921052307ede750cf901377969cb37232f62655bd595e866": [
+    "在 scira.ai 开始您的搜索"
+  ],
+  "9557cb7df11809cf5a00cbf8b7e572d734f3985eab18e9a268639249af4bcd18": [
+    "需要URL参数"
+  ],
+  "1687575d2cb4a98ac96ef8cff6ccd824d5e517fee0b42713de38873a3e00bb6c": [
+    "无效的URL格式"
+  ],
+  "1940d14a13ed92f8350bd9e1ab8bcd14fabd488fb383bc2793188ecda4265d89": [
+    "URL 未指向图片"
+  ],
+  "8227a3bb695dec30a6d523aacb417288d0f4d135bf9027fbba15f5124332327d": [
+    "获取图片失败"
+  ],
+  "b058b3bd56eebb22e01f8fa3e084a55bb8f25d50fba2fd1bc79915d6832d8989": [
+    "请求超时"
+  ],
+  "f551d4da6108c3b513b39d64110653fe1d0479abafaf63f711cd219d0460894f": [
+    "无效的URL"
+  ],
+  "0c679757113603c5b8d042f652f814b6082c1d53768c94f8223b26b6fd932d0b": [
+    "网络错误"
+  ],
+  "5556d0437f6a39aff88c5a1f63069de4064ab9b2702d458e36c9744c59b9858b": [
+    "在表单数据中未找到音频文件。"
+  ],
+  "6662a88536a4c89750849e968d9574e5e57466213433a96c0deabca6b65828a9": [
+    "内部服务器错误"
+  ],
+  "3b9ba63d63d31c1f2e46df198cbc75424f070ca1bcbd70b590f067437cb01c87": [
+    "未上传文件"
+  ],
+  "b3b7231ad6099bd44f603f1f3dff79286cbe0a9a1cfd3107ea299b101cbcd62d": [
+    "文件大小应小于5MB"
+  ],
+  "1fd196a05725f98c9cf399d1257ee45ee94c9d291493c741667ffa15e5fd399d": [
+    "文件类型应为 JPEG、PNG、GIF 或 PDF"
+  ],
+  "b396f717c431eac3a6bed919fff70f00cbaa5d73c403deacf103a7c618fe3665": [
+    "文件上传失败"
+  ],
+  "3701a2f1fddf7f9b4bd32bccf0aff1bd92fc506abd37f2cf9aa601766db3da5a": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "出现了问题"
+    }
+  },
+  "6994fbef8d43bbb60d58758d52f1303afa0cba521bc3c41e6221f8948c69f2eb": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "加载此页面时发生错误。请稍后重试。"
+    }
+  },
+  "5df936a9476bc091685be6e43b6a5c7c696dea530e27173f0a5a641f7ffcfd4a": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "重试"
+    }
+  },
+  "e3bfd22e014ab1fbcc04ec06a0948eda12a4c342da7dd9503ea72e35cc363c90": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "返回首页"
+    }
+  },
+  "7cd2cf1e710a35bc047e59629ba282b7e8b5ebfcd69fea5d63d75e2842f05cc6": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "严重错误"
+    }
+  },
+  "08ef4301f3f1ae12649dd3ad4d7606f095757a33a7ffff2f6cb54772ea23892c": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "发生了严重错误。请尝试刷新页面。"
+    }
+  },
+  "37ed765ece1a2fb394161c0f705b92a190c205662baca6f2b16604e726269830": "刷新页面",
+  "08f22cca5f840de9f87772ad6e205835567aaf16bf64f960a213d7a8f72a8d41": [
+    "Scira AI 是一个极简的AI驱动搜索引擎，帮助您在互联网上查找信息。"
+  ],
+  "9619ef586b5855b93b572417d8c946eb232728fb3c40e81898bbebd2bac613bb": [
+    "Scira - AI驱动的搜索引擎"
+  ],
+  "c6acc4db18dbae0536f2e2a6a229f41229baf58fbde856d067534649daa10bdd": [
+    "Scira"
+  ],
+  "60f7c5716004bd30677e9b6d522ea5332e46c8e4835f2f58132759c970619b11": [
+    "一个极简的AI驱动搜索引擎，使用GPT-4、Claude和Grok等先进AI模型帮助您在互联网上查找信息"
+  ],
+  "f69e99a08430920cbc5cc2159b2dfe68f6160ca6068e2e8679a608c3836d4c9d": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "页面未找到"
+    }
+  },
+  "2f030e87d45221087ab4c578104e3e8674f7f0ba66153b7396d6e6dc7ca2a3b3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "您要查找的页面不存在或已被移动。"
+    }
+  },
+  "6af70dde9cc342ffe1fe2cd87b1b8ed145fae1f27b313265639b5cc72caba22b": {
+    "type": "Button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "ArrowLeft",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "返回首页"
+          }
+        }
+      ]
+    }
+  },
+  "4fd338e878e420d9800da8c3f528a68112edfbeba92149d86c5a2ec21437fe7e": [
+    "返回首页"
+  ],
+  "e158c46f31c39631a12132def170c8bf2322d5a0690c3d8d45fb200aca623b50": [
+    "定价"
+  ],
+  "29eb492a93523cc551a8c11727311dfb44977a42c40b3026702f52fd277511d2": [
+    "选择最适合您的方案"
+  ],
+  "80fe996be0d85f02ae20a46cd45f36a1e5b46059ebf85b95856a229453875840": [
+    "关闭"
+  ],
+  "6e5bf9772930c83b85d51dfbb073ce31717394e2e5e3f64c79d9fb488387b9ec": [
+    "领取折扣：",
+    {
+      "key": "{code"
+    },
+    "}"
+  ],
+  "72c5139e70f7a820c82a24e2f9f9a7598807893e9af42b87c6f08182c0bed641": [
+    "领取折扣"
+  ],
+  "72a1a8ed2080019a63fe87dcf529df95d6924a504a3e8099faf15a6384c8b92f": [
+    "当前计划"
+  ],
+  "2063787e3b016c0ee2c087d69cdb31729553a1d4aa03ada4fc0d10757869f20b": [
+    "免费计划"
+  ],
+  "1c4d663344a953c91f289ceb98994f605c28cacd7649bc287a321102e2ee20f0": [
+    "当前计划"
+  ],
+  "e6eeb88b0f7277b1bb541e3444e08b3bdde384ac03a0599103e3b0c59b6462a9": [
+    "热门"
+  ],
+  "9aa1f2ee6d95a8b865b2cc9b75118f9563f80ce3935b4d802a1e485abb84f2fd": [
+    "管理订阅"
+  ],
+  "e27b4dbd325490470dcaa94ca9669aa73ce13b4a3166010bbf105f12e93c827b": [
+    "过期时间 ",
+    {
+      "key": "{date"
+    },
+    "}"
+  ],
+  "f74c10a4a5819f669c2eeda263952fc1a5c67ca5fe09704425e774484fee7691": [
+    "续费于 ",
+    {
+      "key": "{date"
+    },
+    "}"
+  ],
+  "023bf441d244342834faa0f8be08011548e5f74dc87723adb703a2fda804f36c": [
+    "登录以升级"
+  ],
+  "af2897e0f0bba604c6f886efbf216ed53e14686fe90f5058a885302355c76ade": [
+    "升级到 Scira Pro"
+  ],
+  "0e965dc1f900dbf8841f56975cdc30aa610d77d2822f12460a713936bba4a37b": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "特别限时优惠"
+    }
+  },
+  "6274363e9d4b69094c6bbc682226093926aa8df64638d1c2c6a3cf7be1ca1fb3": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "第一个月"
+    }
+  },
+  "ae684d791fd52ba8a862cde27bf7c4dd3fa02b96c1ae706f945029647c223ccd": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "优惠截止时间："
+    }
+  },
+  "bdb4fac637e118aececb9083f0aafcd4197bebc0564f90b455438e23f1d6569c": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "天"
+    }
+  },
+  "498ce73cf7ff95b9c57531c8d39e5ef46fabe337e73ee0620e9a6f1ea4083f86": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "小时"
+    }
+  },
+  "82a3dd56c45593fec6de0dc2d5f2250e5dc2084c703174df8dc146f8c1585db9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "分钟"
+    }
+  },
+  "99f47df8ccae87bd97d068b28eb139478a8e2a24b2ea9e1beba6f1be00119df4": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "秒"
+    }
+  },
+  "976695e190da77848fd40d351530af8f66628f2198d7ca1b230539c03ed10d65": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "每日 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 次搜索（其他模型）"
+      ]
+    }
+  },
+  "8fa0b3c61343b364da1bd4e87f336262753aa4fed04c3465bc09d4103a20d45f": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "每月 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 次极端搜索"
+      ]
+    }
+  },
+  "be089297aab70dbbc1bd2d2930db862e74b103d5dcd02176da390bb0b210d0d3": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Scira Pro"
+    }
+  },
+  "dc519007723c091e60adb189235eca0e948b102a3a446d537ccd2912417180f9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "免费版的所有功能，另外还包括："
+    }
+  },
+  "1c28b1289d46cc52a85d02ffa6090ceca221fffee6f98157ea157bb1f37e153a": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "抢先体验功能"
+    }
+  },
+  "5f12d8fb44a87121552371475e21a6029690b5d03ac7b4dbc869de03446d9d1e": [
+    "订阅即表示您同意我们的",
+    {
+      "type": "Link",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "服务条款"
+      }
+    }
+  ],
+  "2cffd7db25ad0aec16fa1ba9282c42fffdee01a3f0eaa8360969f0a839ba828e": [
+    "有疑问？",
+    {
+      "type": "a",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "联系我们"
+      }
+    }
+  ],
+  "7aaeca39a01bc704cbe5473a4d0110eb162dbe1022a1df444e99b1e230fc8d9f": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "隐私政策"
+    }
+  },
+  "33763724ef4d151363aba958dad33217475a72646af1e2e0e462ed388557d962": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "最后更新：",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "74f6b8143f4e8fbef6585c7b0b0a1415e84a58f78d252bb23ae80e19c13bbfe7": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在 Scira AI，我们尊重您的隐私并致力于保护您的个人数据。本隐私政策说明了当您使用我们的AI驱动搜索引擎时，我们如何收集、使用和保护您的信息。"
+    }
+  },
+  "05dc1985f2592bc75c9386910d5805e07557d3c919c158b66fae6d272a8ca3a0": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们收集的信息"
+    }
+  },
+  "ac742fe07b76ca09412a4325b7580b616c27a725712a0c7552f6dd5a050992b6": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们可能收集以下类型的信息："
+    }
+  },
+  "1fad542af38690ee5b9b923e496a6240882efd66254271dead2dc688a9de06d1": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "搜索查询："
+      }
+    },
+    "您向我们的搜索引擎提交的问题和搜索内容。"
+  ],
+  "abd5cbae49dd767624c9df454ddfebda6be456c0b25442ee486c3f7f24dfcc29": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "使用数据："
+      }
+    },
+    "关于您如何与我们的服务互动的信息，包括使用的功能和在平台上花费的时间。"
+  ],
+  "afab8d4fc12b950286de2d89cff4ab06ccbd4a9e5cc405e20ca197bc0ac4614c": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "设备信息："
+      }
+    },
+    "关于您的设备、浏览器类型、IP地址和操作系统的信息。"
+  ],
+  "0b702b77b80e05ae38b0c481930760509c9f01247cbacf2019cbd54ea5c4295c": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "Cookie和类似技术："
+      }
+    },
+    "我们使用Cookie和类似的跟踪技术来增强您的体验并收集使用信息。"
+  ],
+  "f478902a7e87f13162171b6b94c24ab01a01b219c33cc141f1e85535af39e483": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们如何使用您的信息"
+    }
+  },
+  "821fe7eff18e17245210d972b1007fdbf8d1c205c9282ebae6222b615ae88d59": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们将您的信息用于以下目的："
+    }
+  },
+  "19e91156a7ac99825e6c68467bf8460a19af4776594b15bb4bc81132ec6ed360": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "提供和改进我们的搜索服务"
+    }
+  },
+  "aae6a5064f64a09ef3441ec6a6ea5b62f1bc3fa99b04245372fc1bd56ce65f25": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "了解用户如何与我们的平台互动"
+    }
+  },
+  "c505986290982feab0de4ffc448cb9c6539253df5cc4717047c9b51c4d869c40": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "个性化并提升您的体验"
+    }
+  },
+  "755d698eb3591bb5a7e7e9235fed7cb5c2440eb25c8cab42864446e4ebca2e19": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "监控和分析使用模式和趋势"
+    }
+  },
+  "ffeaee90fb84e4f53f33bea6060a831e194c3951544356305f5741d5b9482951": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "检测、预防和解决技术问题"
+    }
+  },
+  "2426835de7f620b56b0cf8151874f4b0b4aef2219126baec8d75bc5323fcb96a": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数据共享和披露"
+    }
+  },
+  "9e9fe53aefcdad7a59ff644cd0f3aea46af9d8f4961b1f3bdf5e68100f532016": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们可能在以下情况下分享您的信息："
+    }
+  },
+  "590d811c2cac6879d2251a07f7b64c8973872ff0493f0c91995576c1b4379def": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "服务提供商："
+      }
+    },
+    "与帮助我们运营、改进和分析我们服务的第三方服务提供商。具体而言，我们使用以下服务："
+  ],
+  "7a524ecbf93b7683ce82dd6406046b54f729be9b7deb429ce65326bebaefe442": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "Vercel："
+      }
+    },
+    "我们的托管和基础设施提供商"
+  ],
+  "cc83be9ed1c8c2763680b36c40d794ef3fb87360fa319f62f8f2a1b3baca4901": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "AI处理合作伙伴："
+      }
+    },
+    "我们利用包括OpenAI、Anthropic、xAI等公司的服务来处理搜索查询并提供结果"
+  ],
+  "ef6f4bbb12aca624a2641a7754fefc631a603f830644572377b99238558f5b85": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "遵守法律："
+      }
+    },
+    "当适用法律、法规、法律程序或政府要求时。"
+  ],
+  "d9096a9692e27700431a3fd1e74fa37e4686ed668e4451a5c24d29b26f835ee2": [
+    {
+      "type": "strong",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "业务转让："
+      }
+    },
+    "与合并、收购或资产出售相关的情况下。"
+  ],
+  "7e8cab72f948869cd1058f261200c66e41ef9fce2770e8518d9412820922ba1d": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数据安全"
+    }
+  },
+  "3a0c6399d3a1b6eece4891335a3095d29b934f9347c14e3d7e99210dd3919b22": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们采取适当的技术和组织措施来保护您的个人信息。但是，通过互联网传输或电子存储的方法都不是100%安全的，我们无法保证绝对的安全性。"
+    }
+  },
+  "fdf1c50f0717f3e03b3ee789b5e7f9dada1a1f8c5c6761b17e88f7fb71efedcc": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "您的权利"
+    }
+  },
+  "881e05310c7714c0fdbbab283897184902d614357a381e7654baefa750b0fd74": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "根据您所在的地区，您可能有权："
+    }
+  },
+  "08e8feb7238d50c25c08d617570de25f7ff2346da845976239d6f5f620b009e0": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "访问我们持有的关于您的个人信息"
+    }
+  },
+  "a6d6cbdc813480e8cc7921b3768a13adf9cf9ddee4f65a76a5ca672095d84b6d": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "请求更正或删除您的个人信息"
+    }
+  },
+  "93cb362d324886dc21f0b9815ef92bf5d7704a9343c0089aedcee802f9a3e4aa": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "反对或限制某些处理活动"
+    }
+  },
+  "766a37472118dd317a1a2ad4bcd368b527735a3d8ecad40bf86cca1e2bcc4222": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "数据可携性"
+    }
+  },
+  "8cd3e992a4d2395877d1ce59d6ac9cd42b86b8ffb1c9658885a26282cdd02d86": {
+    "type": "li",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在适用情况下撤回同意"
+    }
+  },
+  "3e122417af71d417109b0e7000999dc187ff3e0d32827425bc8e816e6c283b43": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "儿童隐私"
+    }
+  },
+  "601c11b77547c7ca8eece466509a7c93711e1f48699f4f83ce9b1d279b147f6e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们的服务不面向13岁以下的儿童。我们不会故意收集13岁以下儿童的个人信息。如果您是家长或监护人，并认为您的孩子向我们提供了个人信息，请联系我们。"
+    }
+  },
+  "12cf293716c68309b518f3b6a5764a67c5a9302e2c01868302c5043d18e5831e": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "本隐私政策的变更"
+    }
+  },
+  "cc76131ca5be38009b726b5d64524bb5d61c5899c12f6fb0760b06daf6d57b69": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们可能会不时更新我们的隐私政策。我们将通过在此页面发布新的隐私政策并更新\"最后更新\"日期来通知您任何更改。"
+    }
+  },
+  "4fdecadbfe462055b0fd77a102f5303e1c82bb84e7ba37bcf136cfa02a2aa1fb": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "联系我们"
+    }
+  },
+  "f4b91b838268bdfb0cb189e7c1fbdc73462b396b3db4903f8c5c48d7b1c9e995": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "如果您对本隐私政策有任何疑问，请通过以下方式联系我们："
+    }
+  },
+  "524752c5fafb45d078c80633728161eb25d2332ea722596a26365eb8855739e9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "使用 Scira AI 即表示您同意我们的隐私政策和",
+        {
+          "type": "Link",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "服务条款"
+          }
+        },
+        "。"
+      ]
+    }
+  },
+  "3100ede6159112c0fd4a1370da92cd85f93fb310aea79541616fdab319d33e03": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "© ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " Scira AI by Zaid Mukaddam"
+      ]
+    }
+  },
+  "ca749b12449e9284c735bf86f787e8aa3a97012cbfb2f4fc839e0235a2d82445": "首页",
+  "7be0c393d34092d8220ff758561509767328c9e1e90ae8f41db64e49094fe709": "关于",
+  "41b4f5eac2f0a1f6917db9cc939cdf3003c86ef0d31571116da20050f39a4abb": [
+    "Scira Chat"
+  ],
+  "5ede92fff83dde6922b1a5165739ebb9982853d39712e56d41b540b03a118111": [
+    "在 scira.ai 中搜索"
+  ],
+  "99b21ac0ffac586b38725d77cc7e48029ffce4b070e3c1f5b71c5585d09dad23": [
+    "加载个人资料数据失败"
+  ],
+  "ac73aba2a2b3d5713e76f4ba7e891b7372c91d41b233bd600031bd4f07ff0dd8": [
+    "请输入您的全名"
+  ],
+  "ae1a98a5ecad8a32d0687f94565daac72f4e2f5ea98bc796a81a8a9c82e0a536": [
+    "输入您的邮箱"
+  ],
+  "b485ec103a13fd381100e5ee880bfbad174ec3ba9f08367fbfa707e94c9e340b": [
+    "个人资料更新成功"
+  ],
+  "9b22c735b15096fefd7a647d4823ddc8b6df7628a9ca2124ddddd7b0d1b2847a": [
+    "更新个人资料失败"
+  ],
+  "3415ca9a6dc9c713eb1285068bf08680c375153d846722260f2de15936ec8d30": [
+    "加载使用数据失败"
+  ],
+  "cfceed34e0bc23359c86f3ba3f3c3a498a6ae958ed5ca9dbc0a1d92d5e53bbfc": [
+    "使用数据已刷新"
+  ],
+  "ee84a527cfdbee3b88a839180709b32a2a35aabdab89f411e2e2f52989c7c2ce": [
+    "刷新使用数据失败"
+  ],
+  "f88f59e8a7c3bffe6a5a836f3beac905b6fd9d43e0811f4b80a4c789c6479a04": [
+    "加载订阅数据失败"
+  ],
+  "4b84ff33c6b330194a506eaea512e0361f9536a418299283a08c5bd05394f54d": [
+    "打开订阅管理失败"
+  ],
+  "0981caa4820f8e683d9ecfa4785200a1f1429ae3d2fc53f41050787ec56588e7": "个人资料信息",
+  "b5a9539113b051ca17b3714983bfd8eb10c0b1b033e7ceec45dd42cbce40626e": "更新您的个人信息和个人资料设置",
+  "231743da93ff7aa91316f804342f7c90cb18efbf9b0f660289bd9e1121912a16": "全名",
+  "effdcd633af15789c233a24c68322389f2ddad020b0bfced3873788d07ae75f2": "邮箱",
+  "532285398002a13bea6e2e42f821a94c2e3d88cc5d5f83f4af1e9bbbfed173bf": "保存更改",
+  "6d49999f19231b8071f108099abc23a979a0d6e36746690b16d0cd451942d7f4": "重置",
+  "6d3a4be1f72132d0507393b3d1a281e23ebf42892df054b9838b32c39aac6d91": "每日搜索使用量",
+  "5a2e9343ed00c6d135f18fc671f833da817cce40c44b1a49933f959434f527af": "跟踪您的每日搜索使用量和限制",
+  "893bb44a7b9c90946cc2379932420eaf853908688e9686cb3e266257c50a6eb7": "刷新",
+  "2022ca9d8a2eb94a8ddfee44725968d462f6704f933f9ca1314a2a00e4630f1d": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "今日搜索"
+    }
+  },
+  "e688cbf1b138d748768ff3155fa892aed72328fcd57b85462e178768b6fb8481": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "（其他模型）"
+    }
+  },
+  "eb041d2f36d87d45121c2a0125ed02bda98f11fd595126684ecd7c905e1ade43": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Grok 3 Mini & Vision"
+    }
+  },
+  "5ddf3e959a70d0e9d81c32b4fc8be5bdc67c59ff58faf5d987ed49ca0049efca": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限制访问"
+    }
+  },
+  "7af13936f01d97c9d6960a720a01306353400f2176168dca5760806605aa5792": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "极端搜索 ",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "（月度）"
+          }
+        }
+      ]
+    }
+  },
+  "21a7f38a94f90a8f0432ab150b4a0a63b999cfb762a8d8dac8a1746be51e4042": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "每日限额"
+    }
+  },
+  "616274914ec1d0f7d8be9e096e5b5d10d5477a8620640391f9e217e031445a16": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限制访问可用"
+    }
+  },
+  "a2a25562ec466cd1dc78a271d2fccf4f7bd59fb079f63643c5241bdd8d9c65e1": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "您可以无限制地使用 Grok 3 Mini 和 Grok 2 Vision 模型。每日限制仅适用于其他 AI 模型。"
+    }
+  },
+  "348fae7cd190578522aa6c9228eda86812e55d78f699d34f216e67e4275dbb13": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "搜索使用情况（仅限其他模型）"
+    }
+  },
+  "fda9c7d0f36024d50ea2f256bbcc0115ba138076f16adf3e2b7f0e32dad143c8": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "已使用 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        "%"
+      ]
+    }
+  },
+  "bff253d3506b99934bbd707f7ee38c187397536d2a3dfc29fe2dc35163e0fc4d": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "今日已使用 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 次搜索，共 ",
+        {
+          "variable": "number",
+          "id": 3,
+          "key": "_gt_n_3"
+        },
+        " 次"
+      ]
+    }
+  },
+  "e0023321261df9e1b42248c4ffcdfaac49251bb91715ee06ffe87a72a26184c2": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "剩余 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        }
+      ]
+    }
+  },
+  "37eaa9408ae0a98e9f98d605c2c029aa77e4ee9ce830af2c9d85b64c7ddaa017": {
+    "variable": "variable",
+    "id": 1,
+    "key": "_gt_value_1"
+  },
+  "fa3c3665af3d79d9bdaf6c3c08c3a1af5ae3f0be24b8898827966afc02fe4d35": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "极限搜索使用量（月度）"
+    }
+  },
+  "d44093b6c9d98a3dfbee414d303e0b8be83c7cb83791094b3d3670a022717143": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "本月已使用 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 次极限搜索，共 ",
+        {
+          "variable": "number",
+          "id": 3,
+          "key": "_gt_n_3"
+        },
+        " 次"
+      ]
+    }
+  },
+  "71033869438f448abe88021b6b9490d927ea7a3e44dd433298e4ac28005007d5": {
+    "type": "h4",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "升级到专业版"
+    }
+  },
+  "6bca1641723854bd78a2345bfd6482a6fb70fedb45db7362134df24dc115b25b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获得无限搜索和高级功能访问权限"
+    }
+  },
+  "856896e5ff0b7918dc526c43671a4a838e1ae9f56526a551f0d2e30993925840": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无限制所有模型"
+    }
+  },
+  "21d1e03c9f78fa90f62c5a7cf02035fda3012367c88499f674fcb90a50690b89": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "对任何AI模型都没有限制，包括高级版本"
+    }
+  },
+  "3d3354dfb51b8dea6910c5b2e51d89cd85b879bf05ad7a0945f6cbcadc85fc69": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "高级AI模型"
+    }
+  },
+  "6eebf8ddd1d7a59d186f3ad518c80f47dbd2074596c211621c48160f6135d685": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "访问 Claude、GPT-4 和高级分析工具"
+    }
+  },
+  "86c75756a78487ce7bbb4ed56cdf9ba31f1fd54987aeb53fdf1ee6c69ced69b9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "优先支持"
+    }
+  },
+  "f6c4325053163249e899990381f51bcfdcd26b629e7af02424110fbd0691a6f0": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "更快的响应时间和专属帮助"
+    }
+  },
+  "9e172217c3e3d8ae43acf5ba785651b43623c1ad273bf9862c6cf681bba13091": "升级到专业版",
+  "37d50acf0d24b3a40ede224b967ccb4a9d0e9471ffd6f7e6c76c305f607d4c88": "查看计划",
+  "78707ec9e7f37b1aaebf07cdca8cb96cfdb305ee219d596ec6befbdaeaa201cb": "订阅状态",
+  "12ab889f139d364b6dc79c2e34fd136d9dd9a35e16c6fcb2a0f00abd1a0aa186": "管理您的订阅和账单信息",
+  "9b302a721afb3220ca757f00ea623fe0f8150787a02af774940db30176191a5d": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "欢迎使用 Scira Pro"
+    }
+  },
+  "ac82a6f8d6243fd6f0a187c56e8de4572e828210e492c1f35705367fa3412adf": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "您的订阅已激活。开始无限制搜索。"
+    }
+  },
+  "40be43fa52a98db64e076fb88fac82b2144a703a43e38b221cdc2c73cd42779e": "开始搜索",
+  "16a03c70ccab06234cd7e92b2332bf11329b8aa76e98bee44d10bc40b3024d48": {
+    "type": "h1",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "服务条款"
+    }
+  },
+  "a79c819c376498a480e614bce5633c7b4628bb612ef07017d8cd5bd808e43913": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "最后更新：",
+        {
+          "variable": "datetime",
+          "id": 2,
+          "key": "_gt_date_2"
+        }
+      ]
+    }
+  },
+  "e8c4c5f3ffbe2eaeafa18d476d2cd379cd08a057045071d2d7a1f1d31229672a": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "欢迎使用 Scira AI。本服务条款规范您对我们网站和服务的使用。通过使用 Scira AI，您完全同意这些条款。如果您不同意这些条款的任何部分，请不要使用我们的服务。"
+    }
+  },
+  "314644e857b5570c62e1dfa7f55e99adeb57bd93cdde1bde4108935e208c58b2": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "1. 接受条款"
+    }
+  },
+  "732868e8022ef10cc4be4f56b681b9a45ab0bf4832c955e5fbd7c39b49f6089a": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "通过访问或使用 Scira AI，您确认已阅读、理解并同意受这些服务条款的约束。我们保留随时修改这些条款的权利，此类修改将在发布后立即生效。您在任何修改后继续使用 Scira AI 即表示您接受修改后的条款。"
+    }
+  },
+  "54434c4fc722f42f6180ab7f9afba174d7f44d9ac6543ef5d630cb0a82512e2c": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "2. 服务描述"
+    }
+  },
+  "b759471d5151079ddcc564df84e09f0acac36a3698b7bad7d2cb9ca578129c2b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Scira AI 是一个极简主义的AI驱动搜索引擎，帮助用户在互联网上查找信息。我们的服务利用人工智能来处理搜索查询并提供相关的结果和信息。"
+    }
+  },
+  "5e86707f4ffe5af17c050f042f6c229e8c9cce11f518cabc27991dc28c60cf8d": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "我们的服务托管在 Vercel 上，并与包括 OpenAI、Anthropic、xAI 等在内的各种 AI 技术提供商集成，以提供搜索结果和内容生成功能。"
+    }
+  },
+  "40ee0220dac9b030b195b5881e5f3c3858105e377ae5cf8461a9bc260ed4d3bc": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "3. 用户行为"
+    }
+  },
+  "3a57294e0f168350ce7d0de78c3f71398c1fc706797a5287d0c068ff37756fc9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "您同意不将 Scira AI 用于："
+    }
+  },
+  "30c265042d64a614f3d0bc3a81cdd8f755a398730a8371e9f5c2c6a6a8fc0ad7": {
+    "type": "ul",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "从事任何违反适用法律或法规的活动"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "侵犯他人权利，包括知识产权"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 4
+            },
+            "children": "传播恶意软件、病毒或其他有害计算机代码"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 5
+            },
+            "children": "试图未经授权访问我们的系统或网络"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 6
+            },
+            "children": "进行自动化查询或抓取我们的服务"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 7
+            },
+            "children": "生成或传播非法、有害或冒犯性内容"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 8
+            },
+            "children": "干扰服务的正常运行"
+          }
+        }
+      ]
+    }
+  },
+  "72dbbfce34c053b761994ae2d4e2a7b7dfc3244461df96f010793dfc2ed8c7d8": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "4. 内容和结果"
+    }
+  },
+  "fdd28ea6ce301d353c77107adfd3974d3a2e62d7fcdef62ada7e337ba0daabe5": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "虽然我们努力提供准确可靠的信息，但 Scira AI："
+    }
+  },
+  "64e6161c21a4b247c801bb99af73e0ec36d0572970d17e85224c2464005d16b2": {
+    "type": "ul",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "不保证任何结果的准确性、完整性或可靠性"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "不对基于您的搜索查询生成的内容负责"
+          }
+        },
+        {
+          "type": "li",
+          "props": {
+            "data-_gt": {
+              "id": 4
+            },
+            "children": "可能提供指向我们无法控制的第三方网站的链接"
+          }
+        }
+      ]
+    }
+  },
+  "8e96286c04a5733f1fcfa41986c69bc48d1019352e23f83b69719f228381f61f": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在评估搜索结果和生成内容时，您应该运用判断力和批判性思维。Scira AI不应作为做出重要决策的唯一信息来源，特别是在专业、医疗、法律或金融等情况下。"
+    }
+  },
+  "3bbe28553af00e949425d816e60a370809fbd25ca41d5564dc18d92e447d171d": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在您的设备上安装 Scira"
+    }
+  },
+  "cc65931da09e736accaf9a2cb23767fd8c2275972f2eace852aaf9fa46529b84": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "点击 ",
+        {
+          "type": "Share",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        " 然后选择\"添加到主屏幕\" ",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "➕"
+          }
+        }
+      ]
+    }
+  },
+  "055a7cc94d467b7117279fd5a1fbe378b314501d314767b75b367c02133c2a89": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学术论文"
+    }
+  },
+  "bcc1b744a73575f81cbd67843dea81925cda02047b9a71be28359ee0de374ac1": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "所有学术论文"
+    }
+  },
+  "ced51d75a59587ec1f5a277a296ae279b92a28437c00a86f044418167e932ab2": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 篇研究论文"
+      ]
+    }
+  },
+  "d4e57a26da71926a02120d2af727ab5c6985e3a316dc95643bf340c04ac69471": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "学术论文"
+    }
+  },
+  "178e0f62e7514791d108b4f05efbd6e5cfbf290c4892cacf88f356c741af720e": "查看全部",
+  "aadde2c25c3ec29a41ecfb100975edbd2e927f19d2d024acfeb680653d28ab95": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "继续操作即表示您同意我们的",
+        {
+          "type": "Link",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "服务条款"
+          }
+        },
+        "和",
+        {
+          "type": "Link",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "隐私政策"
+          }
+        },
+        "。"
+      ]
+    }
+  },
+  "a4804ca4fef387cd8ebe14b189bfb3ebf11f9336c4f0e1ec33eaf1c6c7aca0be": {
+    "type": "DialogDescription",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": {
+        "variable": "variable",
+        "id": 2,
+        "key": "_gt_value_2"
+      }
+    }
+  },
+  "ae741a4e27d875bb3756341a3e382c7d2ddef11c4991a5902f75b4a7ddff6cfa": [
+    "聊天已删除"
+  ],
+  "6467d696bcbf46bc30d7d1982a6b21ff99d7fdda1bf73a43de682319cfd69f47": [
+    "删除聊天失败。请重试。"
+  ],
+  "284a02e21831a546a98978ed67157a88b4a0efe27ca5481de05ebf99161dbce4": [
+    "标题已更新"
+  ],
+  "ec6a9b85219c79edb5472a6ee2023d3191117a73b87b74be98de1fa19985bbde": [
+    "更新标题失败。请重试。"
+  ],
+  "8142464eaeb66885d0668cd4121cd034f3203657b15e4fbe21e3f6495f021690": [
+    "标题不能为空"
+  ],
+  "c62acebbfa4edf8f59249da8ab36f6001055f12838671f02d82e325deff0f7f1": [
+    "标题过长（最多100个字符）"
+  ],
+  "f31feee58225e9fe6a09e890e624b04eb88698088a8b643327b1b9e703f6b1e2": [
+    "标题"
+  ],
+  "c8de4027e3a54a0322992c89ecb48727fe689ca850041265ce59ae7466b6bda3": [
+    "日期"
+  ],
+  "d3db375d457ee27b209e428d790b5f39a75924167552b349a411b0eba5cf0dbb": [
+    "可见性"
+  ],
+  "d81365e61f627106486890e51e8a8b5ca785ad6a3457396d32bb9a0b73d0386e": [
+    "全部"
+  ],
+  "11e455e4b9ce7225ee574d64e54db9ffd255b5a1b27439baa509d0b562ac900e": [
+    "搜索 ",
+    {
+      "key": "mode"
+    },
+    "..."
+  ],
+  "30d26cfa1d578777a201c4e35b386e1c39ee2bed25e560b1576412e6ed5ed9af": [
+    "最近对话"
+  ],
+  "a0e4d444af4495571e5fc44bb5b0b2735e091e85b746eeb2bef734d811b75ab0": [
+    "今天"
+  ],
+  "23e68b818416605d6e62ceadf2243972be5dd156af35ddd300cbb01bed6329a1": [
+    "昨天"
+  ],
+  "cbaa0aab5968f8b935136c4232d363ad14dfd9d3c27a222fb0eb3dfbd0a9a933": [
+    "本周"
+  ],
+  "f0abbfa19b8783ac3dd4c12b538474789667aef736289f6eeba25dfd5aeb06a7": [
+    "上周"
+  ],
+  "a07e3a30dfd617eda1d1155a86f87dcccab2b0f31a5f014559b23b94c3c52c6a": [
+    "本月"
+  ],
+  "f00035277330b096d6a99225b8e284289e736d81b0f001734bd5917f39429bff": [
+    "较旧"
+  ],
+  "132497e1ffacb375cddaea3748a4f061b54c796a59ff3bbd1abe3a8e6fe7d7f7": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "当前"
+    }
+  },
+  "a1273f0c27ed6721485ffef36d5c25a276c1b489858552904e02b81fc0aeaa3a": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "访问您的聊天记录"
+    }
+  },
+  "023a769e959c579b3d4dea4d4f8db613a15c6c69d650a62e3150ffff0873210a": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "登录以无缝查看、搜索和管理您的所有历史对话。"
+    }
+  },
+  "edcd60ca2384cd55ba97831ffda86f212b82309b1189c5e87c9a38fcb4fbf1f6": "登录",
+  "3ea4891003fd459db007d0bfdfe8607d3113ed4e2a28b52872a1313cafbb03ee": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "当您登录时，您的对话会自动保存。"
+    }
+  },
+  "0f850ad487e97d5aef4822adccf4e9817881fe1625916ceaaec825812260ab99": "加载更多...",
+  "8b9ba362074e7cc966fdfb6868009bfafcd160462d7484cb94a0e96da00b6420": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "未找到对话"
+    }
+  },
+  "6336cbc717ea4677a6fa1af96bd327a04e897f978ae661c6fa93d7e364e54326": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "尝试不同的搜索词或更改搜索模式"
+    }
+  },
+  "3e624075015d7a03bef4bccba2cd45a3e870c18214e00f80b003c3a2d80ac29b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "搜索提示："
+    }
+  },
+  "a633186f67a7156e39dd494bc9ef6c479f361cd0b3e970a49596c622e68e9b27": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "• ",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "public:"
+          }
+        },
+        " 或 ",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "private:"
+          }
+        },
+        " 用于可见性"
+      ]
+    }
+  },
+  "585847b4c8302bdaf4cfd6a313781458ac0b3c25d81c0a40627a662a25e1d6ed": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "• ",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "today:"
+          }
+        },
+        "、",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 3
+            },
+            "children": "week:"
+          }
+        },
+        "、",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 4
+            },
+            "children": "month:"
+          }
+        },
+        " 用于日期"
+      ]
+    }
+  },
+  "0a7bbefafedd98cdd151b9fd6b0f1f898ddcd31dc51050d6c821c0b401f0cdd7": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "• ",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "date:22/05/25"
+          }
+        },
+        " 用于指定日期 (DD/MM/YY)"
+      ]
+    }
+  },
+  "85742f737deaeff06a8501af9cf3f273975827ab496499850765f6493827b3c4": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "• 切换到日期模式并输入 ",
+        {
+          "type": "code",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": "22/05/25"
+          }
+        }
+      ]
+    }
+  },
+  "20488e21c29306caa0c3659568b76c6fd246fbd42a92ffbbfc61da8a052716cf": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "开始新对话"
+    }
+  },
+  "f13623ce4059abd8d432c303ca416bd17a32f2804e289281141dda17b8909787": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击打开"
+    }
+  },
+  "7fe6d16edf1533e15d14ace289af0625ad8b5f4fcf1383c7fda2d71879898496": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "编辑以重命名"
+    }
+  },
+  "a987f664223146ef2feedb833714cd848ba84c4e73cce998acb037653a5bee83": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "要删除的垃圾"
+    }
+  },
+  "c7c8f2165b78eeeabff2cd2fda4c94d1acd31ddca143a7b5bb99649bb6917365": "打开",
+  "9a6af0134cc5774d6560101f34662794558b7846e4107a1c0ebc22bab3bf84e4": "导航",
+  "e748a31cff7c24d62f246c80b195b4c2f971d05a2c1dce88d224a4d87d1eaad7": "切换模式",
+  "c3d8557c7059dcba37d11a112cc95b3ce6911aecc9f9ba09763478791f4d2f35": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击编辑重命名 • 点击垃圾桶删除"
+    }
+  },
+  "0965b14610d4625e6819bc7ff78796262c3dbc71a012a039e8a9d616a9420eed": "关闭",
+  "0e77d5a4aeadc808c9bcd957e4cd54aaf9fbda758943c2eb23f7c05807431ac6": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "聊天记录"
+    }
+  },
+  "6775865af1bfe4aa9da060be866d2e20490722f3c5e5f25d29e4c1564655851a": "聊天记录",
+  "7c63f17f30062660e2939c1f7675a2448439cb59fb5f57f6ec57a52e281ec4db": [
+    "连接错误"
+  ],
+  "b5519daca5f22110d694b5866f0f8bc274ee1193761708cedb2fea4b0fc31190": [
+    "发生了错误。"
+  ],
+  "5e4b2376be45adf54241111237ed8a987b73852a5481042b1134ce62848bc9da": [
+    "哎呀！处理您的请求时发生了错误。",
+    {
+      "key": "error"
+    }
+  ],
+  "7520ef6562941e949de8ee0aa583c0dba90ddf9dbed08412fa93b02169169a84": [
+    "聊天现在",
+    {
+      "key": "visibility"
+    }
+  ],
+  "b8a62252743a6404d00ef5b149b67729c8c380037b619f1a812f1bb6d64e858d": [
+    "更新聊天可见性失败"
+  ],
+  "5d973d9a119eb6875bbe0cd3a29a5ee2d52180b540344350c77feb90050a186f": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "免费无限模型"
+    }
+  },
+  "4e3af4498fb02d72a85687ebfb7ae0cb439fb317a34ebd560df068eadfdb032d": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Grok 3 Mini 和 Grok 2 Vision 现在对注册用户无限制使用。"
+    }
+  },
+  "a28dff6e4d10f8e104e5c25f2c22f55d79c261f0ed2d46b59bcfe4ab27a61bb3": "明白了",
+  "dee31b25b86f6c20453f0e534c32c5817f6040bda9d3b14d531053238fbc3b8c": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在 Peerlist 上发布了！"
+    }
+  },
+  "d503d6a764a7c97574b368a94ff42746cd2c2b01ac024d70e35a5c8d29faa64e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查看我们的项目展示"
+    }
+  },
+  "218ac78e22f19ee78fd103f799a899a5b5faffa0273f36d1943caa8b272b9291": "查看项目",
+  "5070af64f18bd7267d571a030219bf7880616bb7c0209ae1685c58d088464ba0": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "升级到 Scira Pro"
+    }
+  },
+  "372e102733165ba8865a8890ab59b361d5937cf37afade0bb46e2ea2b1b4bfa2": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获得所有功能的无限访问权限"
+    }
+  },
+  "ec2bf9049241690cbb51b03b5b440ab0831911c239bb961c7281cf33416d99f6": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无每日限制或约束"
+    }
+  },
+  "825308168103b2753deb2eb7da70d1f5fa161f811eb0eda1db1aa36538b344f4": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "高级AI模型"
+    }
+  },
+  "0ce6b260af48240e7178e5f6e88dbe995e451c1e17abe65379f9d8c49354f196": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Claude 4 Opus、Grok 3、GPT-4o 等"
+    }
+  },
+  "11b339e1a4b9b7d8d559b8c54507a2eeab09df07568502e0968509414b322503": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "PDF分析"
+    }
+  },
+  "e4ae7f754ea8fe3e940c8911ae490701f7ea73c03f36bc28edfb43e60cb3bc17": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "上传和分析文档"
+    }
+  },
+  "ce9a91d37a13aeb0d8963806df16bd64ae9dabf15fa4f3aa66bcd332bcf55a41": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "随时可取消"
+    }
+  },
+  "b01548b6df32b8b5faf36ff2dc3311e32cb1b2f498754729e5f8e5725958b818": "也许以后吧",
+  "e589674ba155c53ad0658d16d1fee7444588bf461829c8219165a5b79720db68": "立即升级",
+  "0370648d510937df74ba711c38393f50a0d56f54db8428668376d532cff44ea4": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "已达到每日限额"
+    }
+  },
+  "208933700d65b4e6443e8c3e364e318f81033c291c1f65e986a10240ed7daf67": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "您今天已用完所有 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 次搜索。"
+      ]
+    }
+  },
+  "18650684a89b57c5836169db441c4e333c9175a7d546cbed932ee1cb5262dc88": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "升级以继续享受无限搜索和高级功能。"
+    }
+  },
+  "3befbe3dae383b101c15673c86bc7bdeee40cd9ff24b08bf38b8b4613ac83ec4": "升级",
+  "a38ef536aab2afe6af549fae442831f40f6fe39ea74e0ef3c2a3edd44b05b502": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "已达到每日限制（已使用 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 次搜索）"
+      ]
+    }
+  },
+  "c0fb5c0b97f1aea5a65da8bec7afbae04d75b5baefaaa74035b5670618d16ec7": [
+    "发生未知错误"
+  ],
+  "340a48bd692b364c5f6c9e811d9a26b871015602539b4f9b9a68f8ab782e1c9c": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无股票代码数据可用"
+    }
+  },
+  "256f2fbd894c61e09f99215b712d34b09b24f153c0dca512a9bd3232cea75f79": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获取股票代码数据时出错"
+    }
+  },
+  "dd8cd866ad40c58fc2ecc67cc67c13abce0c3e408b5f9516b00e081479dadd77": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "没有可用的 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 股票代码数据"
+      ]
+    }
+  },
+  "7ae3cb5e87db97c0fe938ea07ec3c824ca09b8ff1b037711d5ec8ec343ee7181": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "显示 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 个股票代码中的 6 个"
+      ]
+    }
+  },
+  "443025a33ce684271979e06e20db7600d937c13c864f7adbe26dc4c8ac94e1ee": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无图表数据可用"
+    }
+  },
+  "1abdca4674ba9085c1ec325c381387c77a48b8a06085b15baa9f688e419c8664": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获取图表数据时出错"
+    }
+  },
+  "f4e21a2a6df1cd4634eda2dcb2a519c6387390701511ae9167dc8fdb234fd0b2": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "没有可用的图表数据 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "2ceb5ad71618c7eaa35b0aa46e3939527a9f8e297ec0e7a958995256d65fc248": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "图表不包含数据点"
+    }
+  },
+  "5f766c99696d81213d99acdb313fa7bc8ab4885fd182894f0098c8b3b64b8d08": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "市值"
+    }
+  },
+  "d66745e887330441daac1dcf92facccb0d3511a9b2ca82c15a37e8f457c018fc": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "24小时交易量"
+    }
+  },
+  "812b346575d09250c2740bcaf560705647c92dc07685901abade18e9885f06d7": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "流通中"
+    }
+  },
+  "e178690010e20d2337995211bc2d46c6f8d5e9b69292b415b88d2fa80b83cca3": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "排名"
+    }
+  },
+  "fa668923be628b47df38e44ede69e6c6f5728b5dea24bdd1e0022592c19ca9e8": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "暂无币种数据"
+    }
+  },
+  "8a7fe071ce0e9f60633a59c11a15d0181d5a2c8237205882aa85868028733d42": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获取币种数据时出错"
+    }
+  },
+  "4b6ea0b0c410dcc857b88f3f21685ba399dd604ea7beb24a51cc9791f65e3b50": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无效的货币数据格式"
+    }
+  },
+  "5baa4c7c414d6767701c6b3b97c560a248c5c105f87a2d17a0b32c8a9f1c9045": [
+    "排名 #",
+    {
+      "variable": "number",
+      "id": 1,
+      "key": "_gt_n_1"
+    }
+  ],
+  "4c20dfdba06255b623126ceabf1497fe131774a316edab104c0b4c53df504f86": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "ATH"
+    }
+  },
+  "1f36220150ad993ec2d6c4bd1741ce8b8ffa79f341a1bf07f483a35d08fcd98f": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "24小时"
+    }
+  },
+  "41f561c1b93e323919b0833066cf84313ade3c8619b476a6a8b3d84d289c9973": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "7天"
+    }
+  },
+  "d42fb4dd6d0ca2cfa9e42cc1bc4d860a916ce7b8697b1dd96f3d5cc07ca47a65": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "30天"
+    }
+  },
+  "f8320efc481fa2a2615fbe5bad468782553e027de610223eabbd85e92d0be844": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "距离历史最高点"
+    }
+  },
+  "18f390ccc4310dbe21a3d90b4efb4bcffc2871e11cb4eaccc3ef6eb15dfe6913": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "流通供应量"
+    }
+  },
+  "4e5ea98312af94f5806c68ca52f12dfe1697b99f408f4d4e62e2d987e98c70e6": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "最大供应量"
+    }
+  },
+  "8abf1ce857ba6db0fbdb983283d04a7c5f5ec1e4497056c857df6f8d875fdf77": [
+    "请输入有效数字"
+  ],
+  "587ca4bb7aafea39ebe7065039e058d071b827c2468f1258671f5a9f27b063ff": [
+    "最大值"
+  ],
+  "72bf18a806d180f353f3cf5d2554411cd63fa6862e832e8bd3c0ba7d8dfa0bde": [
+    "上四分位数"
+  ],
+  "12e2da54c41ade18226a0ab67ee737b81c108b9ee395092a3beb626491017f8d": [
+    "中位数"
+  ],
+  "69f5cef0b89ba927bc0381645f53e9a36a8a2126a2a8bac7499b73c44ede6b68": [
+    "下四分位数"
+  ],
+  "e69777cdfe1f8471451f3529433f735217a1c8ab0761935710c2e19185a55ac9": [
+    "最小值"
+  ],
+  "c4a34dffda12a585824d2b673c2abe51327a666cf1d4fc216b488a17be6612fa": [
+    "箱线图"
+  ],
+  "06084baa582c39ac5200c33f1055c5e36124f5ac181c500fcd699131f87e7214": [
+    "思考中..."
+  ],
+  "e7a1411b801ffe1bfa801bb811c3d5643df9f08a6c84169d40b2f0b02006dcff": [
+    "处理中..."
+  ],
+  "6e4982ab4f386077a968f07cb6752f8b30fd16463ce423fdabcec2200d7e1272": [
+    "Python 代码执行"
+  ],
+  "2805401a85cf485bbac9ab7d417171c3ec851895ca605ee3e274bea1c29162f6": [
+    "正在读取内容..."
+  ],
+  "0671ad7f4e93458a3ba5b6da7eac802db337bc4deea34099aa1b04d0ba097fb5": [
+    "正在搜索来源..."
+  ],
+  "585babcad4bed35e0ab38e78942deb91e9937721d596d9a1bc98295ac5c5f710": [
+    "未找到与此查询相关的来源。"
+  ],
+  "2bba7fc28f53665a40b17e9a2fa1d385780859703aa96abef91efad69eccbf62": [
+    "结果："
+  ],
+  "a61f0ec249919c5a4652c9d6c5ecce33e05ce78d178e1aed188b1ad06e7f7f0a": [
+    "正在执行代码..."
+  ],
+  "ca1488f5ac9988dbc18aa89befacc4107d8ae540483b17cfade375e1b7126809": [
+    "查看全部"
+  ],
+  "162c2d105313fb8741a05384142ad272702d4ebd2524713fc0bba921abc1e0b6": [
+    "未找到此研究的相关资料来源。"
+  ],
+  "fb070892e7789613c1d6f9faba1f65b8d02958aaf6262f0ae8cb9b9bdb797aa5": [
+    "研究过程"
+  ],
+  "b66f8524a4945d99baf04ecd8b5449b3103000adadaeb2a03e606a69aeeb4389": [
+    {
+      "key": "count"
+    },
+    " 个图表",
+    {
+      "key": "pluralSuffix"
+    }
+  ],
+  "01c5a43fad2773d608aa23b1d81e7866dc666e69fbf95b4fdc865a764211b515": [
+    "准备研究计划"
+  ],
+  "4823a85b5c8229bb07736670b265b5f5f80bc39455e2fe02d14d4d810652c241": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "所有来源"
+    }
+  },
+  "a057368b22df20e9b7fa6c5a90c79b7bf907b0723ff8bd7a9519fce6c24993d4": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "来源"
+    }
+  },
+  "e6784e0e89bac58defb439e5cea71313b49951b0072cc6b90bb22cce74a8fcc1": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "可视化"
+    }
+  },
+  "19095591b6093a296c2e7a0f7d1d794a42d8daed947d5890cfd2efa179481813": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "研究计划"
+    }
+  },
+  "8cedeb24a348344a1fce5e44f8adde57ef5779b51319edb1e2e9946caf6e2e6c": [
+    "已着陆"
+  ],
+  "767342005bbc5c5be9a6dd27cece775f9eaf39626ea46b37ec4d146a7e3f698c": [
+    "延迟"
+  ],
+  "ba0a1090433bed2a61eb4acb54816d77ff1c48f75948e7d80faac62d8fc02103": [
+    "飞行中"
+  ],
+  "5c392886d80fb5a80ea239830097e677dcd7f38caa3bff5d908e839bd6869df3": [
+    "已安排"
+  ],
+  "55e399416967525d2790f2f21a98c95b489a882a1bdf2db783c5dd49bb51393a": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无法追踪航班"
+    }
+  },
+  "200390da153c36c60fb23e70306d49b571f5d5e9a98b1e6de89a167bdbe841be": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "终端 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "873517d1a96bd6ee133a69f3111464caf1293d40ec7df73670fa40cc6c623f3b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "门 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "0c082a8f2775d75d816ea7d1be20125332d849c7776ae08d54f087bc500d6cc3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "由 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 运营"
+      ]
+    }
+  },
+  "0d28c470eb95507de193a55014b7e244c4d40a8fbba5ea99e90ded7d62cc1ac4": [
+    "地图配置错误。请检查您的设置。"
+  ],
+  "d3ce2735683b94860e301b571e7e8bd02a4bcd262db8f77738852e21651c88a9": [
+    "地图加载失败。请稍后重试。"
+  ],
+  "bf7bcf4ea003d8089647f821c69e3aee74fb18e862c88732551f366661df7907": [
+    "地图初始化失败。请检查您的网络连接。"
+  ],
+  "3aefe55ab0868e7e39649490ae9ad1404824053e0cb4f90b33938538ced1ba40": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "重新加载页面"
+    }
+  },
+  "8f4c9469a073dde36e2e7faef03a8d7acb2fb9710f12b347ee0ad8891cd61c0c": [
+    "YFinance • ",
+    {
+      "key": "time"
+    }
+  ],
+  "1d976d1c27271e10ddd651fb04539796b609b3b4d11d2ed366f906b378dcbedc": [
+    "最新"
+  ],
+  "893fdf910b8a25049a5df37c0462a60aec55633b6c01453e410ce10dad4bf23d": [
+    "金融"
+  ],
+  "a99296ebeb3b1ec18cfb2eaf047af66e58a8af5868cc1c9b2ffd0bbe197a9bd8": [
+    "新闻"
+  ],
+  "e34b4a47e96003d390390371e7ecefc65d04035cf55271707825ce93866d95bc": [
+    "金融"
+  ],
+  "57d6ca0d7f72be1cb059a1ddb7407bca3ab50347bd1738e9803d3b96d10f1294": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "金融股票图表"
+    }
+  },
+  "895f63c37e55353bc862ecfda11aab16c7a9f8d8d8ce7600db7ebf1d70d82b9f": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "相关新闻"
+    }
+  },
+  "cf261199777ddeb33e8c4f69c261b8d68613ac9e526f8217b85e23a40a9ea5eb": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "财务报告"
+    }
+  },
+  "c325c610665d64992949ca1e43c937408e8008bf5bba58361c732597cbec33d5": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": {
+        "type": "Branch",
+        "props": {
+          "data-_gt": {
+            "id": 2,
+            "transformation": "branch",
+            "branches": {
+              "true": "已关闭",
+              "false": "现在营业"
+            }
+          }
+        }
+      }
+    }
+  },
+  "8fa75035fb9d1df1a611e675d421ecbc67313b56c55ad8a8f70e4578953d2100": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "直到 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "8ee171dd5c418bcd7e51ca4c438a5e49358091eb890b176e4d34e09cb306cbb3": "方向",
+  "52ee190cc093eee9c9a710e46819ecacc41b7ce81fbf7822513bb280281b079b": "网站",
+  "87f8f4ec818835149338789fc956de72f6d96314713f0171a1d49a6583776acc": "呼叫",
+  "6fbc52a0ee6a9e586051d98fc77d02c6a0e147baa9fc34f0eb473cdb746ab7d7": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "正在加载地图..."
+    }
+  },
+  "5593c87dd1bc9bf953955750ddf9493b5ed94cef121b7e1060bb8e34f1be268f": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "正在准备地图视图..."
+    }
+  },
+  "955032d1afbab4be0c454a18bf26cd89ff2b139a4f59154942d83626a61d7e45": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "显示 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 个位置",
+        {
+          "variable": "variable",
+          "id": 3,
+          "key": "_gt_value_3"
+        }
+      ]
+    }
+  },
+  "3758e4c3807e6d78f8ffb7b1b45d96f2b0d6080de23642746423ea119d97b9ed": [
+    "禁用换行"
+  ],
+  "b8d1caa65346ed4df18e31cb400cf0ef8c6f43c8fbb6af32e54dad9685579ed6": [
+    "启用换行"
+  ],
+  "9ced104ee081351660a3b5cce58ce05f92fea2e692aece46a5986ffd2195ad82": [
+    "已复制！"
+  ],
+  "08dc73a5192866b378ae11fcf46f7334158b86db773e23688a2110aed644234f": [
+    "复制代码"
+  ],
+  "1747b57eb5e0f1eedfbafc00119967a19dad6d32b5bdd23f81e42d94eacbbf11": [
+    "已复制到剪贴板"
+  ],
+  "e9bbbd450e2cfe04934781b8c87f495734df7ac2dcf9b57dadc785c8fab35f92": [
+    "找到 ",
+    {
+      "key": "count"
+    },
+    " 台服务器"
+  ],
+  "9b066edc5b3559b83850a0f09432642c61ee7b14d10ee96067fef61053673c0a": [
+    "服务器 ID 已复制！"
+  ],
+  "2d019a6a749274ca3c0c6ef7f852fa1a2b614a90b6ad9e60d1a1f30169940125": [
+    {
+      "key": "type"
+    },
+    " URL已复制！"
+  ],
+  "555c8ff6c88937777dc6f10cd0dfcc62fb73facfeba0935307939e076e205604": [
+    "部署 URL 已复制！"
+  ],
+  "8da1bd3bb80a31c443b9b6885586b188a9c639e99a358f984bde84fb6c10768d": [
+    "已部署"
+  ],
+  "1c9128543ff47163d657ed0d7ebd455d54f4d00fcf9ab8434804e99b9d0c99c0": [
+    "使用量：",
+    {
+      "key": "count"
+    }
+  ],
+  "2cb479a94f4320e2b74cb644df34bef6221cd5b5422ac6d902e77c8fa9b54bad": [
+    "添加时间：",
+    {
+      "key": "date"
+    }
+  ],
+  "6fa128f38adec08c760c74f857db6d7e061013ef4c225ce597fd9bb10aa30b92": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "未找到服务器"
+    }
+  },
+  "365da597ac58aff2a0db4e790200e5daeeea55744c112f1ee1d7c44cba73161f": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "未找到匹配\"",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        "\"的 MCP 服务器。"
+      ]
+    }
+  },
+  "ef41e88a41487f258314c90df1e4af9f2e4e2c586c50b8a09ce0ccbd931a8854": [
+    "内存已成功删除"
+  ],
+  "dbd9c05a65a1a3ef4ead8b7ee1307579589382bdecbdd858a08ab12c1c5f9d67": [
+    "删除内存失败"
+  ],
+  "6a6c760263139ab96cd892ad1879053e45aa7884f3be4bec49682b4cd1239247": [
+    "搜索记忆..."
+  ],
+  "416a68618edac453b146d4ae9c1a9a459575591f13ea3476c8078f5fc2f97a53": {
+    "type": "DialogTitle",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "Memory",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "您的记忆"
+      ]
+    }
+  },
+  "c896142afc567bc22d44bf6f6698af1565d6519a8dc9e39f4abe6b1ceeda7525": {
+    "type": "DialogDescription",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查看和管理您保存的记忆"
+    }
+  },
+  "dc4050857ae90307570a8444c4a2f3739a913515babb6938a9fbe057abfa0df5": {
+    "type": "Plural",
+    "props": {
+      "data-_gt": {
+        "id": 1,
+        "transformation": "plural",
+        "branches": {
+          "one": "找到 {count} 个内存",
+          "other": "找到 {count} 个回忆"
+        }
+      }
+    }
+  },
+  "3e2e4940c7332c07604668ef0b53355020516d88cb73508458b4c06c3f8df9dd": "清除搜索",
+  "64e839317b58e15736c42835af413e5411bfe78789f31e975d050408969989c3": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "正在加载回忆..."
+    }
+  },
+  "82b6a049b6d2f49b4b5eddb107628a0d98f47a4f7e44966ac74ee05f78aed194": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "未找到记忆"
+    }
+  },
+  "537552d4a55bb2cfb815d74203fcc7610eb91f18564144538c56fbf75c5f1ee9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "尝试不同的搜索词"
+    }
+  },
+  "5dae9cc53b5bef3c411bbe34a53f4b5eafb32933bafc1e2524efc95a268b4fbd": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "当您保存记忆时，它们将显示在这里"
+    }
+  },
+  "bcd893762c0618c6a405d93dc37c6edfa7e6bfeb82199df290a74666a53280cc": "加载更多",
+  "24b02fd4067a7fa21f1eb7b8af6f05f6e6a9e080d0b3bea4e59383cc287c6a29": [
+    "用户ID已复制到剪贴板"
+  ],
+  "e375f4a5279d5a3d97684bdb19b0beeec4897d39ca0218d1d5d6f900c16c6cf9": [
+    "记忆已更新"
+  ],
+  "20c3879e5fc7a4fe73529e4289600b3e2a299f4d2ebdb0edeffe764ad727498d": [
+    "内存搜索结果"
+  ],
+  "ffadfcb5b72cc1b8475bcd90ec9b9be19d5fb7cdc42f437db9b4564074791324": [
+    "内存操作"
+  ],
+  "7b69886bb48a72e03d656f35d34e18480fd5e76eee8fbd5eb2adc3a3d5cfe366": [
+    "没有记忆"
+  ],
+  "cc338f3e94562d4e3ef4a684ed4382cbb4e3c677d8e4703bd84b139761ebb328": [
+    "错误代码"
+  ],
+  "140faf41c17c48e400776ffa460791ae34bfa650b085fabadae8c0789e1cd6b7": [
+    "请登录以重试或尝试不同的提示"
+  ],
+  "467b5f04628507cba7c21e2792ebccff429626d0cd088db61d41915e0503e07b": [
+    "您可以重试您的请求或尝试不同的方法"
+  ],
+  "ec2675dd1c2de39af55fa0d9a3e7dae96ab4730b1f17cf3b4d3bd112fb2190cf": [
+    "请输入有效的消息。"
+  ],
+  "ba0e87529743ac7ecc6831fc6aa9442106aeacea88023cf2e13184b44ae6b1f8": [
+    "更新消息失败。请重试。"
+  ],
+  "2bcf7b0f1a139990087470da5b2382ce8294da1c2cf08075a4db95a5fbf53d36": [
+    "编辑您的消息..."
+  ],
+  "26c6fbff8035e094e03d18e4da33906f32a274d5de6087e7a8edc435d7a720ac": [
+    "显示更少"
+  ],
+  "3277d97197b8bc62a330dd4cbdaec45c91dafde14b8aa4af493a0271c50e9510": [
+    "显示更多"
+  ],
+  "edb8ffd8c885ccfcfd71606e2ba9d96643a2c2f21a2adbf298ba31c6c7931d38": [
+    "编辑消息"
+  ],
+  "f5637baaab6a08639ae405424b36630a18d8c1b5000219f0e9aecd045d11c86d": [
+    "复制消息"
+  ],
+  "f66690782604039889c384bb00d48852fff6e0a28d9055b0a883b9474577b0cc": [
+    "建议问题"
+  ],
+  "fed62577a97d52b93b57178ac39fb16c86d9993f7d0ef047e0833bc575fb6c6c": [
+    "移除附件"
+  ],
+  "6add88cbdfc60b67c62f9172f5dc1aa33ccc2b608f6af75221c97ebb7d38a567": [
+    "文件URL已复制到剪贴板"
+  ],
+  "d40018f0de79e3319093f0433616e643d1c5f07937be3891d371898b8e7f0c60": [
+    "复制链接"
+  ],
+  "23bf40e50f5fa4311b7a34fdfb3e99c24cd038cc08452058760d82988d1370ca": [
+    "下载"
+  ],
+  "5e9536e82ab183e5a770dbab5e42e60fa43ecf26008c59267a2582202bfdcd86": [
+    "在新标签页中打开"
+  ],
+  "928900ce729b35e9d354ca4f5a5dd2b37d1faeb3f2a666109faa4a9bf17d6a8c": [
+    "打开全屏"
+  ],
+  "f788157e07b4d9dadde6cdd4d96d7492f0cb4a8485339c5e5a52d657727b9a0b": [
+    "PDF无法直接显示"
+  ],
+  "9bae83052c7664a252e6314e4124e97addfa1b3dbcbed0987618eae5ad527dae": [
+    "打开PDF"
+  ],
+  "bf1733402e85bc0b1551690b6a005f536b7029d1708a37e6d349426c433608de": [
+    "聊天已公开，链接已复制到剪贴板"
+  ],
+  "42aa9777504dbd621b0f61a590e6bfff44bd5f96b4be2662e3e6165378c49507": [
+    "分享链接已复制到剪贴板"
+  ],
+  "1dc502acc24f53e0627535ea57e605688797e692bc8e578b98854e078b0d68cb": [
+    "正在公开聊天并复制链接..."
+  ],
+  "53a38a09b49c38c4dc78fdd1240991b46010bf311c2902bac469069e53f9d44a": [
+    "正在复制分享链接..."
+  ],
+  "fb75b027e1af866a36977cccc4430b7d1298f8d1750214ad80b8be0acb345222": [
+    "分享聊天失败"
+  ],
+  "29581990e09bd47e05eb56adce2367f0bb08d282277e421c8fcb87dc0b8d1d2a": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Scira"
+    }
+  },
+  "006decd1d64a45a0b8d11568d6f405598f571e9b35e1a861738206dc778b0b90": "重写",
+  "13488d9b83ff07dcdb6749c721d85629c6b718d47c4b6c5fca6d23596b46ff60": "分享",
+  "ffd3cdd328e21c9d03d2ad77304fc56c3b2c0db948d12ffae244714e4cf3d1de": "复制",
+  "4f3a13013529edf251056b54ddf23a7839f0cd7352fa4d6de1d83a0a96a91b5f": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "不完整的响应"
+    }
+  },
+  "e7c4179afcb58f8fff3d8e92f167760ce2477b62a35381002c315e85af282c36": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "助手的回复似乎缺失了。"
+    }
+  },
+  "a0e138c9d01a2b4f37f8bca6faf4151b1877f6b2f1d4aa0344d47dfe65bee6cb": {
+    "type": "Branch",
+    "props": {
+      "data-_gt": {
+        "id": 1,
+        "transformation": "branch",
+        "branches": {
+          "true": {
+            "type": "p",
+            "props": {
+              "data-_gt": {
+                "id": 2
+              },
+              "children": "请登录以重试或尝试不同的提示"
+            }
+          },
+          "false": {
+            "type": "p",
+            "props": {
+              "data-_gt": {
+                "id": 2
+              },
+              "children": "请尝试重新生成回复或重新表述您的问题"
+            }
+          }
+        }
+      }
+    }
+  },
+  "488c8b73cf55d415ec3f81527c56354fca647df30b46dc3b3dec4b17bc1b12dc": "生成回复",
+  "372780b9aa4f52dca75d034e82ed9f998a3599dd112525533f5a8d1cab4cb921": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "概述"
+    }
+  },
+  "3e065b7ed94a2daf11f7061a0162973a410960eb5ef0ca67f097edc84c38c083": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "演员表"
+    }
+  },
+  "7750c27336ac12b1dc052b9a22eb36f1c99cb1bb4f12bc6d4946450cecc7888f": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "演员表："
+    }
+  },
+  "61026e93969da24419ae4247e32c592493b603fd2d134522acef8850649f6fb6": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "从 ",
+        {
+          "variable": "number",
+          "id": 3,
+          "key": "_gt_n_3"
+        },
+        " 次搜索中获得 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 个结果"
+      ]
+    }
+  },
+  "fb5e50031a37027d6413b0409e1f70c7e9fc7bafde48e83a33b98a024b272dcd": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 个结果"
+      ]
+    }
+  },
+  "e1625f8fedfe116b806476a488cc5b45a142984a5bc08983e6f5e938004a3787": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "还有 +",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 个"
+      ]
+    }
+  },
+  "cd9bdd3804a1a979fbbcfd2eeefc9bc11dfb5a57a9390db51fc8df5dc287bc61": [
+    {
+      "variable": "number",
+      "id": 1,
+      "key": "_gt_n_1"
+    },
+    " / ",
+    {
+      "variable": "number",
+      "id": 2,
+      "key": "_gt_n_2"
+    }
+  ],
+  "77f18bdd0bee3050d1253b3c84a1355ecb41ca9d2592fdbb56ef6de3319910cf": [
+    "链接已复制到剪贴板"
+  ],
+  "01200499230cfe5aa4af0255a4741a41a760825b950bf51c9560459fdbddfb67": [
+    "新的"
+  ],
+  "b52cc2d692b5246d43fc7de72f13b8c405a2aefa69930f86ec2a989f9a60fccf": [
+    "保存中..."
+  ],
+  "dd0229edc6ec61bc2def8f905753149daf3606237978244609b1eccc28802f9f": [
+    "已共享"
+  ],
+  "6722df26f73668afb625dc75c53d7175d911b991b71e3cb98de44f7e9792f7e8": [
+    "分享链接"
+  ],
+  "1e808f5412579f08048d38672beb6bdf1bc7c558d57cc1658558ed703b92455b": [
+    "设为私有"
+  ],
+  "5c591fd790f6a763c5d66c4cc4082ede349165e0c7d754228890eaeb1aca2fad": [
+    "任何拥有此链接的人都可以查看此页面"
+  ],
+  "62b76fa2d81458f5fb4a1f013546f56920cc62720551c0e5d315bf03eac133a7": [
+    "分享"
+  ],
+  "49110aef907dd908f85ed65275e813fdcf571e6ddd891d414a314b493b935b3f": [
+    "分享此页面，让任何拥有链接的人都可以访问。"
+  ],
+  "21efc9c601c99bbd029b82cc0b65d7d405c238742c69d0d8ad0c7acccb38e064": [
+    "取消"
+  ],
+  "2d7a9ff5fe9688ce449606c292a77a79d39d7662ad10748fa233b74540fe1400": [
+    "这是其他人的共享页面"
+  ],
+  "282dc6a9856b525c67f806dea9ec309bf13c3c4d5ed4c1dfd706c5fa23b1d3b1": [
+    "这是一个共享页面"
+  ],
+  "63ff1e59992aad3ba99c2994a1b462b56a35585bc3eb303707b57ab44a1b6182": [
+    "正在加载订阅状态..."
+  ],
+  "f7cda601bdca8891063f347296ce3c49ac2307912d5733949dbeb2de35baf070": [
+    "专业版"
+  ],
+  "b80111461ad3832427dc15bbf7d501da406071b15561414070c0ebb0766140f6": [
+    "Pro 订阅 - 无限制访问"
+  ],
+  "617d9fae496aec0175e10ae761ac01451fbc35d0e365d219e3a85b0f23e4b494": [
+    "升级"
+  ],
+  "1443704fa6dbe8e1b506392ca2904e89fcbeda5afa967893ba36342d3be01d68": [
+    "升级到专业版以获得无限搜索"
+  ],
+  "8eb74111a9d6d7f06f12bdbc1806c5150ba44fbec81706843e7d5833526c77b9": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "找到 ",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " ",
+        {
+          "variable": "variable",
+          "id": 3,
+          "key": "_gt_value_3"
+        }
+      ]
+    }
+  },
+  "21a13946c2fb8cc4f0498e1f9b0b6612569d7991c14ee22d2e99b943b17778c6": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "靠近 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "6d66d89d165c53fe4faab6f76968dbcdb8d72eddd8beda46cc1e51ef61110ac4": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        "米半径"
+      ]
+    }
+  },
+  "dc6de46021f4f9ec92cbff11fcf5acddfe522a5744b8bbe028aebaa34038c933": "列表",
+  "3020e61b3303056d824f59cd769259abea4c864380973200983e53434c161f02": "地图",
+  "5d4dab91541221691eeb727f48527b44b0d53590792c6943889bc8e6882f8b8e": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "地图加载失败"
+    }
+  },
+  "06c25e0e00941be77f41de9ac19cb195f9c2624b7d1626e143a389367444f4e7": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "在此区域未找到 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "74ab44af90d91988412b2e317c263b71fcd275c0820ba31c3678fe7fb4485045": [
+    "获取代币价格失败"
+  ],
+  "6aa51c191df325d1843874c81608f91b192032e1dcae405e7327b19493b2c90c": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "错误：",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "dfb0478fa2ec5dc23cbe209144a1f095644cebf580a1dcdf87f564fdac6e73e0": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 个令牌"
+      ]
+    }
+  },
+  "7b699cf79e00d25d842a45f2e49c6339fc491c43016df08619c240684f3f1ae6": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "市值: ",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "d985ed5ba28f82bf7ee6cf5516d1f58ec9460983da83f7b64ea3b2da08413e9f": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "FDV: ",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "3a5c0b9886879eb245b3ab65c3d3e0990e237954da7ecdd1fa78ac4b6b6c1527": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "成交量: ",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "85fa5c6068f4aec6bf2f336d1480b5401f940e0ab89f2517b2a0a57aa62c4201": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "储备：",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "b1d3e5c6611ec687719fa3c2a446fa277799c9d0af3f885ffd629b3e0e32f9bb": [
+    "已关闭"
+  ],
+  "53113d1083c896e4425b2051502728ea74561c6e00cc4d7c03f2e4ab78eda0d0": [
+    "已关闭 · ",
+    {
+      "key": "time"
+    },
+    " 开放"
+  ],
+  "8759aa37bd95dda7999d5aed6e7d6a689c3206e2f9c87a043fb6c805b7474f2e": [
+    "营业中 · ",
+    {
+      "key": "time"
+    },
+    " 结束营业"
+  ],
+  "4c94527f166da262b1e4a45009d3e485a55703437de2d32d5360a2e510847cdf": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "今天：",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "c4c9f5c9516262a9c8b364ea4a58454951d49e6b82b5a5471b3a5a9e2e3c7dba": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "Navigation",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "路线"
+      ]
+    }
+  },
+  "0db2b6ad89e2c6f1e0031c3dbcc96733b562c91300f918eb0130a23c1ce5b08c": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "Phone",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "拨打电话"
+      ]
+    }
+  },
+  "31ba8503a725b4d722f9116b75dc691a301dab344363be773a0334ce177f67cc": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "Globe",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "网站"
+      ]
+    }
+  },
+  "cbdb99ef35b3a503307df6fd78fd27be74e86a915b60ad9075f2662b0bb14b08": {
+    "type": "button",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "type": "ExternalLink",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            }
+          }
+        },
+        "地图"
+      ]
+    }
+  },
+  "a3c910da46947f9b68cb6af2d09be256845de221a40c237ec41fb8da223c68a4": [
+    "思考中"
+  ],
+  "6796d6fcb5d4ecb443571e747561c5d7e8e52a069d016b9832a0387df5a26f7d": [
+    "推理"
+  ],
+  "051f2ff9f9790026736b01d260299fd43801a7037cf744a44d32eb08d7f19a2e": [
+    "最小化"
+  ],
+  "3771c6dffc0070683344827afd97e07986f573826f1554b18b0295d59ed0d050": [
+    "最大化"
+  ],
+  "cf449fc2bc100a48048a581a994bdcdf203721391394a13847e27a041c61fe4e": [
+    "等待推理中..."
+  ],
+  "f34fda2b3052f7998bf2cfb7d30b4f8bb95810a1b6f16a0432a8a9583879f7b8": [
+    "过去24小时"
+  ],
+  "cbf795b008ab632237e833c352215a1b7c8ec448428592dcdea45b6a94644ec4": [
+    "过去一周"
+  ],
+  "d4fc0fd044d5a20d956c67c01ebe603e3e6cae3f89e0b151e0b4bc738eab7ce8": [
+    "过去一个月"
+  ],
+  "daf5b31f612d2f3a000ad66d228c158cca31233c89e5def0419c4b35c1a150ea": [
+    "过去一年"
+  ],
+  "2140c5f1e640177674dc819222f0faba790e0ef5f52d81eecbe48074e51f092b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        " 赞同"
+      ]
+    }
+  },
+  "076a5329b191ef6403a27d4acb2bdb67196aee40c4a42b34328d094464a8ca46": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "所有 Reddit 结果"
+    }
+  },
+  "e56f5811d7e652be2640ca5e2c07d74eb3162aef10a85e440b9ec1527c382641": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 条帖子和评论"
+      ]
+    }
+  },
+  "ab046d22783c5b8fbc5b0f6a141c1452ad201cb1f6ed9af71248dc39ff9827ca": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "Reddit 结果"
+    }
+  },
+  "26d310b4319f525c258db0472ef4facdbdfec4042368ec54564298ad1469b42b": "正在搜索 Reddit...",
+  "b812de3e1dfd18051a16a9e06f77df6fdd7858d2406552f7b4f8a8703cab65a9": [
+    "登录以继续"
+  ],
+  "750729c2f8194e84f54dff59344accc3b2dd06780cbda872b30abe89a6b79e78": [
+    "保存对话并跨设备同步"
+  ],
+  "e6a04c56337babc9613d01252ac34b1ea2c45c66a7070b58904417382c4c5f9c": [
+    "或"
+  ],
+  "1585555718e3c80f33fb34b8a064a62aa3e72f84dc8c655f7434d097079274d2": [
+    "无需账户继续"
+  ],
+  "00638b39cf1ecfd4653f8868ac264a5a7fb09e75bb36156ea9293d389d52a426": [
+    "继续操作即表示您接受我们的",
+    {
+      "type": "Link",
+      "props": {
+        "data-_gt": {
+          "id": 1
+        },
+        "children": "条款"
+      }
+    },
+    "和",
+    {
+      "type": "Link",
+      "props": {
+        "data-_gt": {
+          "id": 2
+        },
+        "children": "隐私政策"
+      }
+    }
+  ],
+  "dddd06d29899d57867027f1e8fdadd887a2669fea564a1586da750c512178a7d": [
+    "切换到",
+    {
+      "key": "{value"
+    },
+    "}主题"
+  ],
+  "6dbed5c3ff8d04ffc95cb7ea43bbbc4085b4d275a36c92c3d9dd7ffe6a79c1fb": [
+    "YouTube视频"
+  ],
+  "4a4eb405fab537c5e6bc671e6e1de44b1e761ac6e6934b77841b4104de3da368": [
+    "YouTube 视频"
+  ],
+  "19c8433b116d30aeb5ee0d3b0f8ac31a212ca6217599f283e56232d20570e374": [
+    "隐藏详情"
+  ],
+  "a9490825a43bd429885233907938b826deb93ff8271f3dcb93ee5671f8a2ab88": [
+    "显示详情"
+  ],
+  "70e38878218384a8be6aa9433c5ddcd6b02b4884d9a9ba5dd26fcf928a68bc03": [
+    "代码执行"
+  ],
+  "385a115a7cde3be37df617bb1522f49c8117b82d7f89cfa62368f28b152c119e": [
+    "错误输出"
+  ],
+  "af5a599cf169727665704430ed196f205f510e4f5a992b02ae8687006fc93144": [
+    "执行结果"
+  ],
+  "8dc0c4ab5c565127875378698e59c6ec558c1b9306e43d660539e2674a32b361": [
+    "正在查找位置..."
+  ],
+  "0d5d077326b5eaf085b530d3dbc93b9750c7bf037318840f763d8a6d2b849ffe": [
+    "地址搜索"
+  ],
+  "79ba18f4ef79a99294185933cdd5f593a319fa156a7d652d2d9ce0c5c72a1937": [
+    "坐标搜索"
+  ],
+  "703da6ce09f002b049b7c8c89de38aa8953419d00947ff35b7339945361adc0a": [
+    "坐标已复制！"
+  ],
+  "0f45f7f09a3985319f0d816fa4eeaaab6fdfe5b3f5a663e34c7946a9aa1b93c1": [
+    "正在发现娱乐内容..."
+  ],
+  "d13dc376a21c46f1b0db3a628cacc8b53b219311d4bab04e0d81784fd3640441": [
+    "正在加载热门电影..."
+  ],
+  "05696cb5cc389e85b243732d74c55f146238fe526169baa84707cd6f60589683": [
+    "正在加载热门电视剧..."
+  ],
+  "5910803a8692a245e78bf52995b285e78a1a3b6b183c1282b6312366d1088ee4": [
+    "正在搜索YouTube视频..."
+  ],
+  "f215c3597e44f8f0827b6cc313902ae59de46b0d1727dabb0bc8f535d9e1cbf8": [
+    "正在搜索学术论文..."
+  ],
+  "f7606965e647a0b0e27b9066cb55130ddf05afc7d828f05ee20cf0f50986f785": [
+    "检索到的内容"
+  ],
+  "2fae202867f323f66bef8074c421e0a61e00c424f3815535172f2ebcf5fc5986": [
+    "暂无内容"
+  ],
+  "b7a7dff9137d3a74443c4532d3569da58790f62f3b961194f2f2e0249162b829": [
+    "正在管理记忆..."
+  ],
+  "db73754bf12dec6c41b90be79a0f57d644943997271595444a947ec15dedebdd": [
+    "正在搜索 MCP 服务器..."
+  ],
+  "0e2a338f8430802a90bc2ec4ffdddaa4b55145a42b6b2877213bd41fd7336a9a": [
+    "正在搜索 Reddit..."
+  ],
+  "e3c0528a15fd09074af7c851dd941f7876002b03ef5dc7deb7ee620fc78b9969": [
+    "正在搜索 X (Twitter)..."
+  ],
+  "42a1f0d0043ad860467bd6cd3c9852a07524b6b2a42a65d9425fb44a329b8bc2": [
+    "正在获取加密货币行情数据..."
+  ],
+  "b6da0314427ad76ee10c5025b12086fe6c23e3eaf43a52cddcbebe8cd02b346c": [
+    "正在加载加密货币价格图表..."
+  ],
+  "122e3a2e456f361f4e17ab5094d3afdcf8c086602fd6725d18b7f73ec9d6b23d": [
+    "正在加载OHLC蜡烛图数据..."
+  ],
+  "e2695a955b59fdb659563b774bc72147049ebebf5fcd0c44f94630bb42fc0342": [
+    "正在加载合约图表数据..."
+  ],
+  "b2fc2d39b5739fb6abc42bbf8949e5f4cec8b29e08fd2948fd721c71a6af93ab": [
+    "正在获取全面的币种数据..."
+  ],
+  "a186546cabcef13e63939d3030b68fc6799e6292dfd1d6e0026380dfd1a9644f": [
+    "正在通过合约获取代币数据..."
+  ],
+  "25579df15ac3628577a88c18cc32abf2a0ca9fbc83b0b3974e047e0900aca13c": [
+    "正在获取链上代币价格..."
+  ],
+  "06a57c358932f410e6e6e29845b9f048f17f94589b683ad403d64a3f73c6b286": [
+    "正在查找附近的",
+    {
+      "variable": "variable",
+      "id": 1,
+      "key": "_gt_value_1"
+    },
+    "..."
+  ],
+  "7eba7c0b5705e202a5a08a21e572f04d25d914a8e8bce74e972162b0c13ad8ce": {
+    "type": "h4",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "关键时刻"
+    }
+  },
+  "b85e55f6b5415b8508c3e93fb1f557c53f61f504d4a1476b2655fd745c6afc36": {
+    "type": "h4",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "转录稿"
+    }
+  },
+  "bd10fd057a98cb051fd6ede6006ad8e55540c1708420c2969d67d63321c18ff1": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "错误"
+    }
+  },
+  "8ab48738472da6688bbc2ff42129efbc8accb95669765cb265d14203872f623d": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "运行中"
+    }
+  },
+  "2b282d2542a2ddfe0ffca6c5a2efebb4c9707709424895adf596108ae409c43e": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "位置搜索失败"
+    }
+  },
+  "2450e04942956879c11333a996d014100ab31f3508ad45e92edc5d6d720a821d": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "未找到位置"
+    }
+  },
+  "7c84a0fb3245b44d5a972c02bc9c4f530b32912e6dc85767f9a544562dce3897": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "尝试使用不同的关键词搜索或检查拼写。"
+    }
+  },
+  "61611711e70bc97036eb18d687323fc4c9cd0f145238764b5f05d2176f4f1dd4": {
+    "type": "Plural",
+    "props": {
+      "data-_gt": {
+        "id": 1,
+        "transformation": "plural",
+        "branches": {
+          "other": {
+            "type": "C2",
+            "props": {
+              "data-_gt": {
+                "id": 2,
+                "transformation": "fragment"
+              },
+              "children": [
+                "找到 ",
+                {
+                  "variable": "number",
+                  "id": 3,
+                  "key": "_gt_n_3"
+                },
+                " 个位置"
+              ]
+            }
+          },
+          "one": {
+            "type": "C2",
+            "props": {
+              "data-_gt": {
+                "id": 2,
+                "transformation": "fragment"
+              },
+              "children": [
+                {
+                  "variable": "number",
+                  "id": 3,
+                  "key": "_gt_n_3"
+                },
+                " 个位置已找到"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "556b268fd5e2266bf45ab957c872f82b5690579bf7d28c0e7fa6d4d8ca57b8ee": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "暂无内容"
+    }
+  },
+  "67c7537c6016bdb21546ae36230781d3a602992b10727c45ee026556dac02d2b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "找到的视频不包含任何时间戳或转录文本。"
+    }
+  },
+  "bab4cf4fc60ad3f0794e0e65a274df3df60ab94277b9296121eb7bb5319b7808": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "YouTube 搜索结果"
+    }
+  },
+  "8c7077e4dfccb732392b0b34891046d10f2ed4f7c72abb55b98f4b95b9c53dfb": [
+    {
+      "variable": "number",
+      "id": 1,
+      "key": "_gt_n_1"
+    },
+    " 个包含内容的视频"
+  ],
+  "589e79050f7c7beefa93f24a8eda77cbdcb895c1733a1139b84981a42980e057": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "附近搜索失败"
+    }
+  },
+  "292237677fca9158030cdbc4fda99a6f58384170a892cd5821c28669ed064a0b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "未找到附近的 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "af1634cc77a6df2f6d74cdd81f57ae9abc45f6ccce7882f8944ed1223f189f2c": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "尝试扩大搜索半径或在其他区域搜索。"
+    }
+  },
+  "6e76875f0b52f5c145e7015e58776caa36e1edc6982a5dc418082d9f3f8974b0": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "获取内容时出错"
+    }
+  },
+  "61e1ba1e18d9d10994040bb4ddbace10b3f8fae4764a59eb3bde15ef22a5be1b": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "暂无内容"
+    }
+  },
+  "e398e4f5da6b8d8c60015a6f5f730ff389dfd0d291256f0152e6f252a5b84dea": "查看源代码",
+  "a0922a87e4cf6a784045c8c848e8bb3aead1e3202b792342edb2e66da088340e": [
+    {
+      "variable": "number",
+      "id": 1,
+      "key": "_gt_n_1"
+    },
+    " 页"
+  ],
+  "66ca875480322317fc69a336b724307c63a7ab15ac7f013ff96bab3629ffe280": {
+    "type": "Branch",
+    "props": {
+      "data-_gt": {
+        "id": 1,
+        "transformation": "branch",
+        "branches": {
+          "true": {
+            "type": "span",
+            "props": {
+              "data-_gt": {
+                "id": 2
+              },
+              "children": "查看完整内容"
+            }
+          },
+          "false": {
+            "type": "span",
+            "props": {
+              "data-_gt": {
+                "id": 2
+              },
+              "children": [
+                "附加内容 ",
+                {
+                  "variable": "variable",
+                  "id": 3,
+                  "key": "_gt_value_3"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "869ffe31f4f853734ccb188a80e1ed5c9f7ab03d358687641d1c3c0690c9e802": [
+    "正在追踪航班 ",
+    {
+      "variable": "variable",
+      "id": 1,
+      "key": "_gt_value_1"
+    },
+    "..."
+  ],
+  "fad51dedecaece4710926a427146d7b7c635259b47a53f858725c4de5b5b194c": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "正在获取当前时间..."
+    }
+  },
+  "5b3baf2e765c0c9c97329562b25bb2ab441b73292f26a18b8666d022005e08e7": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "当前时间"
+    }
+  },
+  "92d163f53059ceaf3dcc69820394a6ee485fa3df815759e1fea4c89efde420cc": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "本地"
+    }
+  },
+  "97d696c5c07e2735d9b977bb4fba975ea6b0798eca81d4806a366e7986d78023": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "时间戳"
+    }
+  },
+  "a6fc15548534155830a457d4ff5b5f1ff47c356d4eb45be4868daac18634811b": {
+    "type": "CardTitle",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "MCP 服务器结果"
+    }
+  },
+  "913e813b736680ff5ca5096192c3a73dac77d489e73706a31f037fe494f88d41": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "\"",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        "\"的搜索结果"
+      ]
+    }
+  },
+  "d99b981934cd27533383ddbcf5a640fc67111aab68a83e64470a690fbc817b2d": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "翻译"
+    }
+  },
+  "f55b9ba9856880f5b38a94a13268870fa5cfba422d007848cc8c4f7e11a9da65": [
+    "操作"
+  ],
+  "f83c1729883b686c6a8d432fa2f99f2277b96c29b057930ba6495322aaf38add": [
+    "冒险"
+  ],
+  "f01742a0fffd991df39b539ed0b793d859e25f8ceaa60aae9e739f4a666145d6": [
+    "动画"
+  ],
+  "8a3bc9253dc37f32a786f437160dcb827a0f5ce73411fe5ad5dc4075f775ee79": [
+    "喜剧"
+  ],
+  "b3f4677f92d153d40cde65df184c1045e5bc53753288e0d1c63de4da2b7aa2fd": [
+    "犯罪"
+  ],
+  "4cbe42e35ef46d1c38912f61568cf7d5f026324de5530b1ab9f2f8a8f02b8695": [
+    "纪录片"
+  ],
+  "ca18301e4fad3189167e725e7fcd6f76be89332de22d07ef1736ea97b756ce76": [
+    "戏剧"
+  ],
+  "d344768d2f0419751689f5c11adecee3e6dd71b4da452df4827138462b6d5640": [
+    "家庭"
+  ],
+  "ef71e05f7c35723fa1700b6eda7833c316028a9c3ee422d7813a4fa4ff8c0868": [
+    "奇幻"
+  ],
+  "c9f3c430ed60c7e37e8185cf7fbac79bdc24bc7a3112d887a583a963e42ee108": [
+    "历史"
+  ],
+  "69e06dc7ccb07a595570b74ed4374b6ad6b99ef3ac8f29ff8b49be043d2262b6": [
+    "恐怖"
+  ],
+  "b685310daa5b153dd5328f90edc8f87646d1cb2deb3bb25be4ef72e46945e459": [
+    "音乐"
+  ],
+  "ff11df139805a4e1a1014dc81541cc24b40550c40b76882f6759a42f2075f256": [
+    "悬疑"
+  ],
+  "da53da4c01ee8b590f04858f2a5c53f3746dcb28dfea383fc0f5ab5dbe89eb07": [
+    "浪漫"
+  ],
+  "f140ca6e18bedeca8dce9c21fe98a5cf4f15d7d8b2a563fc3e2092e437223a6b": [
+    "科幻"
+  ],
+  "1cebe4b22e8906c114b47eca17da95e2fefdc3710282a0218a8575729810e2ae": [
+    "惊悚片"
+  ],
+  "fd48ef4ea69fe15c608bb489c48d3b90b1cc59fbcda7378d37500c6d1fcfebc4": [
+    "战争"
+  ],
+  "43e478247e78dabc89684942b7cbfa27acb20713bc42256947d19200a54edefb": [
+    "西方的"
+  ],
+  "8ff3387dcbb0b0178359a9fb33f5be8ada34f36913f87979b0ad4385f31d6dc5": [
+    "动作冒险"
+  ],
+  "f941a5cecdf99549eebfb0d425e00a4c314cf3984f566ae7e0edbcd50bbdb49f": [
+    "科幻与奇幻"
+  ],
+  "4a53ec70232c4f187834b6747e68a4864a9b2c7adb3f57b3a6785f8d50b8463f": [
+    "战争与政治"
+  ],
+  "d194368e3bacf6a2560272f90aa6ae87ceb5f9f616039fdff87229bfd94e0f33": [
+    "显示更少"
+  ],
+  "ed78a73c045ac248e7af009e3e866bd69680d83886ea3340932c65737ccdbf59": [
+    "查看全部"
+  ],
+  "69fae76579d90f1bfaca364e9d2dc9301db716e7dbee34b5954e7096f1a06d4d": {
+    "type": "h2",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "热门 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "a5738ec3575e01f208c7f5d136a2f21003cf1240a2fff667322d117682e6d388": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "今日精选"
+    }
+  },
+  "429db72ed5371d817b5014176d1b5d25ba93ca8595a6f9c7bc1c9a3df5efd805": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "全部热门 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "631ca2db8784e42c1a1adb5f9a036584c20b64e8786e90e241a6369e4bcfa082": [
+    "useChart 必须在 <ChartContainer /> 内使用"
+  ],
+  "ba2b0602e8d68a1e258a997356f5beb12a62fbb356d75c790d8b92df48247cc3": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "关闭"
+    }
+  },
+  "44cde209012bab3a7db9f6a991fc02b7179281326e637872327c37bf977a7055": [
+    "已过期"
+  ],
+  "b9146c786a8ad170107a07adc712cf468f4ce5ab231656f663b4a74ab47a1f9f": [
+    "特别优惠现已推出"
+  ],
+  "865cb2f4ca1b91442fe0430ebcdfeb4a7bf43c9d3fbda5921715d77d12064110": [
+    "每月节省 $",
+    {
+      "key": "{savings"
+    },
+    "}"
+  ],
+  "a65cfb4c87202e1feb05700b5d27c50deda62539f364e035b36e96e5f3f2064d": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "代码已复制！"
+    }
+  },
+  "cc2636595cdc5530033e0b227f7db06bb76ccfcbea719f23807964748f193a3b": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "复制 ",
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        }
+      ]
+    }
+  },
+  "7dbcd8029de7e9b8b99bb3a16272205c9549cb2db62e91050b256036d744c662": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "复制代码：",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "127fc7e4d87df39d39c2541b2d747872b42e0a7b89761f36c6117a271b365278": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        {
+          "variable": "variable",
+          "id": 2,
+          "key": "_gt_value_2"
+        },
+        "后过期"
+      ]
+    }
+  },
+  "5148a7cb7bf9ba3a993dc2fad7ea6f956339ab2b82e0ef420031385d280d2339": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "如何兑换此代码？"
+    }
+  },
+  "d565361dd6bcffd06ed4dbc234fac4bba8fcbf827c77b011a8b37d654276062b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击升级"
+    }
+  },
+  "7328b1117e88e92b1cac36fa6d3295375ab99d86563fd392c4b89199de539690": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "首先点击升级按钮"
+    }
+  },
+  "8698a4c5ea7a2c52312a33534f6e699b84e3767623b8d587b2e3fb8316e3554b": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "查找折扣区域"
+    }
+  },
+  "6814d96897d613739d95650dc611fe2649cc0d5d8804dbad8f7dfd38bd931fda": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "在结账页面查找\"折扣\""
+    }
+  },
+  "ea598998d92be9a9a104e45e0038d83c6bcbec879090141c62cd8e99c47da397": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "输入代码"
+    }
+  },
+  "4a78f1a13f71bdc8a3fe03b3acaaa2cfb9c07546fdd4a1c26b56ddd01cce96e9": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "粘贴：",
+        {
+          "type": "span",
+          "props": {
+            "data-_gt": {
+              "id": 2
+            },
+            "children": {
+              "variable": "variable",
+              "id": 3,
+              "key": "_gt_value_3"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "5bba2dab44f977c7e868ced28afb2e928296bbd9a0e0f32fed3db3d33237de53": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击申请"
+    }
+  },
+  "050f6106c53918336ced599ed25c6ed7711086bd98edc022771f58c1213cb6e2": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击\"申请\"以激活折扣"
+    }
+  },
+  "5dad5d538c2d460378e9ca8a3ef16fac023bb067604797ea1424c2574081c5a2": [
+    {
+      "key": "category"
+    },
+    " 模型"
+  ],
+  "11fa9f409a237f41c8702a758101fe5a4c0eb8292e33b1ea75d53c8918c0d7d7": [
+    {
+      "key": "model"
+    },
+    " 需要 Pro 版本"
+  ],
+  "95a0fd797f1fd6f3cd215547b1c63079d949eedcf1331dd55ebc774dd9ea4637": [
+    "升级以访问高级AI模型"
+  ],
+  "2b69293b2bed64c5d8f6f30c4f68e639c7c529b798c95b095376c5eafeb69999": [
+    "无限搜索"
+  ],
+  "7eb6788335ba72ad2637450a12936ade4ff75116673f89d3f1bcc521417552db": [
+    "无每日限制或约束"
+  ],
+  "497c4a06c090617909fb6267e11bc2a9d046dec67c138aafb6545c596cc45a94": [
+    "高级AI模型"
+  ],
+  "68b0e4d9fac2d5fbd69179a1731ed5bfd0e374811222782c27aeb13037731dbe": [
+    "Claude 4 Opus、Grok 3、高级推理"
+  ],
+  "311aafbd5b71749f8fc83276ed6a1bcaf068add01d41a040925e905431cc1874": [
+    "PDF分析"
+  ],
+  "52d7b522917f8ed09d4d0d29a5c559af26078db048c66b49c5a15696c06d7c28": [
+    "上传并分析文档"
+  ],
+  "a21da4a574793b7fed4667472e919ce6e9af5fb698ae250c1198904c6336048c": [
+    "随时取消"
+  ],
+  "e085fd7aa1dd95534e1f28f2412b88ec995cc6ec67602ce68fc386284fc636fa": [
+    "也许以后吧"
+  ],
+  "d8e3de2fc4493a7193e5c879635f1abc0ceb63ca1d09cc34837ed281c9ae1820": [
+    "立即升级"
+  ],
+  "b8156a66722b3b6ada04a6648fabf2d8b6958bee16ce656b839057cb543cac68": [
+    {
+      "key": "model"
+    },
+    " 需要登录"
+  ],
+  "3ccbda1791c6be1618d57101d62ea785f26eb21bb96c0cf43d812ed3c5ad52f4": [
+    "创建账户以访问此AI模型"
+  ],
+  "a8344b4ce8f3699a7597bec27e2370faef5bc8a4ca8c433a71c4a992929f0477": [
+    "访问更好的模型"
+  ],
+  "0f9a495ced726cf561acf7c699fa2ebc5c5e76c631020784bfaf9ffbaf45d6a5": [
+    "Gemini 2.5 Flash Lite 和 GPT-4o Mini"
+  ],
+  "95b4d70b34825269c15e7bed84e3326eaaecf4b390690bb218c754d7a429def3": [
+    "保存搜索历史"
+  ],
+  "82f7c3d6c4da90606aae10779e29247ea93f9a507dd9df83fdf00eda248fef73": [
+    "跟踪您的对话记录"
+  ],
+  "df1fc217416fed8aa7347ef2e985ea8485d214efc7063b17ed0949577d176fd8": [
+    "免费开始"
+  ],
+  "3d8a9f4755db4c72533ffcbb51c2d2b5610b9e37f91057a882e1b8ffa5267db5": [
+    "基础功能无需付费"
+  ],
+  "a1247d0aa65d7b68635f76ad7503fd0a9e35fe04d5ebf991e4965772913a0622": [
+    "搜索模式"
+  ],
+  "99a7ce293c3db296cf02f6c47c28330581b28b27746b95dc37ca694d6636cfd9": [
+    "您的输入超过了 ",
+    {
+      "key": "chars"
+    },
+    " 个字符的最大限制。"
+  ],
+  "19efb138d4d289c3205c6af01b415307c73c16e1a6e7cfa8ef0bb65a63781048": [
+    "上传 ",
+    {
+      "key": "filename"
+    },
+    " 失败：",
+    {
+      "key": "error"
+    }
+  ],
+  "9ea589ff4d37396fe39a96149d4f46f56d9541e067249344abcb663d3be19286": [
+    "未知错误"
+  ],
+  "15f6a1d13a394b48164eaaf4bdd4f8569430c54fce8c914717155d4cd7297301": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "加载中"
+    }
+  },
+  "7d66214c65085deea107d578f0e4e94ba4a5f5cbfa2e26c9e29864deb2448c6f": {
+    "type": "SheetTitle",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "侧边栏"
+    }
+  },
+  "b2874d4830aa88dbdfcd02a957fd570e5efdbf3f8c4797df8a1c4da75cf7162f": {
+    "type": "SheetDescription",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "显示移动端侧边栏。"
+    }
+  },
+  "74fcac2fbe20d3dd8e3e13181fcab514354f782db2bdd0169e418f7ebfd1b850": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "切换侧边栏"
+    }
+  },
+  "36361e543817e29fbb3b833c4568e49c686052cd3eee41e1650d851c9efb092c": [
+    "账户"
+  ],
+  "b5e7b383a28224cd8c8baf864e5dd11f5f4e3705b4066cd5fd8e5367e376919e": [
+    "登录"
+  ],
+  "b91f5ca7a0df8ba3884c59463663fabb049be9b2d30d0073dbfa0c83eae7ac8f": [
+    "隐藏邮箱"
+  ],
+  "820623354a86e924e831cf69cf25b3711a540014c3b2a7cef2202b0863e40fac": [
+    "显示邮箱"
+  ],
+  "b82963dbb1e7f90a868e1d3e2f2a5d8a9a3243fc482c8624b0746d3804d2b2ca": [
+    "访客"
+  ],
+  "d1617475f025a9ea550ccc8711a9d685da39584bcd2164fe97a2e4769d3ed905": [
+    "登录以保存您的进度"
+  ],
+  "f65d4de573f6eb8132bc7859ec9a008bc57ab0fd9563be8bcd211db4dc7b50c0": [
+    "无限制访问所有功能"
+  ],
+  "ff7221cbfd1d08f7603e477ab68f8a85e1033418f40d8d42f868a22c33f82806": [
+    "无限搜索和高级模型"
+  ],
+  "5ba0a3b8389c09950611bf4155946f5c0b9ecf22fb27ca70dcc6a0530be30b7f": [
+    "设置"
+  ],
+  "07d942278b2da7d9af18150d30572708f296573ab7ed92e912632dcbdeda2b61": [
+    "主题"
+  ],
+  "27dbc9d60b64651030845a74ad65ad889a50301af676ad1937f96074c124ae16": [
+    "关于"
+  ],
+  "1e8d2952df44b9c85bd5dbb0c5a78087fae1236ff539455f230342329b9739dc": [
+    "条款"
+  ],
+  "2d4c7efe1c036ded8cdaa80f05ba48fa446011eb35cb8ef2d3169b0baa0973fe": [
+    "隐私"
+  ],
+  "9ed6530482423227579a56b323059222fcdb2692196e8278d680ee1bd90d9f4f": [
+    "Github"
+  ],
+  "273a28c527f898f345e0e856a79c50472a81610630cbf08ad3162e1df90b3bb9": [
+    "X.com"
+  ],
+  "3818cca65d4e484d94de2bd33bc1d0ea6068732af7da0f2f7d286077505edce5": [
+    "Instagram"
+  ],
+  "9f1afaccf0dbbbab2aa9c9b58e6a99e201d00d50d3b3c7ae23ca3827db9e94a0": [
+    "使用 Vercel 部署"
+  ],
+  "39e85f0524fcef3f70ddc6f45859ac5cf2d4e6e385e4150f5cb107c54fdb72e9": [
+    "功能/错误请求"
+  ],
+  "90b6156e59970c1bb83a59c9de9d5a1f8a8e8b2c712182f1d6ae34a0076da09f": [
+    "正在退出登录..."
+  ],
+  "05150779a7f79b486e56d138bd96b4e98134aa596efe9520607f32cb778d9a7f": [
+    "成功退出登录"
+  ],
+  "4b1071f184445cde6bea1429945ab3f8460220482cf787474e2f8141cf2ac774": [
+    "登出失败"
+  ],
+  "e9bc111b62c61e57d731cdb920362af59b216e3e79af753107b6576ac592ef6b": [
+    "退出登录"
+  ],
+  "bddf783a302b21e9ea36fecb1511e90dd70e31782327e95de860ea8f281ed049": [
+    "最低温度"
+  ],
+  "af932c62cf1b1914aad6546daa6b48e0c46f45cd7db2a3f323357d925def5fa0": [
+    "最高温度"
+  ],
+  "7cbad5180ba188ac79469b52d0c66edbad6624f0bd4928308d29fc428796030c": [
+    {
+      "key": "percent"
+    },
+    "% 降雨概率"
+  ],
+  "836e3be7b09b7ad452373481e121b126913f7e466c6cb92a68629f0a7a0588b0": [
+    "None"
+  ],
+  "bca746b2d71eeab23e0aa9a1fbf2c38a928c3ac5fa8e80828f4cc86fd96e7463": [
+    "好的"
+  ],
+  "df4b453c5ff166f1d9206e091e178e5279590e96d2b95b01f1b3f9a3e33256ec": [
+    "公平"
+  ],
+  "7a765919f3c48b06e276bfb46da5a6067be9b660c5588bc4f47140ecf2ec1ce4": [
+    "中等"
+  ],
+  "b3c4147fdc53a1d6d20284d414073785af716bad9ae57a0798df180c08d91c7d": [
+    "差"
+  ],
+  "50ba49eb63f6852c875e8f3278710c6cf0aebd0e85ecc3d6ee938ebbbf1c33db": [
+    "非常差"
+  ],
+  "65356ab64fddc3a94417fca8f9759169cc4b67594518e061d6eaf1c9f2e70529": [
+    "未知"
+  ],
+  "8784cd0c7f2a335f5d3031cea9e27d52a23de54c022203da40e70d33acfd01fb": [
+    "空气质量指数: ",
+    {
+      "key": "label"
+    }
+  ],
+  "79fe90f9786dcf66c8ca73375b422a104bef197d9bbd685fe80ea368a44bcbd2": [
+    "体感温度 ",
+    {
+      "key": "temp"
+    },
+    "°C"
+  ],
+  "d05e5a6d16ecc1dfa825628b13322a9d1522d440ab49b2290c153bf1b2cae5da": [
+    {
+      "key": "humidity"
+    },
+    "% 湿度"
+  ],
+  "97403deb04de83ba614c2b719902791bdf94f11cde4d42d32aa1f77e5dfb6052": [
+    {
+      "key": "speed"
+    },
+    " 公里/小时"
+  ],
+  "a1833c8105ced990af9a0e5756bdf3752dbce821d4865a156a9ff6ce00f9e7c1": [
+    {
+      "key": "pressure"
+    },
+    " 百帕"
+  ],
+  "22c7441f8397c8fb350a6a6a4b049b164870035c9a69d6ed6fa1df9ef44b765e": [
+    {
+      "key": "clouds"
+    },
+    "% 云量"
+  ],
+  "85e43b4ba28a8a1457dfdf670694db500a5eb48cab93fe2f916159651c00fc66": [
+    "5天概览"
+  ],
+  "44b4292a512e105056ad8f186002fab0677246dc24efec1ef7718d73fb9ae0c2": [
+    "每小时预报"
+  ],
+  "f58304fb2c9b2285bff907912ba93d5470246255d6ca1342c8055a988e66d839": [
+    "16天天气预报"
+  ],
+  "2bb076a6c9961d463fdf0c1de27dc22285050521382ee77427761e35f8f4fa3c": [
+    "空气质量"
+  ],
+  "a4638064296a96bd3aea97b5aedcd180729bc682032a1aa5edc7c97f4a61ab95": [
+    "最低温度"
+  ],
+  "85ba7baef73f5e30fdf5282f4b3c5194c3512a5a1507e154f2ddec69f4e48661": [
+    "最高温度"
+  ],
+  "2a5797f5c61673e3b8f83df12fbd56067a89960884ff7ebcd584e0b5ae68323c": [
+    "明天"
+  ],
+  "a985b77b830eccb209814bad661cc801a53ca2daf4d933d68e5e258ce785dcd3": [
+    "明天"
+  ],
+  "ba4defa9e0b46731c7ace1b10fa471d24460632bf702272bc79f539f60a97e5e": [
+    "温度"
+  ],
+  "0a6a444f20b36ee45a15789214b9a8e5c6db393bf693278d17b88ef07a8e7416": [
+    "降水"
+  ],
+  "8ebb74e71fa86b470320f5628a2132ddc0789b39a6d704e9b574f9bf90fb1308": [
+    "最高温度"
+  ],
+  "8458dcdb16fd29e0e8a49b94f89b237c5f201f78d39a86781f316419e7fff17c": [
+    "最低温度"
+  ],
+  "c4d9b4ff00bcf46a2c1c00eee3e280f807458bb84122d878a467b9a3c4ad6958": [
+    "雨"
+  ],
+  "f5ca29d9e368e3eddd2dc42bccb3e1c9821e3a601387b0b0066f84068148d164": [
+    {
+      "key": "amount"
+    },
+    " 毫米"
+  ],
+  "1b8a3a01e1d51bc8070e42c34eca61c0aeb7652a4a719683a355082d35a627d8": [
+    "雪"
+  ],
+  "fe3df400c684497d8248f6dd3c8e0beb9383d819cbe0cdfe63d937191385269c": [
+    {
+      "key": "percent"
+    },
+    "% 降雨概率"
+  ],
+  "23899d0e859603e17325b4703504934b41beee1c9cebacd3686a0fb974dd968f": [
+    {
+      "key": "label"
+    },
+    " (空气质量指数: ",
+    {
+      "key": "aqi"
+    },
+    ")"
+  ],
+  "433460b4f7ce257810611cf4aa0e46f2ac8602840e7ba118c13af5ef811f9a94": [
+    "空气质量指数"
+  ],
+  "7c96407d426119c194a146d0ce69745c98bbbb36797349236220de810f471668": [
+    "0: 无"
+  ],
+  "ebcf33aade02fd838b87eba6b1782fe45ef4491d44cd16d909ce8a9484e496ef": [
+    "1: 好"
+  ],
+  "c9e412bb5f939bf6aa1f7e5d0a1f53917c869942be461ae5f262aa1c3371620e": [
+    "2: 一般"
+  ],
+  "be0cde20eb3523e7df94d512e365c86d790c8755734a283d1783ebaaf2922427": [
+    "3: 中等"
+  ],
+  "f537598ec67ed31f044e0adab3de47a72f2c9e80e6a74b277ab0dd61a90f142b": [
+    "4: 差"
+  ],
+  "d83f3d1430cac01761640939bb53b857cfd48ffeaefd31d8f4a9fdc1ae3fea5c": [
+    "5: 非常差"
+  ],
+  "71e5adf490ce1fb92b34a55700d4976efa361a8d04e1fa3dca7eb2920aff090a": [
+    "OpenWeatherMap • ",
+    {
+      "key": "time"
+    }
+  ],
+  "d6228c3a30d025f9023906210a1a812e1ce61d16bc057692a0f0b72561f61726": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "此位置无法获取16天预报数据"
+    }
+  },
+  "1c2e80ae9775c1fe0199762f63c66735945e7b10d3cb2db740861e9574db79f7": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "当前空气质量"
+    }
+  },
+  "678f09e8dd882d84ca4b145abc878f19dc3e35a479486e8aa95d2f96f90876e0": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "空气质量预报"
+    }
+  },
+  "aa5b779ff293edb98ea2776e7c09d16d68815fa86afa36bf6434013b85bdcb59": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "无可用预报数据"
+    }
+  },
+  "a818cef6b9b4e205679b9a16a27c88a8ce055894e29cfd9e01714b01e1287e11": {
+    "type": "div",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "此位置的空气质量数据不可用"
+    }
+  },
+  "9867313672b47178af615826c64c408f5072c2c361dc507a96b520a49958627f": {
+    "type": "h3",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "X 搜索结果"
+    }
+  },
+  "ad7d2121600a114a30cf5f933ffc5c94c16ad1e1f0efd67296690b5c9205b0f8": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "还有 +",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        " 篇帖子"
+      ]
+    }
+  },
+  "c471383cf0818bffd8f24a28cb21358e001f3989d25c0a996437a1f806bdf0ee": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "点击查看全部"
+    }
+  },
+  "f7a4b9b0f90fb063758bf845e8859777bd189ed0ddadc2e41c6d4cb79e290caa": {
+    "type": "span",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": [
+        "所有帖子 (",
+        {
+          "variable": "number",
+          "id": 2,
+          "key": "_gt_n_2"
+        },
+        ")"
+      ]
+    }
+  },
+  "1768c705278b92304594e0309fd1af6275b59a334e867112225fee0e4f89b28e": {
+    "type": "h4",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "未找到帖子"
+    }
+  },
+  "3e072c4e3ac233e86b80bef35d77ce8a13003a08eac19195a574d4ce1d7366a2": {
+    "type": "p",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "请尝试调整您的搜索参数"
+    }
+  },
+  "e9215e94be386904a91f230cb1fbb0f1a64e0ba53129b5f856b97e43cafe956c": {
+    "type": "h4",
+    "props": {
+      "data-_gt": {
+        "id": 1
+      },
+      "children": "相关资源"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import React, { memo, useState } from 'react';
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ExternalLink, ArrowUpRight, ArrowDownRight, Activity, AlertCircle, DollarSign } from 'lucide-react';
+import { T, useGT, Var, Num } from 'gt-next';
 
 interface CoinDataProps {
   result: any;
@@ -119,6 +120,7 @@ const SafeLink = ({
 };
 
 const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddress }) => {
+  const t = useGT();
   // Enhanced error handling
   if (!result) {
     return (
@@ -126,7 +128,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">No coin data available</span>
+            <T><span className="text-sm">No coin data available</span></T>
           </div>
         </CardContent>
       </Card>
@@ -139,9 +141,13 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <Activity className="h-4 w-4" />
-            <span className="text-sm font-medium">Error fetching coin data</span>
+            <T><span className="text-sm font-medium">Error fetching coin data</span></T>
           </div>
-          <p className="text-xs text-red-500 dark:text-red-300 mt-1">{result.error || 'Unknown error occurred'}</p>
+          <T>
+            <p className="text-xs text-red-500 dark:text-red-300 mt-1">
+              <Var>{result.error || t('Unknown error occurred')}</Var>
+            </p>
+          </T>
         </CardContent>
       </Card>
     );
@@ -156,7 +162,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <Activity className="h-4 w-4" />
-            <span className="text-sm">Invalid coin data format</span>
+            <T><span className="text-sm">Invalid coin data format</span></T>
           </div>
         </CardContent>
       </Card>
@@ -212,7 +218,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
           </div>
           {marketCapRank && (
             <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded font-normal flex-shrink-0">
-              Rank #{marketCapRank}
+              <T>Rank #<Num>{marketCapRank}</Num></T>
             </span>
           )}
         </div>
@@ -245,21 +251,21 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
         {/* Compact Metrics Grid */}
         <div className="grid grid-cols-3 gap-2 mb-3 overflow-hidden">
           <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 min-w-0">
-            <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">Market Cap</p>
+            <T><p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">Market Cap</p></T>
             <p className="text-xs sm:text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
               {formatCompactNumber(marketCap)}
             </p>
           </div>
 
           <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 min-w-0">
-            <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">24h Volume</p>
+            <T><p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">24h Volume</p></T>
             <p className="text-xs sm:text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
               {formatCompactNumber(volume24h)}
             </p>
           </div>
 
           <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 min-w-0">
-            <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">ATH</p>
+            <T><p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">ATH</p></T>
             <p className="text-xs sm:text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
               {formatPrice(ath)}
             </p>
@@ -271,7 +277,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
           <div className="grid grid-cols-2 gap-2 text-xs">
             {priceChange24h !== null && (
               <div className="flex justify-between items-center">
-                <span className="text-neutral-500 dark:text-neutral-400">24h</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400">24h</span></T>
                 <span
                   className={`font-medium ${
                     (priceChange24h ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -284,7 +290,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
 
             {priceChange7d !== null && (
               <div className="flex justify-between items-center">
-                <span className="text-neutral-500 dark:text-neutral-400">7d</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400">7d</span></T>
                 <span
                   className={`font-medium ${
                     (priceChange7d ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -297,7 +303,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
 
             {priceChange30d !== null && (
               <div className="flex justify-between items-center">
-                <span className="text-neutral-500 dark:text-neutral-400">30d</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400">30d</span></T>
                 <span
                   className={`font-medium ${
                     (priceChange30d ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -310,7 +316,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
 
             {athChange !== null && (
               <div className="flex justify-between items-center">
-                <span className="text-neutral-500 dark:text-neutral-400">From ATH</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400">From ATH</span></T>
                 <span
                   className={`font-medium ${
                     (athChange ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -328,7 +334,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
           <div className="space-y-1.5 mb-3">
             {circulatingSupply !== null && (
               <div className="flex justify-between text-xs gap-2">
-                <span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Circulating Supply</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Circulating Supply</span></T>
                 <span className="text-neutral-900 dark:text-neutral-100 font-medium text-right truncate max-w-[60%]">
                   {formatSupply(circulatingSupply, coinSymbol)}
                 </span>
@@ -337,7 +343,7 @@ const CoinData: React.FC<CoinDataProps> = memo(({ result, coinId, contractAddres
 
             {maxSupply !== null && (
               <div className="flex justify-between text-xs gap-2">
-                <span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Max Supply</span>
+                <T><span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Max Supply</span></T>
                 <span className="text-neutral-900 dark:text-neutral-100 font-medium text-right truncate max-w-[60%]">
                   {formatSupply(maxSupply, coinSymbol)}
                 </span>

@@ -24,6 +24,7 @@ import {
 
 // Icons
 import { DollarSign, Activity, ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react';
+import { T, useGT, Var, Num } from 'gt-next';
 
 interface CryptoTickersProps {
   result: any;
@@ -305,6 +306,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) => {
+  const t = useGT();
   // Enhanced error handling
   if (!result) {
     return (
@@ -312,7 +314,9 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">No ticker data available</span>
+            <T>
+              <span className="text-sm">No ticker data available</span>
+            </T>
           </div>
         </CardContent>
       </Card>
@@ -325,9 +329,13 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <DollarSign className="h-4 w-4" />
-            <span className="text-sm font-medium">Error fetching ticker data</span>
+            <T>
+              <span className="text-sm font-medium">Error fetching ticker data</span>
+            </T>
           </div>
-          <p className="text-xs text-red-500 dark:text-red-300 mt-1">{result.error || 'Unknown error occurred'}</p>
+          <T>
+            <p className="text-xs text-red-500 dark:text-red-300 mt-1"><Var>{result.error || t('Unknown error occurred')}</Var></p>
+          </T>
         </CardContent>
       </Card>
     );
@@ -342,7 +350,9 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <DollarSign className="h-4 w-4" />
-            <span className="text-sm">No ticker data available for {name || coinId}</span>
+            <T>
+              <span className="text-sm">No ticker data available for <Var>{name || coinId}</Var></span>
+            </T>
           </div>
         </CardContent>
       </Card>
@@ -426,9 +436,11 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
 
         {tickers.length > 6 && (
           <div className="mt-3 text-center">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              Showing 6 of {tickers.length} tickers
-            </span>
+            <T>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Showing 6 of <Num>{tickers.length}</Num> tickers
+              </span>
+            </T>
           </div>
         )}
       </CardContent>
@@ -437,6 +449,7 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
 });
 
 const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartType = 'line' }) => {
+  const t = useGT();
   // Enhanced error handling
   if (!result) {
     return (
@@ -444,7 +457,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">No chart data available</span>
+            <T>
+              <span className="text-sm">No chart data available</span>
+            </T>
           </div>
         </CardContent>
       </Card>
@@ -457,9 +472,13 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <Activity className="h-4 w-4" />
-            <span className="text-sm font-medium">Error fetching chart data</span>
+            <T>
+              <span className="text-sm font-medium">Error fetching chart data</span>
+            </T>
           </div>
-          <p className="text-xs text-red-500 dark:text-red-300 mt-1">{result.error || 'Unknown error occurred'}</p>
+          <T>
+            <p className="text-xs text-red-500 dark:text-red-300 mt-1"><Var>{result.error || t('Unknown error occurred')}</Var></p>
+          </T>
         </CardContent>
       </Card>
     );
@@ -474,7 +493,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <Activity className="h-4 w-4" />
-            <span className="text-sm">No chart data available for {coinId}</span>
+            <T>
+              <span className="text-sm">No chart data available for <Var>{coinId}</Var></span>
+            </T>
           </div>
         </CardContent>
       </Card>
@@ -490,7 +511,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             <Activity className="h-4 w-4" />
-            <span className="text-sm">Chart contains no data points</span>
+            <T>
+              <span className="text-sm">Chart contains no data points</span>
+            </T>
           </div>
         </CardContent>
       </Card>
@@ -801,7 +824,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                     {marketData.market_cap?.usd && (
                       <div>
-                        <div className="text-neutral-500 dark:text-neutral-400">Market Cap</div>
+                        <T>
+                          <div className="text-neutral-500 dark:text-neutral-400">Market Cap</div>
+                        </T>
                         <div className="font-medium text-neutral-900 dark:text-neutral-100">
                           {formatMarketCap(marketData.market_cap.usd)}
                         </div>
@@ -809,7 +834,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                     )}
                     {marketData.total_volume?.usd && (
                       <div>
-                        <div className="text-neutral-500 dark:text-neutral-400">24h Volume</div>
+                        <T>
+                          <div className="text-neutral-500 dark:text-neutral-400">24h Volume</div>
+                        </T>
                         <div className="font-medium text-neutral-900 dark:text-neutral-100">
                           {formatVolume(marketData.total_volume.usd)}
                         </div>
@@ -817,7 +844,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                     )}
                     {marketData.circulating_supply && (
                       <div>
-                        <div className="text-neutral-500 dark:text-neutral-400">Circulating</div>
+                        <T>
+                          <div className="text-neutral-500 dark:text-neutral-400">Circulating</div>
+                        </T>
                         <div className="font-medium text-neutral-900 dark:text-neutral-100">
                           {formatVolume(marketData.circulating_supply)} {symbol}
                         </div>
@@ -825,7 +854,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                     )}
                     {marketData.market_cap_rank && (
                       <div>
-                        <div className="text-neutral-500 dark:text-neutral-400">Rank</div>
+                        <T>
+                          <div className="text-neutral-500 dark:text-neutral-400">Rank</div>
+                        </T>
                         <div className="font-medium text-neutral-900 dark:text-neutral-100">
                           #{marketData.market_cap_rank}
                         </div>

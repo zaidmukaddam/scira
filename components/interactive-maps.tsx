@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { T, useGT } from 'gt-next';
 
 interface Location {
   lat: number;
@@ -66,6 +67,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const popupRef = useRef<mapboxgl.Popup | null>(null);
     const [isMounted, setIsMounted] = useState(false);
+    const t = useGT();
 
     // Ensure component only renders on client
     useEffect(() => {
@@ -243,7 +245,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
 
       // Check if Mapbox token is available
       if (!mapboxgl.accessToken) {
-        setMapError('Map configuration error. Please check your settings.');
+        setMapError(t('Map configuration error. Please check your settings.'));
         return;
       }
 
@@ -261,7 +263,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
         // Add error handling
         map.on('error', (e) => {
           console.error('Mapbox error:', e);
-          setMapError('Failed to load map. Please try again later.');
+          setMapError(t('Failed to load map. Please try again later.'));
         });
 
         // Map loaded successfully
@@ -289,7 +291,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
         };
       } catch (error) {
         console.error('Failed to initialize map:', error);
-        setMapError('Failed to initialize map. Please check your connection.');
+        setMapError(t('Failed to initialize map. Please check your connection.'));
       }
     }, [center.lat, center.lng, addMapLayers, isMounted]);
 
@@ -437,12 +439,14 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
         >
           <div className="text-center p-4">
             <p className="text-neutral-500 dark:text-neutral-400 mb-2">{mapError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-blue-500 hover:text-blue-600 underline"
-            >
-              Reload page
-            </button>
+            <T>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm text-blue-500 hover:text-blue-600 underline"
+              >
+                Reload page
+              </button>
+            </T>
           </div>
         </div>
       );

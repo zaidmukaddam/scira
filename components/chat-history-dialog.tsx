@@ -37,6 +37,7 @@ import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-q
 import { cn, invalidateChatsCache } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClassicLoader } from './ui/loading';
+import { T, useGT, Var, Num } from 'gt-next';
 
 // Constants
 const SCROLL_BUFFER_MAX = 100;
@@ -280,8 +281,9 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
   }
 }
 
-// Main component
+// Main component  
 export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialogProps) {
+  const t = useGT();
   const pathname = usePathname();
   const router = useRouter();
   const rawChatId = pathname?.startsWith('/search/') ? pathname.split('/')[2] : null;
@@ -436,7 +438,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       await deleteChat(id);
     },
     onSuccess: (_, id) => {
-      toast.success('Chat deleted');
+      toast.success(t('Chat deleted'));
       // Update cache after successful deletion
       queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -451,7 +453,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onError: (error) => {
       console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat. Please try again.');
+      toast.error(t('Failed to delete chat. Please try again.'));
       queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
     },
   });
@@ -462,7 +464,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onSuccess: (updatedChat, { id, title }) => {
       if (updatedChat) {
-        toast.success('Title updated');
+        toast.success(t('Title updated'));
         // Update cache after successful title update
         queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
           if (!oldData) return oldData;
@@ -475,12 +477,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           };
         });
       } else {
-        toast.error('Failed to update title. Please try again.');
+        toast.error(t('Failed to update title. Please try again.'));
       }
     },
     onError: (error) => {
       console.error('Failed to update chat title:', error);
-      toast.error('Failed to update title. Please try again.');
+      toast.error(t('Failed to update title. Please try again.'));
     },
   });
 
@@ -573,7 +575,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       } catch (error) {
         // Error handling is done in mutation callbacks, but we should reset state
         console.error('Delete chat error:', error);
-        toast.error('Failed to delete chat. Please try again.');
+        toast.error(t('Failed to delete chat. Please try again.'));
       }
     },
     [deleteMutation, currentChatId],
@@ -609,12 +611,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       e.stopPropagation();
 
       if (!editingTitle.trim()) {
-        toast.error('Title cannot be empty');
+        toast.error(t('Title cannot be empty'));
         return;
       }
 
       if (editingTitle.trim().length > 100) {
-        toast.error('Title is too long (max 100 characters)');
+        toast.error(t('Title is too long (max 100 characters)'));
         return;
       }
 
@@ -653,14 +655,14 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const getSearchModeInfo = (mode: SearchMode) => {
     switch (mode) {
       case 'title':
-        return { icon: Hash, label: 'Title' };
+        return { icon: Hash, label: t('Title') };
       case 'date':
-        return { icon: Calendar, label: 'Date' };
+        return { icon: Calendar, label: t('Date') };
       case 'visibility':
-        return { icon: Globe, label: 'Visibility' };
+        return { icon: Globe, label: t('Visibility') };
       case 'all':
       default:
-        return { icon: Search, label: 'All' };
+        return { icon: Search, label: t('All') };
     }
   };
 
@@ -878,7 +880,9 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 </Button>
                 <div className="w-6 flex justify-end">
                   {isCurrentChat ? (
+                    <T>
                     <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
+                  </T>
                   ) : (
                     <ArrowUpRight className="h-3 w-3" />
                   )}
@@ -903,18 +907,24 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       <CommandDialog open={open} onOpenChange={onOpenChange}>
         <div className="flex flex-col items-center justify-center p-6 text-center h-full min-h-[250px]">
           <History className="size-8 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-1">Access Your Chat History</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-            Sign in to view, search, and manage all your previous conversations seamlessly.
-          </p>
+          <T>
+            <h3 className="text-lg font-semibold mb-1">Access Your Chat History</h3>
+          </T>
+          <T>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+              Sign in to view, search, and manage all your previous conversations seamlessly.
+            </p>
+          </T>
 
           <Button onClick={handleSignIn} className="w-full max-w-[200px]">
-            Sign In
+            <T>Sign In</T>
           </Button>
 
-          <p className="text-xs text-muted-foreground mt-4">
-            Your conversations are automatically saved when you are signed in.
-          </p>
+          <T>
+            <p className="text-xs text-muted-foreground mt-4">
+              Your conversations are automatically saved when you are signed in.
+            </p>
+          </T>
         </div>
       </CommandDialog>
     );
@@ -930,7 +940,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             <input
               ref={inputRef}
               className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 pr-2"
-              placeholder={`Search ${currentModeInfo.label.toLowerCase()}...`}
+              placeholder={t('Search {mode}...', { variables: { mode: currentModeInfo.label.toLowerCase() } })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -962,7 +972,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           >
             {isLoading ? (
               <div>
-                <CommandGroup heading="Recent Conversations">
+                <CommandGroup heading={t("Recent Conversations")}>
                   {Array(5)
                     .fill(0)
                     .map((_, i) => (
@@ -989,12 +999,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 {allChats.length > 0 ? (
                   <>
                     {[
-                      { key: 'today', heading: 'Today' },
-                      { key: 'yesterday', heading: 'Yesterday' },
-                      { key: 'thisWeek', heading: 'This Week' },
-                      { key: 'lastWeek', heading: 'Last Week' },
-                      { key: 'thisMonth', heading: 'This Month' },
-                      { key: 'older', heading: 'Older' },
+                      { key: 'today', heading: t('Today') },
+                      { key: 'yesterday', heading: t('Yesterday') },
+                      { key: 'thisWeek', heading: t('This Week') },
+                      { key: 'lastWeek', heading: t('Last Week') },
+                      { key: 'thisMonth', heading: t('This Month') },
+                      { key: 'older', heading: t('Older') },
                     ].map(({ key, heading }) => {
                       const chats = categorizedChats[key as keyof typeof categorizedChats];
                       return (
@@ -1016,7 +1026,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                         {isFetchingNextPage ? (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <ClassicLoader size="sm" />
-                            Loading more...
+                            <T>Loading more...</T>
                           </div>
                         ) : (
                           <div className="h-1"></div>
@@ -1028,28 +1038,42 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   <CommandEmpty>
                     <div className="py-6 px-4 text-center flex flex-col items-center">
                       <History className="size-10 text-muted-foreground mb-3" />
-                      <p className="text-sm font-medium">No conversations found</p>
+                      <T>
+                        <p className="text-sm font-medium">No conversations found</p>
+                      </T>
                       {searchQuery && (
                         <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                          <p>Try a different search term or change search mode</p>
+                          <T>
+                            <p>Try a different search term or change search mode</p>
+                          </T>
                           <div className="text-xs text-muted-foreground/70">
-                            <p>Search tips:</p>
-                            <p>
-                              • <code>public:</code> or <code>private:</code> for visibility
-                            </p>
-                            <p>
-                              • <code>today:</code>, <code>week:</code>, <code>month:</code> for dates
-                            </p>
-                            <p>
-                              • <code>date:22/05/25</code> for specific date (DD/MM/YY)
-                            </p>
-                            <p>
-                              • Switch to Date mode and type <code>22/05/25</code>
-                            </p>
+                            <T>
+                              <p>Search tips:</p>
+                            </T>
+                            <T>
+                              <p>
+                                • <code>public:</code> or <code>private:</code> for visibility
+                              </p>
+                            </T>
+                            <T>
+                              <p>
+                                • <code>today:</code>, <code>week:</code>, <code>month:</code> for dates
+                              </p>
+                            </T>
+                            <T>
+                              <p>
+                                • <code>date:22/05/25</code> for specific date (DD/MM/YY)
+                              </p>
+                            </T>
+                            <T>
+                              <p>
+                                • Switch to Date mode and type <code>22/05/25</code>
+                              </p>
+                            </T>
                           </div>
                         </div>
                       )}
-                      {!searchQuery && <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>}
+                      {!searchQuery && <T><p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p></T>}
                     </div>
                   </CommandEmpty>
                 )}
@@ -1060,11 +1084,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           {/* Mobile hints */}
           <div className="block sm:hidden bottom-0 left-0 right-0 p-3 text-xs text-center text-muted-foreground border-t border-border bg-background/90">
             <div className="flex justify-center items-center gap-3">
-              <span>Tap to open</span>
+              <T><span>Tap to open</span></T>
               <span>•</span>
-              <span>Edit to rename</span>
+              <T><span>Edit to rename</span></T>
               <span>•</span>
-              <span>Trash to delete</span>
+              <T><span>Trash to delete</span></T>
             </div>
           </div>
 
@@ -1074,23 +1098,23 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               {/* Important navigation shortcuts on the left */}
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">⏎</kbd> open
+                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">⏎</kbd> <T>open</T>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">↑</kbd>
                   <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">↓</kbd>
-                  navigate
+                  <T>navigate</T>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Tab</kbd> toggle mode
+                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Tab</kbd> <T>toggle mode</T>
                 </span>
               </div>
 
               {/* Less critical shortcuts on the right */}
               <div className="flex items-center gap-4">
-                <span className="text-muted-foreground/80">Click edit to rename • Click trash to delete</span>
+                <T><span className="text-muted-foreground/80">Click edit to rename • Click trash to delete</span></T>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Esc</kbd> close
+                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Esc</kbd> <T>close</T>
                 </span>
               </div>
             </div>
@@ -1108,11 +1132,13 @@ export function ChatHistoryButton({ onClick }: { onClick: () => void }) {
       <TooltipTrigger asChild>
         <Button variant="ghost" size="icon" onClick={onClick} className="size-8 p-0! m-0!" aria-label="Chat History">
           <ListMagnifyingGlass className="size-6" />
-          <span className="sr-only">Chat History</span>
+          <T>
+            <span className="sr-only">Chat History</span>
+          </T>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
-        Chat History
+        <T>Chat History</T>
       </TooltipContent>
     </Tooltip>
   );

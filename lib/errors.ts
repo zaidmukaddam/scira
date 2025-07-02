@@ -36,7 +36,7 @@ export class ChatSDKError extends Error {
   public surface: Surface;
   public statusCode: number;
 
-  constructor(errorCode: ErrorCode, cause?: string) {
+  constructor(errorCode: ErrorCode, cause?: string, t?: (content: string) => string) {
     super();
 
     const [type, surface] = errorCode.split(':');
@@ -44,11 +44,11 @@ export class ChatSDKError extends Error {
     this.type = type as ErrorType;
     this.cause = cause;
     this.surface = surface as Surface;
-    this.message = getMessageByErrorCode(errorCode);
+    this.message = t ? getMessageByErrorCode(errorCode, t) : getMessageByErrorCode(errorCode, (s) => s);
     this.statusCode = getStatusCodeByType(this.type);
   }
 
-  public toResponse() {
+  public toResponse(t?: (content: string) => string) {
     const code: ErrorCode = `${this.type}:${this.surface}`;
     const visibility = visibilityBySurface[this.surface];
 
@@ -61,8 +61,9 @@ export class ChatSDKError extends Error {
         cause,
       });
 
+      const fallbackMessage = t ? t('Something went wrong. Please try again later.') : 'Something went wrong. Please try again later.';
       return Response.json(
-        { code: '', message: 'Something went wrong. Please try again later.' },
+        { code: '', message: fallbackMessage },
         { status: statusCode },
       );
     }
@@ -71,53 +72,53 @@ export class ChatSDKError extends Error {
   }
 }
 
-export function getMessageByErrorCode(errorCode: ErrorCode): string {
+export function getMessageByErrorCode(errorCode: ErrorCode, t: (content: string) => string): string {
   if (errorCode.includes('database')) {
-    return 'An error occurred while executing a database query.';
+    return t('An error occurred while executing a database query.');
   }
 
   switch (errorCode) {
     case 'bad_request:api':
-      return "The request couldn't be processed. Please check your input and try again.";
+      return t("The request couldn't be processed. Please check your input and try again.");
     case 'rate_limit:api':
-      return 'You have reached your daily limit for this feature. Upgrade to Pro for unlimited access.';
+      return t('You have reached your daily limit for this feature. Upgrade to Pro for unlimited access.');
 
     case 'unauthorized:auth':
-      return 'You need to sign in before continuing.';
+      return t('You need to sign in before continuing.');
     case 'forbidden:auth':
-      return 'Your account does not have access to this feature.';
+      return t('Your account does not have access to this feature.');
     case 'upgrade_required:auth':
-      return 'This feature requires a Pro subscription. Sign in and upgrade to continue.';
+      return t('This feature requires a Pro subscription. Sign in and upgrade to continue.');
 
     case 'rate_limit:chat':
-      return 'You have exceeded your maximum number of messages for the day. Please try again later.';
+      return t('You have exceeded your maximum number of messages for the day. Please try again later.');
     case 'upgrade_required:chat':
-      return 'You have reached your daily search limit. Upgrade to Pro for unlimited searches.';
+      return t('You have reached your daily search limit. Upgrade to Pro for unlimited searches.');
     case 'not_found:chat':
-      return 'The requested chat was not found. Please check the chat ID and try again.';
+      return t('The requested chat was not found. Please check the chat ID and try again.');
     case 'forbidden:chat':
-      return 'This chat belongs to another user. Please check the chat ID and try again.';
+      return t('This chat belongs to another user. Please check the chat ID and try again.');
     case 'unauthorized:chat':
-      return 'You need to sign in to view this chat. Please sign in and try again.';
+      return t('You need to sign in to view this chat. Please sign in and try again.');
     case 'offline:chat':
-      return "We're having trouble sending your message. Please check your internet connection and try again.";
+      return t("We're having trouble sending your message. Please check your internet connection and try again.");
 
     case 'unauthorized:model':
-      return 'You need to sign in to access this AI model.';
+      return t('You need to sign in to access this AI model.');
     case 'forbidden:model':
-      return 'This AI model requires a Pro subscription.';
+      return t('This AI model requires a Pro subscription.');
     case 'model_restricted:model':
-      return 'Access to this AI model is restricted. Please upgrade to Pro or contact support.';
+      return t('Access to this AI model is restricted. Please upgrade to Pro or contact support.');
     case 'upgrade_required:model':
-      return 'This premium AI model is only available with a Pro subscription.';
+      return t('This premium AI model is only available with a Pro subscription.');
     case 'rate_limit:model':
-      return 'You have reached the usage limit for this AI model. Upgrade to Pro for unlimited access.';
+      return t('You have reached the usage limit for this AI model. Upgrade to Pro for unlimited access.');
 
     case 'forbidden:api':
-      return 'Access denied';
+      return t('Access denied');
 
     default:
-      return 'Something went wrong. Please try again later.';
+      return t('Something went wrong. Please try again later.');
   }
 }
 
@@ -170,33 +171,33 @@ export function isRateLimited(error: ChatSDKError): boolean {
 }
 
 // Helper function to get error action suggestions
-export function getErrorActions(error: ChatSDKError): {
+export function getErrorActions(error: ChatSDKError, t: (content: string) => string): {
   primary?: { label: string; action: string };
   secondary?: { label: string; action: string };
 } {
   if (isSignInRequired(error)) {
     return {
-      primary: { label: 'Sign In', action: 'signin' },
-      secondary: { label: 'Try Again', action: 'retry' }
+      primary: { label: t('Sign In'), action: 'signin' },
+      secondary: { label: t('Try Again'), action: 'retry' }
     };
   }
 
   if (isProRequired(error)) {
     return {
-      primary: { label: 'Upgrade to Pro', action: 'upgrade' },
-      secondary: { label: 'Check Again', action: 'refresh' }
+      primary: { label: t('Upgrade to Pro'), action: 'upgrade' },
+      secondary: { label: t('Check Again'), action: 'refresh' }
     };
   }
 
   if (isRateLimited(error)) {
     return {
-      primary: { label: 'Upgrade to Pro', action: 'upgrade' },
-      secondary: { label: 'Try Again Later', action: 'retry' }
+      primary: { label: t('Upgrade to Pro'), action: 'upgrade' },
+      secondary: { label: t('Try Again Later'), action: 'retry' }
     };
   }
 
   return {
-    primary: { label: 'Try Again', action: 'retry' }
+    primary: { label: t('Try Again'), action: 'retry' }
   };
 }
 

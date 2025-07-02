@@ -6,19 +6,11 @@ import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import {
-  models,
-  requiresAuthentication,
-  requiresProSubscription,
-  hasVisionSupport,
-  hasPdfSupport,
-  getAcceptedFileTypes,
-  shouldBypassRateLimits,
-} from '@/ai/providers';
+import { getModels } from '@/ai/providers';
 import useWindowSize from '@/hooks/use-window-size';
 import { TelescopeIcon, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
+import { cn, SearchGroup, SearchGroupId, getSearchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
@@ -28,6 +20,7 @@ import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
 import { Crown, LockIcon, MicrophoneIcon, Cpu } from '@phosphor-icons/react';
+import { Num, T, useGT } from 'gt-next';
 import {
   Select,
   SelectContent,
@@ -45,7 +38,7 @@ interface ModelSwitcherProps {
   attachments: Array<Attachment>;
   messages: Array<Message>;
   status: 'submitted' | 'streaming' | 'ready' | 'error';
-  onModelSelect?: (model: (typeof models)[0]) => void;
+  onModelSelect?: (model: ReturnType<typeof getModels>[0]) => void;
   subscriptionData?: any;
   user?: any;
 }
@@ -63,16 +56,17 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
 }) => {
   const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
   const isSubscriptionLoading = user && !subscriptionData;
+  const t = useGT();
 
   // Show all models to everyone, but control access via dialogs
   const availableModels = useMemo(() => {
-    return models;
-  }, []);
+    return getModels(t);
+  }, [t]);
 
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showSignInDialog, setShowSignInDialog] = useState(false);
-  const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
-  const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
+  const [selectedProModel, setSelectedProModel] = useState<ReturnType<typeof getModels>[0] | null>(null);
+  const [selectedAuthModel, setSelectedAuthModel] = useState<ReturnType<typeof getModels>[0] | null>(null);
 
   // Check for attachments in current and previous messages
   const hasAttachments =
@@ -84,21 +78,23 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   const filteredModels = hasAttachments ? availableModels.filter((model) => model.vision) : availableModels;
 
   // Group filtered models by category
-  const groupedModels = filteredModels.reduce((acc, model) => {
+  const groupedModels = filteredModels.reduce((acc: Record<string, typeof filteredModels>, model) => {
     const category = model.category;
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(model);
     return acc;
-  }, {} as Record<string, typeof availableModels>);
+  }, {} as Record<string, typeof filteredModels>);
 
   const handleModelChange = (value: string) => {
     const model = availableModels.find((m) => m.value === value);
     if (!model) return;
 
-    const requiresAuth = requiresAuthentication(model.value) && !user;
-    const requiresPro = requiresProSubscription(model.value) && !isProUser;
+    const isProModel = model.pro;
+    const canUseModel = !isProModel || isProUser;
+    const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
+    const requiresAuth = authRequiredModels.includes(model.value) && !user;
 
     // Don't show dialogs if subscription is still loading
     if (isSubscriptionLoading) {
@@ -113,7 +109,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
     }
 
     // Then check for Pro requirement - only if user is NOT Pro
-    if (requiresPro && !isProUser) {
+    if (!canUseModel && !isProUser) {
       setSelectedProModel(model);
       setShowUpgradeDialog(true);
       return;
@@ -148,13 +144,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           )}
         >
           <SelectValue asChild>
-            <span className="flex items-center justify-center group-active:[transform:translate3d(0,1px,0)]">
-              <Cpu className="size-4 text-neutral-600 dark:text-neutral-400" />
+            <span className="flex items-center group-active:[transform:translate3d(0,1px,0)]">
+              <Cpu className="size-3.5 text-neutral-600 dark:text-neutral-400" />
             </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
-          className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
+          className="w-[240px] p-1 font-sans rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
           align="start"
           side="bottom"
           sideOffset={4}
@@ -163,12 +159,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
             <SelectGroup key={category}>
               {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
               <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                {category} Models
+                {t('{category} Models', { variables: { category } })}
               </SelectLabel>
-              {categoryModels.map((model) => {
-                const requiresAuth = requiresAuthentication(model.value) && !user;
-                const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                const isLocked = requiresAuth || requiresPro;
+              {categoryModels.map((model: ReturnType<typeof getModels>[0]) => {
+                const isProModel = model.pro;
+                const canUseModel = !isProModel || isProUser;
+                const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
+                const requiresAuth = authRequiredModels.includes(model.value) && !user;
+                const isLocked = !canUseModel || requiresAuth;
 
                 if (isLocked) {
                   return (
@@ -188,7 +186,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                         if (requiresAuth) {
                           setSelectedAuthModel(model);
                           setShowSignInDialog(true);
-                        } else if (requiresPro && !isProUser) {
+                        } else if (!canUseModel && !isProUser) {
                           setSelectedProModel(model);
                           setShowUpgradeDialog(true);
                         }
@@ -226,8 +224,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                       <div className="font-medium truncate text-[11px] flex items-center gap-1">
                         {model.label}
                         {(() => {
-                          const requiresAuth = requiresAuthentication(model.value) && !user;
-                          const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                          const authRequiredModels = ['scira-google-lite', 'scira-4o-mini'];
+                          const requiresAuth = authRequiredModels.includes(model.value) && !user;
+                          const requiresPro = isProModel && !isProUser;
 
                           if (requiresAuth) {
                             return <LockIcon className="size-3 text-neutral-400" />;
@@ -261,9 +260,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {selectedProModel?.label} requires Pro
+                    {t('{model} requires Pro', { variables: { model: selectedProModel?.label } })}
                   </h2>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Upgrade to access premium AI models</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('Upgrade to access premium AI models')}</p>
                 </div>
               </div>
             </div>
@@ -273,24 +272,24 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('Unlimited searches')}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('No daily limits or restrictions')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('Premium AI models')}</p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Claude 4 Opus, Grok 3, advanced reasoning
+                    {t('Claude 4 Opus, Grok 3, advanced reasoning')}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('PDF analysis')}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('Upload and analyze documents')}</p>
                 </div>
               </div>
             </div>
@@ -301,7 +300,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
                 <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('Cancel anytime')}</p>
             </div>
 
             {/* Actions */}
@@ -311,7 +310,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 onClick={() => setShowUpgradeDialog(false)}
                 className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
-                Maybe later
+                {t('Maybe later')}
               </Button>
               <Button
                 onClick={() => {
@@ -319,7 +318,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 }}
                 className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
               >
-                Upgrade now
+                {t('Upgrade now')}
               </Button>
             </div>
           </div>
@@ -350,10 +349,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {selectedAuthModel?.label} requires sign in
+                    {t('{model} requires sign in', { variables: { model: selectedAuthModel?.label } })}
                   </h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    Create an account to access this AI model
+                    {t('Create an account to access this AI model')}
                   </p>
                 </div>
               </div>
@@ -364,25 +363,25 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('Access better models')}</p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Gemini 2.5 Flash Lite and GPT-4o Mini
+                    {t('Gemini 2.5 Flash Lite and GPT-4o Mini')}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Save search history</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Keep track of your conversations</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('Save search history')}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('Keep track of your conversations')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Free to start</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('Free to start')}</p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    No payment required for basic features
+                    {t('No payment required for basic features')}
                   </p>
                 </div>
               </div>
@@ -395,7 +394,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 onClick={() => setShowSignInDialog(false)}
                 className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 onClick={() => {
@@ -403,7 +402,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 }}
                 className="flex-1 h-9 text-sm font-normal bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
               >
-                Sign in
+                {t('Sign in')}
               </Button>
             </div>
           </div>
@@ -475,11 +474,26 @@ const fileToDataURL = (file: File): Promise<string> => {
   });
 };
 
-// Removed local supportsPdfAttachments function - now use hasPdfSupport from providers
+// Add this helper function near the top with other utility functions
+const supportsPdfAttachments = (modelValue: string, models: ReturnType<typeof getModels>): boolean => {
+  const selectedModel = models.find((model) => model.value === modelValue);
+  return selectedModel?.pdf === true;
+};
 
-// Removed local hasVisionSupport function - now imported from providers
+// Update the hasVisionSupport function to check for PDF support
+const hasVisionSupport = (modelValue: string, models: ReturnType<typeof getModels>): boolean => {
+  const selectedModel = models.find((model) => model.value === modelValue);
+  return selectedModel?.vision === true;
+};
 
-// Removed local getAcceptFileTypes function - now imported from providers
+// Update the getAcceptFileTypes function to use pdf property and check Pro status
+const getAcceptFileTypes = (modelValue: string, isProUser: boolean, models: ReturnType<typeof getModels>): string => {
+  const selectedModel = models.find((model) => model.value === modelValue);
+  if (selectedModel?.pdf && isProUser) {
+    return 'image/*,.pdf';
+  }
+  return 'image/*';
+};
 
 const truncateFilename = (filename: string, maxLength: number = 20) => {
   if (filename.length <= maxLength) return filename;
@@ -493,10 +507,12 @@ const AttachmentPreview: React.FC<{
   onRemove: () => void;
   isUploading: boolean;
 }> = ({ attachment, onRemove, isUploading }) => {
+  const t = useGT();
+  
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' bytes';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB' + (bytes > MAX_FILE_SIZE ? ' (exceeds 5MB limit)' : '');
+    else return (bytes / 1048576).toFixed(1) + ' MB' + (bytes > MAX_FILE_SIZE ? ` (${t('exceeds 5MB limit')})` : '');
   };
 
   const isUploadingAttachment = (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
@@ -612,7 +628,7 @@ const AttachmentPreview: React.FC<{
           </p>
         )}
         <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
-          {isUploadingAttachment(attachment) ? 'Uploading...' : formatFileSize((attachment as Attachment).size)}
+          {isUploadingAttachment(attachment) ? t('Uploading...') : formatFileSize((attachment as Attachment).size)}
         </p>
       </div>
       <motion.button
@@ -686,6 +702,9 @@ interface GroupSelectorProps {
 
 const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSelect, status }) => {
   const { data: session } = useSession();
+  const t = useGT();
+  
+  const searchGroups = useMemo(() => getSearchGroups(t), [t]);
 
   // If user is not authenticated and selectedGroup is memory, switch to web
   useEffect(() => {
@@ -695,19 +714,19 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
         onGroupSelect(webGroup);
       }
     }
-  }, [session, selectedGroup, onGroupSelect]);
+  }, [session, selectedGroup, onGroupSelect, searchGroups]);
 
   // Filter groups based on authentication status
-  const visibleGroups = searchGroups.filter((group) => {
+  const visibleGroups = searchGroups.filter((group: SearchGroup) => {
     if (!group.show) return false;
     if ('requireAuth' in group && group.requireAuth && !session) return false;
     return true;
   });
 
-  const selectedGroupData = visibleGroups.find((group) => group.id === selectedGroup);
+  const selectedGroupData = visibleGroups.find((group: SearchGroup) => group.id === selectedGroup);
 
   const handleGroupChange = (value: string) => {
-    const group = visibleGroups.find((g) => g.id === value);
+    const group = visibleGroups.find((g: SearchGroup) => g.id === value);
     if (group) {
       onGroupSelect(group);
     }
@@ -739,7 +758,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
           >
             {selectedGroupData && (
               <>
-                <selectedGroupData.icon className={cn('size-4')} />
+                <selectedGroupData.icon className={cn('size-3.5')} />
                 {selectedGroupData.name}
               </>
             )}
@@ -747,16 +766,16 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
         </SelectValue>
       </SelectTrigger>
       <SelectContent
-        className="w-[12em] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
+        className="w-[12em] p-1 font-sans rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
         align="start"
         side="bottom"
         sideOffset={4}
       >
         <SelectGroup>
           <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-            Search Mode
+            {t('Search Mode')}
           </SelectLabel>
-          {visibleGroups.map((group) => {
+          {visibleGroups.map((group: SearchGroup) => {
             const Icon = group.icon;
             return (
               <SelectItem
@@ -812,6 +831,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
   setHasSubmitted,
   isLimitBlocked = false,
 }) => {
+  const t = useGT();
+  const models = useMemo(() => getModels(t), [t]);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const isMounted = useRef(true);
   const isCompositionActive = useRef(false);
@@ -887,7 +908,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     // Check if input exceeds character limit
     if (newValue.length > MAX_INPUT_CHARS) {
       setInput(newValue);
-      toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+      toast.error(t('Your input exceeds the maximum of {chars} characters.', { variables: { chars: MAX_INPUT_CHARS } }));
     } else {
       setInput(newValue);
     }
@@ -933,7 +954,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(t('Failed to upload {filename}: {error}', { variables: { filename: file.name, error: error instanceof Error ? error.message : t('Unknown error') } }));
       throw error;
     }
   };
@@ -988,7 +1009,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Unsupported files:',
           unsupportedFiles.map((f) => `${f.name} (${f.type})`),
         );
-        toast.error(`Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(t('Some files are not supported: {filenames}', { variables: { filenames: unsupportedFiles.map((f) => f.name).join(', ') } }));
       }
 
       if (blockedPdfFiles.length > 0) {
@@ -996,9 +1017,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Blocked PDF files for non-Pro user:',
           blockedPdfFiles.map((f) => f.name),
         );
-        toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
+        toast.error(t('PDF uploads require Pro subscription. Upgrade to access PDF analysis.'), {
           action: {
-            label: 'Upgrade',
+            label: t('Upgrade'),
             onClick: () => (window.location.href = '/pricing'),
           },
         });
@@ -1011,19 +1032,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       // Auto-switch to PDF-compatible model if PDFs are present
-      const currentModelData = models.find((m) => m.value === selectedModel);
+      const currentModelData = models.find((m: ReturnType<typeof getModels>[0]) => m.value === selectedModel);
       if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
         console.log('PDFs detected, switching to compatible model');
 
         // Find first compatible model that supports PDFs and vision
-        const compatibleModel = models.find((m) => m.pdf && m.vision);
+        const compatibleModel = models.find((m: ReturnType<typeof getModels>[0]) => m.pdf && m.vision);
 
         if (compatibleModel) {
           console.log('Switching to compatible model:', compatibleModel.value);
           setSelectedModel(compatibleModel.value);
         } else {
           console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
+          toast.error(t('PDFs are only supported by Gemini and Claude models'));
           // Continue with only image files
           if (imageFiles.length === 0) {
             event.target.value = '';
@@ -1034,7 +1055,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Combine valid files
       let validFiles: File[] = [...imageFiles];
-      if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
+      if (supportsPdfAttachments(selectedModel, models) || pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
       }
 
@@ -1045,7 +1066,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(`You can only attach up to ${MAX_FILES} files.`);
+        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
         event.target.value = '';
         return;
       }
@@ -1060,7 +1081,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
+          toast.info(t('Checking images for safety...'));
 
           // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
@@ -1073,7 +1094,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             const [status, category] = moderationResult.split('\n');
             if (status === 'unsafe') {
               console.warn('Unsafe image detected, category:', category);
-              toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } }));
               event.target.value = '';
               return;
             }
@@ -1082,7 +1103,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           console.log('Images passed moderation check');
         } catch (error) {
           console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
+          toast.error(t('Unable to verify image safety. Please try again.'));
           event.target.value = '';
           return;
         }
@@ -1112,14 +1133,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
           setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
 
           toast.success(
-            `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
+            t('{count} file uploaded successfully', { variables: { count: uploadedAttachments.length } })
           );
         } else {
-          toast.error('No files were successfully uploaded');
+          toast.error(t('No files were successfully uploaded'));
         }
       } catch (error) {
         console.error('Error uploading files!', error);
-        toast.error('Failed to upload one or more files. Please try again.');
+        toast.error(t('Failed to upload one or more files. Please try again.'));
       } finally {
         setUploadQueue([]);
         event.target.value = '';
@@ -1160,8 +1181,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, []);
 
   const getFirstVisionModel = useCallback(() => {
-    return models.find((model) => model.vision)?.value || selectedModel;
-  }, [selectedModel]);
+    return models.find((model: ReturnType<typeof getModels>[0]) => model.vision)?.value || selectedModel;
+  }, [selectedModel, models]);
 
   // Fix the handleDrop function specifically to ensure uploads happen
   const handleDrop = useCallback(
@@ -1178,12 +1199,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
       );
 
       if (allFiles.length === 0) {
-        toast.error('No files detected in drop');
+        toast.error(t('No files detected in drop'));
         return;
       }
 
       // Simple verification to ensure we're actually getting Files from the drop
-      toast.info(`Detected ${allFiles.length} dropped files`);
+      toast.info(t('Detected {count} dropped files', { variables: { count: allFiles.length } }));
 
       // Check if user is Pro
       const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
@@ -1227,7 +1248,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Unsupported files:',
           unsupportedFiles.map((f) => `${f.name} (${f.type})`),
         );
-        toast.error(`Some files not supported: ${unsupportedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(t('Some files not supported: {filenames}', { variables: { filenames: unsupportedFiles.map((f) => f.name).join(', ') } }));
       }
 
       if (oversizedFiles.length > 0) {
@@ -1235,7 +1256,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Oversized files:',
           oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
         );
-        toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(t('Some files exceed the 5MB limit: {filenames}', { variables: { filenames: oversizedFiles.map((f) => f.name).join(', ') } }));
       }
 
       if (blockedPdfFiles.length > 0) {
@@ -1243,9 +1264,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Blocked PDF files for non-Pro user:',
           blockedPdfFiles.map((f) => f.name),
         );
-        toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
+        toast.error(t('PDF uploads require Pro subscription. Upgrade to access PDF analysis.'), {
           action: {
-            label: 'Upgrade',
+            label: t('Upgrade'),
             onClick: () => (window.location.href = '/pricing'),
           },
         });
@@ -1253,25 +1274,25 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Check if we have any supported files
       if (imageFiles.length === 0 && pdfFiles.length === 0) {
-        toast.error('Only image and PDF files are supported');
+        toast.error(t('Only image and PDF files are supported'));
         return;
       }
 
       // Auto-switch to PDF-compatible model if PDFs are present
-      const currentModelData = models.find((m) => m.value === selectedModel);
+      const currentModelData = models.find((m: ReturnType<typeof getModels>[0]) => m.value === selectedModel);
       if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
         console.log('PDFs detected, switching to compatible model');
 
         // Find first compatible model that supports PDFs
-        const compatibleModel = models.find((m) => m.pdf && m.vision);
+        const compatibleModel = models.find((m: ReturnType<typeof getModels>[0]) => m.pdf && m.vision);
 
         if (compatibleModel) {
           console.log('Switching to compatible model:', compatibleModel.value);
           setSelectedModel(compatibleModel.value);
-          toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
+          toast.info(t('Switching to {model} to support PDF files', { variables: { model: compatibleModel.label } }));
         } else {
           console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
+          toast.error(t('PDFs are only supported by Gemini and Claude models'));
           // Continue with only image files
           if (imageFiles.length === 0) return;
         }
@@ -1279,7 +1300,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Combine valid files
       let validFiles: File[] = [...imageFiles];
-      if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
+      if (supportsPdfAttachments(selectedModel, models) || pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
       }
 
@@ -1291,13 +1312,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
       // Check total attachment count
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(`You can only attach up to ${MAX_FILES} files.`);
+        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
         return;
       }
 
       if (validFiles.length === 0) {
         console.error('No valid files to upload after filtering');
-        toast.error('No valid files to upload');
+        toast.error(t('No valid files to upload'));
         return;
       }
 
@@ -1305,7 +1326,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
+          toast.info(t('Checking images for safety...'));
 
           // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
@@ -1318,7 +1339,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             const [status, category] = moderationResult.split('\n');
             if (status === 'unsafe') {
               console.warn('Unsafe image detected, category:', category);
-              toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } }));
               return;
             }
           }
@@ -1326,7 +1347,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           console.log('Images passed moderation check');
         } catch (error) {
           console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
+          toast.error(t('Unable to verify image safety. Please try again.'));
           return;
         }
       }
@@ -1338,7 +1359,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         // If we have PDFs, prioritize a PDF-compatible model
         if (pdfFiles.length > 0) {
-          const pdfCompatibleModel = models.find((m) => m.vision && m.pdf);
+          const pdfCompatibleModel = models.find((m: ReturnType<typeof getModels>[0]) => m.vision && m.pdf);
           if (pdfCompatibleModel) {
             visionModel = pdfCompatibleModel.value;
           } else {
@@ -1354,7 +1375,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Set upload queue immediately
       setUploadQueue(validFiles.map((file) => file.name));
-      toast.info(`Starting upload of ${validFiles.length} files...`);
+      toast.info(t('Starting upload of {count} files...', { variables: { count: validFiles.length } }));
 
       // Forced timeout to ensure state updates before upload starts
       setTimeout(async () => {
@@ -1380,14 +1401,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
             setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
 
             toast.success(
-              `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
+              t('{count} file uploaded successfully', { variables: { count: uploadedAttachments.length } })
             );
           } else {
-            toast.error('No files were successfully uploaded');
+            toast.error(t('No files were successfully uploaded'));
           }
         } catch (error) {
           console.error('Error during file upload:', error);
-          toast.error('Upload failed. Please check console for details.');
+          toast.error(t('Upload failed. Please check console for details.'));
         } finally {
           setUploadQueue([]);
         }
@@ -1410,7 +1431,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       const totalAttachments = attachments.length + imageItems.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(`You can only attach up to ${MAX_FILES} files.`);
+        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
         return;
       }
 
@@ -1423,7 +1444,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Oversized files:',
           oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
         );
-        toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name || 'unnamed').join(', ')}`);
+        toast.error(t('Some files exceed the 5MB limit: {filenames}', { variables: { filenames: oversizedFiles.map((f) => f.name || 'unnamed').join(', ') } }));
 
         // Filter out oversized files
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
@@ -1431,7 +1452,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       // Switch to vision model if needed
-      const currentModel = models.find((m) => m.value === selectedModel);
+      const currentModel = models.find((m: ReturnType<typeof getModels>[0]) => m.value === selectedModel);
       if (!currentModel?.vision) {
         const visionModel = getFirstVisionModel();
         setSelectedModel(visionModel);
@@ -1444,7 +1465,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (filesToUpload.length > 0) {
         try {
           console.log('Checking image moderation for', filesToUpload.length, 'pasted images');
-          toast.info('Checking pasted images for safety...');
+          toast.info(t('Checking pasted images for safety...'));
 
           // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(filesToUpload.map((file) => fileToDataURL(file)));
@@ -1458,7 +1479,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (status === 'unsafe') {
               console.warn('Unsafe pasted image detected, category:', category);
               toast.error(
-                `Pasted image content violates safety guidelines (${category}). Please choose different images.`,
+                t('Pasted image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } })
               );
               return;
             }
@@ -1467,7 +1488,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           console.log('Pasted images passed moderation check');
         } catch (error) {
           console.error('Error during pasted image moderation:', error);
-          toast.error('Unable to verify pasted image safety. Please try again.');
+          toast.error(t('Unable to verify pasted image safety. Please try again.'));
           return;
         }
       }
@@ -1480,10 +1501,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
 
-        toast.success('Image pasted successfully');
+        toast.success(t('Image pasted successfully'));
       } catch (error) {
         console.error('Error uploading pasted files!', error);
-        toast.error('Failed to upload pasted image. Please try again.');
+        toast.error(t('Failed to upload pasted image. Please try again.'));
       } finally {
         setUploadQueue([]);
       }
@@ -1512,26 +1533,27 @@ const FormComponent: React.FC<FormComponentProps> = ({
       event.preventDefault();
 
       if (status !== 'ready') {
-        toast.error('Please wait for the current response to complete!');
+        toast.error(t('Please wait for the current response to complete!'));
         return;
       }
 
       if (isRecording) {
-        toast.error('Please stop recording before submitting!');
+        toast.error(t('Please stop recording before submitting!'));
         return;
       }
 
       // Check if user should bypass limits for this model
-      const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+      const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+      const shouldBypassLimitsForThisModel = user && freeUnlimitedModels.includes(selectedModel);
 
       if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-        toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+        toast.error(t('Daily search limit reached. Please upgrade to Pro for unlimited searches.'));
         return;
       }
 
       // Check if input exceeds character limit
       if (input.length > MAX_INPUT_CHARS) {
-        toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
+        toast.error(t('Your input exceeds the maximum of {chars} characters. Please shorten your message.', { variables: { chars: MAX_INPUT_CHARS } }));
         return;
       }
 
@@ -1556,7 +1578,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           fileInputRef.current.value = '';
         }
       } else {
-        toast.error('Please enter a search query or attach an image.');
+        toast.error(t('Please enter a search query or attach an image.'));
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
@@ -1584,7 +1606,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const triggerFileInput = useCallback(() => {
     if (attachments.length >= MAX_FILES) {
-      toast.error(`You can only attach up to ${MAX_FILES} images.`);
+      toast.error(t('You can only attach up to {maxFiles} images.', { variables: { maxFiles: MAX_FILES } }));
       return;
     }
 
@@ -1599,15 +1621,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
     if (event.key === 'Enter' && !event.shiftKey && !isCompositionActive.current) {
       event.preventDefault();
       if (status === 'submitted' || status === 'streaming') {
-        toast.error('Please wait for the response to complete!');
+        toast.error(t('Please wait for the response to complete!'));
       } else if (isRecording) {
-        toast.error('Please stop recording before submitting!');
+        toast.error(t('Please stop recording before submitting!'));
       } else {
         // Check if user should bypass limits for this model
-        const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+        const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+        const shouldBypassLimitsForThisModel = user && freeUnlimitedModels.includes(selectedModel);
 
         if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-          toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+          toast.error(t('Daily search limit reached. Please upgrade to Pro for unlimited searches.'));
         } else {
           submitForm();
           setTimeout(() => {
@@ -1678,10 +1701,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   </div>
                   <div className="space-y-1 text-center">
                     <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                      Drop images or PDFs here
+                      <T>Drop images or PDFs here</T>
                     </p>
                     <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                      Max {MAX_FILES} files (5MB per file)
+                      <T>Max <Num>{MAX_FILES}</Num> files (5MB per file)</T>
                     </p>
                   </div>
                 </div>
@@ -1695,9 +1718,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
             ref={fileInputRef}
             multiple
             onChange={handleFileChange}
-            accept={getAcceptedFileTypes(
+            accept={getAcceptFileTypes(
               selectedModel,
               subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active',
+              models
             )}
             tabIndex={-1}
           />
@@ -1707,9 +1731,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
             ref={postSubmitFileInputRef}
             multiple
             onChange={handleFileChange}
-            accept={getAcceptedFileTypes(
+            accept={getAcceptFileTypes(
               selectedModel,
               subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active',
+              models
             )}
             tabIndex={-1}
           />
@@ -1749,7 +1774,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <Textarea
                   ref={inputRef}
                   placeholder=""
-                  value="◉ Recording..."
+                  value={t('◉ Recording...')}
                   disabled={true}
                   className={cn(
                     'w-full rounded-lg rounded-b-none md:text-base!',
@@ -1775,7 +1800,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               ) : (
                 <Textarea
                   ref={inputRef}
-                  placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
+                  placeholder={hasInteracted ? t('Ask a new question...') : t('Ask a question...')}
                   value={input}
                   onChange={handleInput}
                   onFocus={handleFocus}
@@ -1860,9 +1885,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       status={status}
                       onModelSelect={(model) => {
                         setSelectedModel(model.value);
-                        const isVisionModel = hasVisionSupport(model.value);
-                        toast.message(`Switched to ${model.label}`, {
-                          description: isVisionModel ? 'You can now upload images to the model.' : undefined,
+                        const isVisionModel = hasVisionSupport(model.value, models);
+                        toast.message(t('Switched to {model}', { variables: { model: model.label } }), {
+                          description: isVisionModel ? t('You can now upload images to the model.') : undefined,
                         });
                       }}
                       subscriptionData={subscriptionData}
@@ -1890,8 +1915,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           )}
                         >
                           <span className="group-active:[transform:translate3d(0,1px,0)] flex items-center gap-2">
-                            <TelescopeIcon className="h-4 w-4" />
-                            <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                            <TelescopeIcon className="h-3.5 w-3.5" />
+                            <T>
+                              <span className="hidden sm:block text-xs font-medium">Extreme</span>
+                            </T>
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -1901,10 +1928,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
                       >
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Extreme Mode</span>
-                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                            Deep research with multiple sources and analysis
-                          </span>
+                          <T>
+                            <span className="font-medium text-[11px]">Extreme Mode</span>
+                            <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                              Deep research with multiple sources and analysis
+                            </span>
+                          </T>
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -1912,11 +1941,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
 
                 <div className={cn('flex items-center flex-shrink-0 gap-2')}>
-                  {hasVisionSupport(selectedModel) && (
+                  {hasVisionSupport(selectedModel, models) && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full p-1.75 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-700 dark:text-neutral-300 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none] transition-all duration-200"
+                          className="group rounded-full p-2 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-700 dark:text-neutral-300 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none] transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1924,7 +1953,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block group-active:[transform:translate3d(0,1px,0)]">
-                            <PaperclipIcon size={16} />
+                            <PaperclipIcon size={14} />
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -1934,9 +1963,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                       >
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Attach File</span>
+                          <span className="font-medium text-[11px]"><T>Attach File</T></span>
                           <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
+                            {supportsPdfAttachments(selectedModel, models)
+                              ? t('Upload an image or PDF document')
+                              : t('Upload an image')}
                           </span>
                         </div>
                       </TooltipContent>
@@ -1947,7 +1978,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full p-1.75 h-8 w-8 border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none] transition-all duration-200"
+                          className="group rounded-full p-2 h-8 w-8 border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none] transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1955,7 +1986,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block group-active:[transform:translate3d(0,1px,0)]">
-                            <StopIcon size={16} />
+                            <StopIcon size={14} />
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -1964,7 +1995,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         sideOffset={6}
                         className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                       >
+                        <T>
                         <span className="font-medium text-[11px]">Stop Generation</span>
+                        </T>
                       </TooltipContent>
                     </Tooltip>
                   ) : input.length === 0 && attachments.length === 0 ? (
@@ -1973,7 +2006,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipTrigger asChild>
                         <button
                           className={cn(
-                            'group rounded-full p-1.75 h-8 w-8 backdrop-blur-2xl transition-all duration-200',
+                            'group rounded-full p-2 h-8 w-8 backdrop-blur-2xl transition-all duration-200',
                             isRecording
                               ? 'border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-white shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none]'
                               : 'border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none]',
@@ -1985,7 +2018,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block group-active:[transform:translate3d(0,1px,0)]">
-                            <MicrophoneIcon size={16} />
+                            <MicrophoneIcon size={14} />
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -1996,10 +2029,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">
-                            {isRecording ? 'Stop Recording' : 'Voice Input'}
+                            {isRecording ? t('Stop Recording') : t('Voice Input')}
                           </span>
                           <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                            {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                            {isRecording ? t('Click to stop recording') : t('Record your voice message')}
                           </span>
                         </div>
                       </TooltipContent>
@@ -2009,7 +2042,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full flex p-1.75 m-auto h-8 w-8 border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-zinc-400 disabled:hover:via-zinc-500 disabled:hover:to-zinc-600 transition-all duration-200"
+                          className="group rounded-full flex p-2 m-auto h-8 w-8 border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-zinc-400 disabled:hover:via-zinc-500 disabled:hover:to-zinc-600 transition-all duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2024,7 +2057,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }
                         >
                           <span className="block group-active:[transform:translate3d(0,1px,0)]">
-                            <ArrowUpIcon size={16} />
+                            <ArrowUpIcon size={14} />
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -2033,7 +2066,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         sideOffset={6}
                         className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
                       >
-                        <span className="font-medium text-[11px]">Send Message</span>
+                        <span className="font-medium text-[11px]"><T>Send Message</T></span>
                       </TooltipContent>
                     </Tooltip>
                   )}

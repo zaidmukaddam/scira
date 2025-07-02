@@ -7,6 +7,7 @@ import { signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { T, useGT } from 'gt-next';
 
 interface SignInPromptDialogProps {
   open: boolean;
@@ -88,7 +89,7 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             )}
-            <span>Continue with {isGithub ? 'GitHub' : isGoogle ? 'Google' : 'X (Twitter)'}</span>
+            <span>{t('Continue with {provider}', { variables: { provider: isGithub ? 'GitHub' : isGoogle ? 'Google' : 'X (Twitter)' } })}</span>
           </>
         )}
       </div>
@@ -100,14 +101,15 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
+  const t = useGT();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[360px] p-6 gap-0 border border-neutral-200 dark:border-neutral-800 rounded-lg">
         {/* Compact Header */}
         <div className="mb-6">
-          <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-1">Sign in to continue</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Save conversations and sync across devices</p>
+          <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-1">{t('Sign in to continue')}</h2>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('Save conversations and sync across devices')}</p>
         </div>
 
         {/* Auth Options */}
@@ -123,7 +125,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
             <div className="w-full border-t border-neutral-200 dark:border-neutral-800"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-2 bg-white dark:bg-neutral-950 text-neutral-400">or</span>
+            <span className="px-2 bg-white dark:bg-neutral-950 text-neutral-400">{t('or')}</span>
           </div>
         </div>
 
@@ -133,25 +135,27 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
           onClick={() => onOpenChange(false)}
           className="w-full h-10 font-normal text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-900"
         >
-          Continue without account
+          {t('Continue without account')}
         </Button>
 
         {/* Legal */}
         <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center mt-4">
-          By continuing, you accept our{' '}
-          <Link
-            href="/terms"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Terms
-          </Link>
-          {' & '}
-          <Link
-            href="/privacy-policy"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Privacy Policy
-          </Link>
+          <T>
+            By continuing, you accept our{' '}
+            <Link
+              href="/terms"
+              className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Terms
+            </Link>
+            {' & '}
+            <Link
+              href="/privacy-policy"
+              className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Privacy Policy
+            </Link>
+          </T>
         </p>
       </DialogContent>
     </Dialog>

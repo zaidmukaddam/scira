@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
+import { T, DateTime } from 'gt-next';
 
 const container = {
   hidden: { opacity: 0 },
@@ -54,11 +55,10 @@ export default function TermsPage() {
             </motion.div>
 
             <motion.div variants={item} className="text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Terms of Service</h1>
-              <p className="text-neutral-600 dark:text-neutral-400 mt-3">
-                Last updated:{' '}
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
+              <T><h1 className="text-4xl font-bold tracking-tight">Terms of Service</h1></T>
+              <T><p className="text-neutral-600 dark:text-neutral-400 mt-3">
+                Last updated: <DateTime>{new Date()}</DateTime>
+              </p></T>
             </motion.div>
           </motion.div>
         </div>
@@ -67,34 +67,34 @@ export default function TermsPage() {
       {/* Main Content */}
       <div className="py-16 px-4">
         <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-neutral-600 dark:prose-p:text-neutral-400 prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:no-underline hover:prose-a:text-black dark:hover:prose-a:text-white prose-headings:tracking-tight">
-          <p className="text-lg">
+          <T><p className="text-lg">
             Welcome to Scira AI. These Terms of Service govern your use of our website and services. By using Scira AI,
             you agree to these terms in full. If you disagree with any part of these terms, please do not use our
             service.
-          </p>
+          </p></T>
 
-          <h2>1. Acceptance of Terms</h2>
-          <p>
+          <T><h2>1. Acceptance of Terms</h2></T>
+          <T><p>
             By accessing or using Scira AI, you acknowledge that you have read, understood, and agree to be bound by
             these Terms of Service. We reserve the right to modify these terms at any time, and such modifications shall
             be effective immediately upon posting. Your continued use of Scira AI after any modifications indicates your
             acceptance of the modified terms.
-          </p>
+          </p></T>
 
-          <h2>2. Description of Service</h2>
-          <p>
+          <T><h2>2. Description of Service</h2></T>
+          <T><p>
             Scira AI is a minimalistic AI-powered search engine that helps users find information on the internet. Our
             service utilizes artificial intelligence to process search queries and provide relevant results and
             information.
-          </p>
-          <p>
+          </p></T>
+          <T><p>
             Our service is hosted on Vercel and integrates with various AI technology providers, including OpenAI,
             Anthropic, xAI, and others, to deliver search results and content generation capabilities.
-          </p>
+          </p></T>
 
-          <h2>3. User Conduct</h2>
-          <p>You agree not to use Scira AI to:</p>
-          <ul>
+          <T><h2>3. User Conduct</h2></T>
+          <T><p>You agree not to use Scira AI to:</p></T>
+          <T><ul>
             <li>Engage in any activity that violates applicable laws or regulations</li>
             <li>Infringe upon the rights of others, including intellectual property rights</li>
             <li>Distribute malware, viruses, or other harmful computer code</li>
@@ -102,20 +102,20 @@ export default function TermsPage() {
             <li>Conduct automated queries or scrape our service</li>
             <li>Generate or distribute illegal, harmful, or offensive content</li>
             <li>Interfere with the proper functioning of the service</li>
-          </ul>
+          </ul></T>
 
-          <h2>4. Content and Results</h2>
-          <p>While we strive to provide accurate and reliable information, Scira AI:</p>
-          <ul>
+          <T><h2>4. Content and Results</h2></T>
+          <T><p>While we strive to provide accurate and reliable information, Scira AI:</p></T>
+          <T><ul>
             <li>Does not guarantee the accuracy, completeness, or reliability of any results</li>
             <li>Is not responsible for content generated based on your search queries</li>
             <li>May provide links to third-party websites over which we have no control</li>
-          </ul>
-          <p>
+          </ul></T>
+          <T><p>
             You should exercise judgment and critical thinking when evaluating search results and generated content.
             Scira AI should not be used as the sole source for making important decisions, especially in professional,
             medical, legal, or financial contexts.
-          </p>
+          </p></T>
 
           <h2>5. Intellectual Property</h2>
           <p>

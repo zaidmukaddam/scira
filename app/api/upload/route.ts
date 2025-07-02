@@ -3,23 +3,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
+import { getGT } from 'gt-next/server';
 
-// File validation schema
-const FileSchema = z.object({
+// File validation schema generator
+const getFileSchema = (t: (content: string) => string) => z.object({
     file: z
         .instanceof(Blob)
         .refine((file) => file.size <= 5 * 1024 * 1024, {
-            message: 'File size should be less than 5MB',
+            message: t('File size should be less than 5MB'),
         })
         .refine((file) => {
             const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
             return validTypes.includes(file.type);
         }, {
-            message: 'File type should be JPEG, PNG, GIF or PDF',
+            message: t('File type should be JPEG, PNG, GIF or PDF'),
         }),
 });
 
 export async function POST(request: NextRequest) {
+    const t = await getGT();
+    
     // Check for authentication but don't require it
     let isAuthenticated = false;
     try {
@@ -36,10 +39,11 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
 
     if (!file) {
-        return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+        return NextResponse.json({ error: t('No file uploaded') }, { status: 400 });
     }
 
     // Validate file
+    const FileSchema = getFileSchema(t);
     const validatedFile = FileSchema.safeParse({ file });
     if (!validatedFile.success) {
         const errorMessage = validatedFile.error.errors
@@ -67,6 +71,6 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error('Error uploading file:', error);
-        return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+        return NextResponse.json({ error: t('Failed to upload file') }, { status: 500 });
     }
 }

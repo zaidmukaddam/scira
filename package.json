@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "pnpm translate && next build --turbopack",
     "start": "next start",
     "lint": "next lint",
-    "knip": "knip"
+    "knip": "knip",
+    "translate": "locadex translate"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
@@ -77,9 +78,11 @@
     "exa-js": "^1.8.19",
     "framer-motion": "^12.23.0",
     "geist": "^1.4.2",
+    "gt-next": "^5.2.39",
     "he": "^1.2.0",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
+    "locadex-core": "link:../../../gt-cloud/locadex-core",
     "lucide-react": "^0.525.0",
     "luxon": "^3.6.1",
     "mapbox-gl": "^3.13.0",

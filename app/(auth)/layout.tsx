@@ -1,12 +1,14 @@
 import Image from 'next/image';
+import { getGT } from 'gt-next/server';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const t = await getGT();
   return (
     <div className="flex items-center justify-between h-screen">
       <div className="hidden lg:block lg:w-1/2 h-full bg-black">
         <Image
           src="/placeholder.png"
-          alt="Goku"
+          alt={t('Goku')}
           width={1000}
           height={1000}
           className="object-cover h-full w-full dark:grayscale"

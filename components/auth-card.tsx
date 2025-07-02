@@ -6,6 +6,7 @@ import { signIn } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { T, Var } from 'gt-next';
 
 type AuthProvider = 'github' | 'google' | 'twitter';
 
@@ -127,42 +128,46 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           />
         </div>
 
-        <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-6">
-          By continuing, you agree to our{' '}
-          <Link
-            href="/terms"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link
-            href="/privacy-policy"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
+        <T>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-6">
+            By continuing, you agree to our{' '}
+            <Link
+              href="/terms"
+              className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link
+              href="/privacy-policy"
+              className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </T>
 
         <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            {mode === 'sign-in' ? (
-              <>
-                Don&apos;t have an account?{' '}
-                <Link href="/sign-up" className="text-black dark:text-white hover:underline">
-                  Sign up
-                </Link>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <Link href="/sign-in" className="text-black dark:text-white hover:underline">
-                  Sign in
-                </Link>
-              </>
-            )}
-          </p>
+          <T>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <Var>{mode === 'sign-in' ? (
+                <>
+                  Don&apos;t have an account?{' '}
+                  <Link href="/sign-up" className="text-black dark:text-white hover:underline">
+                    Sign up
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <Link href="/sign-in" className="text-black dark:text-white hover:underline">
+                    Sign in
+                  </Link>
+                </>
+              )}</Var>
+            </p>
+          </T>
         </div>
       </div>
     </div>

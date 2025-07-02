@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import React, { useEffect, useRef, useState, memo } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { T, useGT, Var } from 'gt-next';
 
 // Set Mapbox token with fallback
 if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
@@ -43,6 +44,7 @@ const MapComponent = memo(
     const [mapError, setMapError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { theme, resolvedTheme } = useTheme();
+    const t = useGT();
 
     // Determine if we should use dark theme
     const isDark = resolvedTheme === 'dark';
@@ -52,7 +54,7 @@ const MapComponent = memo(
 
       // Check if Mapbox token is available
       if (!mapboxgl.accessToken) {
-        setMapError('Map configuration error. Please check your settings.');
+        setMapError(t('Map configuration error. Please check your settings.'));
         setIsLoading(false);
         return;
       }
@@ -80,7 +82,7 @@ const MapComponent = memo(
         // Handle map errors
         map.on('error', (e) => {
           console.error('Mapbox error:', e);
-          setMapError('Failed to load map. Please try again later.');
+          setMapError(t('Failed to load map. Please try again later.'));
           setIsLoading(false);
         });
 
@@ -122,7 +124,7 @@ const MapComponent = memo(
         };
       } catch (error) {
         console.error('Failed to initialize map:', error);
-        setMapError('Failed to initialize map. Please check your connection.');
+        setMapError(t('Failed to initialize map. Please check your connection.'));
         setIsLoading(false);
       }
     }, [center.lat, center.lng, zoom, isDark]);
@@ -287,12 +289,14 @@ const MapComponent = memo(
           <div className="text-center p-6">
             <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-3" />
             <p className="text-neutral-600 dark:text-neutral-400 mb-3 text-sm">{mapError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-            >
-              Reload page
-            </button>
+            <T>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+              >
+                Reload page
+              </button>
+            </T>
           </div>
         </div>
       );
@@ -327,7 +331,9 @@ const MapComponent = memo(
           <div className="absolute inset-0 bg-white/80 dark:bg-neutral-900/80 flex items-center justify-center backdrop-blur-sm z-10">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-r-transparent"></div>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Loading map...</p>
+              <T>
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Loading map...</p>
+              </T>
             </div>
           </div>
         )}
@@ -442,7 +448,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
         <h2 className="text-xl font-semibold mb-3 text-neutral-900 dark:text-neutral-100">{title}</h2>
         <MapSkeleton height={height} />
         <div className="mt-3 flex items-center justify-center text-sm text-neutral-500 dark:text-neutral-400">
-          <div className="animate-pulse">Preparing map view...</div>
+          <T>
+            <div className="animate-pulse">Preparing map view...</div>
+          </T>
         </div>
       </div>
     );
@@ -453,9 +461,11 @@ const MapContainer: React.FC<MapContainerProps> = ({
       <h2 className="text-xl font-semibold mb-3 text-neutral-900 dark:text-neutral-100">{title}</h2>
       <MapComponent center={center} places={places} height={height} />
       {places.length > 0 && (
-        <div className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
-          Showing {places.length} location{places.length !== 1 ? 's' : ''}
-        </div>
+        <T>
+          <div className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
+            Showing <Var>{places.length}</Var> location<Var>{places.length !== 1 ? 's' : ''}</Var>
+          </div>
+        </T>
       )}
     </div>
   );
