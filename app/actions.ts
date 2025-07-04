@@ -22,6 +22,11 @@ import {
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
 import { getSubscriptionDetails } from '@/lib/subscription';
+import { 
+  usageCountCache, 
+  createMessageCountKey,
+  createExtremeCountKey
+} from '@/lib/performance-cache';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
@@ -225,6 +230,7 @@ const groupInstructions = {
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - ⚠️ URGENT: Always respond with markdown format!!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -321,6 +327,7 @@ const groupInstructions = {
      - Citation format: [Source Title](URL) - use descriptive source titles
      - For multiple sources supporting one claim, use format: [Source 1](URL1) [Source 2](URL2)
      - Cite the most relevant results that answer the question
+     - Never use the hr tag in the response even in markdown format!
      - Avoid citing irrelevant results or generic information
      - When citing statistics or data, always include the year when available
      - Code blocks should be formatted using the 'code' markdown syntax and should always contain the code and not response text unless requested by the user
@@ -1115,18 +1122,29 @@ export async function getSubDetails() {
   return subscriptionDetails;
 }
 
-export async function getUserMessageCount() {
+
+export async function getUserMessageCount(providedUser?: any) {
   'use server';
 
   try {
-    const user = await getUser();
+    const user = providedUser || await getUser();
     if (!user) {
       return { count: 0, error: 'User not found' };
+    }
+
+    // Check cache first
+    const cacheKey = createMessageCountKey(user.id);
+    const cached = usageCountCache.get(cacheKey);
+    if (cached !== null) {
+      return { count: cached, error: null };
     }
 
     const count = await getMessageCount({
       userId: user.id,
     });
+
+    // Cache the result
+    usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
   } catch (error) {
@@ -1148,6 +1166,10 @@ export async function incrementUserMessageCount() {
       userId: user.id,
     });
 
+    // Invalidate cache
+    const cacheKey = createMessageCountKey(user.id);
+    usageCountCache.delete(cacheKey);
+
     return { success: true, error: null };
   } catch (error) {
     console.error('Error incrementing user message count:', error);
@@ -1155,18 +1177,28 @@ export async function incrementUserMessageCount() {
   }
 }
 
-export async function getExtremeSearchUsageCount() {
+export async function getExtremeSearchUsageCount(providedUser?: any) {
   'use server';
 
   try {
-    const user = await getUser();
+    const user = providedUser || await getUser();
     if (!user) {
       return { count: 0, error: 'User not found' };
+    }
+
+    // Check cache first
+    const cacheKey = createExtremeCountKey(user.id);
+    const cached = usageCountCache.get(cacheKey);
+    if (cached !== null) {
+      return { count: cached, error: null };
     }
 
     const count = await getExtremeSearchCount({
       userId: user.id,
     });
+
+    // Cache the result
+    usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
   } catch (error) {

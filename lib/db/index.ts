@@ -1,7 +1,14 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "@/lib/db/schema";
 import { serverEnv } from "@/env/server";
 
-const sql = neon(serverEnv.DATABASE_URL);
-export const db = drizzle(sql, { schema });
+// Unified connection with optimized pooling
+const client = postgres(serverEnv.DATABASE_URL, {
+  max: 50,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  prepare: false,
+});
+
+export const db = drizzle(client, { schema });

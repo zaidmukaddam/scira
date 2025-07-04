@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { subscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
+import { subscriptionCache, createSubscriptionKey } from './performance-cache';
 
 export type SubscriptionDetails = {
   id: string;
@@ -37,10 +38,19 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       return { hasSubscription: false };
     }
 
+    // Check cache first
+    const cacheKey = createSubscriptionKey(session.user.id);
+    const cached = subscriptionCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, session.user.id));
 
     if (!userSubscriptions.length) {
-      return { hasSubscription: false };
+      const result = { hasSubscription: false };
+      subscriptionCache.set(cacheKey, result);
+      return result;
     }
 
     // Get the most recent active subscription
@@ -59,7 +69,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
         const isCanceled = latestSubscription.status === 'canceled';
 
-        return {
+        const result = {
           hasSubscription: true,
           subscription: {
             id: latestSubscription.id,
@@ -79,14 +89,18 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             : isExpired
               ? 'Subscription has expired'
               : 'Subscription is not active',
-          errorType: isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL',
+          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as 'CANCELED' | 'EXPIRED' | 'GENERAL',
         };
+        subscriptionCache.set(cacheKey, result);
+        return result;
       }
 
-      return { hasSubscription: false };
+      const fallbackResult = { hasSubscription: false };
+      subscriptionCache.set(cacheKey, fallbackResult);
+      return fallbackResult;
     }
 
-    return {
+    const result = {
       hasSubscription: true,
       subscription: {
         id: activeSubscription.id,
@@ -102,6 +116,8 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         organizationId: null,
       },
     };
+    subscriptionCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Error fetching subscription details:', error);
     return {

@@ -20,12 +20,13 @@ import {
   CoreToolMessage,
   CoreAssistantMessage,
   createDataStream,
+  smoothStream,
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 import { extremeSearchTool } from '@/ai/extreme-search';
-import { scira } from '@/ai/providers';
+import { scira, models } from '@/ai/providers';
 import { getUser } from '@/lib/auth-utils';
 import {
   createStreamId,
@@ -36,6 +37,7 @@ import {
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
+  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { SEARCH_LIMITS } from '@/lib/constants';
@@ -304,10 +306,16 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
   });
 };
 
+const getMaxTokens = (modelId: string) => {
+  const modelInfo = models.find((model) => model.value === modelId);
+  return modelInfo?.maxOutputTokens || 8000;
+};
+
 // Initialize Exa client
 const exa = new Exa(serverEnv.EXA_API_KEY);
 
 export async function POST(req: Request) {
+  const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
 
@@ -319,140 +327,209 @@ export async function POST(req: Request) {
   console.log('Messages: ', messages);
   console.log('--------------------------------');
 
+  const userCheckTime = Date.now();
   const user = await getUser();
   const streamId = 'stream-' + uuidv4();
+  console.log(`⏱️  User check took: ${((Date.now() - userCheckTime) / 1000).toFixed(2)}s`);
 
   if (!user) {
     console.log('User not found');
   }
 
-  // Check if model requires authentication
+  // Check if model requires authentication (fast check)
   const authRequiredModels = ['scira-anthropic', 'scira-google'];
   if (authRequiredModels.includes(model) && !user) {
     return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
   }
 
-  // Check message count limit for non-pro users
-  if (user) {
-    const [messageCountResult, subscriptionResult, extremeSearchUsage] = await Promise.all([
-      getUserMessageCount(), // Check daily message count (deletion-proof tracking)
-      getSubDetails(),
-      getExtremeSearchUsageCount(),
-    ]);
-
-    if (messageCountResult.error) {
-      console.error('Error getting message count:', messageCountResult.error);
-      return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
-    }
-
-    const isProUser = subscriptionResult.hasSubscription && subscriptionResult.subscription?.status === 'active';
-
-    // Check if model requires Pro subscription
-    const proRequiredModels = [
-      'scira-grok-3',
-      'scira-anthropic',
-      'scira-anthropic-thinking',
-      'scira-opus',
-      'scira-opus-pro',
-      'scira-google',
-      'scira-google-pro',
-    ];
-
-    if (proRequiredModels.includes(model) && !isProUser) {
-      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
-    }
-
-    // Check if user should bypass limits for free unlimited models
-    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
-    const shouldBypassLimits = freeUnlimitedModels.includes(model);
-
-    if (!isProUser && !shouldBypassLimits && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
-      return new ChatSDKError(
-        'upgrade_required:chat',
-        `Daily search limit of ${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} exceeded`,
-      ).toResponse();
-    }
-
-    // Check extreme search usage limit for non-pro users
-    if (!isProUser && group === 'extreme') {
-      if (extremeSearchUsage.count >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) {
-        return new ChatSDKError(
-          'upgrade_required:api',
-          `Daily extreme search limit of ${SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} exceeded`,
-        ).toResponse();
-      }
-    }
-  }
-
-  const { tools: activeTools, instructions } = await getGroupConfig(group);
+  // For authenticated users, do critical checks in parallel
+  let criticalChecksPromise: Promise<{
+    canProceed: boolean;
+    error?: any;
+    isProUser?: boolean;
+  }> = Promise.resolve({ canProceed: true });
 
   if (user) {
-    const chat = await getChatById({ id });
+    criticalChecksPromise = (async () => {
+      try {
+        const criticalChecksStartTime = Date.now();
+        const [messageCountResult, subscriptionResult, extremeSearchUsage] = await Promise.all([
+          getUserMessageCount(user), // Pass user to avoid duplicate session lookup
+          getSubDetails(), // Keep original - subscription logic is critical
+          getExtremeSearchUsageCount(user), // Pass user to avoid duplicate session lookup
+        ]);
+        console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
 
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message: messages[messages.length - 1],
-      });
+        if (messageCountResult.error) {
+          console.error('Error getting message count:', messageCountResult.error);
+          return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify usage limits') };
+        }
 
-      console.log('--------------------------------');
-      console.log('Title: ', title);
-      console.log('--------------------------------');
+        const isProUser = subscriptionResult.hasSubscription && subscriptionResult.subscription?.status === 'active';
 
-      await saveChat({
-        id,
-        userId: user.id,
-        title,
-        visibility: selectedVisibilityType,
-      });
-    } else {
-      if (chat.userId !== user.id) {
-        return new ChatSDKError('forbidden:chat', 'This chat belongs to another user').toResponse();
+        // Check if model requires Pro subscription
+        const proRequiredModels = [
+          'scira-grok-3',
+          'scira-anthropic',
+          'scira-anthropic-thinking',
+          'scira-opus',
+          'scira-opus-pro',
+          'scira-google',
+          'scira-google-pro',
+        ];
+
+        if (proRequiredModels.includes(model) && !isProUser) {
+          return { canProceed: false, error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`) };
+        }
+
+        // Check if user should bypass limits for free unlimited models
+        const freeUnlimitedModels = ['scira-default', 'scira-vision'];
+        const shouldBypassLimits = freeUnlimitedModels.includes(model);
+
+        if (!isProUser && !shouldBypassLimits && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
+          return {
+            canProceed: false, error: new ChatSDKError(
+              'upgrade_required:chat',
+              `Daily search limit of ${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} exceeded`,
+            )
+          };
+        }
+
+        // Check extreme search usage limit for non-pro users
+        if (!isProUser && group === 'extreme') {
+          if (extremeSearchUsage.count >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) {
+            return {
+              canProceed: false, error: new ChatSDKError(
+                'upgrade_required:api',
+                `Daily extreme search limit of ${SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} exceeded`,
+              )
+            };
+          }
+        }
+
+        return { canProceed: true, isProUser };
+      } catch (error) {
+        console.error('Error in critical checks:', error);
+        return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify permissions') };
       }
-    }
-
-    await saveMessages({
-      messages: [
-        {
-          chatId: id,
-          id: messages[messages.length - 1].id,
-          role: 'user',
-          parts: messages[messages.length - 1].parts,
-          attachments: messages[messages.length - 1].experimental_attachments ?? [],
-          createdAt: new Date(),
-        },
-      ],
-    });
-
-
-
-    console.log('--------------------------------');
-    console.log('Messages saved: ', messages);
-    console.log('--------------------------------');
-
-    await createStreamId({ streamId, chatId: id });
+    })();
   }
 
-  console.log('--------------------------------');
-  console.log('Messages: ', messages);
-  console.log('--------------------------------');
-  console.log('Running with model: ', model.trim());
-  console.log('Group: ', group);
-  console.log('Timezone: ', timezone);
+  // Get configuration in parallel with critical checks
+  const configStartTime = Date.now();
+  const configPromise = getGroupConfig(group).then(config => {
+    console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
+    return config;
+  });
 
+  // Start streaming immediately while background operations continue
   const stream = createDataStream({
     execute: async (dataStream) => {
+      // Wait for critical checks to complete
+      const criticalWaitStartTime = Date.now();
+      const criticalResult = await criticalChecksPromise;
+      console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
+
+      if (!criticalResult.canProceed) {
+        throw criticalResult.error;
+      }
+
+      // Get configuration
+      const configWaitStartTime = Date.now();
+      const { tools: activeTools, instructions } = await configPromise;
+      console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+
+      // Critical: Ensure chat exists before streaming starts
+      if (user) {
+        const chatCheckStartTime = Date.now();
+        const chat = await getChatById({ id });
+        console.log(`⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`);
+
+        if (!chat) {
+          // Create chat without title first - title will be generated in onFinish
+          const chatCreateStartTime = Date.now();
+          await saveChat({
+            id,
+            userId: user.id,
+            title: 'New conversation', // Temporary title that will be updated in onFinish
+            visibility: selectedVisibilityType,
+          });
+          console.log(`⏱️  Chat creation took: ${((Date.now() - chatCreateStartTime) / 1000).toFixed(2)}s`);
+        } else {
+          if (chat.userId !== user.id) {
+            throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+          }
+        }
+
+        // Save user message and create stream ID in background (non-blocking)
+        const backgroundOperations = (async () => {
+          try {
+            const backgroundStartTime = Date.now();
+            await Promise.all([
+              saveMessages({
+                messages: [
+                  {
+                    chatId: id,
+                    id: messages[messages.length - 1].id,
+                    role: 'user',
+                    parts: messages[messages.length - 1].parts,
+                    attachments: messages[messages.length - 1].experimental_attachments ?? [],
+                    createdAt: new Date(),
+                  },
+                ],
+              }),
+              createStreamId({ streamId, chatId: id }),
+            ]);
+            console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
+
+            console.log('--------------------------------');
+            console.log('Messages saved: ', messages);
+            console.log('--------------------------------');
+          } catch (error) {
+            console.error('Error in background message operations:', error);
+            // These are non-critical errors that shouldn't stop the stream
+          }
+        })();
+
+        // Start background operations but don't wait for them
+        backgroundOperations.catch((error) => {
+          console.error('Background operations failed:', error);
+        });
+      }
+
+      console.log('--------------------------------');
+      console.log('Messages: ', messages);
+      console.log('--------------------------------');
+      console.log('Running with model: ', model.trim());
+      console.log('Group: ', group);
+      console.log('Timezone: ', timezone);
+
+      // Calculate time to reach streamText
+      const preStreamTime = Date.now();
+      const setupTime = (preStreamTime - requestStartTime) / 1000;
+      console.log('--------------------------------');
+      console.log(`Time to reach streamText: ${setupTime.toFixed(2)} seconds`);
+      console.log('--------------------------------');
+
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        maxTokens: 12000,
-        ...(model.includes('scira-qwq') || model.includes('scira-qwen-32b')
+        maxTokens: getMaxTokens(model),
+        ...(model.includes('scira-qwq')
           ? {
             temperature: 0.6,
             topP: 0.95,
           }
-          : {
-            temperature: 0,
-          }),
+          : model.includes('scira-qwen-32b')
+            ? {
+              temperature: 0.6,
+              topP: 0.95,
+              topK: 20,
+              minP: 0,
+            }
+            : {
+              temperature: 0,
+            }),
         maxSteps: 5,
         maxRetries: 5,
         experimental_activeTools: [...activeTools],
@@ -2755,10 +2832,33 @@ print(f"Converted amount: {converted_amount}")
           console.log('Response Body: ', event.response.body);
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
+          console.log('Usage: ', event.usage);
 
-          // Track message usage for rate limiting (deletion-proof)
-          // Only track usage for models that are not free unlimited
-          if (user?.id) {
+          // Only proceed if user is authenticated
+          if (user?.id && event.finishReason === 'stop') {
+            // FIRST: Generate and update title for new conversations (highest priority)
+            try {
+              const chat = await getChatById({ id });
+              if (chat && chat.title === 'New conversation') {
+                console.log('Generating title for new conversation...');
+                const title = await generateTitleFromUserMessage({
+                  message: messages[messages.length - 1],
+                });
+
+                console.log('--------------------------------');
+                console.log('Generated title: ', title);
+                console.log('--------------------------------');
+
+                // Update the chat with the generated title
+                await updateChatTitleById({ chatId: id, title });
+              }
+            } catch (titleError) {
+              console.error('Failed to generate or update title:', titleError);
+              // Title generation failure shouldn't break the conversation
+            }
+
+            // Track message usage for rate limiting (deletion-proof)
+            // Only track usage for models that are not free unlimited
             try {
               const freeUnlimitedModels = ['scira-default', 'scira-vision'];
               if (!freeUnlimitedModels.includes(model)) {
@@ -2767,26 +2867,25 @@ print(f"Converted amount: {converted_amount}")
             } catch (error) {
               console.error('Failed to track message usage:', error);
             }
-          }
 
-          // Track extreme search usage if it was used successfully
-          if (user?.id && group === 'extreme') {
-            try {
-              // Check if extreme_search tool was actually called
-              const extremeSearchUsed = event.steps?.some((step) =>
-                step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
-              );
+            // Track extreme search usage if it was used successfully
+            if (group === 'extreme') {
+              try {
+                // Check if extreme_search tool was actually called
+                const extremeSearchUsed = event.steps?.some((step) =>
+                  step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
+                );
 
-              if (extremeSearchUsed) {
-                console.log('Extreme search was used successfully, incrementing count');
-                await incrementExtremeSearchUsage({ userId: user.id });
+                if (extremeSearchUsed) {
+                  console.log('Extreme search was used successfully, incrementing count');
+                  await incrementExtremeSearchUsage({ userId: user.id });
+                }
+              } catch (error) {
+                console.error('Failed to track extreme search usage:', error);
               }
-            } catch (error) {
-              console.error('Failed to track extreme search usage:', error);
             }
-          }
 
-          if (user?.id) {
+            // LAST: Save assistant message (after title is generated)
             try {
               const assistantId = getTrailingMessageId({
                 messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
@@ -2815,13 +2914,26 @@ print(f"Converted amount: {converted_amount}")
                   },
                 ],
               });
-            } catch (_) {
-              console.error('Failed to save chat');
+            } catch (error) {
+              console.error('Failed to save assistant message:', error);
             }
           }
+
+          // Calculate and log overall request processing time
+          const requestEndTime = Date.now();
+          const processingTime = (requestEndTime - requestStartTime) / 1000;
+          console.log('--------------------------------');
+          console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
+          console.log('--------------------------------');
         },
         onError(event) {
           console.log('Error: ', event.error);
+          // Calculate and log processing time even on error
+          const requestEndTime = Date.now();
+          const processingTime = (requestEndTime - requestStartTime) / 1000;
+          console.log('--------------------------------');
+          console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
+          console.log('--------------------------------');
         },
       });
 

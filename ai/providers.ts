@@ -62,6 +62,7 @@ export const models = [
     category: 'Mini',
     pdf: false,
     pro: false,
+    maxOutputTokens: 16000,
   },
   {
     value: 'scira-grok-3',
@@ -73,6 +74,7 @@ export const models = [
     category: 'Pro',
     pdf: false,
     pro: true,
+    maxOutputTokens: 16000,
   },
   {
     value: 'scira-vision',
@@ -84,6 +86,7 @@ export const models = [
     category: 'Mini',
     pdf: false,
     pro: false,
+    maxOutputTokens: 8000,
   },
   {
     value: 'scira-mistral',
@@ -95,6 +98,7 @@ export const models = [
     category: 'Mini',
     pdf: true,
     pro: false,
+    maxOutputTokens: 128000,
   },
   {
     value: 'scira-anthropic',
@@ -106,6 +110,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 64000,
   },
   {
     value: 'scira-anthropic-thinking',
@@ -117,6 +122,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 64000,
   },
   {
     value: 'scira-opus',
@@ -128,6 +134,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 32000,
   },
   {
     value: 'scira-opus-pro',
@@ -139,6 +146,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 32000,
   },
   {
     value: 'scira-google-lite',
@@ -150,6 +158,7 @@ export const models = [
     category: 'Mini',
     pdf: true,
     pro: false,
+    maxOutputTokens: 64000,
   },
   {
     value: 'scira-google',
@@ -161,6 +170,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 65000,
   },
   {
     value: 'scira-google-pro',
@@ -172,6 +182,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 65000,
   },
   {
     value: 'scira-4o-mini',
@@ -183,6 +194,7 @@ export const models = [
     category: 'Mini',
     pdf: true,
     pro: false,
+    maxOutputTokens: 16000,
   },
   {
     value: 'scira-o4-mini',
@@ -194,6 +206,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 100000,
   },
   {
     value: 'scira-o3',
@@ -205,6 +218,7 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    maxOutputTokens: 100000,
   },
   {
     value: 'scira-llama-4',
@@ -216,6 +230,7 @@ export const models = [
     category: 'Experimental',
     pdf: false,
     pro: false,
+    maxOutputTokens: 8000,
   },
   {
     value: 'scira-qwen-32b',
@@ -227,6 +242,7 @@ export const models = [
     category: 'Mini',
     pdf: false,
     pro: false,
+    maxOutputTokens: 40960,
   },
   {
     value: 'scira-qwq',
@@ -238,5 +254,6 @@ export const models = [
     category: 'Experimental',
     pdf: false,
     pro: false,
+    maxOutputTokens: 131072,
   },
 ];

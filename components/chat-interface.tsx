@@ -87,24 +87,12 @@ const LaunchBadge = ({ open, onOpenChange }: { open: boolean; onOpenChange: (ope
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg p-3 max-w-xs">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
-            <img 
-              src="/Launch_SVG_Dark.svg" 
-              alt="Launch" 
-              className="w-8 h-8 hidden dark:block"
-            />
-            <img 
-              src="/Launch_SVG_Light.svg" 
-              alt="Launch" 
-              className="w-8 h-8 block dark:hidden"
-            />
+            <img src="/Launch_SVG_Dark.svg" alt="Launch" className="w-8 h-8 hidden dark:block" />
+            <img src="/Launch_SVG_Light.svg" alt="Launch" className="w-8 h-8 block dark:hidden" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-              Launched on Peerlist!
-            </p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Check out our project showcase
-            </p>
+            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Launched on Peerlist!</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Check out our project showcase</p>
           </div>
           <button
             onClick={() => onOpenChange(false)}
@@ -356,7 +344,7 @@ const ChatInterface = memo(
       () => ({
         id: chatId,
         api: '/api/search',
-        experimental_throttle: 500,
+        experimental_throttle: 100,
         sendExtraMessageFields: true,
         maxSteps: 5,
         body: {

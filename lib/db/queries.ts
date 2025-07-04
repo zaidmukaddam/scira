@@ -1,9 +1,6 @@
 import 'server-only';
 
 import { and, asc, desc, eq, gt, gte, inArray, lt, type SQL } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
 import {
   user,
   chat,
@@ -16,12 +13,9 @@ import {
   messageUsage,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { serverEnv } from '@/env/server';
+import { db } from './index'; // Use unified database connection
 
 type VisibilityType = 'public' | 'private';
-
-const client = postgres(serverEnv.DATABASE_URL!);
-const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
