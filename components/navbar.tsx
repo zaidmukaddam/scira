@@ -297,18 +297,18 @@ const Navbar = memo(
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="pointer-events-auto bg-muted/50 border border-border hover:bg-muted/70 transition-colors"
+                          className="pointer-events-auto bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors"
                           disabled={isChangingVisibility}
                         >
                           {isChangingVisibility ? (
                             <>
-                              <ClassicLoader size="sm" className="text-muted-foreground" />
-                              <span className="text-sm font-medium text-muted-foreground">Saving...</span>
+                              <ClassicLoader size="sm" className="text-primary" />
+                              <span className="text-sm font-medium text-primary">Saving...</span>
                             </>
                           ) : (
                             <>
-                              <Share size={16} className="text-muted-foreground" />
-                              <span className="text-sm font-medium text-muted-foreground">Share</span>
+                              <Share size={16} className="text-primary" />
+                              <span className="text-sm font-medium text-primary">Share</span>
                             </>
                           )}
                         </Button>

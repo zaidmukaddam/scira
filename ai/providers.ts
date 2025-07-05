@@ -163,7 +163,7 @@ export const models = [
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 8000,
+    maxOutputTokens: 16000,
   },
   {
     value: 'scira-4o-mini',
