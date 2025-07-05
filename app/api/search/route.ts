@@ -524,9 +524,15 @@ export async function POST(req: Request) {
               topK: 20,
               minP: 0,
             }
-            : {
-              temperature: 0,
-            }),
+            : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
+              ? {
+                temperature: 0.6,
+                topP: 1,
+                topK: 40,
+              }
+              : {
+                temperature: 0,
+              }),
         maxSteps: 5,
         maxRetries: 5,
         experimental_activeTools: [...activeTools],
