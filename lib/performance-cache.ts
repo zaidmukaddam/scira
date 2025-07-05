@@ -96,7 +96,7 @@ class PerformanceCache<T> {
 
 // Create cache instances with appropriate limits
 export const sessionCache = new PerformanceCache<any>('sessions', 500, 15 * 60 * 1000); // 15 min, 500 sessions
-export const subscriptionCache = new PerformanceCache<any>('subscriptions', 1000, 30 * 60 * 1000); // 30 min, 1000 users  
+export const subscriptionCache = new PerformanceCache<any>('subscriptions', 1000, 1 * 60 * 1000); // 1 min, 1000 users  
 export const usageCountCache = new PerformanceCache<number>('usage-counts', 2000, 5 * 60 * 1000); // 5 min, 2000 users
 
 // Cache key generators
