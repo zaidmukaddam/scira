@@ -34,7 +34,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-deepseek-v3'),
+    model: scira.languageModel('scira-nano'),
     temperature: 0,
     maxTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
