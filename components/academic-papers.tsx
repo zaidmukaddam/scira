@@ -147,10 +147,37 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY !== 0) {
+    const container = e.currentTarget;
+    
+    // Only handle vertical scrolling
+    if (e.deltaY === 0) return;
+    
+    // Check if container can scroll horizontally
+    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
+    if (!canScrollHorizontally) return;
+    
+    // Always stop propagation first to prevent page scroll interference
+    e.stopPropagation();
+    
+    // Check scroll position to determine if we should handle the event
+    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
+    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
+    
+    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
+    if (!isAtLeftEdge && !isAtRightEdge) {
+      // In middle of scroll area - always handle
       e.preventDefault();
-      e.currentTarget.scrollLeft += e.deltaY;
+      container.scrollLeft += e.deltaY;
+    } else if (isAtLeftEdge && e.deltaY > 0) {
+      // At left edge, scrolling right - handle it
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    } else if (isAtRightEdge && e.deltaY < 0) {
+      // At right edge, scrolling left - handle it
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
     }
+    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
   };
 
   // Show first 5 papers in preview

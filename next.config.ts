@@ -60,6 +60,11 @@ const nextConfig: NextConfig = {
         destination: 'https://www.raycast.com/zaidmukaddam/scira',
         permanent: true,
       },
+      {
+        source: '/plst',
+        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
+        permanent: true,
+      },
     ];
   },
   images: {

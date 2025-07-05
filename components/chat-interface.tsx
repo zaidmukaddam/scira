@@ -318,23 +318,24 @@ const ChatInterface = memo(
     // Show changelog dialog to registered free users
     useEffect(() => {
       // Show changelog to registered free users who haven't seen it yet
-      if (user && !isUserPro && !hasShownChangelogDialog && !proStatusLoading) {
+      // Only show if Pro status is fully loaded and user is definitively not Pro
+      if (user && !isUserPro && !proStatusLoading && !hasShownChangelogDialog && subscriptionData !== undefined) {
         // Small delay to ensure UI is ready
         setTimeout(() => {
           setShowChangelogDialog(true);
         }, 500);
       }
-    }, [user, isUserPro, hasShownChangelogDialog, proStatusLoading]);
+    }, [user, isUserPro, hasShownChangelogDialog, proStatusLoading, subscriptionData]);
 
     // Show launch badge to all users who haven't seen it yet
     useEffect(() => {
-      if (!hasShownLaunchBadge) {
+      if (!hasShownLaunchBadge && !proStatusLoading) {
         // Small delay to ensure UI is ready
         setTimeout(() => {
           setShowLaunchBadge(true);
         }, 1000);
       }
-    }, [hasShownLaunchBadge]);
+    }, [hasShownLaunchBadge, proStatusLoading]);
 
     type VisibilityType = 'public' | 'private';
 
@@ -376,7 +377,8 @@ const ChatInterface = memo(
           });
 
           // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-          if (isFirstMessage && !isUserPro && !hasShownUpgradeDialog && user) {
+          // Only show if Pro status is fully loaded and user is definitively not Pro
+          if (isFirstMessage && !isUserPro && !proStatusLoading && !hasShownUpgradeDialog && user) {
             console.log('Showing upgrade dialog...');
             setTimeout(() => {
               setShowUpgradeDialog(true);

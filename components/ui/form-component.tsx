@@ -6,7 +6,15 @@ import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { models, requiresAuthentication, requiresProSubscription, hasVisionSupport, hasPdfSupport, getAcceptedFileTypes, canUseModel, shouldBypassRateLimits } from '@/ai/providers';
+import {
+  models,
+  requiresAuthentication,
+  requiresProSubscription,
+  hasVisionSupport,
+  hasPdfSupport,
+  getAcceptedFileTypes,
+  shouldBypassRateLimits,
+} from '@/ai/providers';
 import useWindowSize from '@/hooks/use-window-size';
 import { TelescopeIcon, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -54,6 +62,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   user,
 }) => {
   const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  const isSubscriptionLoading = user && !subscriptionData;
 
   // Show all models to everyone, but control access via dialogs
   const availableModels = useMemo(() => {
@@ -91,6 +100,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
     const requiresAuth = requiresAuthentication(model.value) && !user;
     const requiresPro = requiresProSubscription(model.value) && !isProUser;
 
+    // Don't show dialogs if subscription is still loading
+    if (isSubscriptionLoading) {
+      return;
+    }
+
     // Check for authentication requirement first
     if (requiresAuth) {
       setSelectedAuthModel(model);
@@ -98,8 +112,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
       return;
     }
 
-    // Then check for Pro requirement
-    if (requiresPro) {
+    // Then check for Pro requirement - only if user is NOT Pro
+    if (requiresPro && !isProUser) {
       setSelectedProModel(model);
       setShowUpgradeDialog(true);
       return;
@@ -166,10 +180,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                         'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
                       )}
                       onClick={() => {
+                        // Don't show dialogs if subscription is still loading
+                        if (isSubscriptionLoading) {
+                          return;
+                        }
+                        
                         if (requiresAuth) {
                           setSelectedAuthModel(model);
                           setShowSignInDialog(true);
-                        } else if (requiresPro) {
+                        } else if (requiresPro && !isProUser) {
                           setSelectedProModel(model);
                           setShowUpgradeDialog(true);
                         }
@@ -1331,7 +1350,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         console.log('Switching to vision model:', visionModel);
         setSelectedModel(visionModel);
-
       }
 
       // Set upload queue immediately
@@ -1417,7 +1435,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (!currentModel?.vision) {
         const visionModel = getFirstVisionModel();
         setSelectedModel(visionModel);
-
       }
 
       // Use filtered files if we found oversized ones
@@ -1919,9 +1936,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">Attach File</span>
                           <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                            {hasPdfSupport(selectedModel)
-                              ? 'Upload an image or PDF document'
-                              : 'Upload an image'}
+                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
                           </span>
                         </div>
                       </TooltipContent>
