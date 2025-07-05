@@ -20,13 +20,12 @@ import {
   CoreToolMessage,
   CoreAssistantMessage,
   createDataStream,
-  smoothStream,
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 import { extremeSearchTool } from '@/ai/extreme-search';
-import { scira, models } from '@/ai/providers';
+import { scira, getMaxOutputTokens, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
 import { getUser } from '@/lib/auth-utils';
 import {
   createStreamId,
@@ -306,15 +305,12 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
   });
 };
 
-const getMaxTokens = (modelId: string) => {
-  const modelInfo = models.find((model) => model.value === modelId);
-  return modelInfo?.maxOutputTokens || 8000;
-};
-
 // Initialize Exa client
 const exa = new Exa(serverEnv.EXA_API_KEY);
 
 export async function POST(req: Request) {
+  console.log('🔍 Search API endpoint hit');
+
   const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
@@ -367,52 +363,53 @@ export async function POST(req: Request) {
 
         const isProUser = subscriptionResult.hasSubscription && subscriptionResult.subscription?.status === 'active';
 
-        // Check if model requires Pro subscription
-        const proRequiredModels = [
-          'scira-grok-3',
-          'scira-anthropic',
-          'scira-anthropic-thinking',
-          'scira-opus',
-          'scira-opus-pro',
-          'scira-google',
-          'scira-google-pro',
-        ];
+        // Check if model requires authentication
+        if (requiresAuthentication(model) && !user) {
+          return { canProceed: false, error: new ChatSDKError('unauthorized:model', `${model} requires authentication`) };
+        }
 
-        if (proRequiredModels.includes(model) && !isProUser) {
+        // Check if model requires Pro subscription
+        if (requiresProSubscription(model) && !isProUser) {
           return { canProceed: false, error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`) };
         }
 
         // Check if user should bypass limits for free unlimited models
-        const freeUnlimitedModels = ['scira-default', 'scira-vision'];
-        const shouldBypassLimits = freeUnlimitedModels.includes(model);
+        const shouldBypassLimits = shouldBypassRateLimits(model, user);
 
-        if (!isProUser && !shouldBypassLimits && messageCountResult.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT) {
-          return {
-            canProceed: false, error: new ChatSDKError(
-              'upgrade_required:chat',
-              `Daily search limit of ${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} exceeded`,
-            )
-          };
-        }
-
-        // Check extreme search usage limit for non-pro users
-        if (!isProUser && group === 'extreme') {
-          if (extremeSearchUsage.count >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) {
-            return {
-              canProceed: false, error: new ChatSDKError(
-                'upgrade_required:api',
-                `Daily extreme search limit of ${SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} exceeded`,
-              )
-            };
+        if (!shouldBypassLimits && messageCountResult.count !== undefined) {
+          const dailyLimit = isProUser ? undefined : 100; // Pro users have no limit
+          if (dailyLimit && messageCountResult.count >= dailyLimit) {
+            return { canProceed: false, error: new ChatSDKError('rate_limit:chat', 'Daily search limit reached') };
           }
         }
 
-        return { canProceed: true, isProUser };
+        return {
+          canProceed: true,
+          messageCount: messageCountResult.count,
+          isProUser,
+          subscriptionData: subscriptionResult,
+          shouldBypassLimits,
+          extremeSearchUsage: extremeSearchUsage.count
+        };
       } catch (error) {
-        console.error('Error in critical checks:', error);
-        return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify permissions') };
+        console.error('Critical checks failed:', error);
+        return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify user access') };
       }
     })();
+  } else {
+    // For anonymous users, check if model requires authentication
+    if (requiresAuthentication(model)) {
+      throw new ChatSDKError('unauthorized:model', `${model} requires authentication`);
+    }
+
+    criticalChecksPromise = Promise.resolve({
+      canProceed: true,
+      messageCount: 0,
+      isProUser: false,
+      subscriptionData: null,
+      shouldBypassLimits: false,
+      extremeSearchUsage: 0
+    });
   }
 
   // Get configuration in parallel with critical checks
@@ -514,7 +511,7 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        maxTokens: getMaxTokens(model),
+        maxTokens: getMaxOutputTokens(model),
         ...(model.includes('scira-qwq')
           ? {
             temperature: 0.6,
@@ -2860,8 +2857,7 @@ print(f"Converted amount: {converted_amount}")
             // Track message usage for rate limiting (deletion-proof)
             // Only track usage for models that are not free unlimited
             try {
-              const freeUnlimitedModels = ['scira-default', 'scira-vision'];
-              if (!freeUnlimitedModels.includes(model)) {
+              if (!shouldBypassRateLimits(model, user)) {
                 await incrementMessageUsage({ userId: user.id });
               }
             } catch (error) {

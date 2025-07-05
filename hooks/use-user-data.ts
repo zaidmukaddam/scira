@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, getSubDetails } from '@/app/actions';
 import { User } from '@/lib/db/schema';
+import { shouldBypassRateLimits } from '@/ai/providers';
 
 // Hook for user data
 export function useUserData() {
@@ -14,7 +15,7 @@ export function useUserData() {
   });
 }
 
-// Hook for subscription data with intelligent caching
+// Hook for subscription data with user dependency
 export function useSubscriptionData(user: User | null) {
   return useQuery({
     queryKey: ['subscription', user?.id],
@@ -37,9 +38,7 @@ export function useProUserStatus() {
 
   // Helper function to check if user should have unlimited access for specific models
   const shouldBypassLimitsForModel = (selectedModel: string) => {
-    // Free unlimited models for registered users
-    const freeUnlimitedModels = ['scira-default', 'scira-vision'];
-    return user && freeUnlimitedModels.includes(selectedModel);
+    return shouldBypassRateLimits(selectedModel, user);
   };
 
   return {

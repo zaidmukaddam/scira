@@ -453,6 +453,12 @@ const ChatInterface = memo(
     });
 
     useEffect(() => {
+      if (status) {
+        console.log('[status]:', status);
+      }
+    }, [status]);
+
+    useEffect(() => {
       if (user && status === 'streaming' && messages.length > 0) {
         console.log('[chatId]:', chatId);
         // Invalidate chats cache to refresh the list

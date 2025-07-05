@@ -153,7 +153,7 @@ const Candlestick = (props: CandlestickProps) => {
     high,
     openClose: [open, close],
   } = props;
-  
+
   const isGrowing = open < close;
   const ratio = Math.abs(height / (close - open)) || 1;
 
@@ -231,19 +231,9 @@ const renderCandlestick = (props: any) => {
     const high = payload.high || 0;
     const low = payload.low || 0;
     const close = payload.close || 0;
-    
+
     if (high > 0 && low > 0) {
-      return (
-        <Candlestick
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          low={low}
-          high={high}
-          openClose={[open, close]}
-        />
-      );
+      return <Candlestick x={x} y={y} width={width} height={height} low={low} high={high} openClose={[open, close]} />;
     }
   }
 
@@ -546,9 +536,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
   try {
     if (chartType === 'candlestick') {
       // Check if we have OHLC data or need to generate it from price data
-      const hasOHLCData = chartData.some((item) => 
-        item && typeof item === 'object' && 
-        ('open' in item || 'high' in item || 'low' in item || 'close' in item)
+      const hasOHLCData = chartData.some(
+        (item) =>
+          item && typeof item === 'object' && ('open' in item || 'high' in item || 'low' in item || 'close' in item),
       );
 
       if (hasOHLCData) {
@@ -587,48 +577,50 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
 
         // Group data by day for candlestick generation
         const groupedByDay = new Map<string, any[]>();
-        
+
         validPriceData.forEach((item) => {
           const date = parseDate(item.timestamp || item.date);
           const dayKey = date.toISOString().split('T')[0];
-          
+
           if (!groupedByDay.has(dayKey)) {
             groupedByDay.set(dayKey, []);
           }
           groupedByDay.get(dayKey)!.push({
             ...item,
             price: extractPrice(item),
-            timestamp: date.getTime()
+            timestamp: date.getTime(),
           });
         });
 
         // Create candlesticks from grouped data
-        formattedData = Array.from(groupedByDay.entries()).map(([dayKey, dayData]) => {
-          // Sort by timestamp
-          dayData.sort((a, b) => a.timestamp - b.timestamp);
-          
-          const prices = dayData.map(d => d.price);
-          const open = prices[0];
-          const close = prices[prices.length - 1];
-          const high = Math.max(...prices);
-          const low = Math.min(...prices);
-          const date = new Date(dayKey);
+        formattedData = Array.from(groupedByDay.entries())
+          .map(([dayKey, dayData]) => {
+            // Sort by timestamp
+            dayData.sort((a, b) => a.timestamp - b.timestamp);
 
-          return {
-            date: date.toISOString(),
-            timestamp: date.getTime(),
-            open,
-            high,
-            low,
-            close,
-            openClose: [open, close],
-            displayDate: date.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            }),
-            fullDate: date.toLocaleDateString(),
-          };
-        }).sort((a, b) => a.timestamp - b.timestamp);
+            const prices = dayData.map((d) => d.price);
+            const open = prices[0];
+            const close = prices[prices.length - 1];
+            const high = Math.max(...prices);
+            const low = Math.min(...prices);
+            const date = new Date(dayKey);
+
+            return {
+              date: date.toISOString(),
+              timestamp: date.getTime(),
+              open,
+              high,
+              low,
+              close,
+              openClose: [open, close],
+              displayDate: date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              }),
+              fullDate: date.toLocaleDateString(),
+            };
+          })
+          .sort((a, b) => a.timestamp - b.timestamp);
       }
 
       if (formattedData.length > 0) {
@@ -779,13 +771,13 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
             <div className="flex items-start gap-3">
               {/* Coin Icon */}
               {coinData.image?.small && (
-                <SafeImage 
-                  src={coinData.image.small} 
+                <SafeImage
+                  src={coinData.image.small}
                   alt={displayName}
                   className="w-8 h-8 rounded-full flex-shrink-0"
                 />
               )}
-              
+
               <div className="flex-1 min-w-0">
                 {/* Name and Symbol */}
                 <div className="flex items-center gap-2 mb-2">
@@ -793,9 +785,7 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                     {displayName}
                   </h2>
                   {symbol && (
-                    <span className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
-                      {symbol}
-                    </span>
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">{symbol}</span>
                   )}
                   {url && (
                     <Button variant="ghost" size="sm" asChild className="h-6 px-2 flex-shrink-0">
@@ -862,7 +852,7 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-3">
               <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                {coinData ? 'OHLC Chart' : (chart.title || `${coinId} Chart`)}
+                {coinData ? 'OHLC Chart' : chart.title || `${coinId} Chart`}
               </h3>
               {!coinData && url && (
                 <Button variant="ghost" size="sm" asChild className="h-6 px-2 flex-shrink-0">

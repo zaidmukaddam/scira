@@ -3,18 +3,18 @@ import './env/server';
 import './env/client';
 
 const nextConfig: NextConfig = {
-  // compiler: {
-  //   // if NODE_ENV is production, remove console.log
-  //   removeConsole:
-  //     process.env.NODE_ENV === 'production'
-  //       ? {
-  //         exclude: ['error'],
-  //       }
-  //       : false,
-  // },
+  compiler: {
+    // if NODE_ENV is production, remove console.log
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
+          exclude: ['error'],
+        }
+        : false,
+  },
   experimental: {
     useCache: true,
-    optimizePackageImports: ['@phosphor-icons/react', '@daytonaio/sdk'],
+    optimizePackageImports: ['@phosphor-icons/react'],
     nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '10mb',
@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     },
     reactCompiler: true,
   },
-  transpilePackages: ['geist'],
+  transpilePackages: ['geist', '@daytonaio/sdk'],
   output: 'standalone',
   async headers() {
     return [

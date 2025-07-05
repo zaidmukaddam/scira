@@ -121,6 +121,15 @@ const Messages: React.FC<MessagesProps> = ({
     return lastMessage?.role === 'user' && (status === 'submitted' || status === 'streaming');
   }, [memoizedMessages, status]);
 
+  // Check if there are any active tool invocations in the current messages
+  const hasActiveToolInvocations = useMemo(() => {
+    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+    if (lastMessage?.role === 'assistant') {
+      return lastMessage.parts?.some((part: any) => part.type === 'tool-invocation');
+    }
+    return false;
+  }, [memoizedMessages]);
+
   // Check if we need to show retry due to missing assistant response (different from error status)
   const isMissingAssistantResponse = useMemo(() => {
     const lastMessage = memoizedMessages[memoizedMessages.length - 1];
@@ -160,8 +169,8 @@ const Messages: React.FC<MessagesProps> = ({
   ): React.ReactNode => {
     // Case 1: Skip rendering text parts that should be superseded by tool invocations
     if (part.type === 'text') {
-      // For empty text parts in a streaming message, show loading animation
-      if ((!part.text || part.text.trim() === '') && status === 'streaming') {
+      // For empty text parts in a streaming message, show loading animation only if no tool invocations are present
+      if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations) {
         return (
           <div key={`${messageIndex}-${partIndex}-loading`} className="flex flex-col min-h-[calc(100vh-18rem)]">
             <SciraLogoHeader />
@@ -505,7 +514,7 @@ const Messages: React.FC<MessagesProps> = ({
       </div>
 
       {/* Loading animation when status is submitted with min-height to reserve space */}
-      {status === 'submitted' && (
+      {status === 'submitted' && !hasActiveToolInvocations && (
         <div className="flex items-start min-h-[calc(100vh-18rem)]">
           <div className="w-full">
             <SciraLogoHeader />
@@ -528,7 +537,7 @@ const Messages: React.FC<MessagesProps> = ({
       )}
 
       {/* Reserve space for empty/streaming assistant message */}
-      {status === 'streaming' && isWaitingForResponse && (
+      {status === 'streaming' && isWaitingForResponse && !hasActiveToolInvocations && (
         <div className="min-h-[calc(100vh-18rem)] mt-2">
           <SciraLogoHeader />
         </div>

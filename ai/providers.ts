@@ -1,6 +1,6 @@
 import { wrapLanguageModel, customProvider, extractReasoningMiddleware } from 'ai';
 
-import { openai } from '@ai-sdk/openai';
+import { openai, createOpenAI } from '@ai-sdk/openai';
 import { xai } from '@ai-sdk/xai';
 import { groq } from '@ai-sdk/groq';
 import { anthropic } from '@ai-sdk/anthropic';
@@ -9,6 +9,11 @@ import { mistral } from '@ai-sdk/mistral';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
+});
+
+const huggingface = createOpenAI({
+  baseURL: 'https://router.huggingface.co/fireworks-ai/inference/v1',
+  apiKey: process.env.HF_TOKEN,
 });
 
 export const scira = customProvider({
@@ -35,6 +40,14 @@ export const scira = customProvider({
       }),
       middleware,
     }),
+    'scira-qwen-30b': wrapLanguageModel({
+      model: huggingface('accounts/fireworks/models/qwen3-30b-a3b'),
+      middleware,
+    }),
+    'scira-deepseek-v3': wrapLanguageModel({
+      model: huggingface('accounts/fireworks/models/deepseek-v3-0324'),
+      middleware,
+    }),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
     'scira-mistral': mistral('mistral-small-latest'),
     'scira-google-lite': google('gemini-2.5-flash-lite-preview-06-17'),
@@ -50,8 +63,8 @@ export const scira = customProvider({
   },
 });
 
-
 export const models = [
+  // Free Unlimited Models (xAI)
   {
     value: 'scira-default',
     label: 'Grok 3.0 Mini',
@@ -62,18 +75,8 @@ export const models = [
     category: 'Mini',
     pdf: false,
     pro: false,
-    maxOutputTokens: 16000,
-  },
-  {
-    value: 'scira-grok-3',
-    label: 'Grok 3.0',
-    description: "xAI's most intelligent model",
-    vision: false,
-    reasoning: false,
-    experimental: false,
-    category: 'Pro',
-    pdf: false,
-    pro: true,
+    requiresAuth: false,
+    freeUnlimited: true,
     maxOutputTokens: 16000,
   },
   {
@@ -86,8 +89,26 @@ export const models = [
     category: 'Mini',
     pdf: false,
     pro: false,
+    requiresAuth: false,
+    freeUnlimited: true,
     maxOutputTokens: 8000,
   },
+  {
+    value: 'scira-grok-3',
+    label: 'Grok 3.0',
+    description: "xAI's most intelligent model",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+  },
+
+  // Mini Models (Free/Paid)
   {
     value: 'scira-mistral',
     label: 'Mistral Small',
@@ -98,8 +119,82 @@ export const models = [
     category: 'Mini',
     pdf: true,
     pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 128000,
   },
+  {
+    value: 'scira-qwen-30b',
+    label: 'Qwen 3 30B A3B',
+    description: "Alibaba's advanced MoE reasoning model",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Mini',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+  },
+  {
+    value: 'scira-qwen-32b',
+    label: 'Qwen 3 32B',
+    description: "Alibaba's advanced reasoning model",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Mini',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 40960,
+  },
+  {
+    value: 'scira-deepseek-v3',
+    label: 'DeepSeek V3 0324',
+    description: "DeepSeek's advanced model",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 8000,
+  },
+  {
+    value: 'scira-4o-mini',
+    label: 'GPT 4o Mini',
+    description: "OpenAI's flagship model",
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: true,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+  },
+  {
+    value: 'scira-google-lite',
+    label: 'Gemini 2.5 Flash Lite',
+    description: "Google's advanced small reasoning model",
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: true,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 64000,
+  },
+
+  // Pro Models
   {
     value: 'scira-anthropic',
     label: 'Claude 4 Sonnet',
@@ -110,6 +205,8 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 64000,
   },
   {
@@ -122,6 +219,8 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: false,
+    freeUnlimited: false,
     maxOutputTokens: 64000,
   },
   {
@@ -134,6 +233,8 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 32000,
   },
   {
@@ -146,19 +247,9 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 32000,
-  },
-  {
-    value: 'scira-google-lite',
-    label: 'Gemini 2.5 Flash Lite',
-    description: "Google's advanced small reasoning model",
-    vision: true,
-    reasoning: false,
-    experimental: false,
-    category: 'Mini',
-    pdf: true,
-    pro: false,
-    maxOutputTokens: 64000,
   },
   {
     value: 'scira-google',
@@ -170,6 +261,8 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 65000,
   },
   {
@@ -182,19 +275,9 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: false,
+    freeUnlimited: false,
     maxOutputTokens: 65000,
-  },
-  {
-    value: 'scira-4o-mini',
-    label: 'GPT 4o Mini',
-    description: "OpenAI's flagship model",
-    vision: true,
-    reasoning: false,
-    experimental: false,
-    category: 'Mini',
-    pdf: true,
-    pro: false,
-    maxOutputTokens: 16000,
   },
   {
     value: 'scira-o4-mini',
@@ -206,6 +289,8 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 100000,
   },
   {
@@ -218,8 +303,12 @@ export const models = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
     maxOutputTokens: 100000,
   },
+
+  // Experimental Models
   {
     value: 'scira-llama-4',
     label: 'Llama 4 Maverick',
@@ -230,19 +319,9 @@ export const models = [
     category: 'Experimental',
     pdf: false,
     pro: false,
+    requiresAuth: false,
+    freeUnlimited: false,
     maxOutputTokens: 8000,
-  },
-  {
-    value: 'scira-qwen-32b',
-    label: 'Qwen 3 32B',
-    description: "Alibaba's advanced reasoning model",
-    vision: false,
-    reasoning: true,
-    experimental: false,
-    category: 'Mini',
-    pdf: false,
-    pro: false,
-    maxOutputTokens: 40960,
   },
   {
     value: 'scira-qwq',
@@ -254,6 +333,94 @@ export const models = [
     category: 'Experimental',
     pdf: false,
     pro: false,
+    requiresAuth: false,
+    freeUnlimited: false,
     maxOutputTokens: 131072,
   },
 ];
+
+// Helper functions for model access checks
+export function getModelConfig(modelValue: string) {
+  return models.find(model => model.value === modelValue);
+}
+
+export function requiresAuthentication(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.requiresAuth || false;
+}
+
+export function requiresProSubscription(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.pro || false;
+}
+
+export function isFreeUnlimited(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.freeUnlimited || false;
+}
+
+export function hasVisionSupport(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.vision || false;
+}
+
+export function hasPdfSupport(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.pdf || false;
+}
+
+export function hasReasoningSupport(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.reasoning || false;
+}
+
+export function isExperimentalModel(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.experimental || false;
+}
+
+export function getMaxOutputTokens(modelValue: string): number {
+  const model = getModelConfig(modelValue);
+  return model?.maxOutputTokens || 8000;
+}
+
+// Access control helper
+export function canUseModel(modelValue: string, user: any, isProUser: boolean): { canUse: boolean; reason?: string } {
+  const model = getModelConfig(modelValue);
+
+  if (!model) {
+    return { canUse: false, reason: 'Model not found' };
+  }
+
+  // Check if model requires authentication
+  if (model.requiresAuth && !user) {
+    return { canUse: false, reason: 'authentication_required' };
+  }
+
+  // Check if model requires Pro subscription
+  if (model.pro && !isProUser) {
+    return { canUse: false, reason: 'pro_subscription_required' };
+  }
+
+  return { canUse: true };
+}
+
+// Helper to check if user should bypass rate limits
+export function shouldBypassRateLimits(modelValue: string, user: any): boolean {
+  const model = getModelConfig(modelValue);
+  return Boolean(user && model?.freeUnlimited);
+}
+
+// Get acceptable file types for a model
+export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): string {
+  const model = getModelConfig(modelValue);
+  if (model?.pdf && isProUser) {
+    return 'image/*,.pdf';
+  }
+  return 'image/*';
+}
+
+// Legacy arrays for backward compatibility (deprecated - use helper functions instead)
+export const authRequiredModels = models.filter(m => m.requiresAuth).map(m => m.value);
+export const proRequiredModels = models.filter(m => m.pro).map(m => m.value);
+export const freeUnlimitedModels = models.filter(m => m.freeUnlimited).map(m => m.value);

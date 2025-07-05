@@ -26,7 +26,6 @@ export const serverEnv = createEnv({
     YT_ENDPOINT: z.string().min(1),
     FIRECRAWL_API_KEY: z.string().min(1),
     OPENWEATHER_API_KEY: z.string().min(1),
-    SANDBOX_TEMPLATE_ID: z.string().min(1),
     GOOGLE_MAPS_API_KEY: z.string().min(1),
     MAPBOX_ACCESS_TOKEN: z.string().min(1),
     AMADEUS_API_KEY: z.string().min(1),

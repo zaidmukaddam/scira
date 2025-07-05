@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X } from 'lucide-react';
 import { TextLoop } from '@/components/core/text-loop';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { VercelLogo } from '@/components/logos/vercel-logo';
@@ -43,6 +45,7 @@ import {
   ProAccordionTrigger,
   ProAccordionContent,
 } from '@/components/ui/pro-accordion';
+import { useGitHubStars } from '@/hooks/use-github-stars';
 
 const container = {
   hidden: { opacity: 0 },
@@ -63,12 +66,20 @@ export default function AboutPage() {
   const router = useRouter();
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showCryptoAlert, setShowCryptoAlert] = useState(true);
+  const { data: githubStars, isLoading: isLoadingStars } = useGitHubStars();
 
   useEffect(() => {
     // Check if user has seen the terms
     const hasAcceptedTerms = localStorage.getItem('hasAcceptedTerms');
     if (!hasAcceptedTerms) {
       setShowTermsDialog(true);
+    }
+
+    // Check if user has dismissed the crypto alert
+    const hasDismissedCryptoAlert = localStorage.getItem('hasDismissedCryptoAlert');
+    if (hasDismissedCryptoAlert) {
+      setShowCryptoAlert(false);
     }
   }, []);
 
@@ -77,6 +88,11 @@ export default function AboutPage() {
       setShowTermsDialog(false);
       localStorage.setItem('hasAcceptedTerms', 'true');
     }
+  };
+
+  const handleDismissCryptoAlert = () => {
+    setShowCryptoAlert(false);
+    localStorage.setItem('hasDismissedCryptoAlert', 'true');
   };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -90,6 +106,29 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Crypto Disclaimer Alert */}
+      {showCryptoAlert && (
+        <div className="sticky top-0 z-50 border-b border-border bg-amber-50 dark:bg-amber-950/20">
+          <Alert className="border-0 rounded-none bg-transparent">
+            <AlertDescription className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <ShieldCheck className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Scira is not connected to any cryptocurrency tokens or coins. We are purely an AI search engine.
+                </span>
+              </div>
+              <button
+                onClick={handleDismissCryptoAlert}
+                className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+                aria-label="Dismiss alert"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Terms Dialog */}
       <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
         <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
@@ -201,90 +240,135 @@ export default function AboutPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50/40 to-transparent dark:from-gray-950/40" />
-        <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02]" />
-        <div className="relative container max-w-screen-xl mx-auto px-4">
-          <motion.div
-            className="max-w-3xl mx-auto space-y-8 text-center"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {/* Logo */}
-            <motion.div variants={item}>
-              <Link href="/" className="inline-flex items-center gap-3">
-                <Image
-                  src="/scira.png"
-                  alt="Scira"
-                  width={100}
-                  height={100}
-                  className="size-14 invert dark:invert-0"
-                  quality={100}
-                />
-                <span className="text-4xl font-medium tracking-tight font-be-vietnam-pro">Scira</span>
+      <section className="relative py-40">
+        <div className="container max-w-6xl mx-auto px-4">
+          <motion.div className="space-y-20 text-center" variants={container} initial="hidden" animate="show">
+            {/* Logo & Brand */}
+            <motion.div variants={item} className="space-y-8">
+              <Link href="/" className="inline-flex items-center gap-4 group">
+                <div className="relative">
+                  <Image
+                    src="/scira.png"
+                    alt="Scira"
+                    width={100}
+                    height={100}
+                    className="size-16 invert dark:invert-0 transition-all duration-300 group-hover:scale-110"
+                    quality={100}
+                  />
+                </div>
+                <span className="text-4xl font-light tracking-tight">Scira</span>
               </Link>
+
+              <div className="space-y-5">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tight text-balance max-w-5xl mx-auto leading-tight">
+                  Minimalistic Open Source
+                  <br />
+                  AI-Powered Search Engine
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                  A clean AI search engine with RAG and search grounding capabilities.
+                  <br />
+                  Open source and built for everyone.
+                </p>
+              </div>
             </motion.div>
 
-            {/* Headline */}
-            <motion.h1
-              variants={item}
-              className="text-2xl sm:text-3xl font-normal tracking-tight text-balance font-be-vietnam-pro"
-            >
-              Minimalistic Open Source AI-Powered Search Engine
-            </motion.h1>
+            {/* Search Interface */}
+            <motion.div variants={item} className="space-y-10">
+              <form className="max-w-3xl mx-auto" onSubmit={handleSearch}>
+                <div className="relative group">
+                  <input
+                    type="text"
+                    name="query"
+                    placeholder="Ask anything..."
+                    className="w-full h-16 px-6 pr-20 text-lg rounded-2xl bg-background border-2 border-border focus:border-foreground focus:outline-none transition-all duration-300 placeholder:text-muted-foreground shadow-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-2 h-12 px-6 rounded-xl bg-foreground text-background font-medium hover:scale-105 transition-all duration-200"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
 
-            {/* Description */}
-            <motion.p variants={item} className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              A minimalistic AI-powered search engine with RAG and search grounding capabilities. Open source and built
-              for everyone.
-            </motion.p>
-
-            {/* Search Box */}
-            <motion.form variants={item} className="max-w-4xl mx-auto w-full" onSubmit={handleSearch}>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="query"
-                  placeholder="Ask anything..."
-                  className="w-full h-14 px-6 rounded-xl bg-background border border-input focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 transition-all"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const query = e.currentTarget.value;
-                      if (query) {
-                        router.push(`/?q=${encodeURIComponent(query)}`);
-                      }
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="https://git.new/scira"
+                  className="inline-flex h-12 items-center gap-2 px-6 rounded-xl bg-foreground text-background hover:scale-105 transition-all duration-200"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  Search
-                </button>
+                  <GithubLogo className="h-4 w-4" />
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">View Source</span>
+                    {!isLoadingStars && githubStars && (
+                      <span className="px-2 py-1 text-xs bg-background/20 rounded-full font-medium">
+                        {githubStars.toLocaleString()}
+                      </span>
+                    )}
+                    {isLoadingStars && (
+                      <span className="px-2 py-1 text-xs bg-background/20 rounded-full animate-pulse">...</span>
+                    )}
+                  </div>
+                </Link>
+                <Link
+                  href="/"
+                  className="inline-flex h-12 items-center gap-2 px-6 rounded-xl border-2 border-border hover:border-foreground hover:scale-105 transition-all duration-200"
+                >
+                  <span className="font-medium">Try Now</span>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
               </div>
-            </motion.form>
+            </motion.div>
 
-            {/* CTA Buttons */}
-            <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="https://git.new/scira"
-                className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <GithubLogo className="h-5 w-5" />
-                <span className="font-medium">View Source</span>
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-secondary text-secondary-foreground border border-input hover:border-ring transition-all"
-              >
-                <span className="font-medium">Try Now</span>
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
+            {/* Social Proof */}
+            <motion.div variants={item} className="space-y-12">
+              {/* OpenAlternative Badge */}
+              <div className="flex justify-center">
+                <a
+                  href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-transform duration-300 hover:scale-110"
+                >
+                  <img
+                    src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
+                    width="200"
+                    height="50"
+                    alt="Scira badge"
+                    loading="lazy"
+                  />
+                </a>
+              </div>
+
+              {/* Awards */}
+              <div className="flex flex-wrap items-center justify-center gap-24">
+                <div className="flex flex-col items-center space-y-4 group">
+                  <div className="transition-transform duration-300 group-hover:scale-110">
+                    <img
+                      src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png"
+                      alt="Tiny Startups #1 Product"
+                      className="size-24 object-contain"
+                    />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="font-medium text-sm">#1 Product of the Week</div>
+                    <div className="text-xs text-muted-foreground">Tiny Startups</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center space-y-4 group">
+                  <div className="transition-transform duration-300 group-hover:scale-110">
+                    <img src="/Winner-Medal-Weekly.svg" alt="Peerlist #3 Project" className="size-24 object-contain" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="font-medium text-sm">#3 Project of the Week</div>
+                    <div className="text-xs text-muted-foreground">Peerlist</div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -494,7 +578,13 @@ export default function AboutPage() {
                 <p className="text-muted-foreground">Active Users</p>
               </div>
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="text-5xl font-medium">7K+</div>
+                <div className="text-5xl font-medium">
+                  {isLoadingStars ? (
+                    <span className="animate-pulse">Loading...</span>
+                  ) : (
+                    `${githubStars?.toLocaleString() || '9,000'}+`
+                  )}
+                </div>
                 <p className="text-muted-foreground">GitHub Stars</p>
               </div>
             </div>
@@ -593,92 +683,6 @@ export default function AboutPage() {
                 <h3 className="font-medium">Qwen QWQ 32B</h3>
                 <p className="text-sm text-muted-foreground mt-1">Alibaba&apos;s most advanced model</p>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Community Recognition Section */}
-      <section className="py-24 px-4 bg-gradient-to-b from-accent/10 to-background">
-        <div className="container max-w-7xl mx-auto w-full">
-          <motion.div
-            className="w-full space-y-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl font-medium tracking-tight">Community Recognition</h2>
-              <p className="text-muted-foreground">
-                Join thousands of developers and researchers who trust Scira
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <motion.div
-                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
-                whileHover={{ y: -2 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <img 
-                      src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png" 
-                      alt="Tiny Startups #1 Product" 
-                      className="h-10 w-10 object-contain" 
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-medium">#1 Product of the Week</h3>
-                    <p className="text-sm text-muted-foreground">Tiny Startups</p>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div
-                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
-                whileHover={{ y: -2 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <img src="/Winner-Medal-Weekly.svg" alt="Award" className="h-10 w-10" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-medium">#3 Project of the Week</h3>
-                    <p className="text-sm text-muted-foreground">Peerlist</p>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div
-                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
-                whileHover={{ y: -2 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <GithubLogo className="h-10 w-10" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-medium">8,000+ Stars</h3>
-                    <p className="text-sm text-muted-foreground">GitHub</p>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div
-                className="group relative p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden"
-                whileHover={{ y: -2 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Users className="h-10 w-10" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-medium">100K+ Monthly Users</h3>
-                    <p className="text-sm text-muted-foreground">Active Community</p>
-                  </div>
-                </div>
-              </motion.div>
             </div>
           </motion.div>
         </div>
@@ -987,9 +991,7 @@ export default function AboutPage() {
                   <Sparkles className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                 </div>
                 <div className="flex-1 space-y-2 text-center sm:text-left">
-                  <h3 className="font-medium text-base">
-                    Free Unlimited Access to Advanced Models
-                  </h3>
+                  <h3 className="font-medium text-base">Free Unlimited Access to Advanced Models</h3>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Registered users get unlimited access to Grok 3 Mini and Grok 2 Vision models - no daily limits, no
                     restrictions. Perfect for students, researchers, and professionals who need reliable AI assistance

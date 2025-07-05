@@ -128,6 +128,11 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
 });
 MarkdownRenderer.displayName = 'MarkdownRenderer';
 
+// Helper function to check if content is empty (just newlines)
+const isEmptyContent = (content: string): boolean => {
+  return !content || content.trim() === '' || /^\n+$/.test(content);
+};
+
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
   ({
     part,
@@ -159,6 +164,16 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
         }, 10);
       }
     }, [part.details, isComplete]);
+
+    // Check if all content is empty (just newlines or whitespace)
+    const hasNonEmptyDetails =
+      part.details && part.details.some((detail) => detail.type === 'text' && !isEmptyContent(detail.text));
+    const hasNonEmptyReasoning = part.reasoning && !isEmptyContent(part.reasoning);
+
+    // If all content is empty, don't render the reasoning section
+    if (!hasNonEmptyDetails && !hasNonEmptyReasoning) {
+      return null;
+    }
 
     return (
       <div className="my-3" key={sectionKey}>
@@ -258,25 +273,28 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     )}
                   >
                     {part.details && part.details.length > 0 ? (
-                      part.details.map((detail, detailIndex) =>
-                        detail.type === 'text' ? (
-                          <div
-                            key={detailIndex}
-                            className={cn(
-                              'px-3 py-3 text-xs leading-relaxed',
-                              detailIndex !== part.details.length - 1 &&
-                                'border-b border-neutral-200 dark:border-neutral-800/80',
-                            )}
-                          >
-                            <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
-                              <MarkdownRenderer content={detail.text} />
+                      part.details
+                        .filter((detail) => detail.type === 'text' && !isEmptyContent(detail.text))
+                        .map((detail, detailIndex) =>
+                          detail.type === 'text' ? (
+                            <div
+                              key={detailIndex}
+                              className={cn(
+                                'px-3 py-3 text-xs leading-relaxed',
+                                detailIndex !==
+                                  part.details.filter((d) => d.type === 'text' && !isEmptyContent(d.text)).length - 1 &&
+                                  'border-b border-neutral-200 dark:border-neutral-800/80',
+                              )}
+                            >
+                              <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
+                                <MarkdownRenderer content={detail.text} />
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          '<redacted>'
-                        ),
-                      )
-                    ) : part.reasoning ? (
+                          ) : (
+                            '<redacted>'
+                          ),
+                        )
+                    ) : part.reasoning && !isEmptyContent(part.reasoning) ? (
                       <div className="px-3 py-3 text-xs leading-relaxed">
                         <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
                           <MarkdownRenderer content={part.reasoning} />

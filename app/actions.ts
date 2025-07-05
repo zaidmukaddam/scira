@@ -22,8 +22,8 @@ import {
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
 import { getSubscriptionDetails } from '@/lib/subscription';
-import { 
-  usageCountCache, 
+import {
+  usageCountCache,
   createMessageCountKey,
   createExtremeCountKey
 } from '@/lib/performance-cache';
@@ -34,7 +34,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-g2'),
+    model: scira.languageModel('scira-deepseek-v3'),
     temperature: 0,
     maxTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
@@ -46,6 +46,7 @@ export async function suggestQuestions(history: any[]) {
 - NEVER use pronouns (he, she, him, his, her, etc.) - always use proper nouns from the context
 - Questions must be related to tools available in the system
 - Questions should flow naturally from previous conversation
+- You are here to generate questions for the search engine not to use tools or run tools!!
 
 ### Tool-Specific Question Types:
 - Web search: Focus on factual information, current events, or general knowledge

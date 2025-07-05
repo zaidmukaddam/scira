@@ -42,9 +42,6 @@ import { cn } from '@/lib/utils';
 
 // Component for Profile Information with its own loading state
 function ProfileSection() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-
   const {
     data: user,
     isLoading: userLoading,
@@ -60,13 +57,6 @@ function ProfileSection() {
     queryFn: getSubDetails,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setEmail(user.email || '');
-    }
-  }, [user]);
 
   useEffect(() => {
     if (userError) {
@@ -115,11 +105,13 @@ function ProfileSection() {
           <Avatar className="h-20 w-20">
             <AvatarImage src={user?.image || ''} />
             <AvatarFallback className="text-lg">
-              {name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase()}
+              {user?.name
+                ? user.name
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()
+                : 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-2">
@@ -140,43 +132,23 @@ function ProfileSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your full name"
-            />
+            <Label>Full Name</Label>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="font-medium">{user?.name || 'Not provided'}</p>
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} placeholder="Enter your email" disabled className="bg-muted" />
+            <Label>Email</Label>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="font-medium">{user?.email || 'Not provided'}</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={async () => {
-              try {
-                // Here you would typically call an API to update the user profile
-                // For now, we'll just show a success message
-                toast.success('Profile updated successfully');
-              } catch (error) {
-                toast.error('Failed to update profile');
-              }
-            }}
-          >
-            Save Changes
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setName(user?.name || '');
-              setEmail(user?.email || '');
-            }}
-          >
-            Reset
-          </Button>
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            Profile information is managed through your authentication provider. To update your name or email, please contact support.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -660,10 +632,6 @@ function SubscriptionSection() {
               <Button variant="outline" onClick={handleManageSubscription}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Manage Billing
-              </Button>
-              <Button variant="outline">
-                <Gear className="h-4 w-4 mr-2" />
-                Update Plan
               </Button>
             </div>
           </div>
