@@ -511,7 +511,9 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        maxTokens: getMaxOutputTokens(model),
+        ...(model !== 'scira-anthropic-thinking' && model !== 'scira-opus-pro' 
+          ? { maxTokens: getMaxOutputTokens(model) } 
+          : {}),
         ...(model.includes('scira-qwq')
           ? {
             temperature: 0.6,
