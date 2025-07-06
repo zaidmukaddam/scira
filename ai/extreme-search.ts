@@ -186,7 +186,7 @@ Plan Guidelines:
 
     // Create the autonomous research agent with tools
     const { text } = await generateText({
-        model: scira.languageModel("scira-x-fast"),
+        model: scira.languageModel("scira-x-fast-mini"),
         maxSteps: totalTodos + 2,
         system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
