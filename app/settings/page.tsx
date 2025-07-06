@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getUserMessageCount, getSubDetails, getCurrentUser, getExtremeSearchUsageCount } from '@/app/actions';
+import { getUserMessageCount, getSubDetails, getCurrentUser, getExtremeSearchUsageCount, getHistoricalUsage } from '@/app/actions';
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { authClient } from '@/lib/auth-client';
 
@@ -39,6 +39,7 @@ import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/
 import { Loader2, Search, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { UsageGraph } from '@/components/ui/usage-graph';
 
 // Component for Profile Information with its own loading state
 function ProfileSection() {
@@ -185,6 +186,28 @@ function UsageSection() {
     retry: 2, // Reduce retry attempts
   });
 
+  // Get current user for historical data query
+  const { data: currentUser } = useQuery({
+    queryKey: ['user'],
+    queryFn: getCurrentUser,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Fetch historical usage data for the graph (only when user is available)
+  const {
+    data: historicalUsageData,
+    isLoading: historicalLoading,
+    refetch: refetchHistoricalData,
+  } = useQuery({
+    queryKey: ['historicalUsage', currentUser?.id],
+    queryFn: () => getHistoricalUsage(currentUser),
+    enabled: !!currentUser, // Only run when user is available
+    staleTime: 1000 * 60 * 10, // 10 minutes - historical data changes less frequently
+    gcTime: 1000 * 60 * 15, // 15 minutes cache retention
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
+
   // Destructure data with fallbacks
   const searchCount = usageData?.searchCount;
   const extremeSearchCount = usageData?.extremeSearchCount;
@@ -199,7 +222,7 @@ function UsageSection() {
 
   const handleRefreshUsage = async () => {
     try {
-      await refetchUsageData();
+      await Promise.all([refetchUsageData(), refetchHistoricalData()]);
       toast.success('Usage data refreshed');
     } catch (error) {
       toast.error('Failed to refresh usage data');
@@ -231,7 +254,7 @@ function UsageSection() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Current Usage Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Today's Searches */}
           <div className="p-4 border rounded-lg bg-card h-32 flex flex-col justify-between">
             <div className="flex items-start justify-between">
@@ -250,19 +273,7 @@ function UsageSection() {
             </div>
           </div>
 
-          {/* Free Unlimited Models */}
-          <div className="p-4 border rounded-lg bg-card h-32 flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground leading-tight">Grok 3 Mini & Vision</span>
-                <span className="text-[10px] text-muted-foreground/70">Unlimited access</span>
-              </div>
-              <Sparkle className="h-6 w-6 text-muted-foreground flex-shrink-0" />
-            </div>
-            <div className="mt-auto">
-              <span className="text-xl font-bold leading-tight">∞</span>
-            </div>
-          </div>
+
 
           {/* Extreme Searches (Monthly) */}
           <div className="p-4 border rounded-lg bg-card h-32 flex flex-col justify-between">
@@ -304,20 +315,40 @@ function UsageSection() {
           </div>
         </div>
 
+        {/* Usage Trend Graph */}
+        {!usageLoading && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Usage Activity</h4>
+                <p className="text-sm text-muted-foreground">Your search activity over the past year</p>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Past 52 weeks
+              </div>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-card">
+              {historicalLoading ? (
+                <div className="h-32 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading usage history...</p>
+                  </div>
+                </div>
+              ) : (
+                <UsageGraph 
+                  data={historicalUsageData || []} 
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Usage Progress Bars for Free Users */}
         {!usageLoading && !isProUser && (
           <div className="space-y-4">
-            {/* Free Unlimited Models Notice */}
-            <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex items-center gap-2 text-green-800 dark:text-green-200 mb-2">
-                <Sparkle className="h-4 w-4" />
-                <span className="text-sm font-medium">Unlimited Access Available</span>
-              </div>
-              <p className="text-xs text-green-700 dark:text-green-300">
-                You have unlimited access to Grok 3 Mini and Grok 2 Vision models. Daily limits only apply to other AI
-                models.
-              </p>
-            </div>
+
 
             {/* Regular Search Usage */}
             <div className="space-y-2">
@@ -348,8 +379,8 @@ function UsageSection() {
                   </div>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                     {usagePercentage >= 100
-                      ? 'You can still use Grok 3 Mini & Vision unlimited. Upgrade to Pro for unlimited access to all models.'
-                      : 'Remember: Grok 3 Mini & Vision are always unlimited. Upgrade to Pro for unlimited access to all models.'}
+                      ? 'Upgrade to Pro for unlimited access to all models.'
+                      : 'Upgrade to Pro for unlimited access to all models.'}
                   </p>
                 </div>
               )}

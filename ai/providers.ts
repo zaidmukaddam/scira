@@ -76,7 +76,7 @@ export const models = [
     pdf: false,
     pro: false,
     requiresAuth: false,
-    freeUnlimited: true,
+    freeUnlimited: false,
     maxOutputTokens: 16000,
   },
   {
@@ -90,7 +90,7 @@ export const models = [
     pdf: false,
     pro: false,
     requiresAuth: false,
-    freeUnlimited: true,
+    freeUnlimited: false,
     maxOutputTokens: 8000,
   },
   {

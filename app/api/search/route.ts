@@ -1173,9 +1173,7 @@ print(f"Converted amount: {converted_amount}")
               include_domains?: string[];
               exclude_domains?: string[];
             }) => {
-              const apiKey = serverEnv.TAVILY_API_KEY;
-              const tvly = tavily({ apiKey });
-              const includeImageDescriptions = true;
+              const exa = new Exa(serverEnv.EXA_API_KEY);
 
               console.log('Queries:', queries);
               console.log('Max Results:', maxResults);
@@ -1186,70 +1184,99 @@ print(f"Converted amount: {converted_amount}")
 
               // Execute searches in parallel
               const searchPromises = queries.map(async (query, index) => {
-                const data = await tvly.search(query, {
-                  topic: topics[index] || topics[0] || 'general',
-                  days: topics[index] === 'news' ? 7 : undefined,
-                  maxResults: maxResults[index] || maxResults[0] || 10,
-                  searchDepth: searchDepth[index] || searchDepth[0] || 'basic',
-                  includeAnswer: true,
-                  includeImages: true,
-                  includeImageDescriptions: includeImageDescriptions,
-                  excludeDomains: exclude_domains || undefined,
-                  includeDomains: include_domains || undefined,
-                });
+                const currentTopic = topics[index] || topics[0] || 'general';
+                const currentMaxResults = maxResults[index] || maxResults[0] || 10;
+                const currentSearchDepth = searchDepth[index] || searchDepth[0] || 'basic';
+                
+                try {
+                  const searchOptions: any = {
+                    text: true,
+                    type: currentSearchDepth === 'advanced' ? 'neural' : 'auto',
+                    numResults: currentMaxResults,
+                    livecrawl: 'preferred',
+                  };
 
-                // Add annotation for query completion
-                dataStream.writeMessageAnnotation({
-                  type: 'query_completion',
-                  data: {
+                  // Add date filtering for news searches
+                  if (currentTopic === 'news') {
+                    const endDate = new Date();
+                    const startDate = new Date();
+                    startDate.setDate(startDate.getDate() - 7); // Last 7 days
+                    
+                    searchOptions.startPublishedDate = startDate.toISOString();
+                    searchOptions.endPublishedDate = endDate.toISOString();
+                  }
+
+                  // Add domain filtering
+                  if (include_domains && include_domains.length > 0) {
+                    searchOptions.includeDomains = include_domains;
+                  }
+                  if (exclude_domains && exclude_domains.length > 0) {
+                    searchOptions.excludeDomains = exclude_domains;
+                  }
+
+                  const data = await exa.searchAndContents(query, searchOptions);
+
+                  // Collect images from results
+                  const images: { url: string; description: string }[] = [];
+                  const results = data.results.map((result: any) => {
+                    // Extract and add image if available
+                    if (result.image) {
+                      images.push({
+                        url: result.image,
+                        description: result.title || result.text?.substring(0, 100) + '...' || '',
+                      });
+                    }
+
+                    return {
+                      url: result.url,
+                      title: result.title || '',
+                      content: result.text || '',
+                      raw_content: result.text || '',
+                      published_date: currentTopic === 'news' && result.publishedDate ? result.publishedDate : undefined,
+                      author: result.author || undefined,
+                    };
+                  });
+
+                  // Add annotation for query completion
+                  dataStream.writeMessageAnnotation({
+                    type: 'query_completion',
+                    data: {
+                      query,
+                      index,
+                      total: queries.length,
+                      status: 'completed',
+                      resultsCount: results.length,
+                      imagesCount: images.length,
+                    },
+                  });
+
+                  return {
                     query,
-                    index,
-                    total: queries.length,
-                    status: 'completed',
-                    resultsCount: data.results.length,
-                    imagesCount: data.images.length,
-                  },
-                });
+                    results: deduplicateByDomainAndUrl(results),
+                    images: images.filter(img => img.url && img.description),
+                  };
+                } catch (error) {
+                  console.error(`Exa search error for query "${query}":`, error);
+                  
+                  // Add annotation for failed query
+                  dataStream.writeMessageAnnotation({
+                    type: 'query_completion',
+                    data: {
+                      query,
+                      index,
+                      total: queries.length,
+                      status: 'completed',
+                      resultsCount: 0,
+                      imagesCount: 0,
+                    },
+                  });
 
-                return {
-                  query,
-                  results: deduplicateByDomainAndUrl(data.results).map((obj: any) => ({
-                    url: obj.url,
-                    title: obj.title,
-                    content: obj.content,
-                    published_date: topics[index] === 'news' ? obj.published_date : undefined,
-                  })),
-                  images: includeImageDescriptions
-                    ? await Promise.all(
-                      deduplicateByDomainAndUrl(data.images).map(
-                        async ({ url, description }: { url: string; description?: string }) => {
-                          const sanitizedUrl = sanitizeUrl(url);
-                          const imageValidation = await isValidImageUrl(sanitizedUrl);
-                          return imageValidation.valid
-                            ? {
-                              url: imageValidation.redirectedUrl || sanitizedUrl,
-                              description: description ?? '',
-                            }
-                            : null;
-                        },
-                      ),
-                    ).then((results) =>
-                      results.filter(
-                        (image): image is { url: string; description: string } =>
-                          image !== null &&
-                          typeof image === 'object' &&
-                          typeof image.description === 'string' &&
-                          image.description !== '',
-                      ),
-                    )
-                    : await Promise.all(
-                      deduplicateByDomainAndUrl(data.images).map(async ({ url }: { url: string }) => {
-                        const sanitizedUrl = sanitizeUrl(url);
-                        const imageValidation = await isValidImageUrl(sanitizedUrl);
-                        return imageValidation.valid ? imageValidation.redirectedUrl || sanitizedUrl : null;
-                      }),
-                    ).then((results) => results.filter((url) => url !== null) as string[]),
-                };
+                  return {
+                    query,
+                    results: [],
+                    images: [],
+                  };
+                }
               });
 
               const searchResults = await Promise.all(searchPromises);
@@ -2903,9 +2930,7 @@ print(f"Converted amount: {converted_amount}")
                 messages: [messages[messages.length - 1]],
                 responseMessages: event.response.messages,
               });
-
-              console.log('Assistant message [annotations]:', assistantMessage.annotations);
-
+              
               await saveMessages({
                 messages: [
                   {

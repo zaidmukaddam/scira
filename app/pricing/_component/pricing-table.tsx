@@ -176,7 +176,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
       {/* Header */}
       <div className="max-w-3xl mx-auto px-6 pt-8 pb-16">
         <div className="text-center">
-          <h1 className="text-[2.5rem] font-black font-be-vietnam-pro text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.02em] leading-tight">
+          <h1 className="text-[2.5rem] font-medium tracking-tight font-be-vietnam-pro text-zinc-900 dark:text-zinc-100 mb-6 leading-tight">
             Pricing
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-be-vietnam-pro leading-relaxed">
@@ -295,10 +295,6 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                   <span className="text-zinc-700 dark:text-zinc-300">
                     {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day (other models)
                   </span>
-                </li>
-                <li className="flex items-center text-[15px]">
-                  <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">Unlimited Grok 3 Mini & Grok 2 Vision</span>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>

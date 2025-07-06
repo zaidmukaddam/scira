@@ -18,6 +18,7 @@ import {
   getExtremeSearchCount,
   incrementMessageUsage,
   getMessageCount,
+  getHistoricalUsageData,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
@@ -1218,5 +1219,59 @@ export async function getDiscountConfigAction() {
     return {
       enabled: false,
     };
+  }
+}
+
+export async function getHistoricalUsage(providedUser?: any) {
+  'use server';
+
+  try {
+    const user = providedUser || await getUser();
+    if (!user) {
+      return [];
+    }
+
+    const historicalData = await getHistoricalUsageData({ userId: user.id });
+    
+    // Create a complete 365-day dataset with defaults
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 364);
+    
+    // Create a map of existing data for quick lookup
+    const dataMap = new Map<string, number>();
+    historicalData.forEach((record) => {
+      const dateKey = record.date.toISOString().split('T')[0];
+      dataMap.set(dateKey, record.messageCount || 0);
+    });
+    
+    // Generate complete dataset for all 365 days
+    const completeData = [];
+    for (let i = 0; i < 365; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      const dateKey = currentDate.toISOString().split('T')[0];
+      
+      const count = dataMap.get(dateKey) || 0;
+      let level: 0 | 1 | 2 | 3 | 4;
+      
+      // Define usage levels based on message count
+      if (count === 0) level = 0;
+      else if (count <= 3) level = 1;
+      else if (count <= 7) level = 2;
+      else if (count <= 12) level = 3;
+      else level = 4;
+
+      completeData.push({
+        date: dateKey,
+        count,
+        level,
+      });
+    }
+    
+    return completeData;
+  } catch (error) {
+    console.error('Error getting historical usage:', error);
+    return [];
   }
 }

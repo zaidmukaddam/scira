@@ -9,7 +9,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 
 // Third-party library imports
 import { useChat, UseChatOptions } from '@ai-sdk/react';
-import { Crown, Sparkle } from '@phosphor-icons/react';
+import { Crown } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
@@ -46,37 +46,7 @@ interface Attachment {
   size: number;
 }
 
-// Add new component for changelog dialog
-const ChangelogDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 shadow-2xl">
-        <div className="p-8">
-          {/* Header */}
-          <div className="text-center space-y-4 mb-8">
-            <div className="w-10 h-10 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center mx-auto">
-              <Sparkle className="w-5 h-5 text-neutral-100 dark:text-neutral-900" weight="fill" />
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Free Unlimited Models</h2>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed max-w-xs mx-auto">
-                Grok 3 Mini and Grok 2 Vision are now unlimited for registered users.
-              </p>
-            </div>
-          </div>
 
-          {/* Action */}
-          <Button
-            onClick={() => onOpenChange(false)}
-            className="w-full h-10 text-sm font-medium bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-neutral-100 dark:text-neutral-900 transition-colors"
-          >
-            Got it
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 // Add new component for launch badge
 const LaunchBadge = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
@@ -251,9 +221,7 @@ const ChatInterface = memo(
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [hasShownUpgradeDialog, setHasShownUpgradeDialog] = useLocalStorage('scira-upgrade-prompt-shown', false);
 
-    // Add changelog dialog state
-    const [showChangelogDialog, setShowChangelogDialog] = useState(false);
-    const [hasShownChangelogDialog, setHasShownChangelogDialog] = useLocalStorage('scira-changelog-shown', false);
+
 
     // Add launch badge state
     const [showLaunchBadge, setShowLaunchBadge] = useState(false);
@@ -315,17 +283,7 @@ const ChatInterface = memo(
       };
     }, [user, hasShownSignInPrompt, setHasShownSignInPrompt]);
 
-    // Show changelog dialog to registered free users
-    useEffect(() => {
-      // Show changelog to registered free users who haven't seen it yet
-      // Only show if Pro status is fully loaded and user is definitively not Pro
-      if (user && !isUserPro && !proStatusLoading && !hasShownChangelogDialog && subscriptionData !== undefined) {
-        // Small delay to ensure UI is ready
-        setTimeout(() => {
-          setShowChangelogDialog(true);
-        }, 500);
-      }
-    }, [user, isUserPro, hasShownChangelogDialog, proStatusLoading, subscriptionData]);
+
 
     // Show launch badge to all users who haven't seen it yet
     useEffect(() => {
@@ -682,16 +640,7 @@ const ChatInterface = memo(
           }}
         />
 
-        {/* Changelog Dialog */}
-        <ChangelogDialog
-          open={showChangelogDialog}
-          onOpenChange={(open) => {
-            setShowChangelogDialog(open);
-            if (!open) {
-              setHasShownChangelogDialog(true);
-            }
-          }}
-        />
+
 
         {/* Launch Badge */}
         <LaunchBadge

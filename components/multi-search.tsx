@@ -26,6 +26,7 @@ type SearchResult = {
   content: string;
   raw_content: string;
   published_date?: string;
+  author?: string;
 };
 
 type SearchQueryResult = {
@@ -41,7 +42,7 @@ type MultiSearchResponse = {
 type MultiSearchArgs = {
   queries: string[];
   maxResults: number[];
-  topics: ('general' | 'news')[];
+  topics: ('general' | 'news' | 'finance')[];
   searchDepth: ('basic' | 'advanced')[];
 };
 
@@ -59,7 +60,6 @@ type QueryCompletion = {
 
 // Constants
 const PREVIEW_IMAGE_COUNT = 5;
-const PREVIEW_SOURCE_COUNT = 5;
 
 // Utility function for favicon
 const getFaviconUrl = (url: string) => {
@@ -116,6 +116,12 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
           </h3>
           <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="truncate">{hostname}</span>
+            {result.author && (
+              <>
+                <span>•</span>
+                <span className="truncate">{result.author}</span>
+              </>
+            )}
             <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
@@ -395,21 +401,21 @@ const LoadingState: React.FC<{
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    
+
     // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-    
+
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-    
+
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-    
+
     // Check scroll position to determine if we should handle the event
     const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-    
+
     // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
       // In middle of scroll area - always handle
@@ -452,12 +458,7 @@ const LoadingState: React.FC<{
                   {totalResults || '0'}
                 </Badge>
                 {totalResults > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 px-2 text-xs opacity-50 cursor-not-allowed"
-                    disabled
-                  >
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
                     View all
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
@@ -476,7 +477,7 @@ const LoadingState: React.FC<{
               )}
             >
               {/* Query badges */}
-              <div 
+              <div
                 ref={loadingQueryTagsRef}
                 className="flex gap-2 overflow-x-auto no-scrollbar"
                 onWheel={handleWheelScroll}
@@ -506,7 +507,7 @@ const LoadingState: React.FC<{
               </div>
 
               {/* Skeleton cards */}
-              <div 
+              <div
                 ref={loadingSkeletonRef}
                 className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
                 onWheel={handleWheelScroll}
@@ -566,21 +567,21 @@ const MultiSearch: React.FC<{
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    
+
     // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-    
+
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-    
+
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-    
+
     // Check scroll position to determine if we should handle the event
     const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-    
+
     // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
       // In middle of scroll area - always handle
@@ -634,9 +635,9 @@ const MultiSearch: React.FC<{
                   {totalResults}
                 </Badge>
                 {totalResults > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-7 px-2 text-xs"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -661,11 +662,7 @@ const MultiSearch: React.FC<{
               )}
             >
               {/* Query tags */}
-              <div 
-                ref={queryTagsRef}
-                className="flex gap-2 overflow-x-auto no-scrollbar"
-                onWheel={handleWheelScroll}
-              >
+              <div ref={queryTagsRef} className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
                 {result.searches.map((search, i) => (
                   <Badge key={i} variant="outline" className="rounded-full text-xs px-3 py-1 shrink-0">
                     <Search className="w-3 h-3 mr-1.5" />
@@ -675,7 +672,7 @@ const MultiSearch: React.FC<{
               </div>
 
               {/* Preview results */}
-              <div 
+              <div
                 ref={previewResultsRef}
                 className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
                 onWheel={handleWheelScroll}
@@ -692,8 +689,6 @@ const MultiSearch: React.FC<{
                   </a>
                 ))}
               </div>
-
-
             </div>
           </AccordionContent>
         </AccordionItem>

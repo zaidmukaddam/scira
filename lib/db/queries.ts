@@ -430,3 +430,49 @@ export async function getMessageCount({ userId }: { userId: string }): Promise<n
     return 0;
   }
 }
+
+export async function getHistoricalUsageData({ userId }: { userId: string }) {
+  try {
+    // Get actual message data for the last 365 days from message table
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 364);
+    
+    // Get all user messages from their chats in the date range
+    const historicalMessages = await db
+      .select({
+        createdAt: message.createdAt,
+        role: message.role,
+      })
+      .from(message)
+      .innerJoin(chat, eq(message.chatId, chat.id))
+      .where(
+        and(
+          eq(chat.userId, userId),
+          eq(message.role, 'user'), // Only count user messages, not assistant responses
+          gte(message.createdAt, startDate),
+          lt(message.createdAt, endDate)
+        )
+      )
+      .orderBy(asc(message.createdAt));
+
+    // Group messages by date and count them
+    const dailyCounts = new Map<string, number>();
+    
+    historicalMessages.forEach((msg) => {
+      const dateKey = msg.createdAt.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+      dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
+    });
+
+    // Convert to array format expected by the frontend
+    const result = Array.from(dailyCounts.entries()).map(([date, count]) => ({
+      date: new Date(date),
+      messageCount: count,
+    }));
+
+    return result;
+  } catch (error) {
+    console.error('Error getting historical usage data:', error);
+    return [];
+  }
+}
