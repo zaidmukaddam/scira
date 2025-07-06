@@ -24,7 +24,6 @@ type SearchResult = {
   url: string;
   title: string;
   content: string;
-  raw_content: string;
   published_date?: string;
   author?: string;
 };

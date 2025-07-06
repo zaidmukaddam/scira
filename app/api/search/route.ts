@@ -536,7 +536,7 @@ export async function POST(req: Request) {
                 temperature: 0,
               }),
         maxSteps: 5,
-        maxRetries: 5,
+        maxRetries: 10,
         experimental_activeTools: [...activeTools],
         system: instructions + `\n\nThe user's location is ${latitude}, ${longitude}.`,
         toolChoice: 'auto',
@@ -1230,8 +1230,7 @@ print(f"Converted amount: {converted_amount}")
                     return {
                       url: result.url,
                       title: result.title || '',
-                      content: result.text || '',
-                      raw_content: result.text || '',
+                      content: (result.text || '').substring(0, 1000),
                       published_date: currentTopic === 'news' && result.publishedDate ? result.publishedDate : undefined,
                       author: result.author || undefined,
                     };
@@ -2930,7 +2929,7 @@ print(f"Converted amount: {converted_amount}")
                 messages: [messages[messages.length - 1]],
                 responseMessages: event.response.messages,
               });
-              
+
               await saveMessages({
                 messages: [
                   {
