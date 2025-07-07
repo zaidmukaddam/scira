@@ -28,12 +28,6 @@ export const scira = customProvider({
     'scira-4o-mini': openai.responses('gpt-4o-mini'),
     'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
     'scira-o3': openai.responses('o3'),
-    'scira-qwq': wrapLanguageModel({
-      model: groq('qwen-qwq-32b', {
-        parallelToolCalls: false,
-      }),
-      middleware,
-    }),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b', {
         parallelToolCalls: false,
@@ -322,20 +316,6 @@ export const models = [
     requiresAuth: false,
     freeUnlimited: false,
     maxOutputTokens: 8000,
-  },
-  {
-    value: 'scira-qwq',
-    label: 'QWQ 32B',
-    description: "Alibaba's advanced reasoning model",
-    vision: false,
-    reasoning: true,
-    experimental: true,
-    category: 'Experimental',
-    pdf: false,
-    pro: false,
-    requiresAuth: false,
-    freeUnlimited: false,
-    maxOutputTokens: 131072,
   },
 ];
 
