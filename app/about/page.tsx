@@ -364,7 +364,7 @@ export default function AboutPage() {
                     <img src="/Winner-Medal-Weekly.svg" alt="Peerlist #1 Project" className="size-24 object-contain" />
                   </div>
                   <div className="text-center space-y-1">
-                    <div className="font-medium text-sm">#3 Project of the Week</div>
+                    <div className="font-medium text-sm">#1 Project of the Week</div>
                     <div className="text-xs text-muted-foreground">Peerlist</div>
                   </div>
                 </div>
