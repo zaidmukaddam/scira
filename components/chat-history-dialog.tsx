@@ -12,19 +12,7 @@ import {
   CommandList,
   CommandInput,
 } from '@/components/ui/command';
-import {
-  Trash,
-  ArrowUpRight,
-  History,
-  Globe,
-  Lock,
-  Search,
-  Calendar,
-  Hash,
-  Check,
-  X,
-  Pencil,
-} from 'lucide-react';
+import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from 'lucide-react';
 import { ListMagnifyingGlass } from '@phosphor-icons/react';
 import {
   isToday,
@@ -702,9 +690,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
         value={chat.id}
         onSelect={() => !isDeleting && !isEditing && handleSelectChat(chat.id, chat.title)}
         className={cn(
-          'flex items-center py-2.5! px-3! mx-1! my-0.5! rounded-md transition-colors',
-          isDeleting && 'bg-destructive/10! border border-destructive/20 hover:bg-destructive/20!',
-          isEditing && 'bg-muted/50! border border-muted-foreground/20',
+          'flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-md transition-all duration-200 ease-in-out',
+          isDeleting &&
+            'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 shadow-sm',
+          isEditing && 'bg-muted/30 dark:bg-muted/20 border border-muted-foreground/20 shadow-sm',
+          !isDeleting && !isEditing && 'hover:bg-muted/50 border border-transparent',
         )}
         disabled={navigating === chat.id}
         data-chat-id={chat.id}
@@ -750,14 +740,19 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 onChange={(e) => setEditingTitle(e.target.value)}
                 onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full bg-transparent border-none outline-none focus:outline-none text-sm"
+                className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
                 placeholder="Enter title..."
                 autoFocus
                 maxLength={100}
               />
             ) : (
               <span
-                className={cn('truncate block', isCurrentChat && 'font-medium', isDeleting && 'text-foreground/70')}
+                className={cn(
+                  'truncate block',
+                  isCurrentChat && 'font-medium',
+                  isDeleting && 'text-red-700 dark:text-red-300 font-medium',
+                  isEditing && 'text-muted-foreground',
+                )}
               >
                 {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
               </span>
@@ -772,17 +767,21 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="h-7 w-7 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
                   onClick={(e) => confirmDeleteChat(e, chat.id)}
                   aria-label="Confirm delete"
                   disabled={deleteMutation.isPending}
                 >
-                  <Check className="h-4 w-4" />
+                  {deleteMutation.isPending ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-red-600"></div>
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-muted-foreground"
+                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
                   onClick={cancelDeleteChat}
                   aria-label="Cancel delete"
                 >
@@ -795,17 +794,21 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-green-600 hover:text-green-600 hover:bg-green-600/10"
+                  className="h-7 w-7 flex-shrink-0 text-foreground hover:text-foreground hover:bg-muted"
                   onClick={(e) => saveEditedTitle(e, chat.id)}
                   aria-label="Save title"
                   disabled={updateTitleMutation.isPending}
                 >
-                  <Check className="h-4 w-4" />
+                  {updateTitleMutation.isPending ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-foreground"></div>
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-muted-foreground"
+                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
                   onClick={cancelEditTitle}
                   aria-label="Cancel edit"
                 >
@@ -820,25 +823,30 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   {formatCompactTime(new Date(chat.createdAt))}
                 </span>
 
-                {/* Actions - always enabled */}
+                {/* Actions - contextual based on states */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'transition-colors hover:text-blue-600 h-7 w-7 flex-shrink-0',
-                    isCurrentChat ? 'text-blue-600/70 hover:text-blue-600' : '',
-                    !!deletingChatId && 'pointer-events-none opacity-50 bg-red-100 dark:bg-red-900',
+                    'transition-colors h-7 w-7 flex-shrink-0',
+                    isCurrentChat
+                      ? 'text-foreground/70 hover:text-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                    (deleteMutation.isPending ||
+                      updateTitleMutation.isPending ||
+                      !!deletingChatId ||
+                      !!editingChatId) &&
+                      'opacity-50 pointer-events-none',
                   )}
-                  onClick={(e) => {
-                    if (!!deletingChatId) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return;
-                    }
-                    handleEditTitle(e, chat.id, chat.title);
-                  }}
+                  onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
                   aria-label={`Edit title of ${displayTitle}`}
-                  disabled={navigating === chat.id || updateTitleMutation.isPending || !!deletingChatId}
+                  disabled={
+                    navigating === chat.id ||
+                    deleteMutation.isPending ||
+                    updateTitleMutation.isPending ||
+                    !!deletingChatId ||
+                    !!editingChatId
+                  }
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -846,12 +854,25 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'transition-colors hover:text-destructive h-7 w-7 flex-shrink-0',
-                    isCurrentChat ? 'text-destructive/70 hover:text-destructive' : '',
+                    'transition-colors h-7 w-7 flex-shrink-0',
+                    isCurrentChat
+                      ? 'text-red-600/70 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
+                      : 'text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30',
+                    (deleteMutation.isPending ||
+                      updateTitleMutation.isPending ||
+                      !!deletingChatId ||
+                      !!editingChatId) &&
+                      'opacity-50 pointer-events-none',
                   )}
                   onClick={(e) => handleDeleteChat(e, chat.id, chat.title)}
                   aria-label={`Delete ${displayTitle}`}
-                  disabled={navigating === chat.id || deleteMutation.isPending}
+                  disabled={
+                    navigating === chat.id ||
+                    deleteMutation.isPending ||
+                    updateTitleMutation.isPending ||
+                    !!deletingChatId ||
+                    !!editingChatId
+                  }
                 >
                   <Trash className="h-4 w-4" />
                 </Button>

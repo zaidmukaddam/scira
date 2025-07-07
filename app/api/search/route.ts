@@ -511,30 +511,25 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        ...(model !== 'scira-anthropic-thinking' && model !== 'scira-opus-pro' 
-          ? { maxTokens: getMaxOutputTokens(model) } 
+        ...(model !== 'scira-anthropic-thinking' && model !== 'scira-opus-pro'
+          ? { maxTokens: getMaxOutputTokens(model) }
           : {}),
-        ...(model.includes('scira-qwq')
+        ...(model.includes('scira-qwen-32b')
           ? {
             temperature: 0.6,
             topP: 0.95,
+            topK: 20,
+            minP: 0,
           }
-          : model.includes('scira-qwen-32b')
+          : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
             ? {
               temperature: 0.6,
-              topP: 0.95,
-              topK: 20,
-              minP: 0,
+              topP: 1,
+              topK: 40,
             }
-            : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
-              ? {
-                temperature: 0.6,
-                topP: 1,
-                topK: 40,
-              }
-              : {
-                temperature: 0,
-              }),
+            : {
+              temperature: 0,
+            }),
         maxSteps: 5,
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
@@ -1187,24 +1182,15 @@ print(f"Converted amount: {converted_amount}")
                 const currentTopic = topics[index] || topics[0] || 'general';
                 const currentMaxResults = maxResults[index] || maxResults[0] || 10;
                 const currentSearchDepth = searchDepth[index] || searchDepth[0] || 'basic';
-                
+
                 try {
                   const searchOptions: any = {
                     text: true,
                     type: currentSearchDepth === 'advanced' ? 'neural' : 'auto',
-                    numResults: currentMaxResults,
+                    numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
                     livecrawl: 'preferred',
+                    category: currentTopic === 'finance' ? 'financial report' : currentTopic === 'news' ? 'news' : '',
                   };
-
-                  // Add date filtering for news searches
-                  if (currentTopic === 'news') {
-                    const endDate = new Date();
-                    const startDate = new Date();
-                    startDate.setDate(startDate.getDate() - 7); // Last 7 days
-                    
-                    searchOptions.startPublishedDate = startDate.toISOString();
-                    searchOptions.endPublishedDate = endDate.toISOString();
-                  }
 
                   // Add domain filtering
                   if (include_domains && include_domains.length > 0) {
@@ -1256,7 +1242,7 @@ print(f"Converted amount: {converted_amount}")
                   };
                 } catch (error) {
                   console.error(`Exa search error for query "${query}":`, error);
-                  
+
                   // Add annotation for failed query
                   dataStream.writeMessageAnnotation({
                     type: 'query_completion',
