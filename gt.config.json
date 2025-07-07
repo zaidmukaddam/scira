@@ -5,6 +5,17 @@
       "output": "public/_gt/[locale].json"
     }
   },
+  "src": [
+    "./app",
+    "./components",
+    "./hooks",
+    "./lib",
+    "./ai"
+  ],
+  "locales": [
+    "en",
+    "zh"
+  ],
   "framework": "next-app",
-  "_versionId": "617406df8b37d30ee23fa316a5b988f167c507c51214ff68835b8852c30bc0b0"
+  "_versionId": "3c91bfe7fc6a534384d389b8e9616c5ba889614a1c3e67d81621fdf89710db63"
 }

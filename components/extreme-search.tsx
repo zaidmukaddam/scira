@@ -702,6 +702,7 @@ const ExtremeSourcesSheet: React.FC<{
 
   const SheetWrapper = isMobile ? Drawer : Sheet;
   const SheetContentWrapper = isMobile ? DrawerContent : SheetContent;
+  const t = useGT();
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>

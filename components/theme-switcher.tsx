@@ -31,7 +31,7 @@ function ThemeOption({
       )}
       role="radio"
       aria-checked={isActive}
-      aria-label={t(`Switch to {{value}} theme`, { value })}
+      aria-label={t(`Switch to {{value}} theme`, { variables: { value } })}
       onClick={() => onClick(value)}
     >
       {icon}

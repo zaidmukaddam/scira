@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { T, useGT, Var } from 'gt-next';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface MCPServer {
   qualifiedName: string;
@@ -38,6 +38,7 @@ interface MCPServerListProps {
 
 export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, isLoading, error }) => {
   const t = useGT();
+  const locale = useLocale();
   if (isLoading) {
     return (
       <div className="flex overflow-x-auto pb-3 space-x-3 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
@@ -204,7 +205,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                 {server.useCount && parseInt(server.useCount) > 0 && (
                   <div className="flex justify-between text-[10px] text-neutral-500 mt-2.5">
                     <span>{t('Usage: {count}', { variables: { count: server.useCount } })}</span>
-                    {server.createdAt && <span>{t('Added: {date}', { variables: { date: new Date(server.createdAt).toLocaleDateString() } })}</span>}
+                    {server.createdAt && <span>{t('Added: {date}', { variables: { date: new Date(server.createdAt).toLocaleDateString(locale) } })}</span>}
                   </div>
                 )}
               </div>

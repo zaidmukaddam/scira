@@ -69,7 +69,7 @@ import { OnChainTokenPrice } from '@/components/onchain-crypto-components';
 // Actions
 import { generateSpeech } from '@/app/actions';
 import Image from 'next/image';
-import { T, useGT, Var, Num, Plural, Branch } from 'gt-next';
+import { T, useGT, Var, Num, Plural, Branch, useLocale } from 'gt-next';
 
 // Interfaces
 interface VideoDetails {
@@ -194,6 +194,7 @@ const SearchLoadingState = ({
 
 // Dedicated nearby search skeleton loading state
 const NearbySearchSkeleton = ({ type }: { type: string }) => {
+  const t = useGT();
   return (
     <div className="relative w-full h-[70vh] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4">
       {/* Header skeleton */}
@@ -232,7 +233,7 @@ const NearbySearchSkeleton = ({ type }: { type: string }) => {
           <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
             <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
             <TextShimmer className="text-sm font-medium" duration={2}>
-              <T>Finding nearby <Var>{type}</Var>...</T>
+              {t('Finding nearby {{type}}...', { variables: { type } })}
             </TextShimmer>
           </div>
         </div>
@@ -636,6 +637,7 @@ CopyButton.displayName = 'CopyButton';
 const ToolInvocationListView = memo(
   ({ toolInvocations, annotations }: { toolInvocations: ToolInvocation[]; annotations: any }) => {
     const t = useGT();
+    const locale = useLocale();
     const renderToolInvocation = useCallback(
       (toolInvocation: ToolInvocation, index: number) => {
         const args = JSON.parse(JSON.stringify(toolInvocation.args));
@@ -1275,7 +1277,7 @@ const ToolInvocationListView = memo(
                           className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 transition-colors"
                         >
                           <PhosphorClock className="h-3 w-3 mr-1" />
-                          {new Date(result.results[0].publishedDate).toLocaleDateString()}
+                          {new Date(result.results[0].publishedDate).toLocaleDateString(locale)}
                         </Badge>
                       )}
                       {result.response_time && (
@@ -1445,7 +1447,7 @@ const ToolInvocationListView = memo(
 
             // Format the time according to the specified timezone
             const timezone = result.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const formatter = new Intl.DateTimeFormat('en-US', {
+            const formatter = new Intl.DateTimeFormat(locale, {
               hour: 'numeric',
               minute: 'numeric',
               second: 'numeric',

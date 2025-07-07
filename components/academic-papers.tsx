@@ -9,7 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { T, useGT, Var, Num } from 'gt-next';
+import { T, useGT, Var, Num, DateTime } from 'gt-next';
 
 interface AcademicResult {
   title: string;
@@ -83,11 +83,11 @@ const AcademicSourceCard: React.FC<{
         {paper.publishedDate && (
           <time className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
             <Calendar className="w-3 h-3" />
-            {new Date(paper.publishedDate).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            <DateTime 
+              options={{ month: 'short', day: 'numeric', year: 'numeric' }}
+            >
+              {paper.publishedDate}
+            </DateTime>
           </time>
         )}
       </div>

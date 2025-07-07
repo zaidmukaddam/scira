@@ -38,6 +38,7 @@ import { cn, invalidateChatsCache } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClassicLoader } from './ui/loading';
 import { T, useGT, Var, Num } from 'gt-next';
+import { useFormatCompactTime } from '@/hooks/use-format-compact-time';
 
 // Constants
 const SCROLL_BUFFER_MAX = 100;
@@ -100,65 +101,6 @@ function categorizeChatsByDate(chats: Chat[]) {
   return { today, yesterday, thisWeek, lastWeek, thisMonth, older };
 }
 
-// Format time in a compact way with memoization
-const formatCompactTime = (() => {
-  const cache = new Map<string, { result: string; timestamp: number }>();
-  const CACHE_DURATION = 30000; // 30 seconds cache duration
-
-  return function (date: Date): string {
-    const now = new Date();
-    const dateKey = date.getTime().toString();
-    const cached = cache.get(dateKey);
-
-    // Check if cache is valid (less than 30 seconds old)
-    if (cached && now.getTime() - cached.timestamp < CACHE_DURATION) {
-      return cached.result;
-    }
-
-    const seconds = differenceInSeconds(now, date);
-
-    let result: string;
-    if (seconds < 60) {
-      result = `${seconds}s ago`;
-    } else {
-      const minutes = differenceInMinutes(now, date);
-      if (minutes < 60) {
-        result = `${minutes}m ago`;
-      } else {
-        const hours = differenceInHours(now, date);
-        if (hours < 24) {
-          result = `${hours}h ago`;
-        } else {
-          const days = differenceInDays(now, date);
-          if (days < 7) {
-            result = `${days}d ago`;
-          } else {
-            const weeks = differenceInWeeks(now, date);
-            if (weeks < 4) {
-              result = `${weeks}w ago`;
-            } else {
-              const months = differenceInMonths(now, date);
-              if (months < 12) {
-                result = `${months}mo ago`;
-              } else {
-                const years = differenceInYears(now, date);
-                result = `${years}y ago`;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Keep cache size reasonable
-    if (cache.size > 1000) {
-      cache.clear();
-    }
-
-    cache.set(dateKey, { result, timestamp: now.getTime() });
-    return result;
-  };
-})();
 
 // Custom fuzzy search function
 function fuzzySearch(query: string, text: string): boolean {
@@ -284,6 +226,7 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
 // Main component  
 export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialogProps) {
   const t = useGT();
+  const formatCompactTime = useFormatCompactTime();
   const pathname = usePathname();
   const router = useRouter();
   const rawChatId = pathname?.startsWith('/search/') ? pathname.split('/')[2] : null;
@@ -743,7 +686,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
                 onClick={(e) => e.stopPropagation()}
                 className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
-                placeholder="Enter title..."
+                placeholder={t("Enter title...")}
                 autoFocus
                 maxLength={100}
               />

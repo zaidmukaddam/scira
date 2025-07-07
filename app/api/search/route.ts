@@ -48,6 +48,7 @@ import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 import { getTweet } from 'react-tweet/api';
+import { getLocale } from 'gt-next/server';
 
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
@@ -314,6 +315,8 @@ export async function POST(req: Request) {
   const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
+
+  const locale = await getLocale();
 
   console.log('--------------------------------');
   console.log('Location: ', latitude, longitude);
@@ -2419,34 +2422,34 @@ print(f"Converted amount: {converted_amount}")
                   iso: now.toISOString(),
                   timezone: timezone,
                   formatted: {
-                    date: new Intl.DateTimeFormat('en-US', {
+                    date: new Intl.DateTimeFormat(locale, {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                       timeZone: timezone,
                     }).format(now),
-                    time: new Intl.DateTimeFormat('en-US', {
+                    time: new Intl.DateTimeFormat(locale, {
                       hour: '2-digit',
                       minute: '2-digit',
                       second: '2-digit',
                       hour12: true,
                       timeZone: timezone,
                     }).format(now),
-                    dateShort: new Intl.DateTimeFormat('en-US', {
+                    dateShort: new Intl.DateTimeFormat(locale, {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
                       timeZone: timezone,
                     }).format(now),
-                    timeShort: new Intl.DateTimeFormat('en-US', {
+                    timeShort: new Intl.DateTimeFormat(locale, {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: true,
                       timeZone: timezone,
                     }).format(now),
                     // Add additional useful formats
-                    full: new Intl.DateTimeFormat('en-US', {
+                    full: new Intl.DateTimeFormat(locale, {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',

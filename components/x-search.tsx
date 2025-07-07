@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ExternalLink, Users, MessageCircle } from 'lucide-react';
-import { T, useGT, Var, Num } from 'gt-next';
+import { T, useGT, Var, Num, useLocale } from 'gt-next';
 
 interface Citation {
   url: string;
@@ -85,6 +85,7 @@ const XSearchLoadingState = () => {
 const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const t = useGT();
+  const locale = useLocale();
 
   // Extract tweet IDs from citations
   const tweetCitations = useMemo(() => {
@@ -123,12 +124,12 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const formatDateRange = (dateRange: string) => {
     const [start, end] = dateRange.split(' to ');
     return {
-      start: new Date(start).toLocaleDateString('en-US', {
+      start: new Date(start).toLocaleDateString(locale, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       }),
-      end: new Date(end).toLocaleDateString('en-US', {
+      end: new Date(end).toLocaleDateString(locale, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',

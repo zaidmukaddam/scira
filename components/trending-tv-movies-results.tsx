@@ -5,7 +5,7 @@ import { Film, Tv, Star, Calendar, ChevronRight, X } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { T, useGT, Var } from 'gt-next';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface TrendingItem {
   id: number;
@@ -33,6 +33,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
   const [showAll, setShowAll] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const t = useGT();
+  const locale = useLocale();
 
   const displayedResults = useMemo(() => {
     return showAll ? result.results : result.results.slice(0, isMobile ? 4 : 10);
@@ -63,7 +64,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
     });
@@ -96,12 +97,12 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                 <Star className="w-4 h-4 fill-current" />
                 <span className="font-medium">{selectedItem.vote_average.toFixed(1)}</span>
               </div>
-              {(selectedItem.release_date || selectedItem.first_air_date) && (
+              {(formatDate(selectedItem.release_date || selectedItem.first_air_date || '') && (
                 <div className="flex items-center gap-1.5 text-neutral-300">
                   <Calendar className="w-4 h-4" />
                   <span>{formatDate(selectedItem.release_date || selectedItem.first_air_date || '')}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -151,7 +152,7 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
           </div>
           <div>
             <T>
-              <h2 className="text-lg sm:text-xl font-semibold">Trending <Var>{type === 'movie' ? 'Movies' : 'Shows'}</Var></h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Trending <Var>{type === 'movie' ? t('Movies') : t('Shows')}</Var></h2>
             </T>
             <T>
               <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">Top picks for today</p>

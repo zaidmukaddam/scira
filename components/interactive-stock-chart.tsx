@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Newspaper } from 'lucide-react';
 import { ChartBar } from '@phosphor-icons/react';
-import { T, useGT } from 'gt-next';
+import { T, useGT, useLocale } from 'gt-next';
 
 // Currency symbol mapping with modern design tokens
 const CURRENCY_SYMBOLS = {
@@ -152,6 +152,7 @@ export const InteractiveStockChart = React.memo(
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const t = useGT();
+    const locale = useLocale();
 
     // Set last updated time and check if device is mobile
     useEffect(() => {
@@ -394,8 +395,8 @@ export const InteractiveStockChart = React.memo(
             color: subTextColor,
             formatter: (value: number) => {
               const date = new Date(value);
-              const month = date.toLocaleDateString('en-US', { month: 'short' });
-              const year = date.toLocaleDateString('en-US', { year: '2-digit' });
+              const month = date.toLocaleDateString(locale, { month: 'short' });
+              const year = date.toLocaleDateString(locale, { year: '2-digit' });
               return isMobile ? `${month}\n${year}` : `${month} ${year}`;
             },
             fontSize: 10,

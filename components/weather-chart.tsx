@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Cloud, Droplets, Thermometer, Wind } from 'lucide-react';
 import Image from 'next/image';
-import { T, useGT } from 'gt-next';
+import { T, useGT, useLocale } from 'gt-next';
 
 interface WeatherDataPoint {
   date: string;
@@ -194,6 +194,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
   const [selectedDay, setSelectedDay] = useState<string>('');
   const t = useGT();
+  const locale = useLocale();
 
   const {
     chartData,
@@ -210,7 +211,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
     const weatherData = result.list.map((item: any) => {
       const date = new Date(item.dt * 1000);
       return {
-        date: date.toLocaleDateString(),
+        date: date.toLocaleDateString(locale),
         timestamp: item.dt,
         hour: date.getHours(),
         minTemp: Number((item.main.temp_min - 273.15).toFixed(1)),
@@ -236,7 +237,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
         return {
           ...item,
           dateTime: new Date(item.dt * 1000),
-          date: new Date(item.dt * 1000).toLocaleDateString(),
+          date: new Date(item.dt * 1000).toLocaleDateString(locale),
           hour: new Date(item.dt * 1000).getHours(),
         };
       }) || [];
@@ -245,8 +246,8 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
     const dailyForecast =
       result.daily_forecast?.list?.map((item: DailyForecastData) => {
         return {
-          date: new Date(item.dt * 1000).toLocaleDateString(),
-          dateFormatted: formatDate(new Date(item.dt * 1000).toLocaleDateString()),
+          date: new Date(item.dt * 1000).toLocaleDateString(locale),
+          dateFormatted: formatDate(new Date(item.dt * 1000).toLocaleDateString(locale)),
           timestamp: item.dt,
           day: new Date(item.dt * 1000).getDay(),
           minTemp: Number((item.temp.min - 273.15).toFixed(1)),

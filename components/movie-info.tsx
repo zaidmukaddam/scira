@@ -6,7 +6,8 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import Image from 'next/image';
-import { T } from 'gt-next';
+import { T, useLocale } from 'gt-next';
+import { useFormatRuntime } from '@/hooks/use-format-runtime';
 
 interface MediaDetails {
   id: number;
@@ -49,23 +50,20 @@ interface TMDBResultProps {
 const TMDBResult = ({ result }: TMDBResultProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const locale = useLocale();
+  const formatRuntime = useFormatRuntime();
 
   if (!result.result) return null;
   const media = result.result;
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
   };
 
-  const formatRuntime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
 
   const DetailContent = () => (
     <div className="flex flex-col max-h-[80vh] bg-black">
@@ -113,7 +111,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                   <Star className="w-4 h-4 fill-current" />
                   <span>{media.vote_average.toFixed(1)}</span>
                 </div>
-                {(media.release_date || media.first_air_date) && (
+                {formatDate(media.release_date || media.first_air_date || '') && (
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
                     <span>{formatDate(media.release_date || media.first_air_date || '')}</span>
@@ -236,7 +234,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                   <Star className="w-4 h-4 fill-current" />
                   <span className="font-medium">{media.vote_average.toFixed(1)}</span>
                 </div>
-                {(media.release_date || media.first_air_date) && (
+                {formatDate(media.release_date || media.first_air_date || '') && (
                   <span className="text-black/60 dark:text-white/60">
                     {formatDate(media.release_date || media.first_air_date || '')}
                   </span>

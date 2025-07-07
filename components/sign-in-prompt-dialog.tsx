@@ -24,6 +24,7 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
   const isGithub = provider === 'github';
   const isGoogle = provider === 'google';
   const isTwitter = provider === 'twitter';
+  const t = useGT();
 
   return (
     <Button

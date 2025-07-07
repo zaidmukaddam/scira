@@ -1,16 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getLocale } from "gt-next/server";
 import { GTProvider, T } from "gt-next";
 
-export default async function GlobalError({ error, reset }: {error: Error & {digest?: string;};reset: () => void;}) {
+export default function GlobalError({ error, reset }: {error: Error & {digest?: string;};reset: () => void;}) {
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
-  <html lang={await getLocale()}>
+  <html>
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}><GTProvider>
         <div
           style={{

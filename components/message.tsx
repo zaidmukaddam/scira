@@ -86,7 +86,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
   const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
   const actions = isChatSDKError
-    ? getErrorActions(parsedError as any)
+    ? getErrorActions(parsedError as any, t)
     : { primary: { label: 'Try Again', action: 'retry' } };
 
   // Get icon component based on error type

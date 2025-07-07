@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
 import { MapPin, Star, ExternalLink, Navigation, Globe, Phone, ChevronDown, ChevronUp, Clock } from 'lucide-react';
-import { T, useGT, Var } from 'gt-next';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface Location {
   lat: number;
@@ -53,10 +53,12 @@ interface PlaceCardProps {
 
 const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours, timezone }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const locale = useLocale();
   const now = timezone ? DateTime.now().setZone(timezone) : DateTime.now();
   const currentDay = now.weekdayLong;
   const t = useGT();
-
+  console.log(hours, timezone);
+  console.log("**********")
   if (!hours?.length) return null;
 
   // Find today's hours
@@ -91,6 +93,11 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
           {hours.map((timeSlot, idx) => {
             const [day, hours] = timeSlot.split(': ');
             const isToday = day === currentDay;
+            
+            // Convert English day name to localized day name using Luxon
+            const localizedDay = DateTime.fromFormat(day, 'cccc', { locale: 'en' })
+              .setLocale(locale)
+              .toFormat('cccc');
 
             return (
               <div
@@ -103,7 +110,7 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
                   idx !== hours.length - 1 && 'border-b border-neutral-200 dark:border-neutral-800',
                 )}
               >
-                <span>{day}</span>
+                <span>{localizedDay}</span>
                 <span>{hours}</span>
               </div>
             );
@@ -209,7 +216,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
 
           {/* Review Count */}
           {place.reviews_count && place.reviews_count > 0 && (
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">{place.reviews_count} reviews</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">{place.reviews_count}<T> reviews</T></div>
           )}
         </div>
 

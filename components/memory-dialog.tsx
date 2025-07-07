@@ -11,12 +11,13 @@ import { Loader2, Search, Trash2, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Memory } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
-import { T, useGT, Plural } from 'gt-next';
+import { T, useGT, Plural, useLocale } from 'gt-next';
 
 export function MemoryDialog() {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
   const t = useGT();
+  const locale = useLocale();
 
   // Infinite query for memories with pagination
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
@@ -79,7 +80,7 @@ export function MemoryDialog() {
   // Format date in a more readable way
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
