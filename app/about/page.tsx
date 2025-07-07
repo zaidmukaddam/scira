@@ -361,7 +361,7 @@ export default function AboutPage() {
 
                 <div className="flex flex-col items-center space-y-4 group">
                   <div className="transition-transform duration-300 group-hover:scale-110">
-                    <img src="/Winner-Medal-Weekly.svg" alt="Peerlist #3 Project" className="size-24 object-contain" />
+                    <img src="/Winner-Medal-Weekly.svg" alt="Peerlist #1 Project" className="size-24 object-contain" />
                   </div>
                   <div className="text-center space-y-1">
                     <div className="font-medium text-sm">#3 Project of the Week</div>
