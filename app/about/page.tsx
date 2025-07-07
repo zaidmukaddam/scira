@@ -34,7 +34,7 @@ import { X } from 'lucide-react';
 import { TextLoop } from '@/components/core/text-loop';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { VercelLogo } from '@/components/logos/vercel-logo';
-import { TavilyLogo } from '@/components/logos/tavily-logo';
+import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
 import { useRouter } from 'next/navigation';
 import { GithubLogo, XLogo } from '@phosphor-icons/react';
@@ -45,7 +45,16 @@ import {
   ProAccordionTrigger,
   ProAccordionContent,
 } from '@/components/ui/pro-accordion';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useGitHubStars } from '@/hooks/use-github-stars';
+import { models } from '@/ai/providers';
 
 const container = {
   hidden: { opacity: 0 },
@@ -68,7 +77,6 @@ export default function AboutPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCryptoAlert, setShowCryptoAlert] = useState(true);
   const { data: githubStars, isLoading: isLoadingStars } = useGitHubStars();
-
   useEffect(() => {
     // Check if user has seen the terms
     const hasAcceptedTerms = localStorage.getItem('hasAcceptedTerms');
@@ -525,10 +533,10 @@ export default function AboutPage() {
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                  <TavilyLogo />
+                  <ExaLogo />
                 </div>
                 <div className="relative z-10 text-center space-y-2">
-                  <h3 className="font-semibold text-lg">Tavily Search</h3>
+                  <h3 className="font-semibold text-lg">Exa Search</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Real-time search grounding with reliable sources
                   </p>
@@ -642,46 +650,86 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-stretch justify-center">
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Grok 3.0</h3>
-                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most intelligent model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Grok 3.0 Mini</h3>
-                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most efficient model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Grok 2.0 Vision</h3>
-                <p className="text-sm text-muted-foreground mt-1">xAI&apos;s most advanced vision model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">OpenAI GPT 4o</h3>
-                <p className="text-sm text-muted-foreground mt-1">OpenAI&apos;s smartest model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">OpenAI o4 mini</h3>
-                <p className="text-sm text-muted-foreground mt-1">OpenAI&apos;s reasoning model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Claude 3.7 Sonnet</h3>
-                <p className="text-sm text-muted-foreground mt-1">Anthropic&apos;s most advanced model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Gemini 2.5 Flash (Thinking)</h3>
-                <p className="text-sm text-muted-foreground mt-1">Google&apos;s most advanced model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Gemini 2.5 Pro (Preview)</h3>
-                <p className="text-sm text-muted-foreground mt-1">Google&apos;s most advanced model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Llama 4 Maverick</h3>
-                <p className="text-sm text-muted-foreground mt-1">Meta&apos;s most advanced model</p>
-              </div>
-              <div className="p-5 rounded-lg bg-card border border-border shadow-sm">
-                <h3 className="font-medium">Qwen QWQ 32B</h3>
-                <p className="text-sm text-muted-foreground mt-1">Alibaba&apos;s most advanced model</p>
+            <div className="max-w-screen-xl mx-auto">
+              <div className="bg-card rounded border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-border bg-muted/20">
+                        <TableHead className="w-[280px] py-3 px-6 font-medium text-foreground">
+                          Model
+                        </TableHead>
+                        <TableHead className="py-3 px-6 font-medium text-foreground">
+                          Description
+                        </TableHead>
+                        <TableHead className="w-[100px] py-3 px-6 font-medium text-foreground">
+                          Category
+                        </TableHead>
+                        <TableHead className="w-[200px] py-3 px-6 font-medium text-foreground">
+                          Capabilities
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {models.map((model: any) => (
+                        <TableRow 
+                          key={model.value} 
+                          className="border-b border-border/20 hover:bg-muted/10 transition-colors"
+                        >
+                          <TableCell className="py-3 px-6">
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium text-foreground">{model.label}</span>
+                              <div className="flex gap-1">
+                                {model.pro && (
+                                  <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                                    Pro
+                                  </span>
+                                )}
+                                {model.experimental && (
+                                  <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                                    Exp
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3 px-6">
+                            <p className="text-sm text-muted-foreground">
+                              {model.description}
+                            </p>
+                          </TableCell>
+                          <TableCell className="py-3 px-6">
+                            <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
+                              {model.category}
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-3 px-6">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {model.vision && (
+                                <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
+                                  Vision
+                                </span>
+                              )}
+                              {model.reasoning && (
+                                <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
+                                  Reasoning
+                                </span>
+                              )}
+                              {model.pdf && (
+                                <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
+                                  PDF
+                                </span>
+                              )}
+                              {!model.vision && !model.reasoning && !model.pdf && (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -14,7 +14,7 @@ export const searchGroups = [
   {
     id: 'web' as const,
     name: 'Web',
-    description: 'Search across the entire internet powered by Tavily',
+    description: 'Search across the entire internet powered by Exa AI',
     icon: Globe,
     show: true,
   },

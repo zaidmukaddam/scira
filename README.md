@@ -13,63 +13,72 @@ A minimalistic AI-powered search engine that helps you find information on the i
     <a href="https://sdk.vercel.ai/docs">
       <img src="/public/one.svg" alt="Vercel AI SDK" height="40" />
     </a>
-    <a href="https://tavily.com">
-      <img src="/public/four.svg" alt="Tavily AI" height="40" />
+    <a href="https://exa.ai">
+      <img src="/public/exa.png" alt="Exa AI" height="40" />
     </a>
   </div>
 </div>
 
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - For AI model integration and streaming
-- [Tavily AI](https://tavily.com) - For search grounding and web search capabilities
+- [Exa AI](https://exa.ai) - For web search and content retrieval
 
 ## Special Thanks
 
 <div align="center" markdown="1">
 
-  [![Warp](https://github.com/user-attachments/assets/2bda420d-4211-4900-a37e-e3c7056d799c)](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
-  ### **[Warp, the intelligent terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)**<br>
-  [Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
-  [Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)
-  
+[![Warp](https://github.com/user-attachments/assets/2bda420d-4211-4900-a37e-e3c7056d799c)](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
+
+### **[Warp, the intelligent terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)**<br>
+
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
+[Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)
+
 </div>
 
 ## Features
 
 ### Core Search & Information
+
 - **AI-powered search**: Get answers to your questions using multiple AI models including xAI's Grok, Anthropic's Claude, Google's Gemini, and OpenAI's GPT models
-- **Web search**: Search the web using Tavily's API with support for multiple queries, search depths, and topics
+- **Web search**: Search the web using Exa's API with support for multiple queries, search depths, and topics
 - **URL content retrieval**: Extract and analyze content from any URL using Exa AI with live crawling capabilities
 - **Reddit search**: Search Reddit content with time range filtering using Tavily API
 - **X (Twitter) search**: Search X posts with date ranges and specific handle filtering using xAI Live Search
 - **Extreme search**: Advanced multi-step search capability for complex queries
 
 ### Academic & Research
+
 - **Academic search**: Search for academic papers and research using Exa AI with abstracts and summaries
 - **YouTube search**: Find YouTube videos with detailed information, captions, and timestamps powered by Exa AI
 
 ### Entertainment & Media
+
 - **Movie & TV show search**: Get detailed information about movies and TV shows using TMDB API
 - **Trending movies**: Discover trending movies with cast, ratings, and detailed information
 - **Trending TV shows**: Find popular TV shows with comprehensive metadata
 
 ### Financial & Data Analysis
+
 - **Stock charts**: Generate interactive stock charts with news integration using yfinance and Tavily
 - **Currency converter**: Convert between currencies with real-time exchange rates using yfinance
 - **Code interpreter**: Write and execute Python code with chart generation capabilities using Daytona sandbox
 
 ### Location & Travel
+
 - **Weather information**: Get current weather and forecasts for any location using OpenWeather API
 - **Maps & geocoding**: Find places and get coordinates using Google Maps API
 - **Nearby places search**: Discover nearby restaurants, attractions, and services with Google Places API
 - **Flight tracking**: Track real-time flight information using Aviation Stack API
 
 ### Productivity & Utilities
+
 - **Text translation**: Translate text between languages using AI models
 - **Date & time**: Get current date and time in user's timezone with multiple format options
 - **Memory management**: Add and search personal memories using Mem0 AI
 - **MCP server search**: Search for Model Context Protocol servers using Smithery Registry
 
 ### Search Groups
+
 - **Web**: Search across the entire internet powered by Tavily
 - **Memory**: Your personal memory companion (requires authentication)
 - **Analysis**: Code execution, stock charts, and currency conversion
@@ -81,6 +90,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - **Extreme**: Deep research with multiple sources and analysis
 
 ## LLM Models Supported
+
 - **xAI**: Grok 3, Grok 3 Mini, Grok 2 Vision
 - **Google**: Gemini 2.5 Flash (Preview), Gemini 2.5 Pro (Preview)
 - **Anthropic**: Claude 4 Sonnet, Claude 4 Opus (with thinking capabilities)
@@ -88,12 +98,13 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - **Groq**: Qwen QwQ 32B, Qwen 3 32B, Meta's Llama 4 Maverick
 
 ## Built with
+
 - [Next.js](https://nextjs.org/) - React framework
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - AI model integration
 - [Shadcn/UI](https://ui.shadcn.com/) - UI components
 - [Exa.AI](https://exa.ai/) - Web search and content retrieval
-- [Tavily](https://tavily.com/) - Search grounding
+- [Tavily](https://tavily.com/) - Search grounding for reddit search
 - [OpenWeather](https://openweathermap.org/) - Weather data
 - [Daytona](https://daytona.io/) - Code execution sandbox
 - [Google Maps](https://developers.google.com/maps) - Location services
@@ -110,23 +121,29 @@ A minimalistic AI-powered search engine that helps you find information on the i
 ## Set Scira as your default search engine
 
 1. **Open the Chrome browser settings**:
+
    - Click on the three vertical dots in the upper right corner of the browser.
    - Select "Settings" from the dropdown menu.
 
 2. **Go to the search engine settings**:
+
    - In the left sidebar, click on "Search engine."
    - Then select "Manage search engines and site search."
 
 3. **Add a new search engine**:
+
    - Click on "Add" next to "Site search."
 
 4. **Set the search engine name**:
+
    - Enter `Scira` in the "Search engine" field.
 
 5. **Set the search engine URL**:
+
    - Enter `https://scira.ai?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
+
    - Enter `sh` in the "Shortcut" field.
 
 7. **Set Default**:
@@ -172,7 +189,7 @@ To run the application locally without Docker:
 1. Sign up for accounts with the required AI providers:
    - OpenAI (required)
    - Anthropic (required)
-   - Tavily (required for web search feature)
+   - Exa (required for web search feature)
 2. Copy `.env.example` to `.env.local` and fill in your API keys
 3. Install dependencies:
    ```bash
