@@ -14,8 +14,9 @@
   ],
   "locales": [
     "en",
-    "zh"
+    "zh",
+    "es"
   ],
   "framework": "next-app",
-  "_versionId": "3c91bfe7fc6a534384d389b8e9616c5ba889614a1c3e67d81621fdf89710db63"
+  "_versionId": "cdb67e397a4764f1c2183b6c9bce0d3f6df209467e5ce44c4ad09b0bd9d860ef"
 }

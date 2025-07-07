@@ -63,20 +63,6 @@ function ProfileSection() {
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
-  // Fetch historical usage data for the graph (only when user is available)
-  const {
-    data: historicalUsageData,
-    isLoading: historicalLoading,
-    refetch: refetchHistoricalData,
-  } = useQuery({
-    queryKey: ['historicalUsage', user?.id],
-    queryFn: () => getHistoricalUsage(user),
-    enabled: !!user, // Only run when user is available
-    staleTime: 1000 * 60 * 10, // 10 minutes - historical data changes less frequently
-    gcTime: 1000 * 60 * 15, // 15 minutes cache retention
-    refetchOnWindowFocus: false,
-    retry: 2,
-  });
 
   useEffect(() => {
     if (user) {
@@ -231,6 +217,21 @@ function UsageSection() {
     gcTime: 1000 * 60 * 5, // 5 minutes cache retention
     refetchOnWindowFocus: false, // Disable automatic refetch on focus
     retry: 2, // Reduce retry attempts
+  });
+
+  // Fetch historical usage data for the graph (only when user is available)
+  const {
+    data: historicalUsageData,
+    isLoading: historicalLoading,
+    refetch: refetchHistoricalData,
+  } = useQuery({
+    queryKey: ['historicalUsage', usageData?.subscriptionDetails?.hasSubscription],
+    queryFn: () => getHistoricalUsage(),
+    enabled: !!usageData, // Only run when usage data is available
+    staleTime: 1000 * 60 * 10, // 10 minutes - historical data changes less frequently
+    gcTime: 1000 * 60 * 15, // 15 minutes cache retention
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   // Destructure data with fallbacks
