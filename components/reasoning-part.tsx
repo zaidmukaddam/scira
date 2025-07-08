@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Minimize2, Maximize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Marked from 'marked-react';
+import { useGT } from 'gt-next';
 
 export interface ReasoningPart {
   type: 'reasoning';
@@ -146,6 +147,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
     setIsExpanded,
   }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const t = useGT();
 
     // Auto-scroll to bottom when new content is added during reasoning
     useEffect(() => {
@@ -210,14 +212,14 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     <div className="size-3 text-blue-500 dark:text-blue-400">
                       <SpinnerIcon />
                     </div>
-                    <span className="text-xs font-medium">Thinking</span>
+                    <span className="text-xs font-medium">{t('Thinking')}</span>
                     {parallelTool && <span className="text-xs font-normal opacity-70">({parallelTool})</span>}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-4 text-amber-500 dark:text-amber-400" strokeWidth={2} />
-                  <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Reasoning</div>
+                  <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{t('Reasoning')}</div>
                 </div>
               )}
             </div>
@@ -236,7 +238,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     setIsFullscreen(!isFullscreen);
                   }}
                   className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full text-neutral-500 dark:text-neutral-400 transition-colors"
-                  aria-label={isFullscreen ? 'Minimize' : 'Maximize'}
+                  aria-label={isFullscreen ? t('Minimize') : t('Maximize')}
                 >
                   {isFullscreen ? (
                     <Minimize2 className="size-3.5 text-violet-500 dark:text-violet-400" strokeWidth={2} />
@@ -302,7 +304,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                       </div>
                     ) : (
                       <div className="px-3 py-3 text-xs">
-                        <div className="text-neutral-500 dark:text-neutral-400 italic">Waiting for reasoning...</div>
+                        <div className="text-neutral-500 dark:text-neutral-400 italic">{t('Waiting for reasoning...')}</div>
                       </div>
                     )}
                   </div>

@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Plane, Clock, AlertCircle } from 'lucide-react';
+import { T, useGT, Var } from 'gt-next';
 
 interface FlightApiResponse {
   data: Array<{
@@ -49,6 +50,8 @@ interface FlightTrackerProps {
 }
 
 export function FlightTracker({ data }: FlightTrackerProps) {
+  const t = useGT();
+  
   if (data?.error) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4">
@@ -56,9 +59,11 @@ export function FlightTracker({ data }: FlightTrackerProps) {
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                Unable to track flight
-              </p>
+              <T>
+                <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                  Unable to track flight
+                </p>
+              </T>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">{data.error}</p>
             </div>
           </div>
@@ -92,15 +97,15 @@ export function FlightTracker({ data }: FlightTrackerProps) {
   const mapStatus = (status: string) => {
     switch (status.toLowerCase()) {
       case 'landed':
-        return { label: 'Landed', variant: 'default' as const };
+        return { label: t('Landed'), variant: 'default' as const };
       case 'active':
         return flight.departure.delay 
-          ? { label: 'Delayed', variant: 'destructive' as const }
-          : { label: 'In Flight', variant: 'default' as const };
+          ? { label: t('Delayed'), variant: 'destructive' as const }
+          : { label: t('In Flight'), variant: 'default' as const };
       case 'scheduled':
-        return { label: 'Scheduled', variant: 'secondary' as const };
+        return { label: t('Scheduled'), variant: 'secondary' as const };
       default:
-        return { label: 'Scheduled', variant: 'secondary' as const };
+        return { label: t('Scheduled'), variant: 'secondary' as const };
     }
   };
 
@@ -236,18 +241,26 @@ export function FlightTracker({ data }: FlightTrackerProps) {
               <div className="flex justify-between text-xs text-neutral-500 dark:text-neutral-400">
                 <div className="flex gap-3">
                   {flightInfo.departure.terminal && (
-                    <span>Terminal {flightInfo.departure.terminal}</span>
+                    <T>
+                      <span>Terminal <Var>{flightInfo.departure.terminal}</Var></span>
+                    </T>
                   )}
                   {flightInfo.departure.gate && (
-                    <span>Gate {flightInfo.departure.gate}</span>
+                    <T>
+                      <span>Gate <Var>{flightInfo.departure.gate}</Var></span>
+                    </T>
                   )}
                 </div>
                 <div className="flex gap-3">
                   {flightInfo.arrival.terminal && (
-                    <span>Terminal {flightInfo.arrival.terminal}</span>
+                    <T>
+                      <span>Terminal <Var>{flightInfo.arrival.terminal}</Var></span>
+                    </T>
                   )}
                   {flightInfo.arrival.gate && (
-                    <span>Gate {flightInfo.arrival.gate}</span>
+                    <T>
+                      <span>Gate <Var>{flightInfo.arrival.gate}</Var></span>
+                    </T>
                   )}
                 </div>
               </div>
@@ -258,9 +271,11 @@ export function FlightTracker({ data }: FlightTrackerProps) {
         {/* Additional Info */}
         {flightInfo.operatedBy && (
           <div className="px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-b-lg">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Operated by {flightInfo.operatedBy}
-            </p>
+            <T>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Operated by <Var>{flightInfo.operatedBy}</Var>
+              </p>
+            </T>
           </div>
         )}
 

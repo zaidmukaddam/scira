@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getGT } from 'gt-next/server';
 
 /**
  * Server-side proxy endpoint to bypass CORS restrictions when validating images
@@ -80,14 +81,16 @@ export async function GET(request: NextRequest) {
     const url = request.nextUrl.searchParams.get('url');
 
     if (!url) {
-        return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+        const t = await getGT();
+        return NextResponse.json({ error: t('URL parameter is required') }, { status: 400 });
     }
 
     // Validate URL format
     try {
         new URL(url);
     } catch {
-        return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+        const t = await getGT();
+        return NextResponse.json({ error: t('Invalid URL format') }, { status: 400 });
     }
 
     try {
@@ -119,8 +122,9 @@ export async function GET(request: NextRequest) {
         // Check if the response is actually an image
         const contentType = response.headers.get('content-type');
         if (!contentType?.startsWith('image/')) {
+            const t = await getGT();
             return NextResponse.json(
-                { error: 'URL does not point to an image', contentType },
+                { error: t('URL does not point to an image'), contentType },
                 { status: 400 }
             );
         }
@@ -143,19 +147,20 @@ export async function GET(request: NextRequest) {
         console.error('Proxy image error:', error);
 
         // Determine appropriate status code based on error type
+        const t = await getGT();
         let status = 500;
-        let errorMessage = 'Failed to fetch image';
+        let errorMessage = t('Failed to fetch image');
 
         if (error instanceof Error) {
             if (error.message.includes('timeout')) {
                 status = 408;
-                errorMessage = 'Request timeout';
+                errorMessage = t('Request timeout');
             } else if (error.message.includes('Invalid URL')) {
                 status = 400;
-                errorMessage = 'Invalid URL';
+                errorMessage = t('Invalid URL');
             } else if (error.message.includes('Network error') || error.message.includes('fetch failed')) {
                 status = 502;
-                errorMessage = 'Network error';
+                errorMessage = t('Network error');
             }
         }
 

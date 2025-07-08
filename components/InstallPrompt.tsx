@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Share } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import Image from 'next/image';
+import { T } from 'gt-next';
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -50,13 +51,17 @@ export function InstallPrompt() {
             />
 
             <div className="flex-grow">
-              <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
-              <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
-                Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}
-                <span role="img" aria-label="plus icon" className="text-primary font-medium">
-                  ➕
-                </span>
-              </p>
+              <T>
+                <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
+              </T>
+              <T>
+                <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
+                  Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}
+                  <span role="img" aria-label="plus icon" className="text-primary font-medium">
+                    ➕
+                  </span>
+                </p>
+              </T>
             </div>
 
             {/* Close Button */}

@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { RedditLogo } from '@phosphor-icons/react';
 import Image from 'next/image';
+import { T, useGT, Var, Num } from 'gt-next';
 
 type RedditResult = {
   url: string;
@@ -104,7 +105,9 @@ const RedditSourceCard: React.FC<{
         {result.score !== undefined && (
           <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <ThumbsUp className="w-3 h-3" />
-            <span>{formattedScore} upvotes</span>
+            <T>
+              <span><Var>{formattedScore}</Var> upvotes</span>
+            </T>
           </div>
         )}
         {result.published_date && (
@@ -143,11 +146,15 @@ const RedditSourcesSheet: React.FC<{
               <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
                 <RedditLogo className="h-4 w-4 text-orange-500" />
               </div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Reddit Results</h2>
+              <T>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Reddit Results</h2>
+              </T>
             </div>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {results.length} posts and comments
-            </p>
+            <T>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <Num>{results.length}</Num> posts and comments
+              </p>
+            </T>
           </div>
 
           {/* Content */}
@@ -191,7 +198,9 @@ const SearchLoadingState = () => {
                 <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
                   <RedditLogo className="h-3.5 w-3.5 text-orange-500" />
                 </div>
-                <h2 className="font-medium text-sm">Reddit Results</h2>
+                <T>
+                  <h2 className="font-medium text-sm">Reddit Results</h2>
+                </T>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
@@ -203,7 +212,7 @@ const SearchLoadingState = () => {
                   className="h-7 px-2 text-xs opacity-50 cursor-not-allowed"
                   disabled
                 >
-                  View all
+                  <T>View all</T>
                   <ArrowUpRight className="w-3 h-3 ml-1" />
                 </Button>
               </div>
@@ -226,7 +235,7 @@ const SearchLoadingState = () => {
                   className="rounded-full text-xs px-3 py-1 shrink-0 bg-neutral-50 dark:bg-neutral-900 text-neutral-400"
                 >
                   <div className="w-3 h-3 mr-1.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  Searching Reddit...
+                  <T>Searching Reddit...</T>
                 </Badge>
               </div>
 
@@ -267,6 +276,7 @@ const RedditSearch: React.FC<{
   args: RedditSearchArgs;
 }> = ({ result, args }) => {
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
+  const t = useGT();
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -309,10 +319,10 @@ const RedditSearch: React.FC<{
 
   const formattedTimeRange =
     {
-      day: 'past 24 hours',
-      week: 'past week',
-      month: 'past month',
-      year: 'past year',
+      day: t('past 24 hours'),
+      week: t('past week'),
+      month: t('past month'),
+      year: t('past year'),
     }[result.timeRange] || result.timeRange;
 
   // Show first 5 results in preview
@@ -335,7 +345,9 @@ const RedditSearch: React.FC<{
                 <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
                   <RedditLogo className="h-3.5 w-3.5 text-orange-500" />
                 </div>
-                <h2 className="font-medium text-sm">Reddit Results</h2>
+                <T>
+                  <h2 className="font-medium text-sm">Reddit Results</h2>
+                </T>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
@@ -351,7 +363,7 @@ const RedditSearch: React.FC<{
                       setSourcesSheetOpen(true);
                     }}
                   >
-                    View all
+                    <T>View all</T>
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}

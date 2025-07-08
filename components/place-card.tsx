@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
 import { MapPin, Star, ExternalLink, Navigation, Globe, Phone, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface Location {
   lat: number;
@@ -52,13 +53,16 @@ interface PlaceCardProps {
 
 const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours, timezone }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const locale = useLocale();
   const now = timezone ? DateTime.now().setZone(timezone) : DateTime.now();
   const currentDay = now.weekdayLong;
-
+  const t = useGT();
+  console.log(hours, timezone);
+  console.log("**********")
   if (!hours?.length) return null;
 
   // Find today's hours
-  const todayHours = hours.find((h) => h.startsWith(currentDay!))?.split(': ')[1] || 'Closed';
+  const todayHours = hours.find((h) => h.startsWith(currentDay!))?.split(': ')[1] || t('Closed');
 
   return (
     <div className="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-800">
@@ -71,9 +75,11 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
       >
         <div className="flex items-center gap-2">
           <Clock className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
-          <span className="text-xs text-neutral-600 dark:text-neutral-400">
-            Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span>
-          </span>
+          <T>
+            <span className="text-xs text-neutral-600 dark:text-neutral-400">
+              Today: <span className="font-medium text-neutral-900 dark:text-neutral-100"><Var>{todayHours}</Var></span>
+            </span>
+          </T>
         </div>
         {isOpen ? (
           <ChevronUp className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
@@ -87,6 +93,11 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
           {hours.map((timeSlot, idx) => {
             const [day, hours] = timeSlot.split(': ');
             const isToday = day === currentDay;
+            
+            // Convert English day name to localized day name using Luxon
+            const localizedDay = DateTime.fromFormat(day, 'cccc', { locale: 'en' })
+              .setLocale(locale)
+              .toFormat('cccc');
 
             return (
               <div
@@ -99,7 +110,7 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
                   idx !== hours.length - 1 && 'border-b border-neutral-200 dark:border-neutral-800',
                 )}
               >
-                <span>{day}</span>
+                <span>{localizedDay}</span>
                 <span>{hours}</span>
               </div>
             );
@@ -114,6 +125,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
   const [showHours, setShowHours] = useState(false);
   const [imageError, setImageError] = useState(false);
   const isOverlay = variant === 'overlay';
+  const t = useGT();
 
   const formatTime = (timeStr: string | undefined, timezone: string | undefined): string => {
     if (!timeStr || !timezone) return '';
@@ -132,12 +144,12 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
 
     if (isClosed) {
       return {
-        text: `Closed · Opens ${timeStr}`,
+        text: t('Closed · Opens {time}', { time: timeStr }),
         color: 'text-red-600 dark:text-red-400',
       };
     }
     return {
-      text: `Open · Closes ${timeStr}`,
+      text: t('Open · Closes {time}', { time: timeStr }),
       color: 'text-emerald-600 dark:text-emerald-400',
     };
   };
@@ -204,63 +216,71 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
 
           {/* Review Count */}
           {place.reviews_count && place.reviews_count > 0 && (
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">{place.reviews_count} reviews</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">{place.reviews_count}<T> reviews</T></div>
           )}
         </div>
 
         {/* Clean Action Buttons */}
         <div className="flex gap-1 mt-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(
-                `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`,
-                '_blank',
-              );
-            }}
-            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
-          >
-            <Navigation className="w-3 h-3" />
-            Directions
-          </button>
-
-          {place.phone && (
+          <T>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(`tel:${place.phone}`, '_blank');
+                window.open(
+                  `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`,
+                  '_blank',
+                );
               }}
               className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <Phone className="w-3 h-3" />
-              Call
+              <Navigation className="w-3 h-3" />
+              Directions
             </button>
+          </T>
+
+          {place.phone && (
+            <T>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`tel:${place.phone}`, '_blank');
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              >
+                <Phone className="w-3 h-3" />
+                Call
+              </button>
+            </T>
           )}
 
           {place.website && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(place.website, '_blank');
-              }}
-              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
-            >
-              <Globe className="w-3 h-3" />
-              Website
-            </button>
+            <T>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(place.website, '_blank');
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              >
+                <Globe className="w-3 h-3" />
+                Website
+              </button>
+            </T>
           )}
 
           {place.place_id && !isOverlay && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(`https://www.google.com/maps/place/?q=place_id:${place.place_id}`, '_blank');
-              }}
-              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
-            >
-              <ExternalLink className="w-3 h-3" />
-              Maps
-            </button>
+            <T>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`https://www.google.com/maps/place/?q=place_id:${place.place_id}`, '_blank');
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Maps
+              </button>
+            </T>
           )}
         </div>
       </div>

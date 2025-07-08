@@ -5,6 +5,7 @@ import { Film, Tv, Star, Calendar, ChevronRight, X } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface TrendingItem {
   id: number;
@@ -31,37 +32,39 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
   const [selectedItem, setSelectedItem] = useState<TrendingItem | null>(null);
   const [showAll, setShowAll] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const t = useGT();
+  const locale = useLocale();
 
   const displayedResults = useMemo(() => {
     return showAll ? result.results : result.results.slice(0, isMobile ? 4 : 10);
   }, [result.results, showAll, isMobile]);
 
   const genreMap: Record<number, string> = {
-    28: 'Action',
-    12: 'Adventure',
-    16: 'Animation',
-    35: 'Comedy',
-    80: 'Crime',
-    99: 'Documentary',
-    18: 'Drama',
-    10751: 'Family',
-    14: 'Fantasy',
-    36: 'History',
-    27: 'Horror',
-    10402: 'Music',
-    9648: 'Mystery',
-    10749: 'Romance',
-    878: 'Sci-Fi',
-    53: 'Thriller',
-    10752: 'War',
-    37: 'Western',
-    10759: 'Action & Adventure',
-    10765: 'Sci-Fi & Fantasy',
-    10768: 'War & Politics',
+    28: t('Action'),
+    12: t('Adventure'),
+    16: t('Animation'),
+    35: t('Comedy'),
+    80: t('Crime'),
+    99: t('Documentary'),
+    18: t('Drama'),
+    10751: t('Family'),
+    14: t('Fantasy'),
+    36: t('History'),
+    27: t('Horror'),
+    10402: t('Music'),
+    9648: t('Mystery'),
+    10749: t('Romance'),
+    878: t('Sci-Fi'),
+    53: t('Thriller'),
+    10752: t('War'),
+    37: t('Western'),
+    10759: t('Action & Adventure'),
+    10765: t('Sci-Fi & Fantasy'),
+    10768: t('War & Politics'),
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
     });
@@ -94,12 +97,12 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
                 <Star className="w-4 h-4 fill-current" />
                 <span className="font-medium">{selectedItem.vote_average.toFixed(1)}</span>
               </div>
-              {(selectedItem.release_date || selectedItem.first_air_date) && (
+              {(formatDate(selectedItem.release_date || selectedItem.first_air_date || '') && (
                 <div className="flex items-center gap-1.5 text-neutral-300">
                   <Calendar className="w-4 h-4" />
                   <span>{formatDate(selectedItem.release_date || selectedItem.first_air_date || '')}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -148,15 +151,19 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
             )}
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold">Trending {type === 'movie' ? 'Movies' : 'Shows'}</h2>
-            <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">Top picks for today</p>
+            <T>
+              <h2 className="text-lg sm:text-xl font-semibold">Trending <Var>{type === 'movie' ? t('Movies') : t('Shows')}</Var></h2>
+            </T>
+            <T>
+              <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">Top picks for today</p>
+            </T>
           </div>
         </div>
         <button
           onClick={() => setShowAll(!showAll)}
           className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
-          {showAll ? 'Show Less' : 'View All'}
+          {showAll ? t('Show Less') : t('View All')}
           <ChevronRight className="w-4 h-4" />
         </button>
       </header>
@@ -221,7 +228,9 @@ const TrendingResults = ({ result, type }: TrendingResultsProps) => {
           <DrawerContent className="bg-white dark:bg-neutral-900">
             <div className="flex flex-col h-[90vh]">
               <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
-                <h3 className="text-lg font-semibold">All Trending {type === 'movie' ? 'Movies' : 'Shows'}</h3>
+                <T>
+                  <h3 className="text-lg font-semibold">All Trending <Var>{type === 'movie' ? 'Movies' : 'Shows'}</Var></h3>
+                </T>
                 <button
                   onClick={() => setShowAll(false)}
                   className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full"

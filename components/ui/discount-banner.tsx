@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DiscountConfig } from '@/lib/discount';
 import { cn } from '@/lib/utils';
+import { T, useGT, Var } from 'gt-next';
 
 interface DiscountBannerProps {
   discountConfig: DiscountConfig;
@@ -18,6 +19,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
   const [isVisible, setIsVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
+  const t = useGT();
 
   // Calculate time remaining
   useEffect(() => {
@@ -41,7 +43,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
           setTimeLeft(`${minutes}m`);
         }
       } else {
-        setTimeLeft('Expired');
+        setTimeLeft(t('Expired'));
         setIsVisible(false);
       }
     };
@@ -120,11 +122,11 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
               <h3 className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100 tracking-[-0.01em]">
-                {discountConfig.message || 'Special Offer Available'}
+                {discountConfig.message || t('Special Offer Available')}
               </h3>
               {discountConfig.percentage && (
                 <Badge className="bg-black dark:bg-white text-white dark:text-black px-2.5 py-1 text-xs font-medium w-fit">
-                  {discountConfig.percentage}% OFF
+                  {discountConfig.percentage}% {t('OFF')}
                 </Badge>
               )}
             </div>
@@ -142,13 +144,16 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                         <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                           ${pricing.firstMonthPrice}/month
                         </span>
-                        <span className="text-xs bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded">
+                        <T><span className="text-xs bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded">
                           First month
-                        </span>
+                        </span></T>
                       </div>
                     </div>
                     <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Then ${pricing.originalPrice}/month • Save ${pricing.savings.toFixed(2)} on your first month
+                      {t('Then ${originalPrice}/month • Save ${savings} on your first month', {
+                        originalPrice: pricing.originalPrice,
+                        savings: pricing.savings.toFixed(2)
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -162,7 +167,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                       </span>
                     </div>
                     <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-                      Save ${pricing.savings.toFixed(2)}/month
+                      {t('Save ${savings}/month', { savings: pricing.savings.toFixed(2) })}
                     </div>
                   </div>
                 )}
@@ -179,23 +184,23 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                   {isCopied ? (
                     <>
                       <Check className="h-4 w-4 flex-shrink-0" />
-                      <span>Code copied!</span>
+                      <T><span>Code copied!</span></T>
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4 flex-shrink-0" />
-                      <span className="sm:hidden">Copy {discountConfig.code}</span>
-                      <span className="hidden sm:inline">
+                      <T><span className="sm:hidden">Copy <Var>{discountConfig.code}</Var></span></T>
+                      <T><span className="hidden sm:inline">
                         Copy code:{' '}
-                        <span className="font-mono text-zinc-900 dark:text-zinc-100">{discountConfig.code}</span>
-                      </span>
+                        <span className="font-mono text-zinc-900 dark:text-zinc-100"><Var>{discountConfig.code}</Var></span>
+                      </span></T>
                     </>
                   )}
                 </button>
               )}
 
               {timeLeft && timeLeft !== 'Expired' && (
-                <span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Expires in {timeLeft}</span>
+                <T><span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Expires in <Var>{timeLeft}</Var></span></T>
               )}
             </div>
 
@@ -206,7 +211,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                   <AccordionTrigger className="py-2 px-0 hover:no-underline text-xs">
                     <div className="flex items-center gap-2">
                       <Question className="h-3.5 w-3.5 text-zinc-500" />
-                      <span className="text-zinc-600 dark:text-zinc-400">How to redeem this code?</span>
+                      <T><span className="text-zinc-600 dark:text-zinc-400">How to redeem this code?</span></T>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-0">
@@ -216,10 +221,10 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                           1
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">Click upgrade</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                          <T><p className="font-medium text-zinc-900 dark:text-zinc-100">Click upgrade</p></T>
+                          <T><p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
                             Start by clicking the upgrade button
-                          </p>
+                          </p></T>
                         </div>
                       </div>
 
@@ -228,10 +233,10 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                           2
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">Find discount section</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                          <T><p className="font-medium text-zinc-900 dark:text-zinc-100">Find discount section</p></T>
+                          <T><p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
                             Look for &quot;Discount&quot; on checkout page
-                          </p>
+                          </p></T>
                         </div>
                       </div>
 
@@ -240,13 +245,13 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                           3
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">Enter code</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                          <T><p className="font-medium text-zinc-900 dark:text-zinc-100">Enter code</p></T>
+                          <T><p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
                             Paste:{' '}
                             <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 rounded">
-                              {discountConfig.code}
+                              <Var>{discountConfig.code}</Var>
                             </span>
-                          </p>
+                          </p></T>
                         </div>
                       </div>
 
@@ -255,10 +260,10 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                           4
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">Click apply</p>
-                          <p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
+                          <T><p className="font-medium text-zinc-900 dark:text-zinc-100">Click apply</p></T>
+                          <T><p className="text-zinc-500 dark:text-zinc-500 text-[11px]">
                             Click &quot;Apply&quot; to activate discount
-                          </p>
+                          </p></T>
                         </div>
                       </div>
                     </div>
@@ -274,7 +279,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
               className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors p-1 self-start sm:self-auto"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
+              <T><span className="sr-only">Close</span></T>
             </button>
           )}
         </div>

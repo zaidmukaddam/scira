@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import PlaceholderImage from './placeholder-image';
+import { T, useGT, Num, useLocale } from 'gt-next';
 
 // Types
 type SearchImage = {
@@ -75,6 +76,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const faviconUrl = getFaviconUrl(result.url);
   const hostname = new URL(result.url).hostname.replace('www.', '');
+  const locale = useLocale();
 
   return (
     <div
@@ -115,12 +117,6 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
           </h3>
           <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="truncate">{hostname}</span>
-            {result.author && (
-              <>
-                <span>•</span>
-                <span className="truncate">{result.author}</span>
-              </>
-            )}
             <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
@@ -134,7 +130,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
           <time className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
             <Calendar className="w-3 h-3" />
-            {new Date(result.published_date).toLocaleDateString('en-US', {
+            {new Date(result.published_date).toLocaleDateString(locale, {
               month: 'short',
               day: 'numeric',
               year: 'numeric',
@@ -165,10 +161,14 @@ const SourcesSheet: React.FC<{
           {/* Header */}
           <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {totalResults} results from {searches.length} searches
-              </p>
+              <T>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
+              </T>
+              <T>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  <Num>{totalResults}</Num> results from <Num>{searches.length}</Num> searches
+                </p>
+              </T>
             </div>
           </div>
 
@@ -182,7 +182,9 @@ const SourcesSheet: React.FC<{
                       <Search className="w-3 h-3 mr-1.5" />
                       {search.query}
                     </Badge>
-                    <span className="text-xs text-neutral-500">{search.results.length} results</span>
+                    <T>
+                      <span className="text-xs text-neutral-500"><Num>{search.results.length}</Num> results</span>
+                    </T>
                   </div>
 
                   <div className="space-y-3">
@@ -269,7 +271,9 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
               {/* Overlay for last image if there are more */}
               {isLast && hasMore && !state.error && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
+                  <T>
+                    <span className="text-white text-sm font-medium">+<Num>{images.length - displayImages.length}</Num> more</span>
+                  </T>
                 </div>
               )}
             </button>
@@ -294,7 +298,9 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                   variant="secondary"
                   className="rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                 >
-                  {selectedImage + 1} of {images.length}
+                  <T>
+                    <Num>{selectedImage + 1}</Num> of <Num>{images.length}</Num>
+                  </T>
                 </Badge>
                 <Button
                   variant="ghost"
@@ -399,37 +405,10 @@ const LoadingState: React.FC<{
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-
-    // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
-
-    // Check if container can scroll horizontally
-    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
-
-    // Always stop propagation first to prevent page scroll interference
-    e.stopPropagation();
-
-    // Check scroll position to determine if we should handle the event
-    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
-    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-
-    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
-    if (!isAtLeftEdge && !isAtRightEdge) {
-      // In middle of scroll area - always handle
+    if (e.deltaY !== 0) {
       e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtLeftEdge && e.deltaY > 0) {
-      // At left edge, scrolling right - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtRightEdge && e.deltaY < 0) {
-      // At right edge, scrolling left - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
+      e.currentTarget.scrollLeft += e.deltaY;
     }
-    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
   };
 
   return (
@@ -450,15 +429,22 @@ const LoadingState: React.FC<{
                 <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
                   <Globe className="h-3.5 w-3.5 text-neutral-500" />
                 </div>
-                <h2 className="font-medium text-sm">Sources</h2>
+                <T>
+                  <h2 className="font-medium text-sm">Sources</h2>
+                </T>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {totalResults || '0'}
+                  <Num>{totalResults || 0}</Num>
                 </Badge>
                 {totalResults > 0 && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
-                    View all
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <T>View all</T>
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}
@@ -476,7 +462,7 @@ const LoadingState: React.FC<{
               )}
             >
               {/* Query badges */}
-              <div
+              <div 
                 ref={loadingQueryTagsRef}
                 className="flex gap-2 overflow-x-auto no-scrollbar"
                 onWheel={handleWheelScroll}
@@ -506,7 +492,7 @@ const LoadingState: React.FC<{
               </div>
 
               {/* Skeleton cards */}
-              <div
+              <div 
                 ref={loadingSkeletonRef}
                 className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
                 onWheel={handleWheelScroll}
@@ -565,37 +551,10 @@ const MultiSearch: React.FC<{
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-
-    // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
-
-    // Check if container can scroll horizontally
-    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
-
-    // Always stop propagation first to prevent page scroll interference
-    e.stopPropagation();
-
-    // Check scroll position to determine if we should handle the event
-    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
-    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-
-    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
-    if (!isAtLeftEdge && !isAtRightEdge) {
-      // In middle of scroll area - always handle
+    if (e.deltaY !== 0) {
       e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtLeftEdge && e.deltaY > 0) {
-      // At left edge, scrolling right - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtRightEdge && e.deltaY < 0) {
-      // At right edge, scrolling left - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
+      e.currentTarget.scrollLeft += e.deltaY;
     }
-    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
   };
 
   if (!result) {
@@ -627,23 +586,25 @@ const MultiSearch: React.FC<{
                 <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
                   <Globe className="h-3.5 w-3.5 text-neutral-500" />
                 </div>
-                <h2 className="font-medium text-sm">Sources</h2>
+                <T>
+                  <h2 className="font-medium text-sm">Sources</h2>
+                </T>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {totalResults}
+                  <Num>{totalResults}</Num>
                 </Badge>
                 {totalResults > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     className="h-7 px-2 text-xs"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSourcesOpen(true);
                     }}
                   >
-                    View all
+                    <T>View all</T>
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}
@@ -661,7 +622,11 @@ const MultiSearch: React.FC<{
               )}
             >
               {/* Query tags */}
-              <div ref={queryTagsRef} className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
+              <div 
+                ref={queryTagsRef}
+                className="flex gap-2 overflow-x-auto no-scrollbar"
+                onWheel={handleWheelScroll}
+              >
                 {result.searches.map((search, i) => (
                   <Badge key={i} variant="outline" className="rounded-full text-xs px-3 py-1 shrink-0">
                     <Search className="w-3 h-3 mr-1.5" />
@@ -671,7 +636,7 @@ const MultiSearch: React.FC<{
               </div>
 
               {/* Preview results */}
-              <div
+              <div 
                 ref={previewResultsRef}
                 className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
                 onWheel={handleWheelScroll}
@@ -688,6 +653,8 @@ const MultiSearch: React.FC<{
                   </a>
                 ))}
               </div>
+
+
             </div>
           </AccordionContent>
         </AccordionItem>

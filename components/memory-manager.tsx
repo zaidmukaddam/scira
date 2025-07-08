@@ -3,6 +3,7 @@ import { Copy, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useGT } from 'gt-next';
 
 interface MemoryAddResponse {
   id: string;
@@ -36,24 +37,25 @@ interface MemoryManagerProps {
 
 export const MemoryManager: React.FC<MemoryManagerProps> = ({ result }) => {
   const [copied, setCopied] = React.useState(false);
+  const t = useGT();
 
   const user_id = result.results?.user_id;
 
   const handleCopyUserId = async () => {
     await navigator.clipboard.writeText(user_id ?? '');
     setCopied(true);
-    toast.success('User ID copied to clipboard');
+    toast.success(t('User ID copied to clipboard'));
     setTimeout(() => setCopied(false), 2000);
   };
 
   const getActionTitle = (action: string) => {
     switch (action) {
       case 'add':
-        return 'Memory Updated';
+        return t('Memory Updated');
       case 'search':
-        return 'Memory Search Results';
+        return t('Memory Search Results');
       default:
-        return 'Memory Operation';
+        return t('Memory Operation');
     }
   };
 
@@ -106,7 +108,7 @@ export const MemoryManager: React.FC<MemoryManagerProps> = ({ result }) => {
       </div>
 
       {memories.length === 0 ? (
-        <div className="text-[10px] text-neutral-400 italic">No memories</div>
+        <div className="text-[10px] text-neutral-400 italic">{t('No memories')}</div>
       ) : (
         <div className="space-y-2">
           {memories.map((memory) => (

@@ -1,10 +1,12 @@
 import type { MetadataRoute } from 'next'
+import { getGT } from 'gt-next/server'
  
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const t = await getGT()
   return {
-    name: "Scira - AI-powered Search Engine",
+    name: t("Scira - AI-powered Search Engine"),
     short_name: "Scira",
-    description: "A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok",
+    description: t("A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok"),
     start_url: "/",
     display: "standalone",
     categories: ["search", "ai", "productivity"],

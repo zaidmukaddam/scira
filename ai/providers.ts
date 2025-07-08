@@ -6,6 +6,7 @@ import { groq } from '@ai-sdk/groq';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { mistral } from '@ai-sdk/mistral';
+import { InlineTranslationOptions } from 'gt-next/types';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -57,16 +58,16 @@ export const scira = customProvider({
   },
 });
 
-export const models = [
+export const getModels = (t: (content: string, options?: InlineTranslationOptions) => string) => [
   // Free Unlimited Models (xAI)
   {
     value: 'scira-default',
     label: 'Grok 3.0 Mini',
-    description: "xAI's most efficient reasoning model",
+    description: 'xAI\'s most efficient reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: false,
     pro: false,
     requiresAuth: false,
@@ -76,11 +77,11 @@ export const models = [
   {
     value: 'scira-vision',
     label: 'Grok 2.0 Vision',
-    description: "xAI's advanced vision model",
+    description: 'xAI\'s advanced vision model',
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: false,
     pro: false,
     requiresAuth: false,
@@ -90,11 +91,11 @@ export const models = [
   {
     value: 'scira-grok-3',
     label: 'Grok 3.0',
-    description: "xAI's most intelligent model",
+    description: 'xAI\'s most intelligent model',
     vision: false,
     reasoning: false,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: false,
     pro: true,
     requiresAuth: true,
@@ -106,11 +107,11 @@ export const models = [
   {
     value: 'scira-mistral',
     label: 'Mistral Small',
-    description: "Mistral's small model",
+    description: 'Mistral\'s small model',
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: true,
     pro: false,
     requiresAuth: true,
@@ -120,11 +121,11 @@ export const models = [
   {
     value: 'scira-qwen-30b',
     label: 'Qwen 3 30B A3B',
-    description: "Alibaba's advanced MoE reasoning model",
+    description: 'Alibaba\'s advanced MoE reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: false,
     pro: false,
     requiresAuth: true,
@@ -134,11 +135,11 @@ export const models = [
   {
     value: 'scira-qwen-32b',
     label: 'Qwen 3 32B',
-    description: "Alibaba's advanced reasoning model",
+    description: 'Alibaba\'s advanced reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: false,
     pro: false,
     requiresAuth: true,
@@ -148,11 +149,11 @@ export const models = [
   {
     value: 'scira-deepseek-v3',
     label: 'DeepSeek V3 0324',
-    description: "DeepSeek's advanced model",
+    description: 'DeepSeek\'s advanced model',
     vision: false,
     reasoning: false,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: false,
     pro: false,
     requiresAuth: true,
@@ -162,11 +163,11 @@ export const models = [
   {
     value: 'scira-4o-mini',
     label: 'GPT 4o Mini',
-    description: "OpenAI's flagship model",
+    description: 'OpenAI\'s flagship model',
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: true,
     pro: false,
     requiresAuth: true,
@@ -176,11 +177,11 @@ export const models = [
   {
     value: 'scira-google-lite',
     label: 'Gemini 2.5 Flash Lite',
-    description: "Google's advanced small reasoning model",
+    description: 'Google\'s advanced small reasoning model',
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Mini',
+    category: t('Mini'),
     pdf: true,
     pro: false,
     requiresAuth: true,
@@ -192,11 +193,11 @@ export const models = [
   {
     value: 'scira-anthropic',
     label: 'Claude 4 Sonnet',
-    description: "Anthropic's most advanced model",
+    description: 'Anthropic\'s most advanced model',
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -206,11 +207,11 @@ export const models = [
   {
     value: 'scira-anthropic-thinking',
     label: 'Claude 4 Sonnet Thinking',
-    description: "Anthropic's most advanced reasoning model",
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: false,
@@ -220,11 +221,11 @@ export const models = [
   {
     value: 'scira-opus',
     label: 'Claude 4 Opus',
-    description: "Anthropic's most advanced reasoning model",
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -234,11 +235,11 @@ export const models = [
   {
     value: 'scira-opus-pro',
     label: 'Claude 4 Opus Thinking',
-    description: "Anthropic's most advanced reasoning model",
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -248,11 +249,11 @@ export const models = [
   {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash',
-    description: "Google's advanced small reasoning model",
+    description: 'Google\'s advanced small reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -262,11 +263,11 @@ export const models = [
   {
     value: 'scira-google-pro',
     label: 'Gemini 2.5 Pro',
-    description: "Google's advanced reasoning model",
+    description: 'Google\'s advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: false,
@@ -276,11 +277,11 @@ export const models = [
   {
     value: 'scira-o4-mini',
     label: 'o4 mini',
-    description: "OpenAI's faster mini reasoning model",
+    description: 'OpenAI\'s faster mini reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -290,11 +291,11 @@ export const models = [
   {
     value: 'scira-o3',
     label: 'o3',
-    description: "OpenAI's big reasoning model",
+    description: 'OpenAI\'s big reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
-    category: 'Pro',
+    category: t('Pro'),
     pdf: true,
     pro: true,
     requiresAuth: true,
@@ -306,11 +307,11 @@ export const models = [
   {
     value: 'scira-llama-4',
     label: 'Llama 4 Maverick',
-    description: "Meta's latest model",
+    description: 'Meta\'s latest model',
     vision: true,
     reasoning: false,
     experimental: true,
-    category: 'Experimental',
+    category: t('Experimental'),
     pdf: false,
     pro: false,
     requiresAuth: false,
@@ -318,6 +319,9 @@ export const models = [
     maxOutputTokens: 8000,
   },
 ];
+
+// Static models array for helper functions (no translations)
+export const models = getModels((str) => str);
 
 // Helper functions for model access checks
 export function getModelConfig(modelValue: string) {

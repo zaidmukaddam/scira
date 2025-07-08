@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Newspaper } from 'lucide-react';
 import { ChartBar } from '@phosphor-icons/react';
+import { T, useGT, useLocale } from 'gt-next';
 
 // Currency symbol mapping with modern design tokens
 const CURRENCY_SYMBOLS = {
@@ -150,6 +151,8 @@ export const InteractiveStockChart = React.memo(
     const isDark = resolvedTheme === 'dark';
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [isMobile, setIsMobile] = useState<boolean>(false);
+    const t = useGT();
+    const locale = useLocale();
 
     // Set last updated time and check if device is mobile
     useEffect(() => {
@@ -392,8 +395,8 @@ export const InteractiveStockChart = React.memo(
             color: subTextColor,
             formatter: (value: number) => {
               const date = new Date(value);
-              const month = date.toLocaleDateString('en-US', { month: 'short' });
-              const year = date.toLocaleDateString('en-US', { year: '2-digit' });
+              const month = date.toLocaleDateString(locale, { month: 'short' });
+              const year = date.toLocaleDateString(locale, { year: '2-digit' });
               return isMobile ? `${month}\n${year}` : `${month} ${year}`;
             },
             fontSize: 10,
@@ -466,7 +469,9 @@ export const InteractiveStockChart = React.memo(
                 strokeLinejoin="round"
               />
             </svg>
-            <h2 className="text-sm font-medium text-foreground/90">Financial Stock Chart</h2>
+            <T>
+              <h2 className="text-sm font-medium text-foreground/90">Financial Stock Chart</h2>
+            </T>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -487,9 +492,9 @@ export const InteractiveStockChart = React.memo(
                 />
                 <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
               </svg>
-              <span>YFinance • {lastUpdated}</span>
+              <span>{t('YFinance • {time}', { time: lastUpdated })}</span>
             </div>
-            <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">LATEST</div>
+            <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">{t('LATEST')}</div>
           </div>
         </div>
 
@@ -550,7 +555,9 @@ export const InteractiveStockChart = React.memo(
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-1.5">
                   <Newspaper className="size-3.5 text-primary/80" />
-                  <h3 className="text-xs font-medium text-foreground/90">Related News</h3>
+                  <T>
+                    <h3 className="text-xs font-medium text-foreground/90">Related News</h3>
+                  </T>
                 </div>
               </div>
 
@@ -576,7 +583,7 @@ export const InteractiveStockChart = React.memo(
                                   : 'bg-blue-100/70 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
                               )}
                             >
-                              {group.topic === 'finance' ? 'Finance' : 'News'}
+                              {group.topic === 'finance' ? t('Finance') : t('News')}
                             </Badge>
                             <span className="text-[9px] text-muted-foreground/80 truncate">{group.query}</span>
                           </div>
@@ -626,7 +633,9 @@ export const InteractiveStockChart = React.memo(
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-1.5">
                   <ChartBar className="size-3.5 text-primary/80" />
-                  <h3 className="text-xs font-medium text-foreground/90">Financial Reports</h3>
+                  <T>
+                    <h3 className="text-xs font-medium text-foreground/90">Financial Reports</h3>
+                  </T>
                 </div>
               </div>
 
@@ -649,7 +658,7 @@ export const InteractiveStockChart = React.memo(
                                 variant="secondary"
                                 className="rounded-full px-1.5 py-0 text-[9px] font-medium bg-amber-100/70 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
                               >
-                                Financial
+                                {t('Financial')}
                               </Badge>
                               <span className="text-[9px] text-muted-foreground/80 truncate">{news.query}</span>
                             </div>

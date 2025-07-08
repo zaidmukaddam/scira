@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { T, useGT, Var, useLocale } from 'gt-next';
 
 interface MCPServer {
   qualifiedName: string;
@@ -36,6 +37,8 @@ interface MCPServerListProps {
 }
 
 export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, isLoading, error }) => {
+  const t = useGT();
+  const locale = useLocale();
   if (isLoading) {
     return (
       <div className="flex overflow-x-auto pb-3 space-x-3 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
@@ -62,10 +65,14 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
           <Server className="h-5 w-5 text-neutral-400" />
         </div>
         <div>
-          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100">No Servers Found</h3>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            No MCP servers matching &quot;{query}&quot; were found.
-          </p>
+          <T>
+            <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100">No Servers Found</h3>
+          </T>
+          <T>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+              No MCP servers matching &quot;<Var>{query}</Var>&quot; were found.
+            </p>
+          </T>
         </div>
       </div>
     );
@@ -82,7 +89,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
     <div className="space-y-3">
       <div className="px-1">
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {servers.length} server{servers.length !== 1 ? 's' : ''} found
+          {t('{count} servers found', { count: servers.length })}
         </p>
       </div>
 
@@ -125,7 +132,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                           variant="ghost"
                           onClick={() => {
                             navigator.clipboard.writeText(server.qualifiedName);
-                            toast.success('Server ID copied!');
+                            toast.success(t('Server ID copied!'));
                           }}
                           className="h-6 w-6 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         >
@@ -155,7 +162,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                             onClick={() => {
                               if (conn.url) {
                                 navigator.clipboard.writeText(conn.url);
-                                toast.success(`${conn.type} URL copied!`);
+                                toast.success(t('{type} URL copied!', { type: conn.type }));
                               }
                             }}
                           >
@@ -180,11 +187,11 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                             className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800/60 hover:text-emerald-800 dark:hover:text-emerald-200 border-0 px-2 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-colors duration-150"
                             onClick={() => {
                               navigator.clipboard.writeText(server.deploymentUrl!);
-                              toast.success('Deployment URL copied!');
+                              toast.success(t('Deployment URL copied!'));
                             }}
                           >
                             <Server className="h-3.5 w-3.5" />
-                            deployed
+{t('deployed')}
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
@@ -197,8 +204,8 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
 
                 {server.useCount && parseInt(server.useCount) > 0 && (
                   <div className="flex justify-between text-[10px] text-neutral-500 mt-2.5">
-                    <span>Usage: {server.useCount}</span>
-                    {server.createdAt && <span>Added: {new Date(server.createdAt).toLocaleDateString()}</span>}
+                    <span>{t('Usage: {count}', { count: server.useCount })}</span>
+                    {server.createdAt && <span>{t('Added: {date}', { date: new Date(server.createdAt).toLocaleDateString(locale) })}</span>}
                   </div>
                 )}
               </div>

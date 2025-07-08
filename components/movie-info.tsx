@@ -6,6 +6,8 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import Image from 'next/image';
+import { T, useLocale } from 'gt-next';
+import { useFormatRuntime } from '@/hooks/use-format-runtime';
 
 interface MediaDetails {
   id: number;
@@ -48,23 +50,20 @@ interface TMDBResultProps {
 const TMDBResult = ({ result }: TMDBResultProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const locale = useLocale();
+  const formatRuntime = useFormatRuntime();
 
   if (!result.result) return null;
   const media = result.result;
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
   };
 
-  const formatRuntime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
 
   const DetailContent = () => (
     <div className="flex flex-col max-h-[80vh] bg-black">
@@ -112,7 +111,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                   <Star className="w-4 h-4 fill-current" />
                   <span>{media.vote_average.toFixed(1)}</span>
                 </div>
-                {(media.release_date || media.first_air_date) && (
+                {formatDate(media.release_date || media.first_air_date || '') && (
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
                     <span>{formatDate(media.release_date || media.first_air_date || '')}</span>
@@ -149,14 +148,18 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
 
           {/* Overview */}
           <div className="space-y-3 max-w-3xl">
-            <h3 className="text-lg font-semibold text-white">Overview</h3>
+            <T>
+              <h3 className="text-lg font-semibold text-white">Overview</h3>
+            </T>
             <p className="text-neutral-300 text-base sm:text-lg leading-relaxed">{media.overview}</p>
           </div>
 
           {/* Cast Section */}
           {media.credits?.cast && media.credits.cast.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Cast</h3>
+              <T>
+                <h3 className="text-lg font-semibold text-white">Cast</h3>
+              </T>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                 {media.credits.cast.slice(0, media.credits.cast.length).map((person) => (
                   <div
@@ -231,7 +234,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                   <Star className="w-4 h-4 fill-current" />
                   <span className="font-medium">{media.vote_average.toFixed(1)}</span>
                 </div>
-                {(media.release_date || media.first_air_date) && (
+                {formatDate(media.release_date || media.first_air_date || '') && (
                   <span className="text-black/60 dark:text-white/60">
                     {formatDate(media.release_date || media.first_air_date || '')}
                   </span>
@@ -248,7 +251,9 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-black/60 dark:text-white/60">
                   <Users className="w-4 h-4" />
                   <p className="truncate">
-                    <span className="font-medium">Cast: </span>
+                    <T>
+                      <span className="font-medium">Cast: </span>
+                    </T>
                     {media.credits.cast
                       .slice(0, 3)
                       .map((person) => person.name)

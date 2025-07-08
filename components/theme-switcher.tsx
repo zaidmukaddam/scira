@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import type { JSX } from 'react';
 import React, { useEffect, useState } from 'react';
+import { T, useGT, Var, Num } from 'gt-next';
 
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ function ThemeOption({
   isActive?: boolean;
   onClick: (value: string) => void;
 }) {
+  const t = useGT();
   return (
     <button
       className={cn(
@@ -29,7 +31,7 @@ function ThemeOption({
       )}
       role="radio"
       aria-checked={isActive}
-      aria-label={`Switch to ${value} theme`}
+      aria-label={t('Switch to {value} theme', { value: value })}
       onClick={() => onClick(value)}
     >
       {icon}

@@ -11,20 +11,24 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 
 import { Providers } from './providers';
+import { getLocale, getGT } from "gt-next/server";
+import { GTProvider } from "gt-next";
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://scira.ai'),
-  title: {
-    default: 'Scira AI',
-    template: '%s | Scira AI',
-    absolute: 'Scira AI',
-  },
-  description: 'Scira AI is a minimalistic AI-powered search engine that helps you find information on the internet.',
-  openGraph: {
-    url: 'https://scira.ai',
-    siteName: 'Scira AI',
-  },
-  keywords: [
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getGT();
+  return {
+    metadataBase: new URL('https://scira.ai'),
+    title: {
+      default: 'Scira AI',
+      template: `%s | ${'Scira AI'}`,
+      absolute: 'Scira AI'
+    },
+    description: t('Scira AI is a minimalistic AI-powered search engine that helps you find information on the internet.'),
+    openGraph: {
+      url: 'https://scira.ai',
+      siteName: 'Scira AI'
+    },
+    keywords: [
     'scira.ai',
     'ai search engine',
     'scira ai',
@@ -57,9 +61,10 @@ export const metadata: Metadata = {
     'scira.how',
     'search engine',
     'AI',
-    'perplexity',
-  ],
-};
+    'perplexity']
+  };
+}
+
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -68,16 +73,16 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0A0A' },
-  ],
+  { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+  { media: '(prefers-color-scheme: dark)', color: '#0A0A0A' }]
+
 };
 
 const geist = Geist({
   subsets: ['latin'],
   variable: '--font-sans',
   preload: true,
-  display: 'swap',
+  display: 'swap'
 });
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -85,17 +90,17 @@ const beVietnamPro = Be_Vietnam_Pro({
   variable: '--font-be-vietnam-pro',
   preload: true,
   display: 'swap',
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900']
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default async function RootLayout({
+  children
+
+
+}: Readonly<{children: React.ReactNode;}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
+  <html suppressHydrationWarning lang={await getLocale()}>
+      <body className={`${geist.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning><GTProvider>
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />
@@ -104,7 +109,7 @@ export default function RootLayout({
         </NuqsAdapter>
         <Analytics />
         <SpeedInsights />
-      </body>
+      </GTProvider></body>
     </html>
   );
 }

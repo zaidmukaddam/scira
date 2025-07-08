@@ -12,6 +12,7 @@ import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { SlidingNumber } from '@/components/core/sliding-number';
+import { T, useGT, useLocale, Var } from 'gt-next';
 
 type SubscriptionDetails = {
   id: string;
@@ -45,6 +46,8 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
   const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number }>(
     { days: 0, hours: 23, minutes: 59, seconds: 59 },
   );
+  const t = useGT();
+  const locale = useLocale();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -147,7 +150,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -169,7 +172,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
           className="inline-flex items-center text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200 mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" />
-          Back to Home
+          {t('Back to Home')}
         </Link>
       </div>
 
@@ -177,10 +180,10 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
       <div className="max-w-3xl mx-auto px-6 pt-8 pb-16">
         <div className="text-center">
           <h1 className="text-[2.5rem] font-medium tracking-tight font-be-vietnam-pro text-zinc-900 dark:text-zinc-100 mb-6 leading-tight">
-            Pricing
+            {t('Pricing')}
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-be-vietnam-pro leading-relaxed">
-            Choose the plan that works best for you
+            {t('Choose the plan that works best for you')}
           </p>
         </div>
       </div>
@@ -193,10 +196,10 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <h3 className="text-base font-medium">Special Limited-Time Offer</h3>
+                    <T><h3 className="text-base font-medium">Special Limited-Time Offer</h3></T>
                     {discountConfig.percentage && (
                       <Badge className="bg-black dark:bg-white text-white dark:text-black px-2.5 py-1 text-xs font-medium">
-                        {discountConfig.percentage}% OFF
+                        {discountConfig.percentage}% {t('OFF')}
                       </Badge>
                     )}
                   </div>
@@ -213,37 +216,37 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                         : (discountConfig.originalPrice || 0) -
                           ((discountConfig.originalPrice || 0) * (discountConfig.percentage || 0)) / 100}
                       /month
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
+                      <T><span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span></T>
                     </span>
                   </div>
                 </div>
 
                 {/* Countdown Timer */}
                 <div className="flex flex-col items-center">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p>
+                  <T><p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p></T>
                   <div className="flex items-center gap-1.5">
                     {countdownTime.days > 0 && (
                       <>
                         <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
                           <SlidingNumber value={countdownTime.days} padStart={true} />
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">days</span>
+                          <T><span className="text-xs text-zinc-500 dark:text-zinc-400">days</span></T>
                         </div>
                         <span className="text-lg font-medium">:</span>
                       </>
                     )}
                     <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
                       <SlidingNumber value={countdownTime.hours} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">hrs</span>
+                      <T><span className="text-xs text-zinc-500 dark:text-zinc-400">hrs</span></T>
                     </div>
                     <span className="text-lg font-medium">:</span>
                     <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
                       <SlidingNumber value={countdownTime.minutes} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">min</span>
+                      <T><span className="text-xs text-zinc-500 dark:text-zinc-400">min</span></T>
                     </div>
                     <span className="text-lg font-medium">:</span>
                     <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
                       <SlidingNumber value={countdownTime.seconds} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">sec</span>
+                      <T><span className="text-xs text-zinc-500 dark:text-zinc-400">sec</span></T>
                     </div>
                   </div>
                 </div>
@@ -257,7 +260,8 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                     onClick={() => handleDiscountClaim(discountConfig.code || '')}
                     className="w-full sm:w-auto"
                   >
-                    {discountConfig.code ? `Claim discount: ${discountConfig.code}` : 'Claim discount'}
+                    {discountConfig.code ? t('Claim discount: {code}', 
+                      { code: discountConfig.code }) : t('Claim discount')}
                   </Button>
                 </div>
               )}
@@ -278,10 +282,10 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
           {/* Free Plan */}
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-10 relative hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-colors duration-200">
             <div className="mb-10">
-              <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Free</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
+              <T><h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Free</h3></T>
+              <T><p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
                 Get started with essential features
-              </p>
+              </p></T>
               <div className="flex items-baseline mb-2">
                 <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$0</span>
                 <span className="text-zinc-400 dark:text-zinc-500 ml-2 text-sm">/month</span>
@@ -292,19 +296,23 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
               <ul className="space-y-4">
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day (other models)
-                  </span>
+                  <T><span className="text-zinc-700 dark:text-zinc-300">
+                    <Var>{SEARCH_LIMITS.DAILY_SEARCH_LIMIT}</Var> searches per day (other models)
+                  </span></T>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    {SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches per month
-                  </span>
+                  <T><span className="text-zinc-700 dark:text-zinc-300">Unlimited Grok 3 Mini & Grok 2 Vision</span></T>
                 </li>
                 <li className="flex items-center text-[15px]">
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                  <span className="text-zinc-700 dark:text-zinc-300">Search history</span>
+                  <T><span className="text-zinc-700 dark:text-zinc-300">
+                    <Var>{SEARCH_LIMITS.EXTREME_SEARCH_LIMIT}</Var> extreme searches per month
+                  </span></T>
+                </li>
+                <li className="flex items-center text-[15px]">
+                  <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                  <T><span className="text-zinc-700 dark:text-zinc-300">Search history</span></T>
                 </li>
               </ul>
             </div>
@@ -315,7 +323,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                 className="w-full h-9 border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-normal text-sm tracking-[-0.01em]"
                 disabled
               >
-                Current plan
+                {t('Current plan')}
               </Button>
             ) : (
               <Button
@@ -323,7 +331,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                 className="w-full h-9 border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-normal text-sm tracking-[-0.01em]"
                 disabled
               >
-                Free plan
+                {t('Free plan')}
               </Button>
             )}
           </div>
@@ -333,7 +341,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
             {isCurrentPlan(STARTER_TIER) && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                 <Badge className="bg-black dark:bg-white text-white dark:text-black px-4 py-1.5 text-xs font-normal tracking-wide">
-                  CURRENT PLAN
+                  {t('CURRENT PLAN')}
                 </Badge>
               </div>
             )}
@@ -341,48 +349,48 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
             <div className="bg-white dark:bg-zinc-900 border-[1.5px] border-black dark:border-white rounded-xl p-10 relative shadow-sm">
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 tracking-[-0.01em]">Scira Pro</h3>
+                  <T><h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 tracking-[-0.01em]">Scira Pro</h3></T>
                   <Badge
                     variant="secondary"
                     className="bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-normal px-2.5 py-1"
                   >
-                    Popular
+                    {t('Popular')}
                   </Badge>
                 </div>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
+                <T><p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
                   Everything you need for unlimited usage
-                </p>
+                </p></T>
                 <div className="flex items-baseline mb-2">
                   <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
                   <span className="text-zinc-500 dark:text-zinc-400 ml-2 text-sm">/month</span>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p>
+                <T><p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p></T>
               </div>
 
               <div className="mb-10">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.01em]">
+                <T><p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-6 tracking-[-0.01em]">
                   Everything in Free, plus:
-                </p>
+                </p></T>
                 <ul className="space-y-4">
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                    <span className="text-zinc-700 dark:text-zinc-300">Unlimited searches</span>
+                    <T><span className="text-zinc-700 dark:text-zinc-300">Unlimited searches</span></T>
                   </li>
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                    <span className="text-zinc-700 dark:text-zinc-300">All AI models</span>
+                    <T><span className="text-zinc-700 dark:text-zinc-300">All AI models</span></T>
                   </li>
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                    <span className="text-zinc-700 dark:text-zinc-300">PDF document analysis</span>
+                    <T><span className="text-zinc-700 dark:text-zinc-300">PDF document analysis</span></T>
                   </li>
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                    <span className="text-zinc-700 dark:text-zinc-300">Priority support</span>
+                    <T><span className="text-zinc-700 dark:text-zinc-300">Priority support</span></T>
                   </li>
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                    <span className="text-zinc-700 dark:text-zinc-300">Early access to features</span>
+                    <T><span className="text-zinc-700 dark:text-zinc-300">Early access to features</span></T>
                   </li>
                 </ul>
               </div>
@@ -393,13 +401,13 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                     className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
                     onClick={handleManageSubscription}
                   >
-                    Manage subscription
+                    {t('Manage subscription')}
                   </Button>
                   {subscriptionDetails.subscription && (
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                       {subscriptionDetails.subscription.cancelAtPeriodEnd
-                        ? `Expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
-                        : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
+                        ? t('Expires {date}', { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) })
+                        : t('Renews {date}', { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) })}
                     </p>
                   )}
                 </div>
@@ -408,7 +416,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                   className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                   onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
                 >
-                  {isAuthenticated === false ? 'Sign in to upgrade' : 'Upgrade to Scira Pro'}
+                  {isAuthenticated === false ? t('Sign in to upgrade') : t('Upgrade to Scira Pro')}
                   <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
               )}
@@ -420,13 +428,13 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
         <div className="text-center mt-16 mb-8">
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-6 py-4 inline-block">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              By subscribing, you agree to our{' '}
+              <T>By subscribing, you agree to our{' '}
               <Link
                 href="/terms"
                 className="text-black dark:text-white font-medium hover:underline underline-offset-4 transition-colors duration-200"
               >
                 Terms of Service
-              </Link>
+              </Link></T>
             </p>
           </div>
         </div>
@@ -434,13 +442,13 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
         {/* Footer */}
         <div className="text-center mt-12">
           <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-            Have questions?{' '}
+            <T>Have questions?{' '}
             <a
               href="mailto:zaid@scira.ai"
               className="text-black dark:text-white hover:underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600 transition-colors duration-200"
             >
               Get in touch
-            </a>
+            </a></T>
           </p>
         </div>
       </div>

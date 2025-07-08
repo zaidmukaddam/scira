@@ -66,6 +66,7 @@ import {
   redditSearchTool,
   extremeSearchTool,
 } from '@/lib/tools';
+import { getLocale } from 'gt-next/server';
 
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
@@ -99,11 +100,12 @@ function getStreamContext() {
 }
 
 export async function POST(req: Request) {
-  console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
+
+  const locale = await getLocale();
 
   console.log('--------------------------------');
   console.log('Location: ', latitude, longitude);

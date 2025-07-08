@@ -3,6 +3,7 @@
 import { getUser } from '@/lib/auth-utils';
 import { serverEnv } from '@/env/server';
 import MemoryClient from 'mem0ai';
+import { getGT } from 'gt-next/server';
 
 // Initialize the memory client with API key
 const memoryClient = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY || '' });
@@ -36,7 +37,8 @@ export async function addMemory(content: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    const t = await getGT();
+    throw new Error(t('Authentication required'));
   }
 
   try {
@@ -62,7 +64,8 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    const t = await getGT();
+    throw new Error(t('Authentication required'));
   }
 
   if (!query.trim()) {
@@ -96,7 +99,8 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Search API error:', errorText);
-      throw new Error(`Failed to search memories: ${response.statusText}`);
+      const t = await getGT();
+      throw new Error(t('Failed to search memories: {error}', { error: response.statusText }));
     }
 
     const results = await response.json();
@@ -131,7 +135,8 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    const t = await getGT();
+    throw new Error(t('Authentication required'));
   }
 
   try {
@@ -157,7 +162,8 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Get memories API error:', errorText);
-      throw new Error(`Failed to fetch memories: ${response.statusText}`);
+      const t = await getGT();
+      throw new Error(t('Failed to fetch memories: {error}', { error: response.statusText }));
     }
 
     const data = await response.json();
@@ -191,7 +197,8 @@ export async function deleteMemory(memoryId: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    const t = await getGT();
+    throw new Error(t('Authentication required'));
   }
 
   try {
@@ -207,7 +214,8 @@ export async function deleteMemory(memoryId: string) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Delete memory API error:', errorText);
-      throw new Error(`Failed to delete memory: ${response.statusText}`);
+      const t = await getGT();
+      throw new Error(t('Failed to delete memory: {error}', { error: response.statusText }));
     }
 
     const data = await response.json();

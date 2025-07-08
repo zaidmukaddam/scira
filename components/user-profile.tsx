@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
+import { T, useGT } from 'gt-next';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -66,6 +67,7 @@ const UserProfile = memo(
     const [showEmail, setShowEmail] = useState(false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
+    const t = useGT();
 
     // Use passed user prop if available, otherwise fall back to session
     const currentUser = user || session?.user;
@@ -138,7 +140,7 @@ const UserProfile = memo(
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={4}>
-              {isAuthenticated ? 'Account' : 'Sign In'}
+              {isAuthenticated ? t('Account') : t('Sign In')}
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent className="w-[240px] z-[110] mr-5">
@@ -172,7 +174,7 @@ const UserProfile = memo(
                         className="size-6 text-muted-foreground hover:text-foreground"
                       >
                         {showEmail ? <EyeSlash size={12} /> : <Eye size={12} />}
-                        <span className="sr-only">{showEmail ? 'Hide email' : 'Show email'}</span>
+                        <span className="sr-only">{showEmail ? t('Hide email') : t('Show email')}</span>
                       </Button>
                     </div>
                   </div>
@@ -187,8 +189,8 @@ const UserProfile = memo(
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <p className="font-medium text-sm leading-none">Guest</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sign in to save your progress</p>
+                    <p className="font-medium text-sm leading-none">{t('Guest')}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('Sign in to save your progress')}</p>
                   </div>
                 </div>
               </div>
@@ -218,8 +220,8 @@ const UserProfile = memo(
                           <Crown size={14} className="text-foreground" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground text-sm">Scira Pro</span>
-                          <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
+                          <span className="font-medium text-foreground text-sm">{t('Scira Pro')}</span>
+                          <span className="text-[10px] text-muted-foreground">{t('Unlimited access to all features')}</span>
                         </div>
                       </div>
                     </div>
@@ -232,8 +234,8 @@ const UserProfile = memo(
                         <Lightning size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">Upgrade to Pro</span>
-                        <span className="text-[10px] text-muted-foreground">Unlimited searches & premium models</span>
+                        <span className="text-sm font-medium">{t('Upgrade to Pro')}</span>
+                        <span className="text-[10px] text-muted-foreground">{t('Unlimited searches & premium models')}</span>
                       </div>
                     </DropdownMenuItem>
                   )
@@ -247,7 +249,7 @@ const UserProfile = memo(
                 <DropdownMenuItem className="cursor-pointer" asChild>
                   <Link href="/settings" className="w-full flex items-center gap-2">
                     <Gear size={16} />
-                    <span>Settings</span>
+                    <span>{t('Settings')}</span>
                   </Link>
                 </DropdownMenuItem>
               </>
@@ -257,7 +259,7 @@ const UserProfile = memo(
               <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2">
                   <Sun size={16} />
-                  <span className="text-sm">Theme</span>
+                  <span className="text-sm">{t('Theme')}</span>
                 </div>
                 <ThemeSwitcher />
               </div>
@@ -268,19 +270,19 @@ const UserProfile = memo(
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/about" className="w-full flex items-center gap-2">
                 <Info size={16} />
-                <span>About</span>
+                <span>{t('About')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/terms" className="w-full flex items-center gap-2">
                 <FileText size={16} />
-                <span>Terms</span>
+                <span>{t('Terms')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/privacy-policy" className="w-full flex items-center gap-2">
                 <Shield size={16} />
-                <span>Privacy</span>
+                <span>{t('Privacy')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -294,7 +296,7 @@ const UserProfile = memo(
                 className="w-full flex items-center gap-2"
               >
                 <GithubLogo size={16} />
-                <span>Github</span>
+                <span>{t('Github')}</span>
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
@@ -305,7 +307,7 @@ const UserProfile = memo(
                 className="w-full flex items-center gap-2"
               >
                 <XLogo size={16} />
-                <span>X.com</span>
+                <span>{t('X.com')}</span>
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
@@ -316,7 +318,7 @@ const UserProfile = memo(
                 className="w-full flex items-center gap-2"
               >
                 <InstagramLogoIcon size={16} />
-                <span>Instagram</span>
+                <span>{t('Instagram')}</span>
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
@@ -327,7 +329,7 @@ const UserProfile = memo(
                 className="w-full flex items-center gap-2"
               >
                 <VercelIcon size={14} />
-                <span>Deploy with Vercel</span>
+                <span>{t('Deploy with Vercel')}</span>
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
@@ -338,7 +340,7 @@ const UserProfile = memo(
                 className="w-full flex items-center gap-2"
               >
                 <Bug className="size-4" />
-                <span>Feature/Bug Request</span>
+                <span>{t('Feature/Bug Request')}</span>
               </a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -352,25 +354,25 @@ const UserProfile = memo(
                     fetchOptions: {
                       onRequest: () => {
                         setSigningOut(true);
-                        toast.loading('Signing out...');
+                        toast.loading(t('Signing out...'));
                       },
                       onSuccess: () => {
                         setSigningOut(false);
                         localStorage.clear();
-                        toast.success('Signed out successfully');
+                        toast.success(t('Signed out successfully'));
                         toast.dismiss();
                         window.location.href = '/new';
                       },
                       onError: () => {
                         setSigningOut(false);
-                        toast.error('Failed to sign out');
+                        toast.error(t('Failed to sign out'));
                         window.location.reload();
                       },
                     },
                   })
                 }
               >
-                <span>Sign Out</span>
+                <span>{t('Sign Out')}</span>
                 <SignOut className="size-4" />
               </DropdownMenuItem>
             ) : (
@@ -381,7 +383,7 @@ const UserProfile = memo(
                   redirect('/sign-in');
                 }}
               >
-                <span>Sign In</span>
+                <span>{t('Sign In')}</span>
                 <SignIn className="size-4" />
               </DropdownMenuItem>
             )}

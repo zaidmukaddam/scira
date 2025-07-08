@@ -4,6 +4,7 @@ import { getUser } from '@/lib/auth-utils';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { Message } from '@/lib/db/schema';
 import { Metadata } from 'next';
+import { getGT } from 'gt-next/server';
 
 interface UIMessage {
   id: string;
@@ -16,12 +17,13 @@ interface UIMessage {
 
 // metadata
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const t = await getGT();
   const id = (await params).id;
   const chat = await getChatById({ id });
   const user = await getUser();
   // if not chat, return Scira Chat
   if (!chat) {
-    return { title: 'Scira Chat' };
+    return { title: t('Scira Chat') };
   }
   let title;
   // if chat is public, return title
@@ -31,20 +33,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // if chat is private, return title
   if (chat.visibility === 'private') {
     if (!user) {
-      title = 'Scira Chat';
+      title = t('Scira Chat');
     }
     if (user!.id !== chat.userId) {
-      title = 'Scira Chat';
+      title = t('Scira Chat');
     }
     title = chat.title;
   }
+  const description = t('A search in scira.ai');
   return {
     title: title,
-    description: 'A search in scira.ai',
+    description: description,
     openGraph: {
       title: title,
       url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
+      description: description,
       siteName: 'scira.ai',
       images: [
         {
@@ -58,7 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       card: 'summary_large_image',
       title: title,
       url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
+      description: description,
       siteName: 'scira.ai',
       creator: '@sciraai',
       images: [

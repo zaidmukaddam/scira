@@ -32,6 +32,8 @@ import { User } from '@/lib/db/schema';
 import { LinkedinLogo, RedditLogo, XLogo } from '@phosphor-icons/react';
 import { ClassicLoader } from '@/components/ui/loading';
 import { useRouter } from 'next/navigation';
+import { T, useGT } from 'gt-next';
+import { useLocaleSelector } from 'gt-next/client'
 
 type VisibilityType = 'public' | 'private';
 
@@ -66,8 +68,11 @@ const Navbar = memo(
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
+    const [localeDropdownOpen, setLocaleDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
+    const t = useGT();
+    const { locale, locales, setLocale, getLocaleProperties } = useLocaleSelector();
 
     // Use passed Pro status instead of calculating it
     const hasActiveSubscription = isProUser;
@@ -81,7 +86,7 @@ const Navbar = memo(
       const url = `https://scira.ai/search/${chatId}`;
       navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      toast.success(t('Link copied to clipboard'));
 
       setTimeout(() => setCopied(false), 2000);
     };
@@ -142,7 +147,7 @@ const Navbar = memo(
               className="rounded-full bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
             >
               <Plus size={16} className="group-hover:rotate-90 transition-all" />
-              <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+              <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">{t('New')}</span>
             </Button>
           </Link>
         </div>
@@ -169,12 +174,12 @@ const Navbar = memo(
                           {isChangingVisibility ? (
                             <>
                               <ClassicLoader size="sm" className="text-blue-600 dark:text-blue-400" />
-                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Saving...</span>
+                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{t('Saving...')}</span>
                             </>
                           ) : (
                             <>
                               <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
-                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{t('Shared')}</span>
                               <Copy size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
                             </>
                           )}
@@ -183,7 +188,7 @@ const Navbar = memo(
                       <DropdownMenuContent align="end" className="w-72 p-3">
                         <div className="space-y-3">
                           <header className="flex justify-between items-center">
-                            <h4 className="text-sm font-medium">Share Link</h4>
+                            <h4 className="text-sm font-medium">{t('Share Link')}</h4>
                             <div className="flex gap-2">
                               <Button
                                 variant="secondary"
@@ -193,7 +198,7 @@ const Navbar = memo(
                                 disabled={isChangingVisibility}
                               >
                                 <Lock size={12} className="mr-1" />
-                                Make Private
+                                {t('Make Private')}
                               </Button>
                               <Button
                                 variant="ghost"
@@ -234,7 +239,7 @@ const Navbar = memo(
 
                           <footer className="flex flex-col space-y-2">
                             <div className="flex justify-center items-center">
-                              <p className="text-xs text-muted-foreground">Anyone with this link can view this page</p>
+                              <p className="text-xs text-muted-foreground">{t('Anyone with this link can view this page')}</p>
                             </div>
 
                             <div className="flex justify-center gap-2 pt-1">
@@ -303,12 +308,12 @@ const Navbar = memo(
                           {isChangingVisibility ? (
                             <>
                               <ClassicLoader size="sm" className="text-muted-foreground" />
-                              <span className="text-sm font-medium text-muted-foreground">Saving...</span>
+                              <span className="text-sm font-medium text-muted-foreground">{t('Saving...')}</span>
                             </>
                           ) : (
                             <>
                               <Share size={16} className="text-muted-foreground" />
-                              <span className="text-sm font-medium text-muted-foreground">Share</span>
+                              <span className="text-sm font-medium text-muted-foreground">{t('Share')}</span>
                             </>
                           )}
                         </Button>
@@ -316,7 +321,7 @@ const Navbar = memo(
                       <DropdownMenuContent align="end" className="w-72 p-3">
                         <div className="space-y-3">
                           <header className="flex justify-between items-center">
-                            <h4 className="text-sm font-medium">Share</h4>
+                            <h4 className="text-sm font-medium">{t('Share')}</h4>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -342,7 +347,7 @@ const Navbar = memo(
 
                           <div className="space-y-2">
                             <p className="text-sm text-muted-foreground">
-                              Share this page to make it accessible to anyone with the link.
+                              {t('Share this page to make it accessible to anyone with the link.')}
                             </p>
                           </div>
 
@@ -354,7 +359,7 @@ const Navbar = memo(
                               onClick={() => setPrivateDropdownOpen(false)}
                               disabled={isChangingVisibility}
                             >
-                              Cancel
+                              {t('Cancel')}
                             </Button>
                             <Button
                               variant="default"
@@ -364,7 +369,7 @@ const Navbar = memo(
                               disabled={isChangingVisibility}
                             >
                               <Share size={12} className="mr-1" />
-                              Share
+                              {t('Share')}
                             </Button>
                           </footer>
                         </div>
@@ -384,11 +389,11 @@ const Navbar = memo(
                         disabled
                       >
                         <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{t('Shared')}</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      {user ? "This is someone else's shared page" : 'This is a shared page'}
+                      {user ? t("This is someone else's shared page") : t('This is a shared page')}
                     </TooltipContent>
                   </Tooltip>
                 )
@@ -408,7 +413,7 @@ const Navbar = memo(
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={4}>
-                    Loading subscription status...
+                    {t('Loading subscription status...')}
                   </TooltipContent>
                 </Tooltip>
               ) : subscriptionData ? (
@@ -417,11 +422,11 @@ const Navbar = memo(
                     <TooltipTrigger asChild>
                       <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-1.5 bg-muted/50 border border-border">
                         <Crown size={14} className="text-foreground" />
-                        <span className="text-xs font-medium text-foreground hidden sm:inline">Pro</span>
+                        <span className="text-xs font-medium text-foreground hidden sm:inline">{t('Pro')}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      Pro Subscribed - Unlimited access
+                      {t('Pro Subscribed - Unlimited access')}
                     </TooltipContent>
                   </Tooltip>
                 ) : (
@@ -434,16 +439,48 @@ const Navbar = memo(
                         onClick={() => router.push('/pricing')}
                       >
                         <Lightning size={16} />
-                        <span className="text-sm font-medium hidden sm:inline ml-1">Upgrade</span>
+                        <span className="text-sm font-medium hidden sm:inline ml-1">{t('Upgrade')}</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      Upgrade to Pro for unlimited searches
+                      {t('Upgrade to Pro for unlimited searches')}
                     </TooltipContent>
                   </Tooltip>
                 )
               ) : null}
             </>
+          )}
+
+          {/* Locale Selector */}
+          {locales && locales.length > 1 && (
+            <DropdownMenu open={localeDropdownOpen} onOpenChange={setLocaleDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="pointer-events-auto bg-muted/50 border border-border hover:bg-muted/70 transition-colors"
+                >
+                  <Globe size={16} className="text-foreground" />
+                  <span className="text-sm font-medium text-foreground ml-1">
+                    {locale?.toUpperCase()}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                {locales.map((localeCode) => (
+                  <DropdownMenuItem
+                    key={localeCode}
+                    onClick={() => {
+                      setLocale(localeCode);
+                      setLocaleDropdownOpen(false);
+                    }}
+                    className={locale === localeCode ? 'bg-accent capitalize' : 'capitalize'}
+                  >
+                    {getLocaleProperties(localeCode).nativeNameWithRegionCode}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {/* Chat History Button */}

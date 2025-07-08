@@ -1,0 +1,22 @@
+{
+  "defaultLocale": "en",
+  "files": {
+    "gt": {
+      "output": "public/_gt/[locale].json"
+    }
+  },
+  "src": [
+    "./app/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",
+    "./hooks/**/*.{js,jsx,ts,tsx}",
+    "./lib/**/*.{js,jsx,ts,tsx}",
+    "./ai/**/*.{js,jsx,ts,tsx}"
+  ],
+  "locales": [
+    "en",
+    "zh",
+    "es"
+  ],
+  "framework": "next-app",
+  "_versionId": "60f3ecb7c9fce5f9119427265f207635efa9b959ec60f32a085c0fabd8bef696"
+}

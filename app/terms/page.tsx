@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
+import { DateTime } from 'gt-next';
 
 const container = {
   hidden: { opacity: 0 },
@@ -56,8 +57,7 @@ export default function TermsPage() {
             <motion.div variants={item} className="text-center">
               <h1 className="text-4xl font-bold tracking-tight">Terms of Service</h1>
               <p className="text-neutral-600 dark:text-neutral-400 mt-3">
-                Last updated:{' '}
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                Last updated: <DateTime>{new Date()}</DateTime>
               </p>
             </motion.div>
           </motion.div>

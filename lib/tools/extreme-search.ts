@@ -11,6 +11,7 @@ import { DataStreamWriter, generateObject, generateText, tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 import { scira } from "@/ai/providers";
+import { getGT } from 'gt-next/server';
 
 const pythonLibsAvailable = [
     "pandas",
@@ -137,9 +138,10 @@ const extremeSearch = async (
     dataStream: DataStreamWriter,
 ): Promise<Research> => {
     const allSources: SearchResult[] = [];
+    const t = await getGT();
 
     dataStream.writeMessageAnnotation({
-        status: { title: "Planning research" },
+        status: { title: t("Planning research") },
     });
 
     // plan out the research
@@ -178,7 +180,7 @@ Plan Guidelines:
     console.log(`Total todos: ${totalTodos}`);
 
     dataStream.writeMessageAnnotation({
-        status: { title: "Research plan ready, starting up research agent" },
+        status: { title: t("Research plan ready, starting up research agent") },
         plan: plan.plan
     });
 
@@ -254,7 +256,7 @@ ${JSON.stringify(plan.plan)}
         },
         tools: {
             codeRunner: {
-                description: 'Run Python code in a sandbox',
+                description: t('Run Python code in a sandbox'),
                 parameters: z.object({
                     title: z.string().describe('The title of what you are running the code for'),
                     code: z.string().describe('The Python code to run with proper syntax and imports'),
@@ -300,7 +302,7 @@ ${JSON.stringify(plan.plan)}
                 },
             },
             webSearch: {
-                description: 'Search the web for information on a topic',
+                description: t('Search the web for information on a topic'),
                 parameters: z.object({
                     query: z.string().describe('The search query to achieve the todo').max(100),
                     category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
@@ -310,7 +312,7 @@ ${JSON.stringify(plan.plan)}
                     console.log("Category:", category);
 
                     dataStream.writeMessageAnnotation({
-                        status: { title: `Searching the web for "${query}"` },
+                        status: { title: t('Searching the web for "{query}"', { query }) },
                     });
 
                     // Add a query annotation to display in the UI
@@ -339,7 +341,7 @@ ${JSON.stringify(plan.plan)}
                     if (results.length > 0) {
                         try {
                             dataStream.writeMessageAnnotation({
-                                status: { title: `Reading content from search results for "${query}"` },
+                                status: { title: t('Reading content from search results for "{query}"', { query }) },
                             });
 
                             // Get the URLs from the results
@@ -403,7 +405,7 @@ ${JSON.stringify(plan.plan)}
     });
 
     dataStream.writeMessageAnnotation({
-        status: { title: "Research completed" },
+        status: { title: t("Research completed") },
     });
 
     const chartResults = toolResults.filter(result =>

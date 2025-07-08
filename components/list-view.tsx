@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import PlaceholderImage from './placeholder-image';
+import { T, Branch, Var } from 'gt-next';
 
 interface Location {
   lat: number;
@@ -71,13 +72,13 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, variant = 'list' 
           <h3 className="text-xl font-medium mb-1">{place.name}</h3>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className={cn('text-sm font-medium', place.is_closed ? 'text-red-500' : 'text-green-500')}>
-              {place.is_closed ? 'Closed' : 'Open now'}
-            </span>
+            <T><span className={cn('text-sm font-medium', place.is_closed ? 'text-red-500' : 'text-green-500')}>
+              <Branch branch={place.is_closed ? 'true' : 'false'} true='Closed' false='Open now' />
+            </span></T>
             {place.next_open_close && (
               <>
                 <span className="text-neutral-400">·</span>
-                <span className="text-sm text-neutral-400">until {place.next_open_close}</span>
+                <T><span className="text-sm text-neutral-400">until <Var>{place.next_open_close}</Var></span></T>
               </>
             )}
             {place.type && (
@@ -114,7 +115,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, variant = 'list' 
                 );
               }}
             >
-              Directions
+              <T>Directions</T>
             </Button>
             {place.website && (
               <Button
@@ -126,7 +127,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, variant = 'list' 
                   window.open(place.website, '_blank');
                 }}
               >
-                Website
+                <T>Website</T>
               </Button>
             )}
             {place.phone && (
@@ -139,7 +140,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, variant = 'list' 
                   window.open(`tel:${place.phone}`, '_blank');
                 }}
               >
-                Call
+                <T>Call</T>
               </Button>
             )}
           </div>

@@ -4,9 +4,12 @@ import { getChatWithUserById } from '@/lib/db/queries';
 import { format } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
+import { getGT } from 'gt-next/server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const t = await getGT();
+    
     // Get chat data with user information
     const id = (await params).id;
     const chatWithUser = await getChatWithUserById({ id });
@@ -197,7 +200,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                     marginTop: '4px',
                   }}
                 >
-                  Minimalistic AI Search Engine
+                  {t('Minimalistic AI Search Engine')}
                 </div>
               </div>
             </div>
@@ -243,7 +246,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ opacity: 0.7 }}>By</span>
+                  <span style={{ opacity: 0.7 }}>{t('By')}</span>
                   <span style={{ fontWeight: 600 }}>{chatWithUser.userName}</span>
                 </div>
                 <div
@@ -276,7 +279,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                   fontFamily: 'Syne',
                 }}
               >
-                Start your search at scira.ai
+                {t('Start your search at scira.ai')}
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGT } from 'gt-next';
 
 interface CurrencyConverterProps {
   toolInvocation: any;
@@ -13,6 +14,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
   const [amount, setAmount] = useState<string>(toolInvocation.args.amount || '1');
   const [error, setError] = useState<string | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
+  const t = useGT();
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -20,7 +22,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
       setAmount(value);
       setError(null);
     } else {
-      setError('Please enter a valid number');
+      setError(t('Please enter a valid number'));
     }
   };
 

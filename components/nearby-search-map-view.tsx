@@ -5,6 +5,7 @@ import InteractiveMap from './interactive-maps';
 import PlaceCard from './place-card';
 import { Badge } from './ui/badge';
 import { AlertCircle } from 'lucide-react';
+import { T, useGT, Num, Var } from 'gt-next';
 
 interface Location {
   lat: number;
@@ -62,6 +63,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
     const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
     const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
     const [mapError, setMapError] = useState<boolean>(false);
+    const t = useGT();
 
     // Memoize center to prevent object recreation
     const memoizedCenter = React.useMemo(
@@ -134,19 +136,25 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
               className="bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-700/60 shadow-[0_4px_12px_0_rgba(0,0,0,0.15),0_2px_4px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_12px_0_rgba(0,0,0,0.4),0_2px_4px_0_rgba(0,0,0,0.3)] text-neutral-900 dark:text-neutral-100 font-semibold rounded-full px-4 py-1.25"
             >
               <div className="flex items-center gap-2 text-sm">
-                <span>
-                  {places.length} {type} found
-                </span>
+                <T>
+                  <span>
+                    <Num>{places.length}</Num> <Var>{type}</Var> found
+                  </span>
+                </T>
                 {query && (
                   <>
                     <span className="text-neutral-400 dark:text-neutral-500">•</span>
-                    <span className="text-neutral-600 dark:text-neutral-400">Near {query}</span>
+                    <T>
+                      <span className="text-neutral-600 dark:text-neutral-400">Near <Var>{query}</Var></span>
+                    </T>
                   </>
                 )}
                 {searchRadius && (
                   <>
                     <span className="text-neutral-400 dark:text-neutral-500">•</span>
-                    <span className="text-neutral-600 dark:text-neutral-400">{searchRadius}m radius</span>
+                    <T>
+                      <span className="text-neutral-600 dark:text-neutral-400"><Num>{searchRadius}</Num>m radius</span>
+                    </T>
                   </>
                 )}
               </div>
@@ -172,7 +180,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:scale-105',
               )}
             >
-              List
+              <T>List</T>
             </button>
             <button
               onClick={() => handleViewModeChange('map')}
@@ -183,7 +191,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:scale-105',
               )}
             >
-              Map
+              <T>Map</T>
             </button>
           </div>
         </div>
@@ -205,10 +213,14 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
               <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
                 <div className="text-center p-6">
                   <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-3" />
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-3">Failed to load map</p>
-                  <button onClick={handleRetry} className="text-sm text-blue-500 hover:text-blue-600 underline">
-                    Try again
-                  </button>
+                  <T>
+                    <p className="text-neutral-600 dark:text-neutral-400 mb-3">Failed to load map</p>
+                  </T>
+                  <T>
+                    <button onClick={handleRetry} className="text-sm text-blue-500 hover:text-blue-600 underline">
+                      Try again
+                    </button>
+                  </T>
                 </div>
               </div>
             ) : (
@@ -249,7 +261,9 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
                 {places.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center p-6">
-                      <p className="text-neutral-500 dark:text-neutral-400">No {type} found in this area</p>
+                      <T>
+                        <p className="text-neutral-500 dark:text-neutral-400">No <Var>{type}</Var> found in this area</p>
+                      </T>
                     </div>
                   </div>
                 ) : (

@@ -13,6 +13,7 @@ import { updateChatVisibility } from '@/app/actions';
 import { invalidateChatsCache } from '@/lib/utils';
 import { Share } from '@phosphor-icons/react';
 import { EnhancedErrorDisplay } from '@/components/message';
+import { T, useGT, Var, Num, Branch } from 'gt-next';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -53,7 +54,7 @@ const SciraLogoHeader = () => (
       unoptimized
       quality={100}
     />
-    <h2 className="text-xl font-normal font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2>
+    <T><h2 className="text-xl font-normal font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2></T>
   </div>
 );
 
@@ -74,6 +75,7 @@ const Messages: React.FC<MessagesProps> = ({
   initialMessages,
   isOwner,
 }) => {
+  const t = useGT();
   // Track visibility state for each reasoning section using messageIndex-partIndex as key
   const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
   const [reasoningFullscreenMap, setReasoningFullscreenMap] = useState<Record<string, boolean>>({});
@@ -264,7 +266,7 @@ const Messages: React.FC<MessagesProps> = ({
                     className="h-8 px-2 text-xs rounded-full"
                   >
                     <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                    Rewrite
+                    <T>Rewrite</T>
                   </Button>
                 )}
                 {/* Only show share for authenticated owners */}
@@ -291,23 +293,23 @@ const Messages: React.FC<MessagesProps> = ({
                         await navigator.clipboard.writeText(shareUrl);
 
                         return selectedVisibilityType === 'private'
-                          ? 'Chat made public and link copied to clipboard'
-                          : 'Share link copied to clipboard';
+                          ? t('Chat made public and link copied to clipboard')
+                          : t('Share link copied to clipboard');
                       };
 
                       toast.promise(sharePromise(), {
                         loading:
                           selectedVisibilityType === 'private'
-                            ? 'Making chat public and copying link...'
-                            : 'Copying share link...',
+                            ? t('Making chat public and copying link...')
+                            : t('Copying share link...'),
                         success: (message) => message,
-                        error: 'Failed to share chat',
+                        error: t('Failed to share chat'),
                       });
                     }}
                     className="h-8 px-2 text-xs rounded-full shadow-none"
                   >
                     <Share className="size-4.5! mr-2 font-bold fill-neutral-900 dark:fill-neutral-100" />
-                    Share
+                    <T>Share</T>
                   </Button>
                 )}
                 <Button
@@ -315,12 +317,12 @@ const Messages: React.FC<MessagesProps> = ({
                   size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(part.text);
-                    toast.success('Copied to clipboard');
+                    toast.success(t('Copied to clipboard'));
                   }}
                   className="h-8 px-2 text-xs rounded-full"
                 >
                   <Copy className="h-3.5 w-3.5 mr-2" />
-                  Copy
+                  <T>Copy</T>
                 </Button>
               </div>
             )}
@@ -557,23 +559,27 @@ const Messages: React.FC<MessagesProps> = ({
                 </div>
               </div>
               <div>
-                <h3 className="font-medium text-amber-700 dark:text-amber-300">Incomplete Response</h3>
-                <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-                  The assistant response appears to be missing.
-                </p>
+                <T><h3 className="font-medium text-amber-700 dark:text-amber-300">Incomplete Response</h3></T>
+                <T>
+                  <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                    The assistant response appears to be missing.
+                  </p>
+                </T>
               </div>
             </div>
 
             <div className="px-4 py-3 flex items-center justify-between">
-              <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-                {!user && selectedVisibilityType === 'public'
-                  ? 'Please sign in to retry or try a different prompt'
-                  : 'Try regenerating the response or rephrase your question'}
-              </p>
+              <T>
+                <Branch
+                  branch={(!user && selectedVisibilityType === 'public').toString()}
+                  true={<p className="text-neutral-500 dark:text-neutral-400 text-xs">Please sign in to retry or try a different prompt</p>}
+                  false={<p className="text-neutral-500 dark:text-neutral-400 text-xs">Try regenerating the response or rephrase your question</p>}
+                />
+              </T>
               {(user || selectedVisibilityType === 'private') && (
                 <Button onClick={handleRetry} className="bg-amber-600 hover:bg-amber-700 text-white" size="sm">
                   <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                  Generate Response
+                  <T>Generate Response</T>
                 </Button>
               )}
             </div>

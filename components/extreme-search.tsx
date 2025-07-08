@@ -18,6 +18,7 @@ import ReactECharts, { EChartsOption } from 'echarts-for-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Num, Plural, T, useGT } from 'gt-next';
 
 interface QueryBlockData {
   queryId: string;
@@ -87,6 +88,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
   const { resolvedTheme} = useTheme();
   const isDark = resolvedTheme === 'dark';
   const [isMobile, setIsMobile] = useState(false);
+  const t = useGT();
 
   useEffect(() => {
     const mobileMediaQuery = window.matchMedia('(max-width: 640px)');
@@ -477,11 +479,11 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           formatter: function (params: any) {
             const data = params.data;
             return `${params.seriesName}<br/>
-                   <strong>Maximum:</strong> ${data[4]}<br/>
-                   <strong>Upper Quartile:</strong> ${data[3]}<br/>
-                   <strong>Median:</strong> ${data[2]}<br/>
-                   <strong>Lower Quartile:</strong> ${data[1]}<br/>
-                   <strong>Minimum:</strong> ${data[0]}`;
+                   <strong>${t('Maximum')}:</strong> ${data[4]}<br/>
+                   <strong>${t('Upper Quartile')}:</strong> ${data[3]}<br/>
+                   <strong>${t('Median')}:</strong> ${data[2]}<br/>
+                   <strong>${t('Lower Quartile')}:</strong> ${data[1]}<br/>
+                   <strong>${t('Minimum')}:</strong> ${data[0]}`;
           },
         },
         xAxis: {
@@ -497,7 +499,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
         },
         series: [
           {
-            name: chart.title || 'Box Plot',
+            name: chart.title || t('Box Plot'),
             type: 'boxplot',
             data: chart.elements.map((element: any) => {
               // If data is already in boxplot format [min, Q1, median, Q3, max]
@@ -700,6 +702,7 @@ const ExtremeSourcesSheet: React.FC<{
 
   const SheetWrapper = isMobile ? Drawer : Sheet;
   const SheetContentWrapper = isMobile ? DrawerContent : SheetContent;
+  const t = useGT();
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>
@@ -708,9 +711,11 @@ const ExtremeSourcesSheet: React.FC<{
           {/* Header */}
           <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
+              <T>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
+              </T>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {sources.length} research sources
+                {t('{count} research sources', { count: sources.length })}
               </p>
             </div>
           </div>
@@ -748,6 +753,7 @@ const ExtremeSearchComponent = ({
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [previousItemsLength, setPreviousItemsLength] = useState(0);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const t = useGT();
 
   // Add state for accordion sections (default to closed for more compact view)
   const [researchProcessOpen, setResearchProcessOpen] = useState(false);
@@ -764,7 +770,7 @@ const ExtremeSearchComponent = ({
 
   const latestStatusTitle =
     latestStatusAnnotation?.status?.title ||
-    (state === 'call' || state === 'partial-call' ? 'Thinking...' : 'Processing...');
+    (state === 'call' || state === 'partial-call' ? t('Thinking...') : t('Processing...'));
 
   const planData = useMemo(() => (annotations as any[])?.find((ann) => ann.plan)?.plan, [annotations]);
 
@@ -839,7 +845,7 @@ const ExtremeSearchComponent = ({
             acc.push({
               codeId,
               code: annotation.status.code,
-              title: annotation.status.title || 'Python Code Execution',
+              title: annotation.status.title || t('Python Code Execution'),
               status: 'running',
             });
           }
@@ -856,7 +862,7 @@ const ExtremeSearchComponent = ({
             acc.push({
               codeId: `code-${acc.length}`,
               code: annotation.status.code,
-              title: annotation.status.title || 'Python Code Execution',
+              title: annotation.status.title || t('Python Code Execution'),
               result: annotation.status.result,
               charts: annotation.status.charts,
               status: 'complete' as const,
@@ -944,7 +950,7 @@ const ExtremeSearchComponent = ({
         const codeCalls = (research.toolResults || [])
           .filter((call) => call.toolName === 'codeRunner')
           .map((call, index) => {
-            const title = call.args?.title || 'Python Code Execution';
+            const title = call.args?.title || t('Python Code Execution');
             const code = call.args?.code || '';
             const codeId = `code-result-${index}`;
             // Find the corresponding result
@@ -1239,19 +1245,19 @@ const ExtremeSearchComponent = ({
                             if (isReadingContent && item.searchData.sources.length > 0 && state !== 'result') {
                               return (
                                 <TextShimmer className="text-xs py-0.5" duration={2.5}>
-                                  Reading content...
+                                  {t('Reading content...')}
                                 </TextShimmer>
                               );
                             } else if (item.status === 'loading' && state !== 'result') {
                               return (
                                 <TextShimmer className="text-xs py-0.5" duration={2.5}>
-                                  Searching sources...
+                                  {t('Searching sources...')}
                                 </TextShimmer>
                               );
                             } else if (item.status === 'no_results' && item.searchData.sources.length === 0) {
                               return (
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400 py-1 mt-1">
-                                  No sources found for this query.
+                                  {t('No sources found for this query.')}
                                 </p>
                               );
                             }
@@ -1272,7 +1278,7 @@ const ExtremeSearchComponent = ({
                           {item.codeData.result && (
                             <div className="mt-2">
                               <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mb-1">
-                                Result:
+                                {t('Result:')}
                               </div>
                               <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md overflow-auto max-h-[100px] text-xs font-mono">
                                 <pre className="whitespace-pre-wrap break-words">{item.codeData.result}</pre>
@@ -1294,7 +1300,7 @@ const ExtremeSearchComponent = ({
                           {/* If still running */}
                           {item.codeData.status === 'running' && state !== 'result' && (
                             <TextShimmer className="text-xs py-0.5 mt-1" duration={2.5}>
-                              Executing code...
+                              {t('Executing code...')}
                             </TextShimmer>
                           )}
                         </>
@@ -1372,7 +1378,9 @@ const ExtremeSearchComponent = ({
               <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
                 <Globe className="h-3.5 w-3.5 text-neutral-500" />
               </div>
-              <h2 className="font-medium text-sm">Sources</h2>
+              <T>
+                <h2 className="font-medium text-sm">Sources</h2>
+              </T>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
@@ -1388,7 +1396,7 @@ const ExtremeSearchComponent = ({
                     setSourcesSheetOpen(true);
                   }}
                 >
-                  View all
+                  {t('View all')}
                   <ArrowUpRight className="w-3 h-3 ml-1" />
                 </Button>
               )}
@@ -1438,7 +1446,7 @@ const ExtremeSearchComponent = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    No sources found for this research.
+                    {t('No sources found for this research.')}
                   </motion.p>
                 )}
               </CardContent>
@@ -1506,7 +1514,7 @@ const ExtremeSearchComponent = ({
             className="py-2 px-3 border-b bg-neutral-50 dark:bg-neutral-900 flex justify-between items-center cursor-pointer"
             onClick={() => setResearchProcessOpen(!researchProcessOpen)}
           >
-            <div className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate">Research Process</div>
+            <div className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate">{t('Research Process')}</div>
             {researchProcessOpen ? (
               <ChevronDown className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
             ) : (
@@ -1534,9 +1542,17 @@ const ExtremeSearchComponent = ({
         {allCharts.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center gap-1.5 mb-2">
-              <h3 className="text-xs font-medium text-neutral-800 dark:text-neutral-200">Visualizations</h3>
+              <T>
+                <h3 className="text-xs font-medium text-neutral-800 dark:text-neutral-200">Visualizations</h3>
+              </T>
               <div className="text-[10px] px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-md text-neutral-500 dark:text-neutral-400">
-                {allCharts.length} chart{allCharts.length !== 1 ? 's' : ''}
+                <T>
+                  <Plural 
+                    n={allCharts.length}
+                    singular={<><Num>{allCharts.length}</Num> chart</>}
+                    plural={<><Num>{allCharts.length}</Num> charts</>}
+                  />
+                </T>
               </div>
             </div>
 
@@ -1599,7 +1615,9 @@ const ExtremeSearchComponent = ({
               >
                 {planData ? (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mb-3">Research Plan</h3>
+                    <T>
+                      <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mb-3">Research Plan</h3>
+                    </T>
                     {planData.map((plan: any, index: number) => (
                       <motion.div
                         key={index}
@@ -1659,7 +1677,7 @@ const ExtremeSearchComponent = ({
                 ) : (
                   <div className="space-y-3 py-2">
                     <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                      Preparing Research Plan
+                      {t('Preparing Research Plan')}
                     </h3>
                     <Skeleton className="h-5 w-full bg-[#4ade80]/20" />
                     <Skeleton className="h-5 w-3/4 bg-[#4ade80]/20" />

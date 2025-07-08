@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { T } from "gt-next"
 
 export function ClassicLoader({
     className,
@@ -41,7 +42,9 @@ export function ClassicLoader({
                     />
                 ))}
             </div>
-            <span className="sr-only">Loading</span>
+            <T>
+                <span className="sr-only">Loading</span>
+            </T>
         </div>
     )
 }

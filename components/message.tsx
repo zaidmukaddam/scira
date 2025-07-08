@@ -24,6 +24,7 @@ import {
   RefreshCw,
   LogIn,
 } from 'lucide-react';
+import { useGT } from 'gt-next';
 import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { deleteTrailingMessages } from '@/app/actions';
@@ -47,6 +48,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   user,
   selectedVisibilityType,
 }) => {
+  const t = useGT();
   let parsedError: any = null;
   let isChatSDKError = false;
 
@@ -84,7 +86,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
   const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
   const actions = isChatSDKError
-    ? getErrorActions(parsedError as any)
+    ? getErrorActions(parsedError as any, t)
     : { primary: { label: 'Try Again', action: 'retry' } };
 
   // Get icon component based on error type
@@ -198,7 +200,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
               {!isChatSDKError && 'Error'}
             </h3>
             <p className={`text-sm ${colors.text} mt-0.5`}>{errorMessage}</p>
-            {errorCode && <p className={`text-xs ${colors.text} mt-1 font-mono`}>Error Code: {errorCode}</p>}
+            {errorCode && <p className={`text-xs ${colors.text} mt-1 font-mono`}>{t('Error Code')}: {errorCode}</p>}
           </div>
         </div>
 
@@ -212,8 +214,8 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           <div className="flex items-center justify-between">
             <p className="text-neutral-500 dark:text-neutral-400 text-xs">
               {!user && selectedVisibilityType === 'public'
-                ? 'Please sign in to retry or try a different prompt'
-                : 'You can retry your request or try a different approach'}
+                ? t('Please sign in to retry or try a different prompt')
+                : t('You can retry your request or try a different approach')}
             </p>
             <div className="flex gap-2">
               {actions.secondary && canPerformAction(actions.secondary.action) && (
@@ -293,6 +295,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [draftContent, setDraftContent] = useState<string>(message.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const t = useGT();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -318,7 +321,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draftContent.trim()) {
-            toast.error('Please enter a valid message.');
+            toast.error(t('Please enter a valid message.'));
             return;
           }
 
@@ -360,7 +363,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             await reload();
           } catch (error) {
             console.error('Error updating message:', error);
-            toast.error('Failed to update message. Please try again.');
+            toast.error(t('Failed to update message. Please try again.'));
           } finally {
             setIsSubmitting(false);
           }
@@ -374,7 +377,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             onChange={handleInput}
             autoFocus
             className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
-            placeholder="Edit your message..."
+            placeholder={t('Edit your message...')}
             style={{
               lineHeight: '1.625',
             }}
@@ -462,6 +465,7 @@ export const Message: React.FC<MessageProps> = ({
   handleRetry,
   isOwner = true,
 }) => {
+  const t = useGT();
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
   // State to track if the message exceeds max height
@@ -580,7 +584,7 @@ export const Message: React.FC<MessageProps> = ({
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                        aria-label={isExpanded ? 'Show less' : 'Show more'}
+                        aria-label={isExpanded ? t('Show less') : t('Show more')}
                       >
                         {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       </Button>
@@ -597,7 +601,7 @@ export const Message: React.FC<MessageProps> = ({
                           onClick={() => setMode('edit')}
                           className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                           disabled={status === 'submitted' || status === 'streaming'}
-                          aria-label="Edit message"
+                          aria-label={t('Edit message')}
                         >
                           <svg
                             width="15"
@@ -623,14 +627,14 @@ export const Message: React.FC<MessageProps> = ({
                       size="icon"
                       onClick={() => {
                         navigator.clipboard.writeText(message.content);
-                        toast.success('Copied to clipboard');
+                        toast.success(t('Copied to clipboard'));
                       }}
                       className={`h-7 w-7 ${
                         (!user || !isOwner) && selectedVisibilityType === 'public'
                           ? 'rounded-md'
                           : 'rounded-r-md rounded-l-none'
                       } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
-                      aria-label="Copy message"
+                      aria-label={t('Copy message')}
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
@@ -771,7 +775,7 @@ export const Message: React.FC<MessageProps> = ({
           <div className="w-full max-w-xl sm:max-w-2xl mt-3">
             <div className="flex items-center gap-1.5 mb-2 px-3">
               <AlignLeft size={16} className="text-neutral-600 dark:text-neutral-400" />
-              <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">Suggested questions</h2>
+              <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">{t('Suggested questions')}</h2>
             </div>
             <div className="flex flex-col border-t border-neutral-200 dark:border-neutral-800">
               {suggestedQuestions.map((question, i) => (
@@ -804,6 +808,7 @@ export const EditableAttachmentsBadge = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const t = useGT();
   const fileAttachments = attachments.filter(
     (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
   );
@@ -883,7 +888,7 @@ export const EditableAttachmentsBadge = ({
                 size="icon"
                 onClick={() => onRemoveAttachment(i)}
                 className="h-4 w-4 p-0 text-neutral-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                title="Remove attachment"
+                title={t('Remove attachment')}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -902,10 +907,10 @@ export const EditableAttachmentsBadge = ({
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    toast.success(t('File URL copied to clipboard'));
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
-                  title="Copy link"
+                  title={t('Copy link')}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -916,7 +921,7 @@ export const EditableAttachmentsBadge = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                  title="Download"
+                  title={t('Download')}
                 >
                   <Download className="h-4 w-4" />
                 </a>
@@ -927,7 +932,7 @@ export const EditableAttachmentsBadge = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                    title="Open in new tab"
+                    title={t('Open in new tab')}
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
@@ -963,7 +968,7 @@ export const EditableAttachmentsBadge = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                          title="Open fullscreen"
+                          title={t('Open fullscreen')}
                         >
                           <Maximize2 className="h-3.5 w-3.5" />
                         </a>
@@ -978,7 +983,7 @@ export const EditableAttachmentsBadge = ({
                         <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-100 dark:bg-neutral-800">
                           <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
                           <p className="text-neutral-600 dark:text-neutral-300 text-sm mb-2">
-                            PDF cannot be displayed directly
+                            {t('PDF cannot be displayed directly')}
                           </p>
                           <div className="flex gap-2">
                             <a
@@ -987,14 +992,14 @@ export const EditableAttachmentsBadge = ({
                               rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
                             >
-                              Open PDF
+                              {t('Open PDF')}
                             </a>
                             <a
                               href={fileAttachments[selectedIndex].url}
                               download={fileAttachments[selectedIndex].name}
                               className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-medium rounded-md hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
                             >
-                              Download
+                              {t('Download')}
                             </a>
                           </div>
                         </div>
@@ -1099,6 +1104,7 @@ export const EditableAttachmentsBadge = ({
 export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const t = useGT();
   const fileAttachments = attachments.filter(
     (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
   );
@@ -1187,10 +1193,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    toast.success(t('File URL copied to clipboard'));
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
-                  title="Copy link"
+                  title={t('Copy link')}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -1201,7 +1207,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                  title="Download"
+                  title={t('Download')}
                 >
                   <Download className="h-4 w-4" />
                 </a>
@@ -1212,7 +1218,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                    title="Open in new tab"
+                    title={t('Open in new tab')}
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
@@ -1248,7 +1254,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-                          title="Open fullscreen"
+                          title={t('Open fullscreen')}
                         >
                           <Maximize2 className="h-3.5 w-3.5" />
                         </a>
@@ -1263,7 +1269,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                         <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-100 dark:bg-neutral-800">
                           <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
                           <p className="text-neutral-600 dark:text-neutral-300 text-sm mb-2">
-                            PDF cannot be displayed directly
+                            {t('PDF cannot be displayed directly')}
                           </p>
                           <div className="flex gap-2">
                             <a
@@ -1272,14 +1278,14 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                               rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
                             >
-                              Open PDF
+                              {t('Open PDF')}
                             </a>
                             <a
                               href={fileAttachments[selectedIndex].url}
                               download={fileAttachments[selectedIndex].name}
                               className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-medium rounded-md hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
                             >
-                              Download
+                              {t('Download')}
                             </a>
                           </div>
                         </div>

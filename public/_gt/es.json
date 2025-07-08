@@ -1,0 +1,2726 @@
+{
+  "9d0c85d70bfa0721": {
+    "i": 1,
+    "c": "Algo salió mal"
+  },
+  "d082a5921498e0e0": {
+    "i": 1,
+    "c": "Ocurrió un error al intentar cargar esta página. Por favor, inténtelo de nuevo más tarde."
+  },
+  "9d9ec53c2f6ea64e": {
+    "i": 1,
+    "c": "Intentar de nuevo"
+  },
+  "312b70a0d405e6cb": {
+    "i": 1,
+    "c": "Volver al inicio"
+  },
+  "710c4af9f15f6b0c": {
+    "i": 1,
+    "c": "Error Crítico"
+  },
+  "48601e57514b4853": {
+    "i": 1,
+    "c": "Ocurrió un error crítico. Por favor, intenta actualizar la página."
+  },
+  "37ed765ece1a2fb3": "Actualizar página",
+  "2619d61ddb641a19": "Scira AI",
+  "e51547e5ebb0eed0": "Scira AI es un motor de búsqueda minimalista impulsado por IA que te ayuda a encontrar información en internet.",
+  "1f99402f83aff1d4": "Scira - Motor de Búsqueda Potenciado por IA",
+  "49a46d93489f825c": "Un motor de búsqueda minimalista impulsado por IA que te ayuda a encontrar información en internet utilizando modelos avanzados de IA como GPT-4, Claude y Grok",
+  "fac036d489edc9bb": {
+    "i": 1,
+    "c": "Página no encontrada"
+  },
+  "26822cd032347422": {
+    "i": 1,
+    "c": "La página que buscas no existe o ha sido movida."
+  },
+  "b82eeb20a4f9ec5b": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      {
+        "i": 3,
+        "c": "Volver al inicio"
+      }
+    ]
+  },
+  "7698f98ebe238faf": "Goku",
+  "3d3f30f1a1c4fc52": "Pregunta lo que quieras...",
+  "ee3e8bd8b7918aec": "Buscar",
+  "8d01b9714d15f730": "Combinando información de múltiples fuentes confiables...",
+  "00035898215e0b38": "Comprensión Inteligente",
+  "4aac1172e82c46c2": "Utiliza múltiples modelos de IA para entender preguntas complejas",
+  "3ecec0400a3c1ab3": "Búsqueda Integral",
+  "698615da4ac59f76": "Busca en múltiples fuentes para obtener respuestas completas",
+  "ccc363c084bab8db": "Comprensión de Imágenes",
+  "1fd9b19c281d6b24": "Puede entender y explicar las imágenes que compartas",
+  "ca85812d6d63d9be": "Cálculos Inteligentes",
+  "a86f20ff88db322f": "Realiza cálculos complejos y análisis en tiempo real",
+  "901deae839fa8bd8": "Asistente de Investigación",
+  "da5885c9c69ca608": "Ayuda a encontrar y explicar investigación académica",
+  "d67e4598f48f8dd1": "Conversaciones Naturales",
+  "2eca08fefa80d93b": "Responde de manera clara y conversacional",
+  "8c5b9b391b5d6541": "Comenzar",
+  "3f73a718694f77ff": "POPULAR",
+  "14499c59d716ba1d": "Scira Pro",
+  "9f577c9f65ec7f52": "Actualizar a Pro",
+  "a8b4c2ba0b3fc5b2": "Solicitar Descuento Estudiantil",
+  "21bfefc5d48ec2fa": "Crear Cuenta Gratuita",
+  "5d206e4a5af76343": "Ver detalles completos de precios",
+  "d1e0245c556a2d38": "Términos y Privacidad",
+  "62fe1d4da006d93c": "Por favor, revise nuestros Términos de Servicio y Política de Privacidad antes de continuar.",
+  "932670b2bccc9541": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Términos de Servicio"
+    ]
+  },
+  "aa8ea2aca916c18f": {
+    "i": 1,
+    "c": "Al usar Scira, aceptas nuestros Términos de Servicio que establecen las reglas para usar nuestra plataforma. Esto incluye pautas sobre el uso aceptable, derechos de propiedad intelectual y limitaciones de responsabilidad."
+  },
+  "a9030a85afe582fb": {
+    "i": 1,
+    "c": [
+      "Leer los Términos de Servicio completos",
+      {
+        "i": 2
+      }
+    ]
+  },
+  "295c00f692fe384b": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Política de Privacidad"
+    ]
+  },
+  "931f669b8fd32e8f": {
+    "i": 1,
+    "c": "Nuestra Política de Privacidad describe cómo recopilamos, utilizamos y protegemos su información personal. Nos tomamos su privacidad en serio y estamos comprometidos a mantener la confidencialidad de sus datos."
+  },
+  "ed6ae94503c768c4": {
+    "i": 1,
+    "c": [
+      "Leer la Política de Privacidad completa",
+      {
+        "i": 2
+      }
+    ]
+  },
+  "3e01d594cdafbb06": {
+    "i": 1,
+    "c": "Acepto los Términos de Servicio y la Política de Privacidad"
+  },
+  "69a722dd54016528": {
+    "i": 1,
+    "c": "Continuar"
+  },
+  "19431529f1ac7cd1": {
+    "i": 1,
+    "c": "Términos"
+  },
+  "0746a2614f312b1c": {
+    "i": 1,
+    "c": "Privacidad"
+  },
+  "69dc7bfcbe2128f6": {
+    "i": 1,
+    "c": "GitHub"
+  },
+  "f77d09aaf174b602": "Motor de Búsqueda Minimalista de Código Abierto Impulsado por IA",
+  "77ebd301854396d4": "Un motor de búsqueda minimalista impulsado por IA con capacidades de RAG y fundamentación de búsqueda. Código abierto y construido para todos.",
+  "e6f47f1b74bd6c2d": {
+    "i": 1,
+    "c": "Ver Código Fuente"
+  },
+  "353b3e958b67301c": {
+    "i": 1,
+    "c": "Prueba Ahora"
+  },
+  "49e3bbc13dfff3b8": {
+    "i": 1,
+    "c": "RAG y Fundamentación de Búsqueda"
+  },
+  "45563a588a6bbf83": {
+    "i": 1,
+    "c": "Scira combina RAG y búsqueda fundamentada para ofrecer respuestas precisas y actualizadas de fuentes confiables."
+  },
+  "a1c08409752ab263": {
+    "i": 1,
+    "c": "Demo de Búsqueda"
+  },
+  "b85e499cdd49f3f8": {
+    "i": 1,
+    "c": "Consulta"
+  },
+  "6e5c6f1aa69ee3a8": {
+    "i": 1,
+    "c": "Explica la computación cuántica y sus aplicaciones en el mundo real"
+  },
+  "439068f6fe7ea5fd": {
+    "i": 1,
+    "c": "Procesando"
+  },
+  "e14698e15b6412e0": {
+    "i": 1,
+    "c": "🔍 Recuperando información relevante..."
+  },
+  "0dece2b4b4b7e75b": {
+    "i": 1,
+    "c": "📚 Procesando resultados de búsqueda..."
+  },
+  "215678544fbe4e39": {
+    "i": 1,
+    "c": "🤖 Generando respuesta..."
+  },
+  "9f0da5fedeabef8b": {
+    "i": 1,
+    "c": "✨ Mejorando con contexto..."
+  },
+  "8d274d0f88458fe2": {
+    "i": 1,
+    "c": "Respuesta"
+  },
+  "582c6745758a735f": {
+    "i": 1,
+    "c": "La computación cuántica es una tecnología revolucionaria que aprovecha la mecánica cuántica para resolver problemas complejos que las computadoras tradicionales no pueden manejar de manera eficiente..."
+  },
+  "bcde7227f3f142d6": "Impulsado Por Líderes de la Industria",
+  "b49265a1cc7906ec": "Construido con tecnología de vanguardia de las empresas más innovadoras del mundo",
+  "69828098e1ba1f02": {
+    "i": 1,
+    "c": "Vercel AI SDK"
+  },
+  "b6fcbe97427a2560": {
+    "i": 1,
+    "c": "Marco de IA avanzado que impulsa respuestas inteligentes"
+  },
+  "14fab874c54c782d": {
+    "i": 1,
+    "c": "Búsqueda Exa"
+  },
+  "1cfc0832298b2549": {
+    "i": 1,
+    "c": "Búsqueda en tiempo real con fuentes confiables"
+  },
+  "4bcd61e42678cacd": {
+    "i": 1,
+    "c": "Voz de ElevenLabs"
+  },
+  "462c6c78e7c96f7b": {
+    "i": 1,
+    "c": "Síntesis de voz natural con calidad similar a la humana"
+  },
+  "a2324ffa9cacc8bc": {
+    "i": 1,
+    "c": "Preguntas Respondidas"
+  },
+  "578354a8606964a2": {
+    "i": 1,
+    "c": "Usuarios Activos"
+  },
+  "00ea56e5ef592020": {
+    "i": 1,
+    "c": "Estrellas de GitHub"
+  },
+  "7a39b34bcfd46deb": {
+    "i": 1,
+    "c": "Destacado en el Blog de Vercel"
+  },
+  "4ce649743861ed6b": {
+    "i": 1,
+    "c": "Reconocidos por nuestro uso innovador de la tecnología de IA y nuestra contribución a la comunidad de desarrolladores a través del SDK de IA de Vercel."
+  },
+  "5c37e2583a13d2e3": "Leer la Función",
+  "6a02d44ff6f57009": {
+    "i": 1,
+    "c": "Impulsado por Modelos Avanzados"
+  },
+  "b9bb8e541d39dc94": {
+    "i": 1,
+    "c": "Cada modelo es cuidadosamente seleccionado por sus fortalezas únicas"
+  },
+  "8c4e8001324f84da": {
+    "i": 1,
+    "c": "Reconocimiento de la Comunidad"
+  },
+  "f93073c498937f7c": {
+    "i": 1,
+    "c": "Únete a miles de desarrolladores e investigadores que confían en Scira"
+  },
+  "e7ae2503f3ea9657": {
+    "i": 1,
+    "c": "Producto #1 de la Semana"
+  },
+  "c4c79ee24393e14b": {
+    "i": 1,
+    "c": "Startups Pequeñas"
+  },
+  "672f3b0e6774a43e": {
+    "i": 1,
+    "c": "Proyecto #1 de la Semana"
+  },
+  "e8b2dda6bfd4ef64": {
+    "i": 1,
+    "c": "Peerlist"
+  },
+  "55f3412ca19b9de2": {
+    "i": 1,
+    "c": "Más de 8,000 Estrellas"
+  },
+  "a0db4f87a77abae4": {
+    "i": 1,
+    "c": "Más de 100K Usuarios Mensuales"
+  },
+  "00b673c9be6dc643": {
+    "i": 1,
+    "c": "Comunidad Activa"
+  },
+  "f02df753d47e7742": {
+    "i": 1,
+    "c": "Hecho Para Todos"
+  },
+  "88eea83bdcb5ea79": {
+    "i": 1,
+    "c": "Ya sea que necesites respuestas rápidas o investigación profunda, Scira se adapta a tus necesidades"
+  },
+  "9d21b612938b4eb0": {
+    "i": 1,
+    "c": "Estudiantes"
+  },
+  "200e4118ab9a772d": {
+    "i": 1,
+    "c": "Asistencia con trabajos de investigación"
+  },
+  "ea05d3a827c77aea": {
+    "i": 1,
+    "c": "Explicaciones de temas complejos"
+  },
+  "ac26746eb3540b05": {
+    "i": 1,
+    "c": "Resolución de problemas matemáticos"
+  },
+  "166c419bd22861fa": {
+    "i": 1,
+    "c": "Investigadores"
+  },
+  "7f81fe0d5131d96b": {
+    "i": 1,
+    "c": "Análisis de artículos académicos"
+  },
+  "0ade196146fcc9c3": {
+    "i": 1,
+    "c": "Interpretación de datos"
+  },
+  "d5abf7a1b7e25f3c": {
+    "i": 1,
+    "c": "Revisión de literatura"
+  },
+  "579b7f2d5ee980cb": {
+    "i": 1,
+    "c": "Profesionales"
+  },
+  "98dfcb1712859929": {
+    "i": 1,
+    "c": "Investigación de mercado"
+  },
+  "ffc40ba6bf721f33": {
+    "i": 1,
+    "c": "Documentación técnica"
+  },
+  "76586e1998d2dce5": {
+    "i": 1,
+    "c": "Análisis de datos"
+  },
+  "7f970dfc53dfd0c9": {
+    "i": 1,
+    "c": "Características Avanzadas"
+  },
+  "2a7ca68cf0cec486": {
+    "i": 1,
+    "c": "Experimenta una forma más inteligente de buscar con capacidades impulsadas por IA"
+  },
+  "2d97a0916a4754b8": {
+    "i": 1,
+    "c": "Planes de Precios"
+  },
+  "1047f393e3d6d508": {
+    "i": 1,
+    "c": "Elige el plan que mejor funcione para ti"
+  },
+  "235998c8a68c6e58": {
+    "i": 1,
+    "c": "Gratis"
+  },
+  "f7b3486df3d8a89f": {
+    "i": 1,
+    "c": "Comienza con las funciones esenciales"
+  },
+  "169661f80e2fc0e8": {
+    "i": 1,
+    "c": "Búsquedas diarias limitadas (otros modelos)"
+  },
+  "28d7c8469fa0bc35": {
+    "i": 1,
+    "c": "Grok 3 Mini y Grok 2 Vision ilimitados"
+  },
+  "6629b8cdb536c101": {
+    "i": 1,
+    "c": "Modelos básicos de IA"
+  },
+  "fe63930690124f01": {
+    "i": 1,
+    "c": "Historial de búsqueda"
+  },
+  "47b44457c080fcef": {
+    "i": 1,
+    "c": "Todo lo que necesitas para uso ilimitado"
+  },
+  "ff0ac054de10a771": {
+    "i": 1,
+    "c": "CANCELA EN CUALQUIER MOMENTO"
+  },
+  "9fce877aa6699dd1": {
+    "i": 1,
+    "c": "Búsquedas ilimitadas"
+  },
+  "76b3ec67cf301b88": {
+    "i": 1,
+    "c": "Todos los modelos de IA"
+  },
+  "9a0a2acb2ce3e6c5": {
+    "i": 1,
+    "c": "Análisis de documentos PDF"
+  },
+  "2e745181e5a811b4": {
+    "i": 1,
+    "c": "Soporte prioritario"
+  },
+  "e18aaf3f6011ebc9": {
+    "i": 1,
+    "c": [
+      "Descuento Estudiantil: ",
+      {
+        "i": 2,
+        "k": "_gt_cost_2",
+        "v": "c"
+      },
+      " de descuento en el Plan Pro"
+    ]
+  },
+  "d58af4ffa27229bd": {
+    "i": 1,
+    "c": [
+      "Los estudiantes pueden obtener el plan Pro por solo ",
+      {
+        "i": 2,
+        "k": "_gt_cost_2",
+        "v": "c"
+      },
+      "/mes. Envía un correo electrónico a zaid@scira.ai con tu identificación estudiantil y una breve descripción de cómo usas Scira para tus estudios."
+    ]
+  },
+  "e9d37f78340fea6e": {
+    "i": 1,
+    "c": "Acceso Ilimitado Gratuito a Modelos Avanzados"
+  },
+  "26faff487038373b": {
+    "i": 1,
+    "c": "Los usuarios registrados obtienen acceso ilimitado a los modelos Grok 3 Mini y Grok 2 Vision - sin límites diarios, sin restricciones. Perfecto para estudiantes, investigadores y profesionales que necesitan asistencia de IA confiable sin arruinarse."
+  },
+  "c38155fb41ae1abf": {
+    "i": 1,
+    "c": "Preguntas Frecuentes"
+  },
+  "5ad283e23f5198f2": {
+    "i": 1,
+    "c": "Encuentra respuestas a preguntas comunes sobre Scira"
+  },
+  "ed558a958fae9deb": "¿Qué es Scira?",
+  "3717dacb1b83f4f9": "Scira es un motor de búsqueda minimalista de código abierto impulsado por IA que utiliza RAG (Generación Aumentada por Recuperación) y fundamentación de búsqueda para proporcionar respuestas precisas y actualizadas de fuentes confiables.",
+  "8fcd3f200be44b5e": "¿Cuál es la diferencia entre los planes Gratuito y Pro?",
+  "822a74cc39db77e8": [
+    "El plan Gratuito ofrece búsquedas diarias limitadas con modelos de IA básicos, mientras que el plan Pro (",
+    {
+      "i": 1,
+      "k": "_gt_cost_1",
+      "v": "c"
+    },
+    "/mes) proporciona búsquedas ilimitadas, acceso a todos los modelos de IA, análisis de documentos PDF y soporte prioritario."
+  ],
+  "77291f0479f0dcad": "¿Hay descuento para estudiantes?",
+  "7c7f9355d7337174": [
+    "Sí, los estudiantes pueden obtener ",
+    {
+      "i": 1,
+      "k": "_gt_cost_1",
+      "v": "c"
+    },
+    " de descuento en el plan Pro, reduciéndolo a ",
+    {
+      "i": 2,
+      "k": "_gt_cost_2",
+      "v": "c"
+    },
+    "/mes. Para aplicar, envía un correo electrónico a zaid@scira.ai con los detalles de verificación de estudiante y una breve descripción de cómo usas Scira para tu trabajo académico o estudios."
+  ],
+  "2b4f8705b9b5b352": "¿Puedo cancelar mi suscripción en cualquier momento?",
+  "1782d7bbe24760cb": "Sí, puedes cancelar tu suscripción Pro en cualquier momento. Tus beneficios continuarán hasta el final de tu período de facturación actual.",
+  "4c9fd9a308b6b1b0": "¿Qué modelos de IA utiliza Scira?",
+  "96c727fd9b5c23e8": "Scira utiliza una gama de modelos de IA avanzados incluyendo Grok 3.0, Claude 3.7 Sonnet, OpenAI GPT 4o, Gemini 2.5 Pro, y más para proporcionar las mejores respuestas posibles.",
+  "66f198469e0b1a58": "¿Cómo garantiza Scira la precisión de la información?",
+  "72ca48cd07917599": "Scira combina la tecnología RAG con la fundamentación de búsqueda para recuperar información de fuentes confiables y verificarla antes de proporcionar respuestas. Cada respuesta incluye la atribución de fuentes.",
+  "dd1dac031d15c09f": "¿Cómo solicito el descuento estudiantil?",
+  "014e020ac1c9df70": "Envía un correo electrónico a zaid@scira.ai con una copia de tu identificación estudiantil o comprobante de inscripción. En tu correo, incluye una breve descripción de cómo usas o planeas usar Scira para tu trabajo académico o estudios. Una vez verificado, recibirás un código de descuento especial de $10 de descuento en el plan Pro.",
+  "03e34eee1aa0dff7": {
+    "i": 1,
+    "c": [
+      "¿Tienes más preguntas? ",
+      {
+        "i": 2,
+        "c": "Ponte en contacto"
+      }
+    ]
+  },
+  "b0c7b31535819630": {
+    "i": 1,
+    "c": [
+      "© ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " Todos los derechos reservados."
+    ]
+  },
+  "dce930d99de233a7": "Términos",
+  "7a6c957300c408f9": "Privacidad",
+  "e8f559b834f23dd2": "Error al cargar los datos del perfil",
+  "5926a6e542f49e5c": "Ingresa tu nombre completo",
+  "f9ddaeacc9c7163f": "Ingresa tu correo electrónico",
+  "a7a7c86f76e13155": "Perfil actualizado exitosamente",
+  "efb36ef9ae7379b9": "Error al actualizar el perfil",
+  "1b2ef8814122aa57": "Error al cargar los datos de uso",
+  "7073cadb1b8b99c7": "Datos de uso actualizados",
+  "8eddbb6f84fc297e": "Error al actualizar los datos de uso",
+  "8de592608694b1b1": "Error al cargar los datos de suscripción",
+  "bf94799b3c35e453": "Error al abrir la gestión de suscripciones",
+  "dac9c1d29a3dea39": "No se pudo cargar el historial de facturación. Esto puede deberse a que tu cuenta aún no está configurada para facturación.",
+  "4ed74894ec4dde48": "Aún no tienes ningún pedido. Tu historial de facturación aparecerá aquí.",
+  "906c4f90eb4fb5b7": "Buscar recuerdos...",
+  "73f5af33f584c251": "Prueba con un término de búsqueda diferente",
+  "a5fcf3d3cfdffd5e": "Los recuerdos aparecerán aquí cuando los guardes",
+  "0981caa4820f8e68": "Información del Perfil",
+  "b5a9539113b051ca": "Actualiza tu información personal y configuración de perfil",
+  "231743da93ff7aa9": "Nombre Completo",
+  "effdcd633af15789": "Correo electrónico",
+  "532285398002a13b": "Guardar Cambios",
+  "6d49999f19231b80": "Restablecer",
+  "6d3a4be1f72132d0": "Uso Diario de Búsqueda",
+  "5a2e9343ed00c6d1": "Rastrea tu consumo diario de búsquedas y límites",
+  "893bb44a7b9c9094": "Actualizar",
+  "6eac5d4a641effde": {
+    "i": 1,
+    "c": "Búsquedas de Hoy"
+  },
+  "995245dcea960d0a": {
+    "i": 1,
+    "c": "(Otros modelos)"
+  },
+  "d425f10efdb0d118": {
+    "i": 1,
+    "c": "Grok 3 Mini & Vision"
+  },
+  "43cc6f5266efd497": {
+    "i": 1,
+    "c": "Acceso ilimitado"
+  },
+  "2b48d4fdd607b7e2": {
+    "i": 1,
+    "c": [
+      "Búsquedas Extremas ",
+      {
+        "i": 2,
+        "c": "(Mensual)"
+      }
+    ]
+  },
+  "1cbe9351137aaee6": {
+    "i": 1,
+    "c": "Límite Diario"
+  },
+  "986572b841119a6a": {
+    "i": 1,
+    "c": "Actividad de Uso"
+  },
+  "a443c79aa73d0011": {
+    "i": 1,
+    "c": "Tu actividad de búsqueda durante el último año"
+  },
+  "832858081251f03f": "Últimas 52 semanas",
+  "c669b1f94802631c": {
+    "i": 1,
+    "c": "Cargando historial de uso..."
+  },
+  "c2c7a89b1bc943ee": {
+    "i": 1,
+    "c": "Acceso Ilimitado Disponible"
+  },
+  "2638ebdefcea3129": {
+    "i": 1,
+    "c": "Tienes acceso ilimitado a los modelos Grok 3 Mini y Grok 2 Vision. Los límites diarios solo se aplican a otros modelos de IA."
+  },
+  "c9fea33ab784157a": {
+    "i": 1,
+    "c": "Uso de Búsqueda (Solo Otros Modelos)"
+  },
+  "98ab9fbf8b2f390d": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      "% usado"
+    ]
+  },
+  "78190084481463d3": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " de ",
+      {
+        "i": 3,
+        "k": "_gt_n_3",
+        "v": "n"
+      },
+      " búsquedas utilizadas hoy"
+    ]
+  },
+  "9266a21f81f6ce61": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " restantes"
+    ]
+  },
+  "933fa7740fe8c681": {
+    "i": 1,
+    "k": "_gt_value_1",
+    "v": "v"
+  },
+  "605e99405e940c25": {
+    "i": 1,
+    "c": "Uso de Búsqueda Extrema (Mensual)"
+  },
+  "d6c5e707914b3cec": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " de ",
+      {
+        "i": 3,
+        "k": "_gt_n_3",
+        "v": "n"
+      },
+      " búsquedas extremas utilizadas este mes"
+    ]
+  },
+  "cb5998210755c892": {
+    "i": 1,
+    "c": "Actualizar a Pro"
+  },
+  "d2e20debb0d4634a": {
+    "i": 1,
+    "c": "Obtén búsquedas ilimitadas y acceso a funciones premium"
+  },
+  "6747207f13436761": {
+    "i": 1,
+    "c": "Todos los Modelos Ilimitados"
+  },
+  "b0e7c6c39026018a": {
+    "i": 1,
+    "c": "Sin límites en ningún modelo de IA, incluyendo los premium"
+  },
+  "d13bcee6a92e14cd": {
+    "i": 1,
+    "c": "Modelos de IA Premium"
+  },
+  "9a13db770b85aed4": {
+    "i": 1,
+    "c": "Acceso a Claude, GPT-4 y herramientas de análisis avanzadas"
+  },
+  "1b0e3885fd6eb286": {
+    "i": 1,
+    "c": "Soporte Prioritario"
+  },
+  "c09ea10080127aa6": {
+    "i": 1,
+    "c": "Tiempos de respuesta más rápidos y ayuda dedicada"
+  },
+  "9e172217c3e3d8ae": "Actualizar a Pro",
+  "37d50acf0d24b3a4": "Ver Planes",
+  "78707ec9e7f37b1a": "Estado de Suscripción",
+  "12ab889f139d364b": "Gestiona tu suscripción e información de facturación",
+  "c2160dc6d01534f5": [
+    {
+      "i": 1
+    },
+    {
+      "i": 2,
+      "c": "Sin Suscripción Activa"
+    },
+    {
+      "i": 3,
+      "c": "Actualmente estás en el plan gratuito con búsquedas diarias limitadas. Actualiza a Pro para acceso ilimitado y funciones premium."
+    },
+    {
+      "i": 4,
+      "c": [
+        {
+          "i": 5,
+          "c": {
+            "i": 6,
+            "c": [
+              {
+                "i": 7
+              },
+              "Actualizar a Pro"
+            ]
+          }
+        },
+        {
+          "i": 8,
+          "c": {
+            "i": 9,
+            "c": "Ver todos los planes y precios →"
+          }
+        }
+      ]
+    }
+  ],
+  "8dba8b8e4e12f6d1": "Problema de Suscripción",
+  "73e3a71122b5fc07": "Reactivar Suscripción",
+  "c0e8c6be37726200": [
+    {
+      "i": 1,
+      "c": "Historial de Facturación"
+    },
+    {
+      "i": 2,
+      "c": "Ve tus facturas pasadas y próximas"
+    }
+  ],
+  "0c4da815ea90eae3": "Gestionar Suscripción",
+  "99ff21d31847ab72": "No se encontraron pedidos",
+  "960116a7099bf96a": [
+    {
+      "i": 1
+    },
+    "Tus Recuerdos"
+  ],
+  "5c1ee144f3f36747": "Gestiona tus memorias de conversaciones guardadas",
+  "2e13898d6da1c22f": "memoria",
+  "f1fbf99125d28752": "recuerdos",
+  "5cd89cfd9ef6a613": "Cargando...",
+  "8183f1f3f9684f70": "No se encontraron recuerdos",
+  "bcd893762c0618c6": "Cargar Más",
+  "7f3f1617bd786b1a": {
+    "i": 1,
+    "c": "Configuración"
+  },
+  "1ab5c35374b94639": [
+    {
+      "i": 1,
+      "c": "Configuración"
+    },
+    {
+      "i": 2,
+      "c": "Administra tu cuenta, suscripción y preferencias de uso"
+    }
+  ],
+  "79faf4ee88058539": [
+    {
+      "i": 1,
+      "c": "Perfil"
+    },
+    {
+      "i": 2,
+      "c": "Uso",
+      "t": "TabsTrigger"
+    },
+    {
+      "i": 3,
+      "c": "Suscripción",
+      "t": "TabsTrigger"
+    },
+    {
+      "i": 4,
+      "c": "Recuerdos",
+      "t": "TabsTrigger"
+    }
+  ],
+  "54cf8932e2a29f9e": {
+    "i": 1,
+    "c": "Bienvenido a Scira Pro"
+  },
+  "ba88b264036cb201": {
+    "i": 1,
+    "c": "Tu suscripción está activa. Comienza a buscar sin límites."
+  },
+  "40be43fa52a98db6": "Comenzar búsqueda",
+  "4681c4c9541539a4": "Iniciar sesión",
+  "9d5dfe01c019d35e": "Inicia sesión en tu cuenta usando tu proveedor preferido",
+  "b99a869ed5a95927": "Registrarse",
+  "3917623bd0a2c9e2": "Regístrate en tu cuenta usando tu proveedor preferido",
+  "f4a1de84ef305d1e": "El parámetro URL es obligatorio",
+  "5202ec23a6ecb71b": "Formato de URL inválido",
+  "28a618e4cc258eef": "La URL no apunta a una imagen",
+  "1349139c5f77c777": "Error al obtener la imagen",
+  "4a50ac02504cda68": "Tiempo de espera agotado",
+  "2455bec27c431f66": "URL inválida",
+  "32fe2ebd935fa02d": "Error de red",
+  "b44871e923697769": "No se encontró archivo de audio en los datos del formulario.",
+  "86bfc5855022e2ee": "Error interno del servidor",
+  "ed821c30ba54dd43": "No se subió ningún archivo",
+  "689095c61d16d0a1": "El tamaño del archivo debe ser menor a 5MB",
+  "3e7eebdef776274e": "El tipo de archivo debe ser JPEG, PNG, GIF o PDF",
+  "88e1df7d9f2dc2bf": "Error al subir el archivo",
+  "d01f1f42a8a0ec91": "Volver al Inicio",
+  "77d5b06bb2fc5c6d": "Precios",
+  "e6ea5869559b7fff": "Elige el plan que mejor se adapte a ti",
+  "024d0023bc8031a4": "APAGADO",
+  "f68e441a32d90688": "Reclamar descuento: {code}",
+  "723d24b1dc9a7366": "Reclamar descuento",
+  "57b44f3cdc844c1c": "Plan actual",
+  "8cf3be038f4fa65c": "Plan gratuito",
+  "79496c8bb6630eac": "PLAN ACTUAL",
+  "7c6f912f2d62c6d7": "Popular",
+  "6eacfab638517319": "Gestionar suscripción",
+  "ab8176c4303a3518": "Vence {date}",
+  "929348775241f684": "Se renueva {date}",
+  "2827e21245267406": "Inicia sesión para actualizar",
+  "8f8d8056766c0ffa": "Actualizar a Scira Pro",
+  "e7984ed9b8df9e69": {
+    "i": 1,
+    "c": "Oferta Especial por Tiempo Limitado"
+  },
+  "d7346a9ecc670a74": {
+    "i": 1,
+    "c": "Primer mes"
+  },
+  "ee08dfb92c05e369": {
+    "i": 1,
+    "c": "La oferta termina en:"
+  },
+  "88c1cd1e31b41e33": {
+    "i": 1,
+    "c": "días"
+  },
+  "9001b1196416f5eb": {
+    "i": 1,
+    "c": "hrs"
+  },
+  "5fc745040edbca98": {
+    "i": 1,
+    "c": "mín"
+  },
+  "5f2569e3644bc77c": {
+    "i": 1,
+    "c": "seg"
+  },
+  "ef636e29a6409d1c": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " búsquedas por día (otros modelos)"
+    ]
+  },
+  "2850a94de0a87016": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " búsquedas extremas por mes"
+    ]
+  },
+  "e027356d302dac2e": {
+    "i": 1,
+    "c": "Scira Pro"
+  },
+  "c905618546c67648": {
+    "i": 1,
+    "c": "Todo lo de Gratis, más:"
+  },
+  "72850155b5a653f3": {
+    "i": 1,
+    "c": "Acceso anticipado a funciones"
+  },
+  "ca18539b691369f0": [
+    "Al suscribirte, aceptas nuestros ",
+    {
+      "i": 1,
+      "c": "Términos de Servicio"
+    }
+  ],
+  "bdeec093d09769e8": [
+    "¿Tienes preguntas? ",
+    {
+      "i": 1,
+      "c": "Ponte en contacto"
+    }
+  ],
+  "b2f500d08958ff11": "Scira Chat",
+  "09b5635fa484dda5": "Una búsqueda en scira.ai",
+  "64a0cdef116797b3": "Motor de Búsqueda de IA Minimalista",
+  "eb68560de6d7e987": "Por",
+  "80ecc36d64b7e333": "Comienza tu búsqueda en scira.ai",
+  "330e76603ff76537": {
+    "i": 1,
+    "c": "Instala Scira en tu dispositivo"
+  },
+  "cd6099f783067565": {
+    "i": 1,
+    "c": [
+      "Toca ",
+      {
+        "i": 2
+      },
+      " luego \"Añadir a pantalla de inicio\" ",
+      {
+        "i": 3,
+        "c": "➕",
+        "d": {
+          "arl": "plus icon"
+        }
+      }
+    ]
+  },
+  "b51b12c7d12f0dd6": {
+    "i": 1,
+    "c": "Artículo Académico"
+  },
+  "40519931defe1742": {
+    "i": 1,
+    "c": "Todos los Artículos Académicos"
+  },
+  "e38e6efa5adbe266": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " artículos de investigación"
+    ]
+  },
+  "b643013ac221b0cb": {
+    "i": 1,
+    "c": "Artículos Académicos"
+  },
+  "178e0f62e7514791": "Ver todo",
+  "c70a19cd53a0d324": {
+    "i": 1,
+    "c": [
+      "Al continuar, aceptas nuestros ",
+      {
+        "i": 2,
+        "c": "Términos de Servicio"
+      },
+      " y ",
+      {
+        "i": 3,
+        "c": "Política de Privacidad",
+        "t": "Link"
+      },
+      "."
+    ]
+  },
+  "0f442932c6435aad": {
+    "t": "DialogDescription",
+    "i": 1,
+    "c": {
+      "i": 2,
+      "k": "_gt_value_2",
+      "v": "v"
+    }
+  },
+  "b8ee3dc58e8a03de": "Chat eliminado",
+  "a7d84e3deabd95bf": "Error al eliminar el chat. Por favor, inténtalo de nuevo.",
+  "42a1be9ccee0088b": "Título actualizado",
+  "b515e9cafb7698f5": "Error al actualizar el título. Por favor, inténtalo de nuevo.",
+  "2458385a5c4c0163": "El título no puede estar vacío",
+  "1cb7802b190d841b": "El título es demasiado largo (máximo 100 caracteres)",
+  "c3ea24ac809a5ed5": "Título",
+  "12a46f713d714e93": "Fecha",
+  "dbf0a6ca0f60def1": "Visibilidad",
+  "045741aa62df51f8": "Todo",
+  "7aba30957ff03505": "Ingresa el título...",
+  "5bea5c424299680a": "Buscar {mode}...",
+  "47dfadb16ee199f6": "Conversaciones Recientes",
+  "5717fb8ba7e64068": "Hoy",
+  "bd55aed411f34f90": "Ayer",
+  "af2c6cd3b0f08750": "Esta semana",
+  "6ba6177da9222d2c": "La Semana Pasada",
+  "c6916f6132c384ce": "Este Mes",
+  "610ae494b3c2c90d": "Más antiguo",
+  "0297430087386e15": {
+    "i": 1,
+    "c": "Actual"
+  },
+  "0ba0bd28c2ac5641": {
+    "i": 1,
+    "c": "Accede a tu Historial de Chat"
+  },
+  "aa4e599a258c1251": {
+    "i": 1,
+    "c": "Inicia sesión para ver, buscar y gestionar todas tus conversaciones anteriores sin problemas."
+  },
+  "edcd60ca2384cd55": "Iniciar Sesión",
+  "c65b7016b6180759": {
+    "i": 1,
+    "c": "Tus conversaciones se guardan automáticamente cuando has iniciado sesión."
+  },
+  "0f850ad487e97d5a": "Cargando más...",
+  "603f1e9a739c0da7": {
+    "i": 1,
+    "c": "No se encontraron conversaciones"
+  },
+  "fa5bcdde529debab": {
+    "i": 1,
+    "c": "Prueba un término de búsqueda diferente o cambia el modo de búsqueda"
+  },
+  "e21536a8fc628111": {
+    "i": 1,
+    "c": "Consejos de búsqueda:"
+  },
+  "dbfdb3a697dc4e33": {
+    "i": 1,
+    "c": [
+      "• ",
+      {
+        "i": 2,
+        "c": "public:"
+      },
+      " o ",
+      {
+        "i": 3,
+        "c": "private:",
+        "t": "code"
+      },
+      " para visibilidad"
+    ]
+  },
+  "8623805ff5191e51": {
+    "i": 1,
+    "c": [
+      "• ",
+      {
+        "i": 2,
+        "c": "today:"
+      },
+      ", ",
+      {
+        "i": 3,
+        "c": "week:",
+        "t": "code"
+      },
+      ", ",
+      {
+        "i": 4,
+        "c": "month:",
+        "t": "code"
+      },
+      " para fechas"
+    ]
+  },
+  "2768c780573917bd": {
+    "i": 1,
+    "c": [
+      "• ",
+      {
+        "i": 2,
+        "c": "date:22/05/25"
+      },
+      " para fecha específica (DD/MM/AA)"
+    ]
+  },
+  "c6d98e6dd385c835": {
+    "i": 1,
+    "c": [
+      "• Cambia al modo Fecha y escribe ",
+      {
+        "i": 2,
+        "c": "22/05/25"
+      }
+    ]
+  },
+  "1a052a56f35b145c": {
+    "i": 1,
+    "c": "Inicia una nueva conversación para comenzar"
+  },
+  "1fad96e6ee372ad8": {
+    "i": 1,
+    "c": "Toca para abrir"
+  },
+  "f10e2540c9967c36": {
+    "i": 1,
+    "c": "Editar para renombrar"
+  },
+  "13fb7dae66522f9f": {
+    "i": 1,
+    "c": "Papelera para eliminar"
+  },
+  "c7c8f2165b78eeea": "abierto",
+  "9a6af0134cc5774d": "navegar",
+  "e748a31cff7c24d6": "alternar modo",
+  "286defad80ae50d2": {
+    "i": 1,
+    "c": "Haz clic en editar para renombrar • Haz clic en papelera para eliminar"
+  },
+  "0965b14610d4625e": "cerrar",
+  "936040423c09f975": {
+    "i": 1,
+    "c": "Historial de Chat"
+  },
+  "6775865af1bfe4aa": "Historial de Chat",
+  "109bce51f58bddee": "Error de Conexión",
+  "0bed322f6071f4da": "Ocurrió un error.",
+  "534b01e985bb9550": "¡Ups! Ocurrió un error al procesar tu solicitud. {error}",
+  "9c4ed6886898ff89": "El chat ahora es {visibility}",
+  "802aed6e1664772c": "Error al actualizar la visibilidad del chat",
+  "8266818b38ebe5fb": {
+    "i": 1,
+    "c": "Modelos Ilimitados Gratuitos"
+  },
+  "a2b841a60d4ab753": {
+    "i": 1,
+    "c": "Grok 3 Mini y Grok 2 Vision ahora son ilimitados para usuarios registrados."
+  },
+  "a28dff6e4d10f8e1": "Entendido",
+  "8b775dcaef365ece": {
+    "i": 1,
+    "c": "¡Lanzado en Peerlist!"
+  },
+  "1aec88e2c9735a0e": {
+    "i": 1,
+    "c": "Echa un vistazo a nuestra galería de proyectos"
+  },
+  "218ac78e22f19ee7": "Ver Proyecto",
+  "f6def1cec5cc5e6c": {
+    "i": 1,
+    "c": "Actualizar a Scira Pro"
+  },
+  "93abde0bdd16065e": {
+    "i": 1,
+    "c": "Obtén acceso ilimitado a todas las funciones"
+  },
+  "bd5e784c86f32528": {
+    "i": 1,
+    "c": "Sin límites ni restricciones diarias"
+  },
+  "f5bd9ded10242533": {
+    "i": 1,
+    "c": "Modelos de IA premium"
+  },
+  "87dc39310d4774cd": {
+    "i": 1,
+    "c": "Claude 4 Opus, Grok 3, GPT-4o y más"
+  },
+  "a15a1c032f493a05": {
+    "i": 1,
+    "c": "Análisis de PDF"
+  },
+  "e31300023666f0fe": {
+    "i": 1,
+    "c": "Subir y analizar documentos"
+  },
+  "b7838ad54f72a79e": {
+    "i": 1,
+    "c": "Cancela en cualquier momento"
+  },
+  "b01548b6df32b8b5": "Tal vez más tarde",
+  "e589674ba155c53a": "Actualizar ahora",
+  "1c4bbba1dca840e5": {
+    "i": 1,
+    "c": "Límite diario alcanzado"
+  },
+  "e58359b0c4960f77": {
+    "i": 1,
+    "c": [
+      "Has usado todas las ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " búsquedas de hoy."
+    ]
+  },
+  "73e7fdb0394c913e": {
+    "i": 1,
+    "c": "Actualiza para continuar con búsquedas ilimitadas y funciones premium."
+  },
+  "3befbe3dae383b10": "Actualizar",
+  "12cc32c254fedfe0": {
+    "i": 1,
+    "c": [
+      "Límite diario alcanzado (",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " búsquedas utilizadas)"
+    ]
+  },
+  "f4473f33135d706e": "Se produjo un error desconocido",
+  "23a44ec4f4b92670": [
+    {
+      "i": 1,
+      "c": {
+        "i": 2,
+        "k": "_gt_date_2",
+        "v": "d"
+      }
+    },
+    {
+      "i": 3,
+      "c": [
+        {
+          "i": 4,
+          "c": [
+            {
+              "i": 5,
+              "c": "Apertura:"
+            },
+            {
+              "i": 6,
+              "c": {
+                "i": 7,
+                "k": "_gt_value_7",
+                "v": "v"
+              },
+              "t": "span"
+            }
+          ]
+        },
+        {
+          "i": 8,
+          "c": [
+            {
+              "i": 9,
+              "c": "Máximo:"
+            },
+            {
+              "i": 10,
+              "c": {
+                "i": 11,
+                "k": "_gt_value_11",
+                "v": "v"
+              },
+              "t": "span"
+            }
+          ],
+          "t": "div"
+        },
+        {
+          "i": 12,
+          "c": [
+            {
+              "i": 13,
+              "c": "Mínimo:"
+            },
+            {
+              "i": 14,
+              "c": {
+                "i": 15,
+                "k": "_gt_value_15",
+                "v": "v"
+              },
+              "t": "span"
+            }
+          ],
+          "t": "div"
+        },
+        {
+          "i": 16,
+          "c": [
+            {
+              "i": 17,
+              "c": "Cierre:"
+            },
+            {
+              "i": 18,
+              "c": {
+                "i": 19,
+                "k": "_gt_value_19",
+                "v": "v"
+              },
+              "t": "span"
+            }
+          ],
+          "t": "div"
+        }
+      ]
+    }
+  ],
+  "0c094156e585a712": {
+    "i": 1,
+    "c": "No hay datos de ticker disponibles"
+  },
+  "fbddc8173aaff349": {
+    "i": 1,
+    "c": "Error al obtener datos del ticker"
+  },
+  "225e5ccec11aa651": {
+    "i": 1,
+    "c": [
+      "No hay datos de ticker disponibles para ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "384033f25ea54f7a": {
+    "i": 1,
+    "c": [
+      "Mostrando 6 de ",
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " símbolos"
+    ]
+  },
+  "791ef7ce311dccfa": {
+    "i": 1,
+    "c": "No hay datos de gráfico disponibles"
+  },
+  "1d6eb3809ec157d1": {
+    "i": 1,
+    "c": "Error al obtener datos del gráfico"
+  },
+  "0a03118daedf9f9c": {
+    "i": 1,
+    "c": [
+      "No hay datos de gráfico disponibles para ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "7d8bdb9577376f2b": {
+    "i": 1,
+    "c": "El gráfico no contiene puntos de datos"
+  },
+  "99d11c81030e8141": {
+    "i": 1,
+    "c": "Capitalización de Mercado"
+  },
+  "62cfec481dbf42e4": {
+    "i": 1,
+    "c": "Volumen 24h"
+  },
+  "ea60e21f4d6eb906": {
+    "i": 1,
+    "c": "Circulando"
+  },
+  "4aa916206cb026f1": {
+    "i": 1,
+    "c": "Rango"
+  },
+  "6ba350727a65bc7f": {
+    "i": 1,
+    "c": "No hay datos de monedas disponibles"
+  },
+  "d4bb76f94555b3c5": {
+    "i": 1,
+    "c": "Error al obtener datos de la moneda"
+  },
+  "154c5f041e75860b": {
+    "i": 1,
+    "c": "Formato de datos de moneda inválido"
+  },
+  "1d4a8a1ec881e941": [
+    "Rango #",
+    {
+      "i": 1,
+      "k": "_gt_n_1",
+      "v": "n"
+    }
+  ],
+  "d8bac6d0a1f2045a": {
+    "i": 1,
+    "c": "ATH"
+  },
+  "02093427a5e254c4": {
+    "i": 1,
+    "c": "24h"
+  },
+  "2024b5c6b32ee95f": {
+    "i": 1,
+    "c": "7d"
+  },
+  "e23f8f2fadf89651": {
+    "i": 1,
+    "c": "30d"
+  },
+  "1821024cfb6235e7": {
+    "i": 1,
+    "c": "Desde ATH"
+  },
+  "7110d9ebf7280c68": {
+    "i": 1,
+    "c": "Suministro Circulante"
+  },
+  "eb4b5776600ea30b": {
+    "i": 1,
+    "c": "Suministro Máximo"
+  },
+  "215d0fb8b6bb7be4": "Por favor, ingrese un número válido",
+  "787f4c28aed5178f": "Máximo",
+  "9bc5c61ff1013c60": "Cuartil Superior",
+  "686afdae7e4cd6d1": "Mediana",
+  "384ee35c135c2d38": "Cuartil Inferior",
+  "bc8578d9f6500c86": "Mínimo",
+  "950a11c773b0c311": "Gráfico de Caja",
+  "95028c8a2a394460": "{count} fuentes de investigación",
+  "d7196bf7035a05de": "Pensando...",
+  "f82fff6526a5fc92": "Procesando...",
+  "745290c1d2afdaa2": "Ejecución de Código Python",
+  "8a1a58ad9ce32aa8": "Leyendo contenido...",
+  "c3ce45fe149b7e6d": "Buscando fuentes...",
+  "0e811be8cd8c4a8b": "No se encontraron fuentes para esta consulta.",
+  "caacdaac7f9b789a": "Resultado:",
+  "426f63f27db37123": "Ejecutando código...",
+  "262b6fc7fc66c7de": "Ver todo",
+  "d437d44416a0d64d": "No se encontraron fuentes para esta investigación.",
+  "ab985da58c861748": "Proceso de Investigación",
+  "537bcd4d9c071ec2": "Preparando Plan de Investigación",
+  "ab5aa616eb6772ed": {
+    "i": 1,
+    "c": "Todas las Fuentes"
+  },
+  "153df60b6cbd9f51": {
+    "i": 1,
+    "c": "Fuentes"
+  },
+  "ea65941eba3f71e5": {
+    "i": 1,
+    "c": "Visualizaciones"
+  },
+  "d7b087f0273fa259": {
+    "i": 1,
+    "d": {
+      "t": "p",
+      "b": {
+        "plural": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        },
+        "singular": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráfico"
+          ]
+        },
+        "other": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        },
+        "many": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        }
+      }
+    }
+  },
+  "d5131458089a7265": {
+    "i": 1,
+    "c": "Plan de Investigación"
+  },
+  "91a73d268eb19b57": "Aterrizado",
+  "1697d147afe4be9d": "Retrasado",
+  "df808840b7374f9f": "En Vuelo",
+  "9dad6db998848e83": "Programado",
+  "3d6098c43d8789ca": {
+    "i": 1,
+    "c": "No se puede rastrear el vuelo"
+  },
+  "3b0bfeee5205f700": {
+    "i": 1,
+    "c": [
+      "Terminal ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "c6c3969cc3f233a2": {
+    "i": 1,
+    "c": [
+      "Puerta ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "6c8bd94052ee0416": {
+    "i": 1,
+    "c": [
+      "Operado por ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "e4b34a5cc406b65a": "Error de configuración del mapa. Por favor, revise su configuración.",
+  "0340388e3561ac68": "Error al cargar el mapa. Por favor, inténtalo de nuevo más tarde.",
+  "2875efa3aa1aeaf1": "Error al inicializar el mapa. Por favor, verifica tu conexión.",
+  "1c4d67c465e48df8": {
+    "i": 1,
+    "c": "Recargar página"
+  },
+  "c9511bd680c34bdc": "YFinance • {time}",
+  "89ab8432906aa038": "ÚLTIMO",
+  "f879b14001421a68": "Finanzas",
+  "cc0129818ccf310f": "Noticias",
+  "a0011359bcf8b59c": "Financiero",
+  "9afb0316d0e4e48d": {
+    "i": 1,
+    "c": "Gráfico de Acciones Financieras"
+  },
+  "bfa59d790ec2cf3e": {
+    "i": 1,
+    "c": "Noticias Relacionadas"
+  },
+  "c36b769972311859": {
+    "i": 1,
+    "c": "Informes Financieros"
+  },
+  "1ba46b059714756e": {
+    "i": 1,
+    "c": {
+      "i": 2,
+      "d": {
+        "t": "b",
+        "b": {
+          "true": "Cerrado",
+          "false": "Abierto ahora"
+        }
+      }
+    }
+  },
+  "a72ca216fbf8a24d": {
+    "i": 1,
+    "c": [
+      "hasta ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "8ee171dd5c418bcd": "Direcciones",
+  "52ee190cc093eee9": "Sitio web",
+  "87f8f4ec81883514": "Llamar",
+  "160a391fa91a890d": {
+    "i": 1,
+    "c": "Cargando mapa..."
+  },
+  "064722bb3c26d011": {
+    "i": 1,
+    "c": "Preparando vista del mapa..."
+  },
+  "e24406963e8e23a0": {
+    "i": 1,
+    "c": [
+      "Mostrando ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " ubicación",
+      {
+        "i": 3,
+        "k": "_gt_value_3",
+        "v": "v"
+      }
+    ]
+  },
+  "6a2c614d0a3c1d39": "Desactivar ajuste de línea",
+  "a2f64c540eaecdfc": "Habilitar ajuste de línea",
+  "efd9775f35548e44": "¡Copiado!",
+  "7c1923203049d602": "[Waiting for actual source content to translate]",
+  "365c738dbeaa7417": "Copiado al portapapeles",
+  "9dbabdba43f9eadc": "{count} servidores encontrados",
+  "dde3862ea8eea294": "¡ID del servidor copiado!",
+  "ee53f4537cb62e5d": "¡URL de {type} copiada!",
+  "05cc092015e65906": "¡URL de despliegue copiada!",
+  "098835bf9af39533": "desplegado",
+  "936e1708243117df": "Uso: {count}",
+  "a0853f238ccfc3c4": "Agregado: {date}",
+  "36d63affc0f589b5": {
+    "i": 1,
+    "c": "No se encontraron servidores"
+  },
+  "3cfd71ad980c4b28": {
+    "i": 1,
+    "c": [
+      "No se encontraron servidores MCP que coincidan con \"",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      "\"."
+    ]
+  },
+  "e446208db7dc1f4b": "Memoria eliminada exitosamente",
+  "8181c883e4e888cd": "Error al eliminar la memoria",
+  "38282e8578ce0911": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Tus Recuerdos"
+    ]
+  },
+  "f4b5ba22dfea6cbf": {
+    "i": 1,
+    "c": "Ver y gestionar tus recuerdos guardados"
+  },
+  "981173e80f903e4f": {
+    "i": 1,
+    "d": {
+      "t": "p",
+      "b": {
+        "other": "{count} recuerdos encontrados",
+        "one": "{count} memoria encontrada"
+      }
+    }
+  },
+  "3e2e4940c7332c07": "Borrar búsqueda",
+  "ece82709a0cfaa36": {
+    "i": 1,
+    "c": "Cargando recuerdos..."
+  },
+  "787dab3895b6f8c5": {
+    "i": 1,
+    "c": "No se encontraron recuerdos"
+  },
+  "22a36faa36e39e67": {
+    "i": 1,
+    "c": "Prueba con un término de búsqueda diferente"
+  },
+  "4ca173346c491d57": {
+    "i": 1,
+    "c": "Los recuerdos aparecerán aquí cuando los guardes"
+  },
+  "33ff8f5e1c637d8c": "ID de usuario copiado al portapapeles",
+  "d1fcf99f35bd9a91": "Memoria Actualizada",
+  "f8c0d813333e014f": "Resultados de Búsqueda en Memoria",
+  "4820282cdc70c13c": "Operación de Memoria",
+  "623b9cca5af20629": "Sin recuerdos",
+  "f3ea1473450cc63c": "Iniciar Sesión",
+  "88fad1ab994c5042": "Intentar de nuevo",
+  "f7fa201e94e33415": "Verificar de nuevo",
+  "d603b3fdb55e08a6": "Inténtalo de nuevo más tarde",
+  "89639a6f0c19c2d5": "Código de Error",
+  "ecd18a87cd02f6db": "Por favor, inicia sesión para reintentar o prueba con una consulta diferente",
+  "f839361de8be204f": "Puedes reintentar tu solicitud o probar un enfoque diferente",
+  "efe0555efcd26093": "Por favor, ingresa un mensaje válido.",
+  "c84c0a4d17e9ee20": "Error al actualizar el mensaje. Por favor, inténtalo de nuevo.",
+  "bfc3bfd95fb93d44": "Edita tu mensaje...",
+  "da7d2d5def438189": "Mostrar menos",
+  "fab845f54ae10809": "Mostrar más",
+  "6aa69394ec8e9be1": "Editar mensaje",
+  "4fd8927b7afc2a92": "Copiar mensaje",
+  "38bfaffcfec38e1f": "Preguntas sugeridas",
+  "7f29dba7ce5dc22c": "Eliminar archivo adjunto",
+  "efda0bd0f0ac9dc6": "URL del archivo copiada al portapapeles",
+  "258d16c1554b734c": "Copiar enlace",
+  "5004547dc22a40db": "Descargar",
+  "d4ece5c971d4b3e8": "Abrir en nueva pestaña",
+  "8c575895a636c5b9": "Abrir pantalla completa",
+  "fd102d1a95f06ee1": "El PDF no se puede mostrar directamente",
+  "6c6f7e0d72ce72f4": "Abrir PDF",
+  "f09344ba129987d6": "Chat hecho público y enlace copiado al portapapeles",
+  "96c0a6aa99d85a04": "Enlace para compartir copiado al portapapeles",
+  "3192df3273a7c17f": "Haciendo el chat público y copiando enlace...",
+  "2fbf2e749182bab3": "Copiando enlace para compartir...",
+  "d8f16a202f5d441e": "Error al compartir el chat",
+  "92b84e6fc23a0f09": {
+    "i": 1,
+    "c": "Scira"
+  },
+  "006decd1d64a45a0": "Reescribir",
+  "13488d9b83ff07dc": "Compartir",
+  "ffd3cdd328e21c9d": "Copiar",
+  "52564942b0517eeb": {
+    "i": 1,
+    "c": "Respuesta Incompleta"
+  },
+  "aab7b1ca3e7ba502": {
+    "i": 1,
+    "c": "La respuesta del asistente parece estar ausente."
+  },
+  "b2b2f52f43c66fd5": {
+    "i": 1,
+    "d": {
+      "t": "b",
+      "b": {
+        "false": {
+          "i": 2,
+          "c": "Intenta regenerar la respuesta o reformula tu pregunta"
+        },
+        "true": {
+          "i": 2,
+          "c": "Por favor, inicia sesión para reintentar o prueba con una consulta diferente"
+        }
+      }
+    }
+  },
+  "488c8b73cf55d415": "Generar Respuesta",
+  "c8ec0af9da595356": {
+    "i": 1,
+    "c": "Resumen"
+  },
+  "f63466cdc8e5bccb": {
+    "i": 1,
+    "c": "Reparto"
+  },
+  "f77e6f1f8196842d": {
+    "i": 1,
+    "c": "Reparto: "
+  },
+  "43aa2b4773113d93": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " resultados de ",
+      {
+        "i": 3,
+        "k": "_gt_n_3",
+        "v": "n"
+      },
+      " búsquedas"
+    ]
+  },
+  "4ac2886359b08054": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " resultados"
+    ]
+  },
+  "75150daf13f4b761": {
+    "i": 1,
+    "c": [
+      "+",
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " más"
+    ]
+  },
+  "162485cb6b5a16a0": [
+    {
+      "i": 1,
+      "k": "_gt_n_1",
+      "v": "n"
+    },
+    " de ",
+    {
+      "i": 2,
+      "k": "_gt_n_2",
+      "v": "n"
+    }
+  ],
+  "8bf4fc757bb73015": "Enlace copiado al portapapeles",
+  "a09545c3e39b9891": "Nuevo",
+  "3414b088dde8621b": "Guardando...",
+  "4c1d398ba00992a9": "Compartido",
+  "62b18f49317bfad5": "Compartir enlace",
+  "4c049ad36503bdc6": "Hacer Privado",
+  "0997f00ec7735b87": "Cualquier persona con este enlace puede ver esta página",
+  "15d8ad64ebd578a1": "Compartir",
+  "3b80208f12fc4b4c": "Comparte esta página para hacerla accesible a cualquier persona con el enlace.",
+  "00ad8aeed0a6c461": "Cancelar",
+  "cb9703e457c76b33": "Esta es la página compartida de otra persona",
+  "0a40c3d29e7d614d": "Esta es una página compartida",
+  "265d4c83d1bf7846": "Cargando estado de suscripción...",
+  "5e92aea16a239c0f": "Pro",
+  "fa5cf424e3c8d68c": "Pro Suscrito - Acceso ilimitado",
+  "693689c79fc3d574": "Actualizar",
+  "1da7ed4994f3d4b6": "Actualiza a Pro para búsquedas ilimitadas",
+  "8f97aff9c6bfbbf7": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " ",
+      {
+        "i": 3,
+        "k": "_gt_value_3",
+        "v": "v"
+      },
+      " encontrados"
+    ]
+  },
+  "21e2ecf8bcf02426": {
+    "i": 1,
+    "c": [
+      "Cerca de ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "1d2662e144631bda": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      "m de radio"
+    ]
+  },
+  "dc6de46021f4f9ec": "Lista",
+  "3020e61b3303056d": "Mapa",
+  "ca1cd25a526390a7": {
+    "i": 1,
+    "c": "Error al cargar el mapa"
+  },
+  "949904fd6c5cd622": {
+    "i": 1,
+    "c": [
+      "No se encontró ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " en esta área"
+    ]
+  },
+  "5fd1213bb6437e56": "Error al obtener los precios de los tokens",
+  "219c142be34b7636": {
+    "i": 1,
+    "c": [
+      "Error: ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "dadc030f305b65e1": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " tokens"
+    ]
+  },
+  "1534bb2e8ca50fb8": {
+    "i": 1,
+    "c": [
+      "Cap. de Mercado: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "b317607ecff7c385": {
+    "i": 1,
+    "c": [
+      "VDC: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "17705434e1a7a3fa": {
+    "i": 1,
+    "c": [
+      "Vol: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "fbabe4abaafc3242": {
+    "i": 1,
+    "c": [
+      "Reservas: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "7f7f6116f1c8f3a9": "Cerrado",
+  "8f13fbfc6a123a91": "Cerrado · Abre a las {time}",
+  "4ce5a077e96a8812": "Abierto · Cierra a las {time}",
+  "2c771d327bd0e06b": {
+    "i": 1,
+    "c": [
+      "Hoy: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "cf83cca96908492a": " reseñas",
+  "44dc89722c8560be": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Direcciones"
+    ]
+  },
+  "9b88839e8c61773e": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Llamar"
+    ]
+  },
+  "c84dbaf007f4498b": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Sitio web"
+    ]
+  },
+  "c87306a20dfded22": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2
+      },
+      "Mapas"
+    ]
+  },
+  "6ab96e26bda35288": "Pensando",
+  "393d7bfc71efec5c": "Razonamiento",
+  "dc8b0f21fc87be70": "Minimizar",
+  "13d514f5472e92fe": "Maximizar",
+  "d95bfd203ca1dc74": "Esperando razonamiento...",
+  "cf5b51b3861f1f16": "últimas 24 horas",
+  "c7a72ed0933bfbc4": "semana pasada",
+  "1a4ccb0219b59b59": "mes pasado",
+  "827c327785c6e21b": "año pasado",
+  "8060f999d0078ecd": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " votos positivos"
+    ]
+  },
+  "af70a66df2584232": {
+    "i": 1,
+    "c": "Todos los Resultados de Reddit"
+  },
+  "0d4e534bcfc62dc8": {
+    "i": 1,
+    "c": [
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " publicaciones y comentarios"
+    ]
+  },
+  "4c9407fc01bfdd83": {
+    "i": 1,
+    "c": "Resultados de Reddit"
+  },
+  "26d310b4319f525c": "Buscando en Reddit...",
+  "5e319d8e901d0ff8": "Continuar con {provider}",
+  "f44c0f34e25f2575": "Inicia sesión para continuar",
+  "39e21f3fa4111385": "Guarda conversaciones y sincroniza entre dispositivos",
+  "a420a5acdc01e8e9": "o",
+  "e3bf513ff5457fce": "Continuar sin cuenta",
+  "9fcb60357c2a32cb": [
+    "Al continuar, aceptas nuestros ",
+    {
+      "i": 1,
+      "c": "Términos"
+    },
+    " y ",
+    {
+      "i": 2,
+      "c": "Política de Privacidad",
+      "t": "Link"
+    }
+  ],
+  "2f24e63d8eb4b7b8": "Cambiar al tema {value}",
+  "6e1490b7085ec6af": "Buscando {type} cercanos...",
+  "1723d83a6b5b9a9e": "Video de YouTube",
+  "cb8b09236208db25": "Video de YouTube",
+  "189cb97125af21c1": "Ocultar detalles",
+  "63790659557f315e": "Mostrar detalles",
+  "aeb17e3ad4839369": "Ejecución de Código",
+  "2c9b74b649957296": "Salida de Error",
+  "7dfaef7a2487e322": "Resultado de Ejecución",
+  "c0a8586713744581": "Buscando ubicaciones...",
+  "fddd868ac4bd151c": "Búsqueda de Dirección",
+  "b739e20652687740": "Búsqueda de Coordenadas",
+  "1d1a5916f4a11dcb": "¡Coordenadas copiadas!",
+  "c489092135f0b6c8": "Descubriendo contenido de entretenimiento...",
+  "11f88e6eee5c9793": "Cargando películas en tendencia...",
+  "bd166beee1df2433": "Cargando programas de TV en tendencia...",
+  "dc79350b91664275": "Buscando videos de YouTube...",
+  "397f132d79e4f048": "Buscando artículos académicos...",
+  "f9244cd2abebaf27": "Contenido Recuperado",
+  "7a1b453ca600a6f5": "No hay contenido disponible",
+  "c239fb2c433aca0d": "Gestionando recuerdos...",
+  "dbe504b6f248b716": "Buscando servidores MCP...",
+  "951520ff4cb14caa": "Buscando en Reddit...",
+  "45ab339828e33892": "Buscando en X (Twitter)...",
+  "79948480472cea4b": "Obteniendo datos del ticker de criptomonedas...",
+  "deaf5e1b9d79491c": "Cargando gráfico de precios de criptomonedas...",
+  "1bd9925570e6ff42": "Cargando datos de velas OHLC...",
+  "e1b509e29fbe63f7": "Cargando datos del gráfico de contrato...",
+  "028db1fbce96a77d": "Obteniendo datos completos de la moneda...",
+  "8fd56e66ca17f274": "Obteniendo datos del token por contrato...",
+  "532c6a9af5b938eb": "Obteniendo precios de tokens en cadena...",
+  "ba08cdabd85df13d": {
+    "i": 1,
+    "c": "Momentos Clave"
+  },
+  "de61ca34f72136c2": {
+    "i": 1,
+    "c": "Transcripción"
+  },
+  "bd47cac6d21b1ef1": {
+    "i": 1,
+    "c": "Error"
+  },
+  "84d8c7ca52656e67": {
+    "i": 1,
+    "c": "Ejecutándose"
+  },
+  "7dc1b367e471dcfd": {
+    "i": 1,
+    "c": "Falló la búsqueda de ubicación"
+  },
+  "46173e15b8b53daa": {
+    "i": 1,
+    "c": "No se encontraron ubicaciones"
+  },
+  "dc692ec71221f6aa": {
+    "i": 1,
+    "c": "Intenta buscar con palabras clave diferentes o verifica la ortografía."
+  },
+  "0a038c2e700e87fb": {
+    "i": 1,
+    "d": {
+      "t": "p",
+      "b": {
+        "other": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " ubicaciones encontradas"
+          ]
+        },
+        "one": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " Ubicación Encontrada"
+          ]
+        }
+      }
+    }
+  },
+  "c198990c62288eaa": {
+    "i": 1,
+    "c": "No Hay Contenido Disponible"
+  },
+  "a7c7e593cb921b30": {
+    "i": 1,
+    "c": "Los videos encontrados no contienen marcas de tiempo ni transcripciones."
+  },
+  "3015bbf15479bdaa": {
+    "i": 1,
+    "c": "Resultados de YouTube"
+  },
+  "a9930011377531be": [
+    {
+      "i": 1,
+      "k": "_gt_n_1",
+      "v": "n"
+    },
+    " videos con contenido"
+  ],
+  "f8bdad0e923e0fb6": {
+    "i": 1,
+    "c": "Falló la búsqueda cercana"
+  },
+  "f2eab1db81d7c62c": {
+    "i": 1,
+    "c": [
+      "No se encontraron ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      " cercanos"
+    ]
+  },
+  "0d6840498b8a9c64": {
+    "i": 1,
+    "c": "Intenta ampliar el radio de búsqueda o buscar en una zona diferente."
+  },
+  "a8b24f17e23881d0": {
+    "i": 1,
+    "c": "Error al recuperar el contenido"
+  },
+  "01471f330d487446": {
+    "i": 1,
+    "c": "No hay contenido disponible"
+  },
+  "e398e4f5da6b8d8c": "Ver código fuente",
+  "5391d41d9358168b": [
+    {
+      "i": 1,
+      "k": "_gt_n_1",
+      "v": "n"
+    },
+    " páginas"
+  ],
+  "53ce28e1fea7a803": {
+    "i": 1,
+    "d": {
+      "t": "b",
+      "b": {
+        "true": {
+          "i": 2,
+          "c": "Ver contenido completo"
+        },
+        "false": {
+          "i": 2,
+          "c": [
+            "Contenido adicional ",
+            {
+              "i": 3,
+              "k": "_gt_value_3",
+              "v": "v"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "6e5c478b42f315e9": [
+    "Rastreando vuelo ",
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    "..."
+  ],
+  "c1f50093f80ce06e": {
+    "i": 1,
+    "c": "Obteniendo la hora actual..."
+  },
+  "b624c310e2e40189": {
+    "i": 1,
+    "c": "Hora Actual"
+  },
+  "fbe09403eb3081fe": {
+    "i": 1,
+    "c": "Local"
+  },
+  "70d79c00ff0126aa": {
+    "i": 1,
+    "c": "Marca de tiempo"
+  },
+  "45e1f29b129c9b98": {
+    "i": 1,
+    "c": "Resultados del Servidor MCP"
+  },
+  "e1910c2c0a8a8301": {
+    "i": 1,
+    "c": [
+      "Resultados de búsqueda para \"",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      },
+      "\""
+    ]
+  },
+  "46cf601b43b71068": {
+    "i": 1,
+    "c": "Traducción"
+  },
+  "634e669508702dea": "Acción",
+  "afb1cce13b1d190b": "Aventura",
+  "de711d8fc5a87520": "Animación",
+  "096e1dd6d121ac4c": "Comedia",
+  "f6d9edbed7fb5a79": "Crimen",
+  "322fa6acfd0b34dd": "Documental",
+  "d95dd73033990d82": "Drama",
+  "caaabed94574a6b7": "Familia",
+  "062a8c8bf68039ab": "Fantasía",
+  "a2f0aed8b5e1967f": "Historial",
+  "2534b92469226b3b": "Terror",
+  "39cd68e1989a9831": "Música",
+  "ff727891cdbeb629": "Misterio",
+  "c582e59cf92a2341": "Romance",
+  "7757cc3c8ca23ca6": "Ciencia Ficción",
+  "cfa9fda4d0795518": "Thriller",
+  "019cee419c6df874": "Guerra",
+  "8435c1f89a87f7ab": "Occidental",
+  "fef7c6f22124e21c": "Acción y Aventura",
+  "48aed0c3584722f1": "Ciencia Ficción y Fantasía",
+  "935a879be4718e86": "Guerra y Política",
+  "dc94ea51cf0b8c7a": "Películas",
+  "90a1fc4fd4f2edf3": "Espectáculos",
+  "363a444ede5b3e94": "Mostrar Menos",
+  "80045c11a9451cf3": "Ver Todo",
+  "ceba6d385e2b1b46": {
+    "i": 1,
+    "c": [
+      "Tendencias ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "db34eef221bc2ba5": {
+    "i": 1,
+    "c": "Mejores opciones para hoy"
+  },
+  "070a20acd2117a30": {
+    "i": 1,
+    "c": [
+      "Todas las Tendencias ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "edaebeea1915f9c1": "Cuenta",
+  "d2441fc72f2aca9f": "Ocultar correo electrónico",
+  "c9a4d3dfac1edd06": "Mostrar correo electrónico",
+  "af2057b5701fe49e": "Invitado",
+  "765ab0102db593c1": "Inicia sesión para guardar tu progreso",
+  "d5661691f3ff071a": "Acceso ilimitado a todas las funciones",
+  "432de62180f25350": "Búsquedas ilimitadas y modelos premium",
+  "0a75e464d833bca8": "Configuración",
+  "fe5ee6266a8106e0": "Tema",
+  "f41ea186c275b56e": "Acerca de",
+  "dff469ee86a5de60": "Términos",
+  "a248beb127b9a957": "Privacidad",
+  "1cabf602c6b6e60e": "Github",
+  "92e9d8ab96f25e35": "X.com",
+  "2181cfaff355302d": "Instagram",
+  "861f9777027722b8": "Desplegar con Vercel",
+  "1eb0e8c9a5ff949c": "Solicitud de Función/Error",
+  "a1f8c2a2f8687542": "Cerrando sesión...",
+  "82b78eab09f28280": "Sesión cerrada exitosamente",
+  "15f853c3b3476b89": "Error al cerrar sesión",
+  "4e5b2bad57ff747d": "Cerrar Sesión",
+  "d33e1f92b25839b1": "Temp. Mín.",
+  "c65462c691c48b29": "Temp. Máx.",
+  "c05881b1b0033d2d": "{percent}% lluvia",
+  "f86d1b3defd75cea": "Ninguno",
+  "f0746b279a69a9ed": "Bueno",
+  "5e87e9e46a962687": "Justo",
+  "b7614c51a9106906": "Moderado",
+  "8cbe7633a01e14a1": "Pobre",
+  "394e64be0177d198": "Muy Malo",
+  "a6fd277111c7cd66": "Desconocido",
+  "dfcdd140fa38e300": "ICA: {label}",
+  "e1a6cf0900df918b": "Sensación térmica {temp}°C",
+  "4a7cd4f3573b6b91": "{humidity}% Humedad",
+  "e55b144b0e01a807": "{speed} km/h",
+  "c70f09a31d1a88d3": "{pressure} hPa",
+  "269cbf89856dc497": "{clouds}% Nubes",
+  "e6add35fa1e637ae": "Resumen de 5 Días",
+  "dd82b4649f3788dd": "Pronóstico por Horas",
+  "ce66b2a01e26a387": "Pronóstico de 16 días",
+  "4763882b850dd529": "Calidad del Aire",
+  "8369d73fb43f59f4": "Temperatura Mínima",
+  "34d285a121d52991": "Temperatura Máxima",
+  "1e670cf847dd0c53": "Mañana",
+  "1b9d249ecc4cc532": "Mañana",
+  "70587449d5673499": "Temperatura",
+  "f6d0a4f8eab31b89": "Precipitación",
+  "ff198435c4159efe": "Temp Máx",
+  "a21b4e3ef7d4bdba": "Temp Mín",
+  "3b9ea8c01aada0ec": "Lluvia",
+  "5b85b9f0d2ac0f16": "{amount} mm",
+  "9baf69134ed6a8dc": "Nieve",
+  "af6ba1116f00d6bc": "{percent}% de probabilidad de lluvia",
+  "c2e38562475356f0": "{label} (ICA: {aqi})",
+  "df0a5207a0a710c9": "Índice de Calidad del Aire",
+  "1011ad3a56c0cb85": "0: Ninguno",
+  "006adf74bc92d133": "1: Bueno",
+  "e51d55d96cc3880c": "2: Regular",
+  "9ee28020d04bf94b": "3: Moderado",
+  "ff359d2fd2c7e009": "4: Deficiente",
+  "b72070ef670a6f28": "5: Muy Malo",
+  "a7fec4d0209056c9": "OpenWeatherMap • {time}",
+  "7d3b3fdf4278e5bd": {
+    "i": 1,
+    "c": "Datos de pronóstico de 16 días no disponibles para esta ubicación"
+  },
+  "c48cacce29cf627a": {
+    "i": 1,
+    "c": "Calidad del Aire Actual"
+  },
+  "8dba556a56008f4c": {
+    "i": 1,
+    "c": "Pronóstico de Calidad del Aire"
+  },
+  "69837cfb07d22364": {
+    "i": 1,
+    "c": "No hay datos de pronóstico disponibles"
+  },
+  "25ad2e2c869b0ba5": {
+    "i": 1,
+    "c": "Datos de calidad del aire no disponibles para esta ubicación"
+  },
+  "3421a6ab7d0c0e40": {
+    "i": 1,
+    "c": "Resultados de búsqueda de X"
+  },
+  "aac9130d1aca44b4": {
+    "i": 1,
+    "c": [
+      "+",
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      " publicaciones más"
+    ]
+  },
+  "98acad42bf7397c5": {
+    "i": 1,
+    "c": "Haz clic para ver todo"
+  },
+  "06cf630ddd8a1cc4": {
+    "i": 1,
+    "c": [
+      "Todas las publicaciones (",
+      {
+        "i": 2,
+        "k": "_gt_n_2",
+        "v": "n"
+      },
+      ")"
+    ]
+  },
+  "77436e32b6a59c3d": {
+    "i": 1,
+    "c": "No se encontraron publicaciones"
+  },
+  "e996365a2bb535b7": {
+    "i": 1,
+    "c": "Intenta ajustar los parámetros de búsqueda"
+  },
+  "8b5f150fa3344467": {
+    "i": 1,
+    "c": "Fuentes Relacionadas"
+  },
+  "72099cb82338cb26": "useChart debe usarse dentro de un <ChartContainer />",
+  "daf080584b6c4e5f": {
+    "i": 1,
+    "c": "Cerrar"
+  },
+  "43821aa7ab710301": "Expirado",
+  "1c532f279a143d8b": "Oferta Especial Disponible",
+  "5830e52971a1408c": "Luego ${originalPrice}/mes • Ahorra ${savings} en tu primer mes",
+  "f6921329007a47ac": "Ahorra ${savings}/mes",
+  "e983d3710ba3908d": {
+    "i": 1,
+    "c": "¡Código copiado!"
+  },
+  "64433add36258ed6": {
+    "i": 1,
+    "c": [
+      "Copiar ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "f00cfdf0e8b6c533": {
+    "i": 1,
+    "c": [
+      "Copiar código: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "90d73b4aa0073dda": {
+    "i": 1,
+    "c": [
+      "Expira en ",
+      {
+        "i": 2,
+        "k": "_gt_value_2",
+        "v": "v"
+      }
+    ]
+  },
+  "18da3e9f12152585": {
+    "i": 1,
+    "c": "¿Cómo canjear este código?"
+  },
+  "4bb67c952b5b8302": {
+    "i": 1,
+    "c": "Haz clic en actualizar"
+  },
+  "051cb0aafc1de050": {
+    "i": 1,
+    "c": "Comienza haciendo clic en el botón de actualización"
+  },
+  "9746509f95c86c92": {
+    "i": 1,
+    "c": "Encuentra la sección de descuentos"
+  },
+  "97edd82384f701f5": {
+    "i": 1,
+    "c": "Busca \"Descuento\" en la página de pago"
+  },
+  "39e144614b95298b": {
+    "i": 1,
+    "c": "Ingresa el código"
+  },
+  "c8e0ea2b3b8d3815": {
+    "i": 1,
+    "c": [
+      "Pegar: ",
+      {
+        "i": 2,
+        "c": {
+          "i": 3,
+          "k": "_gt_value_3",
+          "v": "v"
+        }
+      }
+    ]
+  },
+  "a49c7111034ae9a7": {
+    "i": 1,
+    "c": "Haz clic en aplicar"
+  },
+  "588112536bfb1d5e": {
+    "i": 1,
+    "c": "Haz clic en \"Aplicar\" para activar el descuento"
+  },
+  "ff8a04db40f46af5": "Mini",
+  "517e594e0b49611b": "Experimental",
+  "a4a63b64753352a2": "Modelos de {category}",
+  "93ee0b5adc1ba61b": "{model} requiere Pro",
+  "a01383cc924a9d78": "Actualiza para acceder a modelos de IA premium",
+  "f5b556cb0ddf77e3": "Búsquedas ilimitadas",
+  "5e00953124d2e41d": "Sin límites diarios ni restricciones",
+  "7b47c115e2cdca97": "Modelos de IA premium",
+  "03841029b3b18eaf": "Claude 4 Opus, Grok 3, razonamiento avanzado",
+  "b4ac4e3f0060d6bc": "Análisis de PDF",
+  "103e2c0440bae545": "Subir y analizar documentos",
+  "ca8d29934b2cfdce": "Cancela en cualquier momento",
+  "0b3752ad618d5a1f": "Tal vez más tarde",
+  "636608625e957d9d": "Actualizar ahora",
+  "e1a26797c33114f0": "{model} requiere iniciar sesión",
+  "8fce008ae537100f": "Crea una cuenta para acceder a este modelo de IA",
+  "cb6c18b8515a9560": "Accede a mejores modelos",
+  "38fd96bf169055d3": "Gemini 2.5 Flash Lite y GPT-4o Mini",
+  "2a7951fb7b80ad3e": "Guardar historial de búsqueda",
+  "616a5321e90982ae": "Mantén un registro de tus conversaciones",
+  "5338b07afc6287d1": "Gratis para empezar",
+  "a0ffcdb2a0d6feb7": "No se requiere pago para las funciones básicas",
+  "a808e47b2fa81b94": "excede el límite de 5MB",
+  "d4b6ed8eb724e1e3": "Subiendo...",
+  "9200c1b85dc2eb60": "Web",
+  "38e0a3390e13baee": "Busca en toda la internet con tecnología de Tavily",
+  "2f890e1e55af5ae5": "Memoria",
+  "48a6fcf9419a5c57": "Tu compañero personal de memoria",
+  "9d8dd0d83a2bde9b": "Análisis",
+  "98ccf4e0a475d65c": "Código, inventario y cosas de moneda",
+  "18c257c243a6eda1": "Cripto",
+  "193c0b02a4dbd4e0": "Investigación de criptomonedas impulsada por CoinGecko",
+  "afda415d2d75a5d3": "Chat",
+  "e5dbba422c54a373": "Habla directamente con el modelo.",
+  "7654c1c4192cfc7c": "X",
+  "552c839497619787": "Buscar publicaciones de X",
+  "f52c29a8ce2d1f99": "Reddit",
+  "1dae2087bf0b45ec": "Buscar publicaciones de Reddit",
+  "1df2a1002260e4be": "Académico",
+  "941c6c01d19cd9f2": "Buscar artículos académicos con tecnología de Exa",
+  "118007cb760a512c": "YouTube",
+  "43a9023bc914c067": "Buscar videos de YouTube con tecnología de Exa",
+  "c4935f74ebb40559": "Extremo",
+  "0501aaf298a40f44": "Investigación profunda con múltiples fuentes y análisis",
+  "724fbfadad3b0374": "Modo de Búsqueda",
+  "fb709bb8171c0111": "Tu entrada excede el máximo de {chars} caracteres.",
+  "df95d47b91cc18cb": "Error al subir {filename}: {error}",
+  "3b50f848e56731dd": "Error desconocido",
+  "0ce39aecdebf0d2c": "Algunos archivos no son compatibles: {filenames}",
+  "45e202f7c6180fe5": "Las cargas de PDF requieren suscripción Pro. Actualiza para acceder al análisis de PDF.",
+  "0ce9f9a4b31e5636": "Los PDFs solo son compatibles con los modelos Gemini y Claude",
+  "e9134538e44781aa": "Solo puedes adjuntar hasta {maxFiles} archivos.",
+  "3255a12a89285fed": "Verificando la seguridad de las imágenes...",
+  "03ecec1665131884": "El contenido de la imagen viola las pautas de seguridad ({category}). Por favor, elige imágenes diferentes.",
+  "9c5764c676059980": "No se pudo verificar la seguridad de la imagen. Por favor, inténtalo de nuevo.",
+  "a11ba7983bc23dd7": "{count} archivo subido exitosamente",
+  "453abdb1dfa9d818": "No se subieron archivos exitosamente",
+  "abf851597b6c94b0": "Error al cargar uno o más archivos. Por favor, inténtalo de nuevo.",
+  "c051bdba70df330d": "No se detectaron archivos en el arrastre",
+  "08e786d21f936e52": "Se detectaron {count} archivos soltados",
+  "f807f4980c216cd6": "Algunos archivos no son compatibles: {filenames}",
+  "352aef4108557c93": "Algunos archivos exceden el límite de 5MB: {filenames}",
+  "e68b531c48068206": "Solo se admiten archivos de imagen y PDF",
+  "1b4c7cc429fe6a60": "Cambiando a {model} para admitir archivos PDF",
+  "db2f3904d6ecf239": "No hay archivos válidos para subir",
+  "3030e6ebab70ec26": "Iniciando subida de {count} archivos...",
+  "eeace9c749b0075e": "Error en la carga. Por favor, revisa la consola para más detalles.",
+  "cef56e7523357179": "Verificando la seguridad de las imágenes pegadas...",
+  "7c7991431534afc1": "El contenido de la imagen pegada viola las pautas de seguridad ({category}). Por favor, elige imágenes diferentes.",
+  "7678e03c55c9162d": "No se pudo verificar la seguridad de la imagen pegada. Por favor, inténtalo de nuevo.",
+  "1fd0eaa590fa5fb4": "Imagen pegada exitosamente",
+  "0a8f545e1da6a61a": "Error al subir la imagen pegada. Por favor, inténtalo de nuevo.",
+  "b89036956255434a": "¡Por favor espera a que se complete la respuesta actual!",
+  "5d1e27ce79771645": "¡Por favor, detén la grabación antes de enviar!",
+  "4b55691fe1ede7ac": "Límite diario de búsquedas alcanzado. Por favor, actualiza a Pro para búsquedas ilimitadas.",
+  "9f2e6289457711c1": "Tu entrada excede el máximo de {chars} caracteres. Por favor, acorta tu mensaje.",
+  "2a70a4c72cf620c4": "Por favor, ingresa una consulta de búsqueda o adjunta una imagen.",
+  "14fb4d7fc42853a4": "Solo puedes adjuntar hasta {maxFiles} imágenes.",
+  "c3856d21b5b94cf2": "¡Por favor espera a que se complete la respuesta!",
+  "642b53062885fe25": "◉ Grabando...",
+  "51129b69b3f5798e": "Haz una nueva pregunta...",
+  "4d03ebcad7a4e07f": "Haz una pregunta...",
+  "8d16823919831d92": "Cambiado a {model}",
+  "ecdc298183595bd4": "Ahora puedes subir imágenes al modelo.",
+  "4a83614cbb1db7d5": "Sube una imagen o documento PDF",
+  "f8b0f8f857ffc069": "Subir una imagen",
+  "6accff4ffab95d01": "Detener Grabación",
+  "e55b71f3702c29be": "Entrada de Voz",
+  "376195d7164048d0": "Haz clic para detener la grabación",
+  "ccffc0c21c45385a": "Graba tu mensaje de voz",
+  "5534a8588dca1bd3": "Arrastra imágenes o PDFs aquí",
+  "fb0902e6a68ed741": [
+    "Máximo ",
+    {
+      "i": 1,
+      "k": "_gt_n_1",
+      "v": "n"
+    },
+    " archivos (5MB por archivo)"
+  ],
+  "d5810961f08cf9c3": {
+    "i": 1,
+    "c": "Extremo"
+  },
+  "41c3f37193962dd2": [
+    {
+      "i": 1,
+      "c": "Modo Extremo"
+    },
+    {
+      "i": 2,
+      "c": "Investigación profunda con múltiples fuentes y análisis",
+      "t": "span"
+    }
+  ],
+  "e6d213a6c02bfdcd": "Adjuntar Archivo",
+  "d95474fda077f950": {
+    "i": 1,
+    "c": "Detener Generación"
+  },
+  "eda44db6fa202309": "Enviar Mensaje",
+  "28fe164ff31ed2c7": {
+    "i": 1,
+    "c": "Cargando"
+  },
+  "8d7ce7233a180337": {
+    "i": 1,
+    "c": "Barra lateral"
+  },
+  "221e860385ed93a3": {
+    "i": 1,
+    "c": "Muestra la barra lateral móvil."
+  },
+  "ee511ef053425e82": {
+    "i": 1,
+    "c": "Alternar Barra Lateral"
+  },
+  "87db4a7acd4f36d9": "Autenticación requerida",
+  "53a4a04f307ce463": "Error al buscar recuerdos: {error}",
+  "0f0d3bb85d91e937": "Error al obtener memorias: {error}",
+  "487fe8ef0beb5b2c": "Error al eliminar la memoria: {error}",
+  "4efc3e977bb06934": "La suscripción ha sido cancelada",
+  "0137ae2648975e9e": "La suscripción ha expirado",
+  "04a5b4149ea6b6cc": "La suscripción no está activa",
+  "57721d3a7dd60f57": "Error al cargar los detalles de la suscripción",
+  "0497e5e7fd1ac6ec": "Planificación de investigación",
+  "8a4b93f34ceadc8c": "Plan de investigación listo, iniciando agente de investigación",
+  "1755e44b1749aec8": "Ejecutar código Python en un entorno aislado",
+  "114e4e49c1ab9b79": "Buscar información sobre un tema en la web",
+  "c1e0a264b298356f": "Buscando en la web \"{query}\"",
+  "f6ad6713505626c1": "Leyendo contenido de los resultados de búsqueda para \"{query}\"",
+  "8651c6b433dadf3c": "Investigación completada"
+}
