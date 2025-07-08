@@ -310,7 +310,6 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
 const exa = new Exa(serverEnv.EXA_API_KEY);
 
 export async function POST(req: Request) {
-  console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();

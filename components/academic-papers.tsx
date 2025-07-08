@@ -86,8 +86,8 @@ const AcademicSourceCard: React.FC<{
             <DateTime 
               options={{ month: 'short', day: 'numeric', year: 'numeric' }}
             >
-              {paper.publishedDate}
-            </DateTime>
+              {new Date(paper.publishedDate)}
+           </DateTime>
           </time>
         )}
       </div>

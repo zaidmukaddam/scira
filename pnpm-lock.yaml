@@ -210,8 +210,11 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       gt-next:
-        specifier: ^5.2.39
-        version: 5.2.39(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: ^6.0.1
+        version: 6.0.1(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      gt-react:
+        specifier: ^10.0.1
+        version: 10.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       gtx-cli:
         specifier: ^2.0.1
         version: 2.0.1(@babel/core@7.28.0)
@@ -1144,8 +1147,8 @@ packages:
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
 
-  '@generaltranslation/supported-locales@2.0.10':
-    resolution: {integrity: sha512-K6meXfejheBmhIcrm1qKIuyoY9ooDmOQniCAaskfF+DVMC/54gkCKm+mLinDbY9OsF4RqpNgq9YHPYDf3cyNEg==}
+  '@generaltranslation/supported-locales@2.0.12':
+    resolution: {integrity: sha512-dey6ehO1r2e1SL3Wsi2qkmplE3oOC3fGolyKQLIT/yL5uBe8laTlZuk6d1lnYLshhyFvFtzjweVIgHCyCeWv9A==}
 
   '@google/genai@0.7.0':
     resolution: {integrity: sha512-r+Fwj/emnXZN5R+4JCxDXboY4AGTmTn7+Wnori5dgyJiStP0P82f9YYL0CVsCnDIumNY2i0UIcZ1zGZdtHJ34w==}
@@ -4039,9 +4042,6 @@ packages:
     peerDependencies:
       next: '>=13.2.0'
 
-  generaltranslation@6.3.2:
-    resolution: {integrity: sha512-v4RiXxC59TdJAI2U4P73UsD8KRmdieCm+vcgteKc12GSO5MJCN/vTi9jLxbfveT6Sx9D4nbRQfU43lkhbxyNVw==}
-
   generaltranslation@7.0.1:
     resolution: {integrity: sha512-G1aPfq9pHZFToW/1tNGZ4wTN1LpCmxE9Y5DmTk+wJZ2OUFM5X0nBQPEEwe8C2VR2vP1cFxMf4GBcU9DRpcv7ng==}
 
@@ -4133,15 +4133,15 @@ packages:
   groq-sdk@0.3.0:
     resolution: {integrity: sha512-Cdgjh4YoSBE2X4S9sxPGXaAy1dlN4bRtAaDZ3cnq+XsxhhN9WSBeHF64l7LWwuD5ntmw7YC5Vf4Ff1oHCg1LOg==}
 
-  gt-next@5.2.39:
-    resolution: {integrity: sha512-s4iHGEtCRzWBDZagNFGXUipmiCnt78wvIx5u/F8TcQW6wPiLXNfvuTmDng0CqCLe2hB+EYwIlFDIomZnreUQNQ==}
+  gt-next@6.0.1:
+    resolution: {integrity: sha512-yT0m20Q9npwQWi/IGvRaDdbeqgjfakVdLFWUXDaFZsFQbUAtVASJ9RZiJtr/hFwBZzjUZLmHL5QLOWjhoQPQjw==}
     peerDependencies:
       next: '>=13.0.0 <15.2.1 || >15.2.2'
       react: '>=16.8.0 <20.0.0'
       react-dom: '>=16.8.0 <20.0.0'
 
-  gt-react@9.2.30:
-    resolution: {integrity: sha512-Wfi+tEoi91PrAcEcx3jDFfrzAJAI7SVGrWJggaQ6l50Tb7to7W8puwnSY8PEb0lby3aZUCGYZL1/YDMgTUTN/g==}
+  gt-react@10.0.1:
+    resolution: {integrity: sha512-rdn5xHMvOUgEOcDkekt5m9riUY75KLyrCksBHTgrCj5LJ0Y4ctJGk9ifBa+ckl/kdw/SwXpJBScYxAgmNFo86A==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -7365,9 +7365,9 @@ snapshots:
   '@gar/promisify@1.1.3':
     optional: true
 
-  '@generaltranslation/supported-locales@2.0.10':
+  '@generaltranslation/supported-locales@2.0.12':
     dependencies:
-      generaltranslation: 6.3.2
+      generaltranslation: 7.0.1
 
   '@google/genai@0.7.0(encoding@0.1.13)':
     dependencies:
@@ -10486,11 +10486,6 @@ snapshots:
     dependencies:
       next: 15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
-  generaltranslation@6.3.2:
-    dependencies:
-      crypto-js: 4.2.0
-      fast-json-stable-stringify: 2.1.0
-
   generaltranslation@7.0.1:
     dependencies:
       crypto-js: 4.2.0
@@ -10609,19 +10604,19 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  gt-next@5.2.39(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  gt-next@6.0.1(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
-      '@generaltranslation/supported-locales': 2.0.10
-      generaltranslation: 6.3.2
-      gt-react: 9.2.30(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@generaltranslation/supported-locales': 2.0.12
+      generaltranslation: 7.0.1
+      gt-react: 10.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next: 15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  gt-react@9.2.30(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  gt-react@10.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
-      '@generaltranslation/supported-locales': 2.0.10
-      generaltranslation: 6.3.2
+      '@generaltranslation/supported-locales': 2.0.12
+      generaltranslation: 7.0.1
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 

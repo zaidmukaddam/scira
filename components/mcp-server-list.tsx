@@ -89,7 +89,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
     <div className="space-y-3">
       <div className="px-1">
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {t('{count} servers found', { variables: { count: servers.length } })}
+          {t('{count} servers found', { count: servers.length })}
         </p>
       </div>
 
@@ -162,7 +162,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                             onClick={() => {
                               if (conn.url) {
                                 navigator.clipboard.writeText(conn.url);
-                                toast.success(t('{type} URL copied!', { variables: { type: conn.type } }));
+                                toast.success(t('{type} URL copied!', { type: conn.type }));
                               }
                             }}
                           >
@@ -204,8 +204,8 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
 
                 {server.useCount && parseInt(server.useCount) > 0 && (
                   <div className="flex justify-between text-[10px] text-neutral-500 mt-2.5">
-                    <span>{t('Usage: {count}', { variables: { count: server.useCount } })}</span>
-                    {server.createdAt && <span>{t('Added: {date}', { variables: { date: new Date(server.createdAt).toLocaleDateString(locale) } })}</span>}
+                    <span>{t('Usage: {count}', { count: server.useCount })}</span>
+                    {server.createdAt && <span>{t('Added: {date}', { date: new Date(server.createdAt).toLocaleDateString(locale) })}</span>}
                   </div>
                 )}
               </div>

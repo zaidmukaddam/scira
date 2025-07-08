@@ -492,7 +492,7 @@ export const InteractiveStockChart = React.memo(
                 />
                 <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
               </svg>
-              <span>{t('YFinance • {time}', { variables: { time: lastUpdated } })}</span>
+              <span>{t('YFinance • {time}', { time: lastUpdated })}</span>
             </div>
             <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">{t('LATEST')}</div>
           </div>

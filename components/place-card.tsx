@@ -144,12 +144,12 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
 
     if (isClosed) {
       return {
-        text: t('Closed · Opens {time}', { variables: { time: timeStr } }),
+        text: t('Closed · Opens {time}', { time: timeStr }),
         color: 'text-red-600 dark:text-red-400',
       };
     }
     return {
-      text: t('Open · Closes {time}', { variables: { time: timeStr } }),
+      text: t('Open · Closes {time}', { time: timeStr }),
       color: 'text-emerald-600 dark:text-emerald-400',
     };
   };

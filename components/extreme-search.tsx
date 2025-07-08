@@ -18,7 +18,7 @@ import ReactECharts, { EChartsOption } from 'echarts-for-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { T, useGT } from 'gt-next';
+import { Num, Plural, T, useGT } from 'gt-next';
 
 interface QueryBlockData {
   queryId: string;
@@ -715,7 +715,7 @@ const ExtremeSourcesSheet: React.FC<{
                 <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
               </T>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {t('{count} research sources', { variables: { count: sources.length } })}
+                {t('{count} research sources', { count: sources.length })}
               </p>
             </div>
           </div>
@@ -1546,7 +1546,13 @@ const ExtremeSearchComponent = ({
                 <h3 className="text-xs font-medium text-neutral-800 dark:text-neutral-200">Visualizations</h3>
               </T>
               <div className="text-[10px] px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-md text-neutral-500 dark:text-neutral-400">
-                {t('{count} chart{pluralSuffix}', { variables: { count: allCharts.length, pluralSuffix: allCharts.length !== 1 ? 's' : '' } })}
+                <T>
+                  <Plural 
+                    n={allCharts.length}
+                    singular={<><Num>{allCharts.length}</Num> chart</>}
+                    plural={<><Num>{allCharts.length}</Num> charts</>}
+                  />
+                </T>
               </div>
             </div>
 

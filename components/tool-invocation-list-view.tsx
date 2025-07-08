@@ -233,7 +233,7 @@ const NearbySearchSkeleton = ({ type }: { type: string }) => {
           <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
             <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
             <TextShimmer className="text-sm font-medium" duration={2}>
-              {t('Finding nearby {{type}}...', { variables: { type } })}
+              {t('Finding nearby {type}...', { type })}
             </TextShimmer>
           </div>
         </div>

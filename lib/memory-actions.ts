@@ -100,7 +100,7 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       const errorText = await response.text();
       console.error('Search API error:', errorText);
       const t = await getGT();
-      throw new Error(t('Failed to search memories: {error}', { variables: { error: response.statusText } }));
+      throw new Error(t('Failed to search memories: {error}', { error: response.statusText }));
     }
 
     const results = await response.json();
@@ -163,7 +163,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
       const errorText = await response.text();
       console.error('Get memories API error:', errorText);
       const t = await getGT();
-      throw new Error(t('Failed to fetch memories: {error}', { variables: { error: response.statusText } }));
+      throw new Error(t('Failed to fetch memories: {error}', { error: response.statusText }));
     }
 
     const data = await response.json();
@@ -215,7 +215,7 @@ export async function deleteMemory(memoryId: string) {
       const errorText = await response.text();
       console.error('Delete memory API error:', errorText);
       const t = await getGT();
-      throw new Error(t('Failed to delete memory: {error}', { variables: { error: response.statusText } }));
+      throw new Error(t('Failed to delete memory: {error}', { error: response.statusText }));
     }
 
     const data = await response.json();

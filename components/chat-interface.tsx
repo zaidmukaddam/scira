@@ -433,10 +433,9 @@ const ChatInterface = memo(
               });
             }
           } else {
-            console.error('Chat error:', error.cause, error.message);
             toast.error(t('An error occurred.'), {
               description: t('Oops! An error occurred while processing your request. {error}', {
-                variables: { error: error.cause || error.message }
+                error: error.cause || error.message
               }),
             });
           }
@@ -641,7 +640,7 @@ const ChatInterface = memo(
         try {
           await updateChatVisibility(chatId, visibility);
           setSelectedVisibilityType(visibility);
-          toast.success(t('Chat is now {visibility}', { variables: { visibility } }));
+          toast.success(t('Chat is now {visibility}', { visibility }));
           // Invalidate cache to refresh the list with updated visibility
           invalidateChatsCache();
         } catch (error) {

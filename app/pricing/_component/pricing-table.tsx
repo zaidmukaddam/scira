@@ -261,7 +261,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                     className="w-full sm:w-auto"
                   >
                     {discountConfig.code ? t('Claim discount: {code}', 
-                      { variables: { code: discountConfig.code } }) : t('Claim discount')}
+                      { code: discountConfig.code }) : t('Claim discount')}
                   </Button>
                 </div>
               )}
@@ -406,8 +406,8 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                   {subscriptionDetails.subscription && (
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                       {subscriptionDetails.subscription.cancelAtPeriodEnd
-                        ? t('Expires {date}', {variables: { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) }})
-                        : t('Renews {date}', { variables: { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) } })}
+                        ? t('Expires {date}', { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) })
+                        : t('Renews {date}', { date: formatDate(subscriptionDetails.subscription.currentPeriodEnd) })}
                     </p>
                   )}
                 </div>

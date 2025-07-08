@@ -312,7 +312,7 @@ ${JSON.stringify(plan.plan)}
                     console.log("Category:", category);
 
                     dataStream.writeMessageAnnotation({
-                        status: { title: t(`Searching the web for "{query}"`, { variables: { query } }) },
+                        status: { title: t('Searching the web for "{query}"', { query }) },
                     });
 
                     // Add a query annotation to display in the UI
@@ -341,7 +341,7 @@ ${JSON.stringify(plan.plan)}
                     if (results.length > 0) {
                         try {
                             dataStream.writeMessageAnnotation({
-                                status: { title: t(`Reading content from search results for "{query}"`, { variables: { query } }) },
+                                status: { title: t('Reading content from search results for "{query}"', { query }) },
                             });
 
                             // Get the URLs from the results

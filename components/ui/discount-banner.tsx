@@ -151,10 +151,8 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                     </div>
                     <div className="text-sm text-zinc-600 dark:text-zinc-400">
                       {t('Then ${originalPrice}/month • Save ${savings} on your first month', {
-                        variables: {
-                          originalPrice: pricing.originalPrice,
-                          savings: pricing.savings.toFixed(2)
-                        }
+                        originalPrice: pricing.originalPrice,
+                        savings: pricing.savings.toFixed(2)
                       })}
                     </div>
                   </div>
@@ -169,7 +167,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                       </span>
                     </div>
                     <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-                      {t('Save ${savings}/month', { variables: { savings: pricing.savings.toFixed(2) } })}
+                      {t('Save ${savings}/month', { savings: pricing.savings.toFixed(2) })}
                     </div>
                   </div>
                 )}

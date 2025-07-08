@@ -159,7 +159,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
             <SelectGroup key={category}>
               {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
               <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                {t('{category} Models', { variables: { category } })}
+                {t('{category} Models', {category})}
               </SelectLabel>
               {categoryModels.map((model: ReturnType<typeof getModels>[0]) => {
                 const isProModel = model.pro;
@@ -260,7 +260,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {t('{model} requires Pro', { variables: { model: selectedProModel?.label } })}
+                    {t('{model} requires Pro', { model: selectedProModel?.label })}
                   </h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('Upgrade to access premium AI models')}</p>
                 </div>
@@ -349,7 +349,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {t('{model} requires sign in', { variables: { model: selectedAuthModel?.label } })}
+                    {t('{model} requires sign in', { model: selectedAuthModel?.label })}
                   </h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     {t('Create an account to access this AI model')}
@@ -908,7 +908,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     // Check if input exceeds character limit
     if (newValue.length > MAX_INPUT_CHARS) {
       setInput(newValue);
-      toast.error(t('Your input exceeds the maximum of {chars} characters.', { variables: { chars: MAX_INPUT_CHARS } }));
+      toast.error(t('Your input exceeds the maximum of {chars} characters.', { chars: MAX_INPUT_CHARS }));
     } else {
       setInput(newValue);
     }
@@ -954,7 +954,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error(t('Failed to upload {filename}: {error}', { variables: { filename: file.name, error: error instanceof Error ? error.message : t('Unknown error') } }));
+      toast.error(t('Failed to upload {filename}: {error}', { filename: file.name, error: error instanceof Error ? error.message : t('Unknown error') }));
       throw error;
     }
   };
@@ -1009,7 +1009,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Unsupported files:',
           unsupportedFiles.map((f) => `${f.name} (${f.type})`),
         );
-        toast.error(t('Some files are not supported: {filenames}', { variables: { filenames: unsupportedFiles.map((f) => f.name).join(', ') } }));
+        toast.error(t('Some files are not supported: {filenames}', { filenames: unsupportedFiles.map((f) => f.name).join(', ') }));
       }
 
       if (blockedPdfFiles.length > 0) {
@@ -1066,7 +1066,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
+        toast.error(t('You can only attach up to {maxFiles} files.', { maxFiles: MAX_FILES }));
         event.target.value = '';
         return;
       }
@@ -1094,7 +1094,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             const [status, category] = moderationResult.split('\n');
             if (status === 'unsafe') {
               console.warn('Unsafe image detected, category:', category);
-              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } }));
+              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { category }));
               event.target.value = '';
               return;
             }
@@ -1133,7 +1133,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
 
           toast.success(
-            t('{count} file uploaded successfully', { variables: { count: uploadedAttachments.length } })
+            t('{count} file uploaded successfully', { count: uploadedAttachments.length })
           );
         } else {
           toast.error(t('No files were successfully uploaded'));
@@ -1204,7 +1204,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       // Simple verification to ensure we're actually getting Files from the drop
-      toast.info(t('Detected {count} dropped files', { variables: { count: allFiles.length } }));
+      toast.info(t('Detected {count} dropped files', { count: allFiles.length }));
 
       // Check if user is Pro
       const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
@@ -1248,7 +1248,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Unsupported files:',
           unsupportedFiles.map((f) => `${f.name} (${f.type})`),
         );
-        toast.error(t('Some files not supported: {filenames}', { variables: { filenames: unsupportedFiles.map((f) => f.name).join(', ') } }));
+        toast.error(t('Some files not supported: {filenames}', { filenames: unsupportedFiles.map((f) => f.name).join(', ') }));
       }
 
       if (oversizedFiles.length > 0) {
@@ -1256,7 +1256,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Oversized files:',
           oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
         );
-        toast.error(t('Some files exceed the 5MB limit: {filenames}', { variables: { filenames: oversizedFiles.map((f) => f.name).join(', ') } }));
+        toast.error(t('Some files exceed the 5MB limit: {filenames}', { filenames: oversizedFiles.map((f) => f.name).join(', ') }));
       }
 
       if (blockedPdfFiles.length > 0) {
@@ -1289,7 +1289,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         if (compatibleModel) {
           console.log('Switching to compatible model:', compatibleModel.value);
           setSelectedModel(compatibleModel.value);
-          toast.info(t('Switching to {model} to support PDF files', { variables: { model: compatibleModel.label } }));
+          toast.info(t('Switching to {model} to support PDF files', { model: compatibleModel.label }));
         } else {
           console.warn('No PDF-compatible model found');
           toast.error(t('PDFs are only supported by Gemini and Claude models'));
@@ -1312,7 +1312,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       // Check total attachment count
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
+        toast.error(t('You can only attach up to {maxFiles} files.', { maxFiles: MAX_FILES }));
         return;
       }
 
@@ -1339,7 +1339,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             const [status, category] = moderationResult.split('\n');
             if (status === 'unsafe') {
               console.warn('Unsafe image detected, category:', category);
-              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } }));
+              toast.error(t('Image content violates safety guidelines ({category}). Please choose different images.', { category }));
               return;
             }
           }
@@ -1375,7 +1375,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Set upload queue immediately
       setUploadQueue(validFiles.map((file) => file.name));
-      toast.info(t('Starting upload of {count} files...', { variables: { count: validFiles.length } }));
+      toast.info(t('Starting upload of {count} files...', { count: validFiles.length }));
 
       // Forced timeout to ensure state updates before upload starts
       setTimeout(async () => {
@@ -1401,7 +1401,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
 
             toast.success(
-              t('{count} file uploaded successfully', { variables: { count: uploadedAttachments.length } })
+              t('{count} file uploaded successfully', { count: uploadedAttachments.length })
             );
           } else {
             toast.error(t('No files were successfully uploaded'));
@@ -1431,7 +1431,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       const totalAttachments = attachments.length + imageItems.length;
       if (totalAttachments > MAX_FILES) {
-        toast.error(t('You can only attach up to {maxFiles} files.', { variables: { maxFiles: MAX_FILES } }));
+        toast.error(t('You can only attach up to {maxFiles} files.', { maxFiles: MAX_FILES }));
         return;
       }
 
@@ -1444,7 +1444,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           'Oversized files:',
           oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
         );
-        toast.error(t('Some files exceed the 5MB limit: {filenames}', { variables: { filenames: oversizedFiles.map((f) => f.name || 'unnamed').join(', ') } }));
+        toast.error(t('Some files exceed the 5MB limit: {filenames}', { filenames: oversizedFiles.map((f) => f.name || 'unnamed').join(', ') }));
 
         // Filter out oversized files
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
@@ -1479,7 +1479,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             if (status === 'unsafe') {
               console.warn('Unsafe pasted image detected, category:', category);
               toast.error(
-                t('Pasted image content violates safety guidelines ({category}). Please choose different images.', { variables: { category } })
+                t('Pasted image content violates safety guidelines ({category}). Please choose different images.', { category })
               );
               return;
             }
@@ -1553,7 +1553,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       // Check if input exceeds character limit
       if (input.length > MAX_INPUT_CHARS) {
-        toast.error(t('Your input exceeds the maximum of {chars} characters. Please shorten your message.', { variables: { chars: MAX_INPUT_CHARS } }));
+        toast.error(t('Your input exceeds the maximum of {chars} characters. Please shorten your message.', { chars: MAX_INPUT_CHARS }));
         return;
       }
 
@@ -1606,7 +1606,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const triggerFileInput = useCallback(() => {
     if (attachments.length >= MAX_FILES) {
-      toast.error(t('You can only attach up to {maxFiles} images.', { variables: { maxFiles: MAX_FILES } }));
+      toast.error(t('You can only attach up to {maxFiles} images.', { maxFiles: MAX_FILES }));
       return;
     }
 
@@ -1886,7 +1886,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       onModelSelect={(model) => {
                         setSelectedModel(model.value);
                         const isVisionModel = hasVisionSupport(model.value, models);
-                        toast.message(t('Switched to {model}', { variables: { model: model.label } }), {
+                        toast.message(t('Switched to {model}', { model: model.label }), {
                           description: isVisionModel ? t('You can now upload images to the model.') : undefined,
                         });
                       }}

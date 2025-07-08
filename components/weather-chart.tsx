@@ -370,13 +370,13 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
               {renderWeatherBadge(currentWeather.description)}
               {currentWeather.pop > 0 && (
                 <Badge className="font-normal bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 py-0.5 text-xs">
-                  {t('{percent}% rain', { variables: { percent: currentWeather.pop } })}
+                  {t('{percent}% rain', { percent: currentWeather.pop })}
                 </Badge>
               )}
               {airPollution &&
                 (() => {
                   const { label, colorClass } = getAirQualityInfo(airPollution.main.aqi, t);
-                  return <Badge className={`font-normal py-0.5 text-xs ${colorClass}`}>{t('AQI: {label}', { variables: { label } })}</Badge>;
+                  return <Badge className={`font-normal py-0.5 text-xs ${colorClass}`}>{t('AQI: {label}', { label })}</Badge>;
                 })()}
             </div>
           </div>
@@ -388,7 +388,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                 {currentWeather.temp}°C
               </div>
               <div className="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400">
-                {t('Feels like {temp}°C', { variables: { temp: currentWeather.feelsLike } })}
+                {t('Feels like {temp}°C', { temp: currentWeather.feelsLike })}
               </div>
             </div>
             <div className="h-12 w-12 flex items-center justify-center ml-2">
@@ -412,7 +412,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
           >
             <Thermometer className="h-3 w-3 text-rose-500 dark:text-rose-400" />
             <span className="font-medium text-neutral-800 dark:text-neutral-200">
-              {t('{humidity}% Humidity', { variables: { humidity: currentWeather.humidity } })}
+              {t('{humidity}% Humidity', { humidity: currentWeather.humidity })}
             </span>
           </Badge>
           <Badge
@@ -420,21 +420,21 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
             className="flex items-center gap-1 py-1 px-3 border rounded-full bg-white/50 dark:bg-neutral-800/50"
           >
             <Wind className="h-3 w-3 text-blue-500 dark:text-blue-400" />
-            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{speed} km/h', { variables: { speed: currentWeather.windSpeed } })}</span>
+            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{speed} km/h', { speed: currentWeather.windSpeed })}</span>
           </Badge>
           <Badge
             variant="outline"
             className="flex items-center gap-1 py-1 px-3 border rounded-full bg-white/50 dark:bg-neutral-800/50"
           >
             <Droplets className="h-3 w-3 text-sky-500 dark:text-sky-400" />
-            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{pressure} hPa', { variables: { pressure: currentWeather.pressure } })}</span>
+            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{pressure} hPa', { pressure: currentWeather.pressure })}</span>
           </Badge>
           <Badge
             variant="outline"
             className="flex items-center gap-1 py-1 px-3 border rounded-full bg-white/50 dark:bg-neutral-800/50"
           >
             <Cloud className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{clouds}% Clouds', { variables: { clouds: currentWeather.clouds } })}</span>
+            <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('{clouds}% Clouds', { clouds: currentWeather.clouds })}</span>
           </Badge>
         </div>
       </CardHeader>
@@ -781,13 +781,13 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                                   {data.rain && (
                                     <p className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
                                       <span>{t('Rain')}</span>
-                                      <span>{t('{amount} mm', { variables: { amount: data.rain } })}</span>
+                                      <span>{t('{amount} mm', { amount: data.rain })}</span>
                                     </p>
                                   )}
                                   {data.snow && (
                                     <p className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
                                       <span>{t('Snow')}</span>
-                                      <span>{t('{amount} mm', { variables: { amount: data.snow } })}</span>
+                                      <span>{t('{amount} mm', { amount: data.snow })}</span>
                                     </p>
                                   )}
                                 </div>
@@ -868,7 +868,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                             {day.pop > 20 && (
                               <div className="text-[10px] text-blue-500 dark:text-blue-400 flex items-center gap-0.5">
                                 <Droplets className="h-3 w-3" />
-                                {t('{percent}% chance of rain', { variables: { percent: day.pop } })}
+                                {t('{percent}% chance of rain', { percent: day.pop })}
                               </div>
                             )}
                           </div>
@@ -925,7 +925,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                             const { label, colorClass } = getAirQualityInfo(airPollution.main.aqi, t);
                             return (
                               <Badge className={`font-normal py-1 px-2 ${colorClass}`}>
-                                {t('{label} (AQI: {aqi})', { variables: { label, aqi: airPollution.main.aqi } })}
+                                {t('{label} (AQI: {aqi})', { label, aqi: airPollution.main.aqi })}
                               </Badge>
                             );
                           })()}
@@ -1091,7 +1091,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
 
       <CardFooter className="border-t border-neutral-200 dark:border-neutral-800 py-0! px-4 m-0!">
         <div className="w-full flex justify-end items-center text-[9px] text-neutral-400 dark:text-neutral-500 py-1">
-          {t('OpenWeatherMap • {time}', { variables: { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } })}
+          {t('OpenWeatherMap • {time}', { time: new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })}
         </div>
       </CardFooter>
     </Card>

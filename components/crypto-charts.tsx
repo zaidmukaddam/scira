@@ -258,7 +258,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <DateTime 
                 options={{ weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }}
               >
-                {data.date}
+                {new Date(data.date)}
               </DateTime>
             </p>
             <div className="space-y-1 text-xs">
