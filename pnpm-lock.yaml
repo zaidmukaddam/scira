@@ -212,6 +212,9 @@ importers:
       gt-next:
         specifier: ^5.2.39
         version: 5.2.39(next@15.4.0-canary.116(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      gtx-cli:
+        specifier: ^2.0.1
+        version: 2.0.1(@babel/core@7.28.0)
       he:
         specifier: ^1.2.0
         version: 1.2.0
@@ -221,9 +224,6 @@ importers:
       katex:
         specifier: ^0.16.22
         version: 0.16.22
-      locadex:
-        specifier: ^1.0.1
-        version: 1.0.1(@babel/core@7.28.0)
       lucide-react:
         specifier: ^0.525.0
         version: 0.525.0(react@19.1.0)
@@ -4042,8 +4042,8 @@ packages:
   generaltranslation@6.3.2:
     resolution: {integrity: sha512-v4RiXxC59TdJAI2U4P73UsD8KRmdieCm+vcgteKc12GSO5MJCN/vTi9jLxbfveT6Sx9D4nbRQfU43lkhbxyNVw==}
 
-  generaltranslation@7.0.0:
-    resolution: {integrity: sha512-/4Pt+OodK1XOV1hNhjz8HRxuiG5pfk+cUBJQCyK4CtiqJFa+Fi6bvQexTh4tNyzItM3vt/e9BtuK3NfgSxrljg==}
+  generaltranslation@7.0.1:
+    resolution: {integrity: sha512-G1aPfq9pHZFToW/1tNGZ4wTN1LpCmxE9Y5DmTk+wJZ2OUFM5X0nBQPEEwe8C2VR2vP1cFxMf4GBcU9DRpcv7ng==}
 
   generic-pool@3.9.0:
     resolution: {integrity: sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==}
@@ -4150,8 +4150,8 @@ packages:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
     engines: {node: '>=14.0.0'}
 
-  gtx-cli@2.0.0:
-    resolution: {integrity: sha512-WPDUnWH3QmZSGIIAVSyyq44O4RGLnuVZblK5V1kyNjv4uX8xC2KR7Sttz67U+GqnbiTKL3IDhKlQFu0ZyIoKeg==}
+  gtx-cli@2.0.1:
+    resolution: {integrity: sha512-jen6+xsjT4QPFL296tHNkUpiTkiwy+132PZ0YjRoTMAKtHDWQjgJGtY9FvOjaibaLYPqK4oBBnXsln7TCH4Hkg==}
     hasBin: true
 
   has-bigints@1.1.0:
@@ -4680,10 +4680,6 @@ packages:
   lightningcss@1.30.1:
     resolution: {integrity: sha512-xi6IyHML+c9+Q3W0S4fCQJOym42pyurFiJUHEcEyHS0CeKzia4yZDEsLlqOFykxOdHpNy0NmvVO31vcSqAxJCg==}
     engines: {node: '>= 12.0.0'}
-
-  locadex@1.0.1:
-    resolution: {integrity: sha512-tAoLhk2j1KNtVikTSeXd9SPv66E9YiC7uEEN9iI+xhRG+pKoK9DmQ2/Di3qJYnmO9qyFtXYw74L3VOh5QV9lTA==}
-    hasBin: true
 
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
@@ -10495,7 +10491,7 @@ snapshots:
       crypto-js: 4.2.0
       fast-json-stable-stringify: 2.1.0
 
-  generaltranslation@7.0.0:
+  generaltranslation@7.0.1:
     dependencies:
       crypto-js: 4.2.0
       fast-json-stable-stringify: 2.1.0
@@ -10637,7 +10633,7 @@ snapshots:
       - encoding
       - supports-color
 
-  gtx-cli@2.0.0(@babel/core@7.28.0):
+  gtx-cli@2.0.1(@babel/core@7.28.0):
     dependencies:
       '@babel/generator': 7.28.0
       '@babel/parser': 7.28.0
@@ -10650,7 +10646,7 @@ snapshots:
       esbuild: 0.25.4
       fast-glob: 3.3.3
       form-data: 4.0.2
-      generaltranslation: 7.0.0
+      generaltranslation: 7.0.1
       open: 10.1.2
       ora: 8.2.0
       resolve: 1.22.10
@@ -11228,17 +11224,6 @@ snapshots:
       lightningcss-linux-x64-musl: 1.30.1
       lightningcss-win32-arm64-msvc: 1.30.1
       lightningcss-win32-x64-msvc: 1.30.1
-
-  locadex@1.0.1(@babel/core@7.28.0):
-    dependencies:
-      '@clack/prompts': 1.0.0-alpha.1
-      chalk: 5.4.1
-      commander: 12.1.0
-      dotenv: 16.5.0
-      gtx-cli: 2.0.0(@babel/core@7.28.0)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - supports-color
 
   locate-path@6.0.0:
     dependencies:
