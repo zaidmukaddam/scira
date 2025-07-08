@@ -194,6 +194,6 @@ export const auth = betterAuth({
         }),
         nextCookies(),
     ],
-    trustedOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai", "https://scira.generaltranslation.app"],
-    allowedOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai", "https://scira.generaltranslation.app"],
+    trustedOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai"],
+    allowedOrigins: ["https://localhost:3000", "https://scira.ai", "https://www.scira.ai"],
 });
