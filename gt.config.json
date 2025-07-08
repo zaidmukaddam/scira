@@ -6,11 +6,11 @@
     }
   },
   "src": [
-    "./app",
-    "./components",
-    "./hooks",
-    "./lib",
-    "./ai"
+    "./app/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",
+    "./hooks/**/*.{js,jsx,ts,tsx}",
+    "./lib/**/*.{js,jsx,ts,tsx}",
+    "./ai/**/*.{js,jsx,ts,tsx}"
   ],
   "locales": [
     "en",
@@ -18,5 +18,5 @@
     "es"
   ],
   "framework": "next-app",
-  "_versionId": "cdb67e397a4764f1c2183b6c9bce0d3f6df209467e5ce44c4ad09b0bd9d860ef"
+  "_versionId": "d5ccd928a78a34992cc24a7e15bf22efeb08e35430e3413e8c25675667635f15"
 }
