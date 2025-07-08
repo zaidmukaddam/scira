@@ -474,7 +474,7 @@ const Navbar = memo(
                       setLocale(localeCode);
                       setLocaleDropdownOpen(false);
                     }}
-                    className={locale === localeCode ? 'bg-accent' : ''}
+                    className={locale === localeCode ? 'bg-accent capitalize' : 'capitalize'}
                   >
                     {getLocaleProperties(localeCode).nativeNameWithRegionCode}
                   </DropdownMenuItem>

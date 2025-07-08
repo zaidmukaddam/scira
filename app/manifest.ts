@@ -5,7 +5,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const t = await getGT()
   return {
     name: t("Scira - AI-powered Search Engine"),
-    short_name: t("Scira"),
+    short_name: "Scira",
     description: t("A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok"),
     start_url: "/",
     display: "standalone",
