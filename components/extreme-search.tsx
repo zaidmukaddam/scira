@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { Research } from '@/ai/extreme-search';
+import type { Research } from '@/lib/tools/extreme-search';
 import type { JSONValue, ToolInvocation } from 'ai';
 import React, { useEffect, useState, memo, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

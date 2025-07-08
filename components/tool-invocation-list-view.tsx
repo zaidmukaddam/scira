@@ -639,7 +639,7 @@ const ToolInvocationListView = memo(
     const t = useGT();
     const locale = useLocale();
     const renderToolInvocation = useCallback(
-      (toolInvocation: ToolInvocation, index: number) => {
+      (toolInvocation: ToolInvocation, _index: number) => {
         const args = JSON.parse(JSON.stringify(toolInvocation.args));
         const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
 

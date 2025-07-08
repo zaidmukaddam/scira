@@ -62,8 +62,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   // Free Unlimited Models (xAI)
   {
     value: 'scira-default',
-    label: t('Grok 3.0 Mini'),
-    description: t("xAI's most efficient reasoning model"),
+    label: 'Grok 3.0 Mini',
+    description: 'xAI\'s most efficient reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -76,8 +76,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-vision',
-    label: t('Grok 2.0 Vision'),
-    description: t("xAI's advanced vision model"),
+    label: 'Grok 2.0 Vision',
+    description: 'xAI\'s advanced vision model',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -90,8 +90,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-grok-3',
-    label: t('Grok 3.0'),
-    description: t("xAI's most intelligent model"),
+    label: 'Grok 3.0',
+    description: 'xAI\'s most intelligent model',
     vision: false,
     reasoning: false,
     experimental: false,
@@ -106,8 +106,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   // Mini Models (Free/Paid)
   {
     value: 'scira-mistral',
-    label: t('Mistral Small'),
-    description: t("Mistral's small model"),
+    label: 'Mistral Small',
+    description: 'Mistral\'s small model',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -120,8 +120,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-qwen-30b',
-    label: t('Qwen 3 30B A3B'),
-    description: t("Alibaba's advanced MoE reasoning model"),
+    label: 'Qwen 3 30B A3B',
+    description: 'Alibaba\'s advanced MoE reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -134,8 +134,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-qwen-32b',
-    label: t('Qwen 3 32B'),
-    description: t("Alibaba's advanced reasoning model"),
+    label: 'Qwen 3 32B',
+    description: 'Alibaba\'s advanced reasoning model',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -148,8 +148,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-deepseek-v3',
-    label: t('DeepSeek V3 0324'),
-    description: t("DeepSeek's advanced model"),
+    label: 'DeepSeek V3 0324',
+    description: 'DeepSeek\'s advanced model',
     vision: false,
     reasoning: false,
     experimental: false,
@@ -162,8 +162,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-4o-mini',
-    label: t('GPT 4o Mini'),
-    description: t("OpenAI's flagship model"),
+    label: 'GPT 4o Mini',
+    description: 'OpenAI\'s flagship model',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -176,8 +176,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-google-lite',
-    label: t('Gemini 2.5 Flash Lite'),
-    description: t("Google's advanced small reasoning model"),
+    label: 'Gemini 2.5 Flash Lite',
+    description: 'Google\'s advanced small reasoning model',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -192,8 +192,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   // Pro Models
   {
     value: 'scira-anthropic',
-    label: t('Claude 4 Sonnet'),
-    description: t("Anthropic's most advanced model"),
+    label: 'Claude 4 Sonnet',
+    description: 'Anthropic\'s most advanced model',
     vision: true,
     reasoning: false,
     experimental: false,
@@ -206,8 +206,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-anthropic-thinking',
-    label: t('Claude 4 Sonnet Thinking'),
-    description: t("Anthropic's most advanced reasoning model"),
+    label: 'Claude 4 Sonnet Thinking',
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -220,8 +220,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-opus',
-    label: t('Claude 4 Opus'),
-    description: t("Anthropic's most advanced reasoning model"),
+    label: 'Claude 4 Opus',
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -234,8 +234,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-opus-pro',
-    label: t('Claude 4 Opus Thinking'),
-    description: t("Anthropic's most advanced reasoning model"),
+    label: 'Claude 4 Opus Thinking',
+    description: 'Anthropic\'s most advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -248,8 +248,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-google',
-    label: t('Gemini 2.5 Flash'),
-    description: t("Google's advanced small reasoning model"),
+    label: 'Gemini 2.5 Flash',
+    description: 'Google\'s advanced small reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -262,8 +262,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-google-pro',
-    label: t('Gemini 2.5 Pro'),
-    description: t("Google's advanced reasoning model"),
+    label: 'Gemini 2.5 Pro',
+    description: 'Google\'s advanced reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -276,8 +276,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-o4-mini',
-    label: t('o4 mini'),
-    description: t("OpenAI's faster mini reasoning model"),
+    label: 'o4 mini',
+    description: 'OpenAI\'s faster mini reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -290,8 +290,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   },
   {
     value: 'scira-o3',
-    label: t('o3'),
-    description: t("OpenAI's big reasoning model"),
+    label: 'o3',
+    description: 'OpenAI\'s big reasoning model',
     vision: true,
     reasoning: true,
     experimental: false,
@@ -306,8 +306,8 @@ export const getModels = (t: (content: string, options?: InlineTranslationOption
   // Experimental Models
   {
     value: 'scira-llama-4',
-    label: t('Llama 4 Maverick'),
-    description: t("Meta's latest model"),
+    label: 'Llama 4 Maverick',
+    description: 'Meta\'s latest model',
     vision: true,
     reasoning: false,
     experimental: true,
