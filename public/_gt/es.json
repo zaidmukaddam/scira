@@ -27,7 +27,6 @@
   "2619d61ddb641a19": "Scira AI",
   "e51547e5ebb0eed0": "Scira AI es un motor de búsqueda minimalista impulsado por IA que te ayuda a encontrar información en internet.",
   "1f99402f83aff1d4": "Scira - Motor de Búsqueda Potenciado por IA",
-  "bb35fccfa799748b": "Scira",
   "49a46d93489f825c": "Un motor de búsqueda minimalista impulsado por IA que te ayuda a encontrar información en internet utilizando modelos avanzados de IA como GPT-4, Claude y Grok",
   "fac036d489edc9bb": {
     "i": 1,
@@ -1435,7 +1434,6 @@
   "262b6fc7fc66c7de": "Ver todo",
   "d437d44416a0d64d": "No se encontraron fuentes para esta investigación.",
   "ab985da58c861748": "Proceso de Investigación",
-  "a69428374383356c": "{count} gráfico{pluralSuffix}",
   "537bcd4d9c071ec2": "Preparando Plan de Investigación",
   "ab5aa616eb6772ed": {
     "i": 1,
@@ -1448,6 +1446,58 @@
   "ea65941eba3f71e5": {
     "i": 1,
     "c": "Visualizaciones"
+  },
+  "d7b087f0273fa259": {
+    "i": 1,
+    "d": {
+      "t": "p",
+      "b": {
+        "plural": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        },
+        "singular": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráfico"
+          ]
+        },
+        "other": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        },
+        "many": {
+          "i": 2,
+          "c": [
+            {
+              "i": 3,
+              "k": "_gt_n_3",
+              "v": "n"
+            },
+            " gráficos"
+          ]
+        }
+      }
+    }
   },
   "d5131458089a7265": {
     "i": 1,
@@ -2035,7 +2085,8 @@
       "t": "Link"
     }
   ],
-  "2c6bb9c1841a4907": "Buscando {{type}} cercanos...",
+  "2f24e63d8eb4b7b8": "Cambiar al tema {value}",
+  "6e1490b7085ec6af": "Buscando {type} cercanos...",
   "1723d83a6b5b9a9e": "Video de YouTube",
   "cb8b09236208db25": "Video de YouTube",
   "189cb97125af21c1": "Ocultar detalles",
@@ -2555,6 +2606,7 @@
   "2ffa3e65b1f0f572": "Llama 4 Maverick",
   "17f7d86d9f311170": "El último modelo de Meta",
   "517e594e0b49611b": "Experimental",
+  "a4a63b64753352a2": "Modelos de {category}",
   "93ee0b5adc1ba61b": "{model} requiere Pro",
   "a01383cc924a9d78": "Actualiza para acceder a modelos de IA premium",
   "f5b556cb0ddf77e3": "Búsquedas ilimitadas",
@@ -2703,7 +2755,5 @@
   "114e4e49c1ab9b79": "Buscar información sobre un tema en la web",
   "c1e0a264b298356f": "Buscando en la web \"{query}\"",
   "f6ad6713505626c1": "Leyendo contenido de los resultados de búsqueda para \"{query}\"",
-  "8651c6b433dadf3c": "Investigación completada",
-  "2f24e63d8eb4b7b8": "Cambiar al tema {value}",
-  "a4a63b64753352a2": "Modelos de {category}"
+  "8651c6b433dadf3c": "Investigación completada"
 }
