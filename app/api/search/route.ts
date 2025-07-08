@@ -7,6 +7,7 @@ import {
   getExtremeSearchUsageCount,
 } from '@/app/actions';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
+import { AzureProviderOptions } from '@ai-sdk/azure';
 import {
   convertToCoreMessages,
   streamText,
@@ -341,6 +342,15 @@ export async function POST(req: Request) {
               }
               : {}),
           } as OpenAIResponsesProviderOptions,
+          azure: {
+            ...(model.startsWith('scira-azure')
+              ? {
+                parallelToolCalls: true,
+                strictSchemas: true,
+                temperature: 0,
+              }
+              : {}),
+          } as AzureProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {

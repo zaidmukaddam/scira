@@ -6,6 +6,7 @@ import { groq } from '@ai-sdk/groq';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { mistral } from '@ai-sdk/mistral';
+import { createAzure } from '@ai-sdk/azure';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -14,6 +15,13 @@ const middleware = extractReasoningMiddleware({
 const huggingface = createOpenAI({
   baseURL: 'https://router.huggingface.co/fireworks-ai/inference/v1',
   apiKey: process.env.HF_TOKEN,
+});
+
+// Configure Azure OpenAI provider
+const azure = createAzure({
+  apiKey: process.env.AZURE_OPENAI_API_KEY,
+  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.replace(/^https?:\/\//, '').replace(/\.openai\.azure\.com.*$/, ''),
+  apiVersion: process.env.AZURE_OPENAI_API_VERSION,
 });
 
 export const scira = customProvider({
@@ -28,6 +36,11 @@ export const scira = customProvider({
     'scira-4o-mini': openai.responses('gpt-4o-mini'),
     'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
     'scira-o3': openai.responses('o3'),
+    // Azure OpenAI models
+    'scira-azure-gpt35': azure('gpt-35-turbo'),
+    'scira-azure-gpt4': azure('gpt-4'),
+    'scira-azure-gpt4-vision': azure('gpt-4-vision'),
+    'scira-azure-gpt4o': azure('gpt-4o'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b', {
         parallelToolCalls: false,
@@ -72,6 +85,64 @@ export const models = [
     requiresAuth: false,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+  },
+  
+  // Azure OpenAI Models
+  {
+    value: 'scira-azure-gpt35',
+    label: 'Azure GPT-3.5 Turbo',
+    description: "Azure OpenAI's efficient model",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Azure',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+  },
+  {
+    value: 'scira-azure-gpt4',
+    label: 'Azure GPT-4',
+    description: "Azure OpenAI's advanced model",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Azure',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 32000,
+  },
+  {
+    value: 'scira-azure-gpt4-vision',
+    label: 'Azure GPT-4 Vision',
+    description: "Azure OpenAI's vision model",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Azure',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 32000,
+  },
+  {
+    value: 'scira-azure-gpt4o',
+    label: 'Azure GPT-4o',
+    description: "Azure OpenAI's flagship model",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Azure',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 32000,
   },
   {
     value: 'scira-vision',
