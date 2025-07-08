@@ -1141,11 +1141,6 @@ print(f"Converted amount: {converted_amount}")
                   .enum(['general', 'news', 'finance'])
                   .describe('Array of topic types to search for. Default is general.'),
               ),
-              searchDepth: z.array(
-                z
-                  .enum(['basic', 'advanced'])
-                  .describe('Array of search depths to use. Default is basic. Use advanced for more detailed results.'),
-              ),
               include_domains: z
                 .array(z.string())
                 .describe('A list of domains to include in all search results. Default is an empty list.'),
@@ -1157,14 +1152,12 @@ print(f"Converted amount: {converted_amount}")
               queries,
               maxResults,
               topics,
-              searchDepth,
               include_domains,
               exclude_domains,
             }: {
               queries: string[];
               maxResults: number[];
               topics: ('general' | 'news' | 'finance')[];
-              searchDepth: ('basic' | 'advanced')[];
               include_domains?: string[];
               exclude_domains?: string[];
             }) => {
@@ -1173,7 +1166,6 @@ print(f"Converted amount: {converted_amount}")
               console.log('Queries:', queries);
               console.log('Max Results:', maxResults);
               console.log('Topics:', topics);
-              console.log('Search Depths:', searchDepth);
               console.log('Include Domains:', include_domains);
               console.log('Exclude Domains:', exclude_domains);
 
@@ -1181,14 +1173,14 @@ print(f"Converted amount: {converted_amount}")
               const searchPromises = queries.map(async (query, index) => {
                 const currentTopic = topics[index] || topics[0] || 'general';
                 const currentMaxResults = maxResults[index] || maxResults[0] || 10;
-                const currentSearchDepth = searchDepth[index] || searchDepth[0] || 'basic';
 
                 try {
                   const searchOptions: any = {
                     text: true,
-                    type: currentSearchDepth === 'advanced' ? 'neural' : 'auto',
+                    type: 'auto',
                     numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
                     livecrawl: 'preferred',
+                    useAutoprompt: true,
                     category: currentTopic === 'finance' ? 'financial report' : currentTopic === 'news' ? 'news' : '',
                   };
 
