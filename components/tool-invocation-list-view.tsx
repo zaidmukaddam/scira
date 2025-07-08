@@ -633,7 +633,7 @@ CopyButton.displayName = 'CopyButton';
 const ToolInvocationListView = memo(
   ({ toolInvocations, annotations }: { toolInvocations: ToolInvocation[]; annotations: any }) => {
     const renderToolInvocation = useCallback(
-      (toolInvocation: ToolInvocation, index: number) => {
+      (toolInvocation: ToolInvocation, _index: number) => {
         const args = JSON.parse(JSON.stringify(toolInvocation.args));
         const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
 
