@@ -947,7 +947,7 @@ export default function AboutPage() {
 
                 <div className="mb-8">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">
-                    {t('Scira Pro')}
+                    Scira Pro
                   </h3>
                   <T><p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6 leading-relaxed">
                     Everything you need for unlimited usage

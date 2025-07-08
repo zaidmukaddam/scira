@@ -19,14 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL('https://scira.ai'),
     title: {
-      default: t('Scira AI'),
-      template: `%s | ${t('Scira AI')}`,
-      absolute: t('Scira AI')
+      default: 'Scira AI',
+      template: `%s | ${'Scira AI'}`,
+      absolute: 'Scira AI'
     },
     description: t('Scira AI is a minimalistic AI-powered search engine that helps you find information on the internet.'),
     openGraph: {
       url: 'https://scira.ai',
-      siteName: t('Scira AI')
+      siteName: 'Scira AI'
     },
     keywords: [
     'scira.ai',

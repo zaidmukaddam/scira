@@ -90,7 +90,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                   fontFamily: 'Syne',
                 }}
               >
-                {t('Scira AI')}
+                Scira AI
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                     lineHeight: 1,
                   }}
                 >
-                  {t('Scira AI')}
+                  Scira AI
                 </div>
                 <div
                   style={{
