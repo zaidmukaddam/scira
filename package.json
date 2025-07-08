@@ -82,7 +82,7 @@
     "he": "^1.2.0",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
-    "locadex-core": "link:../../../gt-cloud/locadex-core",
+    "locadex": "^1.0.1",
     "lucide-react": "^0.525.0",
     "luxon": "^3.6.1",
     "mapbox-gl": "^3.13.0",
