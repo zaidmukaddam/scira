@@ -75,10 +75,6 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
 
       try {
         dataStream.writeMessageAnnotation({
-          status: { title: `Searching for "${query}"` },
-        });
-
-        dataStream.writeMessageAnnotation({
           type: "query_completion",
           data: {
             query,

@@ -1355,7 +1355,8 @@ const ToolInvocationListView = memo(
                 <div className="flex items-center gap-2">
                   <Plane className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
                   <span className="text-neutral-700 dark:text-neutral-300 text-lg">
-                    Tracking flight {args.carrierCode}{args.flightNumber}...
+                    Tracking flight {args.carrierCode}
+                    {args.flightNumber}...
                   </span>
                 </div>
                 <div className="flex space-x-1">
@@ -1596,7 +1597,7 @@ const ToolInvocationListView = memo(
           const enhancedResult = {
             ...result,
             // Add essential coin details to chart result
-            coinData: result.coinData
+            coinData: result.coinData,
           };
 
           return <CryptoChart result={enhancedResult} coinId={args.coinId} chartType="candlestick" />;
@@ -1632,6 +1633,39 @@ const ToolInvocationListView = memo(
           }
 
           return <OnChainTokenPrice result={result} network={args.network} addresses={args.addresses} />;
+        }
+
+        if (toolInvocation.toolName === 'greeting') {
+          if (!result) {
+            return <SearchLoadingState icon={User2} text="Preparing greeting..." color="gray" />;
+          }
+
+          return (
+            <div className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200">
+              <div className="p-3">
+                <div className="flex items-start gap-3">
+                  {result.timeEmoji && (
+                    <div className="mt-0.5 w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
+                      <span className="text-xs">{result.timeEmoji}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-medium text-neutral-900 dark:text-neutral-100">{result.greeting}</span>
+                      <span className="text-neutral-400">•</span>
+                      <span className="text-neutral-500 dark:text-neutral-400">{result.dayOfWeek}</span>
+                    </div>
+                    <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                      {result.professionalMessage}
+                    </div>
+                    {result.helpfulTip && (
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400">{result.helpfulTip}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
         }
 
         return null;

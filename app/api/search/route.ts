@@ -61,6 +61,7 @@ import {
   coinDataByContractTool,
   coinOhlcTool,
   datetimeTool,
+  greetingTool,
   mcpSearchTool,
   memoryManagerTool,
   redditSearchTool,
@@ -390,6 +391,7 @@ export async function POST(req: Request) {
           mcp_search: mcpSearchTool,
           memory_manager: memoryManagerTool,
           extreme_search: extremeSearchTool(dataStream),
+          greeting: greetingTool,
         },
         experimental_repairToolCall: async ({ toolCall, tools, parameterSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {

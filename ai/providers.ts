@@ -11,7 +11,7 @@ const middleware = extractReasoningMiddleware({
   tagName: 'think',
 });
 
-const huggingface = createOpenAI({
+const fireworks = createOpenAI({
   baseURL: 'https://router.huggingface.co/fireworks-ai/inference/v1',
   apiKey: process.env.HF_TOKEN,
 });
@@ -35,11 +35,11 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-qwen-30b': wrapLanguageModel({
-      model: huggingface('accounts/fireworks/models/qwen3-30b-a3b'),
+      model: fireworks('accounts/fireworks/models/qwen3-30b-a3b'),
       middleware,
     }),
     'scira-deepseek-v3': wrapLanguageModel({
-      model: huggingface('accounts/fireworks/models/deepseek-v3-0324'),
+      model: fireworks('accounts/fireworks/models/deepseek-v3-0324'),
       middleware,
     }),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),

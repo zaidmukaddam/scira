@@ -195,6 +195,7 @@ type LegacyGroupId = SearchGroupId | 'buddy';
 const groupTools = {
   web: [
     'web_search',
+    'greeting',
     'get_weather_data',
     'retrieve',
     'text_translate',

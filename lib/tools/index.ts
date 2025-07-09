@@ -19,3 +19,4 @@ export { mcpSearchTool } from './mcp-search';
 export { memoryManagerTool } from './memory-manager';
 export { redditSearchTool } from './reddit-search'; 
 export { extremeSearchTool } from './extreme-search';
+export { greetingTool } from './greeting';
