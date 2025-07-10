@@ -62,7 +62,7 @@ export const models = [
   // Free Unlimited Models (xAI)
   {
     value: 'scira-default',
-    label: 'Grok 3.0 Mini',
+    label: 'Grok 3 Mini',
     description: "xAI's most efficient reasoning model",
     vision: false,
     reasoning: true,
@@ -76,7 +76,7 @@ export const models = [
   },
   {
     value: 'scira-vision',
-    label: 'Grok 2.0 Vision',
+    label: 'Grok 2 Vision',
     description: "xAI's advanced vision model",
     vision: true,
     reasoning: false,
@@ -90,8 +90,8 @@ export const models = [
   },
   {
     value: 'scira-grok-3',
-    label: 'Grok 3.0',
-    description: "xAI's most intelligent model",
+    label: 'Grok 3',
+    description: "xAI's recent smartest model",
     vision: false,
     reasoning: false,
     experimental: false,
