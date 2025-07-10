@@ -4,23 +4,20 @@
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
+🔗 **[Try Scira at scira.ai](https://scira.ai)**
+
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/scira)
 
 ## Powered By
 
 <div align="center">
-  <div style="display: flex; justify-content: center; align-items: center; gap: 80px; margin: 20px 0;">
-    <a href="https://sdk.vercel.ai/docs">
-      <img src="/public/one.svg" alt="Vercel AI SDK" height="40" />
-    </a>
-    <a href="https://exa.ai">
-      <img src="/public/exa.png" alt="Exa AI" height="40" />
-    </a>
-  </div>
-</div>
 
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) - For AI model integration and streaming
-- [Exa AI](https://exa.ai) - For web search and content retrieval
+| [Vercel AI SDK](https://sdk.vercel.ai/docs) | [Exa AI](https://exa.ai) |
+|:---:|:---:|
+| <img src="/public/one.svg" alt="Vercel AI SDK" height="40" /> | <img src="/public/exa.png" alt="Exa AI" height="40" /> |
+| For AI model integration and streaming | For web search and content retrieval |
+
+</div>
 
 ## Special Thanks
 
