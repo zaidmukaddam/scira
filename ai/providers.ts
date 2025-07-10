@@ -106,7 +106,7 @@ export const models = [
     value: 'scira-grok-4',
     label: 'Grok 4',
     description: "xAI's most intelligent model",
-    vision: true,
+    vision: false,
     reasoning: true,
     experimental: false,
     category: 'Pro',
