@@ -22,6 +22,7 @@ export const scira = customProvider({
     'scira-x-fast-mini': xai('grok-3-mini-fast'),
     'scira-x-fast': xai('grok-3-fast'),
     'scira-nano': openai.responses('gpt-4.1-nano'),
+    'scira-4.1-mini' : openai.responses('gpt-4.1-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
     'scira-vision': xai('grok-2-vision-1212'),
@@ -189,8 +190,8 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-nano',
-    label: 'GPT 4.1 Nano',
+    value: 'scira-4.1-mini',
+    label: 'GPT 4.1 Mini',
     description: "OpenAI's flagship model",
     vision: true,
     reasoning: false,

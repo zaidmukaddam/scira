@@ -4,9 +4,9 @@ import { z } from 'zod';
 export const greetingTool = tool({
   description: 'Generate a professional greeting for the user',
   parameters: z.object({
-    name: z.string().optional().describe('User name to personalize the greeting'),
-    style: z.enum(['professional', 'casual', 'formal']).optional().describe('Greeting style'),
-    includeTimeOfDay: z.boolean().optional().describe('Whether to include time-specific greeting'),
+    name: z.string().nullable().describe('User name to personalize the greeting'),
+    style: z.enum(['professional', 'casual', 'formal']).nullable().describe('Greeting style'),
+    includeTimeOfDay: z.boolean().nullable().describe('Whether to include time-specific greeting'),
   }),
   execute: async ({ name, style = 'professional', includeTimeOfDay = true }) => {
     const currentTime = new Date();
@@ -63,7 +63,7 @@ export const greetingTool = tool({
     // Random selection
     const randomFrom = (array: string[]) => array[Math.floor(Math.random() * array.length)];
     
-    const mainGreeting = randomFrom(styleGreetings[style]);
+    const mainGreeting = randomFrom(styleGreetings[style || 'professional']);
     const professionalMessage = randomFrom(professionalMessages);
     const helpfulTip = randomFrom(helpfulTips);
     
