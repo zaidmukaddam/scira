@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { Daytona } from '@daytonaio/sdk';
 import { serverEnv } from '@/env/server';
+import { SNAPSHOT_NAME } from '@/lib/constants';
 
 export const currencyConverterTool = tool({
   description: 'Convert currency from one to another using yfinance',
@@ -42,7 +43,7 @@ print(f"Converted amount: {converted_amount}")
     });
     const sandbox = await daytona.create(
       {
-        snapshot: 'scira-analysis:1751171803',
+        snapshot: SNAPSHOT_NAME,
       }
     );
 

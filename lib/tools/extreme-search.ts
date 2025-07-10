@@ -11,6 +11,7 @@ import { DataStreamWriter, generateObject, generateText, tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 import { scira } from "@/ai/providers";
+import { SNAPSHOT_NAME } from "@/lib/constants";
 
 const pythonLibsAvailable = [
     "pandas",
@@ -31,7 +32,7 @@ const daytona = new Daytona({
 const runCode = async (code: string, installLibs: string[] = []) => {
     const sandbox = await daytona.create(
         {
-            snapshot: 'scira-analysis:1751171803',
+            snapshot: SNAPSHOT_NAME,
         }
     );
 
@@ -187,7 +188,7 @@ Plan Guidelines:
     // Create the autonomous research agent with tools
     const { text } = await generateText({
         model: scira.languageModel("scira-x-fast-mini"),
-        maxSteps: totalTodos + 2,
+        maxSteps: totalTodos,
         system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 

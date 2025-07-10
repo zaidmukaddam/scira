@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { Daytona } from '@daytonaio/sdk';
 import { serverEnv } from '@/env/server';
+import { SNAPSHOT_NAME } from '@/lib/constants';
 
 export const codeInterpreterTool = tool({
   description: 'Write and execute Python code.',
@@ -28,7 +29,7 @@ export const codeInterpreterTool = tool({
 
     const sandbox = await daytona.create(
       {
-        snapshot: 'scira-analysis:1751171803',
+        snapshot: SNAPSHOT_NAME,
       },
     );
 

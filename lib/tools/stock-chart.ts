@@ -6,6 +6,7 @@ import Exa from 'exa-js';
 import { generateObject } from 'ai';
 import { serverEnv } from '@/env/server';
 import { scira } from '@/ai/providers';
+import { SNAPSHOT_NAME } from '@/lib/constants';
 
 const CURRENCY_SYMBOLS = {
   USD: '$',
@@ -285,7 +286,7 @@ plt.show()`;
 
     const sandbox = await daytona.create(
       {
-        snapshot: 'scira-analysis:1751171803',
+        snapshot: SNAPSHOT_NAME,
       }
     );
 

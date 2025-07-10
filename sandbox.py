@@ -10,7 +10,7 @@ snapshot_name = f"scira-analysis:{int(time.time())}"
 # Create a Python image
 image = (
     Image.debian_slim("3.12")
-    .pip_install(["numpy", "pandas", "matplotlib", "scipy", "scikit-learn", "yfinance", "requests", "keras", "uv"])
+    .pip_install(["numpy", "pandas", "matplotlib", "scipy", "scikit-learn", "yfinance", "requests", "keras", "uv", "torch", "torchvision", "torchaudio"])
     .run_commands(
             "apt-get update && apt-get install -y git",
             "groupadd -r daytona && useradd -r -g daytona -m daytona",
@@ -36,9 +36,10 @@ daytona.snapshot.create(
 
 sandbox = daytona.create(
     CreateSandboxFromSnapshotParams(
-        snapshot="scira-analysis:1751171803",
+        snapshot=snapshot_name,
         language=CodeLanguage.PYTHON,
-    ),
+        auto_stop_interval=0,
+    )
 )
 
 res = sandbox.process.code_run('''
