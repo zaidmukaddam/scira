@@ -148,7 +148,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
             query,
             index,
             total: queries.length,
-            status: 'failed',
+            status: 'error',
             resultsCount: 0,
             imagesCount: 0,
           },

@@ -51,7 +51,7 @@ type QueryCompletion = {
     query: string;
     index: number;
     total: number;
-    status: 'completed';
+    status: 'started' | 'completed' | 'error';
     resultsCount: number;
     imagesCount: number;
   };
@@ -482,7 +482,7 @@ const LoadingState: React.FC<{
                 onWheel={handleWheelScroll}
               >
                 {queries.map((query, i) => {
-                  const isCompleted = annotations.some((a) => a.data.query === query);
+                  const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
                   return (
                     <Badge
                       key={i}
