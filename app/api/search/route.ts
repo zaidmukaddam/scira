@@ -102,10 +102,13 @@ function getStreamContext() {
 
 export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
-  const { rateLimited } = await checkRateLimit('scira', { request: req });
 
-  if (rateLimited) {
-    return new ChatSDKError('rate_limit:chat', 'Global search limit reached. Try again in a minute.').toResponse();
+  if (process.env.NODE_ENV === 'production') {
+    const { rateLimited } = await checkRateLimit('scira', { request: req, firewallHostForDevelopment: 'https://scira.ai' });
+
+    if (rateLimited) {
+      return new ChatSDKError('rate_limit:chat', 'Global search limit reached. Try again in a minute.').toResponse();
+    }
   }
 
   const requestStartTime = Date.now();
@@ -148,7 +151,7 @@ export async function POST(req: Request) {
     criticalChecksPromise = (async () => {
       try {
         const criticalChecksStartTime = Date.now();
-        
+
         const isProUser = user.isProUser;
 
         // Check if model requires authentication

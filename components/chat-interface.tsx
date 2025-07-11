@@ -46,50 +46,6 @@ interface Attachment {
   size: number;
 }
 
-
-
-// Add new component for launch badge
-const LaunchBadge = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
-  if (!open) return null;
-
-  return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg p-3 max-w-xs">
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0">
-            <img src="/Launch_SVG_Dark.svg" alt="Launch" className="w-8 h-8 hidden dark:block" />
-            <img src="/Launch_SVG_Light.svg" alt="Launch" className="w-8 h-8 block dark:hidden" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Launched on Peerlist!</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Check out our project showcase</p>
-          </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="mt-3 flex gap-2">
-          <a
-            href="https://peerlist.io/zaidmukaddam/project/scira-ai-20"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 text-center px-3 py-1.5 text-xs font-medium bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-neutral-100 dark:text-neutral-900 rounded-md transition-colors"
-            onClick={() => onOpenChange(false)}
-          >
-            View Project
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Add new component for post-message upgrade dialog
 const PostMessageUpgradeDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -221,12 +177,6 @@ const ChatInterface = memo(
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [hasShownUpgradeDialog, setHasShownUpgradeDialog] = useLocalStorage('scira-upgrade-prompt-shown', false);
 
-
-
-    // Add launch badge state
-    const [showLaunchBadge, setShowLaunchBadge] = useState(false);
-    const [hasShownLaunchBadge, setHasShownLaunchBadge] = useLocalStorage('scira-launch-badge-shown', false);
-
     // Sign-in prompt dialog state
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
     const [hasShownSignInPrompt, setHasShownSignInPrompt] = useLocalStorage('scira-signin-prompt-shown', false);
@@ -283,18 +233,6 @@ const ChatInterface = memo(
       };
     }, [user, hasShownSignInPrompt, setHasShownSignInPrompt]);
 
-
-
-    // Show launch badge to all users who haven't seen it yet
-    useEffect(() => {
-      if (!hasShownLaunchBadge && !proStatusLoading) {
-        // Small delay to ensure UI is ready
-        setTimeout(() => {
-          setShowLaunchBadge(true);
-        }, 1000);
-      }
-    }, [hasShownLaunchBadge, proStatusLoading]);
-
     type VisibilityType = 'public' | 'private';
 
     const [selectedVisibilityType, setSelectedVisibilityType] = useState<VisibilityType>(initialVisibility);
@@ -303,7 +241,7 @@ const ChatInterface = memo(
       () => ({
         id: chatId,
         api: '/api/search',
-        experimental_throttle: 1000,
+        experimental_throttle: selectedModel === 'scira-opus' || selectedModel === 'scira-opus-pro' ? 1000 : 100,
         sendExtraMessageFields: true,
         maxSteps: 5,
         body: {
@@ -636,19 +574,6 @@ const ChatInterface = memo(
             setShowUpgradeDialog(open);
             if (!open) {
               setHasShownUpgradeDialog(true);
-            }
-          }}
-        />
-
-
-
-        {/* Launch Badge */}
-        <LaunchBadge
-          open={showLaunchBadge}
-          onOpenChange={(open) => {
-            setShowLaunchBadge(open);
-            if (!open) {
-              setHasShownLaunchBadge(true);
             }
           }}
         />

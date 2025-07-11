@@ -107,7 +107,6 @@ const preprocessLaTeX = (content: string) => {
 };
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
-
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
 
@@ -381,7 +380,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
         // Add text before this match
         if (start > lastEnd) {
-          components.push(text.slice(lastEnd, start));
+          const textContent = text.slice(lastEnd, start);
+          components.push(<span key={`text-${components.length}-${generateKey()}`}>{textContent}</span>);
         }
 
         // Find the corresponding LaTeX block
@@ -416,7 +416,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             );
           }
         } else {
-          components.push(fullMatch); // fallback
+          components.push(<span key={`fallback-${components.length}-${generateKey()}`}>{fullMatch}</span>); // fallback
         }
 
         lastEnd = start + fullMatch.length;
@@ -424,10 +424,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
       // Add any remaining text
       if (lastEnd < text.length) {
-        components.push(text.slice(lastEnd));
+        const textContent = text.slice(lastEnd);
+        components.push(<span key={`text-final-${components.length}-${generateKey()}`}>{textContent}</span>);
       }
 
-      return components.length === 1 ? components[0] : <>{components}</>;
+      return components.length === 1 ? (
+        components[0]
+      ) : (
+        <React.Fragment key={generateKey()}>{components}</React.Fragment>
+      );
     },
     paragraph(children) {
       // Check if the paragraph contains only a LaTeX block placeholder
@@ -454,7 +459,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         }
       }
 
-      return <p className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">{children}</p>;
+      return (
+        <p key={generateKey()} className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">
+          {children}
+        </p>
+      );
     },
     code(children, language) {
       return (
@@ -473,7 +482,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return isValidUrl(href) ? (
         renderHoverCard(href, text)
       ) : (
-        <a href={href} className="text-primary dark:text-primary-light hover:underline font-medium">
+        <a key={generateKey()} href={href} className="text-primary dark:text-primary-light hover:underline font-medium">
           {text}
         </a>
       );
@@ -491,7 +500,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         }[level] || '';
 
       return (
-        <HeadingTag className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}>
+        <HeadingTag
+          key={generateKey()}
+          className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}
+        >
           {children}
         </HeadingTag>
       );
@@ -500,6 +512,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       const ListTag = ordered ? 'ol' : 'ul';
       return (
         <ListTag
+          key={generateKey()}
           className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${
             ordered ? 'list-decimal' : 'list-disc'
           }`}
@@ -509,48 +522,68 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       );
     },
     listItem(children) {
-      return <li className="pl-1 leading-relaxed">{children}</li>;
+      return (
+        <li key={generateKey()} className="pl-1 leading-relaxed">
+          {children}
+        </li>
+      );
     },
     blockquote(children) {
       return (
-        <blockquote className="my-6 border-l-4 border-primary/30 dark:border-primary/20 pl-4 py-1 text-neutral-700 dark:text-neutral-300 italic bg-neutral-50 dark:bg-neutral-900/50 rounded-r-md">
+        <blockquote
+          key={generateKey()}
+          className="my-6 border-l-4 border-primary/30 dark:border-primary/20 pl-4 py-1 text-neutral-700 dark:text-neutral-300 italic bg-neutral-50 dark:bg-neutral-900/50 rounded-r-md"
+        >
           {children}
         </blockquote>
       );
     },
     table(children) {
       return (
-        <Table className="!border !rounded-lg !m-0">{children}</Table>
+        <Table key={generateKey()} className="!border !rounded-lg !m-0">
+          {children}
+        </Table>
       );
     },
     tableRow(children) {
-      return <TableRow>{children}</TableRow>;
+      return <TableRow key={generateKey()}>{children}</TableRow>;
     },
     tableCell(children, flags) {
       const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
       const isHeader = flags.header;
 
       return isHeader ? (
-        <TableHead className={cn(
-          alignClass,
-          'border-r border-border last:border-r-0 bg-muted/50 font-semibold !p-2 !m-1 !text-wrap'
-        )}>
+        <TableHead
+          key={generateKey()}
+          className={cn(
+            alignClass,
+            'border-r border-border last:border-r-0 bg-muted/50 font-semibold !p-2 !m-1 !text-wrap',
+          )}
+        >
           {children}
         </TableHead>
       ) : (
-        <TableCell className={cn(
-          alignClass,
-          'border-r border-border last:border-r-0 !p-2 !m-1 !text-wrap'
-        )}>
+        <TableCell
+          key={generateKey()}
+          className={cn(alignClass, 'border-r border-border last:border-r-0 !p-2 !m-1 !text-wrap')}
+        >
           {children}
         </TableCell>
       );
     },
     tableHeader(children) {
-      return <TableHeader className='!p-1 !m-1'>{children}</TableHeader>;
+      return (
+        <TableHeader key={generateKey()} className="!p-1 !m-1">
+          {children}
+        </TableHeader>
+      );
     },
     tableBody(children) {
-      return <TableBody className='!text-wrap !m-1'>{children}</TableBody>;
+      return (
+        <TableBody key={generateKey()} className="!text-wrap !m-1">
+          {children}
+        </TableBody>
+      );
     },
   };
 
