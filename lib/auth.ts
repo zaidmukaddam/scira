@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { user, session, verification, account, chat, message, extremeSearchUsage, messageUsage, subscription, customInstructions, stream } from "@/lib/db/schema";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import { config } from 'dotenv';
@@ -12,7 +13,6 @@ import {
     webhooks,
 } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
-import { subscription } from "@/lib/db/schema";
 
 config({
     path: '.env.local',
@@ -37,6 +37,19 @@ export const auth = betterAuth({
     },
     database: drizzleAdapter(db, {
         provider: "pg",
+        schema: {
+            user,
+            session,
+            verification,
+            account,
+            chat,
+            message,
+            extremeSearchUsage,
+            messageUsage,
+            subscription,
+            customInstructions,
+            stream,
+        }
     }),
     socialProviders: {
         github: {

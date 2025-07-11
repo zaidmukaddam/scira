@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
+import { SettingsDialog } from './settings-dialog';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -64,6 +65,7 @@ const UserProfile = memo(
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
@@ -244,11 +246,11 @@ const UserProfile = memo(
 
             {isAuthenticated && (
               <>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <Link href="/settings" className="w-full flex items-center gap-2">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
+                  <div className="w-full flex items-center gap-2">
                     <Gear size={16} />
                     <span>Settings</span>
-                  </Link>
+                  </div>
                 </DropdownMenuItem>
               </>
             )}
@@ -387,6 +389,16 @@ const UserProfile = memo(
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Settings Dialog */}
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          user={currentUser}
+          subscriptionData={subscriptionData}
+          isProUser={isProUser}
+          isProStatusLoading={isProStatusLoading}
+        />
       </>
     );
   },

@@ -24,7 +24,7 @@ import { UIMessage } from '@ai-sdk/ui-utils';
 import { Globe } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { User } from '@/lib/db/schema';
+import { UserWithProStatus } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
 import { Crown, LockIcon, MicrophoneIcon, Cpu } from '@phosphor-icons/react';
@@ -47,7 +47,7 @@ interface ModelSwitcherProps {
   status: 'submitted' | 'streaming' | 'ready' | 'error';
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
-  user?: any;
+  user?: UserWithProStatus | null;
 }
 
 const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
@@ -61,7 +61,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
   subscriptionData,
   user,
 }) => {
-  const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
   const isSubscriptionLoading = user && !subscriptionData;
 
   // Show all models to everyone, but control access via dialogs
@@ -650,7 +650,7 @@ interface FormComponentProps {
   attachments: Array<Attachment>;
   setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
   chatId: string;
-  user: User | null;
+  user: UserWithProStatus | null;
   subscriptionData?: any;
   handleSubmit: (
     event?: {
@@ -953,7 +953,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       );
 
       // Check if user is Pro
-      const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+      const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
 
       // First, separate images and PDFs
       const imageFiles: File[] = [];
@@ -1186,7 +1186,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       toast.info(`Detected ${allFiles.length} dropped files`);
 
       // Check if user is Pro
-      const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+      const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
 
       // First, separate images and PDFs
       const imageFiles: File[] = [];
@@ -1697,7 +1697,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
-              subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active',
+              user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -1709,7 +1709,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
-              subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active',
+              user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />

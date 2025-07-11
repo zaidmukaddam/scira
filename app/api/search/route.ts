@@ -3,8 +3,9 @@ import {
   generateTitleFromUserMessage,
   getGroupConfig,
   getUserMessageCount,
-  getSubDetails,
   getExtremeSearchUsageCount,
+  getCurrentUser,
+  getCustomInstructions
 } from '@/app/actions';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import {
@@ -18,7 +19,6 @@ import {
   generateObject,
 } from 'ai';
 import { scira, getMaxOutputTokens, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
-import { getUser } from '@/lib/auth-utils';
 import {
   createStreamId,
   getChatById,
@@ -34,7 +34,7 @@ import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
 import { differenceInSeconds } from 'date-fns';
-import { Chat } from '@/lib/db/schema';
+import { Chat, CustomInstructions } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
@@ -115,13 +115,14 @@ export async function POST(req: Request) {
   console.log('--------------------------------');
 
   const userCheckTime = Date.now();
-  const user = await getUser();
+  const user = await getCurrentUser();
   const streamId = 'stream-' + uuidv4();
   console.log(`⏱️  User check took: ${((Date.now() - userCheckTime) / 1000).toFixed(2)}s`);
 
   if (!user) {
     console.log('User not found');
   }
+  let customInstructions: CustomInstructions | null = null;
 
   // Check if model requires authentication (fast check)
   const authRequiredModels = ['scira-anthropic', 'scira-google'];
@@ -137,22 +138,12 @@ export async function POST(req: Request) {
   }> = Promise.resolve({ canProceed: true });
 
   if (user) {
+    customInstructions = await getCustomInstructions(user);
     criticalChecksPromise = (async () => {
       try {
         const criticalChecksStartTime = Date.now();
-        const [messageCountResult, subscriptionResult, extremeSearchUsage] = await Promise.all([
-          getUserMessageCount(user), // Pass user to avoid duplicate session lookup
-          getSubDetails(), // Keep original - subscription logic is critical
-          getExtremeSearchUsageCount(user), // Pass user to avoid duplicate session lookup
-        ]);
-        console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
-
-        if (messageCountResult.error) {
-          console.error('Error getting message count:', messageCountResult.error);
-          return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify usage limits') };
-        }
-
-        const isProUser = subscriptionResult.hasSubscription && subscriptionResult.subscription?.status === 'active';
+        
+        const isProUser = user.isProUser;
 
         // Check if model requires authentication
         if (requiresAuthentication(model) && !user) {
@@ -164,12 +155,37 @@ export async function POST(req: Request) {
           return { canProceed: false, error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`) };
         }
 
+        // Pro users skip all usage limit checks
+        if (isProUser) {
+          console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`);
+          return {
+            canProceed: true,
+            messageCount: 0, // Not relevant for pro users
+            isProUser: true,
+            subscriptionData: user.subscriptionData,
+            shouldBypassLimits: true,
+            extremeSearchUsage: 0 // Not relevant for pro users
+          };
+        }
+
+        // Only check usage limits for non-pro users
+        const [messageCountResult, extremeSearchUsage] = await Promise.all([
+          getUserMessageCount(user), // Pass user to avoid duplicate session lookup
+          getExtremeSearchUsageCount(user), // Pass user to avoid duplicate session lookup
+        ]);
+        console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
+
+        if (messageCountResult.error) {
+          console.error('Error getting message count:', messageCountResult.error);
+          return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify usage limits') };
+        }
+
         // Check if user should bypass limits for free unlimited models
         const shouldBypassLimits = shouldBypassRateLimits(model, user);
 
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
-          const dailyLimit = isProUser ? undefined : 100; // Pro users have no limit
-          if (dailyLimit && messageCountResult.count >= dailyLimit) {
+          const dailyLimit = 100; // Non-pro users have a daily limit
+          if (messageCountResult.count >= dailyLimit) {
             return { canProceed: false, error: new ChatSDKError('rate_limit:chat', 'Daily search limit reached') };
           }
         }
@@ -177,8 +193,8 @@ export async function POST(req: Request) {
         return {
           canProceed: true,
           messageCount: messageCountResult.count,
-          isProUser,
-          subscriptionData: subscriptionResult,
+          isProUser: false,
+          subscriptionData: user.subscriptionData,
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count
         };
@@ -324,7 +340,7 @@ export async function POST(req: Request) {
         maxSteps: 5,
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
-        system: instructions + `\n\nThe user's location is ${latitude}, ${longitude}.`,
+        system: instructions + `\n\nThe user's custom instructions are: ${customInstructions?.content}` + `\n\nThe user's location is ${latitude}, ${longitude}.`,
         toolChoice: 'auto',
         providerOptions: {
           openai: {

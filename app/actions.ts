@@ -7,6 +7,7 @@ import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
+import { authClient } from '@/lib/auth-client';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -19,6 +20,10 @@ import {
   incrementMessageUsage,
   getMessageCount,
   getHistoricalUsageData,
+  getCustomInstructionsByUserId,
+  createCustomInstructions,
+  updateCustomInstructions,
+  deleteCustomInstructions,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
@@ -28,6 +33,27 @@ import {
   createMessageCountKey,
   createExtremeCountKey
 } from '@/lib/performance-cache';
+
+// Server action to get the current user with Pro status
+export async function getCurrentUser() {
+  try {
+    const user = await getUser();
+    if (!user) return null;
+
+    // Get subscription details for Pro status
+    const subscriptionDetails = await getSubscriptionDetails();
+    const isProUser = subscriptionDetails?.hasSubscription && subscriptionDetails?.subscription?.status === 'active';
+
+    return {
+      ...user,
+      isProUser,
+      subscriptionData: subscriptionDetails,
+    };
+  } catch (error) {
+    console.error('Error in getCurrentUser server action:', error);
+    return null;
+  }
+}
 
 export async function suggestQuestions(history: any[]) {
   'use server';
@@ -100,16 +126,7 @@ export async function checkImageModeration(images: any) {
   return text;
 }
 
-// Server action to get the current user
-export async function getCurrentUser() {
-  try {
-    const user = await getUser();
-    return user;
-  } catch (error) {
-    console.error('Error in getCurrentUser server action:', error);
-    return null;
-  }
-}
+
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
@@ -1233,29 +1250,29 @@ export async function getHistoricalUsage(providedUser?: any) {
     }
 
     const historicalData = await getHistoricalUsageData({ userId: user.id });
-    
-    // Create a complete 365-day dataset with defaults
+
+    // Create a complete 90-day dataset with defaults (3 months)
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 364);
-    
+    startDate.setDate(endDate.getDate() - 89);
+
     // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
     historicalData.forEach((record) => {
       const dateKey = record.date.toISOString().split('T')[0];
       dataMap.set(dateKey, record.messageCount || 0);
     });
-    
-    // Generate complete dataset for all 365 days
+
+    // Generate complete dataset for all 90 days
     const completeData = [];
-    for (let i = 0; i < 365; i++) {
+    for (let i = 0; i < 90; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
-      
+
       const count = dataMap.get(dateKey) || 0;
       let level: 0 | 1 | 2 | 3 | 4;
-      
+
       // Define usage levels based on message count
       if (count === 0) level = 0;
       else if (count <= 3) level = 1;
@@ -1269,10 +1286,77 @@ export async function getHistoricalUsage(providedUser?: any) {
         level,
       });
     }
-    
+
     return completeData;
   } catch (error) {
     console.error('Error getting historical usage:', error);
     return [];
   }
 }
+
+// Custom Instructions Server Actions
+export async function getCustomInstructions(providedUser?: any) {
+  'use server';
+
+  try {
+    const user = providedUser || await getUser();
+    if (!user) {
+      return null;
+    }
+
+    const instructions = await getCustomInstructionsByUserId({ userId: user.id });
+    return instructions;
+  } catch (error) {
+    console.error('Error getting custom instructions:', error);
+    return null;
+  }
+}
+
+export async function saveCustomInstructions(content: string) {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    if (!content.trim()) {
+      return { success: false, error: 'Content cannot be empty' };
+    }
+
+    // Check if instructions already exist
+    const existingInstructions = await getCustomInstructionsByUserId({ userId: user.id });
+
+    let result;
+    if (existingInstructions) {
+      result = await updateCustomInstructions({ userId: user.id, content: content.trim() });
+    } else {
+      result = await createCustomInstructions({ userId: user.id, content: content.trim() });
+    }
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error saving custom instructions:', error);
+    return { success: false, error: 'Failed to save custom instructions' };
+  }
+}
+
+export async function deleteCustomInstructionsAction() {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    const result = await deleteCustomInstructions({ userId: user.id });
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error deleting custom instructions:', error);
+    return { success: false, error: 'Failed to delete custom instructions' };
+  }
+}
+
+

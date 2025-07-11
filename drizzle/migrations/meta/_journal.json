@@ -50,6 +50,13 @@
       "when": 1750221725745,
       "tag": "0006_confused_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1752217695953,
+      "tag": "0007_easy_frank_castle",
+      "breakpoints": true
     }
   ]
 }

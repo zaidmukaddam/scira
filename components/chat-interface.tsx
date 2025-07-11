@@ -303,7 +303,7 @@ const ChatInterface = memo(
       () => ({
         id: chatId,
         api: '/api/search',
-        experimental_throttle: 100,
+        experimental_throttle: 1000,
         sendExtraMessageFields: true,
         maxSteps: 5,
         body: {

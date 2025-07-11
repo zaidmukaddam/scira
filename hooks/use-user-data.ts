@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCurrentUser, getSubDetails } from '@/app/actions';
+import { getSubDetails, getCurrentUser } from '@/app/actions';
 import { User } from '@/lib/db/schema';
 import { shouldBypassRateLimits } from '@/ai/providers';
+
+export type UserWithProStatus = User & {
+  isProUser: boolean;
+  subscriptionData?: any;
+};
 
 // Hook for user data
 export function useUserData() {
@@ -31,10 +36,6 @@ export function useSubscriptionData(user: User | null) {
 // Combined hook for Pro user status with optimized caching
 export function useProUserStatus() {
   const { data: user, isLoading: userLoading } = useUserData();
-  const { data: subscriptionData, isLoading: subscriptionLoading } = useSubscriptionData(user || null);
-
-  const isProUser = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-  const isLoading = userLoading || (user && subscriptionLoading);
 
   // Helper function to check if user should have unlimited access for specific models
   const shouldBypassLimitsForModel = (selectedModel: string) => {
@@ -42,12 +43,12 @@ export function useProUserStatus() {
   };
 
   return {
-    user: (user || null) as User | null,
-    subscriptionData,
-    isProUser: Boolean(isProUser),
-    isLoading: Boolean(isLoading),
+    user: (user || null) as UserWithProStatus | null,
+    subscriptionData: user?.subscriptionData,
+    isProUser: Boolean(user?.isProUser),
+    isLoading: Boolean(userLoading),
     // Pro users should never see limit checks
-    shouldCheckLimits: !isLoading && user && !isProUser,
+    shouldCheckLimits: !userLoading && user && !user.isProUser,
     shouldBypassLimitsForModel,
   };
 } 
