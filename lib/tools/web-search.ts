@@ -43,10 +43,10 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
     ),
     include_domains: z
       .array(z.string())
-      .describe('A list of domains to include in all search results. Default is an empty list.'),
+      .describe('A list of base domains to include in all search results. Default is an empty list.'),
     exclude_domains: z
       .array(z.string())
-      .describe('A list of domains to exclude from all search results. Default is an empty list.'),
+      .describe('A list of base domains to exclude from all search results. Default is an empty list.'),
   }),
   execute: async ({
     queries,
@@ -96,10 +96,11 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
         };
 
         if (include_domains && include_domains.length > 0) {
-          searchOptions.includeDomains = include_domains;
+          // clean the domains to be the base domain
+          searchOptions.includeDomains = include_domains.map(domain => extractDomain(domain));
         }
         if (exclude_domains && exclude_domains.length > 0) {
-          searchOptions.excludeDomains = exclude_domains;
+          searchOptions.excludeDomains = exclude_domains.map(domain => extractDomain(domain));
         }
 
         const data = await exa.searchAndContents(query, searchOptions);

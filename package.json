@@ -56,6 +56,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^1.1.1",
     "@vercel/edge-config": "^1.4.0",
+    "@vercel/firewall": "^1.0.0",
     "@vercel/functions": "^2.2.2",
     "@vercel/speed-insights": "^1.2.0",
     "ai": "^4.3.16",

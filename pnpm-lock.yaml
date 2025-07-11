@@ -146,6 +146,9 @@ importers:
       '@vercel/edge-config':
         specifier: ^1.4.0
         version: 1.4.0(@opentelemetry/api@1.9.0)
+      '@vercel/firewall':
+        specifier: ^1.0.0
+        version: 1.0.0(next@15.4.0-canary.126(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@vercel/functions':
         specifier: ^2.2.2
         version: 2.2.2(@aws-sdk/credential-provider-web-identity@3.840.0)
@@ -2776,6 +2779,15 @@ packages:
       '@opentelemetry/api': ^1.7.0
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+
+  '@vercel/firewall@1.0.0':
+    resolution: {integrity: sha512-7umwUgTV9BvM96YDhYOGEHmDoYoqdg7hdRUe8SahtppyD9zIF6uMA8sJvM53XYIaPSmpyj1nixDioyyJThMyog==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      next: '*'
+    peerDependenciesMeta:
+      next:
         optional: true
 
   '@vercel/functions@2.2.2':
@@ -8735,6 +8747,10 @@ snapshots:
       '@vercel/edge-config-fs': 0.1.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
+
+  '@vercel/firewall@1.0.0(next@15.4.0-canary.126(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+    optionalDependencies:
+      next: 15.4.0-canary.126(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
   '@vercel/functions@2.2.2(@aws-sdk/credential-provider-web-identity@3.840.0)':
     optionalDependencies:
