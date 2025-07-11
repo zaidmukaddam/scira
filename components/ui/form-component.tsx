@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { User } from '@/lib/db/schema';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown, LockIcon, MicrophoneIcon, Cpu } from '@phosphor-icons/react';
+import { Crown, LockIcon, MicrophoneIcon, Cpu, Cloud } from '@phosphor-icons/react';
 import {
   Select,
   SelectContent,
@@ -162,7 +162,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
           {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
             <SelectGroup key={category}>
               {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-              <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+              <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                {category === 'Azure' ? <Cloud className="size-3 text-blue-500" weight="fill" /> : null}
                 {category} Models
               </SelectLabel>
               {categoryModels.map((model) => {
@@ -196,7 +197,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                     >
                       <div className="flex flex-col min-w-0 flex-1">
                         <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                          {model.label}
+                          {model.value.startsWith('scira-azure') ? (
+                            <span className="flex items-center gap-1">
+                              <Cloud className="size-3 text-blue-500" weight="fill" />
+                              {model.label}
+                            </span>
+                          ) : model.label}
                           {requiresAuth ? (
                             <LockIcon className="size-3 text-neutral-400" />
                           ) : (
@@ -224,7 +230,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                   >
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                        {model.label}
+                        {model.value.startsWith('scira-azure') ? (
+                          <span className="flex items-center gap-1">
+                            <Cloud className="size-3 text-blue-500" weight="fill" />
+                            {model.label}
+                          </span>
+                        ) : model.label}
                         {(() => {
                           const requiresAuth = requiresAuthentication(model.value) && !user;
                           const requiresPro = requiresProSubscription(model.value) && !isProUser;
@@ -235,7 +246,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
                             return <Crown className="size-3 text-neutral-400" />;
                           }
                           return null;
-                        })()}
+                        })()
                       </div>
                       <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
                         {model.description}
