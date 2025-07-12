@@ -55,12 +55,16 @@ const UserProfile = memo(
     subscriptionData,
     isProUser,
     isProStatusLoading,
+    isCustomInstructionsEnabled,
+    setIsCustomInstructionsEnabled,
   }: {
     className?: string;
     user?: User | null;
     subscriptionData?: any;
     isProUser?: boolean;
     isProStatusLoading?: boolean;
+    isCustomInstructionsEnabled?: boolean;
+    setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
@@ -398,6 +402,8 @@ const UserProfile = memo(
           subscriptionData={subscriptionData}
           isProUser={isProUser}
           isProStatusLoading={isProStatusLoading}
+          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
         />
       </>
     );

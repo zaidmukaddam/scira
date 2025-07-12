@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Latex from 'react-latex-next';
 import Marked, { ReactRenderer } from 'marked-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, Fragment } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -431,7 +431,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return components.length === 1 ? (
         components[0]
       ) : (
-        <React.Fragment key={generateKey()}>{components}</React.Fragment>
+        <Fragment key={generateKey()}>{components}</Fragment>
       );
     },
     paragraph(children) {

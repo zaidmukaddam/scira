@@ -1,15 +1,18 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { ToolInvocation, UIMessage } from 'ai';
+import React, { memo, useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { ToolInvocation } from 'ai';
 import { motion } from 'framer-motion';
 import { Wave } from '@foobar404/wave';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Activity, ArrowDownRight, ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
+import { ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
+import { generateSpeech } from '@/app/actions';
+import Image from 'next/image';
+import MemoryManager from '@/components/memory-manager';
 
 // UI Components
 import { BorderTrail } from '@/components/core/border-trail';
@@ -45,63 +48,78 @@ import {
 } from 'lucide-react';
 import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon, XLogo } from '@phosphor-icons/react';
 
-// Components
-import { FlightTracker } from '@/components/flight-tracker';
-import InteractiveChart from '@/components/interactive-charts';
-import { MapComponent, MapContainer } from '@/components/map-components';
-import TMDBResult from '@/components/movie-info';
-import MultiSearch from '@/components/multi-search';
-import NearbySearchMapView from '@/components/nearby-search-map-view';
-import TrendingResults from '@/components/trending-tv-movies-results';
-import AcademicPapersCard from '@/components/academic-papers';
-import WeatherChart from '@/components/weather-chart';
-import InteractiveStockChart from '@/components/interactive-stock-chart';
-import { CurrencyConverter } from '@/components/currency_conv';
-import { ExtremeSearch } from '@/components/extreme-search';
-import MemoryManager from '@/components/memory-manager';
-import MCPServerList from '@/components/mcp-server-list';
-import RedditSearch from '@/components/reddit-search';
-import XSearch from '@/components/x-search';
-import { CryptoTickers, CryptoChart } from '@/components/crypto-charts';
-import { CoinData } from '@/components/crypto-coin-data';
-import { OnChainTokenPrice } from '@/components/onchain-crypto-components';
-
-// Actions
-import { generateSpeech } from '@/app/actions';
-import Image from 'next/image';
-
-// Interfaces
+// Type definitions for YouTube components
 interface VideoDetails {
   title?: string;
   author_name?: string;
   author_url?: string;
   thumbnail_url?: string;
-  type?: string;
-  provider_name?: string;
-  provider_url?: string;
-  height?: number;
-  width?: number;
 }
 
 interface VideoResult {
   videoId: string;
   url: string;
   details?: VideoDetails;
-  captions?: string;
   timestamps?: string[];
-  views?: string;
-  likes?: string;
+  captions?: string;
   summary?: string;
-}
-
-interface YouTubeSearchResponse {
-  results: VideoResult[];
 }
 
 interface YouTubeCardProps {
   video: VideoResult;
   index: number;
 }
+
+interface YouTubeSearchResponse {
+  results: VideoResult[];
+}
+
+// Lazy load heavy components
+const FlightTracker = lazy(() =>
+  import('@/components/flight-tracker').then((module) => ({ default: module.FlightTracker })),
+);
+const InteractiveChart = lazy(() => import('@/components/interactive-charts'));
+const MapComponent = lazy(() =>
+  import('@/components/map-components').then((module) => ({ default: module.MapComponent })),
+);
+const MapContainer = lazy(() =>
+  import('@/components/map-components').then((module) => ({ default: module.MapContainer })),
+);
+const TMDBResult = lazy(() => import('@/components/movie-info'));
+const MultiSearch = lazy(() => import('@/components/multi-search'));
+const NearbySearchMapView = lazy(() => import('@/components/nearby-search-map-view'));
+const TrendingResults = lazy(() => import('@/components/trending-tv-movies-results'));
+const AcademicPapersCard = lazy(() => import('@/components/academic-papers'));
+const WeatherChart = lazy(() => import('@/components/weather-chart'));
+const MCPServerList = lazy(() => import('@/components/mcp-server-list'));
+const RedditSearch = lazy(() => import('@/components/reddit-search'));
+const XSearch = lazy(() => import('@/components/x-search'));
+const ExtremeSearch = lazy(() =>
+  import('@/components/extreme-search').then((module) => ({ default: module.ExtremeSearch })),
+);
+const CryptoCoinsData = lazy(() =>
+  import('@/components/crypto-coin-data').then((module) => ({ default: module.CoinData })),
+);
+const CurrencyConverter = lazy(() =>
+  import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
+);
+const InteractiveStockChart = lazy(() => import('@/components/interactive-stock-chart'));
+const CryptoChart = lazy(() =>
+  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoChart })),
+);
+const OnChainCryptoComponents = lazy(() =>
+  import('@/components/onchain-crypto-components').then((module) => ({ default: module.OnChainTokenPrice })),
+);
+const CryptoTickers = lazy(() =>
+  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoTickers })),
+);
+
+// Loading component for lazy-loaded components
+const ComponentLoader = () => (
+  <div className="flex items-center justify-center py-8">
+    <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+  </div>
+);
 
 // Now adding the SearchLoadingState component
 const SearchLoadingState = ({
@@ -346,7 +364,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                       <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Key Moments</h4>
                       <ScrollArea className="h-[120px]">
                         <div className="pr-4">
-                          {video.timestamps.map((timestamp, i) => {
+                          {video.timestamps.map((timestamp: string, i: number) => {
                             const { time, description } = formatTimestamp(timestamp);
                             return (
                               <Link
@@ -1081,7 +1099,9 @@ const ToolInvocationListView = memo(
 
               {result?.chart && (
                 <div className="pt-1 overflow-x-auto">
-                  <InteractiveChart chart={result.chart} />
+                  <Suspense fallback={<ComponentLoader />}>
+                    <InteractiveChart chart={result.chart} />
+                  </Suspense>
                 </div>
               )}
             </div>
@@ -1089,17 +1109,23 @@ const ToolInvocationListView = memo(
         }
 
         if (toolInvocation.toolName === 'extreme_search') {
-          return <ExtremeSearch toolInvocation={toolInvocation} annotations={annotations} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <ExtremeSearch toolInvocation={toolInvocation} annotations={annotations} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'web_search') {
           return (
             <div className="mt-4">
-              <MultiSearch
-                result={result}
-                args={args}
-                annotations={annotations?.filter((a: any) => a.type === 'query_completion') || []}
-              />
+              <Suspense fallback={<ComponentLoader />}>
+                <MultiSearch
+                  result={result}
+                  args={args}
+                  annotations={annotations?.filter((a: any) => a.type === 'query_completion') || []}
+                />
+              </Suspense>
             </div>
           );
         }
@@ -1381,7 +1407,9 @@ const ToolInvocationListView = memo(
 
           return (
             <div className="my-4">
-              <FlightTracker data={result} />
+              <Suspense fallback={<ComponentLoader />}>
+                <FlightTracker data={result} />
+              </Suspense>
             </div>
           );
         }
@@ -1549,7 +1577,9 @@ const ToolInvocationListView = memo(
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 px-3 pb-3">
-                  <MCPServerList servers={result.servers || []} query={result.query} error={result.error} />
+                  <Suspense fallback={<ComponentLoader />}>
+                    <MCPServerList servers={result.servers || []} query={result.query} error={result.error} />
+                  </Suspense>
                 </CardContent>
               </Card>
             </div>
@@ -1561,7 +1591,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={RedditLogo} text="Searching Reddit..." color="orange" />;
           }
 
-          return <RedditSearch result={result} args={args} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <RedditSearch result={result} args={args} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'x_search') {
@@ -1569,7 +1603,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={XLogo} text="Searching X (Twitter)..." color="gray" />;
           }
 
-          return <XSearch result={result} args={args} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <XSearch result={result} args={args} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'coin_tickers') {
@@ -1577,7 +1615,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={DollarSign} text="Fetching crypto ticker data..." color="orange" />;
           }
 
-          return <CryptoTickers result={result} coinId={args.coinId} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoTickers result={result} coinId={args.coinId} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'coin_chart_range') {
@@ -1585,7 +1627,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={TrendingUpIcon} text="Loading crypto price chart..." color="blue" />;
           }
 
-          return <CryptoChart result={result} coinId={args.coinId} chartType="candlestick" />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoChart result={result} coinId={args.coinId} chartType="candlestick" />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'coin_ohlc') {
@@ -1600,7 +1646,11 @@ const ToolInvocationListView = memo(
             coinData: result.coinData,
           };
 
-          return <CryptoChart result={enhancedResult} coinId={args.coinId} chartType="candlestick" />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoChart result={enhancedResult} coinId={args.coinId} chartType="candlestick" />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'contract_chart') {
@@ -1608,7 +1658,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={TrendingUpIcon} text="Loading contract chart data..." color="violet" />;
           }
 
-          return <CryptoChart result={result} coinId={args.contractAddress} chartType="line" />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoChart result={result} coinId={args.contractAddress} chartType="line" />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'coin_data') {
@@ -1616,7 +1670,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={DollarSign} text="Fetching comprehensive coin data..." color="blue" />;
           }
 
-          return <CoinData result={result} coinId={args.coinId} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoCoinsData result={result} coinId={args.coinId} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'coin_data_by_contract') {
@@ -1624,7 +1682,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={DollarSign} text="Fetching token data by contract..." color="violet" />;
           }
 
-          return <CoinData result={result} contractAddress={args.contractAddress} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <CryptoCoinsData result={result} contractAddress={args.contractAddress} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'onchain_token_price') {
@@ -1632,7 +1694,11 @@ const ToolInvocationListView = memo(
             return <SearchLoadingState icon={DollarSign} text="Fetching onchain token prices..." color="blue" />;
           }
 
-          return <OnChainTokenPrice result={result} network={args.network} addresses={args.addresses} />;
+          return (
+            <Suspense fallback={<ComponentLoader />}>
+              <OnChainCryptoComponents result={result} network={args.network} addresses={args.addresses} />
+            </Suspense>
+          );
         }
 
         if (toolInvocation.toolName === 'greeting') {

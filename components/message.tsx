@@ -411,7 +411,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
 
       {/* Show editable attachments */}
       {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-        <div className="mt-3">
+        <div className="mt-1.5">
           <EditableAttachmentsBadge
             attachments={message.experimental_attachments}
             onRemoveAttachment={(index) => {
@@ -1109,7 +1109,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
 
   return (
     <>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;

@@ -47,6 +47,8 @@ interface NavbarProps {
   subscriptionData?: any;
   isProUser?: boolean;
   isProStatusLoading?: boolean;
+  isCustomInstructionsEnabled?: boolean;
+  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }
 
 const Navbar = memo(
@@ -62,6 +64,8 @@ const Navbar = memo(
     subscriptionData,
     isProUser,
     isProStatusLoading,
+    isCustomInstructionsEnabled,
+    setIsCustomInstructionsEnabled,
   }: NavbarProps) => {
     const [copied, setCopied] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -455,6 +459,8 @@ const Navbar = memo(
             subscriptionData={subscriptionData}
             isProUser={isProUser}
             isProStatusLoading={isProStatusLoading}
+            isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+            setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
           />
         </div>
       </div>

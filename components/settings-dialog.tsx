@@ -48,6 +48,7 @@ import { cn } from '@/lib/utils';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -56,6 +57,8 @@ interface SettingsDialogProps {
   subscriptionData?: any;
   isProUser?: boolean;
   isProStatusLoading?: boolean;
+  isCustomInstructionsEnabled?: boolean;
+  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }
 
 // Component for Profile Information
@@ -131,9 +134,8 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
-    // Take last 30 days for desktop, 14 for mobile
-    const isMobile = window.innerWidth < 640;
-    const daysToShow = isMobile ? 14 : 30;
+    // Take last 30 days for desktop, 14 for mobile - use media query hook instead of window
+    const daysToShow = 14; // Always use 14 days for mobile to avoid resize triggers
 
     const recentData = data
       .slice(-daysToShow)
@@ -285,7 +287,7 @@ function UsageSection({ user }: any) {
             <MagnifyingGlass className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
-            <Skeleton className="h-6 w-8" />
+            <Skeleton className={cn('font-semibold', isMobile ? 'text-base h-4' : 'text-lg h-5')} />
           ) : (
             <div className={cn('font-semibold', isMobile ? 'text-base' : 'text-lg')}>{searchCount?.count || 0}</div>
           )}
@@ -298,7 +300,7 @@ function UsageSection({ user }: any) {
             <Lightning className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
-            <Skeleton className="h-6 w-8" />
+            <Skeleton className={cn('font-semibold', isMobile ? 'text-base h-4' : 'text-lg h-5')} />
           ) : (
             <div className={cn('font-semibold', isMobile ? 'text-base' : 'text-lg')}>
               {extremeSearchCount?.count || 0}
@@ -325,7 +327,7 @@ function UsageSection({ user }: any) {
                   <span className="font-medium">Daily Limit</span>
                   <span className="text-muted-foreground">{usagePercentage.toFixed(0)}%</span>
                 </div>
-                <Progress value={usagePercentage} className="h-1.5" />
+                <Progress value={usagePercentage} className="h-1.5 [&>div]:transition-none" />
                 <div className="flex justify-between text-[10px] text-muted-foreground">
                   <span>
                     {searchCount?.count || 0} / {SEARCH_LIMITS.DAILY_SEARCH_LIMIT}
@@ -354,17 +356,17 @@ function UsageSection({ user }: any) {
       {!usageLoading && (
         <div className="space-y-2">
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Activity (Past {isMobile ? '14' : '30'} days)
+            Activity (Past 14 days)
           </h4>
           <div className={cn('bg-muted/50 dark:bg-card rounded-lg', isMobile ? 'p-2' : 'p-3')}>
             {historicalLoading ? (
-              <div className={cn(isMobile ? 'h-24' : 'h-32', 'flex items-center justify-center')}>
+              <div className="h-24 flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : historicalUsageData && historicalUsageData.length > 0 ? (
-              <UsageBarChart data={historicalUsageData} className={isMobile ? 'h-24' : 'h-32'} />
+              <UsageBarChart data={historicalUsageData} className="h-24" />
             ) : (
-              <div className={cn(isMobile ? 'h-24' : 'h-32', 'flex items-center justify-center')}>
+              <div className="h-24 flex items-center justify-center">
                 <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No activity data</p>
               </div>
             )}
@@ -422,11 +424,13 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
     }
   };
 
-  const isProUserActive = isProUser;
+  // Use subscriptionData to determine active status and details
+  const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  const subscription = subscriptionData?.subscription;
 
   return (
     <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
-      {isProUserActive ? (
+      {hasActiveSubscription ? (
         <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
           <div className={cn('bg-primary text-primary-foreground rounded-lg', isMobile ? 'p-3' : 'p-4')}>
             <div className={cn('flex items-start justify-between', isMobile ? 'mb-2' : 'mb-3')}>
@@ -436,7 +440,9 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
                 </div>
                 <div>
                   <h3 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>PRO Subscription</h3>
-                  <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>Active</p>
+                  <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>
+                    {subscription?.status === 'active' ? 'Active' : subscription?.status || 'Unknown'}
+                  </p>
                 </div>
               </div>
               <Badge
@@ -445,12 +451,18 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
                   isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-xs',
                 )}
               >
-                ACTIVE
+                {subscription?.status?.toUpperCase() || 'ACTIVE'}
               </Badge>
             </div>
-            <p className={cn('opacity-90 mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
-              Unlimited access to all premium features
-            </p>
+            <div className={cn('opacity-90 mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
+              <p className="mb-1">Unlimited access to all premium features</p>
+              {subscription && (
+                <div className="flex gap-4 text-[10px] opacity-75">
+                  <span>${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}</span>
+                  <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
             <Button
               variant="secondary"
               onClick={handleManageSubscription}
@@ -492,8 +504,8 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
       <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
         <h4 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Billing History</h4>
         {ordersLoading ? (
-          <div className={cn('border rounded-lg', isMobile ? 'p-3' : 'p-4')}>
-            <Loader2 className={cn(isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4', 'animate-spin mx-auto')} />
+          <div className={cn('border rounded-lg flex items-center justify-center', isMobile ? 'p-3 h-16' : 'p-4 h-20')}>
+            <Loader2 className={cn(isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4', 'animate-spin')} />
           </div>
         ) : orders?.result?.items && orders.result.items.length > 0 ? (
           <div className="space-y-2">
@@ -516,7 +528,12 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
             ))}
           </div>
         ) : (
-          <div className={cn('border rounded-lg text-center bg-muted/20', isMobile ? 'p-4' : 'p-6')}>
+          <div
+            className={cn(
+              'border rounded-lg text-center bg-muted/20 flex items-center justify-center',
+              isMobile ? 'p-4 h-16' : 'p-6 h-20',
+            )}
+          >
             <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No billing history yet</p>
           </div>
         )}
@@ -526,9 +543,21 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
 }
 
 // Component for Custom Instructions
-function CustomInstructionsSection({ user }: any) {
+function CustomInstructionsSection({
+  user,
+  isCustomInstructionsEnabled,
+  setIsCustomInstructionsEnabled,
+}: {
+  user: any;
+  isCustomInstructionsEnabled?: boolean;
+  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+}) {
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Use default value if not provided
+  const enabled = isCustomInstructionsEnabled ?? true;
+  const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
 
   const {
     data: customInstructions,
@@ -587,66 +616,80 @@ function CustomInstructionsSection({ user }: any) {
   };
 
   return (
-    <div className="space-y-3">
-      <div>
-        <Label htmlFor="instructions" className="text-sm font-medium">
-          Custom Instructions
-        </Label>
-        <p className="text-xs text-muted-foreground mt-1 mb-3">Guide how the AI responds to your questions</p>
-        {customInstructionsLoading ? (
-          <Skeleton className="h-32 w-full" />
-        ) : (
-          <Textarea
-            id="instructions"
-            placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px] max-h-[30vh] resize-y text-sm"
-            disabled={isSaving}
-          />
-        )}
-      </div>
-
-      <div className="flex gap-2">
-        <Button
-          onClick={handleSave}
-          disabled={isSaving || !content.trim() || customInstructionsLoading}
-          size="sm"
-          className="flex-1 h-9"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Instructions'
-          )}
-        </Button>
-        {customInstructions && (
-          <Button
-            variant="outline"
-            onClick={handleDelete}
-            disabled={isSaving || customInstructionsLoading}
-            size="sm"
-            className="h-9 px-3"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        )}
-      </div>
-
-      {customInstructionsLoading ? (
-        <div className="p-2.5 bg-muted/30 rounded-lg">
-          <Skeleton className="h-3 w-28" />
-        </div>
-      ) : customInstructions ? (
-        <div className="p-2.5 bg-muted/30 rounded-lg">
-          <p className="text-[10px] text-muted-foreground">
-            Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label htmlFor="enable-instructions" className="text-sm font-medium">
+            Enable Custom Instructions
+          </Label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Toggle to enable or disable custom instructions for your conversations
           </p>
         </div>
-      ) : null}
+        <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
+      </div>
+
+      <div className={cn('space-y-3', !enabled && 'opacity-50')}>
+        <div>
+          <Label htmlFor="instructions" className="text-sm font-medium">
+            Custom Instructions
+          </Label>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">Guide how the AI responds to your questions</p>
+          {customInstructionsLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : (
+            <Textarea
+              id="instructions"
+              placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[120px] max-h-[30vh] resize-y text-sm"
+              disabled={isSaving || !enabled}
+            />
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || !content.trim() || customInstructionsLoading || !enabled}
+            size="sm"
+            className="flex-1 h-9"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Instructions'
+            )}
+          </Button>
+          {customInstructions && (
+            <Button
+              variant="outline"
+              onClick={handleDelete}
+              disabled={isSaving || customInstructionsLoading || !enabled}
+              size="sm"
+              className="h-9 px-3"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+
+        {customInstructionsLoading ? (
+          <div className="p-2.5 bg-muted/30 rounded-lg">
+            <Skeleton className="h-3 w-28" />
+          </div>
+        ) : customInstructions ? (
+          <div className="p-2.5 bg-muted/30 rounded-lg">
+            <p className="text-[10px] text-muted-foreground">
+              Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -872,6 +915,8 @@ export function SettingsDialog({
   subscriptionData,
   isProUser,
   isProStatusLoading,
+  isCustomInstructionsEnabled,
+  setIsCustomInstructionsEnabled,
 }: SettingsDialogProps) {
   const [currentTab, setCurrentTab] = useState('profile');
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -904,7 +949,11 @@ export function SettingsDialog({
       </TabsContent>
 
       <TabsContent value="instructions" className="mt-0">
-        <CustomInstructionsSection user={user} />
+        <CustomInstructionsSection
+          user={user}
+          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+        />
       </TabsContent>
 
       <TabsContent value="memories" className="mt-0">
@@ -916,7 +965,7 @@ export function SettingsDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] p-0">
+        <DrawerContent className="h-[600px] max-h-[85vh] p-0 [&[data-vaul-drawer]]:transition-none">
           <div className="flex flex-col h-full">
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3">
@@ -966,7 +1015,7 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-4xl !w-full max-h-4/6 !p-0 gap-0">
         <DialogHeader className="p-4 !m-0">
-          <DialogTitle className="text-base">Settings</DialogTitle>
+          <DialogTitle className="text-xl font-medium tracking-normal">Settings</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">

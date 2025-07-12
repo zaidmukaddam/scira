@@ -9,6 +9,15 @@ const extractDomain = (url: string): string => {
   return url.match(urlPattern)?.[1] || url;
 };
 
+const cleanTitle = (title: string): string => {
+  // Remove content within square brackets and parentheses, then trim whitespace
+  return title
+    .replace(/\[.*?\]/g, '')  // Remove [content]
+    .replace(/\(.*?\)/g, '')  // Remove (content)
+    .replace(/\s+/g, ' ')     // Replace multiple spaces with single space
+    .trim();                  // Remove leading/trailing whitespace
+};
+
 const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] => {
   const seenDomains = new Set<string>();
   const seenUrls = new Set<string>();
@@ -43,10 +52,10 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
     ),
     include_domains: z
       .array(z.string())
-      .describe('A list of base domains to include in all search results. Default is an empty list.'),
+      .describe('An array of domains to include in all search results. Default is an empty list.'),
     exclude_domains: z
       .array(z.string())
-      .describe('A list of base domains to exclude from all search results. Default is an empty list.'),
+      .describe('An array of domains to exclude from all search results. Default is an empty list.'),
   }),
   execute: async ({
     queries,
@@ -110,13 +119,13 @@ export const webSearchTool = (dataStream: DataStreamWriter) => tool({
           if (result.image) {
             images.push({
               url: result.image,
-              description: result.title || result.text?.substring(0, 100) + '...' || '',
+              description: cleanTitle(result.title || result.text?.substring(0, 100) + '...' || ''),
             });
           }
 
           return {
             url: result.url,
-            title: result.title || '',
+            title: cleanTitle(result.title || ''),
             content: (result.text || '').substring(0, 1000),
             published_date: currentTopic === 'news' && result.publishedDate ? result.publishedDate : undefined,
             author: result.author || undefined,
