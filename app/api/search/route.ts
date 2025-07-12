@@ -38,7 +38,6 @@ import { Chat, CustomInstructions } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
-import { checkRateLimit } from '@vercel/firewall';
 
 // Import all tools from the organized tool files
 import {
