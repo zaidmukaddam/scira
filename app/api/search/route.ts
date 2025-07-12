@@ -340,7 +340,7 @@ export async function POST(req: Request) {
         maxSteps: 5,
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
-        system: instructions + `\n\nThe user's custom instructions are: ${customInstructions?.content}` + `\n\nThe user's location is ${latitude}, ${longitude}.`,
+        system: instructions + (customInstructions ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}` : '\n') + (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
         toolChoice: 'auto',
         providerOptions: {
           openai: {
