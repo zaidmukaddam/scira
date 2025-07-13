@@ -42,7 +42,7 @@ interface MessagesProps {
 }
 
 const SciraLogoHeader = () => (
-  <div className="flex items-center gap-2 mt-6 mb-2">
+  <div className="flex items-center gap-2 mt-2 mb-2">
     <Image
       src="/scira.png"
       alt="Scira"
@@ -474,7 +474,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
             if (isCurrentMessageUser && isNextMessageAssistant) {
               // Reduce space between user message and its response
-              messageClasses = 'mb-2';
+              messageClasses = 'mb-0';
             } else if (isCurrentMessageAssistant && index < memoizedMessages.length - 1) {
               // Add border and spacing only if this is not the last assistant message
               messageClasses = 'mb-6 pb-6 border-b border-neutral-200 dark:border-neutral-800';

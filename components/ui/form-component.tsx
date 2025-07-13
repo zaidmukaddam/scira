@@ -50,368 +50,371 @@ interface ModelSwitcherProps {
   user?: UserWithProStatus | null;
 }
 
-const ModelSwitcher: React.FC<ModelSwitcherProps> = ({
-  selectedModel,
-  setSelectedModel,
-  className,
-  attachments,
-  messages,
-  status,
-  onModelSelect,
-  subscriptionData,
-  user,
-}) => {
-  const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
-  const isSubscriptionLoading = user && !subscriptionData;
+const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
+  ({
+    selectedModel,
+    setSelectedModel,
+    className,
+    attachments,
+    messages,
+    status,
+    onModelSelect,
+    subscriptionData,
+    user,
+  }) => {
+    const isProUser = useMemo(
+      () =>
+        user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+      [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
+    );
 
-  // Show all models to everyone, but control access via dialogs
-  const availableModels = useMemo(() => {
-    return models;
-  }, []);
+    const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [showSignInDialog, setShowSignInDialog] = useState(false);
-  const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
-  const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
+    const availableModels = useMemo(() => models, []);
 
-  // Check for attachments in current and previous messages
-  const hasAttachments =
-    attachments.length > 0 ||
-    messages.some((msg) => msg.experimental_attachments && msg.experimental_attachments.length > 0);
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+    const [showSignInDialog, setShowSignInDialog] = useState(false);
+    const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
+    const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
 
-  // Filter models based on attachments first
-  // Always show experimental models by removing the experimental filter
-  const filteredModels = hasAttachments ? availableModels.filter((model) => model.vision) : availableModels;
+    const hasAttachments = useMemo(
+      () =>
+        attachments.length > 0 ||
+        messages.some((msg) => msg.experimental_attachments && msg.experimental_attachments.length > 0),
+      [attachments.length, messages],
+    );
 
-  // Group filtered models by category
-  const groupedModels = filteredModels.reduce((acc, model) => {
-    const category = model.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(model);
-    return acc;
-  }, {} as Record<string, typeof availableModels>);
+    const filteredModels = useMemo(
+      () => (hasAttachments ? availableModels.filter((model) => model.vision) : availableModels),
+      [hasAttachments, availableModels],
+    );
 
-  const handleModelChange = (value: string) => {
-    const model = availableModels.find((m) => m.value === value);
-    if (!model) return;
+    const groupedModels = useMemo(
+      () =>
+        filteredModels.reduce((acc, model) => {
+          const category = model.category;
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          acc[category].push(model);
+          return acc;
+        }, {} as Record<string, typeof availableModels>),
+      [filteredModels],
+    );
 
-    const requiresAuth = requiresAuthentication(model.value) && !user;
-    const requiresPro = requiresProSubscription(model.value) && !isProUser;
+    const handleModelChange = useCallback(
+      (value: string) => {
+        const model = availableModels.find((m) => m.value === value);
+        if (!model) return;
 
-    // Don't show dialogs if subscription is still loading
-    if (isSubscriptionLoading) {
-      return;
-    }
+        const requiresAuth = requiresAuthentication(model.value) && !user;
+        const requiresPro = requiresProSubscription(model.value) && !isProUser;
 
-    // Check for authentication requirement first
-    if (requiresAuth) {
-      setSelectedAuthModel(model);
-      setShowSignInDialog(true);
-      return;
-    }
+        if (isSubscriptionLoading) {
+          return;
+        }
 
-    // Then check for Pro requirement - only if user is NOT Pro
-    if (requiresPro && !isProUser) {
-      setSelectedProModel(model);
-      setShowUpgradeDialog(true);
-      return;
-    }
+        if (requiresAuth) {
+          setSelectedAuthModel(model);
+          setShowSignInDialog(true);
+          return;
+        }
 
-    console.log('Selected model:', model.value);
-    setSelectedModel(model.value.trim());
+        if (requiresPro && !isProUser) {
+          setSelectedProModel(model);
+          setShowUpgradeDialog(true);
+          return;
+        }
 
-    // Call onModelSelect if provided
-    if (onModelSelect) {
-      onModelSelect(model);
-    }
-  };
+        console.log('Selected model:', model.value);
+        setSelectedModel(model.value.trim());
 
-  return (
-    <>
-      <Select value={selectedModel} onValueChange={handleModelChange}>
-        <SelectTrigger
-          size="sm"
-          className={cn(
-            'group flex items-center gap-2 w-fit',
-            'px-3 h-8',
-            'rounded-full transition-all duration-200',
-            'border border-neutral-300 dark:border-neutral-700',
-            'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
-            'text-neutral-900 dark:text-neutral-100',
-            'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
-            'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
-            'active:[box-shadow:none]',
-            'ring-0! outline-none!',
-            className,
-          )}
-        >
-          <SelectValue asChild>
-            <span className="flex items-center justify-center group-active:[transform:translate3d(0,1px,0)]">
-              <Cpu className="size-4 text-neutral-600 dark:text-neutral-400" />
-            </span>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent
-          className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
-          align="start"
-          side="bottom"
-          sideOffset={4}
-        >
-          {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
-            <SelectGroup key={category}>
-              {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-              <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                {category} Models
-              </SelectLabel>
-              {categoryModels.map((model) => {
-                const requiresAuth = requiresAuthentication(model.value) && !user;
-                const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                const isLocked = requiresAuth || requiresPro;
+        if (onModelSelect) {
+          onModelSelect(model);
+        }
+      },
+      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect],
+    );
 
-                if (isLocked) {
+    return (
+      <>
+        <Select value={selectedModel} onValueChange={handleModelChange}>
+          <SelectTrigger
+            size="sm"
+            className={cn(
+              'group flex items-center gap-2 w-fit',
+              'px-3 h-8',
+              'rounded-full transition-all duration-200',
+              'border border-neutral-300 dark:border-neutral-700',
+              'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
+              'text-neutral-900 dark:text-neutral-100',
+              'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
+              'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
+              'active:[box-shadow:none]',
+              'ring-0! outline-none!',
+              className,
+            )}
+          >
+            <SelectValue asChild>
+              <span className="flex items-center justify-center group-active:[transform:translate3d(0,1px,0)]">
+                <Cpu className="size-4 text-neutral-600 dark:text-neutral-400" />
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent
+            className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
+            align="start"
+            side="bottom"
+            sideOffset={4}
+          >
+            {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+              <SelectGroup key={category}>
+                {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
+                <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                  {category} Models
+                </SelectLabel>
+                {categoryModels.map((model) => {
+                  const requiresAuth = requiresAuthentication(model.value) && !user;
+                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                  const isLocked = requiresAuth || requiresPro;
+
+                  if (isLocked) {
+                    return (
+                      <div
+                        key={model.value}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                          'transition-all duration-200',
+                          'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                        )}
+                        onClick={() => {
+                          if (isSubscriptionLoading) {
+                            return;
+                          }
+
+                          if (requiresAuth) {
+                            setSelectedAuthModel(model);
+                            setShowSignInDialog(true);
+                          } else if (requiresPro && !isProUser) {
+                            setSelectedProModel(model);
+                            setShowUpgradeDialog(true);
+                          }
+                        }}
+                      >
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div className="font-medium truncate text-[11px] flex items-center gap-1">
+                            {model.label}
+                            {requiresAuth ? (
+                              <LockIcon className="size-3 text-neutral-400" />
+                            ) : (
+                              <Crown className="size-3 text-neutral-400" />
+                            )}
+                          </div>
+                          <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                            {model.description}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div
+                    <SelectItem
                       key={model.value}
+                      value={model.value}
                       className={cn(
-                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
                         'transition-all duration-200',
-                        'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                        'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                        'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
                       )}
-                      onClick={() => {
-                        // Don't show dialogs if subscription is still loading
-                        if (isSubscriptionLoading) {
-                          return;
-                        }
-                        
-                        if (requiresAuth) {
-                          setSelectedAuthModel(model);
-                          setShowSignInDialog(true);
-                        } else if (requiresPro && !isProUser) {
-                          setSelectedProModel(model);
-                          setShowUpgradeDialog(true);
-                        }
-                      }}
                     >
                       <div className="flex flex-col min-w-0 flex-1">
                         <div className="font-medium truncate text-[11px] flex items-center gap-1">
                           {model.label}
-                          {requiresAuth ? (
-                            <LockIcon className="size-3 text-neutral-400" />
-                          ) : (
-                            <Crown className="size-3 text-neutral-400" />
-                          )}
+                          {(() => {
+                            const requiresAuth = requiresAuthentication(model.value) && !user;
+                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
+
+                            if (requiresAuth) {
+                              return <LockIcon className="size-3 text-neutral-400" />;
+                            } else if (requiresPro) {
+                              return <Crown className="size-3 text-neutral-400" />;
+                            }
+                            return null;
+                          })()}
                         </div>
                         <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
                           {model.description}
                         </div>
                       </div>
-                    </div>
+                    </SelectItem>
                   );
-                }
+                })}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
 
-                return (
-                  <SelectItem
-                    key={model.value}
-                    value={model.value}
-                    className={cn(
-                      'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                      'transition-all duration-200',
-                      'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                      'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
-                    )}
-                  >
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                        {model.label}
-                        {(() => {
-                          const requiresAuth = requiresAuthentication(model.value) && !user;
-                          const requiresPro = requiresProSubscription(model.value) && !isProUser;
-
-                          if (requiresAuth) {
-                            return <LockIcon className="size-3 text-neutral-400" />;
-                          } else if (requiresPro) {
-                            return <Crown className="size-3 text-neutral-400" />;
-                          }
-                          return null;
-                        })()}
-                      </div>
-                      <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
-                        {model.description}
-                      </div>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Upgrade Dialog */}
-      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className="sm:max-w-md p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
-          <div className="p-6 space-y-5">
-            {/* Header */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-white dark:text-black" weight="fill" />
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+          <DialogContent className="sm:max-w-md p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+            <div className="p-6 space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center">
+                    <Crown className="w-4 h-4 text-white dark:text-black" weight="fill" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
+                      {selectedProModel?.label} requires Pro
+                    </h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Upgrade to access premium AI models
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {selectedProModel?.label} requires Pro
-                  </h2>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Upgrade to access premium AI models</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+                  </div>
                 </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Claude 4 Opus, Grok 3, advanced reasoning
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-4 space-y-2">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
+                </div>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUpgradeDialog(false)}
+                  className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                >
+                  Maybe later
+                </Button>
+                <Button
+                  onClick={() => {
+                    window.location.href = '/pricing';
+                  }}
+                  className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                >
+                  Upgrade now
+                </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
 
-            {/* Features */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+        <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
+          <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+            <div className="p-6 space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-600 dark:bg-neutral-700 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-4 h-4 text-white"
+                    >
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
+                      {selectedAuthModel?.label} requires sign in
+                    </h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Create an account to access this AI model
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Claude 4 Opus, Grok 3, advanced reasoning
-                  </p>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Gemini 2.5 Flash Lite and GPT-4o Mini
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Save search history</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Keep track of your conversations</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Free to start</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      No payment required for basic features
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
-                </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSignInDialog(false)}
+                  className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    window.location.href = '/sign-in';
+                  }}
+                  className="flex-1 h-9 text-sm font-normal bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
+                >
+                  Sign in
+                </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  },
+);
 
-            {/* Pricing */}
-            <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-4 space-y-2">
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
-                <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
-              </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowUpgradeDialog(false)}
-                className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-              >
-                Maybe later
-              </Button>
-              <Button
-                onClick={() => {
-                  window.location.href = '/pricing';
-                }}
-                className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
-              >
-                Upgrade now
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Sign In Dialog */}
-      <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-        <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
-          <div className="p-6 space-y-5">
-            {/* Header */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-neutral-600 dark:bg-neutral-700 flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-4 h-4 text-white"
-                  >
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                    {selectedAuthModel?.label} requires sign in
-                  </h2>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    Create an account to access this AI model
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Features */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Gemini 2.5 Flash Lite and GPT-4o Mini
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Save search history</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Keep track of your conversations</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Free to start</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    No payment required for basic features
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowSignInDialog(false)}
-                className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  window.location.href = '/sign-in';
-                }}
-                className="flex-1 h-9 text-sm font-normal bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
-              >
-                Sign in
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-};
+ModelSwitcher.displayName = 'ModelSwitcher';
 
 interface Attachment {
   name: string;
@@ -462,10 +465,9 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 };
 
 const MAX_FILES = 4;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_INPUT_CHARS = 10000;
 
-// Helper function to convert File to base64 data URL for moderation
 const fileToDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -475,11 +477,14 @@ const fileToDataURL = (file: File): Promise<string> => {
   });
 };
 
-// Removed local supportsPdfAttachments function - now use hasPdfSupport from providers
-
-// Removed local hasVisionSupport function - now imported from providers
-
-// Removed local getAcceptFileTypes function - now imported from providers
+// Debounce utility function
+const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T => {
+  let timeout: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(null, args), wait);
+  }) as T;
+};
 
 const truncateFilename = (filename: string, maxLength: number = 20) => {
   if (filename.length <= maxLength) return filename;
@@ -492,23 +497,29 @@ const AttachmentPreview: React.FC<{
   attachment: Attachment | UploadingAttachment;
   onRemove: () => void;
   isUploading: boolean;
-}> = ({ attachment, onRemove, isUploading }) => {
-  const formatFileSize = (bytes: number): string => {
+}> = React.memo(({ attachment, onRemove, isUploading }) => {
+  const formatFileSize = useCallback((bytes: number): string => {
     if (bytes < 1024) return bytes + ' bytes';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     else return (bytes / 1048576).toFixed(1) + ' MB' + (bytes > MAX_FILE_SIZE ? ' (exceeds 5MB limit)' : '');
-  };
+  }, []);
 
-  const isUploadingAttachment = (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
-    return 'progress' in attachment;
-  };
+  const isUploadingAttachment = useCallback(
+    (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
+      return 'progress' in attachment;
+    },
+    [],
+  );
 
-  const isPdf = (attachment: Attachment | UploadingAttachment): boolean => {
-    if (isUploadingAttachment(attachment)) {
-      return attachment.file.type === 'application/pdf';
-    }
-    return (attachment as Attachment).contentType === 'application/pdf';
-  };
+  const isPdf = useCallback(
+    (attachment: Attachment | UploadingAttachment): boolean => {
+      if (isUploadingAttachment(attachment)) {
+        return attachment.file.type === 'application/pdf';
+      }
+      return (attachment as Attachment).contentType === 'application/pdf';
+    },
+    [isUploadingAttachment],
+  );
 
   return (
     <motion.div
@@ -637,7 +648,9 @@ const AttachmentPreview: React.FC<{
       </motion.button>
     </motion.div>
   );
-};
+});
+
+AttachmentPreview.displayName = 'AttachmentPreview';
 
 interface UploadingAttachment {
   file: File;
@@ -684,10 +697,35 @@ interface GroupSelectorProps {
   status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
-const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSelect, status }) => {
+const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
   const { data: session } = useSession();
 
-  // If user is not authenticated and selectedGroup is memory, switch to web
+  // Memoize visible groups calculation
+  const visibleGroups = useMemo(
+    () =>
+      searchGroups.filter((group) => {
+        if (!group.show) return false;
+        if ('requireAuth' in group && group.requireAuth && !session) return false;
+        return true;
+      }),
+    [session],
+  );
+
+  const selectedGroupData = useMemo(
+    () => visibleGroups.find((group) => group.id === selectedGroup),
+    [visibleGroups, selectedGroup],
+  );
+
+  const handleGroupChange = useCallback(
+    (value: string) => {
+      const group = visibleGroups.find((g) => g.id === value);
+      if (group) {
+        onGroupSelect(group);
+      }
+    },
+    [visibleGroups, onGroupSelect],
+  );
+
   useEffect(() => {
     if (!session && selectedGroup === 'memory') {
       const webGroup = searchGroups.find((group) => group.id === 'web');
@@ -696,22 +734,6 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
       }
     }
   }, [session, selectedGroup, onGroupSelect]);
-
-  // Filter groups based on authentication status
-  const visibleGroups = searchGroups.filter((group) => {
-    if (!group.show) return false;
-    if ('requireAuth' in group && group.requireAuth && !session) return false;
-    return true;
-  });
-
-  const selectedGroupData = visibleGroups.find((group) => group.id === selectedGroup);
-
-  const handleGroupChange = (value: string) => {
-    const group = visibleGroups.find((g) => g.id === value);
-    if (group) {
-      onGroupSelect(group);
-    }
-  };
 
   return (
     <Select value={selectedGroup} onValueChange={handleGroupChange}>
@@ -787,7 +809,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onGroupSel
       </SelectContent>
     </Select>
   );
-};
+});
+
+GroupSelector.displayName = 'GroupSelector';
 
 const FormComponent: React.FC<FormComponentProps> = ({
   chatId,
@@ -815,24 +839,46 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const isMounted = useRef(true);
   const isCompositionActive = useRef(false);
-  const { width } = useWindowSize();
   const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
-  const [isFocused, setIsFocused] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  async function handleRecord() {
-    if (isRecording && mediaRecorder) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      setMediaRecorder(null);
+  const isProUser = useMemo(
+    () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+    [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
+  );
+
+  const isProcessing = useMemo(() => status === 'submitted' || status === 'streaming', [status]);
+
+  const hasInteracted = useMemo(() => messages.length > 0, [messages.length]);
+
+  const cleanupMediaRecorder = useCallback(() => {
+    if (mediaRecorderRef.current?.stream) {
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+    }
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+  }, []);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      cleanupMediaRecorder();
+    };
+  }, [cleanupMediaRecorder]);
+
+  const handleRecord = useCallback(async () => {
+    if (isRecording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      cleanupMediaRecorder();
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const recorder = new MediaRecorder(stream);
-        setMediaRecorder(recorder);
+        mediaRecorderRef.current = recorder;
 
         recorder.addEventListener('dataavailable', async (event) => {
           if (event.data.size > 0) {
@@ -860,9 +906,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             } catch (error) {
               console.error('Error during transcription request:', error);
             } finally {
-              setIsRecording(false);
-              setMediaRecorder(null);
-              stream.getTracks().forEach((track) => track.stop());
+              cleanupMediaRecorder();
             }
           }
         });
@@ -878,40 +922,32 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setIsRecording(false);
       }
     }
-  }
+  }, [isRecording, cleanupMediaRecorder, setInput]);
 
-  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    event.preventDefault();
-    const newValue = event.target.value;
+  const handleInput = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      event.preventDefault();
+      const newValue = event.target.value;
 
-    // Check if input exceeds character limit
-    if (newValue.length > MAX_INPUT_CHARS) {
-      setInput(newValue);
-      toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
-    } else {
-      setInput(newValue);
-    }
-  };
-
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
+      if (newValue.length > MAX_INPUT_CHARS) {
+        setInput(newValue);
+        toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+      } else {
+        setInput(newValue);
+      }
+    },
+    [setInput],
+  );
 
   const handleGroupSelect = useCallback(
     (group: SearchGroup) => {
       setSelectedGroup(group.id);
       inputRef.current?.focus();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [setSelectedGroup, inputRef],
   );
 
-  // Update uploadFile function to add more error details
-  const uploadFile = async (file: File): Promise<Attachment> => {
+  const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -936,9 +972,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
       toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
-  };
+  }, []);
 
-  // Fix handleFileChange to ensure it properly processes files
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
@@ -952,10 +987,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         files.map((f) => `${f.name} (${f.type})`),
       );
 
-      // Check if user is Pro
-      const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
-
-      // First, separate images and PDFs
       const imageFiles: File[] = [];
       const pdfFiles: File[] = [];
       const unsupportedFiles: File[] = [];
@@ -963,13 +994,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
       const blockedPdfFiles: File[] = [];
 
       files.forEach((file) => {
-        // Check file size first
         if (file.size > MAX_FILE_SIZE) {
           oversizedFiles.push(file);
           return;
         }
 
-        // Then check file type
         if (file.type.startsWith('image/')) {
           imageFiles.push(file);
         } else if (file.type === 'application/pdf') {
@@ -1010,12 +1039,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Auto-switch to PDF-compatible model if PDFs are present
       const currentModelData = models.find((m) => m.value === selectedModel);
       if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
         console.log('PDFs detected, switching to compatible model');
 
-        // Find first compatible model that supports PDFs and vision
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
@@ -1024,7 +1051,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
           console.warn('No PDF-compatible model found');
           toast.error('PDFs are only supported by Gemini and Claude models');
-          // Continue with only image files
+
           if (imageFiles.length === 0) {
             event.target.value = '';
             return;
@@ -1032,7 +1059,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }
 
-      // Combine valid files
       let validFiles: File[] = [...imageFiles];
       if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
@@ -1056,16 +1082,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Check image moderation before uploading
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
           toast.info('Checking images for safety...');
 
-          // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
 
-          // Check moderation
           const moderationResult = await checkImageModeration(imageDataURLs);
           console.log('Moderation result:', moderationResult);
 
@@ -1093,7 +1116,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       try {
         console.log('Starting upload of', validFiles.length, 'files');
 
-        // Upload files one by one for better error handling
         const uploadedAttachments: Attachment[] = [];
         for (const file of validFiles) {
           try {
@@ -1124,26 +1146,25 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setUploadQueue([]);
         event.target.value = '';
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [attachments, setAttachments, selectedModel, setSelectedModel],
+    [attachments.length, setAttachments, selectedModel, setSelectedModel, isProUser, uploadFile],
   );
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removeAttachment = useCallback(
+    (index: number) => {
+      setAttachments((prev) => prev.filter((_, i) => i !== index));
+    },
+    [setAttachments],
+  );
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
-      // Only check if we've reached the attachment limit
       if (attachments.length >= MAX_FILES) return;
 
-      // Always show drag UI when files are dragged over
       if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-        // Check if at least one item is a file
         const hasFile = Array.from(e.dataTransfer.items).some((item) => item.kind === 'file');
         if (hasFile) {
           setIsDragging(true);
@@ -1163,14 +1184,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
     return models.find((model) => model.vision)?.value || selectedModel;
   }, [selectedModel]);
 
-  // Fix the handleDrop function specifically to ensure uploads happen
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
 
-      // Log raw files first
       const allFiles = Array.from(e.dataTransfer.files);
       console.log(
         'Raw files dropped:',
@@ -1182,13 +1201,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Simple verification to ensure we're actually getting Files from the drop
       toast.info(`Detected ${allFiles.length} dropped files`);
 
-      // Check if user is Pro
-      const isProUser = user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
-
-      // First, separate images and PDFs
       const imageFiles: File[] = [];
       const pdfFiles: File[] = [];
       const unsupportedFiles: File[] = [];
@@ -1198,13 +1212,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
       allFiles.forEach((file) => {
         console.log(`Processing file: ${file.name} (${file.type})`);
 
-        // Check file size first
         if (file.size > MAX_FILE_SIZE) {
           oversizedFiles.push(file);
           return;
         }
 
-        // Then check file type
         if (file.type.startsWith('image/')) {
           imageFiles.push(file);
         } else if (file.type === 'application/pdf') {
@@ -1251,18 +1263,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
         });
       }
 
-      // Check if we have any supported files
       if (imageFiles.length === 0 && pdfFiles.length === 0) {
         toast.error('Only image and PDF files are supported');
         return;
       }
 
-      // Auto-switch to PDF-compatible model if PDFs are present
       const currentModelData = models.find((m) => m.value === selectedModel);
       if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
         console.log('PDFs detected, switching to compatible model');
 
-        // Find first compatible model that supports PDFs
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
@@ -1272,12 +1281,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
           console.warn('No PDF-compatible model found');
           toast.error('PDFs are only supported by Gemini and Claude models');
-          // Continue with only image files
           if (imageFiles.length === 0) return;
         }
       }
 
-      // Combine valid files
       let validFiles: File[] = [...imageFiles];
       if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
@@ -1288,7 +1295,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         validFiles.map((f) => `${f.name} (${f.type})`),
       );
 
-      // Check total attachment count
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
         toast.error(`You can only attach up to ${MAX_FILES} files.`);
@@ -1301,16 +1307,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Check image moderation before proceeding
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
           toast.info('Checking images for safety...');
 
-          // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
 
-          // Check moderation
           const moderationResult = await checkImageModeration(imageDataURLs);
           console.log('Moderation result:', moderationResult);
 
@@ -1331,12 +1334,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }
 
-      // Switch to vision model if current model doesn't support vision
       if (!currentModelData?.vision) {
-        // Find the appropriate vision model based on file types
         let visionModel: string;
 
-        // If we have PDFs, prioritize a PDF-compatible model
         if (pdfFiles.length > 0) {
           const pdfCompatibleModel = models.find((m) => m.vision && m.pdf);
           if (pdfCompatibleModel) {
@@ -1352,16 +1352,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setSelectedModel(visionModel);
       }
 
-      // Set upload queue immediately
       setUploadQueue(validFiles.map((file) => file.name));
       toast.info(`Starting upload of ${validFiles.length} files...`);
 
-      // Forced timeout to ensure state updates before upload starts
       setTimeout(async () => {
         try {
           console.log('Beginning upload of', validFiles.length, 'files');
 
-          // Try uploading one by one instead of all at once
           const uploadedAttachments: Attachment[] = [];
           for (const file of validFiles) {
             try {
@@ -1392,20 +1389,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
           setUploadQueue([]);
         }
       }, 100);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel],
+    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel, isProUser],
   );
 
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
       const items = Array.from(e.clipboardData.items);
       const imageItems = items.filter((item) => item.type.startsWith('image/'));
-      // Note: Pasting PDFs directly is typically not possible, but we're updating the code for consistency
 
       if (imageItems.length === 0) return;
 
-      // Prevent default paste behavior if there are images
       e.preventDefault();
 
       const totalAttachments = attachments.length + imageItems.length;
@@ -1414,7 +1408,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Get files and check sizes before proceeding
       const files = imageItems.map((item) => item.getAsFile()).filter(Boolean) as File[];
       const oversizedFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
 
@@ -1425,31 +1418,25 @@ const FormComponent: React.FC<FormComponentProps> = ({
         );
         toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name || 'unnamed').join(', ')}`);
 
-        // Filter out oversized files
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
         if (validFiles.length === 0) return;
       }
 
-      // Switch to vision model if needed
       const currentModel = models.find((m) => m.value === selectedModel);
       if (!currentModel?.vision) {
         const visionModel = getFirstVisionModel();
         setSelectedModel(visionModel);
       }
 
-      // Use filtered files if we found oversized ones
       const filesToUpload = oversizedFiles.length > 0 ? files.filter((file) => file.size <= MAX_FILE_SIZE) : files;
 
-      // Check image moderation before uploading
       if (filesToUpload.length > 0) {
         try {
           console.log('Checking image moderation for', filesToUpload.length, 'pasted images');
           toast.info('Checking pasted images for safety...');
 
-          // Convert images to data URLs for moderation
           const imageDataURLs = await Promise.all(filesToUpload.map((file) => fileToDataURL(file)));
 
-          // Check moderation
           const moderationResult = await checkImageModeration(imageDataURLs);
           console.log('Moderation result:', moderationResult);
 
@@ -1487,7 +1474,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       } finally {
         setUploadQueue([]);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel],
   );
@@ -1504,7 +1490,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       return () => clearTimeout(focusTimeout);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   const onSubmit = useCallback(
@@ -1521,7 +1506,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Check if user should bypass limits for this model
       const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
 
       if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
@@ -1529,7 +1513,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Check if input exceeds character limit
       if (input.length > MAX_INPUT_CHARS) {
         toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
         return;
@@ -1558,7 +1541,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       } else {
         toast.error('Please enter a search query or attach an image.');
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [
       input,
@@ -1572,6 +1554,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
       setHasSubmitted,
       isLimitBlocked,
       user,
+      isRecording,
+      chatId,
     ],
   );
 
@@ -1580,7 +1564,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     resetSuggestedQuestions();
 
     inputRef.current?.focus();
-  }, [onSubmit, resetSuggestedQuestions, width, inputRef]);
+  }, [onSubmit, resetSuggestedQuestions, inputRef]);
 
   const triggerFileInput = useCallback(() => {
     if (attachments.length >= MAX_FILES) {
@@ -1595,39 +1579,36 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }
   }, [attachments.length, status, fileInputRef]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey && !isCompositionActive.current) {
-      event.preventDefault();
-      if (status === 'submitted' || status === 'streaming') {
-        toast.error('Please wait for the response to complete!');
-      } else if (isRecording) {
-        toast.error('Please stop recording before submitting!');
-      } else {
-        // Check if user should bypass limits for this model
-        const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
-
-        if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-          toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey && !isCompositionActive.current) {
+        event.preventDefault();
+        if (isProcessing) {
+          toast.error('Please wait for the response to complete!');
+        } else if (isRecording) {
+          toast.error('Please stop recording before submitting!');
         } else {
-          submitForm();
-          setTimeout(() => {
-            inputRef.current?.focus();
-          }, 100);
+          const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+
+          if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
+            toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+          } else {
+            submitForm();
+            setTimeout(() => {
+              inputRef.current?.focus();
+            }, 100);
+          }
         }
       }
-    }
-  };
+    },
+    [isProcessing, isRecording, selectedModel, user, isLimitBlocked, submitForm, inputRef],
+  );
 
-  const isProcessing = status === 'submitted' || status === 'streaming';
-  const hasInteracted = messages.length > 0;
-
-  // Auto-resize function for textarea
   const resizeTextarea = useCallback(() => {
     if (!inputRef.current) return;
 
     const target = inputRef.current;
 
-    // Reset height to auto first to get the actual scroll height
     target.style.height = 'auto';
 
     const scrollHeight = target.scrollHeight;
@@ -1640,13 +1621,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
       target.style.height = `${scrollHeight}px`;
       target.style.overflowY = 'hidden';
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width]);
+  }, [inputRef]);
+
+  // Debounced resize function
+  const debouncedResize = useMemo(() => debounce(resizeTextarea, 100), [resizeTextarea]);
 
   // Resize textarea when input value changes
   useEffect(() => {
-    resizeTextarea();
-  }, [input, resizeTextarea]);
+    debouncedResize();
+  }, [input, debouncedResize]);
 
   return (
     <div className={cn('flex flex-col w-full')}>
@@ -1697,7 +1680,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
-              user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+              user?.isProUser ||
+                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -1709,7 +1693,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
-              user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+              user?.isProUser ||
+                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -1744,7 +1729,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           {/* Form container */}
           <div className="relative">
-            <div className="rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
+            <div className="rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
               {isRecording ? (
                 <Textarea
                   ref={inputRef}
@@ -1752,16 +1737,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   value="◉ Recording..."
                   disabled={true}
                   className={cn(
-                    'w-full rounded-lg rounded-b-none md:text-base!',
+                    'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
                     'bg-neutral-100 dark:bg-neutral-900',
                     'border-0!',
-                    'text-neutral-600 dark:text-neutral-400', // Different text color for recording
+                    'text-neutral-600 dark:text-neutral-400',
                     'focus:ring-0! focus-visible:ring-0!',
                     'px-4! py-4!',
                     'touch-manipulation',
                     'whatsize',
-                    'text-center', // Center the recording text
+                    'text-center',
                     'cursor-not-allowed',
                   )}
                   style={{
@@ -1778,8 +1763,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
                   value={input}
                   onChange={handleInput}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
                   onInput={(e) => {
                     // Auto-resize textarea based on content
                     const target = e.target as HTMLTextAreaElement;
@@ -1807,7 +1790,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     });
                   }}
                   className={cn(
-                    'w-full rounded-lg rounded-b-none md:text-base!',
+                    'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
                     'bg-neutral-100 dark:bg-neutral-900',
                     'border-0!',
@@ -1835,7 +1818,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               {/* Toolbar as a separate block - no absolute positioning */}
               <div
                 className={cn(
-                  'flex justify-between items-center rounded-t-none rounded-b-lg',
+                  'flex justify-between items-center rounded-t-none rounded-b-xl',
                   'bg-neutral-100 dark:bg-neutral-900',
                   'border-t-0 border-neutral-200! dark:border-neutral-700!',
                   'p-2 gap-2',
