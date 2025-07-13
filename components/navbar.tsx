@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useFastProStatus } from '@/hooks/use-user-data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,9 +73,13 @@ const Navbar = memo(
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
+    
+    // Use fast pro status hook for immediate UI response
+    const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
 
-    // Use passed Pro status instead of calculating it
-    const hasActiveSubscription = isProUser;
+    // Use passed Pro status instead of calculating it, but prioritize fast status if available
+    const hasActiveSubscription = user ? fastProStatus : isProUser;
+    const showProLoading = user ? fastProLoading : isProStatusLoading;
 
     const handleCopyLink = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -403,7 +408,7 @@ const Navbar = memo(
           {/* Subscription Status - show loading or actual status */}
           {user && (
             <>
-              {isProStatusLoading ? (
+              {showProLoading ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">

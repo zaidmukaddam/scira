@@ -31,7 +31,9 @@ import { getSubscriptionDetails } from '@/lib/subscription';
 import {
   usageCountCache,
   createMessageCountKey,
-  createExtremeCountKey
+  createExtremeCountKey,
+  getProUserStatus,
+  computeAndCacheProUserStatus
 } from '@/lib/performance-cache';
 
 // Server action to get the current user with Pro status
@@ -40,15 +42,29 @@ export async function getCurrentUser() {
     const user = await getUser();
     if (!user) return null;
 
-    // Get subscription details for Pro status
-    const subscriptionDetails = await getSubscriptionDetails();
-    const isProUser = subscriptionDetails?.hasSubscription && subscriptionDetails?.subscription?.status === 'active';
+    // Try to get cached pro status first
+    let isProUser = getProUserStatus(user.id);
 
-    return {
-      ...user,
-      isProUser,
-      subscriptionData: subscriptionDetails,
-    };
+    if (isProUser === null) {
+      // Not cached, get subscription details and compute
+      const subscriptionDetails = await getSubscriptionDetails();
+      isProUser = computeAndCacheProUserStatus(user.id, subscriptionDetails);
+
+      return {
+        ...user,
+        isProUser,
+        subscriptionData: subscriptionDetails,
+      };
+    } else {
+      // Use cached status, but still fetch subscription data for UI
+      const subscriptionDetails = await getSubscriptionDetails();
+
+      return {
+        ...user,
+        isProUser,
+        subscriptionData: subscriptionDetails,
+      };
+    }
   } catch (error) {
     console.error('Error in getCurrentUser server action:', error);
     return null;
@@ -1356,6 +1372,27 @@ export async function deleteCustomInstructionsAction() {
   } catch (error) {
     console.error('Error deleting custom instructions:', error);
     return { success: false, error: 'Failed to delete custom instructions' };
+  }
+}
+
+// Fast pro user status check - uses cache only
+export async function getProUserStatusOnly(): Promise<boolean> {
+  try {
+    const user = await getUser();
+    if (!user) return false;
+
+    // Try cache first for instant response
+    const cached = getProUserStatus(user.id);
+    if (cached !== null) {
+      return cached;
+    }
+
+    // If not cached, compute and cache (but don't fetch full subscription details)
+    const subscriptionDetails = await getSubscriptionDetails();
+    return computeAndCacheProUserStatus(user.id, subscriptionDetails);
+  } catch (error) {
+    console.error('Error getting pro user status:', error);
+    return false;
   }
 }
 

@@ -1,9 +1,14 @@
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { subscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { subscription } from './db/schema';
+import { db } from './db';
+import { auth } from './auth';
 import { headers } from 'next/headers';
-import { subscriptionCache, createSubscriptionKey } from './performance-cache';
+import {
+  subscriptionCache,
+  createSubscriptionKey,
+  getProUserStatus,
+  setProUserStatus
+} from './performance-cache';
 
 export type SubscriptionDetails = {
   id: string;
@@ -42,6 +47,12 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     const cacheKey = createSubscriptionKey(session.user.id);
     const cached = subscriptionCache.get(cacheKey);
     if (cached) {
+      // Also ensure pro user status is cached
+      if (cached.hasSubscription && cached.subscription?.status === 'active') {
+        setProUserStatus(session.user.id, true);
+      } else {
+        setProUserStatus(session.user.id, false);
+      }
       return cached;
     }
 
@@ -50,6 +61,8 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     if (!userSubscriptions.length) {
       const result = { hasSubscription: false };
       subscriptionCache.set(cacheKey, result);
+      // Cache pro user status as false
+      setProUserStatus(session.user.id, false);
       return result;
     }
 
@@ -92,11 +105,15 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
           errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as 'CANCELED' | 'EXPIRED' | 'GENERAL',
         };
         subscriptionCache.set(cacheKey, result);
+        // Cache pro user status
+        setProUserStatus(session.user.id, result.subscription?.status === 'active');
         return result;
       }
 
       const fallbackResult = { hasSubscription: false };
       subscriptionCache.set(cacheKey, fallbackResult);
+      // Cache pro user status as false
+      setProUserStatus(session.user.id, false);
       return fallbackResult;
     }
 
@@ -117,6 +134,8 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       },
     };
     subscriptionCache.set(cacheKey, result);
+    // Cache pro user status as true for active subscription
+    setProUserStatus(session.user.id, true);
     return result;
   } catch (error) {
     console.error('Error fetching subscription details:', error);
@@ -130,6 +149,27 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
 
 // Simple helper to check if user has an active subscription
 export async function isUserSubscribed(): Promise<boolean> {
+  const result = await getSubscriptionDetails();
+  return result.hasSubscription && result.subscription?.status === 'active';
+}
+
+// Fast pro user status check using cache
+export async function isUserProCached(): Promise<boolean> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.id) {
+    return false;
+  }
+
+  // Try cache first
+  const cached = getProUserStatus(session.user.id);
+  if (cached !== null) {
+    return cached;
+  }
+
+  // Fallback to full subscription check
   const result = await getSubscriptionDetails();
   return result.hasSubscription && result.subscription?.status === 'active';
 }

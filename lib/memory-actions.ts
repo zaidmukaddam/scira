@@ -45,7 +45,8 @@ export async function addMemory(content: string) {
       content: content
     }], {
       user_id: user.id,
-      app_id: "scira"
+      org_id: serverEnv.MEM0_ORG_ID,
+      project_id: serverEnv.MEM0_PROJECT_ID,
     });
     return response;
   } catch (error) {
@@ -69,51 +70,59 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
     return { memories: [], total: 0 };
   }
 
-  const filters = {
-    "AND": [
-      {
-        "user_id": user.id
-      }
-    ]
+  const searchFilters = {
+    AND: [{ user_id: user.id }],
   };
 
   try {
-    const response = await fetch('https://api.mem0.ai/v2/memories/search/', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${serverEnv.MEM0_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: query,
-        filters: filters,
-        top_k: 1,
-        rerank: true,
-        page: page
-      })
+    const result = await memoryClient.search(query, {
+      filters: searchFilters,
+      api_version: 'v2',
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Search API error:', errorText);
-      throw new Error(`Failed to search memories: ${response.statusText}`);
+    console.log("[searchMemories] result", result);
+
+    if (!result || !result[0]) {
+      return { memories: [], total: 0 };
     }
 
-    const results = await response.json();
-
-    console.log("[searchMemories] results", results);
-
     // Process the results to ensure we return a consistent structure
-    if (Array.isArray(results)) {
+    if (Array.isArray(result)) {
+      const memories: MemoryItem[] = result.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        memory: item.memory,
+        metadata: item.metadata,
+        user_id: item.user_id,
+        owner: item.owner,
+        immutable: item.immutable,
+        expiration_date: item.expiration_date,
+        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
+        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
+        categories: item.categories,
+      }));
       return {
-        memories: results as unknown as MemoryItem[],
-        total: results.length
+        memories,
+        total: memories.length
       };
-    } else if (results && typeof results === 'object' && 'memories' in results) {
-      const memories = (results as any).memories || [];
+    } else if (result && typeof result === 'object' && 'memories' in result) {
+      const rawMemories = (result as any).memories || [];
+      const memories: MemoryItem[] = rawMemories.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        memory: item.memory,
+        metadata: item.metadata,
+        user_id: item.user_id,
+        owner: item.owner,
+        immutable: item.immutable,
+        expiration_date: item.expiration_date,
+        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
+        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
+        categories: item.categories,
+      }));
       return {
-        memories: memories,
-        total: (results as any).total || memories.length
+        memories,
+        total: (result as any).total || memories.length
       };
     }
     return { memories: [], total: 0 };
@@ -135,45 +144,50 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
   }
 
   try {
-    const response = await fetch('https://api.mem0.ai/v2/memories/', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${serverEnv.MEM0_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        filters: {
-          "AND": [
-            {
-              "user_id": user.id
-            }
-          ]
-        },
-        page: page,
-        page_size: pageSize
-      })
+    const data = await memoryClient.getAll({
+      user_id: user.id,
+      org_id: serverEnv.MEM0_ORG_ID,
+      project_id: serverEnv.MEM0_PROJECT_ID,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Get memories API error:', errorText);
-      throw new Error(`Failed to fetch memories: ${response.statusText}`);
-    }
-
-    const data = await response.json();
 
     console.log("[getAllMemories] data", data);
 
     // Process the result to ensure we return a consistent structure
     if (Array.isArray(data)) {
+      const memories: MemoryItem[] = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        memory: item.memory,
+        metadata: item.metadata,
+        user_id: item.user_id,
+        owner: item.owner,
+        immutable: item.immutable,
+        expiration_date: item.expiration_date,
+        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
+        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
+        categories: item.categories,
+      }));
       return {
-        memories: data as MemoryItem[],
-        total: data.length
+        memories,
+        total: memories.length
       };
     } else if (data && typeof data === 'object' && 'memories' in data) {
-      const memories = (data as any).memories || [];
+      const rawMemories = (data as any).memories || [];
+      const memories: MemoryItem[] = rawMemories.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        memory: item.memory,
+        metadata: item.metadata,
+        user_id: item.user_id,
+        owner: item.owner,
+        immutable: item.immutable,
+        expiration_date: item.expiration_date,
+        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
+        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
+        categories: item.categories,
+      }));
       return {
-        memories: memories,
+        memories,
         total: (data as any).total || memories.length
       };
     }
@@ -195,22 +209,7 @@ export async function deleteMemory(memoryId: string) {
   }
 
   try {
-    // The delete method only takes the memory ID as a parameter
-    const response = await fetch(`https://api.mem0.ai/v1/memories/${memoryId}/`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Token ${serverEnv.MEM0_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Delete memory API error:', errorText);
-      throw new Error(`Failed to delete memory: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await memoryClient.delete(memoryId);
     return data;
   } catch (error) {
     console.error('Error deleting memory:', error);

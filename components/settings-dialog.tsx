@@ -35,7 +35,6 @@ import {
   Memory,
   Calendar,
   NotePencil,
-  CaretLeft,
 } from '@phosphor-icons/react';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
@@ -49,6 +48,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
+import { useFastProStatus } from '@/hooks/use-user-data';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -63,7 +63,9 @@ interface SettingsDialogProps {
 
 // Component for Profile Information
 function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading }: any) {
-  const isProUserActive = user?.isProUser;
+  const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
+  const isProUserActive = user ? fastProStatus : user?.isProUser;
+  const showProLoading = user ? fastProLoading : isProStatusLoading;
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
@@ -84,7 +86,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
         <div className="space-y-1">
           <h3 className={cn('font-semibold', isMobile ? 'text-base' : 'text-lg')}>{user?.name}</h3>
           <p className={cn('text-muted-foreground', isMobile ? 'text-xs' : 'text-sm')}>{user?.email}</p>
-          {isProStatusLoading ? (
+          {showProLoading ? (
             <Skeleton className="h-5 w-16 mx-auto" />
           ) : (
             isProUserActive && (
@@ -425,7 +427,8 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
   };
 
   // Use subscriptionData to determine active status and details
-  const hasActiveSubscription = subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  const hasActiveSubscription =
+    subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
   const subscription = subscriptionData?.subscription;
 
   return (
@@ -458,7 +461,9 @@ function SubscriptionSection({ subscriptionData, isProUser }: any) {
               <p className="mb-1">Unlimited access to all premium features</p>
               {subscription && (
                 <div className="flex gap-4 text-[10px] opacity-75">
-                  <span>${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}</span>
+                  <span>
+                    ${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}
+                  </span>
                   <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
                 </div>
               )}

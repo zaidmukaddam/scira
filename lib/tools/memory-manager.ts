@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import MemoryClient from 'mem0ai';
 import { serverEnv } from '@/env/server';
+import { getCurrentUser } from '@/app/actions';
 
 export const memoryManagerTool = tool({
   description: 'Manage personal memories with add and search operations.',
@@ -20,7 +21,8 @@ export const memoryManagerTool = tool({
     query?: string;
   }) => {
     const client = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY });
-
+    const user = await getCurrentUser();
+    let userId = user?.id;
     console.log('action', action);
     console.log('content', content);
     console.log('query', query);
@@ -43,7 +45,7 @@ export const memoryManagerTool = tool({
               },
             ],
             {
-              user_id: 'anonymous',
+              user_id: userId,
               org_id: serverEnv.MEM0_ORG_ID,
               project_id: serverEnv.MEM0_PROJECT_ID,
             },
@@ -55,11 +57,12 @@ export const memoryManagerTool = tool({
               message: 'No memory added',
             };
           }
-          console.log('result', result);
+          console.log('add result', result);
+          const { id, data, event } = result[0];
           return {
             success: true,
             action: 'add',
-            memory: result[0],
+            memory: { id, data, event, user_id: userId },
           };
         }
         case 'search': {
@@ -71,7 +74,7 @@ export const memoryManagerTool = tool({
             };
           }
           const searchFilters = {
-            AND: [{ user_id: 'anonymous' }],
+            AND: [{ user_id: userId }],
           };
           const result = await client.search(query, {
             filters: searchFilters,
@@ -84,6 +87,7 @@ export const memoryManagerTool = tool({
               message: 'No results found for the search query',
             };
           }
+          console.log('search result', result);
           return {
             success: true,
             action: 'search',
