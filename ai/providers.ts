@@ -164,7 +164,7 @@ export const models = [
   {
     value: 'scira-deepseek-v3',
     label: 'DeepSeek V3 0324',
-    description: "DeepSeek's advanced model",
+    description: "DeepSeek's advanced base model",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -178,7 +178,7 @@ export const models = [
   {
     value: 'scira-4o-mini',
     label: 'GPT 4o Mini',
-    description: "OpenAI's flagship model",
+    description: "OpenAI's previous flagship mini model",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -192,7 +192,7 @@ export const models = [
   {
     value: 'scira-4.1-mini',
     label: 'GPT 4.1 Mini',
-    description: "OpenAI's flagship model",
+    description: "OpenAI's latest flagship mini model",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -206,7 +206,7 @@ export const models = [
   {
     value: 'scira-google-lite',
     label: 'Gemini 2.5 Flash Lite',
-    description: "Google's advanced small reasoning model",
+    description: "Google's advanced smallest model",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -250,7 +250,7 @@ export const models = [
   {
     value: 'scira-opus',
     label: 'Claude 4 Opus',
-    description: "Anthropic's most advanced reasoning model",
+    description: "Anthropic's ultra advanced model",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -264,7 +264,7 @@ export const models = [
   {
     value: 'scira-opus-pro',
     label: 'Claude 4 Opus Thinking',
-    description: "Anthropic's most advanced reasoning model",
+    description: "Anthropic's ultra advanced reasoning model",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -278,7 +278,7 @@ export const models = [
   {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash',
-    description: "Google's advanced small reasoning model",
+    description: "Google's advanced small model",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -292,7 +292,7 @@ export const models = [
   {
     value: 'scira-google-pro',
     label: 'Gemini 2.5 Pro',
-    description: "Google's advanced reasoning model",
+    description: "Google's most advanced model",
     vision: true,
     reasoning: true,
     experimental: false,

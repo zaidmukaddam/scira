@@ -6,7 +6,7 @@
 // ----> Return all collected sources and research data to the user
 
 import Exa from "exa-js";
-import { CreateSandboxFromImageParams, Daytona } from '@daytonaio/sdk';
+import { Daytona } from '@daytonaio/sdk';
 import { DataStreamWriter, generateObject, generateText, tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
