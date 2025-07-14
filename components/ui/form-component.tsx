@@ -16,7 +16,7 @@ import {
   shouldBypassRateLimits,
 } from '@/ai/providers';
 import useWindowSize from '@/hooks/use-window-size';
-import { TelescopeIcon, X } from 'lucide-react';
+import { TelescopeIcon, X, Check, ChevronsUpDown } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
@@ -28,15 +28,8 @@ import { UserWithProStatus } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
 import { Crown, LockIcon, MicrophoneIcon, Cpu } from '@phosphor-icons/react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectValue,
-  SelectTrigger,
-} from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -76,6 +69,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [showSignInDialog, setShowSignInDialog] = useState(false);
     const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
+    const [open, setOpen] = useState(false);
 
     const hasAttachments = useMemo(
       () =>
@@ -138,123 +132,168 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     return (
       <>
-        <Select value={selectedModel} onValueChange={handleModelChange}>
-          <SelectTrigger
-            size="sm"
-            className={cn(
-              'group flex items-center gap-2 w-fit',
-              'px-3 h-8',
-              'rounded-full transition-all duration-200',
-              'border border-neutral-300 dark:border-neutral-700',
-              'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
-              'text-neutral-900 dark:text-neutral-100',
-              'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
-              'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
-              'active:[box-shadow:none]',
-              'ring-0! outline-none!',
-              className,
-            )}
-          >
-            <SelectValue asChild>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              size="sm"
+              className={cn(
+                'group flex items-center gap-2 w-fit',
+                'px-3 h-8',
+                'rounded-full transition-all duration-200',
+                'border border-neutral-300 dark:border-neutral-700',
+                'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
+                'text-neutral-900 dark:text-neutral-100',
+                'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
+                'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
+                'active:[box-shadow:none]',
+                'ring-0! outline-none!',
+                className,
+              )}
+            >
               <span className="flex items-center justify-center group-active:[transform:translate3d(0,1px,0)]">
                 <Cpu className="size-4 text-neutral-600 dark:text-neutral-400" />
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </span>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent
-            className="w-[240px] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[280px] overflow-y-auto"
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800"
             align="start"
             side="bottom"
             sideOffset={4}
+            avoidCollisions={true}
+            collisionPadding={8}
           >
-            {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
-              <SelectGroup key={category}>
-                {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-                <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                  {category} Models
-                </SelectLabel>
-                {categoryModels.map((model) => {
-                  const requiresAuth = requiresAuthentication(model.value) && !user;
-                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                  const isLocked = requiresAuth || requiresPro;
+            <Command
+              className="rounded-xl"
+              filter={(value, search) => {
+                const model = availableModels.find((m) => m.value === value);
+                if (!model || !search) return 1;
 
-                  if (isLocked) {
-                    return (
-                      <div
-                        key={model.value}
-                        className={cn(
-                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
-                          'transition-all duration-200',
-                          'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                        )}
-                        onClick={() => {
-                          if (isSubscriptionLoading) {
-                            return;
-                          }
+                const searchTerm = search.toLowerCase();
+                const searchableFields = [
+                  model.label,
+                  model.description,
+                  model.category,
+                  model.vision ? 'vision' : '',
+                  model.reasoning ? 'reasoning' : '',
+                  model.pdf ? 'pdf' : '',
+                  model.experimental ? 'experimental' : '',
+                  model.pro ? 'pro' : '',
+                  model.requiresAuth ? 'auth' : '',
+                ]
+                  .join(' ')
+                  .toLowerCase();
 
-                          if (requiresAuth) {
-                            setSelectedAuthModel(model);
-                            setShowSignInDialog(true);
-                          } else if (requiresPro && !isProUser) {
-                            setSelectedProModel(model);
-                            setShowUpgradeDialog(true);
-                          }
-                        }}
-                      >
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                            {model.label}
-                            {requiresAuth ? (
-                              <LockIcon className="size-3 text-neutral-400" />
-                            ) : (
-                              <Crown className="size-3 text-neutral-400" />
+                return searchableFields.includes(searchTerm) ? 1 : 0;
+              }}
+            >
+              <CommandInput placeholder="Search models..." className="h-9" />
+              <CommandEmpty>No model found.</CommandEmpty>
+              <CommandList className="max-h-[15em]">
+                {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+                  <CommandGroup key={category}>
+                    {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
+                    <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                      {category} Models
+                    </div>
+                    {categoryModels.map((model) => {
+                      const requiresAuth = requiresAuthentication(model.value) && !user;
+                      const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                      const isLocked = requiresAuth || requiresPro;
+
+                      if (isLocked) {
+                        return (
+                          <div
+                            key={model.value}
+                            className={cn(
+                              'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                              'transition-all duration-200',
+                              'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
                             )}
-                          </div>
-                          <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
-                            {model.description}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
+                            onClick={() => {
+                              if (isSubscriptionLoading) {
+                                return;
+                              }
 
-                  return (
-                    <SelectItem
-                      key={model.value}
-                      value={model.value}
-                      className={cn(
-                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                        'transition-all duration-200',
-                        'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                        'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
-                      )}
-                    >
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                          {model.label}
-                          {(() => {
-                            const requiresAuth = requiresAuthentication(model.value) && !user;
-                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                              if (requiresAuth) {
+                                setSelectedAuthModel(model);
+                                setShowSignInDialog(true);
+                              } else if (requiresPro && !isProUser) {
+                                setSelectedProModel(model);
+                                setShowUpgradeDialog(true);
+                              }
+                            }}
+                          >
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <div className="font-medium truncate text-[11px] flex items-center gap-1">
+                                {model.label}
+                                {requiresAuth ? (
+                                  <LockIcon className="size-3 text-neutral-400" />
+                                ) : (
+                                  <Crown className="size-3 text-neutral-400" />
+                                )}
+                              </div>
+                              <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                                {model.description}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
 
-                            if (requiresAuth) {
-                              return <LockIcon className="size-3 text-neutral-400" />;
-                            } else if (requiresPro) {
-                              return <Crown className="size-3 text-neutral-400" />;
-                            }
-                            return null;
-                          })()}
-                        </div>
-                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
-                          {model.description}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
+                      return (
+                        <CommandItem
+                          key={model.value}
+                          value={model.value}
+                          onSelect={(currentValue) => {
+                            handleModelChange(currentValue);
+                            setOpen(false);
+                          }}
+                          className={cn(
+                            'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                            'transition-all duration-200',
+                            'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                            'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
+                          )}
+                        >
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="font-medium truncate text-[11px] flex items-center gap-1">
+                              {model.label}
+                              {(() => {
+                                const requiresAuth = requiresAuthentication(model.value) && !user;
+                                const requiresPro = requiresProSubscription(model.value) && !isProUser;
+
+                                if (requiresAuth) {
+                                  return <LockIcon className="size-3 text-neutral-400" />;
+                                } else if (requiresPro) {
+                                  return <Crown className="size-3 text-neutral-400" />;
+                                }
+                                return null;
+                              })()}
+                            </div>
+                            <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                              {model.description}
+                            </div>
+                          </div>
+                          <Check
+                            className={cn(
+                              'ml-auto h-4 w-4',
+                              selectedModel === model.value ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                ))}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className="sm:max-w-md p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
@@ -699,6 +738,7 @@ interface GroupSelectorProps {
 
 const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
   const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
   // Memoize visible groups calculation
   const visibleGroups = useMemo(
@@ -736,23 +776,26 @@ const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup,
   }, [session, selectedGroup, onGroupSelect]);
 
   return (
-    <Select value={selectedGroup} onValueChange={handleGroupChange}>
-      <SelectTrigger
-        size="sm"
-        className={cn(
-          'group flex items-center gap-2 w-fit',
-          'px-3 h-8',
-          'rounded-full transition-all duration-200',
-          'border border-neutral-300 dark:border-neutral-700',
-          'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
-          'text-neutral-900 dark:text-neutral-100',
-          'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
-          'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
-          'active:[box-shadow:none]',
-          'ring-0! outline-none!',
-        )}
-      >
-        <SelectValue asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          size="sm"
+          className={cn(
+            'group flex items-center gap-2 w-fit',
+            'px-3 h-8',
+            'rounded-full transition-all duration-200',
+            'border border-neutral-300 dark:border-neutral-700',
+            'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
+            'text-neutral-900 dark:text-neutral-100',
+            'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
+            'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
+            'active:[box-shadow:none]',
+            'ring-0! outline-none!',
+          )}
+        >
           <span
             className={cn(
               'font-medium whitespace-nowrap flex items-center gap-1.5 group-active:[transform:translate3d(0,1px,0)]',
@@ -763,51 +806,81 @@ const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup,
               <>
                 <selectedGroupData.icon className={cn('size-4')} />
                 {selectedGroupData.name}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </>
             )}
           </span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent
-        className="w-[12em] p-1 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800 max-h-[240px] overflow-y-auto"
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
         align="start"
         side="bottom"
         sideOffset={4}
+        avoidCollisions={true}
+        collisionPadding={8}
       >
-        <SelectGroup>
-          <SelectLabel className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-            Search Mode
-          </SelectLabel>
-          {visibleGroups.map((group) => {
-            const Icon = group.icon;
-            return (
-              <SelectItem
-                key={group.id}
-                value={group.id}
-                className={cn(
-                  'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
-                  'transition-all duration-200',
-                  'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                  'data-[state=checked]:bg-neutral-200 dark:data-[state=checked]:bg-neutral-700',
-                )}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                  <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
-                      {group.name}
+        <Command
+          className="rounded-xl"
+          filter={(value, search) => {
+            const group = visibleGroups.find((g) => g.id === value);
+            if (!group || !search) return 1;
+
+            const searchTerm = search.toLowerCase();
+            const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
+
+            return searchableFields.includes(searchTerm) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Search modes..." className="h-9" />
+          <CommandEmpty>No search mode found.</CommandEmpty>
+          <CommandList className="max-h-[240px]">
+            <CommandGroup>
+              <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                Search Mode
+              </div>
+              {visibleGroups.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <CommandItem
+                    key={group.id}
+                    value={group.id}
+                    onSelect={(currentValue) => {
+                      const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
+                      if (selectedGroup) {
+                        onGroupSelect(selectedGroup);
+                        setOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
+                      'transition-all duration-200',
+                      'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                      'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
+                    )}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
+                      <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
+                          {group.name}
+                        </div>
+                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
+                          {group.description}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
-                      {group.description}
-                    </div>
-                  </div>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+                    <Check
+                      className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')}
+                    />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 });
 
