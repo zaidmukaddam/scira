@@ -4,8 +4,10 @@ export interface ChatState {
   hasManuallyScrolled: boolean;
   showUpgradeDialog: boolean;
   showSignInPrompt: boolean;
+  showAnnouncementDialog: boolean;
   hasShownUpgradeDialog: boolean;
   hasShownSignInPrompt: boolean;
+  hasShownAnnouncementDialog: boolean;
   commandDialogOpen: boolean;
   anyDialogOpen: boolean;
 
@@ -27,8 +29,10 @@ export type ChatAction =
   | { type: 'SET_HAS_MANUALLY_SCROLLED'; payload: boolean }
   | { type: 'SET_SHOW_UPGRADE_DIALOG'; payload: boolean }
   | { type: 'SET_SHOW_SIGNIN_PROMPT'; payload: boolean }
+  | { type: 'SET_SHOW_ANNOUNCEMENT_DIALOG'; payload: boolean }
   | { type: 'SET_HAS_SHOWN_UPGRADE_DIALOG'; payload: boolean }
   | { type: 'SET_HAS_SHOWN_SIGNIN_PROMPT'; payload: boolean }
+  | { type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG'; payload: boolean }
   | { type: 'SET_COMMAND_DIALOG_OPEN'; payload: boolean }
   | { type: 'SET_ANY_DIALOG_OPEN'; payload: boolean }
   | { type: 'SET_SUGGESTED_QUESTIONS'; payload: string[] }
@@ -51,11 +55,17 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
     case 'SET_SHOW_SIGNIN_PROMPT':
       return { ...state, showSignInPrompt: action.payload };
 
+    case 'SET_SHOW_ANNOUNCEMENT_DIALOG':
+      return { ...state, showAnnouncementDialog: action.payload };
+
     case 'SET_HAS_SHOWN_UPGRADE_DIALOG':
       return { ...state, hasShownUpgradeDialog: action.payload };
 
     case 'SET_HAS_SHOWN_SIGNIN_PROMPT':
       return { ...state, hasShownSignInPrompt: action.payload };
+
+    case 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG':
+      return { ...state, hasShownAnnouncementDialog: action.payload };
 
     case 'SET_COMMAND_DIALOG_OPEN':
       return { ...state, commandDialogOpen: action.payload };
@@ -82,6 +92,7 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
         hasManuallyScrolled: false,
         showUpgradeDialog: false,
         showSignInPrompt: false,
+        showAnnouncementDialog: false,
       };
 
     default:
@@ -92,14 +103,17 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
 export const createInitialState = (
   initialVisibility: 'public' | 'private' = 'private',
   hasShownUpgradeDialog: boolean = false,
-  hasShownSignInPrompt: boolean = false
+  hasShownSignInPrompt: boolean = false,
+  hasShownAnnouncementDialog: boolean = false
 ): ChatState => ({
   hasSubmitted: false,
   hasManuallyScrolled: false,
   showUpgradeDialog: false,
   showSignInPrompt: false,
+  showAnnouncementDialog: false,
   hasShownUpgradeDialog,
   hasShownSignInPrompt,
+  hasShownAnnouncementDialog,
   commandDialogOpen: false,
   anyDialogOpen: false,
   suggestedQuestions: [],

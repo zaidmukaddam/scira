@@ -79,11 +79,15 @@ const ChatInterface = memo(
       'scira-signin-prompt-shown',
       false,
     );
+    const [persistedHasShownAnnouncementDialog, setPersitedHasShownAnnouncementDialog] = useLocalStorage(
+      'scira-announcement-prompt-shown',
+      false,
+    );
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
       chatReducer,
-      createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt),
+      createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt, persistedHasShownAnnouncementDialog),
     );
 
     const {
@@ -121,6 +125,9 @@ const ChatInterface = memo(
 
     // Sign-in prompt timer
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Announcement dialog timer
+    const announcementTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Generate a consistent ID for new chats
     const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
@@ -170,6 +177,31 @@ const ChatInterface = memo(
         }
       };
     }, [user, chatState.hasShownSignInPrompt, setPersitedHasShownSignInPrompt]);
+
+    // Timer for announcement dialog
+    useEffect(() => {
+      // Only start timer if announcement hasn't been shown yet
+      if (!chatState.hasShownAnnouncementDialog) {
+        // Clear any existing timer
+        if (announcementTimerRef.current) {
+          clearTimeout(announcementTimerRef.current);
+        }
+
+        // Set timer for 30 seconds (30000 ms)
+        announcementTimerRef.current = setTimeout(() => {
+          dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: true });
+          dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: true });
+          setPersitedHasShownAnnouncementDialog(true);
+        }, 30000);
+      }
+
+      // Cleanup timer on unmount
+      return () => {
+        if (announcementTimerRef.current) {
+          clearTimeout(announcementTimerRef.current);
+        }
+      };
+    }, [chatState.hasShownAnnouncementDialog, setPersitedHasShownAnnouncementDialog]);
 
     type VisibilityType = 'public' | 'private';
 
@@ -393,8 +425,8 @@ const ChatInterface = memo(
 
     // Dialog management state - track command dialog state in chat state
     useEffect(() => {
-      dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: chatState.commandDialogOpen });
-    }, [chatState.commandDialogOpen]);
+      dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: chatState.commandDialogOpen || chatState.showSignInPrompt || chatState.showUpgradeDialog || chatState.showAnnouncementDialog });
+    }, [chatState.commandDialogOpen, chatState.showSignInPrompt, chatState.showUpgradeDialog, chatState.showAnnouncementDialog]);
 
     // Keyboard shortcut for command dialog
     useEffect(() => {
@@ -475,6 +507,13 @@ const ChatInterface = memo(
           setHasShownUpgradeDialog={(value) => {
             dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
             setPersitedHasShownUpgradeDialog(value);
+          }}
+          showAnnouncementDialog={chatState.showAnnouncementDialog}
+          setShowAnnouncementDialog={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
+          hasShownAnnouncementDialog={chatState.hasShownAnnouncementDialog}
+          setHasShownAnnouncementDialog={(value) => {
+            dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
+            setPersitedHasShownAnnouncementDialog(value);
           }}
           user={user}
           setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}

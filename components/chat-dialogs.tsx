@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown } from '@phosphor-icons/react';
+import { Crown, ArrowSquareOut } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ChatHistoryDialog } from '@/components/chat-history-dialog';
@@ -30,56 +30,52 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
 
           {/* Features */}
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Unlimited daily searches</span>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Claude 4 Opus, Grok 3, GPT-4o and more</p>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Access to all AI models</span>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Priority support</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Early access to new features</span>
               </div>
             </div>
           </div>
 
-          {/* Pricing */}
-          <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-4 space-y-2">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
-              <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
-            </div>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              size="sm"
+              className="flex-1 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
             >
-              Maybe later
+              Maybe Later
             </Button>
             <Button
               onClick={() => {
                 window.location.href = '/pricing';
               }}
-              className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+              size="sm"
+              className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black shadow-sm"
             >
-              Upgrade now
+              <Crown className="h-3 w-3 mr-1.5" />
+              Upgrade Now
             </Button>
           </div>
+
+          {/* Additional info */}
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
+            Start your free trial today. Cancel anytime.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
@@ -87,6 +83,94 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
 });
 
 PostMessageUpgradeDialog.displayName = 'PostMessageUpgradeDialog';
+
+interface ApiAnnouncementDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const ApiAnnouncementDialog = React.memo(({ open, onOpenChange }: ApiAnnouncementDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+        <div className="p-6 space-y-5">
+          {/* Header */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white dark:bg-neutral-900 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+                <img 
+                  src="/scira.png" 
+                  alt="Scira" 
+                  className="w-5 h-5 object-contain"
+                />
+              </div>
+              <div>
+                <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Introducing Scira AI API Platform</h2>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">Powerful APIs for developers</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Build the next generation of AI-powered applications with our comprehensive API suite.
+            </p>
+            
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Web Search API</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">People Discovery API</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">X Platform Search API</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span className="text-neutral-700 dark:text-neutral-300">Developer-friendly documentation</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              className="flex-1 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              Dismiss
+            </Button>
+            <Button
+              onClick={() => {
+                window.open('https://api.scira.ai/', '_blank');
+                onOpenChange(false);
+              }}
+              size="sm"
+              className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black shadow-sm"
+            >
+              <ArrowSquareOut className="h-3 w-3 mr-1.5" />
+              Explore APIs
+            </Button>
+          </div>
+
+          {/* Additional info */}
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
+            Start building today with comprehensive documentation and examples.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+ApiAnnouncementDialog.displayName = 'ApiAnnouncementDialog';
 
 interface ChatDialogsProps {
   commandDialogOpen: boolean;
@@ -99,6 +183,10 @@ interface ChatDialogsProps {
   setShowUpgradeDialog: (open: boolean) => void;
   hasShownUpgradeDialog: boolean;
   setHasShownUpgradeDialog: (value: boolean) => void;
+  showAnnouncementDialog: boolean;
+  setShowAnnouncementDialog: (open: boolean) => void;
+  hasShownAnnouncementDialog: boolean;
+  setHasShownAnnouncementDialog: (value: boolean) => void;
   user: any;
   setAnyDialogOpen: (open: boolean) => void;
 }
@@ -115,6 +203,10 @@ export const ChatDialogs = React.memo(
     setShowUpgradeDialog,
     hasShownUpgradeDialog,
     setHasShownUpgradeDialog,
+    showAnnouncementDialog,
+    setShowAnnouncementDialog,
+    hasShownAnnouncementDialog,
+    setHasShownAnnouncementDialog,
     user,
     setAnyDialogOpen,
   }: ChatDialogsProps) => {
@@ -148,6 +240,17 @@ export const ChatDialogs = React.memo(
             setShowUpgradeDialog(open);
             if (!open) {
               setHasShownUpgradeDialog(true);
+            }
+          }}
+        />
+
+        {/* API Announcement Dialog */}
+        <ApiAnnouncementDialog
+          open={showAnnouncementDialog}
+          onOpenChange={(open) => {
+            setShowAnnouncementDialog(open);
+            if (!open) {
+              setHasShownAnnouncementDialog(true);
             }
           }}
         />

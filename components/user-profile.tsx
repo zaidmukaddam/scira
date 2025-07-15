@@ -29,6 +29,7 @@ import {
   Crown,
   Lightning,
   Gear,
+  Code,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
@@ -292,6 +293,17 @@ const UserProfile = memo(
             <DropdownMenuSeparator />
 
             {/* Social and External Links */}
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <a
+                href={'https://api.scira.ai/'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-2"
+              >
+                <Code size={16} />
+                <span>API</span>
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
                 href={'https://git.new/scira'}
