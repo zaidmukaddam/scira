@@ -33,8 +33,8 @@ importers:
         specifier: ^1.2.11
         version: 1.2.11(zod@3.25.73)
       '@ai-sdk/xai':
-        specifier: ^1.2.17
-        version: 1.2.17(zod@3.25.73)
+        specifier: ^1.2.18
+        version: 1.2.18(zod@3.25.73)
       '@aws-sdk/client-s3':
         specifier: ^3.835.0
         version: 3.842.0
@@ -153,8 +153,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(next@15.4.2-canary.0(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       ai:
-        specifier: ^4.3.17
-        version: 4.3.17(react@19.1.0)(zod@3.25.73)
+        specifier: ^4.3.19
+        version: 4.3.19(react@19.1.0)(zod@3.25.73)
       axios:
         specifier: ^1.10.0
         version: 1.10.0
@@ -417,8 +417,8 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  '@ai-sdk/openai-compatible@0.2.15':
-    resolution: {integrity: sha512-868uTi5/gx0OlK8x2OT6G/q/WKATVStM4XEXMMLOo9EQTaoNDtSndhLU+4N4kuxbMS7IFaVSJcMr7mKFwV5vvQ==}
+  '@ai-sdk/openai-compatible@0.2.16':
+    resolution: {integrity: sha512-LkvfcM8slJedRyJa/MiMiaOzcMjV1zNDwzTHEGz7aAsgsQV0maLfmJRi/nuSwf5jmp0EouC+JXXDUj2l94HgQw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -455,8 +455,8 @@ packages:
     peerDependencies:
       zod: ^3.23.8
 
-  '@ai-sdk/xai@1.2.17':
-    resolution: {integrity: sha512-6r7/0t5prXaUC7A0G5rs6JdsRUhtYoK9tuwZ2gbc+oad4YE7rza199Il8/FaS9xAiGplC9SPB6dK1q59IjNkUg==}
+  '@ai-sdk/xai@1.2.18':
+    resolution: {integrity: sha512-T70WEu+UKXD/Fdj9ck+ujIqUp5ru06mJ/7usePXeXL5EeTi8KXevXF9AMIDdhyD5MZPT2jI8t19lEr8Bhuh/Bg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -2858,8 +2858,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@4.3.17:
-    resolution: {integrity: sha512-uWqIQ94Nb1GTYtYElGHegJMOzv3r2mCKNFlKrqkft9xrfvIahTI5OdcnD5U9612RFGuUNGmSDTO1/YRNFXobaQ==}
+  ai@4.3.19:
+    resolution: {integrity: sha512-dIE2bfNpqHN3r6IINp9znguYdhIOheKW2LDigAMrgt/upT3B8eBGPSCblENvaZGoq+hxaN9fSMzjWpbqloP+7Q==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -6087,7 +6087,7 @@ snapshots:
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.73)
       zod: 3.25.73
 
-  '@ai-sdk/openai-compatible@0.2.15(zod@3.25.73)':
+  '@ai-sdk/openai-compatible@0.2.16(zod@3.25.73)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.73)
@@ -6127,9 +6127,9 @@ snapshots:
       zod: 3.25.73
       zod-to-json-schema: 3.24.5(zod@3.25.73)
 
-  '@ai-sdk/xai@1.2.17(zod@3.25.73)':
+  '@ai-sdk/xai@1.2.18(zod@3.25.73)':
     dependencies:
-      '@ai-sdk/openai-compatible': 0.2.15(zod@3.25.73)
+      '@ai-sdk/openai-compatible': 0.2.16(zod@3.25.73)
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.73)
       zod: 3.25.73
@@ -7189,7 +7189,7 @@ snapshots:
   '@npmcli/fs@1.1.1':
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.7.1
+      semver: 7.7.2
     optional: true
 
   '@npmcli/move-file@1.1.2':
@@ -8810,7 +8810,7 @@ snapshots:
       indent-string: 4.0.0
     optional: true
 
-  ai@4.3.17(react@19.1.0)(zod@3.25.73):
+  ai@4.3.19(react@19.1.0)(zod@3.25.73):
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.73)
@@ -10604,7 +10604,7 @@ snapshots:
       console-table-printer: 2.12.1
       p-queue: 6.6.2
       p-retry: 4.6.2
-      semver: 7.7.1
+      semver: 7.7.2
       uuid: 10.0.0
     optionalDependencies:
       openai: 5.1.1(ws@8.18.1)(zod@3.25.73)
@@ -11335,7 +11335,7 @@ snapshots:
 
   node-abi@3.74.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   node-addon-api@7.1.1: {}
 
@@ -11356,7 +11356,7 @@ snapshots:
       nopt: 5.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.7.1
+      semver: 7.7.2
       tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
@@ -12050,8 +12050,7 @@ snapshots:
 
   semver@7.7.1: {}
 
-  semver@7.7.2:
-    optional: true
+  semver@7.7.2: {}
 
   serialize-to-js@3.1.2: {}
 
