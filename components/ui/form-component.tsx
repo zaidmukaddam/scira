@@ -784,7 +784,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   return (
     <div className="flex items-center">
       {/* Toggle Switch Container */}
-      <div className="flex items-center bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg !py-1 !px-0.75 h-8">
+      <div className="flex items-center bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg !gap-1 !py-1 !px-0.75 h-8">
         {/* Group Selector Side */}
         <Popover open={open && !isExtreme} onOpenChange={(newOpen) => !isExtreme && setOpen(newOpen)}>
           <PopoverTrigger asChild>
