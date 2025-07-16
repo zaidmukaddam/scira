@@ -80,7 +80,7 @@ export const searchGroups = [
     name: 'Extreme',
     description: 'Deep research with multiple sources and analysis',
     icon: TelescopeIcon,
-    show: false,
+    show: true,
   },
 ] as const;
 

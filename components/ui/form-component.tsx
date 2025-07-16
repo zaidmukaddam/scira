@@ -15,13 +15,12 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import useWindowSize from '@/hooks/use-window-size';
-import { TelescopeIcon, X, Check, ChevronsUpDown } from 'lucide-react';
+import { TelescopeIcon, X, Check, ChevronsUpDown, Globe } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
-import { Globe } from 'lucide-react';
+``;
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserWithProStatus } from '@/hooks/use-user-data';
@@ -96,6 +95,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [filteredModels],
     );
 
+    const currentModel = useMemo(
+      () => availableModels.find((m) => m.value === selectedModel),
+      [availableModels, selectedModel],
+    );
+
     const handleModelChange = useCallback(
       (value: string) => {
         const model = availableModels.find((m) => m.value === value);
@@ -140,23 +144,16 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               aria-expanded={open}
               size="sm"
               className={cn(
-                'group flex items-center gap-2 w-fit',
-                'px-3 h-8',
-                'rounded-full transition-all duration-200',
+                'flex items-center gap-2 px-3 h-8 rounded-lg',
                 'border border-neutral-300 dark:border-neutral-700',
-                'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
-                'text-neutral-900 dark:text-neutral-100',
-                'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
-                'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
-                'active:[box-shadow:none]',
-                'ring-0! outline-none!',
+                'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100',
+                'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors',
                 className,
               )}
             >
-              <span className="flex items-center justify-center group-active:[transform:translate3d(0,1px,0)]">
-                <Cpu className="size-4 text-neutral-600 dark:text-neutral-400" />
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </span>
+              <Cpu className="h-4 w-4" />
+              <span className="text-xs font-medium sm:block hidden">{currentModel?.label || 'Select Model'}</span>
+              <ChevronsUpDown className="h-4 w-4 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -571,7 +568,7 @@ const AttachmentPreview: React.FC<{
         'relative flex items-center',
         'bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xs',
         'border border-neutral-200/80 dark:border-neutral-700/80',
-        'rounded-2xl p-2 pr-8 gap-2.5',
+        'rounded-lg p-2 pr-8 gap-2.5',
         'shadow-xs hover:shadow-md',
         'shrink-0 z-0',
         'hover:bg-white dark:hover:bg-neutral-800',
@@ -627,7 +624,7 @@ const AttachmentPreview: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="w-8 h-8 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50 flex items-center justify-center">
           {isPdf(attachment) ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -736,9 +733,10 @@ interface GroupSelectorProps {
   status: 'submitted' | 'streaming' | 'ready' | 'error';
 }
 
-const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
+const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const isExtreme = selectedGroup === 'extreme';
 
   // Memoize visible groups calculation
   const visibleGroups = useMemo(
@@ -746,6 +744,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup,
       searchGroups.filter((group) => {
         if (!group.show) return false;
         if ('requireAuth' in group && group.requireAuth && !session) return false;
+        if (group.id === 'extreme') return false; // Exclude extreme from dropdown
         return true;
       }),
     [session],
@@ -755,6 +754,22 @@ const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup,
     () => visibleGroups.find((group) => group.id === selectedGroup),
     [visibleGroups, selectedGroup],
   );
+
+  const handleToggleExtreme = useCallback(() => {
+    if (isExtreme) {
+      // Switch back to web mode
+      const webGroup = searchGroups.find((group) => group.id === 'web');
+      if (webGroup) {
+        onGroupSelect(webGroup);
+      }
+    } else {
+      // Switch to extreme mode
+      const extremeGroup = searchGroups.find((group) => group.id === 'extreme');
+      if (extremeGroup) {
+        onGroupSelect(extremeGroup);
+      }
+    }
+  }, [isExtreme, onGroupSelect]);
 
   const handleGroupChange = useCallback(
     (value: string) => {
@@ -766,125 +781,139 @@ const GroupSelector: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup,
     [visibleGroups, onGroupSelect],
   );
 
-  useEffect(() => {
-    if (!session && selectedGroup === 'memory') {
-      const webGroup = searchGroups.find((group) => group.id === 'web');
-      if (webGroup) {
-        onGroupSelect(webGroup);
-      }
-    }
-  }, [session, selectedGroup, onGroupSelect]);
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <div className="flex items-center">
+      {/* Toggle Switch Container */}
+      <div className="flex items-center bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg !py-1 !px-0.75 h-8">
+        {/* Group Selector Side */}
+        <Popover open={open && !isExtreme} onOpenChange={(newOpen) => !isExtreme && setOpen(newOpen)}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              role="combobox"
+              aria-expanded={open && !isExtreme}
+              size="sm"
+              onClick={() => {
+                if (isExtreme) {
+                  // Switch back to web mode when clicking groups in extreme mode
+                  const webGroup = searchGroups.find((group) => group.id === 'web');
+                  if (webGroup) {
+                    onGroupSelect(webGroup);
+                  }
+                } else {
+                  setOpen(!open);
+                }
+              }}
+              className={cn(
+                'flex items-center gap-1.5 !m-0 !px-2 h-6 rounded-md transition-all cursor-pointer',
+                !isExtreme
+                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-300 dark:hover:bg-neutral-700'
+                  : 'text-neutral-400 dark:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+              )}
+            >
+              {selectedGroupData && !isExtreme && (
+                <>
+                  <selectedGroupData.icon className="h-3.5 w-3.5" />
+                  <ChevronsUpDown className="h-3 w-3 opacity-50" />
+                </>
+              )}
+              {isExtreme && (
+                <>
+                  <Globe className="h-3.5 w-3.5" />
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
+            align="start"
+            side="bottom"
+            sideOffset={4}
+            avoidCollisions={true}
+            collisionPadding={8}
+          >
+            <Command
+              className="rounded-xl"
+              filter={(value, search) => {
+                const group = visibleGroups.find((g) => g.id === value);
+                if (!group || !search) return 1;
+
+                const searchTerm = search.toLowerCase();
+                const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
+
+                return searchableFields.includes(searchTerm) ? 1 : 0;
+              }}
+            >
+              <CommandInput placeholder="Search modes..." className="h-9" />
+              <CommandEmpty>No search mode found.</CommandEmpty>
+              <CommandList className="max-h-[240px]">
+                <CommandGroup>
+                  <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                    Search Mode
+                  </div>
+                  {visibleGroups.map((group) => {
+                    const Icon = group.icon;
+                    return (
+                      <CommandItem
+                        key={group.id}
+                        value={group.id}
+                        onSelect={(currentValue) => {
+                          const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
+                          if (selectedGroup) {
+                            onGroupSelect(selectedGroup);
+                            setOpen(false);
+                          }
+                        }}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
+                          'transition-all duration-200',
+                          'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                          'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
+                          <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
+                              {group.name}
+                            </div>
+                            <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
+                              {group.description}
+                            </div>
+                          </div>
+                        </div>
+                        <Check
+                          className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')}
+                        />
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        {/* Extreme Mode Side */}
         <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
+          variant="ghost"
           size="sm"
+          onClick={handleToggleExtreme}
           className={cn(
-            'group flex items-center gap-2 w-fit',
-            'px-3 h-8',
-            'rounded-full transition-all duration-200',
-            'border border-neutral-300 dark:border-neutral-700',
-            'bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950',
-            'text-neutral-900 dark:text-neutral-100',
-            'shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252]',
-            'hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900',
-            'active:[box-shadow:none]',
-            'ring-0! outline-none!',
+            'flex items-center gap-1.5 px-2 h-6 rounded-md transition-all',
+            isExtreme
+              ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-300 dark:hover:bg-neutral-700'
+              : 'text-neutral-400 dark:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800',
           )}
         >
-          <span
-            className={cn(
-              'font-medium whitespace-nowrap flex items-center gap-1.5 group-active:[transform:translate3d(0,1px,0)]',
-              'text-xs',
-            )}
-          >
-            {selectedGroupData && (
-              <>
-                <selectedGroupData.icon className={cn('size-4')} />
-                {selectedGroupData.name}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </>
-            )}
-          </span>
+          <TelescopeIcon className="h-3.5 w-3.5" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
-        align="start"
-        side="bottom"
-        sideOffset={4}
-        avoidCollisions={true}
-        collisionPadding={8}
-      >
-        <Command
-          className="rounded-xl"
-          filter={(value, search) => {
-            const group = visibleGroups.find((g) => g.id === value);
-            if (!group || !search) return 1;
-
-            const searchTerm = search.toLowerCase();
-            const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
-
-            return searchableFields.includes(searchTerm) ? 1 : 0;
-          }}
-        >
-          <CommandInput placeholder="Search modes..." className="h-9" />
-          <CommandEmpty>No search mode found.</CommandEmpty>
-          <CommandList className="max-h-[240px]">
-            <CommandGroup>
-              <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                Search Mode
-              </div>
-              {visibleGroups.map((group) => {
-                const Icon = group.icon;
-                return (
-                  <CommandItem
-                    key={group.id}
-                    value={group.id}
-                    onSelect={(currentValue) => {
-                      const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
-                      if (selectedGroup) {
-                        onGroupSelect(selectedGroup);
-                        setOpen(false);
-                      }
-                    }}
-                    className={cn(
-                      'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
-                      'transition-all duration-200',
-                      'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                      'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
-                    )}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                      <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
-                          {group.name}
-                        </div>
-                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
-                          {group.description}
-                        </div>
-                      </div>
-                    </div>
-                    <Check
-                      className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')}
-                    />
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
   );
 });
 
-GroupSelector.displayName = 'GroupSelector';
+GroupModeToggle.displayName = 'GroupModeToggle';
 
 const FormComponent: React.FC<FormComponentProps> = ({
   chatId,
@@ -1898,73 +1927,24 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 )}
               >
                 <div className={cn('flex items-center gap-2')}>
-                  <div
-                    className={cn(
-                      'transition-all duration-100 flex-shrink-0',
-                      selectedGroup !== 'extreme' ? 'opacity-100 visible w-auto' : 'opacity-0 invisible w-0',
-                    )}
-                  >
-                    <GroupSelector selectedGroup={selectedGroup} onGroupSelect={handleGroupSelect} status={status} />
-                  </div>
+                  <GroupModeToggle selectedGroup={selectedGroup} onGroupSelect={handleGroupSelect} status={status} />
 
-                  <div className={cn('transition-all duration-300 flex-shrink-0', 'opacity-100 visible w-auto')}>
-                    <ModelSwitcher
-                      selectedModel={selectedModel}
-                      setSelectedModel={setSelectedModel}
-                      attachments={attachments}
-                      messages={messages}
-                      status={status}
-                      onModelSelect={(model) => {
-                        setSelectedModel(model.value);
-                        const isVisionModel = hasVisionSupport(model.value);
-                        toast.message(`Switched to ${model.label}`, {
-                          description: isVisionModel ? 'You can now upload images to the model.' : undefined,
-                        });
-                      }}
-                      subscriptionData={subscriptionData}
-                      user={user}
-                    />
-                  </div>
-
-                  <div className={cn('transition-all duration-300 flex-shrink-0', 'opacity-100 visible w-auto')}>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const newMode = selectedGroup === 'extreme' ? 'web' : 'extreme';
-                            setSelectedGroup(newMode);
-                          }}
-                          className={cn(
-                            'group flex items-center gap-2 p-2 sm:px-3 h-8',
-                            'rounded-full transition-all duration-200',
-                            'border',
-                            selectedGroup === 'extreme'
-                              ? 'border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none]'
-                              : 'border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-600 dark:text-neutral-400 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none]',
-                          )}
-                        >
-                          <span className="group-active:[transform:translate3d(0,1px,0)] flex items-center gap-2">
-                            <TelescopeIcon className="h-4 w-4" />
-                            <span className="hidden sm:block text-xs font-medium">Extreme</span>
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="bottom"
-                        sideOffset={6}
-                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3 max-w-[200px]"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Extreme Mode</span>
-                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
-                            Deep research with multiple sources and analysis
-                          </span>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
+                  <ModelSwitcher
+                    selectedModel={selectedModel}
+                    setSelectedModel={setSelectedModel}
+                    attachments={attachments}
+                    messages={messages}
+                    status={status}
+                    onModelSelect={(model) => {
+                      setSelectedModel(model.value);
+                      const isVisionModel = hasVisionSupport(model.value);
+                      toast.message(`Switched to ${model.label}`, {
+                        description: isVisionModel ? 'You can now upload images to the model.' : undefined,
+                      });
+                    }}
+                    subscriptionData={subscriptionData}
+                    user={user}
+                  />
                 </div>
 
                 <div className={cn('flex items-center flex-shrink-0 gap-2')}>
@@ -1972,14 +1952,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full p-1.75 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-neutral-50 via-neutral-100 to-neutral-200 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950 text-neutral-700 dark:text-neutral-300 shadow-[inset_0_1px_0px_0px_#ffffff] dark:shadow-[inset_0_1px_0px_0px_#525252] hover:from-neutral-100 hover:via-neutral-200 hover:to-neutral-300 dark:hover:from-neutral-700 dark:hover:via-neutral-800 dark:hover:to-neutral-900 active:[box-shadow:none] transition-all duration-200"
+                          className="group rounded-lg p-1.75 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             triggerFileInput();
                           }}
                         >
-                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                          <span className="block">
                             <PaperclipIcon size={16} />
                           </span>
                         </button>
@@ -2003,14 +1983,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full p-1.75 h-8 w-8 border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none] transition-all duration-200"
+                          className="group rounded-lg p-1.75 h-8 w-8 border border-red-600 bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             stop();
                           }}
                         >
-                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                          <span className="block">
                             <StopIcon size={16} />
                           </span>
                         </button>
@@ -2029,10 +2009,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipTrigger asChild>
                         <button
                           className={cn(
-                            'group rounded-full p-1.75 h-8 w-8 backdrop-blur-2xl transition-all duration-200',
+                            'group rounded-lg p-1.75 h-8 w-8 transition-colors duration-200',
                             isRecording
-                              ? 'border border-red-600 bg-gradient-to-b from-red-400 via-red-500 to-red-600 text-white shadow-[inset_0_1px_0px_0px_#fca5a5] hover:from-red-600 hover:via-red-600 hover:to-red-600 active:[box-shadow:none]'
-                              : 'border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none]',
+                              ? 'border border-red-600 bg-red-600 text-white hover:bg-red-700'
+                              : 'border border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-700',
                           )}
                           onClick={(event) => {
                             event.preventDefault();
@@ -2040,7 +2020,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             handleRecord();
                           }}
                         >
-                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                          <span className="block">
                             <MicrophoneIcon size={16} />
                           </span>
                         </button>
@@ -2065,7 +2045,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-full flex p-1.75 m-auto h-8 w-8 border border-zinc-600 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-600 text-neutral-50 shadow-[inset_0_1px_0px_0px_#a1a1aa] hover:from-zinc-600 hover:via-zinc-600 hover:to-zinc-600 active:[box-shadow:none] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-zinc-400 disabled:hover:via-zinc-500 disabled:hover:to-zinc-600 transition-all duration-200"
+                          className="group rounded-lg flex p-1.75 m-auto h-8 w-8 border border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-zinc-600 transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2079,7 +2059,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             isRecording
                           }
                         >
-                          <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                          <span className="block">
                             <ArrowUpIcon size={16} />
                           </span>
                         </button>
