@@ -157,7 +157,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800"
+            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800"
             align="start"
             side="bottom"
             sideOffset={4}
@@ -165,7 +165,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             collisionPadding={8}
           >
             <Command
-              className="rounded-xl"
+              className="rounded-lg"
               filter={(value, search) => {
                 const model = availableModels.find((m) => m.value === value);
                 if (!model || !search) return 1;
@@ -825,7 +825,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-xl bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
+            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
             align="start"
             side="bottom"
             sideOffset={4}
@@ -833,7 +833,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
             collisionPadding={8}
           >
             <Command
-              className="rounded-xl"
+              className="rounded-lg"
               filter={(value, search) => {
                 const group = visibleGroups.find((g) => g.id === value);
                 if (!group || !search) return 1;
