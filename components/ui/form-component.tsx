@@ -151,6 +151,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 'border border-border',
                 'bg-background text-foreground',
                 'hover:bg-accent transition-colors',
+                'focus:!outline-none focus:!ring-0',
                 className,
               )}
             >

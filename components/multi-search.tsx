@@ -2,7 +2,17 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ExternalLink, Calendar, X, ChevronLeft, ChevronRight, Check, ArrowUpRight } from 'lucide-react';
+import {
+  Globe,
+  Search,
+  ExternalLink,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  ArrowUpRight,
+  ChevronDown,
+} from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +22,6 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import PlaceholderImage from './placeholder-image';
 
 // Types
 type SearchImage = {
@@ -128,20 +137,6 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
 
       {/* Content */}
       <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">{result.content}</p>
-
-      {/* Date */}
-      {result.published_date && (
-        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-          <time className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-            <Calendar className="w-3 h-3" />
-            {new Date(result.published_date).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </time>
-        </div>
-      )}
     </div>
   );
 };
@@ -212,18 +207,10 @@ const SourcesSheet: React.FC<{
 const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [imageStates, setImageStates] = React.useState<Record<number, { loaded: boolean; error: boolean }>>({});
   const isMobile = useIsMobile();
 
   const displayImages = images.slice(0, PREVIEW_IMAGE_COUNT);
   const hasMore = images.length > PREVIEW_IMAGE_COUNT;
-
-  const updateImageState = (index: number, state: { loaded?: boolean; error?: boolean }) => {
-    setImageStates((prev) => ({
-      ...prev,
-      [index]: { ...prev[index], ...state },
-    }));
-  };
 
   const ImageViewer = isMobile ? Drawer : Dialog;
   const ImageViewerContent = isMobile ? DrawerContent : DialogContent;
@@ -233,7 +220,6 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
       {/* Image Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
         {displayImages.map((image, index) => {
-          const state = imageStates[index] || { loaded: false, error: false };
           const isLast = index === displayImages.length - 1;
 
           return (
@@ -251,23 +237,10 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                 index === 0 ? 'md:col-span-2 md:row-span-2' : '',
               )}
             >
-              {!state.loaded && !state.error && <div className="absolute inset-0 animate-pulse" />}
-
-              {state.error ? (
-                <PlaceholderImage variant="compact" />
-              ) : (
-                <Image
-                  src={image.url}
-                  alt={image.description || ''}
-                  fill
-                  className={cn('object-cover', !state.loaded && 'opacity-0')}
-                  onLoad={() => updateImageState(index, { loaded: true })}
-                  onError={() => updateImageState(index, { error: true, loaded: true })}
-                />
-              )}
+              <Image src={image.url} alt={image.description || ''} fill className="object-cover" />
 
               {/* Overlay for last image if there are more */}
-              {isLast && hasMore && !state.error && (
+              {isLast && hasMore && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
                 </div>
@@ -310,35 +283,21 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
             {/* Image Display */}
             <div className="absolute inset-0 flex items-center justify-center p-4 pt-16 pb-16">
               <AnimatePresence mode="wait">
-                {imageStates[selectedImage]?.error ? (
-                  <motion.div
-                    key={`error-${selectedImage}`}
-                    className="w-full max-w-md h-64"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <PlaceholderImage />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={selectedImage}
-                    className="relative w-full h-full"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Image
-                      src={images[selectedImage].url}
-                      alt={images[selectedImage].description || ''}
-                      fill
-                      className="object-contain rounded-lg"
-                      onError={() => updateImageState(selectedImage, { error: true, loaded: true })}
-                    />
-                  </motion.div>
-                )}
+                <motion.div
+                  key={selectedImage}
+                  className="relative w-full h-full"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Image
+                    src={images[selectedImage].url}
+                    alt={images[selectedImage].description || ''}
+                    fill
+                    className="object-contain rounded-lg"
+                  />
+                </motion.div>
               </AnimatePresence>
             </div>
 
@@ -373,7 +332,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
             </Button>
 
             {/* Description */}
-            {images[selectedImage].description && !imageStates[selectedImage]?.error && (
+            {images[selectedImage].description && (
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800">
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-3xl mx-auto">
                   {images[selectedImage].description}
@@ -433,16 +392,18 @@ const LoadingState: React.FC<{
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-2 relative isolate overflow-hidden">
       {/* Sources Accordion */}
-      <Accordion type="single" collapsible defaultValue="sources" className="w-full">
+      <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="sources" className="border-none">
           <AccordionTrigger
             className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline',
+              'py-3 px-4 rounded-xl hover:no-underline group',
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
               'data-[state=open]:rounded-b-none',
+              '[&>svg]:hidden', // Hide default chevron
+              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
             )}
           >
             <div className="flex items-center justify-between w-full">
@@ -462,6 +423,10 @@ const LoadingState: React.FC<{
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}
+                <ChevronDown
+                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
+                  data-chevron
+                />
               </div>
             </div>
           </AccordionTrigger>
@@ -543,6 +508,7 @@ const LoadingState: React.FC<{
               key={i}
               className={cn(
                 'rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse',
+                'relative overflow-hidden',
                 i === 0 ? 'md:col-span-2 md:row-span-2' : '',
               )}
             />
@@ -616,10 +582,12 @@ const MultiSearch: React.FC<{
         <AccordionItem value="sources" className="border-none">
           <AccordionTrigger
             className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline',
+              'py-3 px-4 rounded-xl hover:no-underline group',
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
               'data-[state=open]:rounded-b-none',
+              '[&>svg]:hidden', // Hide default chevron
+              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
             )}
           >
             <div className="flex items-center justify-between w-full">
@@ -647,6 +615,10 @@ const MultiSearch: React.FC<{
                     <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}
+                <ChevronDown
+                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
+                  data-chevron
+                />
               </div>
             </div>
           </AccordionTrigger>

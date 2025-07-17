@@ -378,8 +378,8 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                                     return i === 0
                                       ? acc + parseInt(time) * 3600
                                       : i === 1
-                                      ? acc + parseInt(time) * 60
-                                      : acc + parseInt(time);
+                                        ? acc + parseInt(time) * 60
+                                        : acc + parseInt(time);
                                   }
                                 }, 0)}`}
                                 target="_blank"
@@ -1118,7 +1118,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'web_search') {
           return (
-            <div className="mt-4">
+            <div className="mt-4 relative isolate overflow-hidden">
               <Suspense fallback={<ComponentLoader />}>
                 <MultiSearch
                   result={result}
