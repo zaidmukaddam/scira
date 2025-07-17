@@ -153,11 +153,11 @@ const Navbar = memo(
             )}
           >
             <div className="flex items-center bg-muted/50 rounded-lg border border-border">
-              <span className="px-3 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
+              <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
               <Button
                 variant="default"
                 size="sm"
-                className="rounded-md mx-1 h-6"
+                className="rounded-md mr-1.5 h-6"
                 onClick={() => router.push('/pricing')}
               >
                 Upgrade
