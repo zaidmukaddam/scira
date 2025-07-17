@@ -124,6 +124,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
 // Usage Bar Chart Component
 function UsageBarChart({ data, className }: { data: any[]; className?: string }) {
   const { resolvedTheme } = useTheme();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const chartConfig = {
     count: {
@@ -172,21 +173,24 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
     <div className={cn('w-full', className)}>
       <ChartContainer config={chartConfig} className="w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={processedData} margin={{ top: 10, right: 5, left: 25, bottom: 10 }}>
+          <BarChart
+            data={processedData}
+            margin={isMobile ? { top: 10, right: 0, left: 10, bottom: 5 } : { top: 10, right: 5, left: 25, bottom: 10 }}
+          >
             <XAxis
               dataKey="day"
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-              interval="preserveStartEnd"
+              interval={isMobile ? 2 : 'preserveStartEnd'}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
               domain={[0, yAxisMax]}
-              ticks={Array.from({ length: Math.floor(yAxisMax / 5) + 1 }, (_, i) => i * 5)}
-              width={20}
+              ticks={Array.from({ length: Math.min(4, Math.floor(yAxisMax / 5) + 1) }, (_, i) => i * 5)}
+              width={isMobile ? 15 : 20}
             />
             <ChartTooltip
               content={<ChartTooltipContent />}
@@ -209,6 +213,7 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
 function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const isProUser = user?.isProUser;
 
   const {
     data: usageData,
@@ -261,14 +266,13 @@ function UsageSection({ user }: any) {
     }
   };
 
-  const isProUser = user?.isProUser;
   const searchLimit = isProUser ? Infinity : SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
   const usagePercentage = isProUser
     ? 0
     : Math.min(((searchCount?.count || 0) / SEARCH_LIMITS.DAILY_SEARCH_LIMIT) * 100, 100);
 
   return (
-    <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
+    <div className={cn(isMobile ? 'space-y-3' : 'space-y-4', isMobile && !isProUser ? 'pb-4' : '')}>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold">Daily Search Usage</h3>
         <Button
@@ -356,17 +360,19 @@ function UsageSection({ user }: any) {
       )}
 
       {!usageLoading && (
-        <div className="space-y-2">
+        <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
             Activity (Past 14 days)
           </h4>
-          <div className={cn('bg-muted/50 dark:bg-card rounded-lg', isMobile ? 'p-2' : 'p-3')}>
+          <div className={cn('bg-muted/50 dark:bg-card rounded-lg overflow-hidden', isMobile ? 'p-2' : 'p-3')}>
             {historicalLoading ? (
               <div className="h-24 flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : historicalUsageData && historicalUsageData.length > 0 ? (
-              <UsageBarChart data={historicalUsageData} className="h-24" />
+              <div className="h-24 overflow-hidden">
+                <UsageBarChart data={historicalUsageData} className="h-full w-full" />
+              </div>
             ) : (
               <div className="h-24 flex items-center justify-center">
                 <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No activity data</p>
@@ -970,20 +976,20 @@ export function SettingsDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[600px] max-h-[85vh] p-0 [&[data-vaul-drawer]]:transition-none">
-          <div className="flex flex-col h-full">
+        <DrawerContent className="h-[85vh] max-h-[600px] p-0 [&[data-vaul-drawer]]:transition-none overflow-hidden">
+          <div className="flex flex-col h-full max-h-full">
             {/* Header - more compact */}
-            <DrawerHeader className="pb-2 px-4 pt-3">
+            <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium">Settings</DrawerTitle>
             </DrawerHeader>
 
             {/* Content area with tabs */}
-            <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col">
+            <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden">
               {/* Tab content - takes up most space */}
-              <div className="flex-1 overflow-y-auto px-4 pb-2">{contentSections}</div>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">{contentSections}</div>
 
               {/* Bottom tab navigation - compact and accessible */}
-              <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4">
+              <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 shrink-0">
                 <TabsList className="w-full h-14 p-1 bg-transparent rounded-none grid grid-cols-5 gap-1">
                   {tabItems.map((item) => (
                     <TabsTrigger
@@ -1018,7 +1024,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-4xl !w-full max-h-4/6 !p-0 gap-0">
+      <DialogContent className="!max-w-4xl !w-full max-h-[85vh] !p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 !m-0">
           <DialogTitle className="text-xl font-medium tracking-normal">Settings</DialogTitle>
         </DialogHeader>
@@ -1048,8 +1054,8 @@ export function SettingsDialog({
 
           {/* Content */}
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(90vh-65px)]">
-              <div className="p-6">
+            <ScrollArea className="h-[calc(85vh-120px)]">
+              <div className="p-6 pb-8">
                 <Tabs value={currentTab} onValueChange={setCurrentTab} orientation="vertical">
                   {contentSections}
                 </Tabs>

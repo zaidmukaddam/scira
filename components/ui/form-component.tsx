@@ -84,14 +84,17 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const groupedModels = useMemo(
       () =>
-        filteredModels.reduce((acc, model) => {
-          const category = model.category;
-          if (!acc[category]) {
-            acc[category] = [];
-          }
-          acc[category].push(model);
-          return acc;
-        }, {} as Record<string, typeof availableModels>),
+        filteredModels.reduce(
+          (acc, model) => {
+            const category = model.category;
+            if (!acc[category]) {
+              acc[category] = [];
+            }
+            acc[category].push(model);
+            return acc;
+          },
+          {} as Record<string, typeof availableModels>,
+        ),
       [filteredModels],
     );
 
@@ -144,10 +147,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               aria-expanded={open}
               size="sm"
               className={cn(
-                'flex items-center gap-2 px-3 h-8 rounded-lg',
-                'border border-neutral-300 dark:border-neutral-700',
-                'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100',
-                'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors',
+                'flex items-center gap-2 px-3 h-7.5 rounded-lg',
+                'border border-border',
+                'bg-background text-foreground',
+                'hover:bg-accent transition-colors',
                 className,
               )}
             >
@@ -157,7 +160,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-40 shadow-lg border border-neutral-200 dark:border-neutral-800"
+            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
             align="start"
             side="bottom"
             sideOffset={4}
@@ -193,10 +196,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <CommandList className="max-h-[15em]">
                 {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
                   <CommandGroup key={category}>
-                    {categoryIndex > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-                    <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                      {category} Models
-                    </div>
+                    {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
+                    <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">{category} Models</div>
                     {categoryModels.map((model) => {
                       const requiresAuth = requiresAuthentication(model.value) && !user;
                       const requiresPro = requiresProSubscription(model.value) && !isProUser;
@@ -209,7 +210,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             className={cn(
                               'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
                               'transition-all duration-200',
-                              'opacity-50 hover:opacity-70 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                              'opacity-50 hover:opacity-70 hover:bg-accent',
                             )}
                             onClick={() => {
                               if (isSubscriptionLoading) {
@@ -229,12 +230,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                               <div className="font-medium truncate text-[11px] flex items-center gap-1">
                                 {model.label}
                                 {requiresAuth ? (
-                                  <LockIcon className="size-3 text-neutral-400" />
+                                  <LockIcon className="size-3 text-muted-foreground" />
                                 ) : (
-                                  <Crown className="size-3 text-neutral-400" />
+                                  <Crown className="size-3 text-muted-foreground" />
                                 )}
                               </div>
-                              <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                              <div className="text-[9px] text-muted-foreground truncate leading-tight">
                                 {model.description}
                               </div>
                             </div>
@@ -253,8 +254,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           className={cn(
                             'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
                             'transition-all duration-200',
-                            'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                            'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
+                            'hover:bg-accent',
+                            'data-[selected=true]:bg-accent',
                           )}
                         >
                           <div className="flex flex-col min-w-0 flex-1">
@@ -265,14 +266,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 const requiresPro = requiresProSubscription(model.value) && !isProUser;
 
                                 if (requiresAuth) {
-                                  return <LockIcon className="size-3 text-neutral-400" />;
+                                  return <LockIcon className="size-3 text-muted-foreground" />;
                                 } else if (requiresPro) {
-                                  return <Crown className="size-3 text-neutral-400" />;
+                                  return <Crown className="size-3 text-muted-foreground" />;
                                 }
                                 return null;
                               })()}
                             </div>
-                            <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight">
+                            <div className="text-[9px] text-muted-foreground truncate leading-tight">
                               {model.description}
                             </div>
                           </div>
@@ -293,63 +294,57 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         </Popover>
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="sm:max-w-md p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+          <DialogContent className="sm:max-w-md p-0 gap-0 border !shadow-none">
             <div className="p-6 space-y-5">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center">
-                    <Crown className="w-4 h-4 text-white dark:text-black" weight="fill" />
+                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                    <Crown className="w-4 h-4 text-primary-foreground" weight="fill" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                      {selectedProModel?.label} requires Pro
-                    </h2>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      Upgrade to access premium AI models
-                    </p>
+                    <h2 className="text-lg font-medium text-foreground">{selectedProModel?.label} requires Pro</h2>
+                    <p className="text-sm text-muted-foreground">Upgrade to access premium AI models</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Unlimited searches</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">No daily limits or restrictions</p>
+                    <p className="text-sm font-medium text-foreground">Unlimited searches</p>
+                    <p className="text-xs text-muted-foreground">No daily limits or restrictions</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Premium AI models</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      Claude 4 Opus, Grok 3, advanced reasoning
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Premium AI models</p>
+                    <p className="text-xs text-muted-foreground">Claude 4 Opus, Grok 3, advanced reasoning</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">PDF analysis</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload and analyze documents</p>
+                    <p className="text-sm font-medium text-foreground">PDF analysis</p>
+                    <p className="text-xs text-muted-foreground">Upload and analyze documents</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-4 space-y-2">
+              <div className="bg-muted rounded-lg p-4 space-y-2">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-medium text-neutral-900 dark:text-neutral-100">$15</span>
-                  <span className="text-sm text-neutral-500 dark:text-neutral-400">/month</span>
+                  <span className="text-xl font-medium text-foreground">$15</span>
+                  <span className="text-sm text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Cancel anytime</p>
+                <p className="text-xs text-muted-foreground">Cancel anytime</p>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowUpgradeDialog(false)}
-                  className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className="flex-1 h-9 text-sm font-normal"
                 >
                   Maybe later
                 </Button>
@@ -357,7 +352,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   onClick={() => {
                     window.location.href = '/pricing';
                   }}
-                  className="flex-1 h-9 text-sm font-normal bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                  className="flex-1 h-9 text-sm font-normal"
                 >
                   Upgrade now
                 </Button>
@@ -367,11 +362,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         </Dialog>
 
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-          <DialogContent className="sm:max-w-[420px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+          <DialogContent className="sm:max-w-[420px] p-0 gap-0 border !shadow-none">
             <div className="p-6 space-y-5">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-600 dark:bg-neutral-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -380,47 +375,39 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-4 h-4 text-white"
+                      className="w-4 h-4 text-muted-foreground"
                     >
                       <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                      {selectedAuthModel?.label} requires sign in
-                    </h2>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      Create an account to access this AI model
-                    </p>
+                    <h2 className="text-lg font-medium text-foreground">{selectedAuthModel?.label} requires sign in</h2>
+                    <p className="text-sm text-muted-foreground">Create an account to access this AI model</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Access better models</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      Gemini 2.5 Flash Lite and GPT-4o Mini
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Access better models</p>
+                    <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Lite and GPT-4o Mini</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Save search history</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Keep track of your conversations</p>
+                    <p className="text-sm font-medium text-foreground">Save search history</p>
+                    <p className="text-xs text-muted-foreground">Keep track of your conversations</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 mt-2 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Free to start</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      No payment required for basic features
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Free to start</p>
+                    <p className="text-xs text-muted-foreground">No payment required for basic features</p>
                   </div>
                 </div>
               </div>
@@ -429,7 +416,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 <Button
                   variant="outline"
                   onClick={() => setShowSignInDialog(false)}
-                  className="flex-1 h-9 text-sm font-normal border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className="flex-1 h-9 text-sm font-normal"
                 >
                   Cancel
                 </Button>
@@ -437,7 +424,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   onClick={() => {
                     window.location.href = '/sign-in';
                   }}
-                  className="flex-1 h-9 text-sm font-normal bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
+                  className="flex-1 h-9 text-sm font-normal"
                 >
                   Sign in
                 </Button>
@@ -566,20 +553,20 @@ const AttachmentPreview: React.FC<{
       transition={{ duration: 0.2 }}
       className={cn(
         'relative flex items-center',
-        'bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xs',
-        'border border-neutral-200/80 dark:border-neutral-700/80',
+        'bg-background/90 backdrop-blur-xs',
+        'border border-border/80',
         'rounded-lg p-2 pr-8 gap-2.5',
-        'shadow-xs hover:shadow-md',
         'shrink-0 z-0',
-        'hover:bg-white dark:hover:bg-neutral-800',
+        'hover:bg-background',
         'transition-all duration-200',
         'group',
+        '!shadow-none',
       )}
     >
       {isUploading ? (
         <div className="w-8 h-8 flex items-center justify-center">
           <svg
-            className="animate-spin h-4 w-4 text-neutral-500 dark:text-neutral-400"
+            className="animate-spin h-4 w-4 text-muted-foreground"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -597,7 +584,7 @@ const AttachmentPreview: React.FC<{
           <div className="relative w-6 h-6">
             <svg className="w-full h-full" viewBox="0 0 100 100">
               <circle
-                className="text-neutral-200 dark:text-neutral-700 stroke-current"
+                className="text-muted stroke-current"
                 strokeWidth="8"
                 cx="50"
                 cy="50"
@@ -617,14 +604,12 @@ const AttachmentPreview: React.FC<{
               ></circle>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] font-medium text-neutral-800 dark:text-neutral-200">
-                {Math.round(attachment.progress * 100)}%
-              </span>
+              <span className="text-[10px] font-medium text-foreground">{Math.round(attachment.progress * 100)}%</span>
             </div>
           </div>
         </div>
       ) : (
-        <div className="w-8 h-8 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900 shrink-0 ring-1 ring-neutral-200/50 dark:ring-neutral-700/50 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg overflow-hidden bg-muted shrink-0 ring-1 ring-border flex items-center justify-center">
           {isPdf(attachment) ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -636,7 +621,7 @@ const AttachmentPreview: React.FC<{
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-red-500 dark:text-red-400"
+              className="text-red-500"
             >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -654,11 +639,9 @@ const AttachmentPreview: React.FC<{
       )}
       <div className="grow min-w-0">
         {!isUploadingAttachment(attachment) && (
-          <p className="text-xs font-medium truncate text-neutral-800 dark:text-neutral-200">
-            {truncateFilename(attachment.name)}
-          </p>
+          <p className="text-xs font-medium truncate text-foreground">{truncateFilename(attachment.name)}</p>
         )}
-        <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+        <p className="text-[10px] text-muted-foreground">
           {isUploadingAttachment(attachment) ? 'Uploading...' : formatFileSize((attachment as Attachment).size)}
         </p>
       </div>
@@ -671,16 +654,16 @@ const AttachmentPreview: React.FC<{
         }}
         className={cn(
           'absolute -top-1.5 -right-1.5 p-0.5 m-0 rounded-full',
-          'bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xs',
-          'border border-neutral-200/80 dark:border-neutral-700/80',
-          'shadow-xs hover:shadow-md',
+          'bg-background/90 backdrop-blur-xs',
+          'border border-border/80',
           'transition-all duration-200 z-20',
           'opacity-0 group-hover:opacity-100',
           'scale-75 group-hover:scale-100',
-          'hover:bg-neutral-100 dark:hover:bg-neutral-700',
+          'hover:bg-muted/50',
+          '!shadow-none',
         )}
       >
-        <X className="h-3 w-3 text-neutral-500 dark:text-neutral-400" />
+        <X className="h-3 w-3 text-muted-foreground" />
       </motion.button>
     </motion.div>
   );
@@ -784,48 +767,55 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   return (
     <div className="flex items-center">
       {/* Toggle Switch Container */}
-      <div className="flex items-center bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg !gap-1 !py-1 !px-0.75 h-8">
+      <div className="flex items-center bg-background border border-border rounded-lg !gap-1 !py-1 !px-0.75 h-8">
         {/* Group Selector Side */}
         <Popover open={open && !isExtreme} onOpenChange={(newOpen) => !isExtreme && setOpen(newOpen)}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              role="combobox"
-              aria-expanded={open && !isExtreme}
-              size="sm"
-              onClick={() => {
-                if (isExtreme) {
-                  // Switch back to web mode when clicking groups in extreme mode
-                  const webGroup = searchGroups.find((group) => group.id === 'web');
-                  if (webGroup) {
-                    onGroupSelect(webGroup);
-                  }
-                } else {
-                  setOpen(!open);
-                }
-              }}
-              className={cn(
-                'flex items-center gap-1.5 !m-0 !px-2 h-6 rounded-md transition-all cursor-pointer',
-                !isExtreme
-                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-300 dark:hover:bg-neutral-700'
-                  : 'text-neutral-400 dark:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800',
-              )}
-            >
-              {selectedGroupData && !isExtreme && (
-                <>
-                  <selectedGroupData.icon className="h-3.5 w-3.5" />
-                  <ChevronsUpDown className="h-3 w-3 opacity-50" />
-                </>
-              )}
-              {isExtreme && (
-                <>
-                  <Globe className="h-3.5 w-3.5" />
-                </>
-              )}
-            </Button>
-          </PopoverTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  role="combobox"
+                  aria-expanded={open && !isExtreme}
+                  size="sm"
+                  onClick={() => {
+                    if (isExtreme) {
+                      // Switch back to web mode when clicking groups in extreme mode
+                      const webGroup = searchGroups.find((group) => group.id === 'web');
+                      if (webGroup) {
+                        onGroupSelect(webGroup);
+                      }
+                    } else {
+                      setOpen(!open);
+                    }
+                  }}
+                  className={cn(
+                    'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
+                    !isExtreme
+                      ? 'bg-accent text-foreground hover:bg-accent/80'
+                      : 'text-muted-foreground hover:bg-accent',
+                  )}
+                >
+                  {selectedGroupData && !isExtreme && (
+                    <>
+                      <selectedGroupData.icon className="h-4 w-4" />
+                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </>
+                  )}
+                  {isExtreme && (
+                    <>
+                      <Globe className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
+            </TooltipContent>
+          </Tooltip>
           <PopoverContent
-            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-white dark:bg-neutral-900 z-50 shadow-lg border border-neutral-200 dark:border-neutral-800"
+            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-popover z-50 border !shadow-none"
             align="start"
             side="bottom"
             sideOffset={4}
@@ -848,9 +838,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
               <CommandEmpty>No search mode found.</CommandEmpty>
               <CommandList className="max-h-[240px]">
                 <CommandGroup>
-                  <div className="px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                    Search Mode
-                  </div>
+                  <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
                   {visibleGroups.map((group) => {
                     const Icon = group.icon;
                     return (
@@ -867,17 +855,15 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                         className={cn(
                           'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
                           'transition-all duration-200',
-                          'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                          'data-[selected=true]:bg-neutral-200 dark:data-[selected=true]:bg-neutral-700',
+                          'hover:bg-accent',
+                          'data-[selected=true]:bg-accent',
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                          <Icon className="size-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                          <Icon className="size-4 text-muted-foreground flex-shrink-0" />
                           <div className="flex flex-col min-w-0 flex-1">
-                            <div className="font-medium truncate text-[11px] text-neutral-900 dark:text-neutral-100">
-                              {group.name}
-                            </div>
-                            <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate leading-tight text-wrap!">
+                            <div className="font-medium truncate text-[11px] text-foreground">{group.name}</div>
+                            <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
                               {group.description}
                             </div>
                           </div>
@@ -895,19 +881,24 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
         </Popover>
 
         {/* Extreme Mode Side */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleToggleExtreme}
-          className={cn(
-            'flex items-center gap-1.5 px-2 h-6 rounded-md transition-all',
-            isExtreme
-              ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-300 dark:hover:bg-neutral-700'
-              : 'text-neutral-400 dark:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800',
-          )}
-        >
-          <TelescopeIcon className="h-3.5 w-3.5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleExtreme}
+              className={cn(
+                'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
+                isExtreme ? 'bg-accent text-foreground hover:bg-accent/80' : 'text-muted-foreground hover:bg-accent',
+              )}
+            >
+              <TelescopeIcon className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{isExtreme ? 'Switch to search modes' : 'Switch to extreme mode'}</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
@@ -1740,10 +1731,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           className={cn(
             'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
             hasInteracted ? 'z-51' : '',
-            isDragging && 'ring-1 ring-neutral-300 dark:ring-neutral-700',
-            attachments.length > 0 || uploadQueue.length > 0
-              ? 'bg-gray-100/70 dark:bg-neutral-800 p-1'
-              : 'bg-transparent',
+            isDragging && 'ring-1 ring-border',
+            attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/70 p-1' : 'bg-transparent',
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -1755,19 +1744,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 backdrop-blur-[2px] bg-background/80 dark:bg-neutral-900/80 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center z-50 m-2"
+                className="absolute inset-0 backdrop-blur-[2px] bg-background/80 rounded-lg border border-dashed border-border flex items-center justify-center z-50 m-2"
               >
                 <div className="flex items-center gap-4 px-6 py-8">
-                  <div className="p-3 rounded-full bg-neutral-100 dark:bg-neutral-800 shadow-xs">
-                    <Upload className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
+                  <div className="p-3 rounded-full bg-muted !shadow-none">
+                    <Upload className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div className="space-y-1 text-center">
-                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                      Drop images or PDFs here
-                    </p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                      Max {MAX_FILES} files (5MB per file)
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Drop images or PDFs here</p>
+                    <p className="text-xs text-muted-foreground">Max {MAX_FILES} files (5MB per file)</p>
                   </div>
                 </div>
               </motion.div>
@@ -1802,7 +1787,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           />
 
           {(attachments.length > 0 || uploadQueue.length > 0) && (
-            <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+            <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
               {attachments.map((attachment, index) => (
                 <AttachmentPreview
                   key={attachment.url}
@@ -1831,7 +1816,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           {/* Form container */}
           <div className="relative">
-            <div className="rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200! dark:border-neutral-700! focus-within:border-neutral-300! dark:focus-within:border-neutral-500! transition-colors duration-200">
+            <div className="rounded-xl bg-muted border border-border focus-within:border-ring transition-colors duration-200">
               {isRecording ? (
                 <Textarea
                   ref={inputRef}
@@ -1841,9 +1826,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   className={cn(
                     'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
-                    'bg-neutral-100 dark:bg-neutral-900',
+                    'bg-muted',
                     'border-0!',
-                    'text-neutral-600 dark:text-neutral-400',
+                    'text-muted-foreground',
                     'focus:ring-0! focus-visible:ring-0!',
                     'px-4! py-4!',
                     'touch-manipulation',
@@ -1894,9 +1879,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   className={cn(
                     'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
-                    'bg-neutral-100 dark:bg-neutral-900',
+                    '!bg-muted',
                     'border-0!',
-                    'text-neutral-900 dark:text-neutral-100',
+                    'text-foreground',
                     'focus:ring-0! focus-visible:ring-0!',
                     'px-4! py-4!',
                     'touch-manipulation',
@@ -1921,8 +1906,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
               <div
                 className={cn(
                   'flex justify-between items-center rounded-t-none rounded-b-xl',
-                  'bg-neutral-100 dark:bg-neutral-900',
-                  'border-t-0 border-neutral-200! dark:border-neutral-700!',
+                  'bg-muted',
+                  'border-t-0 border-border!',
                   'p-2 gap-2',
                 )}
               >
@@ -1952,7 +1937,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-lg p-1.75 h-8 w-8 border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
+                          className="group rounded-lg p-1.75 h-8 w-8 border border-border bg-background text-foreground hover:bg-accent transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1967,11 +1952,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipContent
                         side="bottom"
                         sideOffset={6}
-                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">Attach File</span>
-                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                          <span className="text-[10px] text-muted-foreground leading-tight">
                             {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
                           </span>
                         </div>
@@ -1983,7 +1968,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-lg p-1.75 h-8 w-8 border border-red-600 bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
+                          className="group rounded-lg p-1.75 h-8 w-8 border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1998,7 +1983,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipContent
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <span className="font-medium text-[11px]">Stop Generation</span>
                       </TooltipContent>
@@ -2009,10 +1994,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipTrigger asChild>
                         <button
                           className={cn(
-                            'group rounded-lg p-1.75 h-8 w-8 transition-colors duration-200',
+                            'group rounded-lg p-1.5 size-7.5 transition-colors duration-200',
                             isRecording
-                              ? 'border border-red-600 bg-red-600 text-white hover:bg-red-700'
-                              : 'border border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-700',
+                              ? 'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                              : 'border border-primary bg-primary text-primary-foreground hover:bg-primary/90',
                           )}
                           onClick={(event) => {
                             event.preventDefault();
@@ -2028,13 +2013,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipContent
                         side="bottom"
                         sideOffset={6}
-                        className=" border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">
                             {isRecording ? 'Stop Recording' : 'Voice Input'}
                           </span>
-                          <span className="text-[10px] text-neutral-300 dark:text-neutral-600 leading-tight">
+                          <span className="text-[10px] text-muted-foreground leading-tight">
                             {isRecording ? 'Click to stop recording' : 'Record your voice message'}
                           </span>
                         </div>
@@ -2045,7 +2030,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
-                          className="group rounded-lg flex p-1.75 m-auto h-8 w-8 border border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-zinc-600 transition-colors duration-200"
+                          className="group rounded-lg flex p-1.75 m-auto h-8 w-8 border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary transition-colors duration-200"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2067,7 +2052,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipContent
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 shadow-lg backdrop-blur-xs py-2 px-3"
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <span className="font-medium text-[11px]">Send Message</span>
                       </TooltipContent>

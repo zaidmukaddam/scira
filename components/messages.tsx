@@ -9,8 +9,6 @@ import { MarkdownRenderer } from '@/components/markdown';
 import ToolInvocationListView from '@/components/tool-invocation-list-view';
 import { deleteTrailingMessages } from '@/app/actions';
 import { toast } from 'sonner';
-import { updateChatVisibility } from '@/app/actions';
-import { invalidateChatsCache } from '@/lib/utils';
 import { Share } from '@phosphor-icons/react';
 import { EnhancedErrorDisplay } from '@/components/message';
 
@@ -42,7 +40,7 @@ interface MessagesProps {
 }
 
 const SciraLogoHeader = () => (
-  <div className="flex items-center gap-2 mt-2 mb-2">
+  <div className="flex items-center gap-2">
     <Image
       src="/scira.png"
       alt="Scira"
@@ -351,8 +349,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
                 i > partIndex && (p.type === 'text' || p.type === 'tool-invocation'),
             );
             const parallelTool = hasParallelToolInvocation
-              ? parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation?.toolName ??
-                null
+              ? (parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation
+                  ?.toolName ?? null)
               : null;
 
             // Separate expanded and fullscreen states

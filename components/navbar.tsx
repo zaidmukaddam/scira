@@ -3,19 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Plus,
-  Globe,
-  GlobeHemisphereWest,
-  Lock,
-  Copy,
-  Check,
-  Crown,
-  Lightning,
-  Eye,
-  DotsThree,
-  Share,
-} from '@phosphor-icons/react';
+import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -73,7 +61,7 @@ const Navbar = memo(
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
-    
+
     // Use fast pro status hook for immediate UI response
     const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
 
@@ -138,8 +126,8 @@ const Navbar = memo(
           isDialogOpen
             ? 'bg-transparent pointer-events-none'
             : status === 'streaming' || status === 'ready'
-            ? 'bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60'
-            : 'bg-background',
+              ? 'bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60'
+              : 'bg-background',
         )}
       >
         <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>

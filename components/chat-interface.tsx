@@ -68,7 +68,10 @@ const ChatInterface = memo(
     // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
-    const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage('scira-custom-instructions-enabled', true);
+    const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
+      'scira-custom-instructions-enabled',
+      true,
+    );
 
     // Get persisted values for dialog states
     const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
@@ -87,7 +90,12 @@ const ChatInterface = memo(
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
       chatReducer,
-      createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt, persistedHasShownAnnouncementDialog),
+      createInitialState(
+        initialVisibility,
+        persistedHasShownUpgradeDialog,
+        persistedHasShownSignInPrompt,
+        persistedHasShownAnnouncementDialog,
+      ),
     );
 
     const {
@@ -284,7 +292,15 @@ const ChatInterface = memo(
         initialMessages: initialMessages,
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }),
-      [selectedModel, selectedGroup, chatId, initialChatId, initialMessages, chatState.selectedVisibilityType, isCustomInstructionsEnabled],
+      [
+        selectedModel,
+        selectedGroup,
+        chatId,
+        initialChatId,
+        initialMessages,
+        chatState.selectedVisibilityType,
+        isCustomInstructionsEnabled,
+      ],
     );
 
     const {
@@ -425,8 +441,20 @@ const ChatInterface = memo(
 
     // Dialog management state - track command dialog state in chat state
     useEffect(() => {
-      dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: chatState.commandDialogOpen || chatState.showSignInPrompt || chatState.showUpgradeDialog || chatState.showAnnouncementDialog });
-    }, [chatState.commandDialogOpen, chatState.showSignInPrompt, chatState.showUpgradeDialog, chatState.showAnnouncementDialog]);
+      dispatch({
+        type: 'SET_ANY_DIALOG_OPEN',
+        payload:
+          chatState.commandDialogOpen ||
+          chatState.showSignInPrompt ||
+          chatState.showUpgradeDialog ||
+          chatState.showAnnouncementDialog,
+      });
+    }, [
+      chatState.commandDialogOpen,
+      chatState.showSignInPrompt,
+      chatState.showUpgradeDialog,
+      chatState.showAnnouncementDialog,
+    ]);
 
     // Keyboard shortcut for command dialog
     useEffect(() => {
