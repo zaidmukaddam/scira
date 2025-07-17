@@ -19,7 +19,7 @@ export default function SuccessPage() {
 
     // Side cannons
     const end = Date.now() + 3 * 1000; // 3 seconds
-    const colors = ['#000000', '#404040', '#606060'];
+    const colors = ['hsl(var(--foreground))', 'hsl(var(--muted-foreground))', 'hsl(var(--border))'];
 
     const frame = () => {
       if (Date.now() > end) return;
@@ -51,21 +51,21 @@ export default function SuccessPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-6">
+    <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="text-center max-w-md">
         {/* Success Icon */}
-        <div className="mx-auto mb-8 w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">
-          <Check className="h-5 w-5 text-zinc-600" />
+        <div className="mx-auto mb-8 w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+          <Check className="h-5 w-5 text-muted-foreground" />
         </div>
 
         {/* Content */}
-        <h1 className="text-2xl font-light text-zinc-900 mb-4 tracking-tight">Welcome to Scira Pro</h1>
-        <p className="text-zinc-600 mb-8">Your subscription is active. Start unlimited searching.</p>
+        <h1 className="text-2xl font-light text-foreground mb-4 tracking-tight">Welcome to Scira Pro</h1>
+        <p className="text-muted-foreground mb-8">Your subscription is active. Start unlimited searching.</p>
 
         {/* Action */}
         <Button
           onClick={() => router.push('/')}
-          className="bg-black hover:bg-zinc-800 text-white h-9 px-6 text-sm font-normal"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-6 text-sm font-normal"
         >
           Start searching
           <ArrowRight className="ml-2 h-3.5 w-3.5" />
