@@ -897,7 +897,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>{isExtreme ? 'Switch to search modes' : 'Switch to extreme mode'}</p>
+            <p>{isExtreme ? 'extreme mode on' : 'Switch to extreme mode'}</p>
           </TooltipContent>
         </Tooltip>
       </div>
