@@ -40,7 +40,7 @@ interface MessagesProps {
 }
 
 const SciraLogoHeader = () => (
-  <div className="flex items-center gap-2">
+  <div className="flex items-center gap-2 my-1.5">
     <Image
       src="/scira.png"
       alt="Scira"
