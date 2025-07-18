@@ -110,9 +110,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
 
-    // First, extract and protect LaTeX blocks
-    const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
+    // First, extract and protect monetary amounts
+    const monetaryBlocks: Array<{ id: string; content: string }> = [];
     let modifiedContent = content;
+
+    // Protect common monetary patterns
+    const monetaryPatterns = [
+      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B))\b/g,
+      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?=\s|$|[.,;!?])/g,
+    ];
+
+    monetaryPatterns.forEach((pattern) => {
+      modifiedContent = modifiedContent.replace(pattern, (match) => {
+        const id = `MONETARY${monetaryBlocks.length}END`;
+        monetaryBlocks.push({ id, content: match });
+        return id;
+      });
+    });
+
+    // Then extract and protect LaTeX blocks
+    const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
 
     // Extract block equations first (they need to be standalone)
     const blockPatterns = [
@@ -128,6 +145,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       });
     });
 
+    // Process LaTeX patterns (monetary amounts are already protected)
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
       { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
@@ -142,16 +160,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     });
 
     // Now process citations (LaTeX is already protected)
-    // Process standard markdown links
-    const stdLinkRegex = /\[([^\]]+)\]\(((?:\([^()]*\)|[^()])*)\)/g;
-    modifiedContent = modifiedContent.replace(stdLinkRegex, (match, text, url) => {
-      citations.push({ text, link: url });
-      return `[${text}](${url})`;
-    });
 
     // Process references followed by URLs
     const refWithUrlRegex =
       /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
+
+    // Process standalone URLs at the end of sentences
+    const standaloneUrlRegex = /\s+(https?:\/\/[^\s\]]+)(?=\s*[\].,;:!?\s]|$)/g;
     modifiedContent = modifiedContent.replace(refWithUrlRegex, (match, docType, bracketText, plainText, url) => {
       const text = bracketText || plainText;
       const fullText = (docType ? `[${docType}] ` : '') + text;
@@ -159,6 +174,35 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
       citations.push({ text: fullText.trim(), link: cleanUrl });
       return `[${fullText.trim()}](${cleanUrl})`;
+    });
+
+    // Process standalone URLs
+    modifiedContent = modifiedContent.replace(standaloneUrlRegex, (match, url) => {
+      // Extract a reasonable title from the URL
+      const cleanUrl = url.replace(/[.,;:!?]+$/, '');
+      const urlParts = cleanUrl.split('/');
+      const domain = urlParts[2] || cleanUrl;
+      const path = urlParts.slice(3).join('/');
+
+      // Try to extract a meaningful title
+      let title = domain;
+      if (path) {
+        const pathTitle = path
+          .split(/[-_]/)
+          .join(' ')
+          .replace(/\.[^.]*$/, '');
+        if (pathTitle.length > 0 && pathTitle.length < 100) {
+          title = pathTitle;
+        }
+      }
+
+      // Check if this URL is already linked
+      const alreadyLinked = citations.some((citation) => citation.link === cleanUrl);
+      if (!alreadyLinked) {
+        citations.push({ text: title, link: cleanUrl });
+        return ` [${title}](${cleanUrl})`;
+      }
+      return match;
     });
 
     // Process quoted paper titles
@@ -181,6 +225,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         citations.push({ text: filename, link: url });
       }
       return match;
+    });
+
+    // Restore protected monetary amounts
+    monetaryBlocks.forEach(({ id, content }) => {
+      modifiedContent = modifiedContent.replace(id, content);
     });
 
     return [modifiedContent, citations, latexBlocks];
@@ -428,11 +477,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         components.push(<span key={`text-final-${components.length}-${generateKey()}`}>{textContent}</span>);
       }
 
-      return components.length === 1 ? (
-        components[0]
-      ) : (
-        <Fragment key={generateKey()}>{components}</Fragment>
-      );
+      return components.length === 1 ? components[0] : <Fragment key={generateKey()}>{components}</Fragment>;
     },
     paragraph(children) {
       // Check if the paragraph contains only a LaTeX block placeholder

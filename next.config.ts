@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
-          exclude: ['error'],
-        }
+            exclude: ['error'],
+          }
         : false,
   },
   experimental: {
@@ -23,7 +23,6 @@ const nextConfig: NextConfig = {
       dynamic: 10,
       static: 30,
     },
-    reactCompiler: true,
   },
   transpilePackages: ['geist', '@daytonaio/sdk'],
   output: 'standalone',
