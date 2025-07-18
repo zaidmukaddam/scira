@@ -22,7 +22,7 @@ export const scira = customProvider({
     'scira-x-fast-mini': xai('grok-3-mini-fast'),
     'scira-x-fast': xai('grok-3-fast'),
     'scira-nano': openai.responses('gpt-4.1-nano'),
-    'scira-4.1-mini' : openai.responses('gpt-4.1-mini'),
+    'scira-4.1-mini': openai.responses('gpt-4.1-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
     'scira-vision': xai('grok-2-vision-1212'),
@@ -51,9 +51,9 @@ export const scira = customProvider({
     'scira-google': google('gemini-2.5-flash'),
     'scira-google-pro': google('gemini-2.5-pro'),
     'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
-    'scira-anthropic-thinking': anthropic('claude-sonnet-4-20250514'),
-    'scira-opus': anthropic('claude-4-opus-20250514'),
-    'scira-opus-pro': anthropic('claude-4-opus-20250514'),
+    // 'scira-anthropic-thinking': anthropic('claude-sonnet-4-20250514'),
+    // 'scira-opus': anthropic('claude-4-opus-20250514'),
+    // 'scira-opus-pro': anthropic('claude-4-opus-20250514'),
     'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
       parallelToolCalls: false,
     }),
@@ -235,48 +235,6 @@ export const models = [
     maxOutputTokens: 64000,
   },
   {
-    value: 'scira-anthropic-thinking',
-    label: 'Claude 4 Sonnet Thinking',
-    description: "Anthropic's most advanced reasoning model",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Pro',
-    pdf: true,
-    pro: true,
-    requiresAuth: false,
-    freeUnlimited: false,
-    maxOutputTokens: 64000,
-  },
-  {
-    value: 'scira-opus',
-    label: 'Claude 4 Opus',
-    description: "Anthropic's ultra advanced model",
-    vision: true,
-    reasoning: false,
-    experimental: false,
-    category: 'Pro',
-    pdf: true,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 32000,
-  },
-  {
-    value: 'scira-opus-pro',
-    label: 'Claude 4 Opus Thinking',
-    description: "Anthropic's ultra advanced reasoning model",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Pro',
-    pdf: true,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 32000,
-  },
-  {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash',
     description: "Google's advanced small model",
@@ -302,7 +260,7 @@ export const models = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 131072,
+    maxOutputTokens: 10000,
   },
   {
     value: 'scira-google-pro',
@@ -366,7 +324,7 @@ export const models = [
 
 // Helper functions for model access checks
 export function getModelConfig(modelValue: string) {
-  return models.find(model => model.value === modelValue);
+  return models.find((model) => model.value === modelValue);
 }
 
 export function requiresAuthentication(modelValue: string): boolean {
@@ -446,6 +404,6 @@ export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): st
 }
 
 // Legacy arrays for backward compatibility (deprecated - use helper functions instead)
-export const authRequiredModels = models.filter(m => m.requiresAuth).map(m => m.value);
-export const proRequiredModels = models.filter(m => m.pro).map(m => m.value);
-export const freeUnlimitedModels = models.filter(m => m.freeUnlimited).map(m => m.value);
+export const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
+export const proRequiredModels = models.filter((m) => m.pro).map((m) => m.value);
+export const freeUnlimitedModels = models.filter((m) => m.freeUnlimited).map((m) => m.value);
