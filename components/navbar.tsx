@@ -9,13 +9,7 @@ import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFastProStatus } from '@/hooks/use-user-data';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { User } from '@/lib/db/schema';
 import { LinkedinLogo, RedditLogo, XLogo } from '@phosphor-icons/react';
@@ -62,12 +56,9 @@ const Navbar = memo(
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
 
-    // Use fast pro status hook for immediate UI response
-    const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
-
-    // Use passed Pro status instead of calculating it, but prioritize fast status if available
-    const hasActiveSubscription = user ? fastProStatus : isProUser;
-    const showProLoading = user ? fastProLoading : isProStatusLoading;
+    // Use passed Pro status directly
+    const hasActiveSubscription = isProUser;
+    const showProLoading = isProStatusLoading;
 
     const handleCopyLink = (e: React.MouseEvent) => {
       e.preventDefault();
