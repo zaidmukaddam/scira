@@ -62,7 +62,7 @@ export const models = [
   {
     value: 'scira-default',
     label: 'Grok 3 Mini',
-    description: "xAI's most efficient reasoning model",
+    description: "xAI's most efficient reasoning LLM.",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -76,7 +76,7 @@ export const models = [
   {
     value: 'scira-vision',
     label: 'Grok 2 Vision',
-    description: "xAI's advanced vision model",
+    description: "xAI's advanced vision LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -90,7 +90,7 @@ export const models = [
   {
     value: 'scira-grok-3',
     label: 'Grok 3',
-    description: "xAI's recent smartest model",
+    description: "xAI's recent smartest LLM",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -104,7 +104,7 @@ export const models = [
   {
     value: 'scira-grok-4',
     label: 'Grok 4',
-    description: "xAI's most intelligent model",
+    description: "xAI's most intelligent vision LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -120,7 +120,7 @@ export const models = [
   {
     value: 'scira-mistral',
     label: 'Mistral Small',
-    description: "Mistral's small model",
+    description: "Mistral's small LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -134,7 +134,7 @@ export const models = [
   {
     value: 'scira-qwen-30b',
     label: 'Qwen 3 30B A3B',
-    description: "Alibaba's advanced MoE reasoning model",
+    description: "Alibaba's advanced MoE reasoning LLM",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -148,7 +148,7 @@ export const models = [
   {
     value: 'scira-qwen-32b',
     label: 'Qwen 3 32B',
-    description: "Alibaba's advanced reasoning model",
+    description: "Alibaba's advanced reasoning LLM",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -162,7 +162,7 @@ export const models = [
   {
     value: 'scira-deepseek-v3',
     label: 'DeepSeek V3 0324',
-    description: "DeepSeek's advanced base model",
+    description: "DeepSeek's advanced base LLM",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -176,7 +176,7 @@ export const models = [
   {
     value: 'scira-4o-mini',
     label: 'GPT 4o Mini',
-    description: "OpenAI's previous flagship mini model",
+    description: "OpenAI's previous flagship mini LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -190,7 +190,7 @@ export const models = [
   {
     value: 'scira-4.1-mini',
     label: 'GPT 4.1 Mini',
-    description: "OpenAI's latest flagship mini model",
+    description: "OpenAI's latest flagship mini LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -204,7 +204,7 @@ export const models = [
   {
     value: 'scira-google-lite',
     label: 'Gemini 2.5 Flash Lite',
-    description: "Google's advanced smallest model",
+    description: "Google's advanced smallest LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -220,7 +220,7 @@ export const models = [
   {
     value: 'scira-anthropic',
     label: 'Claude 4 Sonnet',
-    description: "Anthropic's most advanced model",
+    description: "Anthropic's most advanced LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -234,7 +234,7 @@ export const models = [
   {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash',
-    description: "Google's advanced small model",
+    description: "Google's advanced small LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -248,7 +248,7 @@ export const models = [
   {
     value: 'scira-kimi-k2',
     label: 'Kimi K2',
-    description: "MoonShot AI's advanced base model",
+    description: "MoonShot AI's advanced base LLM",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -262,7 +262,7 @@ export const models = [
   {
     value: 'scira-google-pro',
     label: 'Gemini 2.5 Pro',
-    description: "Google's most advanced model",
+    description: "Google's most advanced LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -276,7 +276,7 @@ export const models = [
   {
     value: 'scira-o4-mini',
     label: 'o4 mini',
-    description: "OpenAI's faster mini reasoning model",
+    description: "OpenAI's faster mini reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -290,7 +290,7 @@ export const models = [
   {
     value: 'scira-o3',
     label: 'o3',
-    description: "OpenAI's big reasoning model",
+    description: "OpenAI's big reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -306,7 +306,7 @@ export const models = [
   {
     value: 'scira-llama-4',
     label: 'Llama 4 Maverick',
-    description: "Meta's latest model",
+    description: "Meta's latest LLM",
     vision: true,
     reasoning: false,
     experimental: true,
