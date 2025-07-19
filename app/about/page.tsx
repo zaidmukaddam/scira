@@ -45,14 +45,7 @@ import {
   ProAccordionTrigger,
   ProAccordionContent,
 } from '@/components/ui/pro-accordion';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGitHubStars } from '@/hooks/use-github-stars';
 import { models } from '@/ai/providers';
 
@@ -207,7 +200,7 @@ export default function AboutPage() {
       </Dialog>
 
       {/* Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-neutral-200 dark:border-neutral-800">
+      <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
         <div className="container max-w-screen-xl mx-auto py-4 px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -253,7 +246,7 @@ export default function AboutPage() {
           <motion.div className="space-y-20 text-center" variants={container} initial="hidden" animate="show">
             {/* Logo & Brand */}
             <motion.div variants={item} className="space-y-8">
-              <Link href="/" className="inline-flex items-center gap-4 group">
+              <Link href="/" className="inline-flex items-center gap-2 group">
                 <div className="relative">
                   <Image
                     src="/scira.png"
@@ -264,11 +257,11 @@ export default function AboutPage() {
                     quality={100}
                   />
                 </div>
-                <span className="text-4xl font-light tracking-tight">Scira</span>
+                <span className="text-5xl font-light tracking-tight font-be-vietname-pro">scira</span>
               </Link>
 
               <div className="space-y-5">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tight text-balance max-w-5xl mx-auto leading-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tight text-balance max-w-5xl mx-auto leading-tight font-be-vietname-pro">
                   Minimalistic Open Source
                   <br />
                   AI-Powered Search Engine
@@ -401,7 +394,7 @@ export default function AboutPage() {
             <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/50">
                 <div className="flex space-x-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-destructive/80"></div>
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                   <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                 </div>
@@ -419,8 +412,8 @@ export default function AboutPage() {
 
                 {/* Processing */}
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-blue-500" />
+                  <div className="w-8 h-8 rounded-full bg-primary/10 shrink-0 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1 space-y-4">
                     <div className="space-y-1.5">
@@ -636,9 +629,9 @@ export default function AboutPage() {
 
       {/* Models Section */}
       <section className="py-24 px-4 bg-accent/10 border-y border-border">
-        <div className="container max-w-screen-xl mx-auto">
+        <div className="container mx-auto">
           <motion.div
-            className="max-w-3xl mx-auto space-y-12"
+            className="mx-auto space-y-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -650,30 +643,22 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="max-w-screen-xl mx-auto">
+            <div className="!max-w-4xl w-full mx-auto">
               <div className="bg-card rounded border border-border overflow-hidden">
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table className="!w-full">
                     <TableHeader>
                       <TableRow className="border-b border-border bg-muted/20">
-                        <TableHead className="w-[280px] py-3 px-6 font-medium text-foreground">
-                          Model
-                        </TableHead>
-                        <TableHead className="py-3 px-6 font-medium text-foreground">
-                          Description
-                        </TableHead>
-                        <TableHead className="w-[100px] py-3 px-6 font-medium text-foreground">
-                          Category
-                        </TableHead>
-                        <TableHead className="w-[200px] py-3 px-6 font-medium text-foreground">
-                          Capabilities
-                        </TableHead>
+                        <TableHead className="w-[280px] py-3 px-6 font-medium text-foreground">Model</TableHead>
+                        <TableHead className="py-3 px-6 font-medium text-foreground">Description</TableHead>
+                        <TableHead className="w-[100px] py-3 px-6 font-medium text-foreground">Category</TableHead>
+                        <TableHead className="w-[200px] py-3 px-6 font-medium text-foreground">Capabilities</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {models.map((model: any) => (
-                        <TableRow 
-                          key={model.value} 
+                        <TableRow
+                          key={model.value}
                           className="border-b border-border/20 hover:bg-muted/10 transition-colors"
                         >
                           <TableCell className="py-3 px-6">
@@ -694,9 +679,7 @@ export default function AboutPage() {
                             </div>
                           </TableCell>
                           <TableCell className="py-3 px-6">
-                            <p className="text-sm text-muted-foreground">
-                              {model.description}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{model.description}</p>
                           </TableCell>
                           <TableCell className="py-3 px-6">
                             <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
@@ -716,9 +699,7 @@ export default function AboutPage() {
                                 </span>
                               )}
                               {model.pdf && (
-                                <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">
-                                  PDF
-                                </span>
+                                <span className="text-xs bg-accent px-2 py-1 rounded text-accent-foreground">PDF</span>
                               )}
                               {!model.vision && !model.reasoning && !model.pdf && (
                                 <span className="text-xs text-muted-foreground">—</span>
@@ -899,7 +880,7 @@ export default function AboutPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24 px-4 bg-white dark:bg-zinc-950 border-y border-border">
+      <section className="py-24 px-4 bg-background border-y border-border">
         <div className="container max-w-screen-xl mx-auto">
           <motion.div
             className="max-w-4xl mx-auto space-y-12"
@@ -914,42 +895,42 @@ export default function AboutPage() {
 
             <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {/* Free Plan */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-8 relative hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-colors duration-200">
+              <div className="bg-card border border-border rounded-xl p-8 relative hover:border-border/80 transition-colors duration-200">
                 <div className="mb-8">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Free</h3>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6 leading-relaxed">
+                  <h3 className="text-lg font-medium text-card-foreground mb-3 tracking-[-0.01em]">Free</h3>
+                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
                     Get started with essential features
                   </p>
                   <div className="flex items-baseline mb-2">
-                    <span className="text-3xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$0</span>
-                    <span className="text-zinc-400 dark:text-zinc-500 ml-2 text-sm">/month</span>
+                    <span className="text-3xl font-light text-card-foreground tracking-tight">$0</span>
+                    <span className="text-muted-foreground ml-2 text-sm">/month</span>
                   </div>
                 </div>
 
                 <div className="mb-6">
                   <ul className="space-y-3">
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Limited daily searches (other models)</span>
+                      <div className="w-1 h-1 bg-muted rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-muted-foreground">10 searches per day (other models)</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-green-500 dark:bg-green-400 rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Unlimited Grok 3 Mini & Grok 2 Vision</span>
+                      <div className="w-1 h-1 bg-muted rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-muted-foreground">5 extreme searches per month</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Basic AI models</span>
+                      <div className="w-1 h-1 bg-muted rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-muted-foreground">Basic AI models</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Search history</span>
+                      <div className="w-1 h-1 bg-muted rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-muted-foreground">Search history</span>
                     </li>
                   </ul>
                 </div>
 
                 <Button
                   variant="outline"
-                  className="w-full h-9 border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-normal text-sm tracking-[-0.01em]"
+                  className="w-full h-9 border-border text-muted-foreground hover:bg-accent font-normal text-sm tracking-[-0.01em]"
                   onClick={() => router.push('/')}
                 >
                   Get Started
@@ -957,50 +938,48 @@ export default function AboutPage() {
               </div>
 
               {/* Pro Plan */}
-              <div className="bg-white dark:bg-zinc-900 border-[1.5px] border-black dark:border-white rounded-xl p-8 relative shadow-sm">
+              <div className="bg-card border-[1.5px] border-foreground rounded-xl p-8 relative shadow-sm">
                 <div className="absolute -top-3 right-8 z-10">
-                  <Badge className="bg-black dark:bg-white text-white dark:text-black px-3 py-1 text-xs font-normal tracking-wide">
+                  <Badge className="bg-foreground text-background px-3 py-1 text-xs font-normal tracking-wide">
                     POPULAR
                   </Badge>
                 </div>
 
                 <div className="mb-8">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">
-                    Scira Pro
-                  </h3>
-                  <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6 leading-relaxed">
+                  <h3 className="text-lg font-medium text-card-foreground mb-3 tracking-[-0.01em]">Scira Pro</h3>
+                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
                     Everything you need for unlimited usage
                   </p>
                   <div className="flex items-baseline mb-2">
-                    <span className="text-3xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
-                    <span className="text-zinc-500 dark:text-zinc-400 ml-2 text-sm">/month</span>
+                    <span className="text-3xl font-light text-card-foreground tracking-tight">$15</span>
+                    <span className="text-muted-foreground ml-2 text-sm">/month</span>
                   </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p>
+                  <p className="text-xs text-muted-foreground tracking-wide">CANCEL ANYTIME</p>
                 </div>
 
                 <div className="mb-6">
                   <ul className="space-y-3">
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Unlimited searches</span>
+                      <div className="w-1 h-1 bg-foreground rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-card-foreground">Unlimited searches</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">All AI models</span>
+                      <div className="w-1 h-1 bg-foreground rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-card-foreground">All AI models</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">PDF document analysis</span>
+                      <div className="w-1 h-1 bg-foreground rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-card-foreground">PDF document analysis</span>
                     </li>
                     <li className="flex items-center text-[15px]">
-                      <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
-                      <span className="text-zinc-700 dark:text-zinc-300">Priority support</span>
+                      <div className="w-1 h-1 bg-foreground rounded-full mr-4 flex-shrink-0"></div>
+                      <span className="text-card-foreground">Priority support</span>
                     </li>
                   </ul>
                 </div>
 
                 <Button
-                  className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
+                  className="w-full h-9 bg-foreground hover:bg-foreground/90 text-background font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
                   onClick={() => router.push('/pricing')}
                 >
                   Upgrade to Pro
@@ -1009,21 +988,21 @@ export default function AboutPage() {
             </div>
 
             {/* Student Discount */}
-            <div className="max-w-3xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 mt-8">
+            <div className="max-w-3xl mx-auto bg-muted/50 border border-border rounded-xl p-6 mt-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-                <div className="p-2 rounded-md bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
-                  <GraduationCap className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                <div className="p-2 rounded-md bg-muted flex-shrink-0">
+                  <GraduationCap className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1 space-y-2 text-center sm:text-left">
                   <h3 className="font-medium text-base">Student Discount: $10 off Pro Plan</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-muted-foreground">
                     Students can get the Pro plan for just $5/month. Email zaid@scira.ai with your student ID and a
                     brief description of how you use Scira for your studies.
                   </p>
                   <div className="pt-1">
                     <a
                       href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-zinc-300 dark:border-zinc-700 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 px-4 py-2"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-border bg-background hover:bg-accent h-9 px-4 py-2"
                     >
                       Request Student Discount
                     </a>
@@ -1033,22 +1012,21 @@ export default function AboutPage() {
             </div>
 
             {/* Free Unlimited Models Highlight */}
-            <div className="max-w-3xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 mt-8">
+            <div className="max-w-3xl mx-auto bg-muted/50 border border-border rounded-xl p-6 mt-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-                <div className="p-2 rounded-md bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                <div className="p-2 rounded-md bg-muted flex-shrink-0">
+                  <Sparkles className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1 space-y-2 text-center sm:text-left">
                   <h3 className="font-medium text-base">Free Unlimited Access to Advanced Models</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Registered users get unlimited access to Grok 3 Mini and Grok 2 Vision models - no daily limits, no
-                    restrictions. Perfect for students, researchers, and professionals who need reliable AI assistance
-                    without breaking the bank.
+                  <p className="text-sm text-muted-foreground">
+                    Free users get 10 searches per day and 5 extreme searches per month. Perfect for getting started
+                    with AI-powered search and research assistance.
                   </p>
                   <div className="pt-1">
                     <Button
                       variant="outline"
-                      className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="border-border text-card-foreground hover:bg-accent"
                       onClick={() => router.push('/sign-up')}
                     >
                       Create Free Account
@@ -1146,11 +1124,11 @@ export default function AboutPage() {
             </ProAccordion>
 
             <div className="text-center pt-4">
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Have more questions?{' '}
                 <a
                   href="mailto:zaid@scira.ai"
-                  className="text-black dark:text-white hover:underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600 transition-colors duration-200"
+                  className="text-foreground hover:underline underline-offset-4 decoration-muted-foreground transition-colors duration-200"
                 >
                   Get in touch
                 </a>
