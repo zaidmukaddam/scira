@@ -351,18 +351,18 @@ export async function POST(req: Request) {
           openai: {
             ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
-                  reasoningEffort: 'medium',
                   strictSchemas: true,
                   reasoningSummary: 'detailed',
+                  serviceTier: 'flex',
                 }
               : {}),
-            ...(model === 'scira-4o-mini'
+            ...(model === 'scira-4.1-mini'
               ? {
                   parallelToolCalls: false,
                   strictSchemas: true,
                 }
               : {}),
-          } as OpenAIResponsesProviderOptions,
+          },
           xai: {
             ...(model === 'scira-default'
               ? {
