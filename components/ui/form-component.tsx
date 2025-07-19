@@ -321,7 +321,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
                   <div>
                     <p className="text-sm font-medium text-foreground">Premium AI models</p>
-                    <p className="text-xs text-muted-foreground">Claude 4 Opus, Grok 3, advanced reasoning</p>
+                    <p className="text-xs text-muted-foreground">Claude 4 Sonnet, Grok 4, advanced reasoning</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

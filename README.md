@@ -90,7 +90,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 - **xAI**: Grok 3, Grok 3 Mini, Grok 2 Vision
 - **Google**: Gemini 2.5 Flash (Preview), Gemini 2.5 Pro (Preview)
-- **Anthropic**: Claude 4 Sonnet, Claude 4 Opus (with thinking capabilities)
+- **Anthropic**: Claude 4 Sonnet
 - **OpenAI**: GPT-4o, o4-mini, o3 (with reasoning capabilities)
 - **Groq**: Qwen QwQ 32B, Qwen 3 32B, Meta's Llama 4 Maverick
 

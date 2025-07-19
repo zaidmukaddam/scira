@@ -5,7 +5,7 @@ import {
   getUserMessageCount,
   getExtremeSearchUsageCount,
   getCurrentUser,
-  getCustomInstructions
+  getCustomInstructions,
 } from '@/app/actions';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import {
@@ -18,7 +18,13 @@ import {
   createDataStream,
   generateObject,
 } from 'ai';
-import { scira, getMaxOutputTokens, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
+import {
+  scira,
+  getMaxOutputTokens,
+  requiresAuthentication,
+  requiresProSubscription,
+  shouldBypassRateLimits,
+} from '@/ai/providers';
 import {
   createStreamId,
   getChatById,
@@ -101,7 +107,7 @@ function getStreamContext() {
 
 export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
-  
+
   const requestStartTime = Date.now();
   const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
   const { latitude, longitude } = geolocation(req);
@@ -147,24 +153,32 @@ export async function POST(req: Request) {
 
         // Check if model requires authentication
         if (requiresAuthentication(model) && !user) {
-          return { canProceed: false, error: new ChatSDKError('unauthorized:model', `${model} requires authentication`) };
+          return {
+            canProceed: false,
+            error: new ChatSDKError('unauthorized:model', `${model} requires authentication`),
+          };
         }
 
         // Check if model requires Pro subscription
         if (requiresProSubscription(model) && !isProUser) {
-          return { canProceed: false, error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`) };
+          return {
+            canProceed: false,
+            error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`),
+          };
         }
 
         // Pro users skip all usage limit checks
         if (isProUser) {
-          console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`);
+          console.log(
+            `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
+          );
           return {
             canProceed: true,
             messageCount: 0, // Not relevant for pro users
             isProUser: true,
             subscriptionData: user.subscriptionData,
             shouldBypassLimits: true,
-            extremeSearchUsage: 0 // Not relevant for pro users
+            extremeSearchUsage: 0, // Not relevant for pro users
           };
         }
 
@@ -196,7 +210,7 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.subscriptionData,
           shouldBypassLimits,
-          extremeSearchUsage: extremeSearchUsage.count
+          extremeSearchUsage: extremeSearchUsage.count,
         };
       } catch (error) {
         console.error('Critical checks failed:', error);
@@ -215,13 +229,13 @@ export async function POST(req: Request) {
       isProUser: false,
       subscriptionData: null,
       shouldBypassLimits: false,
-      extremeSearchUsage: 0
+      extremeSearchUsage: 0,
     });
   }
 
   // Get configuration in parallel with critical checks
   const configStartTime = Date.now();
-  const configPromise = getGroupConfig(group).then(config => {
+  const configPromise = getGroupConfig(group).then((config) => {
     console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
     return config;
   });
@@ -318,58 +332,53 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        ...(model !== 'scira-anthropic-thinking' && model !== 'scira-opus-pro'
-          ? { maxTokens: getMaxOutputTokens(model) }
-          : {}),
         ...(model.includes('scira-qwen-32b')
           ? {
-            temperature: 0.6,
-            topP: 0.95,
-            topK: 20,
-            minP: 0,
-          }
+              temperature: 0.6,
+              topP: 0.95,
+              topK: 20,
+              minP: 0,
+            }
           : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
             ? {
-              temperature: 0.6,
-              topP: 1,
-              topK: 40,
-            }
+                temperature: 0.6,
+                topP: 1,
+                topK: 40,
+              }
             : {
-              temperature: 0,
-            }),
+                temperature: 0,
+              }),
         maxSteps: 5,
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
-        system: instructions + (customInstructions ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}` : '\n') + (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
+        system:
+          instructions +
+          (customInstructions
+            ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
+            : '\n') +
+          (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
         toolChoice: 'auto',
         providerOptions: {
           openai: {
             ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
-                reasoningEffort: 'medium',
-                strictSchemas: true,
-                reasoningSummary: 'detailed',
-              }
+                  reasoningEffort: 'medium',
+                  strictSchemas: true,
+                  reasoningSummary: 'detailed',
+                }
               : {}),
             ...(model === 'scira-4o-mini'
               ? {
-                parallelToolCalls: false,
-                strictSchemas: true,
-              }
+                  parallelToolCalls: false,
+                  strictSchemas: true,
+                }
               : {}),
           } as OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
-                reasoningEffort: 'low',
-              }
-              : {}),
-          },
-          anthropic: {
-            ...(model === 'scira-anthropic-thinking' || model === 'scira-opus-pro'
-              ? {
-                thinking: { type: 'enabled', budgetTokens: 12000 },
-              }
+                  reasoningEffort: 'low',
+                }
               : {}),
           },
         },
@@ -640,7 +649,7 @@ export async function GET(request: Request) {
   }
 
   const emptyDataStream = createDataStream({
-    execute: () => { },
+    execute: () => {},
   });
 
   const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
