@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
   experimental: {
     useCache: true,
     optimizePackageImports: ['@phosphor-icons/react'],
-    nodeMiddleware: true,
     serverActions: {
       bodySizeLimit: '10mb',
     },
