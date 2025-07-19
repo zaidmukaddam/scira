@@ -23,6 +23,7 @@
     "@aws-sdk/lib-storage": "^3.842.0",
     "@babel/runtime": ">=7.27.0",
     "@daytonaio/sdk": "^0.24.2",
+    "@eslint/plugin-kit": "0.3.3",
     "@foobar404/wave": "^2.0.5",
     "@neondatabase/serverless": "^1.0.1",
     "@phosphor-icons/react": "^2.1.10",
