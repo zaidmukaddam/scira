@@ -501,7 +501,7 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-neutral-300 dark:!scrollbar-thumb-neutral-700 !scrollbar-track-transparent hover:!scrollbar-thumb-neutral-400 dark:!hover:scrollbar-thumb-neutral-600">
+      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
         <Navbar
           isDialogOpen={chatState.anyDialogOpen}
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
@@ -557,7 +557,7 @@ const ChatInterface = memo(
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
-                <h1 className="text-3xl sm:text-5xl !mb-0 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro! font-light tracking-tighter">
+                <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
                   scira
                 </h1>
               </div>
@@ -565,17 +565,17 @@ const ChatInterface = memo(
 
             {/* Show initial limit exceeded message */}
             {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-8 p-6 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl max-w-lg mx-auto">
+              <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
                 <div className="text-center space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-neutral-600 dark:text-neutral-400">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
                     <Crown className="h-4 w-4" />
                     <span className="text-sm font-medium">Daily limit reached</span>
                   </div>
                   <div>
-                    <p className="text-neutral-700 dark:text-neutral-300 mb-2">
+                    <p className="text-foreground dark:text-foreground mb-2">
                       You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
                     </p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                       Upgrade to continue with unlimited searches and premium features.
                     </p>
                   </div>
@@ -595,7 +595,7 @@ const ChatInterface = memo(
                         window.location.href = '/pricing';
                       }}
                       size="sm"
-                      className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                      className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
                     >
                       <Crown className="h-3 w-3 mr-1.5" />
                       Upgrade
@@ -681,11 +681,11 @@ const ChatInterface = memo(
           {/* Show limit exceeded message */}
           {isLimitBlocked && messages.length > 0 && (
             <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
-              <div className="p-3 bg-neutral-50 dark:bg-neutral-900/95 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg shadow-sm backdrop-blur-sm">
+              <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Crown className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
-                    <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                    <Crown className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
+                    <span className="text-sm text-foreground dark:text-foreground">
                       Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
                     </span>
                   </div>
@@ -705,7 +705,7 @@ const ChatInterface = memo(
                       onClick={() => {
                         window.location.href = '/pricing';
                       }}
-                      className="h-7 px-3 text-xs bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black"
+                      className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
                     >
                       Upgrade
                     </Button>

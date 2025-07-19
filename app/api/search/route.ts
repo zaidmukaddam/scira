@@ -145,53 +145,28 @@ export async function POST(req: Request) {
 
   if (user) {
     customInstructions = await getCustomInstructions(user);
-    criticalChecksPromise = (async () => {
+
+    const isProUser = user.isProUser;
+
+    // Check if model requires Pro subscription
+    if (requiresProSubscription(model) && !isProUser) {
+      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
+    }
+
+    // For non-pro users, check usage limits upfront
+    if (!isProUser) {
+      const criticalChecksStartTime = Date.now();
+
       try {
-        const criticalChecksStartTime = Date.now();
-
-        const isProUser = user.isProUser;
-
-        // Check if model requires authentication
-        if (requiresAuthentication(model) && !user) {
-          return {
-            canProceed: false,
-            error: new ChatSDKError('unauthorized:model', `${model} requires authentication`),
-          };
-        }
-
-        // Check if model requires Pro subscription
-        if (requiresProSubscription(model) && !isProUser) {
-          return {
-            canProceed: false,
-            error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`),
-          };
-        }
-
-        // Pro users skip all usage limit checks
-        if (isProUser) {
-          console.log(
-            `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
-          );
-          return {
-            canProceed: true,
-            messageCount: 0, // Not relevant for pro users
-            isProUser: true,
-            subscriptionData: user.subscriptionData,
-            shouldBypassLimits: true,
-            extremeSearchUsage: 0, // Not relevant for pro users
-          };
-        }
-
-        // Only check usage limits for non-pro users
         const [messageCountResult, extremeSearchUsage] = await Promise.all([
-          getUserMessageCount(user), // Pass user to avoid duplicate session lookup
-          getExtremeSearchUsageCount(user), // Pass user to avoid duplicate session lookup
+          getUserMessageCount(user),
+          getExtremeSearchUsageCount(user),
         ]);
         console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
 
         if (messageCountResult.error) {
           console.error('Error getting message count:', messageCountResult.error);
-          return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify usage limits') };
+          return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
         }
 
         // Check if user should bypass limits for free unlimited models
@@ -200,27 +175,41 @@ export async function POST(req: Request) {
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
           const dailyLimit = 100; // Non-pro users have a daily limit
           if (messageCountResult.count >= dailyLimit) {
-            return { canProceed: false, error: new ChatSDKError('rate_limit:chat', 'Daily search limit reached') };
+            return new ChatSDKError('rate_limit:chat', 'Daily search limit reached').toResponse();
           }
         }
 
-        return {
+        criticalChecksPromise = Promise.resolve({
           canProceed: true,
           messageCount: messageCountResult.count,
           isProUser: false,
           subscriptionData: user.subscriptionData,
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
-        };
+        });
       } catch (error) {
         console.error('Critical checks failed:', error);
-        return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify user access') };
+        return new ChatSDKError('bad_request:api', 'Failed to verify user access').toResponse();
       }
-    })();
+    } else {
+      // Pro users skip all usage limit checks
+      const criticalChecksStartTime = Date.now();
+      console.log(
+        `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
+      );
+      criticalChecksPromise = Promise.resolve({
+        canProceed: true,
+        messageCount: 0, // Not relevant for pro users
+        isProUser: true,
+        subscriptionData: user.subscriptionData,
+        shouldBypassLimits: true,
+        extremeSearchUsage: 0, // Not relevant for pro users
+      });
+    }
   } else {
     // For anonymous users, check if model requires authentication
     if (requiresAuthentication(model)) {
-      throw new ChatSDKError('unauthorized:model', `${model} requires authentication`);
+      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
     }
 
     criticalChecksPromise = Promise.resolve({

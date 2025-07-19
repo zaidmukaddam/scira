@@ -110,9 +110,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
 
-    // First, extract and protect monetary amounts
-    const monetaryBlocks: Array<{ id: string; content: string }> = [];
+    // First, extract and protect code blocks to prevent LaTeX processing inside them
+    const codeBlocks: Array<{ id: string; content: string }> = [];
     let modifiedContent = content;
+
+    // Protect code blocks (both inline and fenced)
+    const codeBlockPatterns = [
+      /```[\s\S]*?```/g, // Fenced code blocks
+      /`[^`\n]+`/g, // Inline code
+    ];
+
+    codeBlockPatterns.forEach((pattern) => {
+      modifiedContent = modifiedContent.replace(pattern, (match) => {
+        const id = `CODEBLOCK${codeBlocks.length}END`;
+        codeBlocks.push({ id, content: match });
+        return id;
+      });
+    });
+
+    // Then, extract and protect monetary amounts
+    const monetaryBlocks: Array<{ id: string; content: string }> = [];
 
     // Protect common monetary patterns
     const monetaryPatterns = [
@@ -232,6 +249,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       modifiedContent = modifiedContent.replace(id, content);
     });
 
+    // Restore protected code blocks
+    codeBlocks.forEach(({ id, content }) => {
+      modifiedContent = modifiedContent.replace(id, content);
+    });
+
     return [modifiedContent, citations, latexBlocks];
   }, [content]);
 
@@ -258,14 +280,14 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     }, []);
 
     return (
-      <div className="group relative my-5 rounded-md border border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50/50 dark:bg-neutral-900/50 overflow-hidden">
+      <div className="group relative my-5 rounded-md border border-border bg-muted overflow-hidden">
         {/* Floating Controls */}
         <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={toggleWrap}
             className={cn(
-              'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
-              isWrapped ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 dark:text-neutral-400',
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isWrapped ? 'text-primary' : 'text-muted-foreground',
             )}
             title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
           >
@@ -274,8 +296,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           <button
             onClick={handleCopy}
             className={cn(
-              'p-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm transition-colors',
-              isCopied ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400',
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isCopied ? 'text-primary' : 'text-muted-foreground',
             )}
             title={isCopied ? 'Copied!' : 'Copy code'}
           >
@@ -296,7 +318,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           }}
           showLineNumbers={true}
           lineNumberStyle={{
-            color: resolvedTheme === 'dark' ? '#525252' : '#a3a3a3',
+            color: 'hsl(var(--muted-foreground))',
             paddingRight: '1rem',
             minWidth: '2rem',
             textAlign: 'right',
@@ -324,8 +346,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     const domain = new URL(href).hostname;
 
     return (
-      <div className="flex flex-col bg-white dark:bg-neutral-800 text-xs m-0">
-        <div className="flex items-center h-6 space-x-1.5 px-2 pt-2 text-xs text-neutral-600 dark:text-neutral-300">
+      <div className="flex flex-col bg-background text-xs m-0">
+        <div className="flex items-center h-6 space-x-1.5 px-2 pt-2 text-xs text-muted-foreground">
           <Image
             src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
             alt=""
@@ -337,7 +359,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         </div>
         {title && (
           <div className="px-2 pb-2 pt-1">
-            <h3 className="font-normal text-sm m-0 text-neutral-700 dark:text-neutral-200 line-clamp-3">{title}</h3>
+            <h3 className="font-normal text-sm m-0 text-foreground line-clamp-3">{title}</h3>
           </div>
         )}
       </div>
@@ -356,8 +378,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
             rel="noopener noreferrer"
             className={
               isCitation
-                ? 'cursor-pointer text-xs no-underline text-[#ff8c37] dark:text-[#ff9f57] py-0.5 px-1.25 m-0! bg-[#ff8c37]/10 dark:bg-[#ff9f57]/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-[#ff8c37]/20 dark:hover:bg-[#ff9f57]/20 focus:outline-none focus:ring-1 focus:ring-[#ff8c37] align-baseline'
-                : 'text-primary bg-primary/10 dark:text-primary-light no-underline hover:underline font-medium'
+                ? 'cursor-pointer text-xs no-underline text-primary py-0.5 px-1.25 m-0! bg-primary/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-primary/20 focus:outline-none focus:ring-1 focus:ring-primary align-baseline'
+                : 'text-primary bg-primary/10 no-underline hover:underline font-medium'
             }
           >
             {text}
@@ -367,7 +389,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
           side="top"
           align="start"
           sideOffset={5}
-          className="w-64 p-0 shadow-lg border border-[#ff8c37]/30 dark:border-[#ff9f57]/30 rounded-md overflow-hidden bg-white dark:bg-neutral-900"
+          className="w-64 p-0 shadow-lg border border-primary/30 rounded-md overflow-hidden bg-background"
         >
           <LinkPreview href={href} title={title} />
         </HoverCardContent>
@@ -505,7 +527,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       }
 
       return (
-        <p key={generateKey()} className="my-5 leading-relaxed text-neutral-700 dark:text-neutral-300">
+        <p key={generateKey()} className="my-5 leading-relaxed text-foreground">
           {children}
         </p>
       );
@@ -527,7 +549,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return isValidUrl(href) ? (
         renderHoverCard(href, text)
       ) : (
-        <a key={generateKey()} href={href} className="text-primary dark:text-primary-light hover:underline font-medium">
+        <a key={generateKey()} href={href} className="text-primary hover:underline font-medium">
           {text}
         </a>
       );
@@ -545,10 +567,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         }[level] || '';
 
       return (
-        <HeadingTag
-          key={generateKey()}
-          className={`${sizeClasses} text-neutral-900 dark:text-neutral-50 tracking-tight`}
-        >
+        <HeadingTag key={generateKey()} className={`${sizeClasses} text-foreground tracking-tight`}>
           {children}
         </HeadingTag>
       );
@@ -558,9 +577,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return (
         <ListTag
           key={generateKey()}
-          className={`my-5 pl-6 space-y-2 text-neutral-700 dark:text-neutral-300 ${
-            ordered ? 'list-decimal' : 'list-disc'
-          }`}
+          className={`my-5 pl-6 space-y-2 text-foreground ${ordered ? 'list-decimal' : 'list-disc'}`}
         >
           {children}
         </ListTag>
@@ -577,7 +594,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return (
         <blockquote
           key={generateKey()}
-          className="my-6 border-l-4 border-primary/30 dark:border-primary/20 pl-4 py-1 text-neutral-700 dark:text-neutral-300 italic bg-neutral-50 dark:bg-neutral-900/50 rounded-r-md"
+          className="my-6 border-l-4 border-primary/30 pl-4 py-1 text-foreground italic bg-muted/50 rounded-r-md"
         >
           {children}
         </blockquote>
@@ -633,7 +650,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   };
 
   return (
-    <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none dark:text-neutral-200 font-sans">
+    <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
       <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );

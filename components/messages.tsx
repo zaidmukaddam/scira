@@ -51,7 +51,7 @@ const SciraLogoHeader = () => (
       quality={100}
       priority
     />
-    <h2 className="text-xl font-normal font-be-vietnam-pro text-neutral-800 dark:text-neutral-200">Scira</h2>
+    <h2 className="text-xl font-normal font-be-vietnam-pro text-foreground dark:text-foreground">Scira</h2>
   </div>
 );
 
@@ -210,15 +210,15 @@ const Messages: React.FC<MessagesProps> = React.memo(
                 <SciraLogoHeader />
                 <div className="flex space-x-2 ml-8 mt-2">
                   <div
-                    className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                    className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                     style={{ animationDelay: '0ms' }}
                   ></div>
                   <div
-                    className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                    className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                     style={{ animationDelay: '150ms' }}
                   ></div>
                   <div
-                    className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                    className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                     style={{ animationDelay: '300ms' }}
                   ></div>
                 </div>
@@ -317,7 +317,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
                             toast.error('Failed to share chat');
                           }
                         }}
-                        className="h-8 px-2 text-xs rounded-full"
+                        className="h-8 px-2 text-xs rounded-full text-muted-foreground hover:text-foreground"
                       >
                         <Share className="h-3.5 w-3.5 mr-2" />
                         Share
@@ -330,7 +330,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
                         navigator.clipboard.writeText(part.text);
                         toast.success('Copied to clipboard');
                       }}
-                      className="h-8 px-2 text-xs rounded-full"
+                      className="h-8 px-2 text-xs rounded-full text-muted-foreground hover:text-foreground"
                     >
                       <Copy className="h-3.5 w-3.5 mr-2" />
                       Copy
@@ -475,7 +475,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
               messageClasses = 'mb-0';
             } else if (isCurrentMessageAssistant && index < memoizedMessages.length - 1) {
               // Add border and spacing only if this is not the last assistant message
-              messageClasses = 'mb-6 pb-6 border-b border-neutral-200 dark:border-neutral-800';
+              messageClasses = 'mb-6 pb-6 border-b border-border dark:border-border';
             } else if (isCurrentMessageAssistant && index === memoizedMessages.length - 1) {
               // Last assistant message should have no bottom margin (min-height is now handled in Message component)
               messageClasses = 'mb-0';
@@ -517,15 +517,15 @@ const Messages: React.FC<MessagesProps> = React.memo(
               <SciraLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
                 <div
-                  className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                  className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                   style={{ animationDelay: '0ms' }}
                 ></div>
                 <div
-                  className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                  className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                   style={{ animationDelay: '150ms' }}
                 ></div>
                 <div
-                  className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce"
+                  className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                   style={{ animationDelay: '300ms' }}
                 ></div>
               </div>
@@ -539,12 +539,14 @@ const Messages: React.FC<MessagesProps> = React.memo(
             <div className="w-full">
               <SciraLogoHeader />
 
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4 max-w-2xl">
+              <div className="bg-secondary/30 dark:bg-secondary/20 border border-secondary dark:border-secondary rounded-lg p-4 mb-4 max-w-2xl">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <h3 className="font-medium text-amber-900 dark:text-amber-100 mb-1">No response generated</h3>
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <h3 className="font-medium text-secondary-foreground dark:text-secondary-foreground mb-1">
+                      No response generated
+                    </h3>
+                    <p className="text-sm text-secondary-foreground/80 dark:text-secondary-foreground/80">
                       It looks like the assistant didn&apos;t provide a response to your message.
                     </p>
                   </div>
@@ -552,13 +554,17 @@ const Messages: React.FC<MessagesProps> = React.memo(
               </div>
 
               <div className="px-4 py-3 flex items-center justify-between">
-                <p className="text-neutral-500 dark:text-neutral-400 text-xs">
+                <p className="text-muted-foreground dark:text-muted-foreground text-xs">
                   {!user && selectedVisibilityType === 'public'
                     ? 'Please sign in to retry or try a different prompt'
                     : 'Try regenerating the response or rephrase your question'}
                 </p>
                 {(user || selectedVisibilityType === 'private') && (
-                  <Button onClick={handleRetry} className="bg-amber-600 hover:bg-amber-700 text-white" size="sm">
+                  <Button
+                    onClick={handleRetry}
+                    className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                    size="sm"
+                  >
                     <RefreshCw className="mr-2 h-3.5 w-3.5" />
                     Generate Response
                   </Button>

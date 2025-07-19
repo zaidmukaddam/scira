@@ -79,8 +79,8 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   const errorMessage = isChatSDKError
     ? parsedError.message
     : typeof error === 'string'
-    ? error
-    : (error as any).message || 'Something went wrong while processing your message';
+      ? error
+      : (error as any).message || 'Something went wrong while processing your message';
   const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
   const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
   const actions = isChatSDKError
@@ -106,39 +106,39 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
     switch (errorIcon) {
       case 'auth':
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/30',
-          border: 'border-blue-200 dark:border-blue-800',
-          iconBg: 'bg-blue-100 dark:bg-blue-700/50',
-          title: 'text-blue-700 dark:text-blue-300',
-          text: 'text-blue-600/80 dark:text-blue-400/80',
-          button: 'bg-blue-600 hover:bg-blue-700 text-white',
+          bg: 'bg-primary/5 dark:bg-primary/10',
+          border: 'border-primary/20 dark:border-primary/30',
+          iconBg: 'bg-primary/10 dark:bg-primary/20',
+          title: 'text-primary dark:text-primary',
+          text: 'text-primary/80 dark:text-primary/80',
+          button: 'bg-primary hover:bg-primary/90 text-primary-foreground',
         };
       case 'upgrade':
         return {
-          bg: 'bg-amber-50 dark:bg-amber-900/30',
-          border: 'border-amber-200 dark:border-amber-800',
-          iconBg: 'bg-amber-100 dark:bg-amber-700/50',
-          title: 'text-amber-700 dark:text-amber-300',
-          text: 'text-amber-600/80 dark:text-amber-400/80',
-          button: 'bg-amber-600 hover:bg-amber-700 text-white',
+          bg: 'bg-secondary/30 dark:bg-secondary/20',
+          border: 'border-secondary dark:border-secondary',
+          iconBg: 'bg-secondary/50 dark:bg-secondary/40',
+          title: 'text-secondary-foreground dark:text-secondary-foreground',
+          text: 'text-secondary-foreground/80 dark:text-secondary-foreground/80',
+          button: 'bg-secondary hover:bg-secondary/90 text-secondary-foreground',
         };
       case 'warning':
         return {
-          bg: 'bg-orange-50 dark:bg-orange-900/30',
-          border: 'border-orange-200 dark:border-orange-800',
-          iconBg: 'bg-orange-100 dark:bg-orange-700/50',
-          title: 'text-orange-700 dark:text-orange-300',
-          text: 'text-orange-600/80 dark:text-orange-400/80',
-          button: 'bg-orange-600 hover:bg-orange-700 text-white',
+          bg: 'bg-muted dark:bg-muted',
+          border: 'border-muted-foreground/20 dark:border-muted-foreground/30',
+          iconBg: 'bg-muted-foreground/10 dark:bg-muted-foreground/20',
+          title: 'text-muted-foreground dark:text-muted-foreground',
+          text: 'text-muted-foreground/80 dark:text-muted-foreground/80',
+          button: 'bg-muted-foreground hover:bg-muted-foreground/90 text-background',
         };
       default:
         return {
-          bg: 'bg-red-50 dark:bg-red-900/30',
-          border: 'border-red-200 dark:border-red-800',
-          iconBg: 'bg-red-100 dark:bg-red-700/50',
-          title: 'text-red-700 dark:text-red-300',
-          text: 'text-red-600/80 dark:text-red-400/80',
-          button: 'bg-red-600 hover:bg-red-700 text-white',
+          bg: 'bg-destructive/5 dark:bg-destructive/10',
+          border: 'border-destructive/20 dark:border-destructive/30',
+          iconBg: 'bg-destructive/10 dark:bg-destructive/20',
+          title: 'text-destructive dark:text-destructive',
+          text: 'text-destructive/80 dark:text-destructive/80',
+          button: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground',
         };
     }
   };
@@ -179,7 +179,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
   return (
     <div className="mt-3">
-      <div className={`rounded-lg border ${colors.border} bg-white dark:bg-neutral-900 shadow-sm overflow-hidden`}>
+      <div className={`rounded-lg border ${colors.border} bg-card dark:bg-card shadow-sm overflow-hidden`}>
         <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
           <div className="mt-0.5">
             <div className={`${colors.iconBg} p-1.5 rounded-full`}>{getIconComponent()}</div>
@@ -204,13 +204,13 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
         <div className="px-4 py-3">
           {errorCause && (
-            <div className="mb-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-md border border-neutral-200 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300 overflow-x-auto">
+            <div className="mb-3 p-3 bg-muted dark:bg-muted rounded-md border border-border dark:border-border font-mono text-xs text-muted-foreground dark:text-muted-foreground overflow-x-auto">
               {errorCause.toString()}
             </div>
           )}
 
           <div className="flex items-center justify-between">
-            <p className="text-neutral-500 dark:text-neutral-400 text-xs">
+            <p className="text-muted-foreground dark:text-muted-foreground text-xs">
               {!user && selectedVisibilityType === 'public'
                 ? 'Please sign in to retry or try a different prompt'
                 : 'You can retry your request or try a different approach'}
@@ -367,25 +367,25 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         }}
         className="w-full"
       >
-        <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-neutral-50/30 dark:bg-neutral-800/30">
+        <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-muted/30 dark:bg-muted/30">
           <Textarea
             ref={textareaRef}
             value={draftContent}
             onChange={handleInput}
             autoFocus
-            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
+            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-muted/10 focus:bg-muted/20 dark:hover:bg-muted/10 dark:focus:bg-muted/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
             placeholder="Edit your message..."
             style={{
               lineHeight: '1.625',
             }}
           />
 
-          <div className="absolute -right-2 top-1 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm">
+          <div className="absolute -right-2 top-1 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm">
             <Button
               type="submit"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
               disabled={isSubmitting || draftContent.trim() === message.content.trim()}
             >
               {isSubmitting ? (
@@ -394,13 +394,13 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 <ArrowRight className="h-3.5 w-3.5" />
               )}
             </Button>
-            <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+            <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={() => setMode('view')}
-              className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="h-7 w-7 rounded-r-md rounded-l-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
               disabled={isSubmitting}
             >
               <X className="h-3.5 w-3.5" />
@@ -483,7 +483,7 @@ export const Message: React.FC<MessageProps> = ({
   const getDynamicFontSize = (content: string) => {
     const length = content.trim().length;
     const lines = content.split('\n').length;
-    
+
     // Very short messages (like single words or short phrases)
     if (length <= 50 && lines === 1) {
       return '[&>*]:text-xl sm:[&>*]:text-2xl'; // Smaller on mobile
@@ -542,7 +542,7 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
+                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
@@ -561,7 +561,7 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
+                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
@@ -579,7 +579,7 @@ export const Message: React.FC<MessageProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
+                        className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-transparent"
                         aria-label={isExpanded ? 'Show less' : 'Show more'}
                       >
                         {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -587,7 +587,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
+                  <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
@@ -595,7 +595,7 @@ export const Message: React.FC<MessageProps> = ({
                           variant="ghost"
                           size="icon"
                           onClick={() => setMode('edit')}
-                          className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                          className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
                           disabled={status === 'submitted' || status === 'streaming'}
                           aria-label="Edit message"
                         >
@@ -615,7 +615,7 @@ export const Message: React.FC<MessageProps> = ({
                             />
                           </svg>
                         </Button>
-                        <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                        <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
                       </>
                     )}
                     <Button
@@ -629,7 +629,7 @@ export const Message: React.FC<MessageProps> = ({
                         (!user || !isOwner) && selectedVisibilityType === 'public'
                           ? 'rounded-md'
                           : 'rounded-r-md rounded-l-none'
-                      } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                      } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
                       aria-label="Copy message"
                     >
                       <Copy className="h-3.5 w-3.5" />
@@ -664,7 +664,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
+                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
@@ -681,7 +681,7 @@ export const Message: React.FC<MessageProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsExpanded(!isExpanded)}
-                      className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
+                      className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-transparent"
                       aria-label={isExpanded ? 'Show less' : 'Show more'}
                     >
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -689,7 +689,7 @@ export const Message: React.FC<MessageProps> = ({
                   </div>
                 )}
 
-                <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
+                <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                   {/* Only show edit button for owners OR unauthenticated users on private chats */}
                   {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                     <>
@@ -697,7 +697,7 @@ export const Message: React.FC<MessageProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => setMode('edit')}
-                        className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
                         disabled={status === 'submitted' || status === 'streaming'}
                         aria-label="Edit message"
                       >
@@ -717,7 +717,7 @@ export const Message: React.FC<MessageProps> = ({
                           />
                         </svg>
                       </Button>
-                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                      <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
                     </>
                   )}
                   <Button
@@ -731,7 +731,7 @@ export const Message: React.FC<MessageProps> = ({
                       (!user || !isOwner) && selectedVisibilityType === 'public'
                         ? 'rounded-md'
                         : 'rounded-r-md rounded-l-none'
-                    } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
+                    } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
                     aria-label="Copy message"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -770,18 +770,18 @@ export const Message: React.FC<MessageProps> = ({
         {suggestedQuestions.length > 0 && (user || selectedVisibilityType === 'private') && status !== 'streaming' && (
           <div className="w-full max-w-xl sm:max-w-2xl mt-3">
             <div className="flex items-center gap-1.5 mb-2 px-3">
-              <AlignLeft size={16} className="text-neutral-600 dark:text-neutral-400" />
-              <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">Suggested questions</h2>
+              <AlignLeft size={16} className="text-muted-foreground dark:text-muted-foreground" />
+              <h2 className="font-medium text-sm text-foreground dark:text-foreground">Suggested questions</h2>
             </div>
-            <div className="flex flex-col border-t border-neutral-200 dark:border-neutral-800">
+            <div className="flex flex-col border-t border-border dark:border-border">
               {suggestedQuestions.map((question, i) => (
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestionClick(question)}
-                  className="w-full py-2.5 px-3 text-left flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors"
+                  className="w-full py-2.5 px-0.5 text-left flex justify-between items-center border-b border-border dark:border-border hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
                 >
-                  <span className="text-neutral-700 dark:text-neutral-300 text-sm font-normal pr-3">{question}</span>
-                  <Plus size={14} className="text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                  <span className="text-foreground dark:text-foreground text-sm font-normal pr-3">{question}</span>
+                  <Plus size={14} className="text-muted-foreground dark:text-muted-foreground flex-shrink-0" />
                 </button>
               ))}
             </div>
@@ -825,16 +825,16 @@ export const EditableAttachmentsBadge = ({
           return (
             <div
               key={i}
-              className="group flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-2 py-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+              className="group flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-2 py-1 bg-muted dark:bg-muted border border-border dark:border-border"
             >
               <button
                 onClick={() => {
                   setSelectedIndex(i);
                   setIsOpen(true);
                 }}
-                className="flex items-center gap-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full pl-0 pr-1 transition-colors"
+                className="flex items-center gap-1.5 hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 rounded-full pl-0 pr-1 transition-colors"
               >
-                <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-white dark:bg-neutral-900">
+                <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background dark:bg-background">
                   {isPdf(attachment) ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -873,7 +873,7 @@ export const EditableAttachmentsBadge = ({
                     </svg>
                   )}
                 </div>
-                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
                   {truncatedName}
                 </span>
               </button>
@@ -882,7 +882,7 @@ export const EditableAttachmentsBadge = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => onRemoveAttachment(i)}
-                className="h-4 w-4 p-0 text-neutral-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                className="h-4 w-4 p-0 text-muted-foreground hover:text-destructive dark:hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
                 title="Remove attachment"
               >
                 <X className="h-3 w-3" />
@@ -893,9 +893,9 @@ export const EditableAttachmentsBadge = ({
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="p-0 bg-white dark:bg-neutral-900 sm:max-w-3xl w-[90vw] max-h-[85vh] overflow-hidden">
+        <DialogContent className="p-0 bg-background dark:bg-background sm:max-w-3xl w-[90vw] max-h-[85vh] overflow-hidden">
           <div className="flex flex-col h-full max-h-[85vh]">
-            <header className="p-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <header className="p-2 border-b border-border dark:border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -904,7 +904,7 @@ export const EditableAttachmentsBadge = ({
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
                     toast.success('File URL copied to clipboard');
                   }}
-                  className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
+                  className="h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground"
                   title="Copy link"
                 >
                   <Copy className="h-4 w-4" />
@@ -915,7 +915,7 @@ export const EditableAttachmentsBadge = ({
                   download={fileAttachments[selectedIndex].name}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                   title="Download"
                 >
                   <Download className="h-4 w-4" />
@@ -926,7 +926,7 @@ export const EditableAttachmentsBadge = ({
                     href={fileAttachments[selectedIndex].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                     title="Open in new tab"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -935,13 +935,13 @@ export const EditableAttachmentsBadge = ({
 
                 <Badge
                   variant="secondary"
-                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-background dark:bg-background border border-border dark:border-border"
                 >
                   {selectedIndex + 1} of {fileAttachments.length}
                 </Badge>
               </div>
 
-              <DialogClose className="h-8 w-8 rounded-md flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors">
+              <DialogClose className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors">
                 <X className="h-4 w-4" />
               </DialogClose>
             </header>
@@ -949,11 +949,11 @@ export const EditableAttachmentsBadge = ({
             <div className="flex-1 p-1 overflow-auto flex items-center justify-center">
               <div className="relative flex items-center justify-center w-full h-full">
                 {isPdf(fileAttachments[selectedIndex]) ? (
-                  <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700 mx-auto">
-                    <div className="bg-neutral-100 dark:bg-neutral-800 py-1.5 px-2 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700">
+                  <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-border dark:border-border mx-auto">
+                    <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
-                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[200px]">
+                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
                           {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>
@@ -962,7 +962,7 @@ export const EditableAttachmentsBadge = ({
                           href={fileAttachments[selectedIndex].url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                           title="Open fullscreen"
                         >
                           <Maximize2 className="h-3.5 w-3.5" />
@@ -975,9 +975,9 @@ export const EditableAttachmentsBadge = ({
                         type="application/pdf"
                         className="w-full h-full"
                       >
-                        <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-100 dark:bg-neutral-800">
+                        <div className="flex flex-col items-center justify-center w-full h-full bg-muted dark:bg-muted">
                           <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
-                          <p className="text-neutral-600 dark:text-neutral-300 text-sm mb-2">
+                          <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-2">
                             PDF cannot be displayed directly
                           </p>
                           <div className="flex gap-2">
@@ -992,7 +992,7 @@ export const EditableAttachmentsBadge = ({
                             <a
                               href={fileAttachments[selectedIndex].url}
                               download={fileAttachments[selectedIndex].name}
-                              className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-medium rounded-md hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+                              className="px-3 py-1.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-xs font-medium rounded-md hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                             >
                               Download
                             </a>
@@ -1017,7 +1017,7 @@ export const EditableAttachmentsBadge = ({
                       variant="outline"
                       size="icon"
                       onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
-                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 dark:bg-background/90 border border-border dark:border-border shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -1025,7 +1025,7 @@ export const EditableAttachmentsBadge = ({
                       variant="outline"
                       size="icon"
                       onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 dark:bg-background/90 border border-border dark:border-border shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -1125,9 +1125,9 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                 setSelectedIndex(i);
                 setIsOpen(true);
               }}
-              className="flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-3 py-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+              className="flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-3 py-1 bg-muted dark:bg-muted border border-border dark:border-border hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
             >
-              <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-white dark:bg-neutral-900">
+              <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background dark:bg-background">
                 {isPdf(attachment) ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1166,10 +1166,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   </svg>
                 )}
               </div>
-              <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+              <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
                 {truncatedName}
                 {fileExtension && !isPdf(attachment) && !isImage && (
-                  <span className="text-neutral-500 dark:text-neutral-400 ml-0.5">.{fileExtension}</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground ml-0.5">.{fileExtension}</span>
                 )}
               </span>
             </button>
@@ -1178,9 +1178,9 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="p-0 bg-white dark:bg-neutral-900 sm:max-w-3xl w-[90vw] max-h-[85vh] overflow-hidden">
+        <DialogContent className="p-0 bg-background dark:bg-background sm:max-w-3xl w-[90vw] max-h-[85vh] overflow-hidden">
           <div className="flex flex-col h-full max-h-[85vh]">
-            <header className="p-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <header className="p-2 border-b border-border dark:border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -1189,7 +1189,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
                     toast.success('File URL copied to clipboard');
                   }}
-                  className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
+                  className="h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground"
                   title="Copy link"
                 >
                   <Copy className="h-4 w-4" />
@@ -1200,7 +1200,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   download={fileAttachments[selectedIndex].name}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                   title="Download"
                 >
                   <Download className="h-4 w-4" />
@@ -1211,7 +1211,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     href={fileAttachments[selectedIndex].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                     title="Open in new tab"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -1220,13 +1220,13 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
 
                 <Badge
                   variant="secondary"
-                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-background dark:bg-background border border-border dark:border-border"
                 >
                   {selectedIndex + 1} of {fileAttachments.length}
                 </Badge>
               </div>
 
-              <DialogClose className="h-8 w-8 rounded-md flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors">
+              <DialogClose className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors">
                 <X className="h-4 w-4" />
               </DialogClose>
             </header>
@@ -1234,11 +1234,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
             <div className="flex-1 p-1 overflow-auto flex items-center justify-center">
               <div className="relative flex items-center justify-center w-full h-full">
                 {isPdf(fileAttachments[selectedIndex]) ? (
-                  <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700 mx-auto">
-                    <div className="bg-neutral-100 dark:bg-neutral-800 py-1.5 px-2 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700">
+                  <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-border dark:border-border mx-auto">
+                    <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
-                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[200px]">
+                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
                           {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>
@@ -1247,7 +1247,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                           href={fileAttachments[selectedIndex].url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                           title="Open fullscreen"
                         >
                           <Maximize2 className="h-3.5 w-3.5" />
@@ -1260,9 +1260,9 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                         type="application/pdf"
                         className="w-full h-full"
                       >
-                        <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-100 dark:bg-neutral-800">
+                        <div className="flex flex-col items-center justify-center w-full h-full bg-muted dark:bg-muted">
                           <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
-                          <p className="text-neutral-600 dark:text-neutral-300 text-sm mb-2">
+                          <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-2">
                             PDF cannot be displayed directly
                           </p>
                           <div className="flex gap-2">
@@ -1277,7 +1277,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                             <a
                               href={fileAttachments[selectedIndex].url}
                               download={fileAttachments[selectedIndex].name}
-                              className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-medium rounded-md hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+                              className="px-3 py-1.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-xs font-medium rounded-md hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                             >
                               Download
                             </a>
@@ -1302,7 +1302,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       variant="outline"
                       size="icon"
                       onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
-                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 dark:bg-background/90 border border-border dark:border-border shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -1310,7 +1310,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       variant="outline"
                       size="icon"
                       onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 dark:bg-background/90 border border-border dark:border-border shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -1320,7 +1320,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
             </div>
 
             {fileAttachments.length > 1 && (
-              <div className="border-t border-neutral-200 dark:border-neutral-800 p-2">
+              <div className="border-t border-border dark:border-border p-2">
                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 max-w-full">
                   {fileAttachments.map((attachment, idx) => (
                     <button
@@ -1333,7 +1333,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       }`}
                     >
                       {isPdf(attachment) ? (
-                        <div className="h-full w-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
+                        <div className="h-full w-full flex items-center justify-center bg-muted dark:bg-muted">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="14"
@@ -1363,8 +1363,8 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
               </div>
             )}
 
-            <footer className="border-t border-neutral-200 dark:border-neutral-800 p-2">
-              <div className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center justify-between">
+            <footer className="border-t border-border dark:border-border p-2">
+              <div className="text-xs text-muted-foreground dark:text-muted-foreground flex items-center justify-between">
                 <span className="truncate max-w-[70%]">
                   {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
                 </span>
