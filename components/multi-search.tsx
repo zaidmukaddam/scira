@@ -1,7 +1,7 @@
 // /components/multi-search.tsx
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import {
   Globe,
   Search,
@@ -204,19 +204,45 @@ const SourcesSheet: React.FC<{
 };
 
 // Image Gallery Component
-const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
+const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
+  const [isClient, setIsClient] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
   const isMobile = useIsMobile();
 
-  const displayImages = images.slice(0, PREVIEW_IMAGE_COUNT);
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const displayImages = React.useMemo(() => images.slice(0, PREVIEW_IMAGE_COUNT), [images]);
   const hasMore = images.length > PREVIEW_IMAGE_COUNT;
 
   const ImageViewer = isMobile ? Drawer : Dialog;
   const ImageViewerContent = isMobile ? DrawerContent : DialogContent;
 
+  const handleImageClick = React.useCallback((index: number) => {
+    setSelectedImage(index);
+    setIsOpen(true);
+  }, []);
+
+  const handleClose = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const handlePrevious = React.useCallback(() => {
+    setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  }, [images.length]);
+
+  const handleNext = React.useCallback(() => {
+    setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  }, [images.length]);
+
+  if (!isClient) {
+    return <div className="space-y-4" />;
+  }
+
   return (
-    <>
+    <div className="space-y-4">
       {/* Image Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
         {displayImages.map((image, index) => {
@@ -224,11 +250,8 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
 
           return (
             <button
-              key={index}
-              onClick={() => {
-                setSelectedImage(index);
-                setIsOpen(true);
-              }}
+              key={`${image.url}-${index}`}
+              onClick={() => handleImageClick(index)}
               className={cn(
                 'relative rounded-lg overflow-hidden',
                 'bg-neutral-100 dark:bg-neutral-800',
@@ -273,7 +296,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -282,23 +305,14 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
 
             {/* Image Display */}
             <div className="absolute inset-0 flex items-center justify-center p-4 pt-16 pb-16">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedImage}
-                  className="relative w-full h-full"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Image
-                    src={images[selectedImage].url}
-                    alt={images[selectedImage].description || ''}
-                    fill
-                    className="object-contain rounded-lg"
-                  />
-                </motion.div>
-              </AnimatePresence>
+              <div className="relative w-full h-full">
+                <Image
+                  src={images[selectedImage].url}
+                  alt={images[selectedImage].description || ''}
+                  fill
+                  className="object-contain rounded-lg"
+                />
+              </div>
             </div>
 
             {/* Navigation */}
@@ -312,7 +326,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                 'border border-neutral-200 dark:border-neutral-700',
                 'shadow-sm',
               )}
-              onClick={() => setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+              onClick={handlePrevious}
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -326,7 +340,7 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
                 'border border-neutral-200 dark:border-neutral-700',
                 'shadow-sm',
               )}
-              onClick={() => setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+              onClick={handleNext}
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -342,9 +356,11 @@ const ImageGallery: React.FC<{ images: SearchImage[] }> = ({ images }) => {
           </div>
         </ImageViewerContent>
       </ImageViewer>
-    </>
+    </div>
   );
-};
+});
+
+ImageGallery.displayName = 'ImageGallery';
 
 // Loading State Component
 const LoadingState: React.FC<{
@@ -520,14 +536,24 @@ const LoadingState: React.FC<{
 };
 
 // Main Component
-const MultiSearch: React.FC<{
+const MultiSearch = ({
+  result,
+  args,
+  annotations = [],
+}: {
   result: MultiSearchResponse | null;
   args: MultiSearchArgs;
   annotations?: QueryCompletion[];
-}> = ({ result, args, annotations = [] }) => {
+}) => {
+  const [isClient, setIsClient] = React.useState(false);
   const [sourcesOpen, setSourcesOpen] = React.useState(false);
   const queryTagsRef = React.useRef<HTMLDivElement>(null);
   const previewResultsRef = React.useRef<HTMLDivElement>(null);
+
+  // Ensure hydration safety
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -574,6 +600,11 @@ const MultiSearch: React.FC<{
 
   // Show all results in horizontal scroll
   const previewResults = allResults;
+
+  // Prevent hydration mismatches by only rendering after client-side mount
+  if (!isClient) {
+    return <div className="w-full space-y-4" />;
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -677,5 +708,7 @@ const MultiSearch: React.FC<{
     </div>
   );
 };
+
+MultiSearch.displayName = 'MultiSearch';
 
 export default MultiSearch;

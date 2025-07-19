@@ -170,7 +170,7 @@ export async function getMessagesByChatId({
   offset?: number;
 }) {
   'use cache';
-  
+
   try {
     return await db
       .select()
@@ -390,9 +390,7 @@ export async function incrementMessageUsage({ userId }: { userId: string }) {
     endOfDay.setHours(0, 0, 0, 0);
 
     // Clean up previous day entries for this user
-    await db
-      .delete(messageUsage)
-      .where(and(eq(messageUsage.userId, userId), lt(messageUsage.date, today)));
+    await db.delete(messageUsage).where(and(eq(messageUsage.userId, userId), lt(messageUsage.date, today)));
 
     const existingUsage = await getMessageUsageByUserId({ userId });
 
@@ -439,7 +437,7 @@ export async function getHistoricalUsageData({ userId }: { userId: string }) {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 89);
-    
+
     // Get all user messages from their chats in the date range
     const historicalMessages = await db
       .select({
@@ -453,14 +451,14 @@ export async function getHistoricalUsageData({ userId }: { userId: string }) {
           eq(chat.userId, userId),
           eq(message.role, 'user'), // Only count user messages, not assistant responses
           gte(message.createdAt, startDate),
-          lt(message.createdAt, endDate)
-        )
+          lt(message.createdAt, endDate),
+        ),
       )
       .orderBy(asc(message.createdAt));
 
     // Group messages by date and count them
     const dailyCounts = new Map<string, number>();
-    
+
     historicalMessages.forEach((msg) => {
       const dateKey = msg.createdAt.toISOString().split('T')[0]; // Get YYYY-MM-DD format
       dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
@@ -487,7 +485,7 @@ export async function getCustomInstructionsByUserId({ userId }: { userId: string
       .from(customInstructions)
       .where(eq(customInstructions.userId, userId))
       .limit(1);
-    
+
     return instructions;
   } catch (error) {
     console.error('Error getting custom instructions:', error);
@@ -504,7 +502,7 @@ export async function createCustomInstructions({ userId, content }: { userId: st
         content,
       })
       .returning();
-    
+
     return newInstructions;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to create custom instructions');
@@ -521,7 +519,7 @@ export async function updateCustomInstructions({ userId, content }: { userId: st
       })
       .where(eq(customInstructions.userId, userId))
       .returning();
-    
+
     return updatedInstructions;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to update custom instructions');
@@ -534,7 +532,7 @@ export async function deleteCustomInstructions({ userId }: { userId: string }) {
       .delete(customInstructions)
       .where(eq(customInstructions.userId, userId))
       .returning();
-    
+
     return deletedInstructions;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to delete custom instructions');
