@@ -22,6 +22,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import PlaceholderImage from '@/components/placeholder-image';
 
 // Types
 type SearchImage = {
@@ -208,6 +209,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
   const [isClient, setIsClient] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
 
   React.useEffect(() => {
@@ -237,6 +239,10 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
     setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   }, [images.length]);
 
+  const handleImageError = React.useCallback((imageUrl: string) => {
+    setFailedImages((prev) => new Set(prev).add(imageUrl));
+  }, []);
+
   if (!isClient) {
     return <div className="space-y-4" />;
   }
@@ -260,7 +266,17 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                 index === 0 ? 'md:col-span-2 md:row-span-2' : '',
               )}
             >
-              <Image src={image.url} alt={image.description || ''} fill className="object-cover" />
+              {failedImages.has(image.url) ? (
+                <PlaceholderImage className="absolute inset-0" variant="compact" size="md" />
+              ) : (
+                <Image
+                  src={image.url}
+                  alt={image.description || ''}
+                  fill
+                  className="object-cover"
+                  onError={() => handleImageError(image.url)}
+                />
+              )}
 
               {/* Overlay for last image if there are more */}
               {isLast && hasMore && (
@@ -306,12 +322,17 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             {/* Image Display */}
             <div className="absolute inset-0 flex items-center justify-center p-4 pt-16 pb-16">
               <div className="relative w-full h-full">
-                <Image
-                  src={images[selectedImage].url}
-                  alt={images[selectedImage].description || ''}
-                  fill
-                  className="object-contain rounded-lg"
-                />
+                {failedImages.has(images[selectedImage].url) ? (
+                  <PlaceholderImage className="absolute inset-0" variant="default" size="lg" />
+                ) : (
+                  <Image
+                    src={images[selectedImage].url}
+                    alt={images[selectedImage].description || ''}
+                    fill
+                    className="object-contain rounded-lg"
+                    onError={() => handleImageError(images[selectedImage].url)}
+                  />
+                )}
               </div>
             </div>
 
