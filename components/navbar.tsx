@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share } from '@phosphor-icons/react';
+import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share, X } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -54,7 +54,16 @@ const Navbar = memo(
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+    const [isBannerDismissed, setIsBannerDismissed] = useState(false);
     const router = useRouter();
+
+    // Check localStorage for banner dismissal on component mount
+    useEffect(() => {
+      const dismissed = localStorage.getItem('mobile-banner-dismissed');
+      if (dismissed === 'true') {
+        setIsBannerDismissed(true);
+      }
+    }, []);
 
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
@@ -110,17 +119,32 @@ const Navbar = memo(
       }
     };
 
+    const handleDismissBanner = () => {
+      setIsBannerDismissed(true);
+      localStorage.setItem('mobile-banner-dismissed', 'true');
+    };
+
     return (
       <>
         {/* Mobile Warning Banner */}
-        <div className="fixed top-0 left-0 right-0 z-40 bg-amber-200/90 backdrop-blur-sm text-amber-900 text-center py-2 px-4 text-sm font-medium md:hidden">
-          ⚠️ We do NOT support mobile yet. Use with caution.
-        </div>
+        {!isBannerDismissed && (
+          <div className="fixed top-0 left-0 right-0 z-40 bg-yellow-50/95 dark:bg-yellow-950/95 backdrop-blur-sm border-b border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 py-2 px-4 text-sm font-medium md:hidden flex items-center justify-between">
+            <div className="flex-1 text-center">⚠️ We do NOT support mobile yet. Use with caution.</div>
+            <button
+              onClick={handleDismissBanner}
+              className="ml-2 p-1 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded transition-colors"
+              aria-label="Dismiss banner"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         <div
           className={cn(
             'fixed left-0 right-0 z-30 flex justify-between items-center p-3 transition-colors duration-200',
-            'md:top-0 top-10', // Add top margin on mobile to account for banner
+            'md:top-0', // Add top margin on mobile to account for banner
+            !isBannerDismissed ? 'top-10' : 'top-0',
             isDialogOpen
               ? 'bg-transparent pointer-events-none'
               : status === 'streaming' || status === 'ready'
