@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   keywords: [
     'scira.ai',
     'ai search engine',
+    'search engine',
     'scira ai',
     'Scira AI',
     'scira AI',

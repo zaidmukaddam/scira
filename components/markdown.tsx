@@ -267,80 +267,235 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isWrapped, setIsWrapped] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const { resolvedTheme } = useTheme();
 
+    // Auto-expand for shorter code blocks
+    const shouldShowExpandButton = children.split('\n').length > 20;
+
     const handleCopy = useCallback(async () => {
-      await navigator.clipboard.writeText(children);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      try {
+        if (!navigator.clipboard) {
+          // Fallback for browsers without clipboard API
+          const textArea = document.createElement('textarea');
+          textArea.value = children;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        } else {
+          await navigator.clipboard.writeText(children);
+        }
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        toast.success('Code copied to clipboard');
+      } catch (error) {
+        console.error('Failed to copy code:', error);
+        toast.error('Failed to copy code');
+      }
     }, [children]);
 
     const toggleWrap = useCallback(() => {
       setIsWrapped((prev) => !prev);
+      toast.success(isWrapped ? 'Code wrap disabled' : 'Code wrap enabled');
+    }, [isWrapped]);
+
+    const toggleExpand = useCallback(() => {
+      setIsExpanded((prev) => !prev);
     }, []);
 
+    // Create custom themes without background to prevent override
+    const customDarkTheme = {
+      ...oneDark,
+      'pre[class*="language-"]': {
+        ...oneDark['pre[class*="language-"]'],
+        background: 'transparent',
+        backgroundColor: 'transparent',
+      },
+      'code[class*="language-"]': {
+        ...oneDark['code[class*="language-"]'],
+        background: 'transparent',
+        backgroundColor: 'transparent',
+      },
+    };
+
+    const customLightTheme = {
+      ...oneLight,
+      'pre[class*="language-"]': {
+        ...oneLight['pre[class*="language-"]'],
+        background: 'transparent',
+        backgroundColor: 'transparent',
+      },
+      'code[class*="language-"]': {
+        ...oneLight['code[class*="language-"]'],
+        background: 'transparent',
+        backgroundColor: 'transparent',
+      },
+    };
+
     return (
-      <div className="group relative my-5 rounded-md border border-border bg-muted overflow-hidden">
-        {/* Floating Controls */}
-        <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={toggleWrap}
-            className={cn(
-              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-              isWrapped ? 'text-primary' : 'text-muted-foreground',
+      <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
+        {/* Header with language and controls */}
+        <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
+          <div className="flex items-center gap-2">
+            {language && (
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
             )}
-            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
-          >
-            {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
-          </button>
-          <button
-            onClick={handleCopy}
-            className={cn(
-              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-              isCopied ? 'text-primary' : 'text-muted-foreground',
-            )}
-            title={isCopied ? 'Copied!' : 'Copy code'}
-          >
-            {isCopied ? <Check size={12} /> : <Copy size={12} />}
-          </button>
+            <span className="text-xs text-muted-foreground">{children.split('\n').length} lines</span>
+          </div>
+
+          {/* Controls */}
+          <div className="flex gap-1">
+            <button
+              onClick={toggleWrap}
+              className={cn(
+                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+                isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+              title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
+            >
+              {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
+            </button>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+                isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+              title={isCopied ? 'Copied!' : 'Copy code'}
+            >
+              {isCopied ? <Check size={12} /> : <Copy size={12} />}
+            </button>
+          </div>
         </div>
 
-        <SyntaxHighlighter
-          language={language || 'text'}
-          style={resolvedTheme === 'dark' ? oneDark : oneLight}
-          customStyle={{
-            margin: 0,
-            padding: '1rem',
-            backgroundColor: 'transparent',
-            fontSize: '0.775rem',
-            lineHeight: '1.5',
-            fontFamily: geistMono.style.fontFamily,
-          }}
-          showLineNumbers={true}
-          lineNumberStyle={{
-            color: 'hsl(var(--muted-foreground))',
-            paddingRight: '1rem',
-            minWidth: '2rem',
-            textAlign: 'right',
-            userSelect: 'none',
-            fontFamily: geistMono.style.fontFamily,
-          }}
-          codeTagProps={{
-            style: {
+        <div className={cn('relative', shouldShowExpandButton && !isExpanded && 'max-h-96 overflow-hidden')}>
+          <SyntaxHighlighter
+            language={language || 'text'}
+            style={resolvedTheme === 'dark' ? customDarkTheme : customLightTheme}
+            customStyle={{
+              margin: 0,
+              padding: isWrapped ? '1rem' : '1rem 1rem 1rem 0',
+              paddingLeft: isWrapped ? '1rem' : '0',
+              backgroundColor: 'transparent !important',
+              fontSize: '0.875rem',
+              lineHeight: '1.6',
               fontFamily: geistMono.style.fontFamily,
-              whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
-              wordBreak: 'normal',
-              overflowWrap: isWrapped ? 'break-word' : 'normal',
-            },
-          }}
-        >
-          {children}
-        </SyntaxHighlighter>
+            }}
+            showLineNumbers={!isWrapped}
+            lineNumberStyle={{
+              color: 'hsl(var(--muted-foreground))',
+              paddingRight: '1rem',
+              minWidth: '2.5rem',
+              textAlign: 'right',
+              userSelect: 'none',
+              fontFamily: geistMono.style.fontFamily,
+              fontSize: '0.75rem',
+            }}
+            codeTagProps={{
+              style: {
+                fontFamily: geistMono.style.fontFamily,
+                whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+                wordBreak: isWrapped ? 'break-word' : 'normal',
+                overflowWrap: isWrapped ? 'break-word' : 'normal',
+                overflowX: isWrapped ? 'visible' : 'auto',
+              },
+            }}
+            wrapLongLines={isWrapped}
+          >
+            {children}
+          </SyntaxHighlighter>
+
+          {/* Fade overlay for collapsed long code blocks */}
+          {shouldShowExpandButton && !isExpanded && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-muted to-transparent pointer-events-none">
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+                <button
+                  onClick={toggleExpand}
+                  className={cn(
+                    'px-4 py-2 rounded-lg bg-background/90 backdrop-blur-sm border border-border/50 transition-all text-xs font-medium',
+                    'text-muted-foreground hover:text-foreground hover:bg-accent/80 hover:border-border',
+                  )}
+                  title="Expand code block"
+                >
+                  Expand
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Collapse button for expanded long code blocks */}
+          {shouldShowExpandButton && isExpanded && (
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+              <button
+                onClick={toggleExpand}
+                className={cn(
+                  'px-4 py-2 rounded-lg bg-background/90 backdrop-blur-sm border border-border/50 transition-all text-xs font-medium',
+                  'text-muted-foreground hover:text-foreground hover:bg-accent/80 hover:border-border',
+                )}
+                title="Collapse code block"
+              >
+                Collapse
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
   CodeBlock.displayName = 'CodeBlock';
+
+  const InlineCode: React.FC<{ code: string }> = ({ code }) => {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopy = useCallback(async () => {
+      try {
+        if (!navigator.clipboard) {
+          // Fallback for browsers without clipboard API
+          const textArea = document.createElement('textarea');
+          textArea.value = code;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        } else {
+          await navigator.clipboard.writeText(code);
+        }
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 1500);
+        toast.success('Code copied to clipboard');
+      } catch (error) {
+        console.error('Failed to copy code:', error);
+        toast.error('Failed to copy code');
+      }
+    }, [code]);
+
+    return (
+      <code
+        className={cn(
+          'inline rounded px-1 py-0.5 font-mono text-[0.9em]',
+          'bg-muted/50',
+          'text-foreground/85',
+          'before:content-none after:content-none',
+          'hover:bg-muted/70 transition-colors duration-150 cursor-pointer',
+          'align-baseline',
+          isCopied && 'ring-1 ring-primary/30 bg-primary/5',
+        )}
+        style={{
+          fontFamily: geistMono.style.fontFamily,
+          fontSize: '0.85em',
+          lineHeight: 'inherit',
+        }}
+        onClick={handleCopy}
+        title={isCopied ? 'Copied!' : 'Click to copy'}
+      >
+        {code}
+      </code>
+    );
+  };
+
+  InlineCode.displayName = 'InlineCode';
 
   const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
     const domain = new URL(href).hostname;
@@ -533,11 +688,17 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       );
     },
     code(children, language) {
+      // This handles fenced code blocks (```)
       return (
         <CodeBlock language={language} key={generateKey()}>
           {String(children)}
         </CodeBlock>
       );
+    },
+    codespan(code) {
+      // This handles inline code (`code`)
+      const codeString = typeof code === 'string' ? code : String(code || '');
+      return <InlineCode key={generateKey()} code={codeString} />;
     },
     link(href, text) {
       const citationIndex = citationLinks.findIndex((link) => link.link === href);

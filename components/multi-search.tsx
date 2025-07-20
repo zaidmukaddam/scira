@@ -219,8 +219,8 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
   const displayImages = React.useMemo(() => images.slice(0, PREVIEW_IMAGE_COUNT), [images]);
   const hasMore = images.length > PREVIEW_IMAGE_COUNT;
 
-  const ImageViewer = isMobile ? Drawer : Dialog;
-  const ImageViewerContent = isMobile ? DrawerContent : DialogContent;
+  const ImageViewer = React.useMemo(() => (isMobile ? Drawer : Dialog), [isMobile]);
+  const ImageViewerContent = React.useMemo(() => (isMobile ? DrawerContent : DialogContent), [isMobile]);
 
   const handleImageClick = React.useCallback((index: number) => {
     setSelectedImage(index);
@@ -243,6 +243,47 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
     setFailedImages((prev) => new Set(prev).add(imageUrl));
   }, []);
 
+  const currentImage = React.useMemo(() => images[selectedImage], [images, selectedImage]);
+
+  const gridItemClassName = React.useCallback(
+    (index: number) =>
+      cn(
+        'relative rounded-lg overflow-hidden',
+        'bg-neutral-100 dark:bg-neutral-800',
+        'transition-all duration-200 hover:scale-[1.02]',
+        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+        index === 0 ? 'md:col-span-2 md:row-span-2' : '',
+      ),
+    [],
+  );
+
+  const shouldShowOverlay = React.useCallback(
+    (index: number) => index === displayImages.length - 1 && hasMore,
+    [displayImages.length, hasMore],
+  );
+
+  const navigationButtonClassName = React.useMemo(
+    () =>
+      cn(
+        'h-10 w-10 rounded-lg',
+        'bg-white/90 dark:bg-neutral-800/90',
+        'hover:bg-neutral-100 dark:hover:bg-neutral-700',
+        'border border-neutral-200 dark:border-neutral-700',
+        'shadow-sm',
+      ),
+    [],
+  );
+
+  const viewerContentClassName = React.useMemo(
+    () =>
+      cn(
+        isMobile ? 'h-[90vh]' : 'w-full! max-w-2xl! h-3/5',
+        'p-0 overflow-hidden',
+        !isMobile && 'border border-neutral-200 dark:border-neutral-800 shadow-lg',
+      ),
+    [isMobile],
+  );
+
   if (!isClient) {
     return <div className="space-y-4" />;
   }
@@ -251,53 +292,37 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
     <div className="space-y-4">
       {/* Image Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
-        {displayImages.map((image, index) => {
-          const isLast = index === displayImages.length - 1;
+        {displayImages.map((image, index) => (
+          <button
+            key={`${image.url}-${index}`}
+            onClick={() => handleImageClick(index)}
+            className={gridItemClassName(index)}
+          >
+            {failedImages.has(image.url) ? (
+              <PlaceholderImage className="absolute inset-0" variant="compact" size="md" />
+            ) : (
+              <Image
+                src={image.url}
+                alt={image.description || ''}
+                fill
+                className="object-cover"
+                onError={() => handleImageError(image.url)}
+              />
+            )}
 
-          return (
-            <button
-              key={`${image.url}-${index}`}
-              onClick={() => handleImageClick(index)}
-              className={cn(
-                'relative rounded-lg overflow-hidden',
-                'bg-neutral-100 dark:bg-neutral-800',
-                'transition-all duration-200 hover:scale-[1.02]',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                index === 0 ? 'md:col-span-2 md:row-span-2' : '',
-              )}
-            >
-              {failedImages.has(image.url) ? (
-                <PlaceholderImage className="absolute inset-0" variant="compact" size="md" />
-              ) : (
-                <Image
-                  src={image.url}
-                  alt={image.description || ''}
-                  fill
-                  className="object-cover"
-                  onError={() => handleImageError(image.url)}
-                />
-              )}
-
-              {/* Overlay for last image if there are more */}
-              {isLast && hasMore && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
-                </div>
-              )}
-            </button>
-          );
-        })}
+            {/* Overlay for last image if there are more */}
+            {shouldShowOverlay(index) && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
+              </div>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Image Viewer */}
       <ImageViewer open={isOpen} onOpenChange={setIsOpen}>
-        <ImageViewerContent
-          className={cn(
-            isMobile ? 'h-[90vh]' : 'w-full! max-w-2xl! h-3/5',
-            'p-0 overflow-hidden',
-            !isMobile && 'border border-neutral-200 dark:border-neutral-800 shadow-lg',
-          )}
-        >
+        <ImageViewerContent className={viewerContentClassName}>
           <div className="relative w-full h-full bg-white dark:bg-neutral-900">
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
@@ -322,15 +347,15 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             {/* Image Display */}
             <div className="absolute inset-0 flex items-center justify-center p-4 pt-16 pb-16">
               <div className="relative w-full h-full">
-                {failedImages.has(images[selectedImage].url) ? (
+                {failedImages.has(currentImage.url) ? (
                   <PlaceholderImage className="absolute inset-0" variant="default" size="lg" />
                 ) : (
                   <Image
-                    src={images[selectedImage].url}
-                    alt={images[selectedImage].description || ''}
+                    src={currentImage.url}
+                    alt={currentImage.description || ''}
                     fill
                     className="object-contain rounded-lg"
-                    onError={() => handleImageError(images[selectedImage].url)}
+                    onError={() => handleImageError(currentImage.url)}
                   />
                 )}
               </div>
@@ -340,13 +365,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             <Button
               variant="ghost"
               size="icon"
-              className={cn(
-                'absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg',
-                'bg-white/90 dark:bg-neutral-800/90',
-                'hover:bg-neutral-100 dark:hover:bg-neutral-700',
-                'border border-neutral-200 dark:border-neutral-700',
-                'shadow-sm',
-              )}
+              className={cn('absolute left-4 top-1/2 -translate-y-1/2', navigationButtonClassName)}
               onClick={handlePrevious}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -354,23 +373,17 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             <Button
               variant="ghost"
               size="icon"
-              className={cn(
-                'absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg',
-                'bg-white/90 dark:bg-neutral-800/90',
-                'hover:bg-neutral-100 dark:hover:bg-neutral-700',
-                'border border-neutral-200 dark:border-neutral-700',
-                'shadow-sm',
-              )}
+              className={cn('absolute right-4 top-1/2 -translate-y-1/2', navigationButtonClassName)}
               onClick={handleNext}
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
 
             {/* Description */}
-            {images[selectedImage].description && (
+            {currentImage.description && (
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800">
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-3xl mx-auto">
-                  {images[selectedImage].description}
+                  {currentImage.description}
                 </p>
               </div>
             )}

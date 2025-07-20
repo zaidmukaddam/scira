@@ -28,7 +28,7 @@ import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepSt
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
-import { Crown, User } from '@phosphor-icons/react';
+import { Crown, PlusCircle, User } from '@phosphor-icons/react';
 
 // Define MessagePart type
 type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | StepStartUIPart;
@@ -179,7 +179,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
   return (
     <div className="mt-3">
-      <div className={`rounded-lg border ${colors.border} bg-card dark:bg-card shadow-sm overflow-hidden`}>
+      <div className={`rounded-lg border ${colors.border} bg-background dark:bg-background shadow-sm overflow-hidden`}>
         <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
           <div className="mt-0.5">
             <div className={`${colors.iconBg} p-1.5 rounded-full`}>{getIconComponent()}</div>
@@ -768,20 +768,20 @@ export const Message: React.FC<MessageProps> = ({
         )}
 
         {suggestedQuestions.length > 0 && (user || selectedVisibilityType === 'private') && status !== 'streaming' && (
-          <div className="w-full max-w-xl sm:max-w-2xl mt-3">
-            <div className="flex items-center gap-1.5 mb-2 px-3">
+          <div className="w-full max-w-xl sm:max-w-2xl mt-4">
+            <div className="flex items-center gap-1.5 mb-2 pr-3">
               <AlignLeft size={16} className="text-muted-foreground dark:text-muted-foreground" />
-              <h2 className="font-medium text-sm text-foreground dark:text-foreground">Suggested questions</h2>
+              <h2 className="font-medium texl-lg text-foreground dark:text-foreground">Suggested questions</h2>
             </div>
             <div className="flex flex-col border-t border-border dark:border-border">
               {suggestedQuestions.map((question, i) => (
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestionClick(question)}
-                  className="w-full py-2.5 px-0.5 text-left flex justify-between items-center border-b border-border dark:border-border hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
+                  className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b border-border dark:border-border hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
                 >
-                  <span className="text-foreground dark:text-foreground text-sm font-normal pr-3">{question}</span>
-                  <Plus size={14} className="text-muted-foreground dark:text-muted-foreground flex-shrink-0" />
+                  <span className="text-foreground dark:text-foreground font-light pr-3">{question}</span>
+                  <PlusCircle size={22} className="text-primary flex-shrink-0 pr-1" />
                 </button>
               ))}
             </div>

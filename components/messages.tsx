@@ -257,7 +257,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
                 {/* Add buttons below the text with visible labels */}
                 {status === 'ready' && (
-                  <div className="flex items-center gap-3 mt-3">
+                  <div className="flex items-center gap-3 mt-2.5 mb-5 !-ml-1">
                     {/* Only show reload for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <Button
@@ -295,9 +295,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
                             console.error('Error in reload:', error);
                           }
                         }}
-                        className="h-8 px-2 text-xs rounded-full"
+                        className="h-6 !p-1 text-xs rounded-full"
                       >
-                        <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                        <RefreshCw className="h-3.5 w-3.5 mr-0.5" />
                         Rewrite
                       </Button>
                     )}
@@ -317,9 +317,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
                             toast.error('Failed to share chat');
                           }
                         }}
-                        className="h-8 px-2 text-xs rounded-full text-muted-foreground hover:text-foreground"
+                        className="h-6 !p-1 text-xs rounded-full"
                       >
-                        <Share className="h-3.5 w-3.5 mr-2" />
+                        <Share className="h-3.5 w-3.5 mr-0.5" />
                         Share
                       </Button>
                     )}
@@ -330,9 +330,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
                         navigator.clipboard.writeText(part.text);
                         toast.success('Copied to clipboard');
                       }}
-                      className="h-8 px-2 text-xs rounded-full text-muted-foreground hover:text-foreground"
+                      className="h-6 !p-1 text-xs rounded-full"
                     >
-                      <Copy className="h-3.5 w-3.5 mr-2" />
+                      <Copy className="h-3.5 w-3.5 mr-0.5" />
                       Copy
                     </Button>
                   </div>

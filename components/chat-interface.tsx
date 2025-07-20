@@ -217,7 +217,7 @@ const ChatInterface = memo(
       () => ({
         id: chatId,
         api: '/api/search',
-        experimental_throttle: selectedModel === 'scira-anthropic' ? 500 : 100,
+        experimental_throttle: selectedModel === 'scira-anthropic' ? 1000 : 100,
         sendExtraMessageFields: true,
         maxSteps: 5,
         body: {
