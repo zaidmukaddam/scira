@@ -23,9 +23,9 @@ interface AcademicPapersProps {
 }
 
 // Academic Paper Source Card Component
-const AcademicSourceCard: React.FC<{ 
-  paper: AcademicResult; 
-  onClick?: () => void 
+const AcademicSourceCard: React.FC<{
+  paper: AcademicResult;
+  onClick?: () => void;
 }> = ({ paper, onClick }) => {
   // Format authors for display
   const formatAuthors = (author: string | null | undefined) => {
@@ -115,22 +115,14 @@ const AcademicPapersSheet: React.FC<{
               </div>
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Academic Papers</h2>
             </div>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {papers.length} research papers
-            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{papers.length} research papers</p>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {papers.map((paper, index) => (
-                <a
-                  key={index}
-                  href={paper.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
+                <a key={index} href={paper.url} target="_blank" rel="noopener noreferrer" className="block">
                   <AcademicSourceCard paper={paper} />
                 </a>
               ))}
@@ -148,21 +140,21 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    
+
     // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-    
+
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-    
+
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-    
+
     // Check scroll position to determine if we should handle the event
     const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-    
+
     // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
       // In middle of scroll area - always handle
@@ -187,7 +179,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
     <div className="w-full space-y-3 my-4">
       <Accordion type="single" collapsible defaultValue="academic_papers" className="w-full">
         <AccordionItem value="academic_papers" className="border-none">
-          <AccordionTrigger 
+          <AccordionTrigger
             className={cn(
               'py-3 px-4 rounded-xl hover:no-underline',
               'bg-white dark:bg-neutral-900',
@@ -207,9 +199,9 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
                   {results.length}
                 </Badge>
                 {results.length > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-7 px-2 text-xs"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -234,10 +226,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
               )}
             >
               {/* Preview results */}
-              <div 
-                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
-                onWheel={handleWheelScroll}
-              >
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                 {previewPapers.map((paper, index) => (
                   <a
                     key={index}
@@ -256,11 +245,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
       </Accordion>
 
       {/* Sources Sheet */}
-      <AcademicPapersSheet 
-        papers={results} 
-        open={sourcesSheetOpen} 
-        onOpenChange={setSourcesSheetOpen} 
-      />
+      <AcademicPapersSheet papers={results} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
     </div>
   );
 };
