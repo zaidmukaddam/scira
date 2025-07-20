@@ -15,7 +15,7 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { TelescopeIcon, X, Check, ChevronsUpDown, Globe, Sparkles } from 'lucide-react';
+import { TelescopeIcon, X, Check, ChevronsUpDown, Globe, Sparkles, Cpu } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
@@ -154,7 +154,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 className,
               )}
             >
-              <Sparkles className="h-4 w-4" />
+              <Cpu className="h-4 w-4" />
               <span className="text-xs font-medium sm:block hidden">{currentModel?.label || 'Select Model'}</span>
               <ChevronsUpDown className="h-4 w-4 opacity-50" />
             </Button>
@@ -962,6 +962,62 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     };
   }, [cleanupMediaRecorder]);
+
+  // Global typing detection to auto-focus form
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Don't interfere if user is already typing in an input, textarea, or contenteditable
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true' ||
+        target.closest('[contenteditable="true"]')
+      ) {
+        return;
+      }
+
+      // Don't interfere with keyboard shortcuts (Ctrl/Cmd + key)
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      // Don't interfere with function keys, arrow keys, etc.
+      if (
+        event.key.length > 1 && // Multi-character keys like 'Enter', 'Escape', etc.
+        !['Backspace', 'Delete', 'Space'].includes(event.key)
+      ) {
+        return;
+      }
+
+      // Don't focus if form is already focused
+      if (inputRef.current && document.activeElement === inputRef.current) {
+        return;
+      }
+
+      // Don't focus if recording is active
+      if (isRecording) {
+        return;
+      }
+
+      // Focus the input and add the typed character
+      if (inputRef.current && event.key.length === 1) {
+        inputRef.current.focus();
+        // If it's a printable character, add it to the input
+        if (event.key !== ' ' || input.length > 0) {
+          // Allow space only if there's already content
+          setInput(input + event.key);
+          event.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isRecording, input, setInput]);
 
   const handleRecord = useCallback(async () => {
     if (isRecording && mediaRecorderRef.current) {
