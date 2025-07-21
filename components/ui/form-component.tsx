@@ -15,7 +15,7 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { TelescopeIcon, X, Check, ChevronsUpDown, Globe, Sparkles, Cpu } from 'lucide-react';
+import { TelescopeIcon, X, Check, ChevronsUpDown, Globe } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { UserWithProStatus } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown, LockIcon, MicrophoneIcon } from '@phosphor-icons/react';
+import { Crown, LockIcon, MicrophoneIcon, CpuIcon } from '@phosphor-icons/react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -154,7 +154,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 className,
               )}
             >
-              <Cpu className="h-4 w-4" />
+              <CpuIcon className="h-4 w-4" />
               <span className="text-xs font-medium sm:block hidden">{currentModel?.label || 'Select Model'}</span>
               <ChevronsUpDown className="h-4 w-4 opacity-50" />
             </Button>
