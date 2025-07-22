@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState, memo } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, memo } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSession, signOut } from '@/lib/auth-client';
-import { redirect } from 'next/navigation';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession, signOut } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
+import { toast } from "sonner";
 import {
   SignOut,
   SignIn,
@@ -30,20 +30,35 @@ import {
   Lightning,
   Gear,
   Code,
-} from '@phosphor-icons/react';
-import { cn } from '@/lib/utils';
-import { ThemeSwitcher } from './theme-switcher';
-import { useRouter } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
-import Link from 'next/link';
-import { User } from '@/lib/db/schema';
-import { SettingsDialog } from './settings-dialog';
+} from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "./theme-switcher";
+import { useRouter } from "next/navigation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { XLogo, InstagramLogoIcon } from "@phosphor-icons/react";
+import Link from "next/link";
+import { User } from "@/lib/db/schema";
+import { SettingsDialog } from "./settings-dialog";
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
-    <svg height={size} strokeLinejoin="round" viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8 1L16 15H0L8 1Z"
+        fill="currentColor"
+      ></path>
     </svg>
   );
 };
@@ -65,7 +80,9 @@ const UserProfile = memo(
     isProUser?: boolean;
     isProStatusLoading?: boolean;
     isCustomInstructionsEnabled?: boolean;
-    setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+    setIsCustomInstructionsEnabled?: (
+      value: boolean | ((val: boolean) => boolean),
+    ) => void;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
@@ -91,7 +108,7 @@ const UserProfile = memo(
 
     // Function to format email for display
     const formatEmail = (email?: string | null) => {
-      if (!email) return '';
+      if (!email) return "";
 
       // If showing full email, don't truncate it
       if (showEmail) {
@@ -99,16 +116,16 @@ const UserProfile = memo(
       }
 
       // If hiding email, show only first few characters and domain
-      const parts = email.split('@');
+      const parts = email.split("@");
       if (parts.length === 2) {
         const username = parts[0];
         const domain = parts[1];
-        const maskedUsername = username.slice(0, 3) + '•••';
+        const maskedUsername = username.slice(0, 3) + "•••";
         return `${maskedUsername}@${domain}`;
       }
 
       // Fallback for unusual email formats
-      return email.slice(0, 3) + '•••';
+      return email.slice(0, 3) + "•••";
     };
 
     return (
@@ -121,13 +138,17 @@ const UserProfile = memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn('p-0! m-0! focus:!outline-0 focus:!ring-0', signingOut && 'animate-pulse', className)}
+                    className={cn(
+                      "p-0! m-0! focus:!outline-0 focus:!ring-0",
+                      signingOut && "animate-pulse",
+                      className,
+                    )}
                     asChild
                   >
                     <Avatar className="size-7 rounded-md border border-neutral-200 dark:border-neutral-700">
                       <AvatarImage
-                        src={currentUser?.image ?? ''}
-                        alt={currentUser?.name ?? ''}
+                        src={currentUser?.image ?? ""}
+                        alt={currentUser?.name ?? ""}
                         className="rounded-md p-0 m-0 size-7"
                       />
                       <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
@@ -139,7 +160,11 @@ const UserProfile = memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn('p-0! m-0! hover:bg-transparent!', signingIn && 'animate-pulse', className)}
+                    className={cn(
+                      "p-0! m-0! hover:bg-transparent!",
+                      signingIn && "animate-pulse",
+                      className,
+                    )}
                   >
                     <UserCircle className="size-6" />
                   </Button>
@@ -147,7 +172,7 @@ const UserProfile = memo(
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={4}>
-              {isAuthenticated ? 'Account' : 'Sign In'}
+              {isAuthenticated ? "Account" : "Sign In"}
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent className="w-[240px] z-[110] mr-5">
@@ -156,8 +181,8 @@ const UserProfile = memo(
                 <div className="flex items-center gap-2">
                   <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700">
                     <AvatarImage
-                      src={currentUser?.image ?? ''}
-                      alt={currentUser?.name ?? ''}
+                      src={currentUser?.image ?? ""}
+                      alt={currentUser?.name ?? ""}
                       className="rounded-md p-0 m-0 size-8"
                     />
                     <AvatarFallback className="rounded-md p-0 m-0 size-8">
@@ -165,11 +190,13 @@ const UserProfile = memo(
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <p className="font-medium text-sm leading-none truncate">{currentUser?.name}</p>
+                    <p className="font-medium text-sm leading-none truncate">
+                      {currentUser?.name}
+                    </p>
                     <div className="flex items-center mt-0.5 gap-1">
                       <div
-                        className={`text-xs text-muted-foreground ${showEmail ? '' : 'max-w-[160px] truncate'}`}
-                        title={currentUser?.email || ''}
+                        className={`text-xs text-muted-foreground ${showEmail ? "" : "max-w-[160px] truncate"}`}
+                        title={currentUser?.email || ""}
                       >
                         {formatEmail(currentUser?.email)}
                       </div>
@@ -183,7 +210,9 @@ const UserProfile = memo(
                         className="size-6 text-muted-foreground hover:text-foreground"
                       >
                         {showEmail ? <EyeSlash size={12} /> : <Eye size={12} />}
-                        <span className="sr-only">{showEmail ? 'Hide email' : 'Show email'}</span>
+                        <span className="sr-only">
+                          {showEmail ? "Hide email" : "Show email"}
+                        </span>
                       </Button>
                     </div>
                   </div>
@@ -199,7 +228,9 @@ const UserProfile = memo(
                   </Avatar>
                   <div className="flex flex-col min-w-0">
                     <p className="font-medium text-sm leading-none">Guest</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sign in to save your progress</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Sign in to save your progress
+                    </p>
                   </div>
                 </div>
               </div>
@@ -229,33 +260,46 @@ const UserProfile = memo(
                           <Crown size={14} className="text-foreground" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground text-sm">Scira Pro</span>
-                          <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
+                          <span className="font-medium text-foreground text-sm">
+                            Scira Pro
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Unlimited access to all features
+                          </span>
                         </div>
                       </div>
                     </div>
                   ) : (
                     <DropdownMenuItem
                       className="cursor-pointer flex items-center gap-2.5 py-1.5"
-                      onClick={() => router.push('/pricing')}
+                      onClick={() => router.push("/pricing")}
                     >
                       <div className="size-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
                         <Lightning size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">Upgrade to Pro</span>
-                        <span className="text-[10px] text-muted-foreground">Unlimited searches & premium models</span>
+                        <span className="text-sm font-medium">
+                          Upgrade to Pro
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Unlimited searches & premium models
+                        </span>
                       </div>
                     </DropdownMenuItem>
                   )
                 ) : null}
-                {(subscriptionData || isProStatusLoading) && <DropdownMenuSeparator />}
+                {(subscriptionData || isProStatusLoading) && (
+                  <DropdownMenuSeparator />
+                )}
               </>
             )}
 
             {isAuthenticated && (
               <>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => setSettingsOpen(true)}
+                >
                   <div className="w-full flex items-center gap-2">
                     <Gear size={16} />
                     <span>Settings</span>
@@ -265,7 +309,10 @@ const UserProfile = memo(
             )}
 
             <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
-              <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center justify-between w-full px-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center gap-2">
                   <Sun size={16} />
                   <span className="text-sm">Theme</span>
@@ -276,7 +323,7 @@ const UserProfile = memo(
             <DropdownMenuSeparator />
 
             {/* About and Information */}
-            <DropdownMenuItem className="cursor-pointer" asChild>
+            {/* <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/about" className="w-full flex items-center gap-2">
                 <Info size={16} />
                 <span>About</span>
@@ -294,76 +341,9 @@ const UserProfile = memo(
                 <span>Privacy</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
 
             {/* Social and External Links */}
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://api.scira.ai/'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <Code size={16} />
-                <span>API</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://git.new/scira'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <GithubLogo size={16} />
-                <span>Github</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://x.com/sciraai'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <XLogo size={16} />
-                <span>X.com</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://www.instagram.com/scira.ai'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <InstagramLogoIcon size={16} />
-                <span>Instagram</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <VercelIcon size={14} />
-                <span>Deploy with Vercel</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://scira.userjot.com'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <Bug className="size-4" />
-                <span>Feature/Bug Request</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
 
             {/* Auth */}
             {isAuthenticated ? (
@@ -374,18 +354,18 @@ const UserProfile = memo(
                     fetchOptions: {
                       onRequest: () => {
                         setSigningOut(true);
-                        toast.loading('Signing out...');
+                        toast.loading("Signing out...");
                       },
                       onSuccess: () => {
                         setSigningOut(false);
                         localStorage.clear();
-                        toast.success('Signed out successfully');
+                        toast.success("Signed out successfully");
                         toast.dismiss();
-                        window.location.href = '/new';
+                        window.location.href = "/new";
                       },
                       onError: () => {
                         setSigningOut(false);
-                        toast.error('Failed to sign out');
+                        toast.error("Failed to sign out");
                         window.location.reload();
                       },
                     },
@@ -400,7 +380,7 @@ const UserProfile = memo(
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
                 onClick={() => {
                   setSigningIn(true);
-                  redirect('/sign-in');
+                  redirect("/sign-in");
                 }}
               >
                 <span>Sign In</span>
@@ -427,6 +407,6 @@ const UserProfile = memo(
 );
 
 // Add a display name for the memoized component for better debugging
-UserProfile.displayName = 'UserProfile';
+UserProfile.displayName = "UserProfile";
 
 export { UserProfile };

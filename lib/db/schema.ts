@@ -10,6 +10,7 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+  suggestedQuestions: boolean('suggested_questions').notNull().default(true),
 });
 
 export const session = pgTable('session', {

@@ -1,15 +1,15 @@
 // /app/components/map-components.tsx
-import { clientEnv } from '@/env/client';
+// import { clientEnv } from '@/env/client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import React, { useEffect, useRef, useState, memo } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-// Set Mapbox token with fallback
-if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
-  mapboxgl.accessToken = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
-}
+// // Set Mapbox token with fallback
+// if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
+//   mapboxgl.accessToken = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
+// }
 
 interface Location {
   lat: number;

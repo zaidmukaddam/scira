@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import {
   ArrowRight,
   ChevronDown,
@@ -23,22 +23,39 @@ import {
   AlertCircle,
   RefreshCw,
   LogIn,
-} from 'lucide-react';
-import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
-import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
-import { deleteTrailingMessages } from '@/app/actions';
-import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
-import { Crown, User } from '@phosphor-icons/react';
+} from "lucide-react";
+import {
+  TextUIPart,
+  ReasoningUIPart,
+  ToolInvocationUIPart,
+  SourceUIPart,
+  StepStartUIPart,
+} from "@ai-sdk/ui-utils";
+import { MarkdownRenderer, preprocessLaTeX } from "@/components/markdown";
+import { deleteTrailingMessages } from "@/app/actions";
+import {
+  getErrorActions,
+  getErrorIcon,
+  isSignInRequired,
+  isProRequired,
+  isRateLimited,
+} from "@/lib/errors";
+import { Crown, User } from "@phosphor-icons/react";
 
 // Define MessagePart type
-type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | StepStartUIPart;
+type MessagePart =
+  | TextUIPart
+  | ReasoningUIPart
+  | ToolInvocationUIPart
+  | SourceUIPart
+  | StepStartUIPart;
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
   error: any;
   handleRetry?: () => Promise<void>;
   user?: any;
-  selectedVisibilityType?: 'public' | 'private';
+  selectedVisibilityType?: "public" | "private";
 }
 
 const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
@@ -55,8 +72,8 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
       const errorData = JSON.parse(error.message);
       if (errorData.code && errorData.message) {
         parsedError = {
-          type: errorData.code.split(':')[0],
-          surface: errorData.code.split(':')[1],
+          type: errorData.code.split(":")[0],
+          surface: errorData.code.split(":")[1],
           message: errorData.message,
           cause: errorData.cause,
         };
@@ -65,8 +82,8 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
     } catch (e) {
       // Not JSON, fallback
       parsedError = {
-        type: 'unknown',
-        surface: 'chat',
+        type: "unknown",
+        surface: "chat",
         message: error.message,
         cause: (error as any).cause,
       };
@@ -78,67 +95,88 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   const errorIcon = getErrorIcon(parsedError as any);
   const errorMessage = isChatSDKError
     ? parsedError.message
-    : typeof error === 'string'
-    ? error
-    : (error as any).message || 'Something went wrong while processing your message';
-  const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
-  const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
+    : typeof error === "string"
+      ? error
+      : (error as any).message ||
+        "Something went wrong while processing your message";
+  const errorCause = isChatSDKError
+    ? parsedError.cause
+    : typeof error === "string"
+      ? undefined
+      : (error as any).cause;
+  const errorCode = isChatSDKError
+    ? `${parsedError.type}:${parsedError.surface}`
+    : null;
   const actions = isChatSDKError
     ? getErrorActions(parsedError as any)
-    : { primary: { label: 'Try Again', action: 'retry' } };
+    : { primary: { label: "Try Again", action: "retry" } };
 
   // Get icon component based on error type
   const getIconComponent = () => {
     switch (errorIcon) {
-      case 'auth':
-        return <User className="h-4 w-4 text-blue-500 dark:text-blue-300" weight="fill" />;
-      case 'upgrade':
-        return <Crown className="h-4 w-4 text-amber-500 dark:text-amber-300" weight="fill" />;
-      case 'warning':
-        return <AlertCircle className="h-4 w-4 text-orange-500 dark:text-orange-300" />;
+      case "auth":
+        return (
+          <User
+            className="h-4 w-4 text-blue-500 dark:text-blue-300"
+            weight="fill"
+          />
+        );
+      case "upgrade":
+        return (
+          <Crown
+            className="h-4 w-4 text-amber-500 dark:text-amber-300"
+            weight="fill"
+          />
+        );
+      case "warning":
+        return (
+          <AlertCircle className="h-4 w-4 text-orange-500 dark:text-orange-300" />
+        );
       default:
-        return <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-300" />;
+        return (
+          <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-300" />
+        );
     }
   };
 
   // Get color scheme based on error type
   const getColorScheme = () => {
     switch (errorIcon) {
-      case 'auth':
+      case "auth":
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/30',
-          border: 'border-blue-200 dark:border-blue-800',
-          iconBg: 'bg-blue-100 dark:bg-blue-700/50',
-          title: 'text-blue-700 dark:text-blue-300',
-          text: 'text-blue-600/80 dark:text-blue-400/80',
-          button: 'bg-blue-600 hover:bg-blue-700 text-white',
+          bg: "bg-blue-50 dark:bg-blue-900/30",
+          border: "border-blue-200 dark:border-blue-800",
+          iconBg: "bg-blue-100 dark:bg-blue-700/50",
+          title: "text-blue-700 dark:text-blue-300",
+          text: "text-blue-600/80 dark:text-blue-400/80",
+          button: "bg-blue-600 hover:bg-blue-700 text-white",
         };
-      case 'upgrade':
+      case "upgrade":
         return {
-          bg: 'bg-amber-50 dark:bg-amber-900/30',
-          border: 'border-amber-200 dark:border-amber-800',
-          iconBg: 'bg-amber-100 dark:bg-amber-700/50',
-          title: 'text-amber-700 dark:text-amber-300',
-          text: 'text-amber-600/80 dark:text-amber-400/80',
-          button: 'bg-amber-600 hover:bg-amber-700 text-white',
+          bg: "bg-amber-50 dark:bg-amber-900/30",
+          border: "border-amber-200 dark:border-amber-800",
+          iconBg: "bg-amber-100 dark:bg-amber-700/50",
+          title: "text-amber-700 dark:text-amber-300",
+          text: "text-amber-600/80 dark:text-amber-400/80",
+          button: "bg-amber-600 hover:bg-amber-700 text-white",
         };
-      case 'warning':
+      case "warning":
         return {
-          bg: 'bg-orange-50 dark:bg-orange-900/30',
-          border: 'border-orange-200 dark:border-orange-800',
-          iconBg: 'bg-orange-100 dark:bg-orange-700/50',
-          title: 'text-orange-700 dark:text-orange-300',
-          text: 'text-orange-600/80 dark:text-orange-400/80',
-          button: 'bg-orange-600 hover:bg-orange-700 text-white',
+          bg: "bg-orange-50 dark:bg-orange-900/30",
+          border: "border-orange-200 dark:border-orange-800",
+          iconBg: "bg-orange-100 dark:bg-orange-700/50",
+          title: "text-orange-700 dark:text-orange-300",
+          text: "text-orange-600/80 dark:text-orange-400/80",
+          button: "bg-orange-600 hover:bg-orange-700 text-white",
         };
       default:
         return {
-          bg: 'bg-red-50 dark:bg-red-900/30',
-          border: 'border-red-200 dark:border-red-800',
-          iconBg: 'bg-red-100 dark:bg-red-700/50',
-          title: 'text-red-700 dark:text-red-300',
-          text: 'text-red-600/80 dark:text-red-400/80',
-          button: 'bg-red-600 hover:bg-red-700 text-white',
+          bg: "bg-red-50 dark:bg-red-900/30",
+          border: "border-red-200 dark:border-red-800",
+          iconBg: "bg-red-100 dark:bg-red-700/50",
+          title: "text-red-700 dark:text-red-300",
+          text: "text-red-600/80 dark:text-red-400/80",
+          button: "bg-red-600 hover:bg-red-700 text-white",
         };
     }
   };
@@ -148,19 +186,19 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   // Handle action clicks
   const handleAction = (action: string) => {
     switch (action) {
-      case 'signin':
-        window.location.href = '/sign-in';
+      case "signin":
+        window.location.href = "/sign-in";
         break;
-      case 'upgrade':
-        window.location.href = '/pricing';
+      case "upgrade":
+        window.location.href = "/pricing";
         break;
-      case 'retry':
+      case "retry":
         if (handleRetry) {
           handleRetry();
         }
         break;
-      case 'refresh':
-        window.location.href = '/new';
+      case "refresh":
+        window.location.href = "/new";
         break;
       default:
         if (handleRetry) {
@@ -171,34 +209,47 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
   // Determine if user can perform action
   const canPerformAction = (action: string) => {
-    if (action === 'retry' || action === 'refresh') {
-      return (user || selectedVisibilityType === 'private') && handleRetry;
+    if (action === "retry" || action === "refresh") {
+      return (user || selectedVisibilityType === "private") && handleRetry;
     }
     return true;
   };
 
   return (
     <div className="mt-3">
-      <div className={`rounded-lg border ${colors.border} bg-white dark:bg-neutral-900 shadow-sm overflow-hidden`}>
-        <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
+      <div
+        className={`rounded-lg border ${colors.border} bg-white dark:bg-neutral-900 shadow-sm overflow-hidden`}
+      >
+        <div
+          className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}
+        >
           <div className="mt-0.5">
-            <div className={`${colors.iconBg} p-1.5 rounded-full`}>{getIconComponent()}</div>
+            <div className={`${colors.iconBg} p-1.5 rounded-full`}>
+              {getIconComponent()}
+            </div>
           </div>
           <div className="flex-1">
             <h3 className={`font-medium ${colors.title}`}>
-              {isChatSDKError && isSignInRequired(parsedError as any) && 'Sign In Required'}
               {isChatSDKError &&
-                (isProRequired(parsedError as any) || isRateLimited(parsedError as any)) &&
-                'Upgrade Required'}
+                isSignInRequired(parsedError as any) &&
+                "Sign In Required"}
+              {isChatSDKError &&
+                (isProRequired(parsedError as any) ||
+                  isRateLimited(parsedError as any)) &&
+                "Upgrade Required"}
               {isChatSDKError &&
                 !isSignInRequired(parsedError as any) &&
                 !isProRequired(parsedError as any) &&
                 !isRateLimited(parsedError as any) &&
-                'Error'}
-              {!isChatSDKError && 'Error'}
+                "Error"}
+              {!isChatSDKError && "Error"}
             </h3>
             <p className={`text-sm ${colors.text} mt-0.5`}>{errorMessage}</p>
-            {errorCode && <p className={`text-xs ${colors.text} mt-1 font-mono`}>Error Code: {errorCode}</p>}
+            {errorCode && (
+              <p className={`text-xs ${colors.text} mt-1 font-mono`}>
+                Error Code: {errorCode}
+              </p>
+            )}
           </div>
         </div>
 
@@ -209,29 +260,43 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
             </div>
           )}
 
+          {/* Error Message */}
           <div className="flex items-center justify-between">
             <p className="text-neutral-500 dark:text-neutral-400 text-xs">
-              {!user && selectedVisibilityType === 'public'
-                ? 'Please sign in to retry or try a different prompt'
-                : 'You can retry your request or try a different approach'}
+              {!user && selectedVisibilityType === "public"
+                ? "Please sign in to retry or try a different prompt"
+                : "You can retry your request or try a different approach"}
             </p>
             <div className="flex gap-2">
-              {actions.secondary && canPerformAction(actions.secondary.action) && (
-                <Button
-                  onClick={() => handleAction(actions.secondary!.action)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                >
-                  {actions.secondary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
-                  {actions.secondary.label}
-                </Button>
-              )}
+              {actions.secondary &&
+                canPerformAction(actions.secondary.action) && (
+                  <Button
+                    onClick={() => handleAction(actions.secondary!.action)}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    {actions.secondary.action === "retry" && (
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                    )}
+                    {actions.secondary.label}
+                  </Button>
+                )}
               {actions.primary && canPerformAction(actions.primary.action) && (
-                <Button onClick={() => handleAction(actions.primary!.action)} className={colors.button} size="sm">
-                  {actions.primary.action === 'signin' && <LogIn className="mr-2 h-3.5 w-3.5" />}
-                  {actions.primary.action === 'upgrade' && <Crown className="mr-2 h-3.5 w-3.5" />}
-                  {actions.primary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                <Button
+                  onClick={() => handleAction(actions.primary!.action)}
+                  className={colors.button}
+                  size="sm"
+                >
+                  {actions.primary.action === "signin" && (
+                    <LogIn className="mr-2 h-3.5 w-3.5" />
+                  )}
+                  {actions.primary.action === "upgrade" && (
+                    <Crown className="mr-2 h-3.5 w-3.5" />
+                  )}
+                  {actions.primary.action === "retry" && (
+                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                  )}
                   {actions.primary.label}
                 </Button>
               )}
@@ -263,7 +328,7 @@ interface MessageProps {
   setSuggestedQuestions: (questions: string[]) => void;
   suggestedQuestions: string[];
   user?: any;
-  selectedVisibilityType?: 'public' | 'private';
+  selectedVisibilityType?: "public" | "private";
   reload: () => Promise<string | null | undefined>;
   isLastMessage?: boolean;
   error?: any;
@@ -275,7 +340,7 @@ interface MessageProps {
 // Message Editor Component
 interface MessageEditorProps {
   message: any;
-  setMode: (mode: 'view' | 'edit') => void;
+  setMode: (mode: "view" | "edit") => void;
   setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
   reload: () => Promise<string | null | undefined>;
   messages: any[];
@@ -302,7 +367,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
 
   const adjustHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
@@ -318,7 +383,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draftContent.trim()) {
-            toast.error('Please enter a valid message.');
+            toast.error("Please enter a valid message.");
             return;
           }
 
@@ -341,7 +406,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 const updatedMessage = {
                   ...message,
                   content: draftContent.trim(),
-                  parts: [{ type: 'text', text: draftContent.trim() }],
+                  parts: [{ type: "text", text: draftContent.trim() }],
                 };
                 newMessages.push(updatedMessage);
                 break;
@@ -354,13 +419,13 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             setMessages(newMessages);
             setSuggestedQuestions([]);
 
-            setMode('view');
+            setMode("view");
 
             // Step 4: Reload to generate new response (same as rewrite logic)
             await reload();
           } catch (error) {
-            console.error('Error updating message:', error);
-            toast.error('Failed to update message. Please try again.');
+            console.error("Error updating message:", error);
+            toast.error("Failed to update message. Please try again.");
           } finally {
             setIsSubmitting(false);
           }
@@ -376,7 +441,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-neutral-900 dark:text-neutral-100 pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-neutral-50/10 focus:bg-neutral-50/20 dark:hover:bg-neutral-800/10 dark:focus:bg-neutral-800/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
             placeholder="Edit your message..."
             style={{
-              lineHeight: '1.625',
+              lineHeight: "1.625",
             }}
           />
 
@@ -386,7 +451,9 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
               variant="ghost"
               size="icon"
               className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-              disabled={isSubmitting || draftContent.trim() === message.content.trim()}
+              disabled={
+                isSubmitting || draftContent.trim() === message.content.trim()
+              }
             >
               {isSubmitting ? (
                 <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -394,12 +461,15 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 <ArrowRight className="h-3.5 w-3.5" />
               )}
             </Button>
-            <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+            <Separator
+              orientation="vertical"
+              className="h-5 bg-neutral-200 dark:bg-neutral-700"
+            />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setMode('view')}
+              onClick={() => setMode("view")}
               className="h-7 w-7 rounded-r-md rounded-l-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
               disabled={isSubmitting}
             >
@@ -410,31 +480,37 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
       </form>
 
       {/* Show editable attachments */}
-      {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-        <div className="mt-1.5">
-          <EditableAttachmentsBadge
-            attachments={message.experimental_attachments}
-            onRemoveAttachment={(index) => {
-              // Handle attachment removal
-              const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
-              // Update the message with new attachments
-              setMessages((messages) => {
-                const messageIndex = messages.findIndex((m) => m.id === message.id);
-                if (messageIndex !== -1) {
-                  const updatedMessage = {
-                    ...message,
-                    experimental_attachments: updatedAttachments,
-                  };
-                  const updatedMessages = [...messages];
-                  updatedMessages[messageIndex] = updatedMessage;
-                  return updatedMessages;
-                }
-                return messages;
-              });
-            }}
-          />
-        </div>
-      )}
+      {message.experimental_attachments &&
+        message.experimental_attachments.length > 0 && (
+          <div className="mt-1.5">
+            <EditableAttachmentsBadge
+              attachments={message.experimental_attachments}
+              onRemoveAttachment={(index) => {
+                // Handle attachment removal
+                const updatedAttachments =
+                  message.experimental_attachments.filter(
+                    (_: any, i: number) => i !== index,
+                  );
+                // Update the message with new attachments
+                setMessages((messages) => {
+                  const messageIndex = messages.findIndex(
+                    (m) => m.id === message.id,
+                  );
+                  if (messageIndex !== -1) {
+                    const updatedMessage = {
+                      ...message,
+                      experimental_attachments: updatedAttachments,
+                    };
+                    const updatedMessages = [...messages];
+                    updatedMessages[messageIndex] = updatedMessage;
+                    return updatedMessages;
+                  }
+                  return messages;
+                });
+              }}
+            />
+          </div>
+        )}
     </div>
   );
 };
@@ -454,7 +530,7 @@ export const Message: React.FC<MessageProps> = ({
   setSuggestedQuestions,
   suggestedQuestions,
   user,
-  selectedVisibilityType = 'private',
+  selectedVisibilityType = "private",
   reload,
   isLastMessage,
   error,
@@ -469,7 +545,7 @@ export const Message: React.FC<MessageProps> = ({
   // Ref to check content height
   const messageContentRef = React.useRef<HTMLDivElement>(null);
   // Mode state for editing
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [mode, setMode] = useState<"view" | "edit">("view");
 
   // Check if message content exceeds max height
   React.useEffect(() => {
@@ -482,48 +558,52 @@ export const Message: React.FC<MessageProps> = ({
   // Dynamic font size based on content length with mobile responsiveness
   const getDynamicFontSize = (content: string) => {
     const length = content.trim().length;
-    const lines = content.split('\n').length;
-    
+    const lines = content.split("\n").length;
+
     // Very short messages (like single words or short phrases)
     if (length <= 50 && lines === 1) {
-      return '[&>*]:text-xl sm:[&>*]:text-2xl'; // Smaller on mobile
+      return "[&>*]:text-xl sm:[&>*]:text-2xl"; // Smaller on mobile
     }
     // Short messages (one line, moderate length)
     else if (length <= 120 && lines === 1) {
-      return '[&>*]:text-lg sm:[&>*]:text-xl'; // Smaller on mobile
+      return "[&>*]:text-lg sm:[&>*]:text-xl"; // Smaller on mobile
     }
     // Medium messages (2-3 lines or longer single line)
     else if (lines <= 3 || length <= 200) {
-      return '[&>*]:text-base sm:[&>*]:text-lg'; // Smaller on mobile
+      return "[&>*]:text-base sm:[&>*]:text-lg"; // Smaller on mobile
     }
     // Longer messages
     else {
-      return '[&>*]:text-sm sm:[&>*]:text-base'; // Even smaller on mobile
+      return "[&>*]:text-sm sm:[&>*]:text-base"; // Even smaller on mobile
     }
   };
 
   const handleSuggestedQuestionClick = useCallback(
     async (question: string) => {
       // Only proceed if user is authenticated for public chats
-      if (selectedVisibilityType === 'public' && !user) return;
+      if (selectedVisibilityType === "public" && !user) return;
 
       setSuggestedQuestions([]);
 
       await append({
         content: question.trim(),
-        role: 'user',
+        role: "user",
       });
     },
     [append, setSuggestedQuestions, user, selectedVisibilityType],
   );
 
-  if (message.role === 'user') {
+  if (message.role === "user") {
     // Check if the message has parts that should be rendered
-    if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
+    if (
+      message.parts &&
+      Array.isArray(message.parts) &&
+      message.parts.length > 0
+    ) {
       return (
         <div className="mb-0! px-0">
           <div className="grow min-w-0">
-            {mode === 'edit' ? (
+            {mode === "edit" ? (
               <MessageEditor
                 message={message}
                 setMode={setMode}
@@ -536,36 +616,47 @@ export const Message: React.FC<MessageProps> = ({
               <div className="group relative">
                 <div className="relative">
                   {/* Render user message parts */}
-                  {message.parts?.map((part: MessagePart, partIndex: number) => {
-                    if (part.type === 'text') {
-                      return (
-                        <div
-                          key={`user-${index}-${partIndex}`}
-                          ref={messageContentRef}
-                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
-                            !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
-                          }`}
-                        >
-                          <MarkdownRenderer content={preprocessLaTeX(part.text)} />
+                  {message.parts?.map(
+                    (part: MessagePart, partIndex: number) => {
+                      if (part.type === "text") {
+                        return (
+                          <div
+                            key={`user-${index}-${partIndex}`}
+                            ref={messageContentRef}
+                            className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
+                              !isExpanded && exceedsMaxHeight
+                                ? "max-h-[100px]"
+                                : ""
+                            }`}
+                          >
+                            <MarkdownRenderer
+                              content={preprocessLaTeX(part.text)}
+                            />
 
-                          {!isExpanded && exceedsMaxHeight && (
-                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                          )}
-                        </div>
-                      );
-                    }
-                    return null; // Skip non-text parts for user messages
-                  })}
+                            {!isExpanded && exceedsMaxHeight && (
+                              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                            )}
+                          </div>
+                        );
+                      }
+                      return null; // Skip non-text parts for user messages
+                    },
+                  )}
 
                   {/* If no parts have text, fall back to the content property */}
-                  {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
+                  {(!message.parts ||
+                    !message.parts.some(
+                      (part: any) => part.type === "text" && part.text,
+                    )) && (
                     <div
                       ref={messageContentRef}
                       className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
-                        !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                        !isExpanded && exceedsMaxHeight ? "max-h-[100px]" : ""
                       }`}
                     >
-                      <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                      <MarkdownRenderer
+                        content={preprocessLaTeX(message.content)}
+                      />
 
                       {!isExpanded && exceedsMaxHeight && (
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -580,23 +671,30 @@ export const Message: React.FC<MessageProps> = ({
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                        aria-label={isExpanded ? 'Show less' : 'Show more'}
+                        aria-label={isExpanded ? "Show less" : "Show more"}
                       >
-                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {isExpanded ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </div>
                   )}
 
                   <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
-                    {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                    {((user && isOwner) ||
+                      (!user && selectedVisibilityType === "private")) && (
                       <>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setMode('edit')}
+                          onClick={() => setMode("edit")}
                           className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                          disabled={status === 'submitted' || status === 'streaming'}
+                          disabled={
+                            status === "submitted" || status === "streaming"
+                          }
                           aria-label="Edit message"
                         >
                           <svg
@@ -615,7 +713,10 @@ export const Message: React.FC<MessageProps> = ({
                             />
                           </svg>
                         </Button>
-                        <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                        <Separator
+                          orientation="vertical"
+                          className="h-5 bg-neutral-200 dark:bg-neutral-700"
+                        />
                       </>
                     )}
                     <Button
@@ -623,12 +724,13 @@ export const Message: React.FC<MessageProps> = ({
                       size="icon"
                       onClick={() => {
                         navigator.clipboard.writeText(message.content);
-                        toast.success('Copied to clipboard');
+                        toast.success("Copied to clipboard");
                       }}
                       className={`h-7 w-7 ${
-                        (!user || !isOwner) && selectedVisibilityType === 'public'
-                          ? 'rounded-md'
-                          : 'rounded-r-md rounded-l-none'
+                        (!user || !isOwner) &&
+                        selectedVisibilityType === "public"
+                          ? "rounded-md"
+                          : "rounded-r-md rounded-l-none"
                       } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                       aria-label="Copy message"
                     >
@@ -636,9 +738,12 @@ export const Message: React.FC<MessageProps> = ({
                     </Button>
                   </div>
                 </div>
-                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                  <AttachmentsBadge attachments={message.experimental_attachments} />
-                )}
+                {message.experimental_attachments &&
+                  message.experimental_attachments.length > 0 && (
+                    <AttachmentsBadge
+                      attachments={message.experimental_attachments}
+                    />
+                  )}
               </div>
             )}
           </div>
@@ -650,7 +755,7 @@ export const Message: React.FC<MessageProps> = ({
     return (
       <div className="mb-0! px-0">
         <div className="grow min-w-0">
-          {mode === 'edit' ? (
+          {mode === "edit" ? (
             <MessageEditor
               message={message}
               setMode={setMode}
@@ -665,10 +770,12 @@ export const Message: React.FC<MessageProps> = ({
                 <div
                   ref={messageContentRef}
                   className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-neutral-900 dark:text-neutral-100 pr-12 sm:pr-14 overflow-hidden relative ${
-                    !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                    !isExpanded && exceedsMaxHeight ? "max-h-[100px]" : ""
                   }`}
                 >
-                  <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                  <MarkdownRenderer
+                    content={preprocessLaTeX(message.content)}
+                  />
 
                   {!isExpanded && exceedsMaxHeight && (
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -682,23 +789,30 @@ export const Message: React.FC<MessageProps> = ({
                       size="sm"
                       onClick={() => setIsExpanded(!isExpanded)}
                       className="h-6 w-6 p-0 rounded-full text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 hover:bg-transparent"
-                      aria-label={isExpanded ? 'Show less' : 'Show more'}
+                      aria-label={isExpanded ? "Show less" : "Show more"}
                     >
-                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      {isExpanded ? (
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                   </div>
                 )}
 
                 <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-sm rounded-md border border-neutral-200 dark:border-neutral-700 flex items-center shadow-sm hover:shadow-md">
                   {/* Only show edit button for owners OR unauthenticated users on private chats */}
-                  {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                  {((user && isOwner) ||
+                    (!user && selectedVisibilityType === "private")) && (
                     <>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setMode('edit')}
+                        onClick={() => setMode("edit")}
                         className="h-7 w-7 rounded-l-md rounded-r-none text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                        disabled={status === 'submitted' || status === 'streaming'}
+                        disabled={
+                          status === "submitted" || status === "streaming"
+                        }
                         aria-label="Edit message"
                       >
                         <svg
@@ -717,7 +831,10 @@ export const Message: React.FC<MessageProps> = ({
                           />
                         </svg>
                       </Button>
-                      <Separator orientation="vertical" className="h-5 bg-neutral-200 dark:bg-neutral-700" />
+                      <Separator
+                        orientation="vertical"
+                        className="h-5 bg-neutral-200 dark:bg-neutral-700"
+                      />
                     </>
                   )}
                   <Button
@@ -725,12 +842,12 @@ export const Message: React.FC<MessageProps> = ({
                     size="icon"
                     onClick={() => {
                       navigator.clipboard.writeText(message.content);
-                      toast.success('Copied to clipboard');
+                      toast.success("Copied to clipboard");
                     }}
                     className={`h-7 w-7 ${
-                      (!user || !isOwner) && selectedVisibilityType === 'public'
-                        ? 'rounded-md'
-                        : 'rounded-r-md rounded-l-none'
+                      (!user || !isOwner) && selectedVisibilityType === "public"
+                        ? "rounded-md"
+                        : "rounded-r-md rounded-l-none"
                     } text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors`}
                     aria-label="Copy message"
                   >
@@ -738,9 +855,12 @@ export const Message: React.FC<MessageProps> = ({
                   </Button>
                 </div>
               </div>
-              {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                <AttachmentsBadge attachments={message.experimental_attachments} />
-              )}
+              {message.experimental_attachments &&
+                message.experimental_attachments.length > 0 && (
+                  <AttachmentsBadge
+                    attachments={message.experimental_attachments}
+                  />
+                )}
             </div>
           )}
         </div>
@@ -748,13 +868,22 @@ export const Message: React.FC<MessageProps> = ({
     );
   }
 
-  if (message.role === 'assistant') {
-    const isLastAssistantMessage = isLastMessage && message.role === 'assistant';
+  if (message.role === "assistant") {
+    const isLastAssistantMessage =
+      isLastMessage && message.role === "assistant";
 
     return (
-      <div className={isLastAssistantMessage ? 'min-h-[calc(100vh-18rem)]' : ''}>
+      <div
+        className={isLastAssistantMessage ? "min-h-[calc(100vh-18rem)]" : ""}
+      >
         {message.parts?.map((part: MessagePart, partIndex: number) =>
-          renderPart(part, index, partIndex, message.parts as MessagePart[], message),
+          renderPart(
+            part,
+            index,
+            partIndex,
+            message.parts as MessagePart[],
+            message,
+          ),
         )}
 
         {/* Display error message with retry button */}
@@ -767,26 +896,39 @@ export const Message: React.FC<MessageProps> = ({
           />
         )}
 
-        {suggestedQuestions.length > 0 && (user || selectedVisibilityType === 'private') && status !== 'streaming' && (
-          <div className="w-full max-w-xl sm:max-w-2xl mt-3">
-            <div className="flex items-center gap-1.5 mb-2 px-3">
-              <AlignLeft size={16} className="text-neutral-600 dark:text-neutral-400" />
-              <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">Suggested questions</h2>
+        {suggestedQuestions.length > 0 &&
+          (user || selectedVisibilityType === "private") &&
+          status !== "streaming" &&
+          user?.suggestedQuestions !== false && (
+            <div className="w-full max-w-xl sm:max-w-2xl mt-3">
+              <div className="flex items-center gap-1.5 mb-2 px-3">
+                <AlignLeft
+                  size={16}
+                  className="text-neutral-600 dark:text-neutral-400"
+                />
+                <h2 className="font-medium text-sm text-neutral-700 dark:text-neutral-300">
+                  Suggested questions
+                </h2>
+              </div>
+              <div className="flex flex-col border-t border-neutral-200 dark:border-neutral-800">
+                {suggestedQuestions.map((question, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSuggestedQuestionClick(question)}
+                    className="w-full py-2.5 px-3 text-left flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors"
+                  >
+                    <span className="text-neutral-700 dark:text-neutral-300 text-sm font-normal pr-3">
+                      {question}
+                    </span>
+                    <Plus
+                      size={14}
+                      className="text-neutral-600 dark:text-neutral-400 flex-shrink-0"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-col border-t border-neutral-200 dark:border-neutral-800">
-              {suggestedQuestions.map((question, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSuggestedQuestionClick(question)}
-                  className="w-full py-2.5 px-3 text-left flex justify-between items-center border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors"
-                >
-                  <span className="text-neutral-700 dark:text-neutral-300 text-sm font-normal pr-3">{question}</span>
-                  <Plus size={14} className="text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
       </div>
     );
   }
@@ -805,12 +947,15 @@ export const EditableAttachmentsBadge = ({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const fileAttachments = attachments.filter(
-    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
+    (att) =>
+      att.contentType?.startsWith("image/") ||
+      att.contentType === "application/pdf",
   );
 
   if (fileAttachments.length === 0) return null;
 
-  const isPdf = (attachment: any) => attachment.contentType === 'application/pdf';
+  const isPdf = (attachment: any) =>
+    attachment.contentType === "application/pdf";
 
   return (
     <>
@@ -818,9 +963,10 @@ export const EditableAttachmentsBadge = ({
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
-          const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
+          const truncatedName =
+            fileName.length > 15 ? fileName.substring(0, 12) + "..." : fileName;
 
-          const isImage = attachment.contentType?.startsWith('image/');
+          const isImage = attachment.contentType?.startsWith("image/");
 
           return (
             <div
@@ -854,7 +1000,11 @@ export const EditableAttachmentsBadge = ({
                       <path d="M12 18v-5"></path>
                     </svg>
                   ) : isImage ? (
-                    <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
+                    <img
+                      src={attachment.url}
+                      alt={fileName}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -901,8 +1051,10 @@ export const EditableAttachmentsBadge = ({
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    navigator.clipboard.writeText(
+                      fileAttachments[selectedIndex].url,
+                    );
+                    toast.success("File URL copied to clipboard");
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
                   title="Copy link"
@@ -954,7 +1106,8 @@ export const EditableAttachmentsBadge = ({
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
                         <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[200px]">
-                          {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
+                          {fileAttachments[selectedIndex].name ||
+                            `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1005,7 +1158,10 @@ export const EditableAttachmentsBadge = ({
                   <div className="flex items-center justify-center h-[60vh]">
                     <img
                       src={fileAttachments[selectedIndex].url}
-                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                      alt={
+                        fileAttachments[selectedIndex].name ||
+                        `Image ${selectedIndex + 1}`
+                      }
                       className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
                     />
                   </div>
@@ -1016,7 +1172,11 @@ export const EditableAttachmentsBadge = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
+                      onClick={() =>
+                        setSelectedIndex((prev) =>
+                          prev === 0 ? fileAttachments.length - 1 : prev - 1,
+                        )
+                      }
                       className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -1024,7 +1184,11 @@ export const EditableAttachmentsBadge = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
+                      onClick={() =>
+                        setSelectedIndex((prev) =>
+                          prev === fileAttachments.length - 1 ? 0 : prev + 1,
+                        )
+                      }
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -1043,8 +1207,8 @@ export const EditableAttachmentsBadge = ({
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
                         selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                          ? "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                          : "opacity-70 hover:opacity-100"
                       }`}
                     >
                       {isPdf(attachment) ? (
@@ -1081,10 +1245,13 @@ export const EditableAttachmentsBadge = ({
             <footer className="border-t border-neutral-200 dark:border-neutral-800 p-2">
               <div className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center justify-between">
                 <span className="truncate max-w-[70%]">
-                  {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
+                  {fileAttachments[selectedIndex].name ||
+                    `File ${selectedIndex + 1}`}
                 </span>
                 {fileAttachments[selectedIndex].size && (
-                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
+                  <span>
+                    {Math.round(fileAttachments[selectedIndex].size / 1024)} KB
+                  </span>
                 )}
               </div>
             </footer>
@@ -1100,12 +1267,15 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const fileAttachments = attachments.filter(
-    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
+    (att) =>
+      att.contentType?.startsWith("image/") ||
+      att.contentType === "application/pdf",
   );
 
   if (fileAttachments.length === 0) return null;
 
-  const isPdf = (attachment: any) => attachment.contentType === 'application/pdf';
+  const isPdf = (attachment: any) =>
+    attachment.contentType === "application/pdf";
 
   return (
     <>
@@ -1113,10 +1283,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
-          const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
+          const truncatedName =
+            fileName.length > 15 ? fileName.substring(0, 12) + "..." : fileName;
 
-          const fileExtension = fileName.split('.').pop()?.toLowerCase();
-          const isImage = attachment.contentType?.startsWith('image/');
+          const fileExtension = fileName.split(".").pop()?.toLowerCase();
+          const isImage = attachment.contentType?.startsWith("image/");
 
           return (
             <button
@@ -1147,7 +1318,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <path d="M12 18v-5"></path>
                   </svg>
                 ) : isImage ? (
-                  <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
+                  <img
+                    src={attachment.url}
+                    alt={fileName}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1169,7 +1344,9 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
               <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
                 {truncatedName}
                 {fileExtension && !isPdf(attachment) && !isImage && (
-                  <span className="text-neutral-500 dark:text-neutral-400 ml-0.5">.{fileExtension}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400 ml-0.5">
+                    .{fileExtension}
+                  </span>
                 )}
               </span>
             </button>
@@ -1186,8 +1363,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    navigator.clipboard.writeText(
+                      fileAttachments[selectedIndex].url,
+                    );
+                    toast.success("File URL copied to clipboard");
                   }}
                   className="h-8 w-8 rounded-md text-neutral-600 dark:text-neutral-400"
                   title="Copy link"
@@ -1239,7 +1418,8 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
                         <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[200px]">
-                          {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
+                          {fileAttachments[selectedIndex].name ||
+                            `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1290,7 +1470,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   <div className="flex items-center justify-center h-[60vh]">
                     <img
                       src={fileAttachments[selectedIndex].url}
-                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                      alt={
+                        fileAttachments[selectedIndex].name ||
+                        `Image ${selectedIndex + 1}`
+                      }
                       className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
                     />
                   </div>
@@ -1301,7 +1484,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex((prev) => (prev === 0 ? fileAttachments.length - 1 : prev - 1))}
+                      onClick={() =>
+                        setSelectedIndex((prev) =>
+                          prev === 0 ? fileAttachments.length - 1 : prev - 1,
+                        )
+                      }
                       className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -1309,7 +1496,11 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setSelectedIndex((prev) => (prev === fileAttachments.length - 1 ? 0 : prev + 1))}
+                      onClick={() =>
+                        setSelectedIndex((prev) =>
+                          prev === fileAttachments.length - 1 ? 0 : prev + 1,
+                        )
+                      }
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 shadow-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -1328,8 +1519,8 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
                         selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
+                          ? "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                          : "opacity-70 hover:opacity-100"
                       }`}
                     >
                       {isPdf(attachment) ? (
@@ -1366,10 +1557,13 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
             <footer className="border-t border-neutral-200 dark:border-neutral-800 p-2">
               <div className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center justify-between">
                 <span className="truncate max-w-[70%]">
-                  {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
+                  {fileAttachments[selectedIndex].name ||
+                    `File ${selectedIndex + 1}`}
                 </span>
                 {fileAttachments[selectedIndex].size && (
-                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
+                  <span>
+                    {Math.round(fileAttachments[selectedIndex].size / 1024)} KB
+                  </span>
                 )}
               </div>
             </footer>

@@ -84,93 +84,93 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
 
 PostMessageUpgradeDialog.displayName = 'PostMessageUpgradeDialog';
 
-interface ApiAnnouncementDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+// interface ApiAnnouncementDialogProps {
+//   open: boolean;
+//   onOpenChange: (open: boolean) => void;
+// }
 
-export const ApiAnnouncementDialog = React.memo(({ open, onOpenChange }: ApiAnnouncementDialogProps) => {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
-        <div className="p-6 space-y-5">
-          {/* Header */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white dark:bg-neutral-900 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
-                <img 
-                  src="/scira.png" 
-                  alt="Scira" 
-                  className="w-5 h-5 object-contain"
-                />
-              </div>
-              <div>
-                <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Introducing Scira AI API Platform</h2>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">Powerful APIs for developers</p>
-              </div>
-            </div>
-          </div>
+// export const ApiAnnouncementDialog = React.memo(({ open, onOpenChange }: ApiAnnouncementDialogProps) => {
+//   return (
+//     <Dialog open={open} onOpenChange={onOpenChange}>
+//       <DialogContent className="sm:max-w-[480px] p-0 gap-0 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+//         <div className="p-6 space-y-5">
+//           {/* Header */}
+//           <div className="space-y-3">
+//             <div className="flex items-center gap-3">
+//               <div className="w-8 h-8 rounded-lg bg-white dark:bg-neutral-900 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+//                 <img 
+//                   src="/scira.png" 
+//                   alt="Scira" 
+//                   className="w-5 h-5 object-contain"
+//                 />
+//               </div>
+//               <div>
+//                 <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Introducing Scira AI API Platform</h2>
+//                 <p className="text-sm text-neutral-500 dark:text-neutral-400">Powerful APIs for developers</p>
+//               </div>
+//             </div>
+//           </div>
 
-          {/* Features */}
-          <div className="space-y-4">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Build the next generation of AI-powered applications with our comprehensive API suite.
-            </p>
+//           {/* Features */}
+//           <div className="space-y-4">
+//             <p className="text-sm text-neutral-600 dark:text-neutral-400">
+//               Build the next generation of AI-powered applications with our comprehensive API suite.
+//             </p>
             
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <span className="text-neutral-700 dark:text-neutral-300">Web Search API</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <span className="text-neutral-700 dark:text-neutral-300">People Discovery API</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <span className="text-neutral-700 dark:text-neutral-300">X Platform Search API</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <span className="text-neutral-700 dark:text-neutral-300">Developer-friendly documentation</span>
-              </div>
-            </div>
-          </div>
+//             <div className="space-y-2.5">
+//               <div className="flex items-center gap-2 text-sm">
+//                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+//                 <span className="text-neutral-700 dark:text-neutral-300">Web Search API</span>
+//               </div>
+//               <div className="flex items-center gap-2 text-sm">
+//                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+//                 <span className="text-neutral-700 dark:text-neutral-300">People Discovery API</span>
+//               </div>
+//               <div className="flex items-center gap-2 text-sm">
+//                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+//                 <span className="text-neutral-700 dark:text-neutral-300">X Platform Search API</span>
+//               </div>
+//               <div className="flex items-center gap-2 text-sm">
+//                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+//                 <span className="text-neutral-700 dark:text-neutral-300">Developer-friendly documentation</span>
+//               </div>
+//             </div>
+//           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              size="sm"
-              className="flex-1 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            >
-              Dismiss
-            </Button>
-            <Button
-              onClick={() => {
-                window.open('https://api.scira.ai/', '_blank');
-                onOpenChange(false);
-              }}
-              size="sm"
-              className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black shadow-sm"
-            >
-              <ArrowSquareOut className="h-3 w-3 mr-1.5" />
-              Explore APIs
-            </Button>
-          </div>
+//           {/* Action Buttons */}
+//           <div className="flex gap-3">
+//             <Button
+//               variant="outline"
+//               onClick={() => onOpenChange(false)}
+//               size="sm"
+//               className="flex-1 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+//             >
+//               Dismiss
+//             </Button>
+//             <Button
+//               onClick={() => {
+//                 window.open('https://api.scira.ai/', '_blank');
+//                 onOpenChange(false);
+//               }}
+//               size="sm"
+//               className="flex-1 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black shadow-sm"
+//             >
+//               <ArrowSquareOut className="h-3 w-3 mr-1.5" />
+//               Explore APIs
+//             </Button>
+//           </div>
 
-          {/* Additional info */}
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
-            Start building today with comprehensive documentation and examples.
-          </p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-});
+//           {/* Additional info */}
+//           <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
+//             Start building today with comprehensive documentation and examples.
+//           </p>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// });
 
-ApiAnnouncementDialog.displayName = 'ApiAnnouncementDialog';
+// ApiAnnouncementDialog.displayName = 'ApiAnnouncementDialog';
 
 interface ChatDialogsProps {
   commandDialogOpen: boolean;
@@ -223,7 +223,7 @@ export const ChatDialogs = React.memo(
         />
 
         {/* Sign-in Prompt Dialog */}
-        <SignInPromptDialog
+        {/* <SignInPromptDialog
           open={showSignInPrompt}
           onOpenChange={(open) => {
             setShowSignInPrompt(open);
@@ -231,10 +231,10 @@ export const ChatDialogs = React.memo(
               setHasShownSignInPrompt(true);
             }
           }}
-        />
+        /> */}
 
         {/* Post-Message Upgrade Dialog */}
-        <PostMessageUpgradeDialog
+        {/* <PostMessageUpgradeDialog
           open={showUpgradeDialog}
           onOpenChange={(open) => {
             setShowUpgradeDialog(open);
@@ -242,10 +242,10 @@ export const ChatDialogs = React.memo(
               setHasShownUpgradeDialog(true);
             }
           }}
-        />
+        /> */}
 
         {/* API Announcement Dialog */}
-        <ApiAnnouncementDialog
+        {/* <ApiAnnouncementDialog
           open={showAnnouncementDialog}
           onOpenChange={(open) => {
             setShowAnnouncementDialog(open);
@@ -253,7 +253,7 @@ export const ChatDialogs = React.memo(
               setHasShownAnnouncementDialog(true);
             }
           }}
-        />
+        /> */}
       </>
     );
   },

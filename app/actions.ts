@@ -1,13 +1,13 @@
 // app/actions.ts
-'use server';
+"use server";
 
-import { serverEnv } from '@/env/server';
-import { SearchGroupId } from '@/lib/utils';
-import { generateObject, UIMessage, generateText } from 'ai';
-import { z } from 'zod';
-import { getUser } from '@/lib/auth-utils';
-import { scira } from '@/ai/providers';
-import { authClient } from '@/lib/auth-client';
+import { serverEnv } from "@/env/server";
+import { SearchGroupId } from "@/lib/utils";
+import { generateObject, UIMessage, generateText } from "ai";
+import { z } from "zod";
+import { getUser } from "@/lib/auth-utils";
+import { scira } from "@/ai/providers";
+import { authClient } from "@/lib/auth-client";
 import {
   getChatsByUserId,
   deleteChatById,
@@ -24,17 +24,18 @@ import {
   createCustomInstructions,
   updateCustomInstructions,
   deleteCustomInstructions,
-} from '@/lib/db/queries';
-import { getDiscountConfig } from '@/lib/discount';
-import { groq } from '@ai-sdk/groq';
-import { getSubscriptionDetails } from '@/lib/subscription';
+  updateUserSuggestedQuestions,
+} from "@/lib/db/queries";
+import { getDiscountConfig } from "@/lib/discount";
+import { groq } from "@ai-sdk/groq";
+import { getSubscriptionDetails } from "@/lib/subscription";
 import {
   usageCountCache,
   createMessageCountKey,
   createExtremeCountKey,
   getProUserStatus,
-  computeAndCacheProUserStatus
-} from '@/lib/performance-cache';
+  computeAndCacheProUserStatus,
+} from "@/lib/performance-cache";
 
 // Server action to get the current user with Pro status
 export async function getCurrentUser() {
@@ -66,21 +67,27 @@ export async function getCurrentUser() {
       };
     }
   } catch (error) {
-    console.error('Error in getCurrentUser server action:', error);
+    console.error("Error in getCurrentUser server action:", error);
     return null;
   }
 }
 
 export async function suggestQuestions(history: any[]) {
-  'use server';
+  "use server";
 
-  console.log(history);
+  try {
+    const user = await getUser();
+    if (!user || !user.suggestedQuestions) {
+      return { questions: [] };
+    }
 
-  const { object } = await generateObject({
-    model: scira.languageModel('scira-nano'),
-    temperature: 0,
-    maxTokens: 512,
-    system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
+    console.log(history);
+
+    const { object } = await generateObject({
+      model: scira.languageModel("scira-nano"),
+      temperature: 0,
+      maxTokens: 512,
+      system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -115,25 +122,31 @@ export async function suggestQuestions(history: any[]) {
 - Each question must end with a question mark
 - Questions must be diverse and not redundant
 - Do not include instructions or meta-commentary in the questions`,
-    messages: history,
-    schema: z.object({
-      questions: z.array(z.string()).describe('The generated questions based on the message history.'),
-    }),
-  });
+      messages: history,
+      schema: z.object({
+        questions: z
+          .array(z.string())
+          .describe("The generated questions based on the message history."),
+      }),
+    });
 
-  return {
-    questions: object.questions,
-  };
+    return {
+      questions: object.questions,
+    };
+  } catch (error) {
+    console.error("Error generating suggested questions:", error);
+    return { questions: [] };
+  }
 }
 
 export async function checkImageModeration(images: any) {
   const { text } = await generateText({
-    model: groq('meta-llama/llama-guard-4-12b'),
+    model: groq("meta-llama/llama-guard-4-12b"),
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: images.map((image: any) => ({
-          type: 'image',
+          type: "image",
           image: image,
         })),
       },
@@ -142,11 +155,13 @@ export async function checkImageModeration(images: any) {
   return text;
 }
 
-
-
-export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
+export async function generateTitleFromUserMessage({
+  message,
+}: {
+  message: UIMessage;
+}) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-nano'),
+    model: scira.languageModel("scira-title"),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
@@ -162,23 +177,23 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
+  const VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"; // This is the ID for the "George" voice. Replace with your preferred voice ID.
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
-  const method = 'POST';
+  const method = "POST";
 
   if (!ELEVENLABS_API_KEY) {
-    throw new Error('ELEVENLABS_API_KEY is not defined');
+    throw new Error("ELEVENLABS_API_KEY is not defined");
   }
 
   const headers = {
-    Accept: 'audio/mpeg',
-    'xi-api-key': ELEVENLABS_API_KEY,
-    'Content-Type': 'application/json',
+    Accept: "audio/mpeg",
+    "xi-api-key": ELEVENLABS_API_KEY,
+    "Content-Type": "application/json",
   };
 
   const data = {
     text,
-    model_id: 'eleven_turbo_v2_5',
+    model_id: "eleven_turbo_v2_5",
     voice_settings: {
       stability: 0.5,
       similarity_boost: 0.5,
@@ -197,7 +212,7 @@ export async function generateSpeech(text: string) {
 
   const arrayBuffer = await response.arrayBuffer();
 
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+  const base64Audio = Buffer.from(arrayBuffer).toString("base64");
 
   return {
     audio: `data:audio/mp3;base64,${base64Audio}`,
@@ -210,59 +225,67 @@ export async function fetchMetadata(url: string) {
     const html = await response.text();
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
+    const descMatch = html.match(
+      /<meta\s+name=["']description["']\s+content=["'](.*?)["']/i,
+    );
 
-    const title = titleMatch ? titleMatch[1] : '';
-    const description = descMatch ? descMatch[1] : '';
+    const title = titleMatch ? titleMatch[1] : "";
+    const description = descMatch ? descMatch[1] : "";
 
     return { title, description };
   } catch (error) {
-    console.error('Error fetching metadata:', error);
+    console.error("Error fetching metadata:", error);
     return null;
   }
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility
-type LegacyGroupId = SearchGroupId | 'buddy';
+type LegacyGroupId = SearchGroupId | "buddy";
 
 const groupTools = {
   web: [
-    'web_search',
-    'greeting',
-    'get_weather_data',
-    'retrieve',
-    'text_translate',
-    'nearby_places_search',
-    'track_flight',
-    'movie_or_tv_search',
-    'trending_movies',
-    'find_place_on_map',
-    'trending_tv',
-    'datetime',
-    'mcp_search',
+    "web_search",
+    "greeting",
+    "get_weather_data",
+    "retrieve",
+    "text_translate",
+    "nearby_places_search",
+    "track_flight",
+    "movie_or_tv_search",
+    "trending_movies",
+    "find_place_on_map",
+    "trending_tv",
+    "datetime",
+    "mcp_search",
   ] as const,
-  academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
-  youtube: ['youtube_search', 'datetime'] as const,
-  reddit: ['reddit_search', 'datetime'] as const,
-  analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
+  academic: ["academic_search", "code_interpreter", "datetime"] as const,
+  youtube: ["youtube_search", "datetime"] as const,
+  reddit: ["reddit_search", "datetime"] as const,
+  analysis: [
+    "code_interpreter",
+    "stock_chart",
+    "currency_converter",
+    "datetime",
+  ] as const,
   crypto: [
-    'coin_data',
-    'coin_ohlc',
-    'coin_data_by_contract',
-    'datetime'] as const,
+    "coin_data",
+    "coin_ohlc",
+    "coin_data_by_contract",
+    "datetime",
+  ] as const,
   chat: [] as const,
-  extreme: ['extreme_search'] as const,
-  x: ['x_search'] as const,
-  memory: ['memory_manager', 'datetime'] as const,
+  extreme: ["extreme_search"] as const,
+  x: ["x_search"] as const,
+  memory: ["memory_manager", "datetime"] as const,
   // Add legacy mapping for backward compatibility
-  buddy: ['memory_manager', 'datetime'] as const,
+  buddy: ["memory_manager", "datetime"] as const,
 } as const;
 
 const groupInstructions = {
   web: `
   You are an AI web search engine called Scira, designed to help users find information on the internet with no unnecessary chatter and more focus on the content and responsed with markdown format and the response guidelines below.
   'You MUST run the tool IMMEDIATELY on receiving any user message' before composing your response. **This is non-negotiable.**
-  Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+  Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -422,7 +445,7 @@ const groupInstructions = {
   memory: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -456,7 +479,7 @@ const groupInstructions = {
 
   x: `
   You are a X content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### X Search Tool:
@@ -498,7 +521,7 @@ const groupInstructions = {
   buddy: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -533,7 +556,7 @@ const groupInstructions = {
   academic: `
   ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
   You are an academic research assistant that helps find and analyze scholarly content.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### Academic Search Tool:
@@ -594,7 +617,7 @@ const groupInstructions = {
 
   youtube: `
   You are a YouTube content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### YouTube Search Tool:
@@ -652,7 +675,7 @@ const groupInstructions = {
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
   reddit: `
   You are a Reddit content expert that transforms search results into comprehensive tutorial-style guides.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### Reddit Search Tool:
@@ -840,7 +863,7 @@ const groupInstructions = {
 
   chat: `
   You are Scira, a helpful assistant that helps with the task asked by the user.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Guidelines:
   - You do not have access to any tools. You can code like a professional software engineer.
@@ -868,7 +891,7 @@ const groupInstructions = {
   extreme: `
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
   You objective is to always run the tool first and then write the response with citations!
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
   - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
@@ -935,7 +958,7 @@ const groupInstructions = {
 
   crypto: `
   You are a cryptocurrency data expert powered by CoinGecko API. Keep responses minimal and data-focused.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ RUN THE APPROPRIATE CRYPTO TOOL IMMEDIATELY - NO EXCEPTIONS
@@ -994,16 +1017,16 @@ const groupInstructions = {
   - Some verbose explanations`,
 };
 
-export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
-  'use server';
+export async function getGroupConfig(groupId: LegacyGroupId = "web") {
+  "use server";
 
   // Check if the user is authenticated for memory or buddy group
-  if (groupId === 'memory' || groupId === 'buddy') {
+  if (groupId === "memory" || groupId === "buddy") {
     const user = await getUser();
     if (!user) {
       // Redirect to web group if user is not authenticated
-      groupId = 'web';
-    } else if (groupId === 'buddy') {
+      groupId = "web";
+    } else if (groupId === "buddy") {
       // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
       // The tools are the same, just different instructions
       const tools = groupTools[groupId];
@@ -1017,7 +1040,8 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   }
 
   const tools = groupTools[groupId as keyof typeof groupTools];
-  const instructions = groupInstructions[groupId as keyof typeof groupInstructions];
+  const instructions =
+    groupInstructions[groupId as keyof typeof groupInstructions];
 
   return {
     tools,
@@ -1032,7 +1056,7 @@ export async function getUserChats(
   startingAfter?: string,
   endingBefore?: string,
 ): Promise<{ chats: any[]; hasMore: boolean }> {
-  'use server';
+  "use server";
 
   if (!userId) return { chats: [], hasMore: false };
 
@@ -1044,7 +1068,7 @@ export async function getUserChats(
       endingBefore: endingBefore || null,
     });
   } catch (error) {
-    console.error('Error fetching user chats:', error);
+    console.error("Error fetching user chats:", error);
     return { chats: [], hasMore: false };
   }
 }
@@ -1055,7 +1079,7 @@ export async function loadMoreChats(
   lastChatId: string,
   limit: number = 20,
 ): Promise<{ chats: any[]; hasMore: boolean }> {
-  'use server';
+  "use server";
 
   if (!userId || !lastChatId) return { chats: [], hasMore: false };
 
@@ -1067,58 +1091,61 @@ export async function loadMoreChats(
       endingBefore: lastChatId,
     });
   } catch (error) {
-    console.error('Error loading more chats:', error);
+    console.error("Error loading more chats:", error);
     return { chats: [], hasMore: false };
   }
 }
 
 // Add function to delete a chat
 export async function deleteChat(chatId: string) {
-  'use server';
+  "use server";
 
   if (!chatId) return null;
 
   try {
     return await deleteChatById({ id: chatId });
   } catch (error) {
-    console.error('Error deleting chat:', error);
+    console.error("Error deleting chat:", error);
     return null;
   }
 }
 
 // Add function to update chat visibility
-export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
-  'use server';
+export async function updateChatVisibility(
+  chatId: string,
+  visibility: "private" | "public",
+) {
+  "use server";
 
   if (!chatId) return null;
 
   try {
     return await updateChatVisiblityById({ chatId, visibility });
   } catch (error) {
-    console.error('Error updating chat visibility:', error);
+    console.error("Error updating chat visibility:", error);
     return null;
   }
 }
 
 // Add function to get chat info
 export async function getChatInfo(chatId: string) {
-  'use server';
+  "use server";
 
   if (!chatId) return null;
 
   try {
     return await getChatById({ id: chatId });
   } catch (error) {
-    console.error('Error getting chat info:', error);
+    console.error("Error getting chat info:", error);
     return null;
   }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  'use server';
+  "use server";
   try {
     const [message] = await getMessageById({ id });
-    console.log('Message: ', message);
+    console.log("Message: ", message);
 
     if (!message) {
       console.error(`No message found with id: ${id}`);
@@ -1130,7 +1157,9 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
       timestamp: message.createdAt,
     });
 
-    console.log(`Successfully deleted trailing messages after message ID: ${id}`);
+    console.log(
+      `Successfully deleted trailing messages after message ID: ${id}`,
+    );
   } catch (error) {
     console.error(`Error deleting trailing messages: ${error}`);
     throw error; // Re-throw to allow caller to handle
@@ -1139,33 +1168,32 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
 
 // Add function to update chat title
 export async function updateChatTitle(chatId: string, title: string) {
-  'use server';
+  "use server";
 
   if (!chatId || !title.trim()) return null;
 
   try {
     return await updateChatTitleById({ chatId, title: title.trim() });
   } catch (error) {
-    console.error('Error updating chat title:', error);
+    console.error("Error updating chat title:", error);
     return null;
   }
 }
 
 export async function getSubDetails() {
-  'use server';
+  "use server";
 
   const subscriptionDetails = await getSubscriptionDetails();
   return subscriptionDetails;
 }
 
-
 export async function getUserMessageCount(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
-      return { count: 0, error: 'User not found' };
+      return { count: 0, error: "User not found" };
     }
 
     // Check cache first
@@ -1184,18 +1212,18 @@ export async function getUserMessageCount(providedUser?: any) {
 
     return { count, error: null };
   } catch (error) {
-    console.error('Error getting user message count:', error);
-    return { count: 0, error: 'Failed to get message count' };
+    console.error("Error getting user message count:", error);
+    return { count: 0, error: "Failed to get message count" };
   }
 }
 
 export async function incrementUserMessageCount() {
-  'use server';
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
     await incrementMessageUsage({
@@ -1208,18 +1236,18 @@ export async function incrementUserMessageCount() {
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error incrementing user message count:', error);
-    return { success: false, error: 'Failed to increment message count' };
+    console.error("Error incrementing user message count:", error);
+    return { success: false, error: "Failed to increment message count" };
   }
 }
 
 export async function getExtremeSearchUsageCount(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
-      return { count: 0, error: 'User not found' };
+      return { count: 0, error: "User not found" };
     }
 
     // Check cache first
@@ -1238,18 +1266,18 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
 
     return { count, error: null };
   } catch (error) {
-    console.error('Error getting extreme search usage count:', error);
-    return { count: 0, error: 'Failed to get extreme search count' };
+    console.error("Error getting extreme search usage count:", error);
+    return { count: 0, error: "Failed to get extreme search count" };
   }
 }
 
 export async function getDiscountConfigAction() {
-  'use server';
+  "use server";
 
   try {
     return await getDiscountConfig();
   } catch (error) {
-    console.error('Error getting discount configuration:', error);
+    console.error("Error getting discount configuration:", error);
     return {
       enabled: false,
     };
@@ -1257,10 +1285,10 @@ export async function getDiscountConfigAction() {
 }
 
 export async function getHistoricalUsage(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return [];
     }
@@ -1275,7 +1303,7 @@ export async function getHistoricalUsage(providedUser?: any) {
     // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
     historicalData.forEach((record) => {
-      const dateKey = record.date.toISOString().split('T')[0];
+      const dateKey = record.date.toISOString().split("T")[0];
       dataMap.set(dateKey, record.messageCount || 0);
     });
 
@@ -1284,7 +1312,7 @@ export async function getHistoricalUsage(providedUser?: any) {
     for (let i = 0; i < 90; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
-      const dateKey = currentDate.toISOString().split('T')[0];
+      const dateKey = currentDate.toISOString().split("T")[0];
 
       const count = dataMap.get(dateKey) || 0;
       let level: 0 | 1 | 2 | 3 | 4;
@@ -1305,73 +1333,104 @@ export async function getHistoricalUsage(providedUser?: any) {
 
     return completeData;
   } catch (error) {
-    console.error('Error getting historical usage:', error);
+    console.error("Error getting historical usage:", error);
     return [];
   }
 }
 
 // Custom Instructions Server Actions
 export async function getCustomInstructions(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return null;
     }
 
-    const instructions = await getCustomInstructionsByUserId({ userId: user.id });
+    const instructions = await getCustomInstructionsByUserId({
+      userId: user.id,
+    });
     return instructions;
   } catch (error) {
-    console.error('Error getting custom instructions:', error);
+    console.error("Error getting custom instructions:", error);
     return null;
   }
 }
 
 export async function saveCustomInstructions(content: string) {
-  'use server';
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
     if (!content.trim()) {
-      return { success: false, error: 'Content cannot be empty' };
+      return { success: false, error: "Content cannot be empty" };
     }
 
     // Check if instructions already exist
-    const existingInstructions = await getCustomInstructionsByUserId({ userId: user.id });
+    const existingInstructions = await getCustomInstructionsByUserId({
+      userId: user.id,
+    });
 
     let result;
     if (existingInstructions) {
-      result = await updateCustomInstructions({ userId: user.id, content: content.trim() });
+      result = await updateCustomInstructions({
+        userId: user.id,
+        content: content.trim(),
+      });
     } else {
-      result = await createCustomInstructions({ userId: user.id, content: content.trim() });
+      result = await createCustomInstructions({
+        userId: user.id,
+        content: content.trim(),
+      });
     }
 
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error saving custom instructions:', error);
-    return { success: false, error: 'Failed to save custom instructions' };
+    console.error("Error saving custom instructions:", error);
+    return { success: false, error: "Failed to save custom instructions" };
   }
 }
 
-export async function deleteCustomInstructionsAction() {
-  'use server';
+export async function updateUserSuggestedQuestionsAction(enabled: boolean) {
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
+    }
+
+    await updateUserSuggestedQuestions({
+      userId: user.id,
+      suggestedQuestions: enabled,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating suggested questions preference:", error);
+    return { success: false, error: "Failed to update preference" };
+  }
+}
+
+export async function deleteCustomInstructionsAction() {
+  "use server";
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: "User not found" };
     }
 
     const result = await deleteCustomInstructions({ userId: user.id });
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error deleting custom instructions:', error);
-    return { success: false, error: 'Failed to delete custom instructions' };
+    console.error("Error deleting custom instructions:", error);
+    return { success: false, error: "Failed to delete custom instructions" };
   }
 }
 
@@ -1391,9 +1450,7 @@ export async function getProUserStatusOnly(): Promise<boolean> {
     const subscriptionDetails = await getSubscriptionDetails();
     return computeAndCacheProUserStatus(user.id, subscriptionDetails);
   } catch (error) {
-    console.error('Error getting pro user status:', error);
+    console.error("Error getting pro user status:", error);
     return false;
   }
 }
-
-

@@ -1,5 +1,5 @@
 {
-  "name": "scira",
+  "name": "melad",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",
-    "knip": "knip"
+    "knip": "knip",
+    "db": "drizzle-kit generate && drizzle-kit push"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
@@ -135,17 +136,7 @@
     "postcss": ">=8.5.5",
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.3.5",
-    "typescript": "^5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "@vercel/speed-insights",
-      "core-js",
-      "esbuild",
-      "sharp",
-      "sqlite3"
-    ]
+    "typescript": "5.7.0-beta"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"

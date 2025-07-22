@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "suggested_questions" boolean DEFAULT true NOT NULL;

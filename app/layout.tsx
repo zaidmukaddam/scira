@@ -1,9 +1,9 @@
 import './globals.css';
 import 'katex/dist/katex.min.css';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+// import { Analytics } from '@vercel/analytics/react';
+// import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, Geist } from 'next/font/google';
 
@@ -25,35 +25,6 @@ export const metadata: Metadata = {
     siteName: 'Scira AI',
   },
   keywords: [
-    'scira.ai',
-    'ai search engine',
-    'scira ai',
-    'Scira AI',
-    'scira AI',
-    'SCIRA.AI',
-    'scira github',
-    'ai search engine',
-    'Scira',
-    'scira',
-    'scira.app',
-    'scira ai',
-    'scira ai app',
-    'scira',
-    'MiniPerplx',
-    'Scira AI',
-    'Perplexity alternatives',
-    'Perplexity AI alternatives',
-    'open source ai search engine',
-    'minimalistic ai search engine',
-    'minimalistic ai search alternatives',
-    'ai search',
-    'minimal ai search',
-    'minimal ai search alternatives',
-    'Scira (Formerly MiniPerplx)',
-    'AI Search Engine',
-    'mplx.run',
-    'mplx ai',
-    'zaid mukaddam',
     'scira.how',
     'search engine',
     'AI',
@@ -95,15 +66,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${geist.variable} ${beVietnamPro.variable}
+       font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />
             {children}
           </Providers>
         </NuqsAdapter>
-        <Analytics />
-        <SpeedInsights />
+        {/* <Analytics /> */}
+        {/* <SpeedInsights /> */}
       </body>
     </html>
   );

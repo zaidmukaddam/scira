@@ -17,8 +17,14 @@ import {
   CoreAssistantMessage,
   createDataStream,
   generateObject,
-} from 'ai';
-import { scira, getMaxOutputTokens, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
+} from "ai";
+import {
+  scira,
+  getMaxOutputTokens,
+  requiresAuthentication,
+  requiresProSubscription,
+  shouldBypassRateLimits,
+} from "@/ai/providers";
 import {
   createStreamId,
   getChatById,
@@ -29,15 +35,18 @@ import {
   incrementExtremeSearchUsage,
   incrementMessageUsage,
   updateChatTitleById,
-} from '@/lib/db/queries';
-import { ChatSDKError } from '@/lib/errors';
-import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
-import { after } from 'next/server';
-import { differenceInSeconds } from 'date-fns';
-import { Chat, CustomInstructions } from '@/lib/db/schema';
-import { auth } from '@/lib/auth';
-import { v4 as uuidv4 } from 'uuid';
-import { geolocation } from '@vercel/functions';
+} from "@/lib/db/queries";
+import { ChatSDKError } from "@/lib/errors";
+import {
+  createResumableStreamContext,
+  type ResumableStreamContext,
+} from "resumable-stream";
+import { after } from "next/server";
+import { differenceInSeconds } from "date-fns";
+import { Chat, CustomInstructions } from "@/lib/db/schema";
+import { auth } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
+import { geolocation } from "@vercel/functions";
 
 // Import all tools from the organized tool files
 import {
@@ -57,9 +66,9 @@ import {
   findPlaceOnMapTool,
   nearbyPlacesSearchTool,
   flightTrackerTool,
-  coinDataTool,
-  coinDataByContractTool,
-  coinOhlcTool,
+  // coinDataTool,
+  // coinDataByContractTool,
+  // coinOhlcTool,
   datetimeTool,
   greetingTool,
   mcpSearchTool,
@@ -88,8 +97,10 @@ function getStreamContext() {
         waitUntil: after,
       });
     } catch (error: any) {
-      if (error.message.includes('REDIS_URL')) {
-        console.log(' > Resumable streams are disabled due to missing REDIS_URL');
+      if (error.message.includes("REDIS_URL")) {
+        console.log(
+          " > Resumable streams are disabled due to missing REDIS_URL",
+        );
       } else {
         console.error(error);
       }
@@ -127,7 +138,10 @@ export async function POST(req: Request) {
   // Check if model requires authentication (fast check)
   const authRequiredModels = ['scira-anthropic', 'scira-google'];
   if (authRequiredModels.includes(model) && !user) {
-    return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
+    return new ChatSDKError(
+      "unauthorized:model",
+      `Authentication required to access ${model}`,
+    ).toResponse();
   }
 
   // For authenticated users, do critical checks in parallel
@@ -147,24 +161,38 @@ export async function POST(req: Request) {
 
         // Check if model requires authentication
         if (requiresAuthentication(model) && !user) {
-          return { canProceed: false, error: new ChatSDKError('unauthorized:model', `${model} requires authentication`) };
+          return {
+            canProceed: false,
+            error: new ChatSDKError(
+              "unauthorized:model",
+              `${model} requires authentication`,
+            ),
+          };
         }
 
         // Check if model requires Pro subscription
         if (requiresProSubscription(model) && !isProUser) {
-          return { canProceed: false, error: new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`) };
+          return {
+            canProceed: false,
+            error: new ChatSDKError(
+              "upgrade_required:model",
+              `${model} requires a Pro subscription`,
+            ),
+          };
         }
 
         // Pro users skip all usage limit checks
         if (isProUser) {
-          console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`);
+          console.log(
+            `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
+          );
           return {
             canProceed: true,
             messageCount: 0, // Not relevant for pro users
             isProUser: true,
             subscriptionData: user.subscriptionData,
             shouldBypassLimits: true,
-            extremeSearchUsage: 0 // Not relevant for pro users
+            extremeSearchUsage: 0, // Not relevant for pro users
           };
         }
 
@@ -173,11 +201,22 @@ export async function POST(req: Request) {
           getUserMessageCount(user), // Pass user to avoid duplicate session lookup
           getExtremeSearchUsageCount(user), // Pass user to avoid duplicate session lookup
         ]);
-        console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
+        console.log(
+          `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`,
+        );
 
         if (messageCountResult.error) {
-          console.error('Error getting message count:', messageCountResult.error);
-          return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify usage limits') };
+          console.error(
+            "Error getting message count:",
+            messageCountResult.error,
+          );
+          return {
+            canProceed: false,
+            error: new ChatSDKError(
+              "bad_request:api",
+              "Failed to verify usage limits",
+            ),
+          };
         }
 
         // Check if user should bypass limits for free unlimited models
@@ -186,7 +225,13 @@ export async function POST(req: Request) {
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
           const dailyLimit = 100; // Non-pro users have a daily limit
           if (messageCountResult.count >= dailyLimit) {
-            return { canProceed: false, error: new ChatSDKError('rate_limit:chat', 'Daily search limit reached') };
+            return {
+              canProceed: false,
+              error: new ChatSDKError(
+                "rate_limit:chat",
+                "Daily search limit reached",
+              ),
+            };
           }
         }
 
@@ -196,17 +241,26 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.subscriptionData,
           shouldBypassLimits,
-          extremeSearchUsage: extremeSearchUsage.count
+          extremeSearchUsage: extremeSearchUsage.count,
         };
       } catch (error) {
-        console.error('Critical checks failed:', error);
-        return { canProceed: false, error: new ChatSDKError('bad_request:api', 'Failed to verify user access') };
+        console.error("Critical checks failed:", error);
+        return {
+          canProceed: false,
+          error: new ChatSDKError(
+            "bad_request:api",
+            "Failed to verify user access",
+          ),
+        };
       }
     })();
   } else {
     // For anonymous users, check if model requires authentication
     if (requiresAuthentication(model)) {
-      throw new ChatSDKError('unauthorized:model', `${model} requires authentication`);
+      throw new ChatSDKError(
+        "unauthorized:model",
+        `${model} requires authentication`,
+      );
     }
 
     criticalChecksPromise = Promise.resolve({
@@ -215,14 +269,16 @@ export async function POST(req: Request) {
       isProUser: false,
       subscriptionData: null,
       shouldBypassLimits: false,
-      extremeSearchUsage: 0
+      extremeSearchUsage: 0,
     });
   }
 
   // Get configuration in parallel with critical checks
   const configStartTime = Date.now();
-  const configPromise = getGroupConfig(group).then(config => {
-    console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
+  const configPromise = getGroupConfig(group).then((config) => {
+    console.log(
+      `⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`,
+    );
     return config;
   });
 
@@ -232,7 +288,9 @@ export async function POST(req: Request) {
       // Wait for critical checks to complete
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
-      console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
+      console.log(
+        `⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`,
+      );
 
       if (!criticalResult.canProceed) {
         throw criticalResult.error;
@@ -241,13 +299,17 @@ export async function POST(req: Request) {
       // Get configuration
       const configWaitStartTime = Date.now();
       const { tools: activeTools, instructions } = await configPromise;
-      console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      console.log(
+        `⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`,
+      );
 
       // Critical: Ensure chat exists before streaming starts
       if (user) {
         const chatCheckStartTime = Date.now();
         const chat = await getChatById({ id });
-        console.log(`⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`);
+        console.log(
+          `⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`,
+        );
 
         if (!chat) {
           // Create chat without title first - title will be generated in onFinish
@@ -255,13 +317,18 @@ export async function POST(req: Request) {
           await saveChat({
             id,
             userId: user.id,
-            title: 'New conversation', // Temporary title that will be updated in onFinish
+            title: "New conversation", // Temporary title that will be updated in onFinish
             visibility: selectedVisibilityType,
           });
-          console.log(`⏱️  Chat creation took: ${((Date.now() - chatCreateStartTime) / 1000).toFixed(2)}s`);
+          console.log(
+            `⏱️  Chat creation took: ${((Date.now() - chatCreateStartTime) / 1000).toFixed(2)}s`,
+          );
         } else {
           if (chat.userId !== user.id) {
-            throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+            throw new ChatSDKError(
+              "forbidden:chat",
+              "This chat belongs to another user",
+            );
           }
         }
 
@@ -275,29 +342,33 @@ export async function POST(req: Request) {
                   {
                     chatId: id,
                     id: messages[messages.length - 1].id,
-                    role: 'user',
+                    role: "user",
                     parts: messages[messages.length - 1].parts,
-                    attachments: messages[messages.length - 1].experimental_attachments ?? [],
+                    attachments:
+                      messages[messages.length - 1].experimental_attachments ??
+                      [],
                     createdAt: new Date(),
                   },
                 ],
               }),
               createStreamId({ streamId, chatId: id }),
             ]);
-            console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
+            console.log(
+              `⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`,
+            );
 
-            console.log('--------------------------------');
-            console.log('Messages saved: ', messages);
-            console.log('--------------------------------');
+            console.log("--------------------------------");
+            console.log("Messages saved: ", messages);
+            console.log("--------------------------------");
           } catch (error) {
-            console.error('Error in background message operations:', error);
+            console.error("Error in background message operations:", error);
             // These are non-critical errors that shouldn't stop the stream
           }
         })();
 
         // Start background operations but don't wait for them
         backgroundOperations.catch((error) => {
-          console.error('Background operations failed:', error);
+          console.error("Background operations failed:", error);
         });
       }
 
@@ -318,33 +389,41 @@ export async function POST(req: Request) {
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToCoreMessages(messages),
-        ...(model !== 'scira-anthropic-thinking' && model !== 'scira-opus-pro'
+        ...(model !== "scira-anthropic-thinking" && model !== "scira-opus-pro"
           ? { maxTokens: getMaxOutputTokens(model) }
           : {}),
-        ...(model.includes('scira-qwen-32b')
+        ...(model.includes("scira-qwen-32b")
           ? {
-            temperature: 0.6,
-            topP: 0.95,
-            topK: 20,
-            minP: 0,
-          }
-          : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
-            ? {
               temperature: 0.6,
-              topP: 1,
-              topK: 40,
+              topP: 0.95,
+              topK: 20,
+              minP: 0,
             }
+          : model.includes("scira-deepseek-v3") ||
+              model.includes("scira-qwen-30b")
+            ? {
+                temperature: 0.6,
+                topP: 1,
+                topK: 40,
+              }
             : {
-              temperature: 0,
-            }),
+                temperature: 0,
+              }),
         maxSteps: 5,
         maxRetries: 10,
-        experimental_activeTools: [...activeTools],
-        system: instructions + (customInstructions ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}` : '\n') + (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
-        toolChoice: 'auto',
+        // experimental_activeTools: [...activeTools],
+        system:
+          instructions +
+          (customInstructions
+            ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
+            : "\n") +
+          (latitude && longitude
+            ? `\n\nThe user's location is ${latitude}, ${longitude}.`
+            : ""),
+        toolChoice: "auto",
         providerOptions: {
           openai: {
-            ...(model === 'scira-o4-mini' || model === 'scira-o3'
+            ...(model === "scira-o4-mini" || model === "scira-o3"
               ? {
                 reasoningEffort: 'medium',
                 strictSchemas: true,
@@ -353,9 +432,9 @@ export async function POST(req: Request) {
               : {}),
             ...(model === 'scira-4o-mini'
               ? {
-                parallelToolCalls: false,
-                strictSchemas: true,
-              }
+                  parallelToolCalls: false,
+                  strictSchemas: true,
+                }
               : {}),
           } as OpenAIResponsesProviderOptions,
           xai: {
@@ -366,10 +445,11 @@ export async function POST(req: Request) {
               : {}),
           },
           anthropic: {
-            ...(model === 'scira-anthropic-thinking' || model === 'scira-opus-pro'
+            ...(model === "scira-anthropic-thinking" ||
+            model === "scira-opus-pro"
               ? {
-                thinking: { type: 'enabled', budgetTokens: 12000 },
-              }
+                  thinking: { type: "enabled", budgetTokens: 12000 },
+                }
               : {}),
           },
         },
@@ -377,9 +457,9 @@ export async function POST(req: Request) {
           // Stock & Financial Tools
           stock_chart: stockChartTool,
           currency_converter: currencyConverterTool,
-          coin_data: coinDataTool,
-          coin_data_by_contract: coinDataByContractTool,
-          coin_ohlc: coinOhlcTool,
+          // coin_data: coinDataTool,
+          // coin_data_by_contract: coinDataByContractTool,
+          // coin_ohlc: coinOhlcTool,
 
           // Search & Content Tools
           x_search: xSearchTool,
@@ -409,7 +489,12 @@ export async function POST(req: Request) {
           extreme_search: extremeSearchTool(dataStream),
           greeting: greetingTool,
         },
-        experimental_repairToolCall: async ({ toolCall, tools, parameterSchema, error }) => {
+        experimental_repairToolCall: async ({
+          toolCall,
+          tools,
+          parameterSchema,
+          error,
+        }) => {
           if (NoSuchToolError.isInstance(error)) {
             return null; // do not attempt to fix invalid tool names
           }
@@ -426,67 +511,68 @@ export async function POST(req: Request) {
             model: scira.languageModel('scira-4o-mini'),
             schema: tool.parameters,
             prompt: [
-              `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
+              `The model tried to call the tool "${toolCall.toolName}"` +
+                ` with the following arguments:`,
               JSON.stringify(toolCall.args),
               `The tool accepts the following schema:`,
               JSON.stringify(parameterSchema(toolCall)),
-              'Please fix the arguments.',
-              'Do not use print statements stock chart tool.',
+              "Please fix the arguments.",
+              "Do not use print statements stock chart tool.",
               `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
               `For the web search make multiple queries to get the best results.`,
-              `Today's date is ${new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
+              `Today's date is ${new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}`,
-            ].join('\n'),
+            ].join("\n"),
           });
 
-          console.log('repairedArgs', repairedArgs);
+          console.log("repairedArgs", repairedArgs);
 
           return { ...toolCall, args: JSON.stringify(repairedArgs) };
         },
         onChunk(event) {
-          if (event.chunk.type === 'tool-call') {
-            console.log('Called Tool: ', event.chunk.toolName);
+          if (event.chunk.type === "tool-call") {
+            console.log("Called Tool: ", event.chunk.toolName);
           }
         },
         onStepFinish(event) {
           if (event.warnings) {
-            console.log('Warnings: ', event.warnings);
+            console.log("Warnings: ", event.warnings);
           }
         },
         onFinish: async (event) => {
-          console.log('Fin reason: ', event.finishReason);
-          console.log('Reasoning: ', event.reasoning);
-          console.log('reasoning details: ', event.reasoningDetails);
-          console.log('Steps: ', event.steps);
-          console.log('Messages: ', event.response.messages);
-          console.log('Response Body: ', event.response.body);
-          console.log('Provider metadata: ', event.providerMetadata);
-          console.log('Sources: ', event.sources);
-          console.log('Usage: ', event.usage);
+          console.log("Fin reason: ", event.finishReason);
+          console.log("Reasoning: ", event.reasoning);
+          console.log("reasoning details: ", event.reasoningDetails);
+          console.log("Steps: ", event.steps);
+          console.log("Messages: ", event.response.messages);
+          console.log("Response Body: ", event.response.body);
+          console.log("Provider metadata: ", event.providerMetadata);
+          console.log("Sources: ", event.sources);
+          console.log("Usage: ", event.usage);
 
           // Only proceed if user is authenticated
-          if (user?.id && event.finishReason === 'stop') {
+          if (user?.id && event.finishReason === "stop") {
             // FIRST: Generate and update title for new conversations (highest priority)
             try {
               const chat = await getChatById({ id });
-              if (chat && chat.title === 'New conversation') {
-                console.log('Generating title for new conversation...');
+              if (chat && chat.title === "New conversation") {
+                console.log("Generating title for new conversation...");
                 const title = await generateTitleFromUserMessage({
                   message: messages[messages.length - 1],
                 });
 
-                console.log('--------------------------------');
-                console.log('Generated title: ', title);
-                console.log('--------------------------------');
+                console.log("--------------------------------");
+                console.log("Generated title: ", title);
+                console.log("--------------------------------");
 
                 // Update the chat with the generated title
                 await updateChatTitleById({ chatId: id, title });
               }
             } catch (titleError) {
-              console.error('Failed to generate or update title:', titleError);
+              console.error("Failed to generate or update title:", titleError);
               // Title generation failure shouldn't break the conversation
             }
 
@@ -497,34 +583,40 @@ export async function POST(req: Request) {
                 await incrementMessageUsage({ userId: user.id });
               }
             } catch (error) {
-              console.error('Failed to track message usage:', error);
+              console.error("Failed to track message usage:", error);
             }
 
             // Track extreme search usage if it was used successfully
-            if (group === 'extreme') {
+            if (group === "extreme") {
               try {
                 // Check if extreme_search tool was actually called
                 const extremeSearchUsed = event.steps?.some((step) =>
-                  step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
+                  step.toolCalls?.some(
+                    (toolCall) => toolCall.toolName === "extreme_search",
+                  ),
                 );
 
                 if (extremeSearchUsed) {
-                  console.log('Extreme search was used successfully, incrementing count');
+                  console.log(
+                    "Extreme search was used successfully, incrementing count",
+                  );
                   await incrementExtremeSearchUsage({ userId: user.id });
                 }
               } catch (error) {
-                console.error('Failed to track extreme search usage:', error);
+                console.error("Failed to track extreme search usage:", error);
               }
             }
 
             // LAST: Save assistant message (after title is generated)
             try {
               const assistantId = getTrailingMessageId({
-                messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
+                messages: event.response.messages.filter(
+                  (message: any) => message.role === "assistant",
+                ),
               });
 
               if (!assistantId) {
-                throw new Error('No assistant message found!');
+                throw new Error("No assistant message found!");
               }
 
               const [, assistantMessage] = appendResponseMessages({
@@ -539,31 +631,36 @@ export async function POST(req: Request) {
                     chatId: id,
                     role: assistantMessage.role,
                     parts: assistantMessage.parts,
-                    attachments: assistantMessage.experimental_attachments ?? [],
+                    attachments:
+                      assistantMessage.experimental_attachments ?? [],
                     createdAt: new Date(),
                   },
                 ],
               });
             } catch (error) {
-              console.error('Failed to save assistant message:', error);
+              console.error("Failed to save assistant message:", error);
             }
           }
 
           // Calculate and log overall request processing time
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
+          console.log("--------------------------------");
+          console.log(
+            `Total request processing time: ${processingTime.toFixed(2)} seconds`,
+          );
+          console.log("--------------------------------");
         },
         onError(event) {
-          console.log('Error: ', event.error);
+          console.log("Error: ", event.error);
           // Calculate and log processing time even on error
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
+          console.log("--------------------------------");
+          console.log(
+            `Request processing time (with error): ${processingTime.toFixed(2)} seconds`,
+          );
+          console.log("--------------------------------");
         },
       });
 
@@ -574,17 +671,19 @@ export async function POST(req: Request) {
       });
     },
     onError(error) {
-      console.log('Error: ', error);
-      if (error instanceof Error && error.message.includes('Rate Limit')) {
-        return 'Oops, you have reached the rate limit! Please try again later.';
+      console.log("Error: ", error);
+      if (error instanceof Error && error.message.includes("Rate Limit")) {
+        return "Oops, you have reached the rate limit! Please try again later.";
       }
-      return 'Oops, an error occurred!';
+      return "Oops, an error occurred!";
     },
   });
   const streamContext = getStreamContext();
 
   if (streamContext) {
-    return new Response(await streamContext.resumableStream(streamId, () => stream));
+    return new Response(
+      await streamContext.resumableStream(streamId, () => stream),
+    );
   } else {
     return new Response(stream);
   }
@@ -599,16 +698,22 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const chatId = searchParams.get('chatId');
+  const chatId = searchParams.get("chatId");
 
   if (!chatId) {
-    return new ChatSDKError('bad_request:api', 'Chat ID is required').toResponse();
+    return new ChatSDKError(
+      "bad_request:api",
+      "Chat ID is required",
+    ).toResponse();
   }
 
   const session = await auth.api.getSession(request);
 
   if (!session?.user) {
-    return new ChatSDKError('unauthorized:auth', 'Authentication required to resume chat stream').toResponse();
+    return new ChatSDKError(
+      "unauthorized:auth",
+      "Authentication required to resume chat stream",
+    ).toResponse();
   }
 
   let chat: Chat | null;
@@ -616,34 +721,40 @@ export async function GET(request: Request) {
   try {
     chat = await getChatById({ id: chatId });
   } catch {
-    return new ChatSDKError('not_found:chat').toResponse();
+    return new ChatSDKError("not_found:chat").toResponse();
   }
 
   if (!chat) {
-    return new ChatSDKError('not_found:chat').toResponse();
+    return new ChatSDKError("not_found:chat").toResponse();
   }
 
-  if (chat.visibility === 'private' && chat.userId !== session.user.id) {
-    return new ChatSDKError('forbidden:chat', 'Access denied to private chat').toResponse();
+  if (chat.visibility === "private" && chat.userId !== session.user.id) {
+    return new ChatSDKError(
+      "forbidden:chat",
+      "Access denied to private chat",
+    ).toResponse();
   }
 
   const streamIds = await getStreamIdsByChatId({ chatId });
 
   if (!streamIds.length) {
-    return new ChatSDKError('not_found:stream').toResponse();
+    return new ChatSDKError("not_found:stream").toResponse();
   }
 
   const recentStreamId = streamIds.at(-1);
 
   if (!recentStreamId) {
-    return new ChatSDKError('not_found:stream').toResponse();
+    return new ChatSDKError("not_found:stream").toResponse();
   }
 
   const emptyDataStream = createDataStream({
-    execute: () => { },
+    execute: () => {},
   });
 
-  const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
+  const stream = await streamContext.resumableStream(
+    recentStreamId,
+    () => emptyDataStream,
+  );
 
   /*
    * For when the generation is streaming during SSR
@@ -657,7 +768,7 @@ export async function GET(request: Request) {
       return new Response(emptyDataStream, { status: 200 });
     }
 
-    if (mostRecentMessage.role !== 'assistant') {
+    if (mostRecentMessage.role !== "assistant") {
       return new Response(emptyDataStream, { status: 200 });
     }
 
@@ -670,7 +781,7 @@ export async function GET(request: Request) {
     const restoredStream = createDataStream({
       execute: (buffer) => {
         buffer.writeData({
-          type: 'append-message',
+          type: "append-message",
           message: JSON.stringify(mostRecentMessage),
         });
       },

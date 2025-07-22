@@ -1,4 +1,4 @@
-import { clientEnv } from '@/env/client';
+// import { clientEnv } from '@/env/client';
 import { cn } from '@/lib/utils';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -44,10 +44,10 @@ interface Place {
   timezone?: string;
 }
 
-// Set Mapbox token with fallback
-if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
-  mapboxgl.accessToken = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
-}
+// // Set Mapbox token with fallback
+// if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
+//   mapboxgl.accessToken = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
+// }
 
 interface InteractiveMapProps {
   center: Location;

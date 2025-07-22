@@ -4,7 +4,6 @@ import './env/client';
 
 const nextConfig: NextConfig = {
   compiler: {
-    // if NODE_ENV is production, remove console.log
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
@@ -47,25 +46,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async redirects() {
-    return [
-      {
-        source: '/ph',
-        destination: 'https://www.producthunt.com/posts/scira',
-        permanent: true,
-      },
-      {
-        source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/scira',
-        permanent: true,
-      },
-      {
-        source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
-        permanent: true,
-      },
-    ];
-  },
+  // async redirects() {
+  //   return [
+  //     {
+  //       source: '/raycast',
+  //       destination: 'https://www.raycast.com/zaidmukaddam/scira',
+  //       permanent: true,
+  //     },
+  //     {
+  //       source: '/plst',
+  //       destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
+  //       permanent: true,
+  //     },
+  //   ];
+  // },
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
@@ -80,80 +74,6 @@ const nextConfig: NextConfig = {
         hostname: '**',
         port: '',
         pathname: '**',
-      },
-      // Google Favicon Service - comprehensive patterns
-      {
-        protocol: 'https',
-        hostname: 'www.google.com',
-        port: '',
-        pathname: '/s2/favicons/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.google.com',
-        port: '',
-        pathname: '/s2/favicons',
-      },
-      // Google Maps Static API
-      {
-        protocol: 'https',
-        hostname: 'maps.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      // Google Street View Static API
-      {
-        protocol: 'https',
-        hostname: 'maps.googleapis.com',
-        port: '',
-        pathname: '/maps/api/streetview/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.producthunt.com',
-        port: '',
-        pathname: '/widgets/embed-image/v1/featured.svg',
-      },
-      {
-        protocol: 'https',
-        hostname: 'metwm7frkvew6tn1.public.blob.vercel-storage.com',
-        port: '',
-        pathname: '**',
-      },
-      // upload.wikimedia.org
-      {
-        protocol: 'https',
-        hostname: 'upload.wikimedia.org',
-        port: '',
-        pathname: '**',
-      },
-      // media.theresanaiforthat.com
-      {
-        protocol: 'https',
-        hostname: 'media.theresanaiforthat.com',
-        port: '',
-        pathname: '**',
-      },
-      // www.uneed.best
-      {
-        protocol: 'https',
-        hostname: 'www.uneed.best',
-        port: '',
-        pathname: '**',
-      },
-      // image.tmdb.org
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-        port: '',
-        pathname: '/t/p/original/**',
-      },
-      // image.tmdb.org
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-        port: '',
-        pathname: '/**',
       },
     ],
     // Add additional settings for better image loading

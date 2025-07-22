@@ -22,7 +22,7 @@ import { Polar } from '@polar-sh/sdk';
 import { eq } from 'drizzle-orm';
 
 config({
-  path: '.env.local',
+  path: '.env',
 });
 
 // Utility function to safely parse dates
@@ -59,18 +59,18 @@ export const auth = betterAuth({
     },
   }),
   socialProviders: {
-    github: {
-      clientId: serverEnv.GITHUB_CLIENT_ID,
-      clientSecret: serverEnv.GITHUB_CLIENT_SECRET,
-    },
+    // github: {
+    //   clientId: serverEnv.GITHUB_CLIENT_ID,
+    //   clientSecret: serverEnv.GITHUB_CLIENT_SECRET,
+    // },
     google: {
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
     },
-    twitter: {
-      clientId: serverEnv.TWITTER_CLIENT_ID,
-      clientSecret: serverEnv.TWITTER_CLIENT_SECRET,
-    },
+    // twitter: {
+    //   clientId: serverEnv.TWITTER_CLIENT_ID,
+    //   clientSecret: serverEnv.TWITTER_CLIENT_SECRET,
+    // },
   },
   plugins: [
     polar({
@@ -250,6 +250,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  // trustedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  // allowedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
 });

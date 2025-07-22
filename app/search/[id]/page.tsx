@@ -1,51 +1,52 @@
-import { notFound } from 'next/navigation';
-import { ChatInterface } from '@/components/chat-interface';
-import { getUser } from '@/lib/auth-utils';
-import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
-import { Message } from '@/lib/db/schema';
-import { Metadata } from 'next';
+import { notFound } from "next/navigation";
+import { ChatInterface } from "@/components/chat-interface";
+import { getUser } from "@/lib/auth-utils";
+import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
+import { Message } from "@/lib/db/schema";
+import { Metadata } from "next";
 
 interface UIMessage {
   id: string;
   parts: any;
-  role: 'user' | 'assistant' | 'system' | 'tool';
+  role: "user" | "assistant" | "system" | "tool";
   content: string;
   createdAt: Date;
   experimental_attachments?: Array<any>;
 }
 
 // metadata
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const id = (await params).id;
   const chat = await getChatById({ id });
   const user = await getUser();
   // if not chat, return Scira Chat
   if (!chat) {
-    return { title: 'Scira Chat' };
+    return { title: "Scira Chat" };
   }
   let title;
   // if chat is public, return title
-  if (chat.visibility === 'public') {
+  if (chat.visibility === "public") {
     title = chat.title;
   }
   // if chat is private, return title
-  if (chat.visibility === 'private') {
-    if (!user) {
-      title = 'Scira Chat';
-    }
-    if (user!.id !== chat.userId) {
-      title = 'Scira Chat';
+  if (chat.visibility === "private") {
+    if (!user || user!.id !== chat.userId) {
+      title = "Scira Chat";
     }
     title = chat.title;
   }
   return {
     title: title,
-    description: 'A search in scira.ai',
+    description: "A search in scira.ai",
     openGraph: {
       title: title,
       url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      description: "A search in scira.ai",
+      siteName: "scira.ai",
       images: [
         {
           url: `https://scira.ai/api/og/chat/${id}`,
@@ -55,12 +56,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: title,
       url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
-      creator: '@sciraai',
+      description: "A search in scira.ai",
+      siteName: "scira.ai",
+      creator: "@sciraai",
       images: [
         {
           url: `https://scira.ai/api/og/chat/${id}`,
@@ -81,12 +82,17 @@ function convertToUIMessages(messages: Array<Message>): Array<UIMessage> {
     let processedParts = message.parts;
 
     // If parts is missing or empty for a user message, create a text part from empty string
-    if (message.role === 'user' && (!processedParts || !Array.isArray(processedParts) || processedParts.length === 0)) {
+    if (
+      message.role === "user" &&
+      (!processedParts ||
+        !Array.isArray(processedParts) ||
+        processedParts.length === 0)
+    ) {
       // Create an empty text part since there's no content property in DBMessage
       processedParts = [
         {
-          type: 'text',
-          text: '',
+          type: "text",
+          text: "",
         },
       ];
     }
@@ -95,15 +101,15 @@ function convertToUIMessages(messages: Array<Message>): Array<UIMessage> {
     const content =
       processedParts && Array.isArray(processedParts)
         ? processedParts
-            .filter((part: any) => part.type === 'text')
+            .filter((part: any) => part.type === "text")
             .map((part: any) => part.text)
-            .join('\n')
-        : '';
+            .join("\n")
+        : "";
 
     return {
       id: message.id,
       parts: processedParts,
-      role: message.role as UIMessage['role'],
+      role: message.role as UIMessage["role"],
       content,
       createdAt: message.createdAt,
       experimental_attachments: (message.attachments as Array<any>) ?? [],
@@ -120,11 +126,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  console.log('Chat: ', chat);
+  console.log("Chat: ", chat);
 
   const user = await getUser();
 
-  if (chat.visibility === 'private') {
+  if (chat.visibility === "private") {
     if (!user) {
       return notFound();
     }
@@ -140,7 +146,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     offset: 0,
   });
 
-  console.log('Messages from DB: ', messagesFromDb);
+  console.log("Messages from DB: ", messagesFromDb);
 
   const initialMessages = convertToUIMessages(messagesFromDb);
 
@@ -151,7 +157,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     <ChatInterface
       initialChatId={id}
       initialMessages={initialMessages}
-      initialVisibility={chat.visibility as 'public' | 'private'}
+      initialVisibility={chat.visibility as "public" | "private"}
       isOwner={isOwner}
     />
   );
