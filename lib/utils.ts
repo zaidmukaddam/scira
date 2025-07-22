@@ -9,7 +9,7 @@ import {
   RedditLogoIcon,
   YoutubeLogoIcon,
   XLogoIcon,
-} from '@phosphor-icons/react';
+} from '@phosphor-icons/react/ssr';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

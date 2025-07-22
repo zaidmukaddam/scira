@@ -49,6 +49,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
       topics: z.array(
         z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general.'),
       ),
+      quality: z.enum(['default', 'best']).describe('Search quality level. Default is default.'),
       include_domains: z
         .array(z.string())
         .describe('An array of domains to include in all search results. Default is an empty list.'),
@@ -60,12 +61,14 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
       queries,
       maxResults,
       topics,
+      quality,
       include_domains,
       exclude_domains,
     }: {
       queries: string[];
       maxResults: number[];
       topics: ('general' | 'news' | 'finance')[];
+      quality: 'default' | 'best';
       include_domains?: string[];
       exclude_domains?: string[];
     }) => {
@@ -74,6 +77,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
       console.log('Queries:', queries);
       console.log('Max Results:', maxResults);
       console.log('Topics:', topics);
+      console.log('Quality:', quality);
       console.log('Include Domains:', include_domains);
       console.log('Exclude Domains:', exclude_domains);
 
@@ -96,7 +100,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
 
           const searchOptions: any = {
             text: true,
-            type: 'auto',
+            type: quality === 'best' ? 'auto' : 'hybrid',
             numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
             livecrawl: 'preferred',
             useAutoprompt: true,
