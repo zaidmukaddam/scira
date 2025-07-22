@@ -258,7 +258,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
             <div className="flex items-center gap-2">
               {isComplete && (
                 <div className="text-neutral-400 dark:text-neutral-500">
-                  {isExpanded ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                  {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                 </div>
               )}
 
