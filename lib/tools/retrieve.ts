@@ -4,8 +4,7 @@ import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
 
 export const retrieveTool = tool({
-  description:
-    'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
+  description: 'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
   parameters: z.object({
     url: z.string().describe('The URL to retrieve the information from.'),
     include_summary: z.boolean().describe('Whether to include a summary of the content. Default is true.'),
@@ -25,9 +24,7 @@ export const retrieveTool = tool({
     try {
       const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
-      console.log(
-        `Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`,
-      );
+      console.log(`Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`);
 
       const start = Date.now();
 
@@ -65,4 +62,4 @@ export const retrieveTool = tool({
       return { error: error instanceof Error ? error.message : 'Failed to retrieve content', results: [] };
     }
   },
-}); 
+});

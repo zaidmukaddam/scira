@@ -3,12 +3,7 @@ import { subscription } from './db/schema';
 import { db } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
-import {
-  subscriptionCache,
-  createSubscriptionKey,
-  getProUserStatus,
-  setProUserStatus
-} from './performance-cache';
+import { subscriptionCache, createSubscriptionKey, getProUserStatus, setProUserStatus } from './performance-cache';
 
 export type SubscriptionDetails = {
   id: string;
@@ -102,7 +97,10 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             : isExpired
               ? 'Subscription has expired'
               : 'Subscription is not active',
-          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as 'CANCELED' | 'EXPIRED' | 'GENERAL',
+          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as
+            | 'CANCELED'
+            | 'EXPIRED'
+            | 'GENERAL',
         };
         subscriptionCache.set(cacheKey, result);
         // Cache pro user status

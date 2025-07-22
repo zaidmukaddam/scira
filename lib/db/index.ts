@@ -1,7 +1,7 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import * as schema from "@/lib/db/schema";
-import { serverEnv } from "@/env/server";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from '@/lib/db/schema';
+import { serverEnv } from '@/env/server';
 
 // Unified connection with optimized pooling
 const client = postgres(serverEnv.DATABASE_URL, {

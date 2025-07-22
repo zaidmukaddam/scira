@@ -14,13 +14,7 @@ export interface Props {
   setMessages: UseChatHelpers['setMessages'];
 }
 
-export function useAutoResume({
-  autoResume,
-  initialMessages,
-  experimental_resume,
-  data,
-  setMessages,
-}: Props) {
+export function useAutoResume({ autoResume, initialMessages, experimental_resume, data, setMessages }: Props) {
   useEffect(() => {
     if (!autoResume) return;
 

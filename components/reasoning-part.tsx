@@ -52,10 +52,18 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       );
     },
     codespan(code: string) {
-      return <code key={Math.random()} className="bg-neutral-200 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">{code}</code>;
+      return (
+        <code key={Math.random()} className="bg-neutral-200 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">
+          {code}
+        </code>
+      );
     },
     paragraph(text: ReactNode) {
-      return <p key={Math.random()} className="mb-3 last:mb-0">{text}</p>;
+      return (
+        <p key={Math.random()} className="mb-3 last:mb-0">
+          {text}
+        </p>
+      );
     },
     heading(text: ReactNode, level: number) {
       const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
@@ -69,7 +77,11 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       };
 
       const className = classes[`h${level}` as keyof typeof classes] || '';
-      return <Tag key={Math.random()} className={className}>{text}</Tag>;
+      return (
+        <Tag key={Math.random()} className={className}>
+          {text}
+        </Tag>
+      );
     },
     link(href: string, text: ReactNode) {
       return (
@@ -86,14 +98,25 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     },
     list(body: ReactNode, ordered: boolean) {
       const Type = ordered ? 'ol' : 'ul';
-      return <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-5 mb-3 last:mb-1`}>{body}</Type>;
+      return (
+        <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-5 mb-3 last:mb-1`}>
+          {body}
+        </Type>
+      );
     },
     listItem(text: ReactNode) {
-      return <li key={Math.random()} className="mb-1">{text}</li>;
+      return (
+        <li key={Math.random()} className="mb-1">
+          {text}
+        </li>
+      );
     },
     blockquote(text: ReactNode) {
       return (
-        <blockquote key={Math.random()} className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 py-1 my-3 italic">
+        <blockquote
+          key={Math.random()}
+          className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 py-1 my-3 italic"
+        >
           {text}
         </blockquote>
       );
@@ -109,15 +132,23 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       );
     },
     tableRow(content: ReactNode) {
-      return <tr key={Math.random()} className="border-b border-neutral-200 dark:border-neutral-800">{content}</tr>;
+      return (
+        <tr key={Math.random()} className="border-b border-neutral-200 dark:border-neutral-800">
+          {content}
+        </tr>
+      );
     },
     tableCell(children: ReactNode[], flags: TableFlags) {
       const align = flags.align ? `text-${flags.align}` : '';
-      
+
       return flags.header ? (
-        <th key={Math.random()} className={`px-2 py-1 font-semibold bg-neutral-100 dark:bg-neutral-800 ${align}`}>{children}</th>
+        <th key={Math.random()} className={`px-2 py-1 font-semibold bg-neutral-100 dark:bg-neutral-800 ${align}`}>
+          {children}
+        </th>
       ) : (
-        <td key={Math.random()} className={`px-2 py-1 ${align}`}>{children}</td>
+        <td key={Math.random()} className={`px-2 py-1 ${align}`}>
+          {children}
+        </td>
       );
     },
   };

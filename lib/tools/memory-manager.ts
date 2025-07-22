@@ -11,15 +11,7 @@ export const memoryManagerTool = tool({
     content: z.string().describe('The memory content for add operation'),
     query: z.string().describe('The search query for search operations'),
   }),
-  execute: async ({
-    action,
-    content,
-    query,
-  }: {
-    action: 'add' | 'search';
-    content?: string;
-    query?: string;
-  }) => {
+  execute: async ({ action, content, query }: { action: 'add' | 'search'; content?: string; query?: string }) => {
     const client = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY });
     const user = await getCurrentUser();
     let userId = user?.id;
@@ -100,4 +92,4 @@ export const memoryManagerTool = tool({
       throw error;
     }
   },
-}); 
+});

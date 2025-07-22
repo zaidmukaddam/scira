@@ -12,7 +12,7 @@ export const flightTrackerTool = tool({
   execute: async ({
     carrierCode,
     flightNumber,
-    scheduledDepartureDate
+    scheduledDepartureDate,
   }: {
     carrierCode: string;
     flightNumber: string;
@@ -40,10 +40,10 @@ export const flightTrackerTool = tool({
         `https://test.api.amadeus.com/v2/schedule/flights?carrierCode=${carrierCode}&flightNumber=${flightNumber}&scheduledDepartureDate=${scheduledDepartureDate}`,
         {
           headers: {
-            'Accept': 'application/vnd.amadeus+json',
-            'Authorization': `Bearer ${accessToken}`,
+            Accept: 'application/vnd.amadeus+json',
+            Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -58,53 +58,56 @@ export const flightTrackerTool = tool({
         const arrival = flight.flightPoints[1];
 
         return {
-          data: [{
-            flight_date: flight.scheduledDepartureDate,
-            flight_status: 'scheduled',
-            departure: {
-              airport: departure.iataCode,
-              timezone: departure.departure.timings[0].value.slice(-6),
-              iata: departure.iataCode,
-              terminal: null,
-              gate: null,
-              delay: null,
-              scheduled: departure.departure.timings[0].value,
+          data: [
+            {
+              flight_date: flight.scheduledDepartureDate,
+              flight_status: 'scheduled',
+              departure: {
+                airport: departure.iataCode,
+                timezone: departure.departure.timings[0].value.slice(-6),
+                iata: departure.iataCode,
+                terminal: null,
+                gate: null,
+                delay: null,
+                scheduled: departure.departure.timings[0].value,
+              },
+              arrival: {
+                airport: arrival.iataCode,
+                timezone: arrival.arrival.timings[0].value.slice(-6),
+                iata: arrival.iataCode,
+                terminal: null,
+                gate: null,
+                delay: null,
+                scheduled: arrival.arrival.timings[0].value,
+              },
+              airline: {
+                name: carrierCode,
+                iata: carrierCode,
+              },
+              flight: {
+                number: flightNumber,
+                iata: `${carrierCode}${flightNumber}`,
+                duration: flight.legs[0]?.scheduledLegDuration
+                  ? (() => {
+                      const duration = flight.legs[0].scheduledLegDuration;
+                      const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                      if (matches) {
+                        const hours = parseInt(matches[1] || '0');
+                        const minutes = parseInt(matches[2] || '0');
+                        return hours * 60 + minutes;
+                      }
+                      return null;
+                    })()
+                  : null,
+              },
+              amadeus_data: {
+                aircraft_type: flight.legs[0]?.aircraftEquipment?.aircraftType,
+                operating_flight: flight.segments[0]?.partnership?.operatingFlight,
+                segment_duration: flight.segments[0]?.scheduledSegmentDuration,
+              },
             },
-            arrival: {
-              airport: arrival.iataCode,
-              timezone: arrival.arrival.timings[0].value.slice(-6),
-              iata: arrival.iataCode,
-              terminal: null,
-              gate: null,
-              delay: null,
-              scheduled: arrival.arrival.timings[0].value,
-            },
-            airline: {
-              name: carrierCode,
-              iata: carrierCode,
-            },
-            flight: {
-              number: flightNumber,
-              iata: `${carrierCode}${flightNumber}`,
-              duration: flight.legs[0]?.scheduledLegDuration ?
-                (() => {
-                  const duration = flight.legs[0].scheduledLegDuration;
-                  const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-                  if (matches) {
-                    const hours = parseInt(matches[1] || '0');
-                    const minutes = parseInt(matches[2] || '0');
-                    return hours * 60 + minutes;
-                  }
-                  return null;
-                })() : null,
-            },
-            amadeus_data: {
-              aircraft_type: flight.legs[0]?.aircraftEquipment?.aircraftType,
-              operating_flight: flight.segments[0]?.partnership?.operatingFlight,
-              segment_duration: flight.segments[0]?.scheduledSegmentDuration,
-            }
-          }],
-          amadeus_response: data
+          ],
+          amadeus_response: data,
         };
       }
 
@@ -113,8 +116,8 @@ export const flightTrackerTool = tool({
       console.error('Flight tracking error:', error);
       return {
         data: [],
-        error: error instanceof Error ? error.message : 'Flight tracking failed'
+        error: error instanceof Error ? error.message : 'Flight tracking failed',
       };
     }
   },
-}); 
+});

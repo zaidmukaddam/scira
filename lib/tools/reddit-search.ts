@@ -40,9 +40,7 @@ export const redditSearchTool = tool({
 
       const processedResults = data.results.map((result) => {
         const isRedditPost = result.url.includes('/comments/');
-        const subreddit = isRedditPost
-          ? result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown'
-          : 'unknown';
+        const subreddit = isRedditPost ? result.url.match(/reddit\.com\/r\/([^/]+)/)?.[1] || 'unknown' : 'unknown';
 
         return {
           url: result.url,
@@ -66,4 +64,4 @@ export const redditSearchTool = tool({
       throw error;
     }
   },
-}); 
+});

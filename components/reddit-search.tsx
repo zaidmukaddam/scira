@@ -37,9 +37,9 @@ type RedditSearchArgs = {
 };
 
 // Reddit Source Card Component
-const RedditSourceCard: React.FC<{ 
-  result: RedditResult; 
-  onClick?: () => void 
+const RedditSourceCard: React.FC<{
+  result: RedditResult;
+  onClick?: () => void;
 }> = ({ result, onClick }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const formatSubreddit = (subreddit: string) => {
@@ -73,7 +73,8 @@ const RedditSourceCard: React.FC<{
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
               setImageLoaded(true);
-              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23FF4500'%3E%3Cpath d='M10 0C4.478 0 0 4.478 0 10c0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm5.7 11.1c.1.1.1.1.1.2s0 .1-.1.2c-.599.901-1.899 1.4-3.6 1.4-1.3 0-2.5-.3-3.4-.9-.1-.1-.3-.1-.5-.2-.1 0-.1 0-.1-.1s-.1-.1-.1-.1c-.1-.1-.1-.1-.1-.2s0-.1.1-.2c.1-.1.2-.1.3-.1h.1c.9.5 2 .8 3.2.8 1.3 0 2.4-.3 3.3-.9h.1c.102-.1.202-.1.302-.1.099 0 .198 0 .298.1zm-9.6-2.3c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6zm6.8 0c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6z'/%3E%3C/svg%3E";
+              e.currentTarget.src =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23FF4500'%3E%3Cpath d='M10 0C4.478 0 0 4.478 0 10c0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm5.7 11.1c.1.1.1.1.1.2s0 .1-.1.2c-.599.901-1.899 1.4-3.6 1.4-1.3 0-2.5-.3-3.4-.9-.1-.1-.3-.1-.5-.2-.1 0-.1 0-.1-.1s-.1-.1-.1-.1c-.1-.1-.1-.1-.1-.2s0-.1.1-.2c.1-.1.2-.1.3-.1h.1c.9.5 2 .8 3.2.8 1.3 0 2.4-.3 3.3-.9h.1c.102-.1.202-.1.302-.1.099 0 .198 0 .298.1zm-9.6-2.3c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6zm6.8 0c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6z'/%3E%3C/svg%3E";
             }}
           />
         </div>
@@ -145,22 +146,14 @@ const RedditSourcesSheet: React.FC<{
               </div>
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Reddit Results</h2>
             </div>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {results.length} posts and comments
-            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{results.length} posts and comments</p>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {results.map((result, index) => (
-                <a
-                  key={index}
-                  href={result.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
+                <a key={index} href={result.url} target="_blank" rel="noopener noreferrer" className="block">
                   <RedditSourceCard result={result} />
                 </a>
               ))}
@@ -178,7 +171,7 @@ const SearchLoadingState = () => {
     <div className="w-full space-y-3">
       <Accordion type="single" collapsible defaultValue="search" className="w-full">
         <AccordionItem value="search" className="border-none">
-          <AccordionTrigger 
+          <AccordionTrigger
             className={cn(
               'py-3 px-4 rounded-xl hover:no-underline',
               'bg-white dark:bg-neutral-900',
@@ -197,12 +190,7 @@ const SearchLoadingState = () => {
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                   0
                 </Badge>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 px-2 text-xs opacity-50 cursor-not-allowed"
-                  disabled
-                >
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
                   View all
                   <ArrowUpRight className="w-3 h-3 ml-1" />
                 </Button>
@@ -271,21 +259,21 @@ const RedditSearch: React.FC<{
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    
+
     // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-    
+
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-    
+
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-    
+
     // Check scroll position to determine if we should handle the event
     const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-    
+
     // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
       // In middle of scroll area - always handle
@@ -322,7 +310,7 @@ const RedditSearch: React.FC<{
     <div className="w-full space-y-3 my-4">
       <Accordion type="single" collapsible defaultValue="reddit_search" className="w-full">
         <AccordionItem value="reddit_search" className="border-none">
-          <AccordionTrigger 
+          <AccordionTrigger
             className={cn(
               'py-3 px-4 rounded-xl hover:no-underline',
               'bg-white dark:bg-neutral-900',
@@ -342,9 +330,9 @@ const RedditSearch: React.FC<{
                   {result.results.length}
                 </Badge>
                 {result.results.length > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-7 px-2 text-xs"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -369,10 +357,7 @@ const RedditSearch: React.FC<{
               )}
             >
               {/* Query badges */}
-              <div 
-                className="flex gap-2 overflow-x-auto no-scrollbar"
-                onWheel={handleWheelScroll}
-              >
+              <div className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
                 <Badge
                   variant="outline"
                   className="rounded-full text-xs px-3 py-1 shrink-0 bg-neutral-100 dark:bg-neutral-800"
@@ -389,10 +374,7 @@ const RedditSearch: React.FC<{
               </div>
 
               {/* Preview results */}
-              <div 
-                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
-                onWheel={handleWheelScroll}
-              >
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                 {previewResults.map((post, index) => (
                   <a
                     key={index}
@@ -411,11 +393,7 @@ const RedditSearch: React.FC<{
       </Accordion>
 
       {/* Sources Sheet */}
-      <RedditSourcesSheet 
-        results={result.results} 
-        open={sourcesSheetOpen} 
-        onOpenChange={setSourcesSheetOpen} 
-      />
+      <RedditSourcesSheet results={result.results} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
     </div>
   );
 };

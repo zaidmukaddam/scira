@@ -1,6 +1,6 @@
 // https://env.t3.gg/docs/nextjs#create-your-schema
-import { createEnv } from '@t3-oss/env-nextjs'
-import { z } from 'zod'
+import { createEnv } from '@t3-oss/env-nextjs';
+import { z } from 'zod';
 
 export const clientEnv = createEnv({
   client: {
@@ -15,5 +15,4 @@ export const clientEnv = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   },
-})
-
+});

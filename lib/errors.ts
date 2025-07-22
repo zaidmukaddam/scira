@@ -8,14 +8,7 @@ export type ErrorType =
   | 'model_restricted'
   | 'offline';
 
-export type Surface =
-  | 'chat'
-  | 'auth'
-  | 'api'
-  | 'stream'
-  | 'database'
-  | 'history'
-  | 'model';
+export type Surface = 'chat' | 'auth' | 'api' | 'stream' | 'database' | 'history' | 'model';
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -158,7 +151,9 @@ export function isModelError(error: ChatSDKError): boolean {
 }
 
 export function isSignInRequired(error: ChatSDKError): boolean {
-  return error.type === 'unauthorized' && (error.surface === 'auth' || error.surface === 'chat' || error.surface === 'model');
+  return (
+    error.type === 'unauthorized' && (error.surface === 'auth' || error.surface === 'chat' || error.surface === 'model')
+  );
 }
 
 export function isProRequired(error: ChatSDKError): boolean {
@@ -177,26 +172,26 @@ export function getErrorActions(error: ChatSDKError): {
   if (isSignInRequired(error)) {
     return {
       primary: { label: 'Sign In', action: 'signin' },
-      secondary: { label: 'Try Again', action: 'retry' }
+      secondary: { label: 'Try Again', action: 'retry' },
     };
   }
 
   if (isProRequired(error)) {
     return {
       primary: { label: 'Upgrade to Pro', action: 'upgrade' },
-      secondary: { label: 'Check Again', action: 'refresh' }
+      secondary: { label: 'Check Again', action: 'refresh' },
     };
   }
 
   if (isRateLimited(error)) {
     return {
       primary: { label: 'Upgrade to Pro', action: 'upgrade' },
-      secondary: { label: 'Try Again Later', action: 'retry' }
+      secondary: { label: 'Try Again Later', action: 'retry' },
     };
   }
 
   return {
-    primary: { label: 'Try Again', action: 'retry' }
+    primary: { label: 'Try Again', action: 'retry' },
   };
 }
 

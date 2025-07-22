@@ -5,157 +5,150 @@
 // ----> Use structured source collection to provide comprehensive research results
 // ----> Return all collected sources and research data to the user
 
-import Exa from "exa-js";
+import Exa from 'exa-js';
 import { Daytona } from '@daytonaio/sdk';
-import { DataStreamWriter, generateObject, generateText, tool } from "ai";
-import { z } from "zod";
-import { serverEnv } from "@/env/server";
-import { scira } from "@/ai/providers";
-import { SNAPSHOT_NAME } from "@/lib/constants";
+import { DataStreamWriter, generateObject, generateText, tool } from 'ai';
+import { z } from 'zod';
+import { serverEnv } from '@/env/server';
+import { scira } from '@/ai/providers';
+import { SNAPSHOT_NAME } from '@/lib/constants';
 
 const pythonLibsAvailable = [
-    "pandas",
-    "numpy",
-    "scipy",
-    "keras",
-    "seaborn",
-    "matplotlib",
-    "transformers",
-    "scikit-learn"
-]
+  'pandas',
+  'numpy',
+  'scipy',
+  'keras',
+  'seaborn',
+  'matplotlib',
+  'transformers',
+  'scikit-learn',
+];
 
 const daytona = new Daytona({
-    apiKey: serverEnv.DAYTONA_API_KEY,
-    target: 'us',
+  apiKey: serverEnv.DAYTONA_API_KEY,
+  target: 'us',
 });
 
 const runCode = async (code: string, installLibs: string[] = []) => {
-    const sandbox = await daytona.create(
-        {
-            snapshot: SNAPSHOT_NAME,
-        }
-    );
+  const sandbox = await daytona.create({
+    snapshot: SNAPSHOT_NAME,
+  });
 
-    if (installLibs.length > 0) {
-        await sandbox.process.executeCommand(`pip install ${installLibs.join(" ")}`);
-    }
+  if (installLibs.length > 0) {
+    await sandbox.process.executeCommand(`pip install ${installLibs.join(' ')}`);
+  }
 
-    const result = await sandbox.process.codeRun(code);
-    sandbox.delete();
-    return result;
-}
+  const result = await sandbox.process.codeRun(code);
+  sandbox.delete();
+  return result;
+};
 
 export const exa = new Exa(serverEnv.EXA_API_KEY);
 
 type SearchResult = {
-    title: string;
-    url: string;
-    content: string;
-    publishedDate: string;
-    favicon: string;
+  title: string;
+  url: string;
+  content: string;
+  publishedDate: string;
+  favicon: string;
 };
 
 export type Research = {
-    text: string;
-    toolResults: any[];
-    sources: SearchResult[];
-    charts: any[];
+  text: string;
+  toolResults: any[];
+  sources: SearchResult[];
+  charts: any[];
 };
 
 enum SearchCategory {
-    NEWS = "news",
-    COMPANY = "company",
-    RESEARCH_PAPER = "research paper",
-    GITHUB = "github",
-    FINANCIAL_REPORT = "financial report",
+  NEWS = 'news',
+  COMPANY = 'company',
+  RESEARCH_PAPER = 'research paper',
+  GITHUB = 'github',
+  FINANCIAL_REPORT = 'financial report',
 }
 
-const searchWeb = async (
-    query: string,
-    category?: SearchCategory
-) => {
-    console.log(`searchWeb called with query: "${query}", category: ${category}`);
-    try {
-        const { results } = await exa.searchAndContents(query, {
-            numResults: 5,
-            type: "keyword",
-            ...(category ? {
-                category: category as SearchCategory
-            } : {}),
-        });
-        console.log(`searchWeb received ${results.length} results from Exa API`);
+const searchWeb = async (query: string, category?: SearchCategory) => {
+  console.log(`searchWeb called with query: "${query}", category: ${category}`);
+  try {
+    const { results } = await exa.searchAndContents(query, {
+      numResults: 5,
+      type: 'keyword',
+      ...(category
+        ? {
+            category: category as SearchCategory,
+          }
+        : {}),
+    });
+    console.log(`searchWeb received ${results.length} results from Exa API`);
 
-        const mappedResults = results.map((r) => ({
-            title: r.title,
-            url: r.url,
-            content: r.text,
-            publishedDate: r.publishedDate,
-            favicon: r.favicon,
-        })) as SearchResult[];
+    const mappedResults = results.map((r) => ({
+      title: r.title,
+      url: r.url,
+      content: r.text,
+      publishedDate: r.publishedDate,
+      favicon: r.favicon,
+    })) as SearchResult[];
 
-        console.log(`searchWeb returning ${mappedResults.length} results`);
-        return mappedResults;
-    } catch (error) {
-        console.error("Error in searchWeb:", error);
-        return [];
-    }
+    console.log(`searchWeb returning ${mappedResults.length} results`);
+    return mappedResults;
+  } catch (error) {
+    console.error('Error in searchWeb:', error);
+    return [];
+  }
 };
 
 const getContents = async (links: string[]) => {
-    console.log(`getContents called with ${links.length} URLs:`, links);
-    try {
-        const result = await exa.getContents(
-            links,
-            {
-                text: {
-                    maxCharacters: 3000,
-                    includeHtmlTags: false
-                },
-                livecrawl: "preferred",
-            },
-        );
-        console.log(`getContents received ${result.results.length} results from Exa API`);
-
-        const mappedResults = result.results.map(r => ({
-            title: r.title,
-            url: r.url,
-            content: r.text,
-            publishedDate: r.publishedDate,
-            favicon: r.favicon,
-        }));
-
-        console.log(`getContents returning ${mappedResults.length} mapped results`);
-        return mappedResults;
-    } catch (error) {
-        console.error("Error in getContents:", error);
-        return [];
-    }
-}
-
-
-const extremeSearch = async (
-    prompt: string,
-    dataStream: DataStreamWriter,
-): Promise<Research> => {
-    const allSources: SearchResult[] = [];
-
-    dataStream.writeMessageAnnotation({
-        status: { title: "Planning research" },
+  console.log(`getContents called with ${links.length} URLs:`, links);
+  try {
+    const result = await exa.getContents(links, {
+      text: {
+        maxCharacters: 3000,
+        includeHtmlTags: false,
+      },
+      livecrawl: 'preferred',
     });
+    console.log(`getContents received ${result.results.length} results from Exa API`);
 
-    // plan out the research
-    const { object: plan } = await generateObject({
-        model: scira.languageModel("scira-x-fast"),
-        schema: z.object({
-            plan: z.array(
-                z.object({
-                    title: z.string().min(10).max(70).describe("A title for the research topic"),
-                    todos: z.array(z.string()).min(3).max(5).describe("A list of what to research for the given title"),
-                })
-            ).min(1).max(5),
-        }),
-        prompt: `
-Plan out the research for the following topic: ${prompt}. 
+    const mappedResults = result.results.map((r) => ({
+      title: r.title,
+      url: r.url,
+      content: r.text,
+      publishedDate: r.publishedDate,
+      favicon: r.favicon,
+    }));
+
+    console.log(`getContents returning ${mappedResults.length} mapped results`);
+    return mappedResults;
+  } catch (error) {
+    console.error('Error in getContents:', error);
+    return [];
+  }
+};
+
+const extremeSearch = async (prompt: string, dataStream: DataStreamWriter): Promise<Research> => {
+  const allSources: SearchResult[] = [];
+
+  dataStream.writeMessageAnnotation({
+    status: { title: 'Planning research' },
+  });
+
+  // plan out the research
+  const { object: plan } = await generateObject({
+    model: scira.languageModel('scira-x-fast'),
+    schema: z.object({
+      plan: z
+        .array(
+          z.object({
+            title: z.string().min(10).max(70).describe('A title for the research topic'),
+            todos: z.array(z.string()).min(3).max(5).describe('A list of what to research for the given title'),
+          }),
+        )
+        .min(1)
+        .max(5),
+    }),
+    prompt: `
+Plan out the research for the following topic: ${prompt}.
 
 Plan Guidelines:
 - Break down the topic into key aspects to research
@@ -170,26 +163,26 @@ Plan Guidelines:
 - Keep the titles concise and to the point, no more than 70 characters
 - Mention any need for visualizations in the plan
 - Make the plan technical and specific to the topic`,
-    });
+  });
 
-    console.log(plan.plan);
+  console.log(plan.plan);
 
-    // calculate the total number of todos
-    const totalTodos = plan.plan.reduce((acc, curr) => acc + curr.todos.length, 0);
-    console.log(`Total todos: ${totalTodos}`);
+  // calculate the total number of todos
+  const totalTodos = plan.plan.reduce((acc, curr) => acc + curr.todos.length, 0);
+  console.log(`Total todos: ${totalTodos}`);
 
-    dataStream.writeMessageAnnotation({
-        status: { title: "Research plan ready, starting up research agent" },
-        plan: plan.plan
-    });
+  dataStream.writeMessageAnnotation({
+    status: { title: 'Research plan ready, starting up research agent' },
+    plan: plan.plan,
+  });
 
-    let toolResults: any[] = [];
+  let toolResults: any[] = [];
 
-    // Create the autonomous research agent with tools
-    const { text } = await generateText({
-        model: scira.languageModel("scira-x-fast-mini"),
-        maxSteps: totalTodos,
-        system: `
+  // Create the autonomous research agent with tools
+  const { text } = await generateText({
+    model: scira.languageModel('scira-x-fast-mini'),
+    maxSteps: totalTodos,
+    system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 
 Today is ${new Date().toISOString()}.
@@ -246,219 +239,216 @@ For research:
 Research Plan:
 ${JSON.stringify(plan.plan)}
 `,
-        prompt,
-        temperature: 0,
-        providerOptions: {
-            xai: {
-                parallel_function_calling: "false"
-            }
-        },
-        tools: {
-            codeRunner: {
-                description: 'Run Python code in a sandbox',
-                parameters: z.object({
-                    title: z.string().describe('The title of what you are running the code for'),
-                    code: z.string().describe('The Python code to run with proper syntax and imports'),
-                }),
-                execute: async ({ title, code }) => {
-                    console.log("Running code:", code);
-                    // check if the code has any imports other than the pythonLibsAvailable
-                    // and then install the missing libraries
-                    const imports = code.match(/import\s+([\w\s,]+)/);
-                    const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
-                    const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
+    prompt,
+    temperature: 0,
+    providerOptions: {
+      xai: {
+        parallel_function_calling: 'false',
+      },
+    },
+    tools: {
+      codeRunner: {
+        description: 'Run Python code in a sandbox',
+        parameters: z.object({
+          title: z.string().describe('The title of what you are running the code for'),
+          code: z.string().describe('The Python code to run with proper syntax and imports'),
+        }),
+        execute: async ({ title, code }) => {
+          console.log('Running code:', code);
+          // check if the code has any imports other than the pythonLibsAvailable
+          // and then install the missing libraries
+          const imports = code.match(/import\s+([\w\s,]+)/);
+          const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
+          const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
 
-                    dataStream.writeMessageAnnotation({
-                        status: { type: "code", title: title, code: code },
-                    });
-                    const response = await runCode(code, missingLibs);
+          dataStream.writeMessageAnnotation({
+            status: { type: 'code', title: title, code: code },
+          });
+          const response = await runCode(code, missingLibs);
 
-                    // Extract chart data if present, and if so then map and remove the png with chart.png
-                    const charts = response.artifacts?.charts?.map(chart => {
-                        if (chart.png) {
-                            const { png, ...chartWithoutPng } = chart;
-                            return chartWithoutPng;
-                        }
-                        return chart;
-                    }) || [];
+          // Extract chart data if present, and if so then map and remove the png with chart.png
+          const charts =
+            response.artifacts?.charts?.map((chart) => {
+              if (chart.png) {
+                const { png, ...chartWithoutPng } = chart;
+                return chartWithoutPng;
+              }
+              return chart;
+            }) || [];
 
-                    console.log("Charts:", response.artifacts?.charts);
+          console.log('Charts:', response.artifacts?.charts);
 
-                    dataStream.writeMessageAnnotation({
-                        status: {
-                            type: "result",
-                            title: title,
-                            code: code,
-                            result: response.result,
-                            charts: charts
-                        },
-                    });
-
-                    return {
-                        result: response.result,
-                        charts: charts
-                    };
-                },
+          dataStream.writeMessageAnnotation({
+            status: {
+              type: 'result',
+              title: title,
+              code: code,
+              result: response.result,
+              charts: charts,
             },
-            webSearch: {
-                description: 'Search the web for information on a topic',
-                parameters: z.object({
-                    query: z.string().describe('The search query to achieve the todo').max(100),
-                    category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
-                }),
-                execute: async ({ query, category }, { toolCallId }) => {
-                    console.log("Web search query:", query);
-                    console.log("Category:", category);
+          });
 
-                    dataStream.writeMessageAnnotation({
-                        status: { title: `Searching the web for "${query}"` },
-                    });
-
-                    // Add a query annotation to display in the UI
-                    // Use a consistent format for query annotations
-                    dataStream.writeMessageAnnotation({
-                        type: "search_query",
-                        queryId: toolCallId,
-                        query: query,
-                    });
-
-                    let results = await searchWeb(query, category);
-                    console.log(`Found ${results.length} results for query "${query}"`);
-
-                    // Add these sources to our total collection
-                    allSources.push(...results);
-
-                    results.forEach(async (source) => {
-                        dataStream.writeMessageAnnotation({
-                            type: "source",
-                            queryId: toolCallId,
-                            source: { title: source.title, url: source.url },
-                        });
-                    });
-
-                    // Get full content for the top results
-                    if (results.length > 0) {
-                        try {
-                            dataStream.writeMessageAnnotation({
-                                status: { title: `Reading content from search results for "${query}"` },
-                            });
-
-                            // Get the URLs from the results
-                            const urls = results.map(r => r.url);
-
-                            // Get the full content using getContents
-                            const contentsResults = await getContents(urls);
-
-                            // Only update results if we actually got content results
-                            if (contentsResults && contentsResults.length > 0) {
-                                // For each content result, add a content annotation
-                                contentsResults.forEach((content) => {
-                                    dataStream.writeMessageAnnotation({
-                                        type: "content",
-                                        queryId: toolCallId,
-                                        content: {
-                                            title: content.title,
-                                            url: content.url,
-                                            text: content.content.slice(0, 500) + "...", // Truncate for annotation
-                                        }
-                                    });
-                                });
-
-                                // Update results with full content, but keep original results as fallback
-                                results = contentsResults.map(content => {
-                                    const originalResult = results.find(r => r.url === content.url);
-                                    return {
-                                        title: content.title || originalResult?.title || "",
-                                        url: content.url,
-                                        content: content.content || originalResult?.content || "",
-                                        publishedDate: content.publishedDate || originalResult?.publishedDate || "",
-                                        favicon: content.favicon || originalResult?.favicon || ""
-                                    };
-                                }) as SearchResult[];
-                            } else {
-                                console.log("getContents returned no results, using original search results");
-                            }
-                        } catch (error) {
-                            console.error("Error fetching content:", error);
-                            console.log("Using original search results due to error");
-                        }
-                    }
-
-                    return results.map(r => ({
-                        title: r.title,
-                        url: r.url,
-                        content: r.content,
-                        publishedDate: r.publishedDate
-                    }));
-                },
-            },
+          return {
+            result: response.result,
+            charts: charts,
+          };
         },
-        onStepFinish: (step) => {
-            console.log("Step finished:", step.finishReason);
-            console.log("Step:", step.stepType);
-            if (step.toolResults) {
-                console.log("Tool results:", step.toolResults);
-                toolResults.push(...step.toolResults);
+      },
+      webSearch: {
+        description: 'Search the web for information on a topic',
+        parameters: z.object({
+          query: z.string().describe('The search query to achieve the todo').max(100),
+          category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
+        }),
+        execute: async ({ query, category }, { toolCallId }) => {
+          console.log('Web search query:', query);
+          console.log('Category:', category);
+
+          dataStream.writeMessageAnnotation({
+            status: { title: `Searching the web for "${query}"` },
+          });
+
+          // Add a query annotation to display in the UI
+          // Use a consistent format for query annotations
+          dataStream.writeMessageAnnotation({
+            type: 'search_query',
+            queryId: toolCallId,
+            query: query,
+          });
+
+          let results = await searchWeb(query, category);
+          console.log(`Found ${results.length} results for query "${query}"`);
+
+          // Add these sources to our total collection
+          allSources.push(...results);
+
+          results.forEach(async (source) => {
+            dataStream.writeMessageAnnotation({
+              type: 'source',
+              queryId: toolCallId,
+              source: { title: source.title, url: source.url },
+            });
+          });
+
+          // Get full content for the top results
+          if (results.length > 0) {
+            try {
+              dataStream.writeMessageAnnotation({
+                status: { title: `Reading content from search results for "${query}"` },
+              });
+
+              // Get the URLs from the results
+              const urls = results.map((r) => r.url);
+
+              // Get the full content using getContents
+              const contentsResults = await getContents(urls);
+
+              // Only update results if we actually got content results
+              if (contentsResults && contentsResults.length > 0) {
+                // For each content result, add a content annotation
+                contentsResults.forEach((content) => {
+                  dataStream.writeMessageAnnotation({
+                    type: 'content',
+                    queryId: toolCallId,
+                    content: {
+                      title: content.title,
+                      url: content.url,
+                      text: content.content.slice(0, 500) + '...', // Truncate for annotation
+                    },
+                  });
+                });
+
+                // Update results with full content, but keep original results as fallback
+                results = contentsResults.map((content) => {
+                  const originalResult = results.find((r) => r.url === content.url);
+                  return {
+                    title: content.title || originalResult?.title || '',
+                    url: content.url,
+                    content: content.content || originalResult?.content || '',
+                    publishedDate: content.publishedDate || originalResult?.publishedDate || '',
+                    favicon: content.favicon || originalResult?.favicon || '',
+                  };
+                }) as SearchResult[];
+              } else {
+                console.log('getContents returned no results, using original search results');
+              }
+            } catch (error) {
+              console.error('Error fetching content:', error);
+              console.log('Using original search results due to error');
             }
+          }
+
+          return results.map((r) => ({
+            title: r.title,
+            url: r.url,
+            content: r.content,
+            publishedDate: r.publishedDate,
+          }));
         },
-    });
+      },
+    },
+    onStepFinish: (step) => {
+      console.log('Step finished:', step.finishReason);
+      console.log('Step:', step.stepType);
+      if (step.toolResults) {
+        console.log('Tool results:', step.toolResults);
+        toolResults.push(...step.toolResults);
+      }
+    },
+  });
 
-    dataStream.writeMessageAnnotation({
-        status: { title: "Research completed" },
-    });
+  dataStream.writeMessageAnnotation({
+    status: { title: 'Research completed' },
+  });
 
-    const chartResults = toolResults.filter(result =>
-        result.toolName === "codeRunner" &&
-        typeof result.result === 'object' &&
-        result.result !== null &&
-        'charts' in result.result
-    );
+  const chartResults = toolResults.filter(
+    (result) =>
+      result.toolName === 'codeRunner' &&
+      typeof result.result === 'object' &&
+      result.result !== null &&
+      'charts' in result.result,
+  );
 
-    console.log("Chart results:", chartResults);
+  console.log('Chart results:', chartResults);
 
-    const charts = chartResults.flatMap(result => (result.result as any).charts || []);
+  const charts = chartResults.flatMap((result) => (result.result as any).charts || []);
 
-    console.log("Tool results:", toolResults);
-    console.log("Charts:", charts);
-    console.log("Sources:", allSources[2]);
+  console.log('Tool results:', toolResults);
+  console.log('Charts:', charts);
+  console.log('Sources:', allSources[2]);
 
-    return {
-        text,
-        toolResults,
-        sources: Array.from(
-            new Map(
-                allSources.map((s) => [
-                    s.url,
-                    { ...s, content: s.content.slice(0, 3000) + "..." },
-                ]),
-            ).values(),
-        ),
-        charts,
-    };
+  return {
+    text,
+    toolResults,
+    sources: Array.from(
+      new Map(allSources.map((s) => [s.url, { ...s, content: s.content.slice(0, 3000) + '...' }])).values(),
+    ),
+    charts,
+  };
 };
 
 export const extremeSearchTool = (dataStream: DataStreamWriter) =>
-    tool({
-        description: "Use this tool to conduct an extreme search on a given topic.",
-        parameters: z.object({
-            prompt: z
-                .string()
-                .describe(
-                    "This should take the user's exact prompt. Extract from the context but do not infer or change in any way.",
-                ),
-        }),
-        execute: async ({ prompt }) => {
-            console.log({ prompt });
+  tool({
+    description: 'Use this tool to conduct an extreme search on a given topic.',
+    parameters: z.object({
+      prompt: z
+        .string()
+        .describe(
+          "This should take the user's exact prompt. Extract from the context but do not infer or change in any way.",
+        ),
+    }),
+    execute: async ({ prompt }) => {
+      console.log({ prompt });
 
-            const research = await extremeSearch(prompt, dataStream);
+      const research = await extremeSearch(prompt, dataStream);
 
-            return {
-                research: {
-                    text: research.text,
-                    toolResults: research.toolResults,
-                    sources: research.sources,
-                    charts: research.charts,
-                },
-            };
+      return {
+        research: {
+          text: research.text,
+          toolResults: research.toolResults,
+          sources: research.sources,
+          charts: research.charts,
         },
-    }); 
+      };
+    },
+  });

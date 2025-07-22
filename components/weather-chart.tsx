@@ -519,8 +519,8 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                       {index === 0
                         ? 'Today'
                         : index === 1
-                        ? 'Tmrw'
-                        : new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' })}
+                          ? 'Tmrw'
+                          : new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' })}
                     </div>
 
                     <Image
@@ -566,8 +566,8 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                     {index === 0
                       ? 'Today'
                       : index === 1
-                      ? 'Tomorrow'
-                      : new Date(day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                        ? 'Tomorrow'
+                        : new Date(day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
                   </button>
                 ))}
               </div>
@@ -839,8 +839,8 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                               {index === 0
                                 ? 'Today'
                                 : index === 1
-                                ? 'Tmrw'
-                                : new Date(day.timestamp * 1000).toLocaleDateString(undefined, { weekday: 'short' })}
+                                  ? 'Tmrw'
+                                  : new Date(day.timestamp * 1000).toLocaleDateString(undefined, { weekday: 'short' })}
                             </div>
                             <div className="text-[10px] text-neutral-500 dark:text-neutral-500">
                               {new Date(day.timestamp * 1000).toLocaleDateString(undefined, { day: 'numeric' })}

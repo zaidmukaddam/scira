@@ -10,9 +10,7 @@ export const xSearchTool = tool({
     startDate: z
       .string()
       .nullable()
-      .describe(
-        'The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)',
-      ),
+      .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)'),
     endDate: z
       .string()
       .nullable()
@@ -132,4 +130,4 @@ export const xSearchTool = tool({
       throw error;
     }
   },
-}); 
+});

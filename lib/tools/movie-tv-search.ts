@@ -71,18 +71,13 @@ export const movieTvSearchTool = tool({
           cast:
             credits.cast?.slice(0, 8).map((person: any) => ({
               ...person,
-              profile_path: person.profile_path
-                ? `https://image.tmdb.org/t/p/original${person.profile_path}`
-                : null,
+              profile_path: person.profile_path ? `https://image.tmdb.org/t/p/original${person.profile_path}` : null,
             })) || [],
           director: credits.crew?.find((person: any) => person.job === 'Director')?.name,
-          writer: credits.crew?.find((person: any) => person.job === 'Screenplay' || person.job === 'Writer')
-            ?.name,
+          writer: credits.crew?.find((person: any) => person.job === 'Screenplay' || person.job === 'Writer')?.name,
         },
         poster_path: details.poster_path ? `https://image.tmdb.org/t/p/original${details.poster_path}` : null,
-        backdrop_path: details.backdrop_path
-          ? `https://image.tmdb.org/t/p/original${details.backdrop_path}`
-          : null,
+        backdrop_path: details.backdrop_path ? `https://image.tmdb.org/t/p/original${details.backdrop_path}` : null,
       };
 
       return { result };
@@ -91,4 +86,4 @@ export const movieTvSearchTool = tool({
       throw error;
     }
   },
-}); 
+});

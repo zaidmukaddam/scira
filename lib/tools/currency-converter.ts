@@ -41,11 +41,9 @@ print(f"Converted amount: {converted_amount}")
       apiKey: serverEnv.DAYTONA_API_KEY,
       target: 'us',
     });
-    const sandbox = await daytona.create(
-      {
-        snapshot: SNAPSHOT_NAME,
-      }
-    );
+    const sandbox = await daytona.create({
+      snapshot: SNAPSHOT_NAME,
+    });
 
     const execution = await sandbox.process.codeRun(code);
     let message = '';
@@ -89,4 +87,4 @@ print(f"Converted amount: {converted_amount}")
       convertedAmount: convertedAmount,
     };
   },
-}); 
+});

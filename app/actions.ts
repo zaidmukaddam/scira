@@ -7,7 +7,6 @@ import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
-import { authClient } from '@/lib/auth-client';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -33,7 +32,7 @@ import {
   createMessageCountKey,
   createExtremeCountKey,
   getProUserStatus,
-  computeAndCacheProUserStatus
+  computeAndCacheProUserStatus,
 } from '@/lib/performance-cache';
 
 // Server action to get the current user with Pro status
@@ -142,8 +141,6 @@ export async function checkImageModeration(images: any) {
   return text;
 }
 
-
-
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
     model: scira.languageModel('scira-nano'),
@@ -245,11 +242,7 @@ const groupTools = {
   youtube: ['youtube_search', 'datetime'] as const,
   reddit: ['reddit_search', 'datetime'] as const,
   analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
-  crypto: [
-    'coin_data',
-    'coin_ohlc',
-    'coin_data_by_contract',
-    'datetime'] as const,
+  crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
@@ -1158,12 +1151,11 @@ export async function getSubDetails() {
   return subscriptionDetails;
 }
 
-
 export async function getUserMessageCount(providedUser?: any) {
   'use server';
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return { count: 0, error: 'User not found' };
     }
@@ -1217,7 +1209,7 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
   'use server';
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return { count: 0, error: 'User not found' };
     }
@@ -1260,7 +1252,7 @@ export async function getHistoricalUsage(providedUser?: any) {
   'use server';
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return [];
     }
@@ -1315,7 +1307,7 @@ export async function getCustomInstructions(providedUser?: any) {
   'use server';
 
   try {
-    const user = providedUser || await getUser();
+    const user = providedUser || (await getUser());
     if (!user) {
       return null;
     }
@@ -1395,5 +1387,3 @@ export async function getProUserStatusOnly(): Promise<boolean> {
     return false;
   }
 }
-
-

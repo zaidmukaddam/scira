@@ -25,4 +25,4 @@ export const textTranslateTool = tool({
       detectedLanguage: translation.detectedLanguage,
     };
   },
-}); 
+});

@@ -13,9 +13,7 @@ export const codeInterpreterTool = tool({
       .describe(
         'The Python code to execute. put the variables in the end of the code to print them. do not use the print function.',
       ),
-    icon: z
-      .enum(['stock', 'date', 'calculation', 'default'])
-      .describe('The icon to display for the code snippet.'),
+    icon: z.enum(['stock', 'date', 'calculation', 'default']).describe('The icon to display for the code snippet.'),
   }),
   execute: async ({ code, title, icon }: { code: string; title: string; icon: string }) => {
     console.log('Code:', code);
@@ -27,11 +25,9 @@ export const codeInterpreterTool = tool({
       target: 'us',
     });
 
-    const sandbox = await daytona.create(
-      {
-        snapshot: SNAPSHOT_NAME,
-      },
-    );
+    const sandbox = await daytona.create({
+      snapshot: SNAPSHOT_NAME,
+    });
 
     const execution = await sandbox.process.codeRun(code);
 
@@ -62,11 +58,11 @@ export const codeInterpreterTool = tool({
 
     const chartData = chart
       ? {
-        type: chart.type,
-        title: chart.title,
-        elements: chart.elements,
-        png: undefined,
-      }
+          type: chart.type,
+          title: chart.title,
+          elements: chart.elements,
+          png: undefined,
+        }
       : undefined;
 
     await sandbox.delete();
@@ -76,4 +72,4 @@ export const codeInterpreterTool = tool({
       chart: chartData,
     };
   },
-}); 
+});

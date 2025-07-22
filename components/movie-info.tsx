@@ -138,7 +138,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
             {media.genres.map((genre) => (
               <span
                 key={genre.id}
-                className="px-3 py-1 text-sm rounded-full border border-neutral-800 
+                className="px-3 py-1 text-sm rounded-full border border-neutral-800
                                          bg-neutral-900/50 text-neutral-200
                                          hover:bg-neutral-800 transition-colors"
               >
@@ -162,7 +162,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                   <div
                     key={person.id}
                     className="group relative bg-neutral-900 rounded-lg overflow-hidden
-                                                 border border-neutral-800 hover:border-neutral-700 
+                                                 border border-neutral-800 hover:border-neutral-700
                                                  transition-all duration-300"
                   >
                     <div className="aspect-2/3 relative overflow-hidden">

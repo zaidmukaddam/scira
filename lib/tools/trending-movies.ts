@@ -21,9 +21,7 @@ export const trendingMoviesTool = tool({
       const results = data.results.map((movie: any) => ({
         ...movie,
         poster_path: movie.poster_path ? `https://image.tmdb.org/t/p/original${movie.poster_path}` : null,
-        backdrop_path: movie.backdrop_path
-          ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-          : null,
+        backdrop_path: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : null,
       }));
 
       return { results };
@@ -32,4 +30,4 @@ export const trendingMoviesTool = tool({
       throw error;
     }
   },
-}); 
+});

@@ -68,9 +68,9 @@ export function useProUserStatus() {
 // Fast hook for components that only need pro status (navbar, settings)
 export function useFastProStatus() {
   const { data: isProUser, isLoading } = useProStatusOnly();
-  
+
   return {
     isProUser: Boolean(isProUser),
     isLoading,
   };
-} 
+}

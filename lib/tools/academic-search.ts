@@ -44,4 +44,4 @@ export const academicSearchTool = tool({
       throw error;
     }
   },
-}); 
+});

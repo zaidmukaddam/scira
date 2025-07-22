@@ -32,7 +32,9 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           />
         </div>
 
-        <h1 className="text-4xl mb-4 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro">Something went wrong</h1>
+        <h1 className="text-4xl mb-4 text-neutral-800 dark:text-neutral-100 font-be-vietnam-pro">
+          Something went wrong
+        </h1>
         <p className="text-lg mb-8 text-neutral-600 dark:text-neutral-300">
           An error occurred while trying to load this page. Please try again later.
         </p>

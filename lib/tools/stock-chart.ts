@@ -61,8 +61,8 @@ export const stockChartTool = tool({
       .array(z.string())
       .describe(
         'The currency symbols for each stock/asset in the chart. Available symbols: ' +
-        Object.keys(CURRENCY_SYMBOLS).join(', ') +
-        '. Defaults to USD if not provided.',
+          Object.keys(CURRENCY_SYMBOLS).join(', ') +
+          '. Defaults to USD if not provided.',
       ),
     interval: z
       .enum(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'])
@@ -221,8 +221,9 @@ export const stockChartTool = tool({
             try {
               const { object } = await generateObject({
                 model: scira.languageModel('scira-nano'),
-                prompt: `Complete the following financial report with an appropriate title. The report is about ${group.query
-                  } and contains this content: ${result.content.substring(0, 500)}...`,
+                prompt: `Complete the following financial report with an appropriate title. The report is about ${
+                  group.query
+                } and contains this content: ${result.content.substring(0, 500)}...`,
                 schema: z.object({
                   title: z.string().describe('A descriptive title for the financial report'),
                 }),
@@ -248,26 +249,27 @@ import pandas as pd
 from datetime import datetime
 
 ${stock_symbols
-        .map(
-          (symbol) =>
-            `${symbol.toLowerCase().replace('.', '')} = yf.download('${symbol}', period='${interval}', interval='1d')`,
-        )
-        .join('\n')}
+  .map(
+    (symbol) =>
+      `${symbol.toLowerCase().replace('.', '')} = yf.download('${symbol}', period='${interval}', interval='1d')`,
+  )
+  .join('\n')}
 
 # Create the plot
 plt.figure(figsize=(10, 6))
 ${stock_symbols
-        .map(
-          (symbol) => `
+  .map(
+    (symbol) => `
 # Convert datetime64 index to strings to make it serializable
 ${symbol.toLowerCase().replace('.', '')}.index = ${symbol.toLowerCase().replace('.', '')}.index.strftime('%Y-%m-%d')
 plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol
-              .toLowerCase()
-              .replace('.', '')}['Close'], label='${symbol} ${formattedCurrencySymbols[stock_symbols.indexOf(symbol)]
-            }', color='blue')
+      .toLowerCase()
+      .replace('.', '')}['Close'], label='${symbol} ${
+      formattedCurrencySymbols[stock_symbols.indexOf(symbol)]
+    }', color='blue')
 `,
-        )
-        .join('\n')}
+  )
+  .join('\n')}
 
 # Customize the chart
 plt.title('${title}')
@@ -284,11 +286,9 @@ plt.show()`;
       target: 'us',
     });
 
-    const sandbox = await daytona.create(
-      {
-        snapshot: SNAPSHOT_NAME,
-      }
-    );
+    const sandbox = await daytona.create({
+      snapshot: SNAPSHOT_NAME,
+    });
 
     const execution = await sandbox.process.codeRun(code);
     let message = '';
@@ -323,11 +323,11 @@ plt.show()`;
     const chart = execution.artifacts?.charts?.[0] ?? undefined;
     const chartData = chart
       ? {
-        type: chart.type,
-        title: chart.title,
-        elements: chart.elements,
-        png: undefined,
-      }
+          type: chart.type,
+          title: chart.title,
+          elements: chart.elements,
+          png: undefined,
+        }
       : undefined;
 
     return {
@@ -337,4 +337,4 @@ plt.show()`;
       news_results: news_results,
     };
   },
-}); 
+});

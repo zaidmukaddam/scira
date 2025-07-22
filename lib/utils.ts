@@ -1,14 +1,31 @@
 // /lib/utils.ts
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { Globe, Book, TelescopeIcon, DollarSign } from 'lucide-react'
-import { ChatsCircleIcon, CodeIcon, MemoryIcon, RedditLogoIcon, YoutubeLogoIcon, XLogoIcon } from '@phosphor-icons/react'
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { Globe, Book, TelescopeIcon, DollarSign } from 'lucide-react';
+import {
+  ChatsCircleIcon,
+  CodeIcon,
+  MemoryIcon,
+  RedditLogoIcon,
+  YoutubeLogoIcon,
+  XLogoIcon,
+} from '@phosphor-icons/react';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-export type SearchGroupId = 'web' | 'x' | 'academic' | 'youtube' | 'reddit' | 'analysis' | 'chat' | 'extreme' | 'memory' | 'crypto';
+export type SearchGroupId =
+  | 'web'
+  | 'x'
+  | 'academic'
+  | 'youtube'
+  | 'reddit'
+  | 'analysis'
+  | 'chat'
+  | 'extreme'
+  | 'memory'
+  | 'crypto';
 
 export const searchGroups = [
   {
@@ -84,7 +101,7 @@ export const searchGroups = [
   },
 ] as const;
 
-export type SearchGroup = typeof searchGroups[number];
+export type SearchGroup = (typeof searchGroups)[number];
 
 export function invalidateChatsCache() {
   if (typeof window !== 'undefined') {

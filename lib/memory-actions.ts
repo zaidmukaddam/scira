@@ -40,14 +40,19 @@ export async function addMemory(content: string) {
   }
 
   try {
-    const response = await memoryClient.add([{
-      role: "user",
-      content: content
-    }], {
-      user_id: user.id,
-      org_id: serverEnv.MEM0_ORG_ID,
-      project_id: serverEnv.MEM0_PROJECT_ID,
-    });
+    const response = await memoryClient.add(
+      [
+        {
+          role: 'user',
+          content: content,
+        },
+      ],
+      {
+        user_id: user.id,
+        org_id: serverEnv.MEM0_ORG_ID,
+        project_id: serverEnv.MEM0_PROJECT_ID,
+      },
+    );
     return response;
   } catch (error) {
     console.error('Error adding memory:', error);
@@ -80,7 +85,7 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       api_version: 'v2',
     });
 
-    console.log("[searchMemories] result", result);
+    console.log('[searchMemories] result', result);
 
     if (!result || !result[0]) {
       return { memories: [], total: 0 };
@@ -103,7 +108,7 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       }));
       return {
         memories,
-        total: memories.length
+        total: memories.length,
       };
     } else if (result && typeof result === 'object' && 'memories' in result) {
       const rawMemories = (result as any).memories || [];
@@ -122,7 +127,7 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       }));
       return {
         memories,
-        total: (result as any).total || memories.length
+        total: (result as any).total || memories.length,
       };
     }
     return { memories: [], total: 0 };
@@ -150,7 +155,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
       project_id: serverEnv.MEM0_PROJECT_ID,
     });
 
-    console.log("[getAllMemories] data", data);
+    console.log('[getAllMemories] data', data);
 
     // Process the result to ensure we return a consistent structure
     if (Array.isArray(data)) {
@@ -169,7 +174,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
       }));
       return {
         memories,
-        total: memories.length
+        total: memories.length,
       };
     } else if (data && typeof data === 'object' && 'memories' in data) {
       const rawMemories = (data as any).memories || [];
@@ -188,7 +193,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
       }));
       return {
         memories,
-        total: (data as any).total || memories.length
+        total: (data as any).total || memories.length,
       };
     }
     return { memories: [], total: 0 };
@@ -215,4 +220,4 @@ export async function deleteMemory(memoryId: string) {
     console.error('Error deleting memory:', error);
     throw error;
   }
-} 
+}

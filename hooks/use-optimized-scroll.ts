@@ -9,14 +9,9 @@ interface UseOptimizedScrollOptions {
 
 export function useOptimizedScroll(
   targetRef: React.RefObject<HTMLElement | null>,
-  options: UseOptimizedScrollOptions = {}
+  options: UseOptimizedScrollOptions = {},
 ) {
-  const {
-    enabled = true,
-    threshold = 100,
-    behavior = 'smooth',
-    debounceMs = 100
-  } = options;
+  const { enabled = true, threshold = 100, behavior = 'smooth', debounceMs = 100 } = options;
 
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [hasManuallyScrolled, setHasManuallyScrolled] = useState(false);
@@ -34,10 +29,10 @@ export function useOptimizedScroll(
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const scrollHeight = document.documentElement.scrollHeight;
         const clientHeight = window.innerHeight;
-        
+
         const atBottom = scrollHeight - (scrollTop + clientHeight) < threshold;
         setIsAtBottom(atBottom);
-        
+
         if (!atBottom) {
           setHasManuallyScrolled(true);
         }
@@ -46,21 +41,27 @@ export function useOptimizedScroll(
   }, [threshold, debounceMs]);
 
   // Auto scroll to element
-  const scrollToElement = useCallback((instant = false) => {
-    if (!enabled || !targetRef.current) return;
+  const scrollToElement = useCallback(
+    (instant = false) => {
+      if (!enabled || !targetRef.current) return;
 
-    isAutoScrollingRef.current = true;
-    
-    targetRef.current.scrollIntoView({
-      behavior: instant ? 'instant' : behavior,
-      block: 'end'
-    });
+      isAutoScrollingRef.current = true;
 
-    // Reset auto-scrolling flag after animation
-    setTimeout(() => {
-      isAutoScrollingRef.current = false;
-    }, instant ? 0 : 500);
-  }, [enabled, targetRef, behavior]);
+      targetRef.current.scrollIntoView({
+        behavior: instant ? 'instant' : behavior,
+        block: 'end',
+      });
+
+      // Reset auto-scrolling flag after animation
+      setTimeout(
+        () => {
+          isAutoScrollingRef.current = false;
+        },
+        instant ? 0 : 500,
+      );
+    },
+    [enabled, targetRef, behavior],
+  );
 
   // Reset manual scroll state
   const resetManualScroll = useCallback(() => {
@@ -72,7 +73,7 @@ export function useOptimizedScroll(
     if (!enabled) return;
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     // Initial check
     handleScroll();
 
@@ -88,6 +89,6 @@ export function useOptimizedScroll(
     isAtBottom,
     hasManuallyScrolled,
     scrollToElement,
-    resetManualScroll
+    resetManualScroll,
   };
-} 
+}

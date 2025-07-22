@@ -3,8 +3,7 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const weatherTool = tool({
-  description:
-    'Get the weather data for a location using either location name or coordinates with OpenWeather API.',
+  description: 'Get the weather data for a location using either location name or coordinates with OpenWeather API.',
   parameters: z.object({
     location: z
       .string()
@@ -12,14 +11,8 @@ export const weatherTool = tool({
       .describe(
         'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Required if latitude and longitude are not provided.',
       ),
-    latitude: z
-      .number()
-      .nullable()
-      .describe('The latitude coordinate. Required if location is not provided.'),
-    longitude: z
-      .number()
-      .nullable()
-      .describe('The longitude coordinate. Required if location is not provided.'),
+    latitude: z.number().nullable().describe('The latitude coordinate. Required if location is not provided.'),
+    longitude: z.number().nullable().describe('The longitude coordinate. Required if location is not provided.'),
   }),
   execute: async ({
     location,
@@ -93,9 +86,7 @@ export const weatherTool = tool({
       const [weatherResponse, airPollutionResponse, dailyForecastResponse] = await Promise.all([
         fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}`),
         fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${apiKey}`),
-        fetch(
-          `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lng}&cnt=16&appid=${apiKey}`,
-        ),
+        fetch(`https://api.openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lng}&cnt=16&appid=${apiKey}`),
       ]);
 
       const [weatherData, airPollutionData, dailyForecastData] = await Promise.all([
@@ -130,4 +121,4 @@ export const weatherTool = tool({
       throw error;
     }
   },
-}); 
+});

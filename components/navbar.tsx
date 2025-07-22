@@ -471,7 +471,7 @@ const Navbar = memo(
             )}
 
             {/* Chat History Button */}
-            <ChatHistoryButton onClick={onHistoryClick} />
+            <ChatHistoryButton onClickAction={onHistoryClick} />
 
             {/* Memoized UserProfile component */}
             <UserProfile

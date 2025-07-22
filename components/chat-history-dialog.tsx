@@ -703,8 +703,8 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           isDeleting
             ? `Delete ${displayTitle}? Press Enter to confirm, Escape to cancel`
             : isEditing
-            ? `Editing title: ${displayTitle}`
-            : `Open chat: ${displayTitle}`
+              ? `Editing title: ${displayTitle}`
+              : `Open chat: ${displayTitle}`
         }
       >
         <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
@@ -1102,11 +1102,17 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 }
 
 // Navigation Button component for navbar
-export function ChatHistoryButton({ onClick }: { onClick: () => void }) {
+export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={onClick} className="size-8 p-0! m-0!" aria-label="Chat History">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClickAction}
+          className="size-8 p-0! m-0!"
+          aria-label="Chat History"
+        >
           <ListMagnifyingGlass className="size-6" weight="light" />
           <span className="sr-only">Chat History</span>
         </Button>

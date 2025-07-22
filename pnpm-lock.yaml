@@ -61,10 +61,10 @@ importers:
         version: 2.1.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@polar-sh/better-auth':
         specifier: ^1.0.7
-        version: 1.0.7(@polar-sh/sdk@0.34.5(zod@3.25.73))(better-auth@1.2.12)
+        version: 1.0.7(@polar-sh/sdk@0.34.6(zod@3.25.73))(better-auth@1.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@polar-sh/sdk':
-        specifier: ^0.34.5
-        version: 0.34.5(zod@3.25.73)
+        specifier: ^0.34.6
+        version: 0.34.6(zod@3.25.73)
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -135,11 +135,11 @@ importers:
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.1.11)
       '@tanstack/react-query':
-        specifier: ^5.81.5
-        version: 5.81.5(react@19.1.0)
+        specifier: ^5.83.0
+        version: 5.83.0(react@19.1.0)
       '@tavily/core':
-        specifier: ^0.5.9
-        version: 0.5.9
+        specifier: ^0.5.10
+        version: 0.5.10
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.4.2(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -162,8 +162,8 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       better-auth:
-        specifier: ^1.2.12
-        version: 1.2.12
+        specifier: ^1.3.2
+        version: 1.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       canvas-confetti:
         specifier: ^1.9.3
         version: 1.9.3
@@ -201,8 +201,8 @@ importers:
         specifier: ^8.6.0
         version: 8.6.0(react@19.1.0)
       exa-js:
-        specifier: ^1.8.22
-        version: 1.8.22(encoding@0.1.13)(ws@8.18.1)
+        specifier: ^1.8.23
+        version: 1.8.23(encoding@0.1.13)(ws@8.18.1)
       framer-motion:
         specifier: ^12.23.6
         version: 12.23.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -222,8 +222,8 @@ importers:
         specifier: ^0.525.0
         version: 0.525.0(react@19.1.0)
       luxon:
-        specifier: ^3.6.1
-        version: 3.6.1
+        specifier: ^3.7.1
+        version: 3.7.1
       mapbox-gl:
         specifier: ^3.13.0
         version: 3.13.0
@@ -249,8 +249,8 @@ importers:
         specifier: ^3.4.7
         version: 3.4.7
       posthog-js:
-        specifier: ^1.257.0
-        version: 1.257.0
+        specifier: ^1.257.1
+        version: 1.257.1
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
@@ -1380,8 +1380,8 @@ packages:
       '@polar-sh/sdk': ^0.34.5
       better-auth: ^1.2.7
 
-  '@polar-sh/sdk@0.34.5':
-    resolution: {integrity: sha512-9dDw5QSsl9NT/GB77cibRLjAT+qNkdavxCL7YOjBTuwThJb7qrzhV2EzAQ+uM8UvY3ZGptu2tGCODnRLRRvVCQ==}
+  '@polar-sh/sdk@0.34.6':
+    resolution: {integrity: sha512-L9skM7yJNHWOxoypYnFmaM4E7iGDew4sow7yk70E7M3zvt6HXYzdOA658s9qHN/44TligzNxJJDVLM9kzyeqZg==}
     hasBin: true
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
@@ -2408,16 +2408,16 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
 
-  '@tanstack/query-core@5.81.5':
-    resolution: {integrity: sha512-ZJOgCy/z2qpZXWaj/oxvodDx07XcQa9BF92c0oINjHkoqUPsmm3uG08HpTaviviZ/N9eP1f9CM7mKSEkIo7O1Q==}
+  '@tanstack/query-core@5.83.0':
+    resolution: {integrity: sha512-0M8dA+amXUkyz5cVUm/B+zSk3xkQAcuXuz5/Q/LveT4ots2rBpPTZOzd7yJa2Utsf8D2Upl5KyjhHRY+9lB/XA==}
 
-  '@tanstack/react-query@5.81.5':
-    resolution: {integrity: sha512-lOf2KqRRiYWpQT86eeeftAGnjuTR35myTP8MXyvHa81VlomoAWNEd8x5vkcAfQefu0qtYCvyqLropFZqgI2EQw==}
+  '@tanstack/react-query@5.83.0':
+    resolution: {integrity: sha512-/XGYhZ3foc5H0VM2jLSD/NyBRIOK4q9kfeml4+0x2DlL6xVuAcVEW+hTlTapAmejObg0i3eNqhkr2dT+eciwoQ==}
     peerDependencies:
       react: ^18 || ^19
 
-  '@tavily/core@0.5.9':
-    resolution: {integrity: sha512-NkKurKU/xBnjmvp5he6tQLk/6reaeoHXYPVWghGk0mRtkr3ttaPqUu+aIe2Ssa5rozPz9HpNUlRM3/xleCarRw==}
+  '@tavily/core@0.5.10':
+    resolution: {integrity: sha512-HgF0FYrE/vZmh22b/IfOtZj/+EbqNC9BTTnyv2xKy4/IL8x+c1mZVXBa/iv9fy4bJozM25ELsGZPiHCXb/2gzw==}
 
   '@tootallnate/once@1.1.2':
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
@@ -2977,11 +2977,19 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  better-auth@1.2.12:
-    resolution: {integrity: sha512-YicCyjQ+lxb7YnnaCewrVOjj3nPVa0xcfrOJK7k5MLMX9Mt9UnJ8GYaVQNHOHLyVxl92qc3C758X1ihqAUzm4w==}
+  better-auth@1.3.2:
+    resolution: {integrity: sha512-510kOtFBTdp4z51hWtTEqk9yqSinXzyg7PkDFnXYMq1K0KvdXRY1A9t9J998i0CSf/tJA0wNoN3S8exkOgBvTw==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
-  better-call@1.0.9:
-    resolution: {integrity: sha512-Qfm0gjk0XQz0oI7qvTK1hbqTsBY4xV2hsHAxF8LZfUYl3RaECCIifXuVqtPpZJWvlCCMlQSvkvhhyuApGUba6g==}
+  better-call@1.0.12:
+    resolution: {integrity: sha512-ssq5OfB9Ungv2M1WVrRnMBomB0qz1VKuhkY2WxjHaLtlsHoSe9EPolj1xf7xf8LY9o3vfk3Rx6rCWI4oVHeBRg==}
 
   bignumber.js@9.1.2:
     resolution: {integrity: sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==}
@@ -3713,8 +3721,8 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
-  exa-js@1.8.22:
-    resolution: {integrity: sha512-XF2fkEFHWI75kZ0AH9cF3TpwzeZhEOJ4sO2kK3QnhfqTcFErPzUbMjNR0oe+pzEg1+qmIJ08xMrMvJNBTqnUuA==}
+  exa-js@1.8.23:
+    resolution: {integrity: sha512-46l66SJM5HuaRTc9Nf9Rz4FCaq3xBjrecgDEjq6P05B7qZXpEBjSuW24ra5ppBaauzgzGiS0FdeVMFCEvulpPQ==}
 
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
@@ -4307,8 +4315,8 @@ packages:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
 
-  jose@6.0.11:
-    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   js-tiktoken@1.0.19:
     resolution: {integrity: sha512-XC63YQeEcS47Y53gg950xiZ4IWmkfMe4p2V9OSaBt26q+p47WHn18izuXzSclCI73B7yGqtfRsT6jcZQI0y08g==}
@@ -4489,8 +4497,8 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  luxon@3.6.1:
-    resolution: {integrity: sha512-tJLxrKJhO2ukZ5z0gyjY1zPh3Rh88Ej9P7jNrZiHMUXHae1yvI2imgOZtL1TO8TW6biMMKfTtAOoEJANgtWBMQ==}
+  luxon@3.7.1:
+    resolution: {integrity: sha512-RkRWjA926cTvz5rAb1BqyWkKbbjzCGchDUIKMCUvNi17j6f6j8uHGDV82Aqcqtzd+icoYpELmG3ksgGiFNNcNg==}
     engines: {node: '>=12'}
 
   magic-string@0.30.17:
@@ -5164,8 +5172,8 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
-  posthog-js@1.257.0:
-    resolution: {integrity: sha512-Ujg9RGtWVCu+4tmlRpALSy2ZOZI6JtieSYXIDDdgMWm167KYKvTtbMPHdoBaPWcNu0Km+1hAIBnQFygyn30KhA==}
+  posthog-js@1.257.1:
+    resolution: {integrity: sha512-29kk3IO/LkPQ8E1cds6a2sWr5iN4BovgL+EMzRK9hQXbI6D3FJnQ7zLU6EUpktt6pHnqGpfO3BTEcflcDYkHBg==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -6041,6 +6049,9 @@ packages:
 
   zod@3.25.73:
     resolution: {integrity: sha512-fuIKbQAWQl22Ba5d1quwEETQYjqnpKVyZIWAhbnnHgnDd3a+z4YgEfkI5SZ2xMELnLAXo/Flk2uXgysZNf0uaA==}
+
+  zod@4.0.5:
+    resolution: {integrity: sha512-/5UuuRPStvHXu7RS+gmvRf4NXrNxpSllGwDnCBcJZtQsKrviYXm54yDGV2KYNLT5kq0lHGcl7lqWJLgSaG+tgA==}
 
   zrender@5.6.1:
     resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
@@ -7222,13 +7233,13 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  '@polar-sh/better-auth@1.0.7(@polar-sh/sdk@0.34.5(zod@3.25.73))(better-auth@1.2.12)':
+  '@polar-sh/better-auth@1.0.7(@polar-sh/sdk@0.34.6(zod@3.25.73))(better-auth@1.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
-      '@polar-sh/sdk': 0.34.5(zod@3.25.73)
-      better-auth: 1.2.12
+      '@polar-sh/sdk': 0.34.6(zod@3.25.73)
+      better-auth: 1.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod: 3.25.73
 
-  '@polar-sh/sdk@0.34.5(zod@3.25.73)':
+  '@polar-sh/sdk@0.34.6(zod@3.25.73)':
     dependencies:
       standardwebhooks: 1.0.0
       zod: 3.25.73
@@ -8377,14 +8388,14 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.1.11
 
-  '@tanstack/query-core@5.81.5': {}
+  '@tanstack/query-core@5.83.0': {}
 
-  '@tanstack/react-query@5.81.5(react@19.1.0)':
+  '@tanstack/react-query@5.83.0(react@19.1.0)':
     dependencies:
-      '@tanstack/query-core': 5.81.5
+      '@tanstack/query-core': 5.83.0
       react: 19.1.0
 
-  '@tavily/core@0.5.9':
+  '@tavily/core@0.5.10':
     dependencies:
       axios: 1.10.0
       https-proxy-agent: 7.0.6
@@ -8960,7 +8971,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  better-auth@1.2.12:
+  better-auth@1.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@better-auth/utils': 0.2.5
       '@better-fetch/fetch': 1.1.18
@@ -8968,14 +8979,17 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@simplewebauthn/browser': 13.1.0
       '@simplewebauthn/server': 13.1.1
-      better-call: 1.0.9
+      better-call: 1.0.12
       defu: 6.1.4
-      jose: 6.0.11
+      jose: 5.10.0
       kysely: 0.28.2
       nanostores: 0.11.4
-      zod: 3.25.73
+      zod: 4.0.5
+    optionalDependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
-  better-call@1.0.9:
+  better-call@1.0.12:
     dependencies:
       '@better-fetch/fetch': 1.1.18
       rou3: 0.5.1
@@ -9810,7 +9824,7 @@ snapshots:
 
   events@3.3.0: {}
 
-  exa-js@1.8.22(encoding@0.1.13)(ws@8.18.1):
+  exa-js@1.8.23(encoding@0.1.13)(ws@8.18.1):
     dependencies:
       cross-fetch: 4.1.0(encoding@0.1.13)
       dotenv: 16.4.7
@@ -10520,7 +10534,7 @@ snapshots:
 
   jiti@2.4.2: {}
 
-  jose@6.0.11: {}
+  jose@5.10.0: {}
 
   js-tiktoken@1.0.19:
     dependencies:
@@ -10687,7 +10701,7 @@ snapshots:
     dependencies:
       react: 19.1.0
 
-  luxon@3.6.1: {}
+  luxon@3.7.1: {}
 
   magic-string@0.30.17:
     dependencies:
@@ -11634,7 +11648,7 @@ snapshots:
 
   postgres@3.4.7: {}
 
-  posthog-js@1.257.0:
+  posthog-js@1.257.1:
     dependencies:
       core-js: 3.41.0
       fflate: 0.4.8
@@ -12717,6 +12731,8 @@ snapshots:
       zod: 3.25.73
 
   zod@3.25.73: {}
+
+  zod@4.0.5: {}
 
   zrender@5.6.1:
     dependencies:

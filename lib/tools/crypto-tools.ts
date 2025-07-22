@@ -43,7 +43,7 @@ export const coinDataTool = tool({
 
       const response = await fetch(url, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
         },
       });
@@ -116,7 +116,7 @@ export const coinDataByContractTool = tool({
 
       const response = await fetch(url, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
         },
       });
@@ -171,16 +171,19 @@ export const coinOhlcTool = tool({
       const [ohlcResponse, coinDataResponse] = await Promise.all([
         fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`, {
           headers: {
-            'Accept': 'application/json',
+            Accept: 'application/json',
             'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
           },
         }),
-        fetch(`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false`, {
-          headers: {
-            'Accept': 'application/json',
-            'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+        fetch(
+          `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+            },
           },
-        })
+        ),
       ]);
 
       if (!ohlcResponse.ok) {
@@ -191,19 +194,18 @@ export const coinOhlcTool = tool({
         throw new Error(`CoinGecko Coin Data API error: ${coinDataResponse.status} ${coinDataResponse.statusText}`);
       }
 
-      const [ohlcData, coinData] = await Promise.all([
-        ohlcResponse.json(),
-        coinDataResponse.json()
-      ]);
+      const [ohlcData, coinData] = await Promise.all([ohlcResponse.json(), coinDataResponse.json()]);
 
-      const formattedOhlcData = ohlcData.map(([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
-        timestamp,
-        date: new Date(timestamp).toISOString(),
-        open: open,
-        high: high,
-        low: low,
-        close: close,
-      }));
+      const formattedOhlcData = ohlcData.map(
+        ([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
+          timestamp,
+          date: new Date(timestamp).toISOString(),
+          open: open,
+          high: high,
+          low: low,
+          close: close,
+        }),
+      );
 
       return {
         success: true,
@@ -231,4 +233,4 @@ export const coinOhlcTool = tool({
       };
     }
   },
-}); 
+});

@@ -56,9 +56,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                Unable to track flight
-              </p>
+              <p className="text-sm font-medium text-red-900 dark:text-red-100">Unable to track flight</p>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">{data.error}</p>
             </div>
           </div>
@@ -94,7 +92,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
       case 'landed':
         return { label: 'Landed', variant: 'default' as const };
       case 'active':
-        return flight.departure.delay 
+        return flight.departure.delay
           ? { label: 'Delayed', variant: 'destructive' as const }
           : { label: 'In Flight', variant: 'default' as const };
       case 'scheduled':
@@ -140,7 +138,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
     },
     duration: calculateDuration(flight.departure.scheduled, flight.arrival.scheduled),
     aircraftType: flight.amadeus_data?.aircraft_type,
-    operatedBy: flight.amadeus_data?.operating_flight 
+    operatedBy: flight.amadeus_data?.operating_flight
       ? `${flight.amadeus_data.operating_flight.carrierCode}${flight.amadeus_data.operating_flight.flightNumber}`
       : null,
   };
@@ -148,7 +146,6 @@ export function FlightTracker({ data }: FlightTrackerProps) {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-950">
-        
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center justify-between">
@@ -156,20 +153,15 @@ export function FlightTracker({ data }: FlightTrackerProps) {
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
                 {flightInfo.flightNumber}
               </h2>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                {flightInfo.airline}
-              </p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{flightInfo.airline}</p>
             </div>
-            <Badge variant={flightInfo.status.variant}>
-              {flightInfo.status.label}
-            </Badge>
+            <Badge variant={flightInfo.status.variant}>{flightInfo.status.label}</Badge>
           </div>
         </div>
 
         {/* Flight Route */}
         <div className="p-6">
           <div className="flex items-center justify-between">
-            
             {/* Departure */}
             <div className="flex-1">
               <div className="text-2xl font-mono font-bold text-neutral-900 dark:text-neutral-100 mb-2">
@@ -179,9 +171,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
                 <p className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
                   {flightInfo.departure.time}
                 </p>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {flightInfo.departure.date}
-                </p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">{flightInfo.departure.date}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-32 sm:max-w-none truncate">
                   {flightInfo.departure.airport}
                 </p>
@@ -203,9 +193,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
                   </div>
                 )}
                 {flightInfo.aircraftType && (
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {flightInfo.aircraftType}
-                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400">{flightInfo.aircraftType}</div>
                 )}
               </div>
             </div>
@@ -216,39 +204,29 @@ export function FlightTracker({ data }: FlightTrackerProps) {
                 {flightInfo.arrival.code}
               </div>
               <div className="space-y-1">
-                <p className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
-                  {flightInfo.arrival.time}
-                </p>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {flightInfo.arrival.date}
-                </p>
+                <p className="text-lg font-medium text-neutral-900 dark:text-neutral-100">{flightInfo.arrival.time}</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">{flightInfo.arrival.date}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-32 sm:max-w-none truncate ml-auto">
                   {flightInfo.arrival.airport}
                 </p>
               </div>
             </div>
-
           </div>
 
           {/* Terminal/Gate Info */}
-          {(flightInfo.departure.terminal || flightInfo.departure.gate || flightInfo.arrival.terminal || flightInfo.arrival.gate) && (
+          {(flightInfo.departure.terminal ||
+            flightInfo.departure.gate ||
+            flightInfo.arrival.terminal ||
+            flightInfo.arrival.gate) && (
             <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-800">
               <div className="flex justify-between text-xs text-neutral-500 dark:text-neutral-400">
                 <div className="flex gap-3">
-                  {flightInfo.departure.terminal && (
-                    <span>Terminal {flightInfo.departure.terminal}</span>
-                  )}
-                  {flightInfo.departure.gate && (
-                    <span>Gate {flightInfo.departure.gate}</span>
-                  )}
+                  {flightInfo.departure.terminal && <span>Terminal {flightInfo.departure.terminal}</span>}
+                  {flightInfo.departure.gate && <span>Gate {flightInfo.departure.gate}</span>}
                 </div>
                 <div className="flex gap-3">
-                  {flightInfo.arrival.terminal && (
-                    <span>Terminal {flightInfo.arrival.terminal}</span>
-                  )}
-                  {flightInfo.arrival.gate && (
-                    <span>Gate {flightInfo.arrival.gate}</span>
-                  )}
+                  {flightInfo.arrival.terminal && <span>Terminal {flightInfo.arrival.terminal}</span>}
+                  {flightInfo.arrival.gate && <span>Gate {flightInfo.arrival.gate}</span>}
                 </div>
               </div>
             </div>
@@ -258,12 +236,9 @@ export function FlightTracker({ data }: FlightTrackerProps) {
         {/* Additional Info */}
         {flightInfo.operatedBy && (
           <div className="px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-b-lg">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Operated by {flightInfo.operatedBy}
-            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Operated by {flightInfo.operatedBy}</p>
           </div>
         )}
-
       </div>
     </div>
   );

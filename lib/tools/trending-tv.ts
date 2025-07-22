@@ -30,4 +30,4 @@ export const trendingTvTool = tool({
       throw error;
     }
   },
-}); 
+});

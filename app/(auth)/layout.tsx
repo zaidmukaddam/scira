@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="hidden lg:block lg:w-1/2 h-full bg-black">
         <Image
           src="/placeholder.png"
-          alt="Goku"
+          alt="Placeholder"
           width={1000}
           height={1000}
           className="object-cover h-full w-full dark:grayscale"

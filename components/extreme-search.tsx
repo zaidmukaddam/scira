@@ -84,7 +84,7 @@ const CHART_COLORS = {
 
 // Update the ExtremeChart component to be more standalone without the card wrapper
 const ExtremeChart = memo(({ chart }: { chart: any }) => {
-  const { resolvedTheme} = useTheme();
+  const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const [isMobile, setIsMobile] = useState(false);
 
@@ -95,8 +95,6 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
     mobileMediaQuery.addEventListener('change', handler);
     return () => mobileMediaQuery.removeEventListener('change', handler);
   }, []);
-
-
 
   // Memoize chartOptions
   const chartOptions = useMemo(() => {
@@ -156,10 +154,10 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           const tooltipHeight = dom.offsetHeight;
           const chartWidth = size.viewSize[0];
           const chartHeight = size.viewSize[1];
-          
+
           let x = pos[0];
           let y = pos[1];
-          
+
           // Keep tooltip within chart bounds and away from edges
           if (x + tooltipWidth > chartWidth - 20) {
             x = chartWidth - tooltipWidth - 20;
@@ -167,7 +165,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           if (x < 20) {
             x = 20;
           }
-          
+
           // Keep tooltip above the bottom 60px to avoid axis labels
           if (y + tooltipHeight > chartHeight - 60) {
             y = pos[1] - tooltipHeight - 20;
@@ -175,7 +173,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           if (y < 20) {
             y = 20;
           }
-          
+
           return [x, y];
         },
       },
@@ -608,14 +606,14 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
 ExtremeChart.displayName = 'ExtremeChart';
 
 // Source Card Component for Extreme Search
-const ExtremeSourceCard: React.FC<{ 
-  source: any; 
+const ExtremeSourceCard: React.FC<{
+  source: any;
   content?: string;
-  onClick?: () => void 
+  onClick?: () => void;
 }> = ({ source, content, onClick }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   let hostname = '';
-  
+
   try {
     hostname = new URL(source.url).hostname.replace('www.', '');
   } catch {
@@ -709,9 +707,7 @@ const ExtremeSourcesSheet: React.FC<{
           <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
             <div>
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {sources.length} research sources
-              </p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{sources.length} research sources</p>
             </div>
           </div>
 
@@ -719,13 +715,7 @@ const ExtremeSourcesSheet: React.FC<{
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {sources.map((source, index) => (
-                <a
-                  key={index}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
+                <a key={index} href={source.url} target="_blank" rel="noopener noreferrer" className="block">
                   <ExtremeSourceCard source={source} />
                 </a>
               ))}
@@ -785,8 +775,8 @@ const ExtremeSearchComponent = ({
           const targetQuery = queryId
             ? acc.find((q) => q.queryId === queryId)
             : acc.length > 0
-            ? acc[acc.length - 1]
-            : null;
+              ? acc[acc.length - 1]
+              : null;
 
           if (targetQuery && !targetQuery.sources.find((s) => s.url === annotation.source.url)) {
             targetQuery.sources.push({
@@ -805,8 +795,8 @@ const ExtremeSearchComponent = ({
           const targetQuery = queryId
             ? acc.find((q) => q.queryId === queryId)
             : acc.length > 0
-            ? acc[acc.length - 1]
-            : null;
+              ? acc[acc.length - 1]
+              : null;
 
           if (targetQuery && !targetQuery.content.find((c) => c.url === annotation.content.url)) {
             targetQuery.content.push({
@@ -1068,8 +1058,8 @@ const ExtremeSearchComponent = ({
             item.status === 'loading'
               ? 'bg-[#4ade80] animate-[pulse_1s_ease-in-out_infinite]!'
               : item.status === 'success'
-              ? 'bg-neutral-500'
-              : 'bg-amber-500';
+                ? 'bg-neutral-500'
+                : 'bg-amber-500';
 
           // For search queries, check if we're reading content
           let isReadingContent = false;
@@ -1143,9 +1133,9 @@ const ExtremeSearchComponent = ({
                       ? 'calc(100% - 8px)'
                       : '100%'
                     : // If not the last item, extend to connect with next item
-                    itemIndex === timelineItems.length - 1
-                    ? '10px'
-                    : '20px',
+                      itemIndex === timelineItems.length - 1
+                      ? '10px'
+                      : '20px',
                   transform: 'translateX(-50%)',
                 }}
               />
@@ -1313,21 +1303,21 @@ const ExtremeSearchComponent = ({
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    
+
     // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-    
+
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-    
+
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-    
+
     // Check scroll position to determine if we should handle the event
     const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-    
+
     // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
       // In middle of scroll area - always handle
@@ -1349,9 +1339,11 @@ const ExtremeSearchComponent = ({
   const renderSources = (uniqueSources: Array<any>) => {
     // Get content for sources from timeline data
     const getSourceContent = (sourceUrl: string) => {
-      return timelineItems
-        .filter((item) => item.type === 'search' && item.searchData)
-        .flatMap((item) => item.searchData!.content.filter((c) => c.url === sourceUrl))[0]?.text || '';
+      return (
+        timelineItems
+          .filter((item) => item.type === 'search' && item.searchData)
+          .flatMap((item) => item.searchData!.content.filter((c) => c.url === sourceUrl))[0]?.text || ''
+      );
     };
 
     // Show first 5 sources in preview
@@ -1379,9 +1371,9 @@ const ExtremeSearchComponent = ({
                 {uniqueSources.length}
               </Badge>
               {uniqueSources.length > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 px-2 text-xs"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1413,10 +1405,7 @@ const ExtremeSearchComponent = ({
             >
               <CardContent className="p-3 space-y-3">
                 {uniqueSources.length > 0 ? (
-                  <div 
-                    className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
-                    onWheel={handleWheelScroll}
-                  >
+                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                     {previewSources.map((source, index) => (
                       <a
                         key={index}
@@ -1425,10 +1414,7 @@ const ExtremeSearchComponent = ({
                         rel="noopener noreferrer"
                         className="block flex-shrink-0 w-[320px]"
                       >
-                        <ExtremeSourceCard 
-                          source={source} 
-                          content={getSourceContent(source.url)}
-                        />
+                        <ExtremeSourceCard source={source} content={getSourceContent(source.url)} />
                       </a>
                     ))}
                   </div>
@@ -1562,11 +1548,7 @@ const ExtremeSearchComponent = ({
         {renderSources(uniqueSources)}
 
         {/* Sources Sheet */}
-        <ExtremeSourcesSheet 
-          sources={uniqueSources} 
-          open={sourcesSheetOpen} 
-          onOpenChange={setSourcesSheetOpen} 
-        />
+        <ExtremeSourcesSheet sources={uniqueSources} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
       </motion.div>
     );
   }

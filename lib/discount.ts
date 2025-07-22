@@ -64,4 +64,4 @@ export async function getDiscountConfig(): Promise<DiscountConfig> {
 export async function getDiscountConfigAction(): Promise<DiscountConfig> {
   'use server';
   return await getDiscountConfig();
-} 
+}

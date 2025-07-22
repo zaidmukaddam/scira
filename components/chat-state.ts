@@ -104,7 +104,7 @@ export const createInitialState = (
   initialVisibility: 'public' | 'private' = 'private',
   hasShownUpgradeDialog: boolean = false,
   hasShownSignInPrompt: boolean = false,
-  hasShownAnnouncementDialog: boolean = false
+  hasShownAnnouncementDialog: boolean = false,
 ): ChatState => ({
   hasSubmitted: false,
   hasManuallyScrolled: false,
@@ -119,4 +119,4 @@ export const createInitialState = (
   suggestedQuestions: [],
   attachments: [],
   selectedVisibilityType: initialVisibility,
-}); 
+});

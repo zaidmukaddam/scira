@@ -12,7 +12,6 @@ import {
   extremeSearchUsage,
   messageUsage,
   customInstructions,
-  type CustomInstructions,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db } from './index'; // Use unified database connection
