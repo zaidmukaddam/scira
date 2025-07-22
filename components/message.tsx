@@ -780,7 +780,7 @@ export const Message: React.FC<MessageProps> = ({
                   onClick={() => handleSuggestedQuestionClick(question)}
                   className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b border-border dark:border-border hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
                 >
-                  <span className="text-foreground dark:text-foreground font-light pr-3">{question}</span>
+                  <span className="text-foreground text-sm dark:text-foreground font-normal pr-3">{question}</span>
                   <PlusCircle size={22} className="text-primary flex-shrink-0 pr-1" />
                 </button>
               ))}

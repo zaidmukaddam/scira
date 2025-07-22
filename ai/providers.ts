@@ -47,7 +47,7 @@ export const scira = customProvider({
     'scira-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
     'scira-mistral': mistral('mistral-small-latest'),
-    'scira-google-lite': google('gemini-2.5-flash-lite-preview-06-17'),
+    'scira-google-lite': google('gemini-2.5-flash-lite'),
     'scira-google': google('gemini-2.5-flash'),
     'scira-google-pro': google('gemini-2.5-pro'),
     'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
