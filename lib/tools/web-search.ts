@@ -36,6 +36,13 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
   });
 };
 
+const processDomains = (domains?: string[]): string[] | undefined => {
+  if (!domains || domains.length === 0) return undefined;
+
+  const processedDomains = domains.map((domain) => extractDomain(domain));
+  return processedDomains.every((domain) => domain.trim() === '') ? undefined : processedDomains;
+};
+
 export const webSearchTool = (dataStream: DataStreamWriter) =>
   tool({
     description: 'Search the web for information with 5-10 queries, max results and search depth.',
@@ -107,12 +114,14 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
             category: currentTopic === 'finance' ? 'financial report' : currentTopic === 'news' ? 'news' : '',
           };
 
-          if (include_domains && include_domains.length > 0) {
-            // clean the domains to be the base domain
-            searchOptions.includeDomains = include_domains.map((domain) => extractDomain(domain));
+          const processedIncludeDomains = processDomains(include_domains);
+          if (processedIncludeDomains) {
+            searchOptions.includeDomains = processedIncludeDomains;
           }
-          if (exclude_domains && exclude_domains.length > 0) {
-            searchOptions.excludeDomains = exclude_domains.map((domain) => extractDomain(domain));
+
+          const processedExcludeDomains = processDomains(exclude_domains);
+          if (processedExcludeDomains) {
+            searchOptions.excludeDomains = processedExcludeDomains;
           }
 
           const data = await exa.searchAndContents(query, searchOptions);

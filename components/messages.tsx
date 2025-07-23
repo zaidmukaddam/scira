@@ -206,7 +206,10 @@ const Messages: React.FC<MessagesProps> = React.memo(
           // For empty text parts in a streaming message, show loading animation only if no tool invocations are present
           if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations) {
             return (
-              <div key={`${messageIndex}-${partIndex}-loading`} className="flex flex-col min-h-[calc(100vh-18rem)]">
+              <div
+                key={`${messageIndex}-${partIndex}-loading`}
+                className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
+              >
                 <SciraLogoHeader />
                 <div className="flex space-x-2 ml-8 mt-2">
                   <div
@@ -480,7 +483,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
               // Last assistant message should have no bottom margin (min-height is now handled in Message component)
               messageClasses = 'mb-0';
             } else {
-              messageClasses = 'mb-3';
+              messageClasses = 'mb-0';
             }
 
             return (
@@ -512,8 +515,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
         {/* Loading animation when status is submitted with min-height to reserve space */}
         {status === 'submitted' && !hasActiveToolInvocations && (
-          <div className="flex items-start min-h-[calc(100vh-18rem)]">
-            <div className="w-full">
+          <div className="flex items-start min-h-[calc(100vh-18rem)] !m-0 !p-0">
+            <div className="w-full !m-0 !p-0">
               <SciraLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
                 <div

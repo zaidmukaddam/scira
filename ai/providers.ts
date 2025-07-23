@@ -23,7 +23,7 @@ export const scira = customProvider({
     'scira-x-fast': xai('grok-3-fast'),
     'scira-nano': openai.responses('gpt-4.1-nano'),
     'scira-4.1-mini': openai.responses('gpt-4.1-mini'),
-    'scira-grok-3': xai('grok-3'),
+    'scira-grok-3': xai('grok-3-fast'),
     'scira-grok-4': xai('grok-4'),
     'scira-vision': xai('grok-2-vision-1212'),
     'scira-g2': xai('grok-2-latest'),

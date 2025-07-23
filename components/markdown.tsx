@@ -501,7 +501,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
     const domain = new URL(href).hostname;
 
     return (
-      <div className="flex flex-col bg-background text-xs m-0">
+      <div className="flex flex-col bg-accent text-xs m-0">
         <div className="flex items-center h-6 space-x-1.5 px-2 pt-2 text-xs text-muted-foreground">
           <Image
             src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}

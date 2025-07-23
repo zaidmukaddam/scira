@@ -1118,7 +1118,7 @@ const ToolInvocationListView = memo(
 
         if (toolInvocation.toolName === 'web_search') {
           return (
-            <div className="mt-4 relative isolate overflow-hidden">
+            <div className="mt-2 relative isolate overflow-hidden">
               <Suspense fallback={<ComponentLoader />}>
                 <MultiSearch
                   result={result}

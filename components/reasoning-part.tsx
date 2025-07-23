@@ -46,21 +46,21 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
   const renderer = {
     code(code: string, language?: string) {
       return (
-        <pre key={Math.random()} className="bg-neutral-200 dark:bg-neutral-800 p-2 rounded-md overflow-x-auto my-3">
-          <code className="text-neutral-800 dark:text-neutral-300 text-xs">{code}</code>
+        <pre key={Math.random()} className="bg-muted p-1.5 rounded text-xs overflow-x-auto my-2">
+          <code className="text-muted-foreground">{code}</code>
         </pre>
       );
     },
     codespan(code: string) {
       return (
-        <code key={Math.random()} className="bg-neutral-200 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">
+        <code key={Math.random()} className="bg-muted px-1 py-0.5 rounded text-xs">
           {code}
         </code>
       );
     },
     paragraph(text: ReactNode) {
       return (
-        <p key={Math.random()} className="mb-3 last:mb-0">
+        <p key={Math.random()} className="mb-2 last:mb-0">
           {text}
         </p>
       );
@@ -68,12 +68,12 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     heading(text: ReactNode, level: number) {
       const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const classes = {
-        h1: 'text-base font-bold mb-3 mt-4',
-        h2: 'text-sm font-bold mb-2 mt-4',
-        h3: 'text-sm font-semibold mb-2 mt-3',
-        h4: 'text-xs font-semibold mb-1 mt-2',
-        h5: 'text-xs font-medium mb-1 mt-2',
-        h6: 'text-xs font-medium mb-1 mt-2',
+        h1: 'text-sm font-semibold mb-2 mt-3',
+        h2: 'text-xs font-semibold mb-1.5 mt-2.5',
+        h3: 'text-xs font-medium mb-1.5 mt-2',
+        h4: 'text-xs font-medium mb-1 mt-1.5',
+        h5: 'text-xs font-normal mb-1 mt-1.5',
+        h6: 'text-xs font-normal mb-1 mt-1.5',
       };
 
       const className = classes[`h${level}` as keyof typeof classes] || '';
@@ -90,7 +90,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-primary hover:underline"
         >
           {text}
         </a>
@@ -99,14 +99,14 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     list(body: ReactNode, ordered: boolean) {
       const Type = ordered ? 'ol' : 'ul';
       return (
-        <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-5 mb-3 last:mb-1`}>
+        <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-4 mb-2 last:mb-1`}>
           {body}
         </Type>
       );
     },
     listItem(text: ReactNode) {
       return (
-        <li key={Math.random()} className="mb-1">
+        <li key={Math.random()} className="mb-0.5">
           {text}
         </li>
       );
@@ -115,25 +115,25 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       return (
         <blockquote
           key={Math.random()}
-          className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 py-1 my-3 italic"
+          className="border-l-2 border-border pl-2 py-0.5 my-2 italic text-muted-foreground"
         >
           {text}
         </blockquote>
       );
     },
     hr() {
-      return <hr key={Math.random()} className="my-4 border-t border-neutral-200 dark:border-neutral-800" />;
+      return <hr key={Math.random()} className="my-3 border-t border-border/80" />;
     },
     table(children: ReactNode[]) {
       return (
-        <div key={Math.random()} className="overflow-x-auto mb-3">
+        <div key={Math.random()} className="overflow-x-auto mb-2">
           <table className="min-w-full border-collapse text-xs">{children}</table>
         </div>
       );
     },
     tableRow(content: ReactNode) {
       return (
-        <tr key={Math.random()} className="border-b border-neutral-200 dark:border-neutral-800">
+        <tr key={Math.random()} className="border-b border-border/80">
           {content}
         </tr>
       );
@@ -142,11 +142,11 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       const align = flags.align ? `text-${flags.align}` : '';
 
       return flags.header ? (
-        <th key={Math.random()} className={`px-2 py-1 font-semibold bg-neutral-100 dark:bg-neutral-800 ${align}`}>
+        <th key={Math.random()} className={`px-1.5 py-0.5 font-medium bg-muted/50 ${align}`}>
           {children}
         </th>
       ) : (
-        <td key={Math.random()} className={`px-2 py-1 ${align}`}>
+        <td key={Math.random()} className={`px-1.5 py-0.5 ${align}`}>
           {children}
         </td>
       );
@@ -209,21 +209,15 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
     }
 
     return (
-      <div className="my-3" key={sectionKey}>
-        <div
-          className={cn(
-            'bg-neutral-50 dark:bg-neutral-900',
-            'border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden',
-            'shadow-sm dark:shadow-md',
-          )}
-        >
+      <div className="my-2" key={sectionKey}>
+        <div className={cn('bg-accent', 'border border-border/80 rounded-lg overflow-hidden')}>
           {/* Header - Always visible */}
           <div
             onClick={() => isComplete && setIsExpanded(!isExpanded)}
             className={cn(
-              'flex items-center justify-between py-2.5 px-3',
-              isComplete && 'cursor-pointer',
-              'bg-white dark:bg-neutral-900',
+              'flex items-center justify-between py-2 px-2.5',
+              isComplete && 'cursor-pointer hover:bg-muted/50 transition-colors',
+              'bg-background/80',
             )}
           >
             <div className="flex items-center gap-2">
@@ -231,34 +225,33 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                 <div className="flex items-center gap-2">
                   <div
                     className={cn(
-                      'px-2 py-0.5 rounded-full',
-                      'border border-blue-100 dark:border-blue-900/40',
-                      'bg-blue-50 dark:bg-blue-900/20',
-                      'text-blue-600 dark:text-blue-400',
+                      'px-1.5 py-0.5 rounded-md',
+                      'border border-border/80',
+                      'bg-muted/50',
+                      'text-muted-foreground',
                       'flex items-center gap-1.5',
-                      'shadow-sm',
                       'animate-pulse',
                     )}
                   >
-                    <div className="size-3 text-blue-500 dark:text-blue-400">
+                    <div className="size-2.5 text-muted-foreground">
                       <SpinnerIcon />
                     </div>
-                    <span className="text-xs font-medium">Thinking</span>
-                    {parallelTool && <span className="text-xs font-normal opacity-70">({parallelTool})</span>}
+                    <span className="text-xs font-normal">Thinking</span>
+                    {parallelTool && <span className="text-xs font-normal opacity-60">({parallelTool})</span>}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-amber-500 dark:text-amber-400" strokeWidth={2} />
-                  <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Reasoning</div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="size-3 text-muted-foreground" strokeWidth={2} />
+                  <div className="text-xs font-normal text-muted-foreground">Reasoning</div>
                 </div>
               )}
             </div>
 
             <div className="flex items-center gap-2">
               {isComplete && (
-                <div className="text-neutral-400 dark:text-neutral-500">
-                  {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                <div className="text-muted-foreground">
+                  {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
                 </div>
               )}
 
@@ -268,13 +261,13 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     e.stopPropagation();
                     setIsFullscreen(!isFullscreen);
                   }}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full text-neutral-500 dark:text-neutral-400 transition-colors"
+                  className="p-0.5 hover:bg-muted rounded text-muted-foreground transition-colors"
                   aria-label={isFullscreen ? 'Minimize' : 'Maximize'}
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="size-3.5 text-violet-500 dark:text-violet-400" strokeWidth={2} />
+                    <Minimize2 className="size-3 text-muted-foreground" strokeWidth={2} />
                   ) : (
-                    <Maximize2 className="size-3.5 text-violet-500 dark:text-violet-400" strokeWidth={2} />
+                    <Maximize2 className="size-3 text-muted-foreground" strokeWidth={2} />
                   )}
                 </button>
               )}
@@ -288,20 +281,20 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 className="overflow-hidden"
               >
                 <div>
-                  <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
+                  <div className="h-px w-full bg-border/80"></div>
                   <div
                     ref={scrollRef}
                     className={cn(
-                      'overflow-y-auto bg-neutral-50 dark:bg-neutral-900',
-                      'scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700',
+                      'overflow-y-auto bg-muted/20',
+                      'scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-border',
                       'scrollbar-track-transparent',
                       {
-                        'max-h-[250px] rounded-b-xl': !isFullscreen,
-                        'max-h-[70vh] rounded-b-xl': isFullscreen,
+                        'max-h-[180px] rounded-b-lg': !isFullscreen,
+                        'max-h-[60vh] rounded-b-lg': isFullscreen,
                       },
                     )}
                   >
@@ -313,13 +306,13 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                             <div
                               key={detailIndex}
                               className={cn(
-                                'px-3 py-3 text-xs leading-relaxed',
+                                'px-2.5 py-2 text-xs leading-relaxed',
                                 detailIndex !==
                                   part.details.filter((d) => d.type === 'text' && !isEmptyContent(d.text)).length - 1 &&
-                                  'border-b border-neutral-200 dark:border-neutral-800/80',
+                                  'border-b border-border/80',
                               )}
                             >
-                              <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
+                              <div className="text-muted-foreground prose prose-sm max-w-none">
                                 <MarkdownRenderer content={detail.text} />
                               </div>
                             </div>
@@ -328,14 +321,14 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                           ),
                         )
                     ) : part.reasoning && !isEmptyContent(part.reasoning) ? (
-                      <div className="px-3 py-3 text-xs leading-relaxed">
-                        <div className="text-neutral-800 dark:text-neutral-300 prose prose-sm dark:prose-invert max-w-none">
+                      <div className="px-2.5 py-2 text-xs leading-relaxed">
+                        <div className="text-muted-foreground prose prose-sm max-w-none">
                           <MarkdownRenderer content={part.reasoning} />
                         </div>
                       </div>
                     ) : (
-                      <div className="px-3 py-3 text-xs">
-                        <div className="text-neutral-500 dark:text-neutral-400 italic">Waiting for reasoning...</div>
+                      <div className="px-2.5 py-2 text-xs">
+                        <div className="text-muted-foreground/70 italic">Waiting for reasoning...</div>
                       </div>
                     )}
                   </div>
