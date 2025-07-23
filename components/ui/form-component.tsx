@@ -2012,7 +2012,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">Attach File</span>
-                          <span className="text-[10px] text-muted-foreground leading-tight">
+                          <span className="text-[10px] text-accent leading-tight">
                             {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
                           </span>
                         </div>
@@ -2075,7 +2075,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <span className="font-medium text-[11px]">
                             {isRecording ? 'Stop Recording' : 'Voice Input'}
                           </span>
-                          <span className="text-[10px] text-muted-foreground leading-tight">
+                          <span className="text-[10px] text-accent leading-tight">
                             {isRecording ? 'Click to stop recording' : 'Record your voice message'}
                           </span>
                         </div>
