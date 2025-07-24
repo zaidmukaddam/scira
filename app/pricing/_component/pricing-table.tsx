@@ -44,22 +44,13 @@ interface PricingTableProps {
 export default function PricingTable({ subscriptionDetails, user }: PricingTableProps) {
   const router = useRouter();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
   const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number }>(
     { days: 0, hours: 23, minutes: 59, seconds: 59 },
   );
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await authClient.getSession();
-        setIsAuthenticated(!!session.data?.user);
-      } catch {
-        setIsAuthenticated(false);
-      }
-    };
-
     const fetchDiscountConfig = async () => {
       try {
         const config = await getDiscountConfigAction();
@@ -103,12 +94,11 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       return () => clearInterval(countdownInterval);
     };
 
-    checkAuth();
     fetchDiscountConfig();
   }, []);
 
   const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
-    if (isAuthenticated === false) {
+    if (!user) {
       router.push('/sign-up');
       return;
     }
@@ -531,7 +521,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                       </p>
                     )}
                   </div>
-                ) : isAuthenticated === false ? (
+                ) : !user ? (
                   <Button
                     className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                     onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
@@ -572,7 +562,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 >
                   {location.loading
                     ? 'Loading...'
-                    : isAuthenticated === false
+                    : !user
                       ? 'Sign up to get started'
                       : 'Upgrade to Scira Pro ($15/month)'}
                   {!location.loading && (
