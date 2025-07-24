@@ -6,6 +6,10 @@ import { shouldBypassRateLimits } from '@/ai/providers';
 export type UserWithProStatus = User & {
   isProUser: boolean;
   subscriptionData?: any;
+  paymentHistory?: any;
+  dodoProStatus?: any;
+  proSource?: 'polar' | 'dodo' | 'none';
+  expiresAt?: Date;
 };
 
 // Hook for user data
@@ -57,6 +61,10 @@ export function useProUserStatus() {
   return {
     user: (user || null) as UserWithProStatus | null,
     subscriptionData: user?.subscriptionData,
+    paymentHistory: user?.paymentHistory,
+    dodoProStatus: user?.dodoProStatus,
+    proSource: user?.proSource,
+    expiresAt: user?.expiresAt,
     isProUser: Boolean(user?.isProUser),
     isLoading: Boolean(userLoading),
     // Pro users should never see limit checks

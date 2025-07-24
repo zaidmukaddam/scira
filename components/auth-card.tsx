@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signIn } from '@/lib/auth-client';
-import { cn } from '@/lib/utils';
+
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -62,10 +62,7 @@ const AuthIcons = {
 const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => (
   <Button
     variant="outline"
-    className={cn(
-      'w-full py-2 gap-2 bg-transparent border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900',
-      'transition-all text-sm h-10',
-    )}
+    className="w-full py-2 gap-2 text-sm h-10"
     disabled={loading}
     onClick={async () => {
       await signIn.social(
@@ -98,7 +95,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
     <div className="max-w-sm w-full">
       <div className="px-4 py-6">
         <h2 className="text-lg mb-1">{title}</h2>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-6">{description}</p>
+        <p className="text-xs text-muted-foreground mb-6">{description}</p>
 
         <div className="space-y-2 mb-4">
           <SignInButton

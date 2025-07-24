@@ -23,15 +23,18 @@ import {
   createCustomInstructions,
   updateCustomInstructions,
   deleteCustomInstructions,
+  getPaymentsByUserId,
+  hasSuccessfulDodoPayment,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
-import { getSubscriptionDetails } from '@/lib/subscription';
+import { getSubscriptionDetails, getProStatusWithSource, getDodoPaymentsExpirationDate } from '@/lib/subscription';
 import {
   usageCountCache,
   createMessageCountKey,
   createExtremeCountKey,
   getProUserStatus,
+  setProUserStatus,
   computeAndCacheProUserStatus,
 } from '@/lib/performance-cache';
 
@@ -45,23 +48,46 @@ export async function getCurrentUser() {
     let isProUser = getProUserStatus(user.id);
 
     if (isProUser === null) {
-      // Not cached, get subscription details and compute
-      const subscriptionDetails = await getSubscriptionDetails();
-      isProUser = computeAndCacheProUserStatus(user.id, subscriptionDetails);
+      // Not cached, get comprehensive pro status (includes DodoPayments)
+      const proStatus = await getProStatusWithSource();
+      isProUser = proStatus.isProUser;
+      
+      // Cache the comprehensive status
+      setProUserStatus(user.id, isProUser);
+
+      // Get both subscription and payment data
+      const [subscriptionDetails, paymentHistory, dodoStatus] = await Promise.all([
+        getSubscriptionDetails(),
+        getPaymentsByUserId({ userId: user.id }),
+        getDodoPaymentsProStatus(),
+      ]);
 
       return {
         ...user,
         isProUser,
         subscriptionData: subscriptionDetails,
+        paymentHistory,
+        dodoProStatus: dodoStatus,
+        proSource: proStatus.source,
+        expiresAt: proStatus.expiresAt,
       };
     } else {
-      // Use cached status, but still fetch subscription data for UI
-      const subscriptionDetails = await getSubscriptionDetails();
+      // Use cached status, but still fetch all data for UI
+      const [subscriptionDetails, paymentHistory, dodoStatus, proStatus] = await Promise.all([
+        getSubscriptionDetails(),
+        getPaymentsByUserId({ userId: user.id }),
+        getDodoPaymentsProStatus(),
+        getProStatusWithSource(),
+      ]);
 
       return {
         ...user,
         isProUser,
         subscriptionData: subscriptionDetails,
+        paymentHistory,
+        dodoProStatus: dodoStatus,
+        proSource: proStatus.source,
+        expiresAt: proStatus.expiresAt,
       };
     }
   } catch (error) {
@@ -1379,11 +1405,56 @@ export async function getProUserStatusOnly(): Promise<boolean> {
       return cached;
     }
 
-    // If not cached, compute and cache (but don't fetch full subscription details)
-    const subscriptionDetails = await getSubscriptionDetails();
-    return computeAndCacheProUserStatus(user.id, subscriptionDetails);
+    // If not cached, use comprehensive check (includes DodoPayments)
+    const proStatus = await getProStatusWithSource();
+    setProUserStatus(user.id, proStatus.isProUser);
+    return proStatus.isProUser;
   } catch (error) {
     console.error('Error getting pro user status:', error);
     return false;
+  }
+}
+
+export async function getPaymentHistory() {
+  try {
+    const user = await getUser();
+    if (!user) return null;
+
+    const payments = await getPaymentsByUserId({ userId: user.id });
+    return payments;
+  } catch (error) {
+    console.error('Error getting payment history:', error);
+    return null;
+  }
+}
+
+export async function getDodoPaymentsProStatus() {
+  try {
+    const user = await getUser();
+    if (!user) return { isProUser: false, hasPayments: false };
+
+    // Get comprehensive status with expiration info
+    const proStatus = await getProStatusWithSource();
+    const hasPayments = await hasSuccessfulDodoPayment({ userId: user.id });
+    
+    return { 
+      isProUser: proStatus.source === 'dodo' ? proStatus.isProUser : false, 
+      hasPayments,
+      expiresAt: proStatus.expiresAt,
+      source: proStatus.source
+    };
+  } catch (error) {
+    console.error('Error getting DodoPayments pro status:', error);
+    return { isProUser: false, hasPayments: false };
+  }
+}
+
+export async function getDodoExpirationDate() {
+  try {
+    const expirationDate = await getDodoPaymentsExpirationDate();
+    return expirationDate;
+  } catch (error) {
+    console.error('Error getting DodoPayments expiration date:', error);
+    return null;
   }
 }

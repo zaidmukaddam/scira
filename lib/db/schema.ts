@@ -162,6 +162,43 @@ export const customInstructions = pgTable('custom_instructions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+// Payment table for Dodo Payments webhook data
+export const payment = pgTable('payment', {
+  id: text('id').primaryKey(), // payment_id from webhook
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at'),
+  brandId: text('brand_id'),
+  businessId: text('business_id'),
+  cardIssuingCountry: text('card_issuing_country'),
+  cardLastFour: text('card_last_four'),
+  cardNetwork: text('card_network'),
+  cardType: text('card_type'),
+  currency: text('currency').notNull(),
+  digitalProductsDelivered: boolean('digital_products_delivered').default(false),
+  discountId: text('discount_id'),
+  errorCode: text('error_code'),
+  errorMessage: text('error_message'),
+  paymentLink: text('payment_link'),
+  paymentMethod: text('payment_method'),
+  paymentMethodType: text('payment_method_type'),
+  settlementAmount: integer('settlement_amount'),
+  settlementCurrency: text('settlement_currency'),
+  settlementTax: integer('settlement_tax'),
+  status: text('status'),
+  subscriptionId: text('subscription_id'),
+  tax: integer('tax'),
+  totalAmount: integer('total_amount').notNull(),
+  // JSON fields for complex objects
+  billing: json('billing'), // Billing address object
+  customer: json('customer'), // Customer data object
+  disputes: json('disputes'), // Disputes array
+  metadata: json('metadata'), // Metadata object
+  productCart: json('product_cart'), // Product cart array
+  refunds: json('refunds'), // Refunds array
+  // Foreign key to user
+  userId: text('user_id').references(() => user.id),
+});
+
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;
 export type Account = InferSelectModel<typeof account>;
@@ -170,6 +207,7 @@ export type Chat = InferSelectModel<typeof chat>;
 export type Message = InferSelectModel<typeof message>;
 export type Stream = InferSelectModel<typeof stream>;
 export type Subscription = InferSelectModel<typeof subscription>;
+export type Payment = InferSelectModel<typeof payment>;
 export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;

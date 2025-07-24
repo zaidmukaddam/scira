@@ -25,9 +25,9 @@ export default function TermsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-neutral-50/30 to-transparent dark:from-neutral-950/30 dark:to-transparent" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-neutral-200 dark:via-neutral-800 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <div className="relative pt-24 pb-12 px-4">
           <motion.div
@@ -39,7 +39,7 @@ export default function TermsPage() {
             {/* Logo */}
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
-                <div className="relative w-14 h-14 rounded-full bg-white/90 dark:bg-black/90 shadow-sm flex items-center justify-center border border-neutral-200 dark:border-neutral-800">
+                <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
                   <NextImage
                     src="/scira.png"
                     alt="Scira Logo"
@@ -55,9 +55,8 @@ export default function TermsPage() {
 
             <motion.div variants={item} className="text-center">
               <h1 className="text-4xl font-bold tracking-tight">Terms of Service</h1>
-              <p className="text-neutral-600 dark:text-neutral-400 mt-3">
-                Last updated:{' '}
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              <p className="text-muted-foreground mt-3">
+                Last updated: July 24, 2025
               </p>
             </motion.div>
           </motion.div>
@@ -66,7 +65,7 @@ export default function TermsPage() {
 
       {/* Main Content */}
       <div className="py-16 px-4">
-        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-neutral-600 dark:prose-p:text-neutral-400 prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:no-underline hover:prose-a:text-black dark:hover:prose-a:text-white prose-headings:tracking-tight">
+        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
           <p className="text-lg">
             Welcome to Scira AI. These Terms of Service govern your use of our website and services. By using Scira AI,
             you agree to these terms in full. If you disagree with any part of these terms, please do not use our
@@ -133,12 +132,14 @@ export default function TermsPage() {
           <ul>
             <li>Our service is hosted on Vercel&apos;s infrastructure</li>
             <li>We integrate with AI technology providers including OpenAI, Anthropic, xAI, and others</li>
+            <li>We use payment processors including Polar and DodoPayments for billing and subscription management</li>
             <li>These third-party services have their own terms of service and privacy policies</li>
             <li>We are not responsible for the practices or policies of these third-party services</li>
           </ul>
           <p>
             By using Scira AI, you acknowledge and agree that your data may be processed by these third-party services
-            as described in our Privacy Policy.
+            as described in our Privacy Policy. This includes payment data being processed by our payment providers
+            according to their respective privacy policies and security standards.
           </p>
 
           <h2>7. Pricing and Billing</h2>
@@ -157,6 +158,22 @@ export default function TermsPage() {
               <strong>Scira Pro:</strong> $15/month subscription with unlimited searches and access to all AI models
             </li>
           </ul>
+          <p>
+            <strong>Payment Processing:</strong> We use third-party payment processors to handle billing and payments:
+          </p>
+          <ul>
+            <li>
+              <strong>Polar:</strong> For recurring monthly subscriptions (international users)
+            </li>
+            <li>
+              <strong>DodoPayments:</strong> For one-time payments (primarily for Indian users)
+            </li>
+          </ul>
+          <p>
+            <strong>Important:</strong> Scira AI does not store any payment card details, bank information, or other 
+            sensitive payment data. All payment information is processed directly by our payment providers according 
+            to their respective privacy policies and security standards.
+          </p>
           <p>For paid subscriptions:</p>
           <ul>
             <li>Billing is processed monthly and charged automatically to your payment method</li>
@@ -227,8 +244,8 @@ export default function TermsPage() {
             </a>
           </p>
 
-          <div className="my-8 border-t border-neutral-200 dark:border-neutral-800 pt-8">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <div className="my-8 border-t pt-8">
+            <p className="text-sm text-muted-foreground">
               By using Scira AI, you agree to these Terms of Service and our{' '}
               <Link href="/privacy-policy" className="underline">
                 Privacy Policy
@@ -241,11 +258,11 @@ export default function TermsPage() {
 
       {/* Footer */}
       <footer className="py-10 mt-10">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-200 dark:via-neutral-800 to-transparent" />
+        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="container max-w-3xl mx-auto px-4 pt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
                 <NextImage
                   src="/scira.png"
                   alt="Scira Logo"
@@ -256,23 +273,23 @@ export default function TermsPage() {
                   quality={100}
                 />
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
               </div>
             </div>
-            <div className="flex items-center gap-6 text-sm text-neutral-500 dark:text-neutral-400">
-              <Link href="/" className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <Link href="/" className="hover:text-foreground transition-colors">
                 Home
               </Link>
-              <Link href="/about" className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+              <Link href="/about" className="hover:text-foreground transition-colors">
                 About
               </Link>
-              <Link href="/terms" className="text-neutral-900 dark:text-neutral-100 font-medium">
+              <Link href="/terms" className="text-foreground font-medium">
                 Terms
               </Link>
               <Link
                 href="/privacy-policy"
-                className="hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 Privacy
               </Link>

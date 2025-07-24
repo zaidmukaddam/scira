@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
 import Link from 'next/link';
 
 interface SignInPromptDialogProps {
@@ -27,13 +27,7 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
   return (
     <Button
       variant="outline"
-      className={cn(
-        'relative w-full h-10 px-4 font-normal text-sm',
-        'bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800',
-        'hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700',
-        'transition-colors duration-150',
-        'text-neutral-700 dark:text-neutral-300',
-      )}
+      className="relative w-full h-10 px-4 font-normal text-sm"
       disabled={loading}
       onClick={async () => {
         await signIn.social(
@@ -103,11 +97,11 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[360px] p-6 gap-0 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+      <DialogContent className="sm:max-w-[360px] p-6 gap-0">
         {/* Compact Header */}
         <div className="mb-6">
-          <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-1">Sign in to continue</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Save conversations and sync across devices</p>
+          <h2 className="text-lg font-medium text-foreground mb-1">Sign in to continue</h2>
+          <p className="text-sm text-muted-foreground">Save conversations and sync across devices</p>
         </div>
 
         {/* Auth Options */}
@@ -120,10 +114,10 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         {/* Divider */}
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-neutral-200 dark:border-neutral-800"></div>
+            <div className="w-full border-t border-border"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-2 bg-white dark:bg-neutral-950 text-neutral-400">or</span>
+            <span className="px-2 bg-background text-muted-foreground">or</span>
           </div>
         </div>
 
@@ -131,24 +125,24 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         <Button
           variant="ghost"
           onClick={() => onOpenChange(false)}
-          className="w-full h-10 font-normal text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-900"
+          className="w-full h-10 font-normal text-sm"
         >
           Continue without account
         </Button>
 
         {/* Legal */}
-        <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center mt-4">
+        <p className="text-xs text-muted-foreground text-center mt-4">
           By continuing, you accept our{' '}
           <Link
             href="/terms"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            className="underline underline-offset-2 hover:text-foreground"
           >
             Terms
           </Link>
           {' & '}
           <Link
             href="/privacy-policy"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
+            className="underline underline-offset-2 hover:text-foreground"
           >
             Privacy Policy
           </Link>

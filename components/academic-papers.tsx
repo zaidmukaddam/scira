@@ -6,7 +6,6 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { motion } from 'framer-motion';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 

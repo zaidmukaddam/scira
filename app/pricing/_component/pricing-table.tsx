@@ -1,17 +1,19 @@
 'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { authClient } from '@/lib/auth-client';
+import { authClient, betterauthClient } from '@/lib/auth-client';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { SEARCH_LIMITS, PRICING } from '@/lib/constants';
+import { SEARCH_LIMITS, PRICING, CURRENCIES } from '@/lib/constants';
 import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { SlidingNumber } from '@/components/core/sliding-number';
+import { useLocation } from '@/hooks/use-location';
 
 type SubscriptionDetails = {
   id: string;
@@ -36,10 +38,12 @@ type SubscriptionDetailsResult = {
 
 interface PricingTableProps {
   subscriptionDetails: SubscriptionDetailsResult;
+  user: any;
 }
 
-export default function PricingTable({ subscriptionDetails }: PricingTableProps) {
+export default function PricingTable({ subscriptionDetails, user }: PricingTableProps) {
   const router = useRouter();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
   const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number }>(
@@ -103,19 +107,24 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
     fetchDiscountConfig();
   }, []);
 
-  const handleCheckout = async (productId: string, slug: string) => {
+  const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
     if (isAuthenticated === false) {
-      router.push('/sign-in');
+      router.push('/sign-up');
       return;
     }
 
     try {
-      const checkoutOptions: any = {
-        products: [productId],
-        slug: slug,
-      };
-
-      await authClient.checkout(checkoutOptions);
+      if (paymentMethod === 'dodo') {
+        // DodoPayments checkout (one-time payment)
+        router.push('/checkout');
+      } else {
+        // Polar checkout (subscription)
+        const checkoutOptions: any = {
+          products: [productId],
+          slug: slug,
+        };
+        await authClient.checkout(checkoutOptions);
+      }
     } catch (error) {
       console.error('Checkout failed:', error);
       toast.error('Something went wrong. Please try again.');
@@ -124,7 +133,14 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
 
   const handleManageSubscription = async () => {
     try {
-      await authClient.customer.portal();
+      const proSource = getProAccessSource();
+      if (proSource === 'dodo') {
+        // Use DodoPayments portal for DodoPayments users
+        await betterauthClient.customer.portal();
+      } else {
+        // Use Polar portal for Polar subscribers
+        await authClient.customer.portal();
+      }
     } catch (error) {
       console.error('Failed to open customer portal:', error);
       toast.error('Failed to open subscription management');
@@ -144,6 +160,23 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
       subscriptionDetails.subscription?.productId === tierProductId &&
       subscriptionDetails.subscription?.status === 'active'
     );
+  };
+
+  // Check if user has any Pro status (Polar or DodoPayments)
+  const hasProAccess = () => {
+    // Check Polar subscription
+    const hasPolarSub = isCurrentPlan(STARTER_TIER);
+    // Check DodoPayments Pro status
+    const hasDodoProAccess = user?.isProUser && user?.dodoProStatus?.isProUser;
+    
+    return hasPolarSub || hasDodoProAccess;
+  };
+
+  // Get the source of Pro access for display
+  const getProAccessSource = () => {
+    if (isCurrentPlan(STARTER_TIER)) return 'polar';
+    if (user?.dodoProStatus?.isProUser) return 'dodo';
+    return null;
   };
 
   const formatDate = (date: Date) => {
@@ -182,6 +215,13 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
           <p className="text-zinc-600 dark:text-zinc-400 text-lg font-medium font-be-vietnam-pro leading-relaxed">
             Choose the plan that works best for you
           </p>
+          {!location.loading && location.isIndia && (
+            <div className="mt-4">
+              <Badge variant="secondary" className="px-3 py-1">
+                🇮🇳 Introducing special India based pricing
+              </Badge>
+            </div>
+          )}
         </div>
       </div>
 
@@ -203,18 +243,36 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
 
                   {/* Pricing Information */}
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-zinc-500 dark:text-zinc-400 line-through">
-                      ${discountConfig.originalPrice}/month
-                    </span>
-                    <span className="text-lg font-semibold">
-                      $
-                      {discountConfig.finalPrice
-                        ? discountConfig.finalPrice.toFixed(2)
-                        : (discountConfig.originalPrice || 0) -
-                          ((discountConfig.originalPrice || 0) * (discountConfig.percentage || 0)) / 100}
-                      /month
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
-                    </span>
+                    {location.isIndia ? (
+                      <>
+                        <span className="text-zinc-500 dark:text-zinc-400 line-through">
+                          ₹{PRICING.PRO_MONTHLY_INR}/month
+                        </span>
+                        <span className="text-lg font-semibold">
+                          ₹
+                          {discountConfig.finalPrice
+                            ? (discountConfig.finalPrice * 100).toFixed(0) // Convert USD to INR approximation
+                            : PRICING.PRO_MONTHLY_INR - (PRICING.PRO_MONTHLY_INR * (discountConfig.percentage || 0)) / 100}
+                          /month
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-zinc-500 dark:text-zinc-400 line-through">
+                          ${discountConfig.originalPrice}/month
+                        </span>
+                        <span className="text-lg font-semibold">
+                          $
+                          {discountConfig.finalPrice
+                            ? discountConfig.finalPrice.toFixed(2)
+                            : (discountConfig.originalPrice || 0) -
+                              ((discountConfig.originalPrice || 0) * (discountConfig.percentage || 0)) / 100}
+                          /month
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -330,7 +388,7 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
 
           {/* Pro Plan */}
           <div className="relative">
-            {isCurrentPlan(STARTER_TIER) && (
+            {hasProAccess() && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                 <Badge className="bg-black dark:bg-white text-white dark:text-black px-4 py-1.5 text-xs font-normal tracking-wide">
                   CURRENT PLAN
@@ -352,11 +410,50 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
                   Everything you need for unlimited usage
                 </p>
-                <div className="flex items-baseline mb-2">
-                  <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 ml-2 text-sm">/month</span>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p>
+                
+                {/* Pricing Options for Indian Users */}
+                {!location.loading && location.isIndia ? (
+                  <div className="space-y-4 mb-6">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-4 border rounded-lg bg-secondary space-y-1">
+                        <div>
+                          <span className="text-2xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
+                          <div className="text-xs text-muted-foreground">+18% GST</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">One-time</div>
+                        <div className="text-xs text-foreground">1 month access</div>
+                        <div className="mt-2 space-y-0.5">
+                          <div className="text-[10px] text-muted-foreground font-medium">🇮🇳 Indian Payment</div>
+                          <div className="text-[10px] text-muted-foreground">Card, UPI ID & QR available</div>
+                        </div>
+                      </div>
+                      <div className="p-4 border rounded-lg bg-muted space-y-1">
+                        <div className="text-2xl font-light">{PRICING.PRO_MONTHLY} USD</div>
+                        <div className="text-xs text-muted-foreground">Monthly</div>
+                        <div className="text-xs text-foreground">Recurring</div>
+                        <div className="mt-2 space-y-0.5">
+                          <div className="text-[10px] text-muted-foreground font-medium">🌍 International</div>
+                          <div className="text-[10px] text-muted-foreground">Card only</div>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">Choose your preferred payment method</p>
+                  </div>
+                ) : (
+                  <div className="mb-6">
+                    <div className="flex items-baseline mb-2">
+                      {location.loading ? (
+                        <div className="animate-pulse">
+                          <div className="h-12 w-20 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
+                        </div>
+                      ) : (
+                        <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
+                      )}
+                      <span className="text-zinc-500 dark:text-zinc-400 ml-2 text-sm">/month</span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">CANCEL ANYTIME</p>
+                  </div>
+                )}
               </div>
 
               <div className="mb-10">
@@ -387,29 +484,77 @@ export default function PricingTable({ subscriptionDetails }: PricingTableProps)
                 </ul>
               </div>
 
-              {isCurrentPlan(STARTER_TIER) ? (
+              {hasProAccess() ? (
                 <div className="space-y-4">
                   <Button
                     className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
                     onClick={handleManageSubscription}
                   >
-                    Manage subscription
+                    {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
                   </Button>
-                  {subscriptionDetails.subscription && (
+                  {/* Show Polar subscription details */}
+                  {subscriptionDetails.subscription && getProAccessSource() === 'polar' && (
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                       {subscriptionDetails.subscription.cancelAtPeriodEnd
                         ? `Expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
                         : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                     </p>
                   )}
+                  {/* Show DodoPayments details */}
+                  {getProAccessSource() === 'dodo' && user?.expiresAt && (
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
+                      Pro access expires {formatDate(new Date(user.expiresAt))}
+                    </p>
+                  )}
                 </div>
+              ) : !location.loading && location.isIndia ? (
+                isAuthenticated === false ? (
+                  <Button
+                    className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
+                    onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
+                  >
+                    Sign up to get started
+                    <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground text-center font-medium">Choose your preferred payment method:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      <Button
+                        className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
+                        onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
+                      >
+                        🇮🇳 Pay ₹{PRICING.PRO_MONTHLY_INR} (1 month access)
+                        <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
+                        onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
+                      >
+                        🌍 Subscribe ${PRICING.PRO_MONTHLY}/month
+                        <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Indian payment: One-time • International: Recurring subscription
+                    </p>
+                  </div>
+                )
               ) : (
                 <Button
-                  className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
+                  className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200 disabled:opacity-50"
                   onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
+                  disabled={location.loading}
                 >
-                  {isAuthenticated === false ? 'Sign in to upgrade' : 'Upgrade to Scira Pro'}
-                  <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                  {location.loading
+                    ? 'Loading...'
+                    : isAuthenticated === false
+                      ? 'Sign up to get started'
+                      : 'Upgrade to Scira Pro ($15/month)'}
+                  {!location.loading && (
+                    <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                  )}
                 </Button>
               )}
             </div>

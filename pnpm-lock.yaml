@@ -47,12 +47,18 @@ importers:
       '@daytonaio/sdk':
         specifier: ^0.24.2
         version: 0.24.2
+      '@dodopayments/better-auth':
+        specifier: ^0.1.1
+        version: 0.1.1(dodopayments@1.43.1(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.73)
       '@eslint/plugin-kit':
         specifier: 0.3.3
         version: 0.3.3
       '@foobar404/wave':
         specifier: ^2.0.5
         version: 2.0.5
+      '@hookform/resolvers':
+        specifier: ^5.1.1
+        version: 5.1.1(react-hook-form@7.61.0(react@19.1.0))
       '@neondatabase/serverless':
         specifier: ^1.0.1
         version: 1.0.1
@@ -179,6 +185,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      dodopayments:
+        specifier: ^1.43.1
+        version: 1.43.1(encoding@0.1.13)
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -260,6 +269,9 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.1.0(react@19.1.0)
+      react-hook-form:
+        specifier: ^7.61.0
+        version: 7.61.0(react@19.1.0)
       react-katex:
         specifier: ^3.1.0
         version: 3.1.0(prop-types@15.8.1)(react@19.1.0)
@@ -665,6 +677,17 @@ packages:
   '@daytonaio/sdk@0.24.2':
     resolution: {integrity: sha512-OC6zORq0Fc2G0c6B1j2/0VSzQ6Gvq/0ti78vzePeq13DU1rXsmXeJjVUXUfcMRQDcc0hO+evRrx5VL5rdMDIrQ==}
 
+  '@dodopayments/better-auth@0.1.1':
+    resolution: {integrity: sha512-FSXQdBAW/2gUMusiO4+yac4XZAUL5k9vHXt2WtrnC4VkJ0gFBXXctypWkA/Tut8sJrNTcdbaJZC1kQ6eV1nOAw==}
+    peerDependencies:
+      dodopayments: ^1.42.0
+      zod: ^3.25.73
+
+  '@dodopayments/core@0.1.13':
+    resolution: {integrity: sha512-pEexetvseSWZBf2p8zrnw7bmk/h+vHD0Jiu8AWfIcC5UIOnQne9Tdu/QnHFsfT5ywaBBzUi8Ryf1RRRTA+pCPA==}
+    peerDependencies:
+      zod: ^3.25.74
+
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
 
@@ -1040,6 +1063,11 @@ packages:
 
   '@hexagon/base64@1.1.28':
     resolution: {integrity: sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==}
+
+  '@hookform/resolvers@5.1.1':
+    resolution: {integrity: sha512-J/NVING3LMAEvexJkyTLjruSm7aOFx7QX21pzkiJfMoNG0wl5aFEjLTl7ay7IQb9EWY6AkrBy7tHL2Alijpdcg==}
+    peerDependencies:
+      react-hook-form: ^7.55.0
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2256,6 +2284,9 @@ packages:
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
 
+  '@standard-schema/utils@0.3.0':
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
+
   '@supabase/auth-js@2.69.1':
     resolution: {integrity: sha512-FILtt5WjCNzmReeRLq5wRs3iShwmnWgBvxHfqapC/VoljJl+W8hDAyFmf1NVw3zH+ZjZ05AKxiKxVeb0HNWRMQ==}
 
@@ -3356,6 +3387,9 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dodopayments@1.43.1:
+    resolution: {integrity: sha512-/EfEJdqSTcO27SAOCI7pWBH34NPpzjMhByiS412x0qPKqdWgdn8HbqIgDnJXK0LhQPYT9HoBPtX9ciNd5ct8dA==}
 
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
@@ -5271,6 +5305,12 @@ packages:
     peerDependencies:
       react: ^19.1.0
 
+  react-hook-form@7.61.0:
+    resolution: {integrity: sha512-o8S/HcCeuaAQVib36fPCgOLaaQN/v7Anj8zlYjcLMcz+4FnNfMsoDAEvVCefLb3KDnS43wq3pwcifehhkwowuQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -6689,6 +6729,22 @@ snapshots:
       - aws-crt
       - debug
 
+  '@dodopayments/better-auth@0.1.1(dodopayments@1.43.1(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.73)':
+    dependencies:
+      '@dodopayments/core': 0.1.13(encoding@0.1.13)(zod@3.25.73)
+      dodopayments: 1.43.1(encoding@0.1.13)
+      zod: 3.25.73
+    transitivePeerDependencies:
+      - encoding
+
+  '@dodopayments/core@0.1.13(encoding@0.1.13)(zod@3.25.73)':
+    dependencies:
+      dodopayments: 1.43.1(encoding@0.1.13)
+      standardwebhooks: 1.0.0
+      zod: 3.25.73
+    transitivePeerDependencies:
+      - encoding
+
   '@drizzle-team/brocli@0.10.2': {}
 
   '@emnapi/core@1.3.1':
@@ -6941,6 +6997,11 @@ snapshots:
       - utf-8-validate
 
   '@hexagon/base64@1.1.28': {}
+
+  '@hookform/resolvers@5.1.1(react-hook-form@7.61.0(react@19.1.0))':
+    dependencies:
+      '@standard-schema/utils': 0.3.0
+      react-hook-form: 7.61.0(react@19.1.0)
 
   '@humanfs/core@0.19.1': {}
 
@@ -8248,6 +8309,8 @@ snapshots:
 
   '@stablelib/base64@1.0.1': {}
 
+  '@standard-schema/utils@0.3.0': {}
+
   '@supabase/auth-js@2.69.1':
     dependencies:
       '@supabase/node-fetch': 2.6.15
@@ -9356,6 +9419,18 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dodopayments@1.43.1(encoding@0.1.13):
+    dependencies:
+      '@types/node': 18.19.81
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
 
   dom-helpers@5.2.1:
     dependencies:
@@ -11745,6 +11820,10 @@ snapshots:
     dependencies:
       react: 19.1.0
       scheduler: 0.26.0
+
+  react-hook-form@7.61.0(react@19.1.0):
+    dependencies:
+      react: 19.1.0
 
   react-is@16.13.1: {}
 
