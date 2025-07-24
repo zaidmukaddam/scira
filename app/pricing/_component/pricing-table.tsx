@@ -432,8 +432,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         <div className="text-xs text-muted-foreground">Monthly</div>
                         <div className="text-xs text-foreground">Recurring</div>
                         <div className="mt-2 space-y-0.5">
-                          <div className="text-[10px] text-muted-foreground font-medium">🌍 International</div>
-                          <div className="text-[10px] text-muted-foreground">Card only</div>
+                          <div className="text-[10px] text-muted-foreground font-medium">💳 Card Payment</div>
+                          <div className="text-[10px] text-muted-foreground">Debit and credit both work</div>
                         </div>
                       </div>
                     </div>
@@ -555,12 +555,12 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                         onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
                       >
-                        🌍 Subscribe ${PRICING.PRO_MONTHLY}/month
+                        💳 Subscribe ${PRICING.PRO_MONTHLY}/month
                         <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground text-center">
-                      Indian payment: One-time • International: Recurring subscription
+                      Indian payment: One-time • Card payment: Recurring subscription
                     </p>
                   </div>
                 )
