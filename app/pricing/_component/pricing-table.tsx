@@ -508,7 +508,30 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   )}
                 </div>
               ) : !location.loading && location.isIndia ? (
-                isAuthenticated === false ? (
+                hasProAccess() ? (
+                  <div className="space-y-4">
+                    <Button
+                      className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-normal text-sm tracking-[-0.01em] transition-colors duration-200"
+                      onClick={handleManageSubscription}
+                    >
+                      {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
+                    </Button>
+                    {/* Show Polar subscription details */}
+                    {subscriptionDetails.subscription && getProAccessSource() === 'polar' && (
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
+                        {subscriptionDetails.subscription.cancelAtPeriodEnd
+                          ? `Expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
+                          : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
+                      </p>
+                    )}
+                    {/* Show DodoPayments details */}
+                    {getProAccessSource() === 'dodo' && user?.expiresAt && (
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
+                        Pro access expires {formatDate(new Date(user.expiresAt))}
+                      </p>
+                    )}
+                  </div>
+                ) : isAuthenticated === false ? (
                   <Button
                     className="w-full h-9 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                     onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
