@@ -9,13 +9,13 @@ import Autoplay from 'embla-carousel-autoplay';
 const testimonials = [
   {
     content:
-      'Scira @sciraai is better than Grok at digging up information from X, its own platform! I asked it 3 different queries to help scrape and find some data points I was interested in about my own account and Scira did much much better with insanely accurate answers!',
+      '"Scira @sciraai is better than Grok at digging up information from X, its own platform! I asked it 3 different queries to help scrape and find some data points I was interested in about my own account and Scira did much much better with insanely accurate answers!"',
     author: 'Chris Universe',
     handle: '@chrisuniverseb',
     link: 'https://x.com/chrisuniverseb/status/1943025911043100835',
   },
   {
-    content: 'scira dot ai does a really good job scraping through the reddit mines btw',
+    content: '"scira dot ai does a really good job scraping through the reddit mines btw"',
     author: 'nyaaier',
     handle: '@nyaaier',
     link: 'https://x.com/nyaaier/status/1932810453107065284',
@@ -29,7 +29,7 @@ const testimonials = [
   },
   {
     content:
-      'read nothing the whole sem and here I am with @sciraai to top my mid sems !! Literally so good to get all the related diagram, points and even topics from the website my professor uses to teach us 🙌',
+      '"read nothing the whole sem and here I am with @sciraai to top my mid sems !! Literally so good to get all the related diagram, points and even topics from the website my professor uses to teach us 🙌"',
     author: 'Rajnandinit',
     handle: '@itsRajnandinit',
     link: 'https://x.com/itsRajnandinit/status/1897896134837682288',
@@ -95,7 +95,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                       >
                         <blockquote className="relative h-full flex flex-col bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 transition-all duration-200 hover:bg-background/70">
                           <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1 text-balance">
-                            "{testimonial.content}"
+                            {testimonial.content}
                           </div>
                           <footer className="mt-3">
                             <div className="flex items-center gap-2">
