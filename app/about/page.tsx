@@ -374,9 +374,11 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             <div className="bg-card border border-border rounded-lg p-8 text-center">
               <div className="mb-4">
-                <img
+                <Image
                   src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png"
                   alt="Tiny Startups #1 Product"
+                  width={64}
+                  height={64}
                   className="size-16 object-contain mx-auto"
                 />
               </div>
@@ -386,9 +388,11 @@ export default function AboutPage() {
 
             <div className="bg-card border border-border rounded-lg p-8 text-center">
               <div className="mb-4">
-                <img
+                <Image
                   src="/Winner-Medal-Weekly.svg"
                   alt="Peerlist #1 Project"
+                  width={64}
+                  height={64}
                   className="h-16 w-16 object-contain mx-auto"
                 />
               </div>
@@ -404,12 +408,11 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="inline-block"
             >
-              <img
+              <Image
                 src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
-                width="200"
-                height="50"
+                width={200}
+                height={50}
                 alt="Scira badge"
-                loading="lazy"
                 className="mx-auto"
               />
             </a>
@@ -504,7 +507,7 @@ export default function AboutPage() {
         <div className="container max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold">Featured on Vercel's Blog</h2>
+              <h2 className="text-2xl font-semibold">Featured on Vercel&apos;s Blog</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Recognized for our innovative use of AI technology and contribution to the developer community through
                 the Vercel AI SDK.
@@ -738,7 +741,7 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-2">
-              <ProAccordionTrigger>What's the difference between Free and Pro plans?</ProAccordionTrigger>
+              <ProAccordionTrigger>What&apos;s the difference between Free and Pro plans?</ProAccordionTrigger>
               <ProAccordionContent>
                 The Free plan offers limited daily searches with basic AI models, while the Pro plan ($15/month)
                 provides unlimited searches, access to all AI models, PDF document analysis, and priority support.
