@@ -83,16 +83,10 @@ const ChatInterface = memo(
       false,
     );
 
-
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
       chatReducer,
-      createInitialState(
-        initialVisibility,
-        persistedHasShownUpgradeDialog,
-        persistedHasShownSignInPrompt,
-        false,
-      ),
+      createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt, false),
     );
 
     const {
@@ -180,8 +174,6 @@ const ChatInterface = memo(
       };
     }, [user, chatState.hasShownSignInPrompt, setPersitedHasShownSignInPrompt]);
 
-
-
     type VisibilityType = 'public' | 'private';
 
     const chatOptions: UseChatOptions = useMemo(
@@ -190,7 +182,7 @@ const ChatInterface = memo(
         api: '/api/search',
         experimental_throttle: selectedModel === 'scira-anthropic' ? 1000 : 100,
         sendExtraMessageFields: true,
-        maxSteps: 5,
+        maxSteps: 3,
         body: {
           id: chatId,
           model: selectedModel,
@@ -414,16 +406,9 @@ const ChatInterface = memo(
     useEffect(() => {
       dispatch({
         type: 'SET_ANY_DIALOG_OPEN',
-        payload:
-          chatState.commandDialogOpen ||
-          chatState.showSignInPrompt ||
-          chatState.showUpgradeDialog,
+        payload: chatState.commandDialogOpen || chatState.showSignInPrompt || chatState.showUpgradeDialog,
       });
-    }, [
-      chatState.commandDialogOpen,
-      chatState.showSignInPrompt,
-      chatState.showUpgradeDialog,
-    ]);
+    }, [chatState.commandDialogOpen, chatState.showSignInPrompt, chatState.showUpgradeDialog]);
 
     // Keyboard shortcut for command dialog
     useEffect(() => {

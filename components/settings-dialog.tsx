@@ -49,7 +49,6 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { useFastProStatus } from '@/hooks/use-user-data';
-import { useLocation } from '@/hooks/use-location';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -394,7 +393,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const location = useLocation();
 
   // Use data from user object (already cached)
   const paymentHistory = user?.paymentHistory || null;
@@ -404,15 +402,17 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
     const fetchPolarOrders = async () => {
       try {
         setOrdersLoading(true);
-        
+
         // Only fetch Polar orders (DodoPayments data comes from user cache)
-        const ordersResponse = await authClient.customer.orders.list({
-          query: {
-            page: 1,
-            limit: 10,
-            productBillingType: 'recurring',
-          },
-        }).catch(() => ({ data: null }));
+        const ordersResponse = await authClient.customer.orders
+          .list({
+            query: {
+              page: 1,
+              limit: 10,
+              productBillingType: 'recurring',
+            },
+          })
+          .catch(() => ({ data: null }));
 
         setOrders(ordersResponse.data);
       } catch (error) {
@@ -427,18 +427,47 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   }, []);
 
   const handleManageSubscription = async () => {
+    // Determine the subscription source
+    const getProAccessSource = () => {
+      if (hasActiveSubscription) return 'polar';
+      if (hasDodoProStatus) return 'dodo';
+      return null;
+    };
+
+    const proSource = getProAccessSource();
+
+    console.log('proSource', proSource);
+
     try {
       setIsManagingSubscription(true);
-      
-      if (location.isIndia) {
-        // Use DodoPayments portal for Indian users
-        await betterauthClient.customer.portal();
+
+      console.log('Settings Dialog - Provider source:', proSource);
+      console.log('User dodoProStatus:', user?.dodoProStatus);
+      console.log('User full object keys:', Object.keys(user || {}));
+
+      if (proSource === 'dodo') {
+        // Use DodoPayments portal for DodoPayments users
+        console.log('Opening DodoPayments portal');
+        console.log('User object for DodoPayments:', {
+          id: user?.id,
+          email: user?.email,
+          dodoProStatus: user?.dodoProStatus,
+          isProUser: user?.isProUser,
+        });
+        await betterauthClient.dodopayments.customer.portal();
       } else {
-        // Use Polar portal for non-Indian users
+        // Use Polar portal for Polar subscribers
+        console.log('Opening Polar portal');
         await authClient.customer.portal();
       }
     } catch (error) {
-      toast.error('Failed to open subscription management');
+      console.error('Subscription management error:', error);
+
+      if (proSource === 'dodo') {
+        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@scira.ai');
+      } else {
+        toast.error('Failed to open subscription management');
+      }
     } finally {
       setIsManagingSubscription(false);
     }
@@ -479,10 +508,11 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                     PRO {hasActiveSubscription ? 'Subscription' : 'Membership'}
                   </h3>
                   <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>
-                    {hasActiveSubscription 
-                      ? (subscription?.status === 'active' ? 'Active' : subscription?.status || 'Unknown')
-                      : 'Active (DodoPayments)'
-                    }
+                    {hasActiveSubscription
+                      ? subscription?.status === 'active'
+                        ? 'Active'
+                        : subscription?.status || 'Unknown'
+                      : 'Active (DodoPayments)'}
                   </p>
                 </div>
               </div>
@@ -519,7 +549,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                 </div>
               )}
             </div>
-            {(hasActiveSubscription || location.isIndia) && (
+            {(hasActiveSubscription || hasDodoProStatus) && (
               <Button
                 variant="secondary"
                 onClick={handleManageSubscription}
@@ -538,23 +568,41 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
 
           {/* Expiration Warning for DodoPayments */}
           {isExpiringSoon && (
-            <div className={cn('bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg', isMobile ? 'p-3' : 'p-4')}>
+            <div
+              className={cn(
+                'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg',
+                isMobile ? 'p-3' : 'p-4',
+              )}
+            >
               <div className="flex items-start gap-2">
                 <div className={cn('bg-yellow-100 dark:bg-yellow-900/40 rounded', isMobile ? 'p-1' : 'p-1.5')}>
                   <Crown className={cn('text-yellow-600 dark:text-yellow-500', isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
                 </div>
                 <div className="flex-1">
-                  <h4 className={cn('font-semibold text-yellow-800 dark:text-yellow-200', isMobile ? 'text-xs' : 'text-sm')}>
+                  <h4
+                    className={cn(
+                      'font-semibold text-yellow-800 dark:text-yellow-200',
+                      isMobile ? 'text-xs' : 'text-sm',
+                    )}
+                  >
                     Pro Access Expiring Soon
                   </h4>
-                  <p className={cn('text-yellow-700 dark:text-yellow-300', isMobile ? 'text-[11px] mt-1' : 'text-xs mt-1')}>
-                    Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. 
-                    Renew now to continue enjoying unlimited features.
+                  <p
+                    className={cn(
+                      'text-yellow-700 dark:text-yellow-300',
+                      isMobile ? 'text-[11px] mt-1' : 'text-xs mt-1',
+                    )}
+                  >
+                    Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. Renew
+                    now to continue enjoying unlimited features.
                   </p>
                   <Button
                     asChild
                     size="sm"
-                    className={cn('mt-2 bg-yellow-600 hover:bg-yellow-700 text-white', isMobile ? 'h-7 text-xs' : 'h-8')}
+                    className={cn(
+                      'mt-2 bg-yellow-600 hover:bg-yellow-700 text-white',
+                      isMobile ? 'h-7 text-xs' : 'h-8',
+                    )}
                   >
                     <Link href="/pricing">Renew Pro Access</Link>
                   </Button>
@@ -661,17 +709,19 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             )}
 
             {/* Show message if no billing history */}
-            {(!paymentHistory || paymentHistory.length === 0) && 
-             (!orders?.result?.items || orders.result.items.length === 0) && (
-              <div
-                className={cn(
-                  'border rounded-lg text-center bg-muted/20 flex items-center justify-center',
-                  isMobile ? 'p-4 h-16' : 'p-6 h-20',
-                )}
-              >
-                <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No billing history yet</p>
-              </div>
-            )}
+            {(!paymentHistory || paymentHistory.length === 0) &&
+              (!orders?.result?.items || orders.result.items.length === 0) && (
+                <div
+                  className={cn(
+                    'border rounded-lg text-center bg-muted/20 flex items-center justify-center',
+                    isMobile ? 'p-4 h-16' : 'p-6 h-20',
+                  )}
+                >
+                  <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
+                    No billing history yet
+                  </p>
+                </div>
+              )}
           </div>
         )}
       </div>

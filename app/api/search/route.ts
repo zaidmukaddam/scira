@@ -7,7 +7,6 @@ import {
   getCurrentUser,
   getCustomInstructions,
 } from '@/app/actions';
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import {
   convertToCoreMessages,
   streamText,
@@ -334,10 +333,17 @@ export async function POST(req: Request) {
                 topP: 1,
                 topK: 40,
               }
-            : {
-                temperature: 0,
-              }),
-        maxSteps: 5,
+            : model.includes('scira-qwen-235b')
+              ? {
+                  temperature: 0.7,
+                  topP: 0.8,
+                  minP: 0,
+                  presencePenalty: 0.5,
+                }
+              : {
+                  temperature: 0,
+                }),
+        maxSteps: 3,
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
         system:

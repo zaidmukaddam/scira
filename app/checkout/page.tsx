@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/use-location';
 import { useSession } from '@/lib/auth-client';
 import { useProUserStatus } from '@/hooks/use-user-data';
+import { PRICING } from '@/lib/constants';
 
 const checkoutSchema = z.object({
   customer: z.object({
@@ -61,8 +62,8 @@ export default function CheckoutPage() {
   const onSubmit = async (data: CheckoutFormData) => {
     setIsLoading(true);
     try {
-      const checkoutData = {
-        slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG || 'premium-plan',
+      const { data: checkout, error } = await betterauthClient.dodopayments.checkout({
+        slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG,
         customer: {
           email: data.customer.email,
           name: data.customer.name,
@@ -75,9 +76,7 @@ export default function CheckoutPage() {
           zipcode: data.billing.zipcode,
         },
         referenceId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      };
-
-      const { data: checkout, error } = await betterauthClient.checkout(checkoutData);
+      });
 
       if (error) {
         throw new Error(error.message || 'Checkout failed');
@@ -149,12 +148,15 @@ export default function CheckoutPage() {
           </p>
           <div className="mt-4 space-y-2">
             <div className="inline-flex items-center bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-sm">
-              🇮🇳 One-time payment: ₹1500 for 1 month access
+              🇮🇳 One-time payment: ₹{PRICING.PRO_MONTHLY_INR} for 1 month access
             </div>
             <div className="text-xs text-muted-foreground text-center space-y-1">
               <p>GST and tax details will be calculated and shown during checkout</p>
               <p>
-                Prefer a subscription? <Link href="/pricing" className="underline hover:text-foreground">Choose monthly billing instead</Link>
+                Prefer a subscription?{' '}
+                <Link href="/pricing" className="underline hover:text-foreground">
+                  Choose monthly billing instead
+                </Link>
               </p>
             </div>
           </div>
@@ -166,9 +168,7 @@ export default function CheckoutPage() {
         <Card>
           <CardHeader>
             <CardTitle>Billing Information</CardTitle>
-            <CardDescription>
-              Please provide your details to complete the checkout process
-            </CardDescription>
+            <CardDescription>Please provide your details to complete the checkout process</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -315,12 +315,12 @@ export default function CheckoutPage() {
               <CardTitle>📄 Tax & Invoice Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>GST and applicable taxes will be calculated automatically during checkout</li>
-                    <li>Tax breakdown will be clearly displayed before final payment confirmation</li>
-                    <li>A detailed invoice with all charges and tax details will be sent to your email</li>
-                    <li>Invoice will include GST registration details as per Indian tax regulations</li>
-                  </ul>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>GST and applicable taxes will be calculated automatically during checkout</li>
+                <li>Tax breakdown will be clearly displayed before final payment confirmation</li>
+                <li>A detailed invoice with all charges and tax details will be sent to your email</li>
+                <li>Invoice will include GST registration details as per Indian tax regulations</li>
+              </ul>
             </CardContent>
           </Card>
         </div>
@@ -330,9 +330,9 @@ export default function CheckoutPage() {
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-6 py-4 inline-block">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               🔒 Secure checkout powered by{' '}
-              <Link 
-                href="https://dodopayments.com" 
-                target="_blank" 
+              <Link
+                href="https://dodopayments.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-foreground transition-colors"
               >
@@ -344,4 +344,4 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
-} 
+}

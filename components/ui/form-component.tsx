@@ -151,6 +151,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 'bg-background text-foreground',
                 'hover:bg-accent transition-colors',
                 'focus:!outline-none focus:!ring-0',
+                'shadow-none',
                 className,
               )}
             >
@@ -896,7 +897,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>{isExtreme ? 'extreme mode on' : 'Switch to extreme mode'}</p>
+            <p>{isExtreme ? 'Extreme Search mode on' : 'Switch to Extreme Search mode'}</p>
           </TooltipContent>
         </Tooltip>
       </div>

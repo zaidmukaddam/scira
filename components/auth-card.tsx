@@ -3,28 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signIn } from '@/lib/auth-client';
-
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 type AuthProvider = 'github' | 'google' | 'twitter';
 
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
-
-interface SignInButtonProps {
-  title: string;
-  provider: AuthProvider;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  callbackURL: string;
-  icon: React.ReactNode;
-}
-
-interface AuthCardProps {
-  title: string;
-  description: string;
-  mode?: 'sign-in' | 'sign-up';
-}
 
 /**
  * Authentication provider icons
@@ -56,13 +40,27 @@ const AuthIcons = {
   ),
 };
 
+interface SignInButtonProps {
+  title: string;
+  provider: AuthProvider;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  callbackURL: string;
+  icon: React.ReactNode;
+}
+
+interface AuthCardProps {
+  title: string;
+  description: string;
+  mode?: 'sign-in' | 'sign-up';
+}
+
 /**
  * Button component for social authentication providers
  */
 const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => (
-  <Button
-    variant="outline"
-    className="w-full py-2 gap-2 text-sm h-10"
+  <button
+    className="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
     disabled={loading}
     onClick={async () => {
       await signIn.social(
@@ -78,9 +76,11 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon 
       );
     }}
   >
-    {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : icon}
-    <span>{title}</span>
-  </Button>
+    <div className="w-5 h-5 flex items-center justify-center">
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
+    </div>
+    <span className="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with {title}</span>
+  </button>
 );
 
 /**
@@ -92,19 +92,21 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const [twitterLoading, setTwitterLoading] = useState(false);
 
   return (
-    <div className="max-w-sm w-full">
-      <div className="px-4 py-6">
-        <h2 className="text-lg mb-1">{title}</h2>
-        <p className="text-xs text-muted-foreground mb-6">{description}</p>
+    <div className="w-full max-w-[380px] mx-auto">
+      <div className="space-y-6">
+        <div className="text-center space-y-3">
+          <h1 className="text-2xl font-medium">{title}</h1>
+          <p className="text-sm text-muted-foreground/80">{description}</p>
+        </div>
 
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2">
           <SignInButton
             title="GitHub"
             provider="github"
             loading={githubLoading}
             setLoading={setGithubLoading}
             callbackURL="/"
-            icon={<AuthIcons.Github className="w-3.5 h-3.5" />}
+            icon={<AuthIcons.Github className="w-4 h-4" />}
           />
           <SignInButton
             title="Google"
@@ -112,49 +114,42 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
             loading={googleLoading}
             setLoading={setGoogleLoading}
             callbackURL="/"
-            icon={<AuthIcons.Google className="w-3.5 h-3.5" />}
+            icon={<AuthIcons.Google className="w-4 h-4" />}
           />
           <SignInButton
-            title="X (Twitter)"
+            title="X"
             provider="twitter"
             loading={twitterLoading}
             setLoading={setTwitterLoading}
             callbackURL="/"
-            icon={<AuthIcons.Twitter className="w-3.5 h-3.5" />}
+            icon={<AuthIcons.Twitter className="w-4 h-4" />}
           />
         </div>
 
-        <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-6">
-          By continuing, you agree to our{' '}
-          <Link
-            href="/terms"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link
-            href="/privacy-policy"
-            className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
+        <div className="pt-6 space-y-4">
+          <p className="text-[11px] text-center text-muted-foreground/60 leading-relaxed">
+            By continuing, you agree to our{' '}
+            <Link href="/terms" className="hover:text-muted-foreground underline-offset-2 underline">
+              Terms
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy-policy" className="hover:text-muted-foreground underline-offset-2 underline">
+              Privacy Policy
+            </Link>
+          </p>
 
-        <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-center text-muted-foreground">
             {mode === 'sign-in' ? (
               <>
-                Don&apos;t have an account?{' '}
-                <Link href="/sign-up" className="text-black dark:text-white hover:underline">
-                  Sign up
+                New to Scira?{' '}
+                <Link href="/sign-up" className="text-foreground font-medium hover:underline underline-offset-4">
+                  Create account
                 </Link>
               </>
             ) : (
               <>
                 Already have an account?{' '}
-                <Link href="/sign-in" className="text-black dark:text-white hover:underline">
+                <Link href="/sign-in" className="text-foreground font-medium hover:underline underline-offset-4">
                   Sign in
                 </Link>
               </>

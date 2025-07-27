@@ -11,8 +11,8 @@ const middleware = extractReasoningMiddleware({
   tagName: 'think',
 });
 
-const fireworks = createOpenAI({
-  baseURL: 'https://router.huggingface.co/fireworks-ai/inference/v1',
+const huggingface = createOpenAI({
+  baseURL: 'https://router.huggingface.co/v1',
   apiKey: process.env.HF_TOKEN,
 });
 
@@ -37,11 +37,15 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-qwen-30b': wrapLanguageModel({
-      model: fireworks('accounts/fireworks/models/qwen3-30b-a3b'),
+      model: huggingface('Qwen/Qwen3-30B-A3B:fireworks-ai'),
+      middleware,
+    }),
+    'scira-qwen-235b': wrapLanguageModel({
+      model: huggingface('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
       middleware,
     }),
     'scira-deepseek-v3': wrapLanguageModel({
-      model: fireworks('accounts/fireworks/models/deepseek-v3-0324'),
+      model: huggingface('deepseek-ai/DeepSeek-V3-0324:fireworks-ai'),
       middleware,
     }),
     'scira-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
@@ -244,6 +248,20 @@ export const models = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 65000,
+  },
+  {
+    value: 'scira-qwen-235b',
+    label: 'Qwen 3 235B',
+    description: "Alibaba's advanced reasoning LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 200000,
   },
   {
     value: 'scira-kimi-k2',

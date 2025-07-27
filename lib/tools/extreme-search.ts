@@ -73,7 +73,7 @@ const searchWeb = async (query: string, category?: SearchCategory) => {
   try {
     const { results } = await exa.searchAndContents(query, {
       numResults: 5,
-      type: 'keyword',
+      type: 'hybrid',
       ...(category
         ? {
             category: category as SearchCategory,
@@ -415,7 +415,7 @@ ${JSON.stringify(plan.plan)}
 
   console.log('Tool results:', toolResults);
   console.log('Charts:', charts);
-  console.log('Sources:', allSources[2]);
+  console.log('Source 2:', allSources[2]);
 
   return {
     text,

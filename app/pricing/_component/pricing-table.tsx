@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { SEARCH_LIMITS, PRICING, CURRENCIES } from '@/lib/constants';
+import { SEARCH_LIMITS, PRICING } from '@/lib/constants';
 import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
@@ -126,7 +126,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       const proSource = getProAccessSource();
       if (proSource === 'dodo') {
         // Use DodoPayments portal for DodoPayments users
-        await betterauthClient.customer.portal();
+        await betterauthClient.dodopayments.customer.portal();
       } else {
         // Use Polar portal for Polar subscribers
         await authClient.customer.portal();
@@ -158,7 +158,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     const hasPolarSub = isCurrentPlan(STARTER_TIER);
     // Check DodoPayments Pro status
     const hasDodoProAccess = user?.isProUser && user?.dodoProStatus?.isProUser;
-    
+
     return hasPolarSub || hasDodoProAccess;
   };
 
@@ -242,7 +242,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                           ₹
                           {discountConfig.finalPrice
                             ? (discountConfig.finalPrice * 100).toFixed(0) // Convert USD to INR approximation
-                            : PRICING.PRO_MONTHLY_INR - (PRICING.PRO_MONTHLY_INR * (discountConfig.percentage || 0)) / 100}
+                            : PRICING.PRO_MONTHLY_INR -
+                              (PRICING.PRO_MONTHLY_INR * (discountConfig.percentage || 0)) / 100}
                           /month
                           <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
                         </span>
@@ -400,7 +401,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
                   Everything you need for unlimited usage
                 </p>
-                
+
                 {/* Pricing Options for Indian Users */}
                 {!location.loading && location.isIndia ? (
                   <div className="space-y-4 mb-6">
@@ -531,7 +532,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   </Button>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground text-center font-medium">Choose your preferred payment method:</p>
+                    <p className="text-sm text-muted-foreground text-center font-medium">
+                      Choose your preferred payment method:
+                    </p>
                     <div className="grid grid-cols-1 gap-2">
                       <Button
                         className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
@@ -570,6 +573,35 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   )}
                 </Button>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Student Discount */}
+        <div className="max-w-2xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 mt-12">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-black/10 dark:bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="h-5 w-5 text-black dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Student Discount Available</h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                Students can get the Pro plan for just $5/month (₹500/month). Email zaid@scira.ai with your student
+                verification and a brief description of how you use Scira for your studies.
+              </p>
+              <a
+                href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
+                className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-sm font-medium transition-colors"
+              >
+                Apply for Student Discount
+              </a>
             </div>
           </div>
         </div>

@@ -51,7 +51,7 @@ export async function getCurrentUser() {
       // Not cached, get comprehensive pro status (includes DodoPayments)
       const proStatus = await getProStatusWithSource();
       isProUser = proStatus.isProUser;
-      
+
       // Cache the comprehensive status
       setProUserStatus(user.id, isProUser);
 
@@ -910,6 +910,7 @@ const groupInstructions = {
     - Cross-referencing and validation
   - ⚠️ MANDATORY: You MUST immediately run the tool first as soon as the user asks for it and then write the response with citations!
   - ⚠️ MANDATORY: You MUST NOT write any analysis before running the tool!
+  - ⚠️ MANDATORY: You should only run the tool 'once and only once' and then write the response with citations!
 
   ### Response Guidelines:
   - You MUST immediately run the tool first as soon as the user asks for it and then write the response with citations!
@@ -1436,12 +1437,12 @@ export async function getDodoPaymentsProStatus() {
     // Get comprehensive status with expiration info
     const proStatus = await getProStatusWithSource();
     const hasPayments = await hasSuccessfulDodoPayment({ userId: user.id });
-    
-    return { 
-      isProUser: proStatus.source === 'dodo' ? proStatus.isProUser : false, 
+
+    return {
+      isProUser: proStatus.source === 'dodo' ? proStatus.isProUser : false,
       hasPayments,
       expiresAt: proStatus.expiresAt,
-      source: proStatus.source
+      source: proStatus.source,
     };
   } catch (error) {
     console.error('Error getting DodoPayments pro status:', error);
