@@ -66,11 +66,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
   const [transcriptSearch, setTranscriptSearch] = useState('');
   const [chapterSearch, setChapterSearch] = useState('');
 
-  if (!video) return null;
-
-  // Parse captions properly
-  const parsedCaptions = parseCaptions(video.captions);
-
   // Format timestamp for accessibility and URL generation
   const formatTimestamp = (timestamp: string) => {
     console.log(`🕐 Parsing timestamp: "${timestamp}"`);
@@ -84,6 +79,32 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     console.warn(`⚠️ Failed to parse timestamp: "${timestamp}"`);
     return { time: '', description: timestamp };
   };
+
+  // Parse captions properly
+  const parsedCaptions = parseCaptions(video?.captions);
+
+  // Filter transcript based on search
+  const filteredTranscript = useMemo(() => {
+    if (!parsedCaptions || !transcriptSearch.trim()) return parsedCaptions;
+
+    const searchTerm = transcriptSearch.toLowerCase();
+    const lines = parsedCaptions.split('\n');
+
+    return lines.filter((line) => line.toLowerCase().includes(searchTerm)).join('\n');
+  }, [parsedCaptions, transcriptSearch]);
+
+  // Filter chapters based on search (both time and content)
+  const filteredChapters = useMemo(() => {
+    if (!video?.timestamps || !chapterSearch.trim()) return video?.timestamps || [];
+
+    const searchTerm = chapterSearch.toLowerCase();
+    return video.timestamps.filter((timestamp: string) => {
+      const { time, description } = formatTimestamp(timestamp);
+      return time.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm);
+    });
+  }, [video?.timestamps, chapterSearch]);
+
+  if (!video) return null;
 
   // Convert timestamp to seconds for YouTube URL
   const timestampToSeconds = (time: string): number => {
@@ -124,27 +145,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     }
     return likes;
   };
-
-  // Filter transcript based on search
-  const filteredTranscript = useMemo(() => {
-    if (!parsedCaptions || !transcriptSearch.trim()) return parsedCaptions;
-
-    const searchTerm = transcriptSearch.toLowerCase();
-    const lines = parsedCaptions.split('\n');
-
-    return lines.filter((line) => line.toLowerCase().includes(searchTerm)).join('\n');
-  }, [parsedCaptions, transcriptSearch]);
-
-  // Filter chapters based on search (both time and content)
-  const filteredChapters = useMemo(() => {
-    if (!video.timestamps || !chapterSearch.trim()) return video.timestamps || [];
-
-    const searchTerm = chapterSearch.toLowerCase();
-    return video.timestamps.filter((timestamp: string) => {
-      const { time, description } = formatTimestamp(timestamp);
-      return time.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm);
-    });
-  }, [video.timestamps, chapterSearch]);
 
   return (
     <div
@@ -373,7 +373,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                           .filter(Boolean)}
                         {chapterSearch.trim() && filteredChapters.length === 0 && (
                           <div className="text-center py-8 text-neutral-500">
-                            No chapters found for "{chapterSearch}"
+                            No chapters found for &quot;{chapterSearch}&quot;
                           </div>
                         )}
                       </div>
@@ -454,7 +454,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                             </div>
                           ) : (
                             <div className="text-center py-8 text-neutral-500">
-                              No matches found for "{transcriptSearch}"
+                              No matches found for &quot;{transcriptSearch}&quot;
                             </div>
                           )
                         ) : (
