@@ -22,6 +22,7 @@ interface VideoResult {
   views?: string;
   likes?: string;
   summary?: string;
+  publishedDate?: string;
 }
 
 export const youtubeSearchTool = tool({
@@ -124,6 +125,7 @@ export const youtubeSearchTool = tool({
               const baseResult: VideoResult = {
                 videoId,
                 url: result.url,
+                publishedDate: result.publishedDate,
               };
 
               try {

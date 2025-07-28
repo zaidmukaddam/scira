@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { User2, YoutubeIcon, PlayIcon, Eye, ThumbsUp } from 'lucide-react';
+import { User2, YoutubeIcon, PlayIcon, Eye, ThumbsUp, Search, Clock, FileText, X, Calendar } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { SearchLoadingState } from './tool-invocation-list-view';
 
 // Helper function to parse captions that might be JSON-encoded
@@ -42,6 +45,7 @@ interface VideoResult {
   views?: string;
   likes?: string;
   summary?: string;
+  publishedDate?: string;
 }
 
 interface YouTubeSearchResponse {
@@ -59,7 +63,8 @@ interface YouTubeSearchResultsProps {
 }
 
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [transcriptSearch, setTranscriptSearch] = useState('');
+  const [chapterSearch, setChapterSearch] = useState('');
 
   if (!video) return null;
 
@@ -120,9 +125,30 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     return likes;
   };
 
+  // Filter transcript based on search
+  const filteredTranscript = useMemo(() => {
+    if (!parsedCaptions || !transcriptSearch.trim()) return parsedCaptions;
+
+    const searchTerm = transcriptSearch.toLowerCase();
+    const lines = parsedCaptions.split('\n');
+
+    return lines.filter((line) => line.toLowerCase().includes(searchTerm)).join('\n');
+  }, [parsedCaptions, transcriptSearch]);
+
+  // Filter chapters based on search (both time and content)
+  const filteredChapters = useMemo(() => {
+    if (!video.timestamps || !chapterSearch.trim()) return video.timestamps || [];
+
+    const searchTerm = chapterSearch.toLowerCase();
+    return video.timestamps.filter((timestamp: string) => {
+      const { time, description } = formatTimestamp(timestamp);
+      return time.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm);
+    });
+  }, [video.timestamps, chapterSearch]);
+
   return (
     <div
-      className="w-[280px] shrink-0 rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200"
+      className="w-[280px] h-[300px] rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200 relative mr-4"
       onTouchStart={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -158,7 +184,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
       </Link>
 
       {/* Video Info */}
-      <div className="p-3 flex flex-col gap-2">
+      <div className="p-3 pb-16">
         <div>
           <Link
             href={video.url}
@@ -175,7 +201,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
               href={video.details.author_url || video.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 group mt-1.5 w-fit"
+              className="flex items-center gap-2 group mt-2 w-fit"
               aria-label={`Channel: ${video.details.author_name}`}
             >
               <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center shrink-0">
@@ -187,100 +213,259 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             </Link>
           )}
 
+          {/* Published Date */}
+          {video.publishedDate && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <Calendar className="h-3 w-3 text-neutral-400" />
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                {new Date(video.publishedDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+          )}
+
           {/* Stats */}
           {(video.views || video.likes) && (
-            <div className="flex items-center gap-3 mt-1.5">
+            <div className="flex items-center gap-3 mt-2">
               {video.views && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <Eye className="h-3 w-3 text-neutral-400" />
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">{formatViewCount(video.views)}</span>
                 </div>
               )}
               {video.likes && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <ThumbsUp className="h-3 w-3 text-neutral-400" />
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">{formatLikeCount(video.likes)}</span>
                 </div>
               )}
             </div>
           )}
+
+          {/* Summary */}
+          {video.summary && (
+            <div className="text-xs bg-neutral-50 dark:bg-neutral-800 p-2 rounded border dark:border-neutral-700 mt-3">
+              <div className="flex items-baseline gap-2 mb-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-0.5"></div>
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">Summary</span>
+              </div>
+              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">{video.summary}</p>
+            </div>
+          )}
         </div>
 
-        {/* Expandable Content */}
-        {((video.timestamps && video.timestamps?.length > 0) || parsedCaptions || video.summary) && (
-          <div className="mt-1">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="details" className="border-none">
-                <AccordionTrigger className="py-1 hover:no-underline" onClick={() => setIsExpanded(!isExpanded)}>
-                  <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-400">
-                    {isExpanded ? 'Hide details' : 'Show details'}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  {/* Summary */}
-                  {video.summary && (
-                    <div className="mb-3 space-y-1.5">
-                      <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Summary</h4>
-                      <div className="text-xs dark:text-neutral-400 text-neutral-600 rounded bg-neutral-50 dark:bg-neutral-800 p-2">
-                        <p className="whitespace-pre-wrap">{video.summary}</p>
+        {/* Action Buttons */}
+        {((video.timestamps && video.timestamps?.length > 0) || parsedCaptions) && (
+          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+            {/* Timestamps Dialog */}
+            {video.timestamps && video.timestamps.length > 0 && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1.5 border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600"
+                  >
+                    <Clock className="h-3 w-3" />
+                    Chapters ({video.timestamps.length})
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh]">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-lg">
+                      <Clock className="h-4 w-4 text-red-500" />
+                      Video Chapters
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                        <Input
+                          value={chapterSearch}
+                          onChange={(e) => setChapterSearch(e.target.value)}
+                          placeholder="Search chapters by time or content..."
+                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600"
+                        />
                       </div>
+                      {chapterSearch && (
+                        <Button onClick={() => setChapterSearch('')} variant="outline" size="sm" className="px-3">
+                          Clear
+                        </Button>
+                      )}
                     </div>
-                  )}
 
-                  {/* Timestamps */}
-                  {video.timestamps && video.timestamps.length > 0 && (
-                    <div className="mb-3 space-y-1.5">
-                      <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Key Moments</h4>
-                      <ScrollArea className="h-[120px]">
-                        <div className="pr-4">
-                          {video.timestamps
-                            .map((timestamp: string, i: number) => {
-                              console.log(`🎬 Processing timestamp ${i}: "${timestamp}"`);
-                              const { time, description } = formatTimestamp(timestamp);
-                              const seconds = timestampToSeconds(time);
-
-                              // Skip invalid timestamps
-                              if (!time || seconds === 0) {
-                                console.warn(`⚠️ Skipping invalid timestamp: "${timestamp}"`);
-                                return null;
-                              }
-
-                              return (
-                                <Link
-                                  key={i}
-                                  href={`${video.url}&t=${seconds}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-start gap-2 py-1 px-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                                  title={`Jump to ${time}: ${description}`}
-                                >
-                                  <span className="text-xs font-medium text-red-500 whitespace-nowrap">{time}</span>
-                                  <span className="text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2">
-                                    {description}
-                                  </span>
-                                </Link>
-                              );
-                            })
-                            .filter(Boolean)}
-                        </div>
-                      </ScrollArea>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">
+                      {chapterSearch.trim()
+                        ? `${filteredChapters.length} of ${video.timestamps?.length || 0} chapters found`
+                        : 'Search by time (e.g., "1:30") or content to find specific moments'}
                     </div>
-                  )}
 
-                  {/* Captions/Transcript */}
-                  {parsedCaptions && (
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-semibold dark:text-neutral-300 text-neutral-700">Transcript</h4>
-                      <ScrollArea className="h-[120px]">
-                        <div className="text-xs dark:text-neutral-400 text-neutral-600 rounded bg-neutral-50 dark:bg-neutral-800 p-2">
-                          <p className="whitespace-pre-wrap">{parsedCaptions}</p>
-                        </div>
-                      </ScrollArea>
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="space-y-2">
+                        {(chapterSearch.trim() ? filteredChapters : video.timestamps || [])
+                          .map((timestamp: string, i: number) => {
+                            const { time, description } = formatTimestamp(timestamp);
+                            const seconds = timestampToSeconds(time);
+
+                            if (!time || seconds === 0) return null;
+
+                            return (
+                              <Link
+                                key={i}
+                                href={`${video.url}&t=${seconds}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-start gap-4 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
+                              >
+                                <div className="flex items-center justify-center min-w-[60px] h-8 bg-neutral-100 dark:bg-neutral-800 rounded font-mono text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                                  {chapterSearch.trim() && time.toLowerCase().includes(chapterSearch.toLowerCase())
+                                    ? (() => {
+                                        const searchTerm = chapterSearch.toLowerCase();
+                                        const lowerTime = time.toLowerCase();
+                                        const index = lowerTime.indexOf(searchTerm);
+
+                                        if (index !== -1) {
+                                          return (
+                                            <>
+                                              {time.substring(0, index)}
+                                              <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
+                                                {time.substring(index, index + searchTerm.length)}
+                                              </mark>
+                                              {time.substring(index + searchTerm.length)}
+                                            </>
+                                          );
+                                        }
+                                        return time;
+                                      })()
+                                    : time}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed group-hover:text-neutral-900 dark:group-hover:text-neutral-100">
+                                    {chapterSearch.trim()
+                                      ? (() => {
+                                          const searchTerm = chapterSearch.toLowerCase();
+                                          const lowerDescription = description.toLowerCase();
+                                          const index = lowerDescription.indexOf(searchTerm);
+
+                                          if (index !== -1) {
+                                            return (
+                                              <>
+                                                {description.substring(0, index)}
+                                                <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
+                                                  {description.substring(index, index + searchTerm.length)}
+                                                </mark>
+                                                {description.substring(index + searchTerm.length)}
+                                              </>
+                                            );
+                                          }
+                                          return description;
+                                        })()
+                                      : description}
+                                  </p>
+                                </div>
+                              </Link>
+                            );
+                          })
+                          .filter(Boolean)}
+                        {chapterSearch.trim() && filteredChapters.length === 0 && (
+                          <div className="text-center py-8 text-neutral-500">
+                            No chapters found for "{chapterSearch}"
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {/* Transcript Dialog */}
+            {parsedCaptions && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1.5 border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Transcript
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh]">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-lg">
+                      <FileText className="h-4 w-4 text-red-500" />
+                      Video Transcript
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                        <Input
+                          value={transcriptSearch}
+                          onChange={(e) => setTranscriptSearch(e.target.value)}
+                          placeholder="Search transcript..."
+                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600 focus:!outline-0 focus:!ring-0"
+                        />
+                      </div>
+                      {transcriptSearch && (
+                        <Button onClick={() => setTranscriptSearch('')} variant="outline" size="sm" className="px-3">
+                          Clear
+                        </Button>
+                      )}
                     </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+
+                    <ScrollArea className="h-[400px]">
+                      <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 text-sm leading-relaxed">
+                        {transcriptSearch.trim() ? (
+                          filteredTranscript ? (
+                            <div className="space-y-3">
+                              {filteredTranscript.split('\n').map((line, idx) => {
+                                if (!line.trim()) return null;
+                                const searchTerm = transcriptSearch.toLowerCase();
+                                const lowerLine = line.toLowerCase();
+                                const index = lowerLine.indexOf(searchTerm);
+
+                                if (index === -1) return null;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="p-2 bg-white dark:bg-neutral-800 rounded border dark:border-neutral-700"
+                                  >
+                                    <span className="text-neutral-600 dark:text-neutral-400">
+                                      {line.substring(0, index)}
+                                    </span>
+                                    <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
+                                      {line.substring(index, index + searchTerm.length)}
+                                    </mark>
+                                    <span className="text-neutral-600 dark:text-neutral-400">
+                                      {line.substring(index + searchTerm.length)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-neutral-500">
+                              No matches found for "{transcriptSearch}"
+                            </div>
+                          )
+                        ) : (
+                          <p className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300">{parsedCaptions}</p>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         )}
       </div>
@@ -418,15 +603,17 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
           <AccordionContent>
             <div className="relative">
               <div className="w-full overflow-x-scroll">
-                <div className="flex gap-3 p-4">
+                <div className="flex pl-4">
                   {filteredVideos.map((video, index) => (
-                    <MemoizedYouTubeCard key={video.videoId} video={video} index={index} />
+                    <div key={video.videoId} className="last:mr-12">
+                      <MemoizedYouTubeCard video={video} index={index} />
+                    </div>
                   ))}
                 </div>
+                {filteredVideos.length > 3 && (
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
+                )}
               </div>
-              {filteredVideos.length > 3 && (
-                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
-              )}
             </div>
           </AccordionContent>
         </AccordionItem>
