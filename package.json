@@ -143,19 +143,8 @@
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "@vercel/speed-insights",
-      "core-js",
-      "esbuild",
-      "sharp",
-      "sqlite3",
-      "unrs-resolver"
-    ]
-  },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "bun@1.1.45"
 }

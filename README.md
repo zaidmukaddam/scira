@@ -190,11 +190,11 @@ To run the application locally without Docker:
 2. Copy `.env.example` to `.env.local` and fill in your API keys
 3. Install dependencies:
    ```bash
-   pnpm install
+   bun install
    ```
 4. Start the development server:
    ```bash
-   pnpm dev
+   bun dev
    ```
 5. Open `http://localhost:3000` in your browser
 
