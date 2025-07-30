@@ -10,15 +10,13 @@ export default function SuccessPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Initial burst
     confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
     });
 
-    // Side cannons
-    const end = Date.now() + 3 * 1000; // 3 seconds
+    const end = Date.now() + 3 * 1000;
     const colors = ['hsl(var(--foreground))', 'hsl(var(--muted-foreground))', 'hsl(var(--border))'];
 
     const frame = () => {
@@ -44,7 +42,6 @@ export default function SuccessPage() {
       requestAnimationFrame(frame);
     };
 
-    // Delay the side cannons slightly
     setTimeout(() => {
       frame();
     }, 500);
@@ -53,16 +50,13 @@ export default function SuccessPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="text-center max-w-md">
-        {/* Success Icon */}
         <div className="mx-auto mb-8 w-12 h-12 rounded-full bg-muted flex items-center justify-center">
           <Check className="h-5 w-5 text-muted-foreground" />
         </div>
 
-        {/* Content */}
-        <h1 className="text-2xl font-light text-foreground mb-4 tracking-tight">Welcome to Scira Pro</h1>
+        <h1 className="text-2xl font-light text-foreground mb-4 tracking-tight">Welcome to Atlas Pro</h1>
         <p className="text-muted-foreground mb-8">Your subscription is active. Start unlimited searching.</p>
 
-        {/* Action */}
         <Button
           onClick={() => router.push('/')}
           className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-6 text-sm font-normal"

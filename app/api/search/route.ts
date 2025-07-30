@@ -1,4 +1,3 @@
-// /app/api/chat/route.ts
 import {
   generateTitleFromUserMessage,
   getGroupConfig,
@@ -18,7 +17,7 @@ import {
   generateObject,
 } from 'ai';
 import {
-  scira,
+  atlas,
   getMaxOutputTokens,
   requiresAuthentication,
   requiresProSubscription,
@@ -44,7 +43,6 @@ import { auth } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
-// Import all tools from the organized tool files
 import {
   stockChartTool,
   currencyConverterTool,
@@ -129,13 +127,11 @@ export async function POST(req: Request) {
   }
   let customInstructions: CustomInstructions | null = null;
 
-  // Check if model requires authentication (fast check)
-  const authRequiredModels = ['scira-anthropic', 'scira-google'];
+  const authRequiredModels = ['atlas-anthropic', 'atlas-google'];
   if (authRequiredModels.includes(model) && !user) {
     return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
   }
 
-  // For authenticated users, do critical checks in parallel
   let criticalChecksPromise: Promise<{
     canProceed: boolean;
     error?: any;
@@ -147,12 +143,10 @@ export async function POST(req: Request) {
 
     const isProUser = user.isProUser;
 
-    // Check if model requires Pro subscription
     if (requiresProSubscription(model) && !isProUser) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
 
-    // For non-pro users, check usage limits upfront
     if (!isProUser) {
       const criticalChecksStartTime = Date.now();
 
@@ -168,7 +162,6 @@ export async function POST(req: Request) {
           return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
         }
 
-        // Check if user should bypass limits for free unlimited models
         const shouldBypassLimits = shouldBypassRateLimits(model, user);
 
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
@@ -191,7 +184,6 @@ export async function POST(req: Request) {
         return new ChatSDKError('bad_request:api', 'Failed to verify user access').toResponse();
       }
     } else {
-      // Pro users skip all usage limit checks
       const criticalChecksStartTime = Date.now();
       console.log(
         `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
@@ -206,7 +198,6 @@ export async function POST(req: Request) {
       });
     }
   } else {
-    // For anonymous users, check if model requires authentication
     if (requiresAuthentication(model)) {
       return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
     }
@@ -221,17 +212,14 @@ export async function POST(req: Request) {
     });
   }
 
-  // Get configuration in parallel with critical checks
   const configStartTime = Date.now();
   const configPromise = getGroupConfig(group).then((config) => {
     console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
     return config;
   });
 
-  // Start streaming immediately while background operations continue
   const stream = createDataStream({
     execute: async (dataStream) => {
-      // Wait for critical checks to complete
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
       console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
@@ -240,19 +228,16 @@ export async function POST(req: Request) {
         throw criticalResult.error;
       }
 
-      // Get configuration
       const configWaitStartTime = Date.now();
       const { tools: activeTools, instructions } = await configPromise;
       console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
 
-      // Critical: Ensure chat exists before streaming starts
       if (user) {
         const chatCheckStartTime = Date.now();
         const chat = await getChatById({ id });
         console.log(`⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`);
 
         if (!chat) {
-          // Create chat without title first - title will be generated in onFinish
           const chatCreateStartTime = Date.now();
           await saveChat({
             id,
@@ -267,7 +252,6 @@ export async function POST(req: Request) {
           }
         }
 
-        // Save user message and create stream ID in background (non-blocking)
         const backgroundOperations = (async () => {
           try {
             const backgroundStartTime = Date.now();
@@ -293,11 +277,9 @@ export async function POST(req: Request) {
             console.log('--------------------------------');
           } catch (error) {
             console.error('Error in background message operations:', error);
-            // These are non-critical errors that shouldn't stop the stream
           }
         })();
 
-        // Start background operations but don't wait for them
         backgroundOperations.catch((error) => {
           console.error('Background operations failed:', error);
         });
@@ -310,7 +292,6 @@ export async function POST(req: Request) {
       console.log('Group: ', group);
       console.log('Timezone: ', timezone);
 
-      // Calculate time to reach streamText
       const preStreamTime = Date.now();
       const setupTime = (preStreamTime - requestStartTime) / 1000;
       console.log('--------------------------------');
@@ -318,22 +299,22 @@ export async function POST(req: Request) {
       console.log('--------------------------------');
 
       const result = streamText({
-        model: scira.languageModel(model),
+        model: atlas.languageModel(model),
         messages: convertToCoreMessages(messages),
-        ...(model.includes('scira-qwen-32b')
+        ...(model.includes('atlas-qwen-32b')
           ? {
               temperature: 0.6,
               topP: 0.95,
               topK: 20,
               minP: 0,
             }
-          : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
+          : model.includes('atlas-deepseek-v3') || model.includes('atlas-qwen-30b')
             ? {
                 temperature: 0.6,
                 topP: 1,
                 topK: 40,
               }
-            : model.includes('scira-qwen-235b')
+            : model.includes('atlas-qwen-235b')
               ? {
                   temperature: 0.7,
                   topP: 0.8,
@@ -355,14 +336,14 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model === 'scira-o4-mini' || model === 'scira-o3'
+            ...(model === 'atlas-o4-mini' || model === 'atlas-o3'
               ? {
                   strictSchemas: true,
                   reasoningSummary: 'detailed',
                   serviceTier: 'flex',
                 }
               : {}),
-            ...(model === 'scira-4.1-mini'
+            ...(model === 'atlas-4.1-mini'
               ? {
                   parallelToolCalls: false,
                   strictSchemas: true,
@@ -370,7 +351,7 @@ export async function POST(req: Request) {
               : {}),
           },
           xai: {
-            ...(model === 'scira-default'
+            ...(model === 'atlas-default'
               ? {
                   reasoningEffort: 'low',
                 }
@@ -378,14 +359,12 @@ export async function POST(req: Request) {
           },
         },
         tools: {
-          // Stock & Financial Tools
           stock_chart: stockChartTool,
           currency_converter: currencyConverterTool,
           coin_data: coinDataTool,
           coin_data_by_contract: coinDataByContractTool,
           coin_ohlc: coinOhlcTool,
 
-          // Search & Content Tools
           x_search: xSearchTool,
           web_search: webSearchTool(dataStream),
           academic_search: academicSearchTool,
@@ -393,17 +372,14 @@ export async function POST(req: Request) {
           reddit_search: redditSearchTool,
           retrieve: retrieveTool,
 
-          // Media & Entertainment
           movie_or_tv_search: movieTvSearchTool,
           trending_movies: trendingMoviesTool,
           trending_tv: trendingTvTool,
 
-          // Location & Maps
           find_place_on_map: findPlaceOnMapTool,
           nearby_places_search: nearbyPlacesSearchTool,
           get_weather_data: weatherTool,
 
-          // Utility Tools
           text_translate: textTranslateTool,
           code_interpreter: codeInterpreterTool,
           track_flight: flightTrackerTool,
@@ -427,7 +403,7 @@ export async function POST(req: Request) {
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-4o-mini'),
+            model: atlas.languageModel('atlas-4o-mini'),
             schema: tool.parameters,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -471,9 +447,7 @@ export async function POST(req: Request) {
           console.log('Sources: ', event.sources);
           console.log('Usage: ', event.usage);
 
-          // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {
-            // FIRST: Generate and update title for new conversations (highest priority)
             try {
               const chat = await getChatById({ id });
               if (chat && chat.title === 'New conversation') {
@@ -486,16 +460,12 @@ export async function POST(req: Request) {
                 console.log('Generated title: ', title);
                 console.log('--------------------------------');
 
-                // Update the chat with the generated title
                 await updateChatTitleById({ chatId: id, title });
               }
             } catch (titleError) {
               console.error('Failed to generate or update title:', titleError);
-              // Title generation failure shouldn't break the conversation
             }
 
-            // Track message usage for rate limiting (deletion-proof)
-            // Only track usage for models that are not free unlimited
             try {
               if (!shouldBypassRateLimits(model, user)) {
                 await incrementMessageUsage({ userId: user.id });
@@ -504,10 +474,8 @@ export async function POST(req: Request) {
               console.error('Failed to track message usage:', error);
             }
 
-            // Track extreme search usage if it was used successfully
             if (group === 'extreme') {
               try {
-                // Check if extreme_search tool was actually called
                 const extremeSearchUsed = event.steps?.some((step) =>
                   step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
                 );
@@ -521,7 +489,6 @@ export async function POST(req: Request) {
               }
             }
 
-            // LAST: Save assistant message (after title is generated)
             try {
               const assistantId = getTrailingMessageId({
                 messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
@@ -553,7 +520,6 @@ export async function POST(req: Request) {
             }
           }
 
-          // Calculate and log overall request processing time
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');
@@ -562,7 +528,6 @@ export async function POST(req: Request) {
         },
         onError(event) {
           console.log('Error: ', event.error);
-          // Calculate and log processing time even on error
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');
@@ -649,10 +614,6 @@ export async function GET(request: Request) {
 
   const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
 
-  /*
-   * For when the generation is streaming during SSR
-   * but the resumable stream has concluded at this point.
-   */
   if (!stream) {
     const messages = await getMessagesByChatId({ id: chatId });
     const mostRecentMessage = messages.at(-1);

@@ -4,9 +4,9 @@ import { tavily } from '@tavily/core';
 import { convertToCoreMessages, tool, customProvider, generateText } from 'ai';
 import { z } from 'zod';
 
-const scira = customProvider({
+const atlas = customProvider({
   languageModels: {
-    'scira-default': xai('grok-3-beta'),
+    'atlas-default': xai('grok-3-beta'),
   },
 });
 
@@ -35,9 +35,8 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
   });
 };
 
-// Define separate system prompts for each group
 const groupSystemPrompts = {
-  web: `You are Scira for Raycast, a powerful AI web search assistant.
+  web: `You are Atlas for Raycast, a powerful AI web search assistant.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
@@ -84,17 +83,14 @@ Remember, you are designed to be efficient and helpful in the Raycast environmen
     - Avoid using '$' for dollar currency. Use "USD" instead.`,
 };
 
-// Modify the POST function to use the new handler
 export async function POST(req: Request) {
   const { messages, model, group = 'web' } = await req.json();
 
   console.log('Running with model: ', model.trim());
   console.log('Group: ', group);
 
-  // Get the appropriate system prompt based on the group
   const systemPrompt = groupSystemPrompts[group as keyof typeof groupSystemPrompts];
 
-  // Determine which tools to activate based on the group
   const activeTools =
     group === 'x'
       ? ['x_search' as const]
@@ -103,7 +99,7 @@ export async function POST(req: Request) {
         : ['web_search' as const, 'x_search' as const];
 
   const { text, steps } = await generateText({
-    model: scira.languageModel(model),
+    model: atlas.languageModel(model),
     system: systemPrompt,
     maxSteps: 5,
     messages: convertToCoreMessages(messages),
@@ -150,7 +146,6 @@ export async function POST(req: Request) {
           console.log('Search Depths:', searchDepth);
           console.log('Exclude Domains:', exclude_domains);
 
-          // Execute searches in parallel
           const searchPromises = queries.map(async (query, index) => {
             const data = await tvly.search(query, {
               topic: topics[index] || topics[0] || 'general',

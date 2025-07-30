@@ -5,7 +5,7 @@ import { tavily } from '@tavily/core';
 import Exa from 'exa-js';
 import { generateObject } from 'ai';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
+import { atlas } from '@/ai/providers';
 import { SNAPSHOT_NAME } from '@/lib/constants';
 
 const CURRENCY_SYMBOLS = {
@@ -220,7 +220,7 @@ export const stockChartTool = tool({
           if (!result.title || result.title.trim() === '') {
             try {
               const { object } = await generateObject({
-                model: scira.languageModel('scira-nano'),
+                model: atlas.languageModel('atlas-nano'),
                 prompt: `Complete the following financial report with an appropriate title. The report is about ${
                   group.query
                 } and contains this content: ${result.content.substring(0, 500)}...`,

@@ -34,7 +34,6 @@ config({
   path: '.env.local',
 });
 
-// Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -131,7 +130,6 @@ export const auth = betterAuth({
               try {
                 const data = payload.data;
 
-                // Extract user ID from customer data if available
                 let validUserId = null;
                 if (data.customer?.email) {
                   try {
@@ -151,7 +149,6 @@ export const auth = betterAuth({
                   }
                 }
 
-                // Build payment data
                 const paymentData = {
                   id: data.payment_id,
                   createdAt: new Date(data.created_at),
@@ -177,7 +174,6 @@ export const auth = betterAuth({
                   subscriptionId: data.subscription_id || null,
                   tax: data.tax || null,
                   totalAmount: data.total_amount,
-                  // JSON fields
                   billing: data.billing || null,
                   customer: data.customer || null,
                   disputes: data.disputes || null,
@@ -195,7 +191,6 @@ export const auth = betterAuth({
                   currency: paymentData.currency,
                 });
 
-                // Use Drizzle's onConflictDoUpdate for proper upsert
                 await db
                   .insert(payment)
                   .values(paymentData)
@@ -216,14 +211,12 @@ export const auth = betterAuth({
 
                 console.log('✅ Upserted payment:', data.payment_id);
 
-                // Invalidate user caches when payment status changes
                 if (validUserId) {
                   invalidateUserCaches(validUserId);
                   console.log('🗑️ Invalidated caches for user:', validUserId);
                 }
               } catch (error) {
                 console.error('💥 Error processing payment webhook:', error);
-                // Don't throw - let webhook succeed to avoid retries
               }
             }
           },
@@ -238,7 +231,6 @@ export const auth = betterAuth({
         console.log('🚀 getCustomerCreateParams called for user:', newUser.id);
 
         try {
-          // Look for existing customer by email
           const { result: existingCustomers } = await polarClient.customers.list({
             email: newUser.email,
           });
@@ -251,7 +243,6 @@ export const auth = betterAuth({
             );
             console.log(`🔄 Updating user ID from ${newUser.id} to ${existingCustomer.externalId}`);
 
-            // Update the user's ID in database to match the existing external ID
             await db.update(user).set({ id: existingCustomer.externalId }).where(eq(user.id, newUser.id));
 
             console.log(`✅ Updated user ID to match existing external ID: ${existingCustomer.externalId}`);
@@ -303,10 +294,8 @@ export const auth = betterAuth({
               console.log('📦 Payload data:', JSON.stringify(data, null, 2));
 
               try {
-                // STEP 1: Extract user ID from customer data
                 const userId = data.customer?.externalId;
 
-                // STEP 1.5: Check if user exists to prevent foreign key violations
                 let validUserId = null;
                 if (userId) {
                   try {
@@ -330,7 +319,6 @@ export const auth = betterAuth({
                     customerId: data.customerId,
                   });
                 }
-                // STEP 2: Build subscription data
                 const subscriptionData = {
                   id: data.id,
                   createdAt: new Date(data.createdAt),
@@ -364,7 +352,6 @@ export const auth = betterAuth({
                   amount: subscriptionData.amount,
                 });
 
-                // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
                 await db
                   .insert(subscription)
                   .values(subscriptionData)
@@ -398,7 +385,6 @@ export const auth = betterAuth({
                 console.log('✅ Upserted subscription:', data.id);
               } catch (error) {
                 console.error('💥 Error processing subscription webhook:', error);
-                // Don't throw - let webhook succeed to avoid retries
               }
             }
           },
@@ -407,6 +393,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['https://localhost:3000', 'https://atlas.ai', 'https://www.atlas.ai'],
+  allowedOrigins: ['https://localhost:3000', 'https://atlas.ai', 'https://www.atlas.ai'],
 });

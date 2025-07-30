@@ -10,9 +10,6 @@ type AuthProvider = 'github' | 'google' | 'twitter';
 
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
 
-/**
- * Authentication provider icons
- */
 const AuthIcons = {
   Github: (props: AuthIconProps) => (
     <svg viewBox="0 0 438.549 438.549" {...props}>
@@ -55,9 +52,6 @@ interface AuthCardProps {
   mode?: 'sign-in' | 'sign-up';
 }
 
-/**
- * Button component for social authentication providers
- */
 const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => (
   <button
     className="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
@@ -83,9 +77,6 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon 
   </button>
 );
 
-/**
- * Authentication component with social provider options
- */
 export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -141,7 +132,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           <p className="text-sm text-center text-muted-foreground">
             {mode === 'sign-in' ? (
               <>
-                New to Scira?{' '}
+                New to Atlas?{' '}
                 <Link href="/sign-up" className="text-foreground font-medium hover:underline underline-offset-4">
                   Create account
                 </Link>

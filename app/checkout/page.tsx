@@ -54,7 +54,7 @@ export default function CheckoutPage() {
         city: '',
         state: '',
         zipcode: '',
-        country: 'IN', // Always India
+        country: 'IN',
       },
     },
   });
@@ -70,7 +70,7 @@ export default function CheckoutPage() {
         },
         billing: {
           city: data.billing.city,
-          country: 'IN', // Always India
+          country: 'IN',
           state: data.billing.state,
           street: data.billing.street,
           zipcode: data.billing.zipcode,
@@ -83,7 +83,6 @@ export default function CheckoutPage() {
       }
 
       if (checkout?.url) {
-        // Redirect to DodoPayments checkout
         window.location.href = checkout.url;
       } else {
         throw new Error('No checkout URL received');
@@ -96,25 +95,21 @@ export default function CheckoutPage() {
     }
   };
 
-  // Redirect if not authenticated
   if (!isPending && !session) {
     router.push('/sign-up');
     return null;
   }
 
-  // Only show this page for Indian users
   if (!location.loading && !location.isIndia) {
     router.push('/pricing');
     return null;
   }
 
-  // Redirect if user already has Pro access
   if (!isProStatusLoading && isProUser) {
     router.push('/');
     return null;
   }
 
-  // Show loading while checking session, location, or Pro status
   if (isPending || location.loading || isProStatusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -125,7 +120,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
-      {/* Back to Pricing Link */}
       <div className="max-w-2xl mx-auto px-6 pt-6">
         <Link
           href="/pricing"
@@ -136,7 +130,6 @@ export default function CheckoutPage() {
         </Link>
       </div>
 
-      {/* Header */}
       <div className="max-w-2xl mx-auto px-6 pt-8 pb-8">
         <div className="text-center">
           <CreditCard className="w-12 h-12 mx-auto mb-4 text-zinc-600 dark:text-zinc-400" />
@@ -144,7 +137,7 @@ export default function CheckoutPage() {
             Checkout
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed">
-            Complete your one-time payment for Scira Pro
+            Complete your one-time payment for Atlas Pro
           </p>
           <div className="mt-4 space-y-2">
             <div className="inline-flex items-center bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-sm">
@@ -163,7 +156,6 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Checkout Form */}
       <div className="max-w-2xl mx-auto px-6 pb-24">
         <Card>
           <CardHeader>
@@ -173,7 +165,6 @@ export default function CheckoutPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Customer Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Customer Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,7 +197,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Billing Address */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Billing Address</h3>
                   <FormField
@@ -280,7 +270,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Submit Button */}
                 <div className="pt-6 border-t">
                   <Button
                     type="submit"
@@ -308,7 +297,6 @@ export default function CheckoutPage() {
           </CardContent>
         </Card>
 
-        {/* Tax Information Notice */}
         <div className="mt-6">
           <Card>
             <CardHeader className="pb-0">
@@ -325,7 +313,6 @@ export default function CheckoutPage() {
           </Card>
         </div>
 
-        {/* Security Notice */}
         <div className="mt-8 text-center">
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-6 py-4 inline-block">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">

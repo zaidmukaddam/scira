@@ -11,7 +11,7 @@ export function useGitHubStars() {
     queryKey: ['github-stars'],
     queryFn: async (): Promise<number> => {
       try {
-        const response = await fetch('https://api.github.com/repos/zaidmukaddam/scira');
+        const response = await fetch('https://api.github.com/repos/intimetec/atlas');
         if (!response.ok) {
           throw new Error('Failed to fetch GitHub stars');
         }
@@ -22,8 +22,8 @@ export function useGitHubStars() {
         return 9000;
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
   });
 }

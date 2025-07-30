@@ -1,6 +1,5 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element */
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share, X } from '@phosphor-icons/react';
@@ -57,7 +56,6 @@ const Navbar = memo(
     const [isBannerDismissed, setIsBannerDismissed] = useState(false);
     const router = useRouter();
 
-    // Check localStorage for banner dismissal on component mount
     useEffect(() => {
       const dismissed = localStorage.getItem('mobile-banner-dismissed');
       if (dismissed === 'true') {
@@ -65,7 +63,6 @@ const Navbar = memo(
       }
     }, []);
 
-    // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
     const showProLoading = isProStatusLoading;
 
@@ -75,7 +72,7 @@ const Navbar = memo(
 
       if (!chatId) return;
 
-      const url = `https://scira.ai/search/${chatId}`;
+      const url = `https://atlas.ai/search/${chatId}`;
       navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success('Link copied to clipboard');
@@ -83,10 +80,8 @@ const Navbar = memo(
       setTimeout(() => setCopied(false), 2000);
     };
 
-    // Generate the share URL
-    const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+    const shareUrl = chatId ? `https://atlas.ai/search/${chatId}` : '';
 
-    // Social media share handlers
     const handleShareLinkedIn = (e: React.MouseEvent) => {
       e.preventDefault();
       const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
@@ -109,7 +104,6 @@ const Navbar = memo(
       setIsChangingVisibility(true);
       try {
         await onVisibilityChange(newVisibility);
-        // If changing from private to public, open the public dropdown immediately
         if (newVisibility === 'public') {
           setDropdownOpen(true);
         }
@@ -126,7 +120,6 @@ const Navbar = memo(
 
     return (
       <>
-        {/* Mobile Warning Banner */}
         {!isBannerDismissed && (
           <div className="fixed top-0 left-0 right-0 z-40 bg-yellow-50/95 dark:bg-yellow-950/95 backdrop-blur-sm border-b border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 py-2 px-4 text-sm font-medium md:hidden flex items-center justify-between">
             <div className="flex-1 text-center">⚠️ We do NOT support mobile yet. Use with caution.</div>
@@ -143,7 +136,7 @@ const Navbar = memo(
         <div
           className={cn(
             'fixed left-0 right-0 z-30 flex justify-between items-center p-3 transition-colors duration-200',
-            'md:top-0', // Add top margin on mobile to account for banner
+            'md:top-0',
             !isBannerDismissed ? 'top-10' : 'top-0',
             isDialogOpen
               ? 'bg-transparent pointer-events-none'
@@ -166,7 +159,6 @@ const Navbar = memo(
             </Link>
           </div>
 
-          {/* Centered Upgrade Button */}
           {user && !hasActiveSubscription && !showProLoading && (
             <div
               className={cn(
@@ -188,14 +180,11 @@ const Navbar = memo(
             </div>
           )}
           <div className={cn('flex items-center gap-2', isDialogOpen ? 'pointer-events-auto' : '')}>
-            {/* Visibility indicator or toggle based on authentication and ownership */}
             {chatId && (
               <>
                 {user && isOwner ? (
-                  /* Authenticated chat owners get toggle and share option */
                   <>
                     {selectedVisibilityType === 'public' ? (
-                      /* Public chat - show dropdown for copying link */
                       <DropdownMenu
                         open={dropdownOpen}
                         onOpenChange={!isChangingVisibility ? setDropdownOpen : undefined}
@@ -331,7 +320,6 @@ const Navbar = memo(
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
-                      /* Private chat - dropdown prompt to make public */
                       <DropdownMenu
                         open={privateDropdownOpen}
                         onOpenChange={!isChangingVisibility ? setPrivateDropdownOpen : undefined}
@@ -416,7 +404,6 @@ const Navbar = memo(
                     )}
                   </>
                 ) : (
-                  /* Non-owners (authenticated or not) just see indicator */
                   selectedVisibilityType === 'public' && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -439,7 +426,6 @@ const Navbar = memo(
               </>
             )}
 
-            {/* Subscription Status - show loading or Pro status only */}
             {user && (
               <>
                 {showProLoading ? (
@@ -470,10 +456,8 @@ const Navbar = memo(
               </>
             )}
 
-            {/* Chat History Button */}
             <ChatHistoryButton onClickAction={onHistoryClick} />
 
-            {/* Memoized UserProfile component */}
             <UserProfile
               user={user}
               subscriptionData={subscriptionData}

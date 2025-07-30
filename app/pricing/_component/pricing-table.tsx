@@ -54,17 +54,14 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     const fetchDiscountConfig = async () => {
       try {
         const config = await getDiscountConfigAction();
-        // Add original price if not already present (let edge config handle discount details)
         if (config.enabled && !config.originalPrice) {
           config.originalPrice = PRICING.PRO_MONTHLY;
         }
         setDiscountConfig(config);
 
-        // Set initial countdown
         if (config.expiresAt) {
           updateCountdown(config.expiresAt);
         } else {
-          // Default 24-hour countdown if no expiration set
           const endTime = new Date();
           endTime.setHours(endTime.getHours() + 24);
           updateCountdown(endTime);
@@ -105,10 +102,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
     try {
       if (paymentMethod === 'dodo') {
-        // DodoPayments checkout (one-time payment)
         router.push('/checkout');
       } else {
-        // Polar checkout (subscription)
         const checkoutOptions: any = {
           products: [productId],
           slug: slug,
@@ -125,10 +120,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     try {
       const proSource = getProAccessSource();
       if (proSource === 'dodo') {
-        // Use DodoPayments portal for DodoPayments users
         await betterauthClient.dodopayments.customer.portal();
       } else {
-        // Use Polar portal for Polar subscribers
         await authClient.customer.portal();
       }
     } catch (error) {
@@ -152,17 +145,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     );
   };
 
-  // Check if user has any Pro status (Polar or DodoPayments)
   const hasProAccess = () => {
-    // Check Polar subscription
     const hasPolarSub = isCurrentPlan(STARTER_TIER);
-    // Check DodoPayments Pro status
     const hasDodoProAccess = user?.isProUser && user?.dodoProStatus?.isProUser;
 
     return hasPolarSub || hasDodoProAccess;
   };
 
-  // Get the source of Pro access for display
   const getProAccessSource = () => {
     if (isCurrentPlan(STARTER_TIER)) return 'polar';
     if (user?.dodoProStatus?.isProUser) return 'dodo';
@@ -178,14 +167,12 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
   };
 
   const handleDiscountClaim = (code: string) => {
-    // Copy discount code to clipboard
     navigator.clipboard.writeText(code);
     toast.success(`Discount code "${code}" copied to clipboard!`);
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
-      {/* Back to Home Link */}
       <div className="max-w-4xl mx-auto px-6 pt-6">
         <Link
           href="/"
@@ -196,7 +183,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         </Link>
       </div>
 
-      {/* Header */}
       <div className="max-w-3xl mx-auto px-6 pt-8 pb-16">
         <div className="text-center">
           <h1 className="text-[2.5rem] font-medium tracking-tight font-be-vietnam-pro text-zinc-900 dark:text-zinc-100 mb-6 leading-tight">
@@ -215,7 +201,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         </div>
       </div>
 
-      {/* Discount Banner with Countdown */}
       {discountConfig.enabled && (
         <div className="max-w-4xl mx-auto px-6 mb-8">
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden animate-in slide-in-from-top-2 duration-500">
@@ -231,7 +216,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     )}
                   </div>
 
-                  {/* Pricing Information */}
                   <div className="flex flex-wrap items-center gap-3">
                     {location.isIndia ? (
                       <>
@@ -241,7 +225,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         <span className="text-lg font-semibold">
                           ₹
                           {discountConfig.finalPrice
-                            ? (discountConfig.finalPrice * 100).toFixed(0) // Convert USD to INR approximation
+                            ? (discountConfig.finalPrice * 100).toFixed(0)
                             : PRICING.PRO_MONTHLY_INR -
                               (PRICING.PRO_MONTHLY_INR * (discountConfig.percentage || 0)) / 100}
                           /month
@@ -267,7 +251,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   </div>
                 </div>
 
-                {/* Countdown Timer */}
                 <div className="flex flex-col items-center">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p>
                   <div className="flex items-center gap-1.5">
@@ -298,7 +281,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 </div>
               </div>
 
-              {/* Claim Button */}
               {discountConfig.code && (
                 <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                   <Button
@@ -321,10 +303,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         className="max-w-4xl mx-auto px-6 mb-8 hidden"
       />
 
-      {/* Pricing Cards */}
       <div className="max-w-4xl mx-auto px-6 pb-24">
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Free Plan */}
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-10 relative hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-colors duration-200">
             <div className="mb-10">
               <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-3 tracking-[-0.01em]">Free</h3>
@@ -377,7 +357,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             )}
           </div>
 
-          {/* Pro Plan */}
           <div className="relative">
             {hasProAccess() && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
@@ -390,7 +369,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <div className="bg-white dark:bg-zinc-900 border-[1.5px] border-black dark:border-white rounded-xl p-10 relative shadow-sm">
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 tracking-[-0.01em]">Scira Pro</h3>
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 tracking-[-0.01em]">Atlas Pro</h3>
                   <Badge
                     variant="secondary"
                     className="bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-normal px-2.5 py-1"
@@ -402,7 +381,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   Everything you need for unlimited usage
                 </p>
 
-                {/* Pricing Options for Indian Users */}
                 {!location.loading && location.isIndia ? (
                   <div className="space-y-4 mb-6">
                     <div className="grid grid-cols-2 gap-3">
@@ -483,7 +461,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   >
                     {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
                   </Button>
-                  {/* Show Polar subscription details */}
                   {subscriptionDetails.subscription && getProAccessSource() === 'polar' && (
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                       {subscriptionDetails.subscription.cancelAtPeriodEnd
@@ -491,7 +468,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                     </p>
                   )}
-                  {/* Show DodoPayments details */}
                   {getProAccessSource() === 'dodo' && user?.expiresAt && (
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                       Pro access expires {formatDate(new Date(user.expiresAt))}
@@ -507,16 +483,14 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     >
                       {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
                     </Button>
-                    {/* Show Polar subscription details */}
-                    {subscriptionDetails.subscription && getProAccessSource() === 'polar' && (
+                      {subscriptionDetails.subscription && getProAccessSource() === 'polar' && (
                       <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                         {subscriptionDetails.subscription.cancelAtPeriodEnd
                           ? `Expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
                           : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                       </p>
                     )}
-                    {/* Show DodoPayments details */}
-                    {getProAccessSource() === 'dodo' && user?.expiresAt && (
+                      {getProAccessSource() === 'dodo' && user?.expiresAt && (
                       <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center leading-relaxed">
                         Pro access expires {formatDate(new Date(user.expiresAt))}
                       </p>
@@ -567,7 +541,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     ? 'Loading...'
                     : !user
                       ? 'Sign up to get started'
-                      : 'Upgrade to Scira Pro ($15/month)'}
+                      : 'Upgrade to Atlas Pro ($15/month)'}
                   {!location.loading && (
                     <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                   )}
@@ -577,7 +551,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </div>
         </div>
 
-        {/* Student Discount */}
         <div className="max-w-2xl mx-auto bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 mt-12">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-black/10 dark:bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -593,11 +566,11 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <div className="flex-1">
               <h3 className="font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Student Discount Available</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Students can get the Pro plan for just $5/month (₹500/month). Email zaid@scira.ai with your student
-                verification and a brief description of how you use Scira for your studies.
+                Students can get the Pro plan for just $5/month (₹500/month). Email zaid@atlas.ai with your student
+                verification and a brief description of how you use Atlas for your studies.
               </p>
               <a
-                href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
+                href="mailto:zaid@atlas.ai?subject=Student%20Discount%20Request"
                 className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-sm font-medium transition-colors"
               >
                 Apply for Student Discount
@@ -606,7 +579,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </div>
         </div>
 
-        {/* Terms Notice */}
         <div className="text-center mt-16 mb-8">
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-6 py-4 inline-block">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -621,12 +593,11 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-12">
           <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
             Have questions?{' '}
             <a
-              href="mailto:zaid@scira.ai"
+              href="mailto:zaid@atlas.ai"
               className="text-black dark:text-white hover:underline underline-offset-4 decoration-zinc-400 dark:decoration-zinc-600 transition-colors duration-200"
             >
               Get in touch

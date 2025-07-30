@@ -1,16 +1,9 @@
-// extremeSearch(researchPrompt)
-// --> Plan research using LLM to generate a structured research plan
-// ----> Break research into components with discrete search queries
-// ----> For each search query, search web and collect sources
-// ----> Use structured source collection to provide comprehensive research results
-// ----> Return all collected sources and research data to the user
-
 import Exa from 'exa-js';
 import { Daytona } from '@daytonaio/sdk';
 import { DataStreamWriter, generateObject, generateText, tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
+import { atlas } from '@/ai/providers';
 import { SNAPSHOT_NAME } from '@/lib/constants';
 
 const pythonLibsAvailable = [
@@ -133,9 +126,8 @@ const extremeSearch = async (prompt: string, dataStream: DataStreamWriter): Prom
     status: { title: 'Planning research' },
   });
 
-  // plan out the research
   const { object: plan } = await generateObject({
-    model: scira.languageModel('scira-x-fast'),
+    model: atlas.languageModel('atlas-x-fast'),
     schema: z.object({
       plan: z
         .array(
@@ -167,7 +159,6 @@ Plan Guidelines:
 
   console.log(plan.plan);
 
-  // calculate the total number of todos
   const totalTodos = plan.plan.reduce((acc, curr) => acc + curr.todos.length, 0);
   console.log(`Total todos: ${totalTodos}`);
 
@@ -178,9 +169,8 @@ Plan Guidelines:
 
   let toolResults: any[] = [];
 
-  // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-x-fast-mini'),
+    model: atlas.languageModel('atlas-x-fast-mini'),
     maxSteps: totalTodos,
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
@@ -255,8 +245,6 @@ ${JSON.stringify(plan.plan)}
         }),
         execute: async ({ title, code }) => {
           console.log('Running code:', code);
-          // check if the code has any imports other than the pythonLibsAvailable
-          // and then install the missing libraries
           const imports = code.match(/import\s+([\w\s,]+)/);
           const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
           const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
@@ -266,7 +254,6 @@ ${JSON.stringify(plan.plan)}
           });
           const response = await runCode(code, missingLibs);
 
-          // Extract chart data if present, and if so then map and remove the png with chart.png
           const charts =
             response.artifacts?.charts?.map((chart) => {
               if (chart.png) {
@@ -308,8 +295,6 @@ ${JSON.stringify(plan.plan)}
             status: { title: `Searching the web for "${query}"` },
           });
 
-          // Add a query annotation to display in the UI
-          // Use a consistent format for query annotations
           dataStream.writeMessageAnnotation({
             type: 'search_query',
             queryId: toolCallId,
@@ -319,7 +304,6 @@ ${JSON.stringify(plan.plan)}
           let results = await searchWeb(query, category);
           console.log(`Found ${results.length} results for query "${query}"`);
 
-          // Add these sources to our total collection
           allSources.push(...results);
 
           results.forEach(async (source) => {
@@ -330,22 +314,17 @@ ${JSON.stringify(plan.plan)}
             });
           });
 
-          // Get full content for the top results
           if (results.length > 0) {
             try {
               dataStream.writeMessageAnnotation({
                 status: { title: `Reading content from search results for "${query}"` },
               });
 
-              // Get the URLs from the results
               const urls = results.map((r) => r.url);
 
-              // Get the full content using getContents
               const contentsResults = await getContents(urls);
 
-              // Only update results if we actually got content results
               if (contentsResults && contentsResults.length > 0) {
-                // For each content result, add a content annotation
                 contentsResults.forEach((content) => {
                   dataStream.writeMessageAnnotation({
                     type: 'content',
@@ -353,12 +332,11 @@ ${JSON.stringify(plan.plan)}
                     content: {
                       title: content.title,
                       url: content.url,
-                      text: content.content.slice(0, 500) + '...', // Truncate for annotation
+                      text: content.content.slice(0, 500) + '...',
                     },
                   });
                 });
 
-                // Update results with full content, but keep original results as fallback
                 results = contentsResults.map((content) => {
                   const originalResult = results.find((r) => r.url === content.url);
                   return {

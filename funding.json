@@ -4,23 +4,23 @@
         "type": "individual",
         "role": "maintainer",
         "name": "Zaid Mukaddam",
-        "email": "hey@zaidmukaddam.com",
+        "email": "hey@intimetec.com",
         "phone": "",
-        "description": "I built Scira, a minimalistic open source AI Powered Search Engine.",
+        "description": "I built Atlas, a minimalistic open source AI Powered Search Engine.",
         "webpageUrl": {
-            "url": "https://github.com/zaidmukaddam/scira"
+            "url": "https://github.com/intimetec/atlas"
         }
     },
     "projects": [
         {
-            "guid": "scira",
-            "name": "Scira",
-            "description": "Scira is a minimalistic open source AI Powered Search Engine.",
+            "guid": "atlas",
+            "name": "Atlas",
+            "description": "Atlas is a minimalistic open source AI Powered Search Engine.",
             "webpageUrl": {
-                "url": "https://github.com/zaidmukaddam/scira"
+                "url": "https://github.com/intimetec/atlas"
             },
             "repositoryUrl": {
-                "url": "https://github.com/zaidmukaddam/scira"
+                "url": "https://github.com/intimetec/atlas"
             },
             "licenses": [
                 "spdx:MIT"
@@ -37,7 +37,7 @@
             {
                 "guid": "github",
                 "type": "other",
-                "address": "https://github.com/sponsors/zaidmukaddam",
+                "address": "https://github.com/sponsors/intimetec",
                 "description": "Github Sponsor"
             },
             {

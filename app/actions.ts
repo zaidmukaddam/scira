@@ -1,4 +1,3 @@
-// app/actions.ts
 'use server';
 
 import { serverEnv } from '@/env/server';
@@ -6,7 +5,7 @@ import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
-import { scira } from '@/ai/providers';
+import { atlas } from '@/ai/providers';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -38,24 +37,19 @@ import {
   computeAndCacheProUserStatus,
 } from '@/lib/performance-cache';
 
-// Server action to get the current user with Pro status
 export async function getCurrentUser() {
   try {
     const user = await getUser();
     if (!user) return null;
 
-    // Try to get cached pro status first
     let isProUser = getProUserStatus(user.id);
 
     if (isProUser === null) {
-      // Not cached, get comprehensive pro status (includes DodoPayments)
       const proStatus = await getProStatusWithSource();
       isProUser = proStatus.isProUser;
 
-      // Cache the comprehensive status
       setProUserStatus(user.id, isProUser);
 
-      // Get both subscription and payment data
       const [subscriptionDetails, paymentHistory, dodoStatus] = await Promise.all([
         getSubscriptionDetails(),
         getPaymentsByUserId({ userId: user.id }),
@@ -72,7 +66,6 @@ export async function getCurrentUser() {
         expiresAt: proStatus.expiresAt,
       };
     } else {
-      // Use cached status, but still fetch all data for UI
       const [subscriptionDetails, paymentHistory, dodoStatus, proStatus] = await Promise.all([
         getSubscriptionDetails(),
         getPaymentsByUserId({ userId: user.id }),
@@ -102,7 +95,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-nano'),
+    model: atlas.languageModel('atlas-nano'),
     temperature: 0,
     maxTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
@@ -169,7 +162,7 @@ export async function checkImageModeration(images: any) {
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-nano'),
+    model: atlas.languageModel('atlas-nano'),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
@@ -185,7 +178,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
+  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
   const method = 'POST';
 
@@ -229,7 +222,7 @@ export async function generateSpeech(text: string) {
 
 export async function fetchMetadata(url: string) {
   try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+    const response = await fetch(url, { next: { revalidate: 3600 } });
     const html = await response.text();
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
@@ -245,7 +238,6 @@ export async function fetchMetadata(url: string) {
   }
 }
 
-// Map deprecated 'buddy' group ID to 'memory' for backward compatibility
 type LegacyGroupId = SearchGroupId | 'buddy';
 
 const groupTools = {
@@ -273,13 +265,12 @@ const groupTools = {
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
   memory: ['memory_manager', 'datetime'] as const,
-  // Add legacy mapping for backward compatibility
   buddy: ['memory_manager', 'datetime'] as const,
 } as const;
 
 const groupInstructions = {
   web: `
-  You are an AI web search engine called Scira, designed to help users find information on the internet with no unnecessary chatter and more focus on the content and responsed with markdown format and the response guidelines below.
+  You are an AI web search engine called Atlas, designed to help users find information on the internet with no unnecessary chatter and more focus on the content and responsed with markdown format and the response guidelines below.
   'You MUST run the tool IMMEDIATELY on receiving any user message' before composing your response. **This is non-negotiable.**
   Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
@@ -513,7 +504,6 @@ const groupInstructions = {
   - Apply markdown formatting for clarity
   `,
 
-  // Legacy mapping for backward compatibility - same as memory instructions
   buddy: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
@@ -858,7 +848,7 @@ const groupInstructions = {
   - Do not include images in responses`,
 
   chat: `
-  You are Scira, a helpful assistant that helps with the task asked by the user.
+  You are Atlas, a helpful assistant that helps with the task asked by the user.
   Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Guidelines:
@@ -1017,15 +1007,11 @@ const groupInstructions = {
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   'use server';
 
-  // Check if the user is authenticated for memory or buddy group
   if (groupId === 'memory' || groupId === 'buddy') {
     const user = await getUser();
     if (!user) {
-      // Redirect to web group if user is not authenticated
       groupId = 'web';
     } else if (groupId === 'buddy') {
-      // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
-      // The tools are the same, just different instructions
       const tools = groupTools[groupId];
       const instructions = groupInstructions[groupId];
 
@@ -1045,7 +1031,6 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   };
 }
 
-// Add functions to fetch user chats
 export async function getUserChats(
   userId: string,
   limit: number = 20,
@@ -1069,7 +1054,6 @@ export async function getUserChats(
   }
 }
 
-// Add function to load more chats for infinite scroll
 export async function loadMoreChats(
   userId: string,
   lastChatId: string,
@@ -1092,7 +1076,6 @@ export async function loadMoreChats(
   }
 }
 
-// Add function to delete a chat
 export async function deleteChat(chatId: string) {
   'use server';
 
@@ -1106,7 +1089,6 @@ export async function deleteChat(chatId: string) {
   }
 }
 
-// Add function to update chat visibility
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
   'use server';
 
@@ -1120,7 +1102,6 @@ export async function updateChatVisibility(chatId: string, visibility: 'private'
   }
 }
 
-// Add function to get chat info
 export async function getChatInfo(chatId: string) {
   'use server';
 
@@ -1153,11 +1134,10 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
     console.log(`Successfully deleted trailing messages after message ID: ${id}`);
   } catch (error) {
     console.error(`Error deleting trailing messages: ${error}`);
-    throw error; // Re-throw to allow caller to handle
+    throw error;
   }
 }
 
-// Add function to update chat title
 export async function updateChatTitle(chatId: string, title: string) {
   'use server';
 
@@ -1187,7 +1167,6 @@ export async function getUserMessageCount(providedUser?: any) {
       return { count: 0, error: 'User not found' };
     }
 
-    // Check cache first
     const cacheKey = createMessageCountKey(user.id);
     const cached = usageCountCache.get(cacheKey);
     if (cached !== null) {
@@ -1198,7 +1177,6 @@ export async function getUserMessageCount(providedUser?: any) {
       userId: user.id,
     });
 
-    // Cache the result
     usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
@@ -1221,7 +1199,6 @@ export async function incrementUserMessageCount() {
       userId: user.id,
     });
 
-    // Invalidate cache
     const cacheKey = createMessageCountKey(user.id);
     usageCountCache.delete(cacheKey);
 
@@ -1241,7 +1218,6 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
       return { count: 0, error: 'User not found' };
     }
 
-    // Check cache first
     const cacheKey = createExtremeCountKey(user.id);
     const cached = usageCountCache.get(cacheKey);
     if (cached !== null) {
@@ -1252,7 +1228,6 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
       userId: user.id,
     });
 
-    // Cache the result
     usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
@@ -1286,19 +1261,16 @@ export async function getHistoricalUsage(providedUser?: any) {
 
     const historicalData = await getHistoricalUsageData({ userId: user.id });
 
-    // Create a complete 90-day dataset with defaults (3 months)
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 89);
 
-    // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
     historicalData.forEach((record) => {
       const dateKey = record.date.toISOString().split('T')[0];
       dataMap.set(dateKey, record.messageCount || 0);
     });
 
-    // Generate complete dataset for all 90 days
     const completeData = [];
     for (let i = 0; i < 90; i++) {
       const currentDate = new Date(startDate);
@@ -1308,7 +1280,6 @@ export async function getHistoricalUsage(providedUser?: any) {
       const count = dataMap.get(dateKey) || 0;
       let level: 0 | 1 | 2 | 3 | 4;
 
-      // Define usage levels based on message count
       if (count === 0) level = 0;
       else if (count <= 3) level = 1;
       else if (count <= 7) level = 2;
@@ -1329,7 +1300,6 @@ export async function getHistoricalUsage(providedUser?: any) {
   }
 }
 
-// Custom Instructions Server Actions
 export async function getCustomInstructions(providedUser?: any) {
   'use server';
 
@@ -1360,7 +1330,6 @@ export async function saveCustomInstructions(content: string) {
       return { success: false, error: 'Content cannot be empty' };
     }
 
-    // Check if instructions already exist
     const existingInstructions = await getCustomInstructionsByUserId({ userId: user.id });
 
     let result;
@@ -1394,19 +1363,16 @@ export async function deleteCustomInstructionsAction() {
   }
 }
 
-// Fast pro user status check - uses cache only
 export async function getProUserStatusOnly(): Promise<boolean> {
   try {
     const user = await getUser();
     if (!user) return false;
 
-    // Try cache first for instant response
     const cached = getProUserStatus(user.id);
     if (cached !== null) {
       return cached;
     }
 
-    // If not cached, use comprehensive check (includes DodoPayments)
     const proStatus = await getProStatusWithSource();
     setProUserStatus(user.id, proStatus.isProUser);
     return proStatus.isProUser;
@@ -1434,7 +1400,6 @@ export async function getDodoPaymentsProStatus() {
     const user = await getUser();
     if (!user) return { isProUser: false, hasPayments: false };
 
-    // Get comprehensive status with expiration info
     const proStatus = await getProStatusWithSource();
     const hasPayments = await hasSuccessfulDodoPayment({ userId: user.id });
 

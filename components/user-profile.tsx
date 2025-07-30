@@ -48,7 +48,6 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
   );
 };
 
-// Update the component to use memo
 const UserProfile = memo(
   ({
     className,
@@ -74,11 +73,9 @@ const UserProfile = memo(
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
-    // Use passed user prop if available, otherwise fall back to session
     const currentUser = user || session?.user;
     const isAuthenticated = !!(user || session);
 
-    // Use passed Pro status instead of calculating it
     const hasActiveSubscription = isProUser;
 
     if (isPending && !user) {
@@ -89,16 +86,13 @@ const UserProfile = memo(
       );
     }
 
-    // Function to format email for display
     const formatEmail = (email?: string | null) => {
       if (!email) return '';
 
-      // If showing full email, don't truncate it
       if (showEmail) {
         return email;
       }
 
-      // If hiding email, show only first few characters and domain
       const parts = email.split('@');
       if (parts.length === 2) {
         const username = parts[0];
@@ -107,7 +101,6 @@ const UserProfile = memo(
         return `${maskedUsername}@${domain}`;
       }
 
-      // Fallback for unusual email formats
       return email.slice(0, 3) + '•••';
     };
 
@@ -206,7 +199,6 @@ const UserProfile = memo(
             )}
             <DropdownMenuSeparator />
 
-            {/* Subscription Status - show loading or actual status */}
             {isAuthenticated && (
               <>
                 {isProStatusLoading ? (
@@ -229,7 +221,7 @@ const UserProfile = memo(
                           <Crown size={14} className="text-foreground" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground text-sm">Scira Pro</span>
+                          <span className="font-medium text-foreground text-sm">Atlas Pro</span>
                           <span className="text-[10px] text-muted-foreground">Unlimited access to all features</span>
                         </div>
                       </div>
@@ -275,7 +267,6 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuSeparator />
 
-            {/* About and Information */}
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/about" className="w-full flex items-center gap-2">
                 <Info size={16} />
@@ -296,10 +287,9 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuSeparator />
 
-            {/* Social and External Links */}
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href={'https://api.scira.ai/'}
+                href={'https://api.atlas.ai/'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -310,7 +300,7 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href={'https://git.new/scira'}
+                href={'https://git.new/atlas'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -321,7 +311,7 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href={'https://x.com/sciraai'}
+                href={'https://x.com/atlasai'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -332,7 +322,7 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href={'https://www.instagram.com/scira.ai'}
+                href={'https://www.instagram.com/atlas.ai'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -343,7 +333,7 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+                href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fintimetec%2Fatlas&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,ATLAS_PUBLIC_API_KEY,NEXT_PUBLIC_ATLAS_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Atlas%20to%20function"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -354,7 +344,7 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <a
-                href={'https://scira.userjot.com'}
+                href={'https://atlas.userjot.com'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-2"
@@ -365,7 +355,6 @@ const UserProfile = memo(
             </DropdownMenuItem>
             <DropdownMenuSeparator />
 
-            {/* Auth */}
             {isAuthenticated ? (
               <DropdownMenuItem
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
@@ -410,7 +399,6 @@ const UserProfile = memo(
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Settings Dialog */}
         <SettingsDialog
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
@@ -426,7 +414,6 @@ const UserProfile = memo(
   },
 );
 
-// Add a display name for the memoized component for better debugging
 UserProfile.displayName = 'UserProfile';
 
 export { UserProfile };

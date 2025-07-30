@@ -23,7 +23,6 @@ const item = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
@@ -36,13 +35,12 @@ export default function PrivacyPage() {
             initial="hidden"
             animate="show"
           >
-            {/* Logo */}
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
                   <NextImage
-                    src="/scira.png"
-                    alt="Scira Logo"
+                    src="/atlas.png"
+                    alt="Atlas Logo"
                     className="h-8 w-8 opacity-90 invert dark:invert-0"
                     width={32}
                     height={32}
@@ -63,11 +61,10 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="py-16 px-4">
         <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
           <p className="text-lg">
-            At Scira AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
+            At Atlas AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
             explains how we collect, use, and safeguard your information when you use our AI-powered search engine.
           </p>
 
@@ -97,7 +94,7 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment 
+            <strong>Important Note on Payment Data:</strong> Atlas AI does not collect, store, or process any payment 
             card details, bank information, UPI details, or other sensitive payment data. All payment information is 
             handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective 
             privacy policies and security standards.
@@ -180,14 +177,14 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai" className="flex items-center gap-1">
-              zaid@scira.ai <ExternalLink className="h-4 w-4" />
+            <a href="mailto:zaid@atlas.ai" className="flex items-center gap-1">
+              zaid@atlas.ai <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 
           <div className="my-8 border-t pt-8">
             <p className="text-sm text-muted-foreground">
-              By using Scira AI, you agree to our Privacy Policy and our{' '}
+              By using Atlas AI, you agree to our Privacy Policy and our{' '}
               <Link href="/terms" className="underline">
                 Terms of Service
               </Link>
@@ -197,7 +194,6 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="py-10 mt-10">
         <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="container max-w-3xl mx-auto px-4 pt-8">
@@ -205,8 +201,8 @@ export default function PrivacyPage() {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
                 <NextImage
-                  src="/scira.png"
-                  alt="Scira Logo"
+                  src="/atlas.png"
+                  alt="Atlas Logo"
                   className="h-4 w-4 opacity-80 invert dark:invert-0"
                   width={16}
                   height={16}
@@ -215,7 +211,7 @@ export default function PrivacyPage() {
                 />
               </div>
               <div className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
+                © {new Date().getFullYear()} Atlas AI by Zaid Mukaddam
               </div>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">

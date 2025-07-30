@@ -4,7 +4,6 @@ import './env/client';
 
 const nextConfig: NextConfig = {
   compiler: {
-    // if NODE_ENV is production, remove console.log
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
@@ -51,17 +50,17 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/ph',
-        destination: 'https://www.producthunt.com/posts/scira',
+        destination: 'https://www.producthunt.com/posts/atlas',
         permanent: true,
       },
       {
         source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/scira',
+        destination: 'https://www.raycast.com/intimetec/atlas',
         permanent: true,
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
+        destination: 'https://peerlist.io/intimetec/project/atlas-ai-20',
         permanent: true,
       },
     ];
@@ -81,7 +80,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '**',
       },
-      // Google Favicon Service - comprehensive patterns
       {
         protocol: 'https',
         hostname: 'www.google.com',
@@ -94,14 +92,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/s2/favicons',
       },
-      // Google Maps Static API
       {
         protocol: 'https',
         hostname: 'maps.googleapis.com',
         port: '',
         pathname: '/**',
       },
-      // Google Street View Static API
       {
         protocol: 'https',
         hostname: 'maps.googleapis.com',
@@ -120,35 +116,30 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '**',
       },
-      // upload.wikimedia.org
       {
         protocol: 'https',
         hostname: 'upload.wikimedia.org',
         port: '',
         pathname: '**',
       },
-      // media.theresanaiforthat.com
       {
         protocol: 'https',
         hostname: 'media.theresanaiforthat.com',
         port: '',
         pathname: '**',
       },
-      // www.uneed.best
       {
         protocol: 'https',
         hostname: 'www.uneed.best',
         port: '',
         pathname: '**',
       },
-      // image.tmdb.org
       {
         protocol: 'https',
         hostname: 'image.tmdb.org',
         port: '',
         pathname: '/t/p/original/**',
       },
-      // image.tmdb.org
       {
         protocol: 'https',
         hostname: 'image.tmdb.org',
@@ -156,7 +147,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-    // Add additional settings for better image loading
     domains: [],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

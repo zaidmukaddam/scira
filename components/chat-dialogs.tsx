@@ -15,20 +15,18 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] p-0 gap-0">
         <div className="p-6 space-y-5">
-          {/* Header */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Crown className="w-4 h-4 text-primary-foreground" weight="fill" />
               </div>
               <div>
-                <h2 className="text-lg font-medium text-foreground">Upgrade to Scira Pro</h2>
+                <h2 className="text-lg font-medium text-foreground">Upgrade to Atlas Pro</h2>
                 <p className="text-sm text-muted-foreground">Get unlimited access to all features</p>
               </div>
             </div>
           </div>
 
-          {/* Features */}
           <div className="space-y-3">
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 text-sm">
@@ -50,7 +48,6 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -72,7 +69,6 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
             </Button>
           </div>
 
-          {/* Additional info */}
           <p className="text-xs text-muted-foreground text-center">
             Start your free trial today. Cancel anytime.
           </p>
@@ -118,7 +114,6 @@ export const ChatDialogs = React.memo(
   }: ChatDialogsProps) => {
     return (
       <>
-        {/* Chat History Dialog */}
         <ChatHistoryDialog
           open={commandDialogOpen}
           onOpenChange={(open) => {
@@ -128,7 +123,6 @@ export const ChatDialogs = React.memo(
           user={user}
         />
 
-        {/* Sign-in Prompt Dialog */}
         <SignInPromptDialog
           open={showSignInPrompt}
           onOpenChange={(open) => {
@@ -139,7 +133,6 @@ export const ChatDialogs = React.memo(
           }}
         />
 
-        {/* Post-Message Upgrade Dialog */}
         <PostMessageUpgradeDialog
           open={showUpgradeDialog}
           onOpenChange={(open) => {

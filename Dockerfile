@@ -33,7 +33,7 @@ RUN npm run build
 # Stage 3: Production runtime
 # Final stage that runs the application
 FROM base AS runner
-LABEL org.opencontainers.image.name="scira.app"
+LABEL org.opencontainers.image.name="atlas.app"
 WORKDIR /app
 
 # Set production environment

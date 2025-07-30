@@ -93,7 +93,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Crypto Disclaimer Alert */}
       {showCryptoAlert && (
         <div className="sticky top-0 z-50 border-b border-border bg-amber-50 dark:bg-amber-950/20">
           <Alert className="border-0 rounded-none bg-transparent">
@@ -101,7 +100,7 @@ export default function AboutPage() {
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <ShieldCheck className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  Scira is not connected to any cryptocurrency tokens or coins. We are purely an AI search engine.
+                  Atlas is not connected to any cryptocurrency tokens or coins. We are purely an AI search engine.
                 </span>
               </div>
               <button
@@ -116,7 +115,6 @@ export default function AboutPage() {
         </div>
       )}
 
-      {/* Terms Dialog */}
       <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
         <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
           <div className="p-6 border-b border-border">
@@ -138,7 +136,7 @@ export default function AboutPage() {
                 Terms of Service
               </h3>
               <p className="text-xs text-muted-foreground">
-                By using Scira, you agree to our Terms of Service which outline the rules for using our platform.
+                By using Atlas, you agree to our Terms of Service which outline the rules for using our platform.
               </p>
               <Link href="/terms" className="text-xs text-primary hover:underline inline-flex items-center">
                 Read full Terms of Service
@@ -183,26 +181,23 @@ export default function AboutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
         <div className="container max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
                 <Image
-                  src="/scira.png"
-                  alt="Scira"
+                  src="/atlas.png"
+                  alt="Atlas"
                   width={100}
                   height={100}
                   className="size-8 invert dark:invert-0 transition-transform group-hover:scale-110"
                   quality={100}
                 />
               </div>
-              <span className="text-xl font-bold tracking-tight">Scira</span>
+              <span className="text-xl font-bold tracking-tight">Atlas</span>
             </Link>
 
-            {/* Desktop Navigation */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -228,10 +223,9 @@ export default function AboutPage() {
               </NavigationMenuList>
             </NavigationMenu>
 
-            {/* Right Side Actions */}
             <div className="flex items-center gap-4">
               <Link
-                href="https://git.new/scira"
+                href="https://git.new/atlas"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -264,20 +258,19 @@ export default function AboutPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="py-24 px-4">
         <div className="container max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-6">
             <div className="flex items-center justify-center gap-3 mb-8">
               <Image
-                src="/scira.png"
-                alt="Scira"
+                src="/atlas.png"
+                alt="Atlas"
                 width={100}
                 height={100}
                 className="size-12 invert dark:invert-0"
                 quality={100}
               />
-              <h1 className="text-4xl font-bold">Scira</h1>
+              <h1 className="text-4xl font-bold">Atlas</h1>
             </div>
 
             <h2 className="text-2xl md:text-3xl font-semibold text-foreground max-w-3xl mx-auto">
@@ -290,7 +283,6 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* Search Interface */}
           <div className="max-w-2xl mx-auto">
             <form onSubmit={handleSearch}>
               <div className="relative">
@@ -310,10 +302,9 @@ export default function AboutPage() {
             </form>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="https://git.new/scira"
+              href="https://git.new/atlas"
               className="inline-flex h-11 items-center gap-2 px-6 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
@@ -337,7 +328,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className="py-16 px-4 border-y border-border">
         <div className="container max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -363,7 +353,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Awards Section */}
       <section className="py-16 px-4">
         <div className="container max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -403,16 +392,16 @@ export default function AboutPage() {
 
           <div className="text-center">
             <a
-              href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
+              href="https://openalternative.co/atlas?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-atlas"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block"
             >
               <Image
-                src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
+                src="https://openalternative.co/atlas/badge.svg?theme=dark&width=200&height=50"
                 width={200}
                 height={50}
-                alt="Scira badge"
+                alt="Atlas badge"
                 className="mx-auto"
               />
             </a>
@@ -420,7 +409,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -464,7 +452,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Technology Stack */}
       <section className="py-20 px-4">
         <div className="container max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -502,7 +489,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Featured on Vercel Section */}
       <section className="py-16 px-4 border-y border-border">
         <div className="container max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -529,7 +515,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Models Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -597,7 +582,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
       <section className="py-20 px-4">
         <div className="container max-w-4xl mx-auto">
           <div className="text-center mb-16">
@@ -606,7 +590,6 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Free Plan */}
             <div className="bg-background/50 border border-border/50 rounded-xl p-8 hover:border-border/80 transition-colors">
               <div className="mb-8">
                 <h3 className="text-xl font-medium mb-2">Free</h3>
@@ -651,7 +634,6 @@ export default function AboutPage() {
               </Button>
             </div>
 
-            {/* Pro Plan */}
             <div className="bg-background border border-primary/30 rounded-xl p-8 relative hover:border-primary/50 transition-colors">
               <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
 
@@ -700,7 +682,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Student Discount */}
           <div className="max-w-2xl mx-auto bg-muted/20 border border-border/40 rounded-xl p-6 mt-8">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -712,7 +693,7 @@ export default function AboutPage() {
                   Students can access Pro features for $5/month (₹500/month). Contact us with your student verification.
                 </p>
                 <a
-                  href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
+                  href="mailto:zaid@atlas.ai?subject=Student%20Discount%20Request"
                   className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-border/60 bg-background hover:bg-accent/50 text-sm font-medium transition-colors"
                 >
                   Apply for Student Pricing
@@ -723,19 +704,18 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">Find answers to common questions about Scira</p>
+            <p className="text-muted-foreground max-w-2xl mx-auto">Find answers to common questions about Atlas</p>
           </div>
 
           <ProAccordion type="single" collapsible className="w-full">
             <ProAccordionItem value="item-1">
-              <ProAccordionTrigger>What is Scira?</ProAccordionTrigger>
+              <ProAccordionTrigger>What is Atlas?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira is an open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and
+                Atlas is an open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and
                 search grounding to provide accurate, up-to-date answers from reliable sources.
               </ProAccordionContent>
             </ProAccordionItem>
@@ -751,8 +731,8 @@ export default function AboutPage() {
             <ProAccordionItem value="item-3">
               <ProAccordionTrigger>Is there a student discount?</ProAccordionTrigger>
               <ProAccordionContent>
-                Yes, students can get $10 off the Pro plan, bringing it down to $5/month. Email zaid@scira.ai with your
-                student verification and a brief description of how you use Scira.
+                Yes, students can get $10 off the Pro plan, bringing it down to $5/month. Email zaid@atlas.ai with your
+                student verification and a brief description of how you use Atlas.
               </ProAccordionContent>
             </ProAccordionItem>
 
@@ -765,17 +745,17 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-5">
-              <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
+              <ProAccordionTrigger>What AI models does Atlas use?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to provide
+                Atlas uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to provide
                 the best possible answers for different types of queries.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-6">
-              <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
+              <ProAccordionTrigger>How does Atlas ensure information accuracy?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira combines RAG technology with search grounding to retrieve information from reliable sources and
+                Atlas combines RAG technology with search grounding to retrieve information from reliable sources and
                 verify it before providing answers. Each response includes source attribution for transparency.
               </ProAccordionContent>
             </ProAccordionItem>
@@ -784,7 +764,7 @@ export default function AboutPage() {
           <div className="text-center mt-12">
             <p className="text-muted-foreground">
               Have more questions?{' '}
-              <a href="mailto:zaid@scira.ai" className="text-primary hover:text-primary/80 transition-colors">
+              <a href="mailto:zaid@atlas.ai" className="text-primary hover:text-primary/80 transition-colors">
                 Contact us
               </a>
             </p>
@@ -792,13 +772,12 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border py-12 px-4">
         <div className="container max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <Image src="/scira.png" alt="Scira" width={32} height={32} className="h-8 w-8 invert dark:invert-0" />
-              <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Scira. All rights reserved.</p>
+              <Image src="/atlas.png" alt="Atlas" width={32} height={32} className="h-8 w-8 invert dark:invert-0" />
+              <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Atlas. All rights reserved.</p>
             </div>
 
             <div className="flex items-center gap-6">
@@ -813,7 +792,7 @@ export default function AboutPage() {
               </Link>
               <div className="flex items-center gap-2">
                 <Link
-                  href="https://x.com/sciraai"
+                  href="https://x.com/atlasai"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -821,7 +800,7 @@ export default function AboutPage() {
                   <XLogo className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="https://git.new/scira"
+                  href="https://git.new/atlas"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"

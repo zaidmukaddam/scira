@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
 import { getChatWithUserById } from '@/lib/db/queries';
 import { format } from 'date-fns';
@@ -7,28 +6,23 @@ import path from 'path';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Get chat data with user information
     const id = (await params).id;
     const chatWithUser = await getChatWithUserById({ id });
 
-    // Read the background image
     const bgImagePath = path.join(process.cwd(), 'public', 'og-bg.png');
     const bgImageData = await fs.promises.readFile(bgImagePath);
     const bgImageBase64 = `data:image/png;base64,${bgImageData.toString('base64')}`;
 
-    // Read the Scira logo
-    const logoPath = path.join(process.cwd(), 'public', 'scira.png');
+    const logoPath = path.join(process.cwd(), 'public', 'atlas.png');
     const logoData = await fs.promises.readFile(logoPath);
     const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
 
-    // Load custom fonts
     const geistFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Geist-Regular.ttf');
     const syneFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Syne-Bold.ttf');
 
     const geistFontData = await fs.promises.readFile(geistFontPath);
     const syneFontData = await fs.promises.readFile(syneFontPath);
 
-    // If chat doesn't exist or isn't public, return a default OG image
     if (!chatWithUser || chatWithUser.visibility !== 'public') {
       return new ImageResponse(
         (
@@ -47,7 +41,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               fontFamily: 'Syne',
             }}
           >
-            {/* Clean overlay for contrast */}
             <div
               style={{
                 position: 'absolute',
@@ -72,7 +65,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 src={logoBase64}
                 width={140}
                 height={140}
-                alt="Scira AI"
+                alt="Atlas AI"
                 style={{
                   objectFit: 'contain',
                   marginBottom: 28,
@@ -87,7 +80,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                   fontFamily: 'Syne',
                 }}
               >
-                Scira AI
+                Atlas AI
               </div>
             </div>
           </div>
@@ -111,10 +104,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
-    // Format the creation date
     const formattedDate = format(new Date(chatWithUser.createdAt), 'MMMM d, yyyy');
 
-    // Generate the image
     return new ImageResponse(
       (
         <div
@@ -130,7 +121,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             fontFamily: 'Geist',
           }}
         >
-          {/* Light overlay for subtle text enhancement */}
           <div
             style={{
               position: 'absolute',
@@ -143,7 +133,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             }}
           />
 
-          {/* Content container */}
           <div
             style={{
               display: 'flex',
@@ -156,7 +145,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               justifyContent: 'space-between',
             }}
           >
-            {/* Header section - Company branding */}
             <div
               style={{
                 display: 'flex',
@@ -169,7 +157,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 src={logoBase64}
                 width={80}
                 height={80}
-                alt="Scira AI"
+                alt="Atlas AI"
                 style={{
                   objectFit: 'contain',
                 }}
@@ -185,7 +173,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                     lineHeight: 1,
                   }}
                 >
-                  Scira AI
+                  Atlas AI
                 </div>
                 <div
                   style={{
@@ -202,7 +190,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               </div>
             </div>
 
-            {/* Article title section */}
             <div
               style={{
                 display: 'flex',
@@ -229,7 +216,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 {chatWithUser.title}
               </div>
 
-              {/* Article metadata */}
               <div
                 style={{
                   display: 'flex',
@@ -258,7 +244,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               </div>
             </div>
 
-            {/* Footer section */}
             <div
               style={{
                 display: 'flex',
@@ -276,7 +261,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                   fontFamily: 'Syne',
                 }}
               >
-                Start your search at scira.ai
+                Start your search at atlas.ai
               </div>
             </div>
           </div>

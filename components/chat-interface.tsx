@@ -1,13 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
-// CSS imports
 import 'katex/dist/katex.min.css';
 
-// React and React-related imports
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 
-// Third-party library imports
 import { useChat, UseChatOptions } from '@ai-sdk/react';
 import { Crown } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
@@ -15,29 +11,24 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
-// Internal app imports
 import { suggestQuestions, updateChatVisibility } from '@/app/actions';
 
-// Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
 import Messages from '@/components/messages';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import FormComponent from '@/components/ui/form-component';
 
-// Hook imports
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
 import { useProUserStatus } from '@/hooks/use-user-data';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 
-// Utility and type imports
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
 
-// State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
 
 interface Attachment {
@@ -65,25 +56,22 @@ const ChatInterface = memo(
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
 
-    // Use localStorage hook directly for model selection with a default
-    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
-    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
+    const [selectedModel, setSelectedModel] = useLocalStorage('atlas-selected-model', 'atlas-default');
+    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('atlas-selected-group', 'web');
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
-      'scira-custom-instructions-enabled',
+      'atlas-custom-instructions-enabled',
       true,
     );
 
-    // Get persisted values for dialog states
     const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
-      'scira-upgrade-prompt-shown',
+      'atlas-upgrade-prompt-shown',
       false,
     );
     const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] = useLocalStorage(
-      'scira-signin-prompt-shown',
+      'atlas-signin-prompt-shown',
       false,
     );
 
-    // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
       chatReducer,
       createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt, false),
@@ -111,7 +99,6 @@ const ChatInterface = memo(
     const inputRef = useRef<HTMLTextAreaElement>(null!);
     const initializedRef = useRef(false);
 
-    // Use optimized scroll hook
     const { isAtBottom, hasManuallyScrolled, scrollToElement, resetManualScroll } = useOptimizedScroll(bottomRef, {
       enabled: true,
       threshold: 100,
@@ -119,16 +106,12 @@ const ChatInterface = memo(
       debounceMs: 100,
     });
 
-    // Use clean React Query hooks for all data fetching
     const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
 
-    // Sign-in prompt timer
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Generate a consistent ID for new chats
     const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
 
-    // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
     const hasExceededLimit =
       shouldCheckUserLimits &&
@@ -138,27 +121,21 @@ const ChatInterface = memo(
       usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
 
-    // Timer for sign-in prompt for unauthenticated users
     useEffect(() => {
-      // If user becomes authenticated, reset the prompt flag and clear timer
       if (user) {
         if (signInTimerRef.current) {
           clearTimeout(signInTimerRef.current);
           signInTimerRef.current = null;
         }
-        // Reset the flag so it can show again in future sessions if they log out
         setPersitedHasShownSignInPrompt(false);
         return;
       }
 
-      // Only start timer if user is not authenticated and hasn't been shown the prompt yet
       if (!user && !chatState.hasShownSignInPrompt) {
-        // Clear any existing timer
         if (signInTimerRef.current) {
           clearTimeout(signInTimerRef.current);
         }
 
-        // Set timer for 1 minute (60000 ms)
         signInTimerRef.current = setTimeout(() => {
           dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: true });
           dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: true });
@@ -166,7 +143,6 @@ const ChatInterface = memo(
         }, 60000);
       }
 
-      // Cleanup timer on unmount
       return () => {
         if (signInTimerRef.current) {
           clearTimeout(signInTimerRef.current);
@@ -180,7 +156,7 @@ const ChatInterface = memo(
       () => ({
         id: chatId,
         api: '/api/search',
-        experimental_throttle: selectedModel === 'scira-anthropic' ? 1000 : 100,
+        experimental_throttle: selectedModel === 'atlas-anthropic' ? 1000 : 100,
         sendExtraMessageFields: true,
         maxSteps: 3,
         body: {
@@ -195,12 +171,10 @@ const ChatInterface = memo(
         onFinish: async (message, { finishReason }) => {
           console.log('[finish reason]:', finishReason);
 
-          // Refresh usage data after message completion for authenticated users
           if (user) {
             refetchUsage();
           }
 
-          // Check if this is the first message completion and user is not Pro
           const isFirstMessage = messages.length <= 1;
 
           console.log('Upgrade dialog check:', {
@@ -211,7 +185,6 @@ const ChatInterface = memo(
             messagesLength: messages.length,
           });
 
-          // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
           if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
             console.log('Showing upgrade dialog...');
             setTimeout(() => {
@@ -221,7 +194,6 @@ const ChatInterface = memo(
             }, 1000);
           }
 
-          // Only generate suggested questions if authenticated user or private chat
           if (
             message.content &&
             (finishReason === 'stop' || finishReason === 'length') &&
@@ -236,10 +208,8 @@ const ChatInterface = memo(
           }
         },
         onError: (error) => {
-          // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
           if (error instanceof ChatSDKError) {
             console.log('ChatSDK Error:', error.type, error.surface, error.message);
-            // Only show toast for certain error types that need immediate attention
             if (error.type === 'offline' || error.surface === 'stream') {
               toast.error('Connection Error', {
                 description: error.message,
@@ -253,7 +223,6 @@ const ChatInterface = memo(
           }
         },
         initialMessages: initialMessages,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       }),
       [
         selectedModel,
@@ -281,7 +250,6 @@ const ChatInterface = memo(
       experimental_resume,
     } = useChat(chatOptions);
 
-    // Debug error structure
     if (error) {
       console.log('[useChat error]:', error);
       console.log('[error type]:', typeof error);
@@ -306,7 +274,6 @@ const ChatInterface = memo(
     useEffect(() => {
       if (user && status === 'streaming' && messages.length > 0) {
         console.log('[chatId]:', chatId);
-        // Invalidate chats cache to refresh the list
         invalidateChatsCache();
       }
     }, [user, status, router, chatId, initialChatId, messages.length]);
@@ -322,11 +289,8 @@ const ChatInterface = memo(
       }
     }, [initialState.query, append, setInput, messages.length, initialChatId]);
 
-    // Generate suggested questions when opening a chat directly
     useEffect(() => {
       const generateSuggestionsForInitialMessages = async () => {
-        // Only generate if we have initial messages, no suggested questions yet,
-        // user is authenticated or chat is private, and status is not streaming
         if (
           initialMessages &&
           initialMessages.length >= 2 &&
@@ -355,10 +319,8 @@ const ChatInterface = memo(
       generateSuggestionsForInitialMessages();
     }, [initialMessages, chatState.suggestedQuestions.length, status, user, chatState.selectedVisibilityType]);
 
-    // Reset suggested questions when status changes to streaming
     useEffect(() => {
       if (status === 'streaming') {
-        // Clear suggested questions when a new message is being streamed
         dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
       }
     }, [status]);
@@ -373,15 +335,12 @@ const ChatInterface = memo(
     }, [messages]);
 
     useEffect(() => {
-      // Reset manual scroll when streaming starts
       if (status === 'streaming') {
         resetManualScroll();
-        // Initial scroll to bottom when streaming starts
         scrollToElement();
       }
     }, [status, resetManualScroll, scrollToElement]);
 
-    // Auto-scroll on new content if user is at bottom or hasn't manually scrolled away
     useEffect(() => {
       if (status === 'streaming' && (isAtBottom || !hasManuallyScrolled)) {
         scrollToElement();
@@ -390,7 +349,6 @@ const ChatInterface = memo(
         chatState.suggestedQuestions.length > 0 &&
         (isAtBottom || !hasManuallyScrolled)
       ) {
-        // Scroll when suggested questions appear
         scrollToElement();
       }
     }, [
@@ -402,7 +360,6 @@ const ChatInterface = memo(
       scrollToElement,
     ]);
 
-    // Dialog management state - track command dialog state in chat state
     useEffect(() => {
       dispatch({
         type: 'SET_ANY_DIALOG_OPEN',
@@ -410,7 +367,6 @@ const ChatInterface = memo(
       });
     }, [chatState.commandDialogOpen, chatState.showSignInPrompt, chatState.showUpgradeDialog]);
 
-    // Keyboard shortcut for command dialog
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -423,7 +379,6 @@ const ChatInterface = memo(
       return () => document.removeEventListener('keydown', down);
     }, [chatState.commandDialogOpen]);
 
-    // Define the model change handler
     const handleModelChange = useCallback(
       (model: string) => {
         setSelectedModel(model);
@@ -435,7 +390,6 @@ const ChatInterface = memo(
       dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
     }, []);
 
-    // Handle visibility change
     const handleVisibilityChange = useCallback(
       async (visibility: VisibilityType) => {
         if (!chatId) return;
@@ -444,7 +398,6 @@ const ChatInterface = memo(
           await updateChatVisibility(chatId, visibility);
           dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
           toast.success(`Chat is now ${visibility}`);
-          // Invalidate cache to refresh the list with updated visibility
           invalidateChatsCache();
         } catch (error) {
           console.error('Error updating chat visibility:', error);
@@ -472,7 +425,6 @@ const ChatInterface = memo(
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
         />
 
-        {/* Chat Dialogs Component */}
         <ChatDialogs
           commandDialogOpen={chatState.commandDialogOpen}
           setCommandDialogOpen={(open) => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open })}
@@ -505,12 +457,11 @@ const ChatInterface = memo(
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
                 <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                  scira
+                  atlas
                 </h1>
               </div>
             )}
 
-            {/* Show initial limit exceeded message */}
             {status === 'ready' && messages.length === 0 && isLimitBlocked && (
               <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
                 <div className="text-center space-y-4">
@@ -552,7 +503,6 @@ const ChatInterface = memo(
               </div>
             )}
 
-            {/* Use the Messages component */}
             {messages.length > 0 && (
               <Messages
                 messages={messages}
@@ -578,7 +528,6 @@ const ChatInterface = memo(
             <div ref={bottomRef} />
           </div>
 
-          {/* Single Form Component with dynamic positioning */}
           {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
             !isLimitBlocked && (
               <div
@@ -625,7 +574,6 @@ const ChatInterface = memo(
               </div>
             )}
 
-          {/* Show limit exceeded message */}
           {isLimitBlocked && messages.length > 0 && (
             <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
               <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
@@ -667,7 +615,6 @@ const ChatInterface = memo(
   },
 );
 
-// Add a display name for the memoized component for better debugging
 ChatInterface.displayName = 'ChatInterface';
 
 export { ChatInterface };

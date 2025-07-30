@@ -61,12 +61,10 @@ interface SettingsDialogProps {
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }
 
-// Component for Profile Information
 function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading }: any) {
   const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Use comprehensive Pro status from user data (includes both Polar + DodoPayments)
   const isProUserActive = user?.isProUser || fastProStatus;
   const showProLoading = fastProLoading || isProStatusLoading;
 
@@ -123,7 +121,6 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
   );
 }
 
-// Usage Bar Chart Component
 function UsageBarChart({ data, className }: { data: any[]; className?: string }) {
   const { resolvedTheme } = useTheme();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -131,16 +128,14 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
   const chartConfig = {
     count: {
       label: 'Messages',
-      color: resolvedTheme === 'dark' ? 'hsl(200 100% 50%)' : 'hsl(220 70% 50%)', // Bright cyan in dark, blue in light
+      color: resolvedTheme === 'dark' ? 'hsl(200 100% 50%)' : 'hsl(220 70% 50%)',
     },
   };
 
-  // Process data for the last 30 days to keep chart readable on mobile
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
-    // Take last 30 days for desktop, 14 for mobile - use media query hook instead of window
-    const daysToShow = 14; // Always use 14 days for mobile to avoid resize triggers
+    const daysToShow = 14;
 
     const recentData = data
       .slice(-daysToShow)
@@ -164,11 +159,9 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
     return null;
   }
 
-  // Calculate max value and round up to nearest multiple of 5
   const maxCount = Math.max(...processedData.map((d) => d.count));
   const yAxisMax = Math.ceil(maxCount / 5) * 5;
 
-  // Dynamic bar color based on theme
   const barColor = resolvedTheme === 'dark' ? 'hsl(200 100% 50%)' : 'hsl(220 70% 50%)';
 
   return (
@@ -211,7 +204,6 @@ function UsageBarChart({ data, className }: { data: any[]; className?: string })
   );
 }
 
-// Component for Usage Information
 function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -387,14 +379,12 @@ function UsageSection({ user }: any) {
   );
 }
 
-// Component for Subscription Information
 function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [orders, setOrders] = useState<any>(null);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Use data from user object (already cached)
   const paymentHistory = user?.paymentHistory || null;
   const dodoProStatus = user?.dodoProStatus || null;
 
@@ -403,7 +393,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       try {
         setOrdersLoading(true);
 
-        // Only fetch Polar orders (DodoPayments data comes from user cache)
         const ordersResponse = await authClient.customer.orders
           .list({
             query: {
@@ -427,7 +416,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   }, []);
 
   const handleManageSubscription = async () => {
-    // Determine the subscription source
     const getProAccessSource = () => {
       if (hasActiveSubscription) return 'polar';
       if (hasDodoProStatus) return 'dodo';
@@ -446,7 +434,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.log('User full object keys:', Object.keys(user || {}));
 
       if (proSource === 'dodo') {
-        // Use DodoPayments portal for DodoPayments users
         console.log('Opening DodoPayments portal');
         console.log('User object for DodoPayments:', {
           id: user?.id,
@@ -456,7 +443,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
         });
         await betterauthClient.dodopayments.customer.portal();
       } else {
-        // Use Polar portal for Polar subscribers
         console.log('Opening Polar portal');
         await authClient.customer.portal();
       }
@@ -464,7 +450,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@scira.ai');
+        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@atlas.ai');
       } else {
         toast.error('Failed to open subscription management');
       }
@@ -473,14 +459,12 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
     }
   };
 
-  // Check for active status from either source
   const hasActiveSubscription =
     subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
   const hasDodoProStatus = dodoProStatus?.isProUser;
   const isProUserActive = hasActiveSubscription || hasDodoProStatus;
   const subscription = subscriptionData?.subscription;
 
-  // Check if DodoPayments Pro is expiring soon (within 7 days)
   const getDaysUntilExpiration = () => {
     if (!dodoProStatus?.expiresAt) return null;
     const now = new Date();
@@ -566,7 +550,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             )}
           </div>
 
-          {/* Expiration Warning for DodoPayments */}
           {isExpiringSoon && (
             <div
               className={cn(
@@ -642,7 +625,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Show DodoPayments history */}
             {paymentHistory && paymentHistory.length > 0 && (
               <>
                 {paymentHistory.slice(0, 3).map((payment: any) => (
@@ -650,7 +632,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                          Scira Pro (DodoPayments)
+                          Atlas Pro (DodoPayments)
                         </p>
                         <div className="flex items-center gap-2">
                           <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
@@ -675,7 +657,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
               </>
             )}
 
-            {/* Show Polar orders */}
             {orders?.result?.items && orders.result.items.length > 0 && (
               <>
                 {orders.result.items.slice(0, 3).map((order: any) => (
@@ -708,7 +689,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
               </>
             )}
 
-            {/* Show message if no billing history */}
             {(!paymentHistory || paymentHistory.length === 0) &&
               (!orders?.result?.items || orders.result.items.length === 0) && (
                 <div
@@ -729,7 +709,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   );
 }
 
-// Component for Custom Instructions
 function CustomInstructionsSection({
   user,
   isCustomInstructionsEnabled,
@@ -742,7 +721,6 @@ function CustomInstructionsSection({
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Use default value if not provided
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
 
@@ -881,7 +859,6 @@ function CustomInstructionsSection({
   );
 }
 
-// Component for Memories
 function MemoriesSection() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -1055,9 +1032,9 @@ function MemoriesSection() {
                   className={cn(
                     'absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive',
                     'opacity-0 group-hover:opacity-100 transition-opacity',
-                    'touch-manipulation', // Better touch targets on mobile
+                    'touch-manipulation',
                   )}
-                  style={{ opacity: 1 }} // Always visible on mobile
+                  style={{ opacity: 1 }}
                 >
                   {deletingMemoryIds.has(memory.id) ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -1154,17 +1131,13 @@ export function SettingsDialog({
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="h-[85vh] max-h-[600px] p-0 [&[data-vaul-drawer]]:transition-none overflow-hidden">
           <div className="flex flex-col h-full max-h-full">
-            {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium">Settings</DrawerTitle>
             </DrawerHeader>
 
-            {/* Content area with tabs */}
             <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden">
-              {/* Tab content - takes up most space */}
               <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">{contentSections}</div>
 
-              {/* Bottom tab navigation - compact and accessible */}
               <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 shrink-0">
                 <TabsList className="w-full h-14 p-1 bg-transparent rounded-none grid grid-cols-5 gap-1">
                   {tabItems.map((item) => (
@@ -1206,7 +1179,6 @@ export function SettingsDialog({
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Navigation */}
           <div className="w-48 !m-0">
             <div className="p-2 !gap-1 flex flex-col">
               {tabItems.map((item) => (
@@ -1228,7 +1200,6 @@ export function SettingsDialog({
             </div>
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-[calc(85vh-120px)]">
               <div className="p-6 pb-8">

@@ -16,55 +16,54 @@ const huggingface = createOpenAI({
   apiKey: process.env.HF_TOKEN,
 });
 
-export const scira = customProvider({
+export const atlas = customProvider({
   languageModels: {
-    'scira-default': xai('grok-3-mini'),
-    'scira-x-fast-mini': xai('grok-3-mini-fast'),
-    'scira-x-fast': xai('grok-3-fast'),
-    'scira-nano': openai.responses('gpt-4.1-nano'),
-    'scira-4.1-mini': openai.responses('gpt-4.1-mini'),
-    'scira-grok-3': xai('grok-3-fast'),
-    'scira-grok-4': xai('grok-4'),
-    'scira-vision': xai('grok-2-vision-1212'),
-    'scira-g2': xai('grok-2-latest'),
-    'scira-4o-mini': openai.responses('gpt-4o-mini'),
-    'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
-    'scira-o3': openai.responses('o3'),
-    'scira-qwen-32b': wrapLanguageModel({
+    'atlas-default': xai('grok-3-mini'),
+    'atlas-x-fast-mini': xai('grok-3-mini-fast'),
+    'atlas-x-fast': xai('grok-3-fast'),
+    'atlas-nano': openai.responses('gpt-4.1-nano'),
+    'atlas-4.1-mini': openai.responses('gpt-4.1-mini'),
+    'atlas-grok-3': xai('grok-3-fast'),
+    'atlas-grok-4': xai('grok-4'),
+    'atlas-vision': xai('grok-2-vision-1212'),
+    'atlas-g2': xai('grok-2-latest'),
+    'atlas-4o-mini': openai.responses('gpt-4o-mini'),
+    'atlas-o4-mini': openai.responses('o4-mini-2025-04-16'),
+    'atlas-o3': openai.responses('o3'),
+    'atlas-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b', {
         parallelToolCalls: false,
       }),
       middleware,
     }),
-    'scira-qwen-30b': wrapLanguageModel({
+    'atlas-qwen-30b': wrapLanguageModel({
       model: huggingface('Qwen/Qwen3-30B-A3B:fireworks-ai'),
       middleware,
     }),
-    'scira-qwen-235b': wrapLanguageModel({
+    'atlas-qwen-235b': wrapLanguageModel({
       model: huggingface('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
       middleware,
     }),
-    'scira-deepseek-v3': wrapLanguageModel({
+    'atlas-deepseek-v3': wrapLanguageModel({
       model: huggingface('deepseek-ai/DeepSeek-V3-0324:fireworks-ai'),
       middleware,
     }),
-    'scira-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
-    'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
-    'scira-mistral': mistral('mistral-small-latest'),
-    'scira-google-lite': google('gemini-2.5-flash-lite'),
-    'scira-google': google('gemini-2.5-flash'),
-    'scira-google-pro': google('gemini-2.5-pro'),
-    'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
-    'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
+    'atlas-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
+    'atlas-haiku': anthropic('claude-3-5-haiku-20241022'),
+    'atlas-mistral': mistral('mistral-small-latest'),
+    'atlas-google-lite': google('gemini-2.5-flash-lite'),
+    'atlas-google': google('gemini-2.5-flash'),
+    'atlas-google-pro': google('gemini-2.5-pro'),
+    'atlas-anthropic': anthropic('claude-sonnet-4-20250514'),
+    'atlas-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct', {
       parallelToolCalls: false,
     }),
   },
 });
 
 export const models = [
-  // Free Unlimited Models (xAI)
   {
-    value: 'scira-default',
+    value: 'atlas-default',
     label: 'Grok 3 Mini',
     description: "xAI's most efficient reasoning LLM.",
     vision: false,
@@ -78,7 +77,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-vision',
+    value: 'atlas-vision',
     label: 'Grok 2 Vision',
     description: "xAI's advanced vision LLM",
     vision: true,
@@ -92,7 +91,7 @@ export const models = [
     maxOutputTokens: 8000,
   },
   {
-    value: 'scira-grok-3',
+    value: 'atlas-grok-3',
     label: 'Grok 3',
     description: "xAI's recent smartest LLM",
     vision: false,
@@ -106,7 +105,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-grok-4',
+    value: 'atlas-grok-4',
     label: 'Grok 4',
     description: "xAI's most intelligent vision LLM",
     vision: true,
@@ -120,9 +119,8 @@ export const models = [
     maxOutputTokens: 16000,
   },
 
-  // Mini Models (Free/Paid)
   {
-    value: 'scira-mistral',
+    value: 'atlas-mistral',
     label: 'Mistral Small',
     description: "Mistral's small LLM",
     vision: true,
@@ -136,7 +134,7 @@ export const models = [
     maxOutputTokens: 128000,
   },
   {
-    value: 'scira-qwen-30b',
+    value: 'atlas-qwen-30b',
     label: 'Qwen 3 30B A3B',
     description: "Alibaba's advanced MoE reasoning LLM",
     vision: false,
@@ -150,7 +148,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-qwen-32b',
+    value: 'atlas-qwen-32b',
     label: 'Qwen 3 32B',
     description: "Alibaba's advanced reasoning LLM",
     vision: false,
@@ -164,7 +162,7 @@ export const models = [
     maxOutputTokens: 40960,
   },
   {
-    value: 'scira-deepseek-v3',
+    value: 'atlas-deepseek-v3',
     label: 'DeepSeek V3 0324',
     description: "DeepSeek's advanced base LLM",
     vision: false,
@@ -178,7 +176,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-4o-mini',
+    value: 'atlas-4o-mini',
     label: 'GPT 4o Mini',
     description: "OpenAI's previous flagship mini LLM",
     vision: true,
@@ -192,7 +190,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-4.1-mini',
+    value: 'atlas-4.1-mini',
     label: 'GPT 4.1 Mini',
     description: "OpenAI's latest flagship mini LLM",
     vision: true,
@@ -206,7 +204,7 @@ export const models = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-google-lite',
+    value: 'atlas-google-lite',
     label: 'Gemini 2.5 Flash Lite',
     description: "Google's advanced smallest LLM",
     vision: true,
@@ -220,9 +218,8 @@ export const models = [
     maxOutputTokens: 64000,
   },
 
-  // Pro Models
   {
-    value: 'scira-anthropic',
+    value: 'atlas-anthropic',
     label: 'Claude 4 Sonnet',
     description: "Anthropic's most advanced LLM",
     vision: true,
@@ -236,7 +233,7 @@ export const models = [
     maxOutputTokens: 64000,
   },
   {
-    value: 'scira-google',
+    value: 'atlas-google',
     label: 'Gemini 2.5 Flash',
     description: "Google's advanced small LLM",
     vision: true,
@@ -250,7 +247,7 @@ export const models = [
     maxOutputTokens: 65000,
   },
   {
-    value: 'scira-qwen-235b',
+    value: 'atlas-qwen-235b',
     label: 'Qwen 3 235B',
     description: "Alibaba's advanced reasoning LLM",
     vision: false,
@@ -264,7 +261,7 @@ export const models = [
     maxOutputTokens: 200000,
   },
   {
-    value: 'scira-kimi-k2',
+    value: 'atlas-kimi-k2',
     label: 'Kimi K2',
     description: "MoonShot AI's advanced base LLM",
     vision: false,
@@ -278,7 +275,7 @@ export const models = [
     maxOutputTokens: 10000,
   },
   {
-    value: 'scira-google-pro',
+    value: 'atlas-google-pro',
     label: 'Gemini 2.5 Pro',
     description: "Google's most advanced LLM",
     vision: true,
@@ -292,7 +289,7 @@ export const models = [
     maxOutputTokens: 65000,
   },
   {
-    value: 'scira-o4-mini',
+    value: 'atlas-o4-mini',
     label: 'o4 mini',
     description: "OpenAI's faster mini reasoning LLM",
     vision: true,
@@ -306,7 +303,7 @@ export const models = [
     maxOutputTokens: 100000,
   },
   {
-    value: 'scira-o3',
+    value: 'atlas-o3',
     label: 'o3',
     description: "OpenAI's big reasoning LLM",
     vision: true,
@@ -320,9 +317,8 @@ export const models = [
     maxOutputTokens: 100000,
   },
 
-  // Experimental Models
   {
-    value: 'scira-llama-4',
+    value: 'atlas-llama-4',
     label: 'Llama 4 Maverick',
     description: "Meta's latest LLM",
     vision: true,
@@ -337,7 +333,6 @@ export const models = [
   },
 ];
 
-// Helper functions for model access checks
 export function getModelConfig(modelValue: string) {
   return models.find((model) => model.value === modelValue);
 }
@@ -382,7 +377,6 @@ export function getMaxOutputTokens(modelValue: string): number {
   return model?.maxOutputTokens || 8000;
 }
 
-// Access control helper
 export function canUseModel(modelValue: string, user: any, isProUser: boolean): { canUse: boolean; reason?: string } {
   const model = getModelConfig(modelValue);
 
@@ -390,12 +384,10 @@ export function canUseModel(modelValue: string, user: any, isProUser: boolean): 
     return { canUse: false, reason: 'Model not found' };
   }
 
-  // Check if model requires authentication
   if (model.requiresAuth && !user) {
     return { canUse: false, reason: 'authentication_required' };
   }
 
-  // Check if model requires Pro subscription
   if (model.pro && !isProUser) {
     return { canUse: false, reason: 'pro_subscription_required' };
   }
@@ -403,13 +395,11 @@ export function canUseModel(modelValue: string, user: any, isProUser: boolean): 
   return { canUse: true };
 }
 
-// Helper to check if user should bypass rate limits
 export function shouldBypassRateLimits(modelValue: string, user: any): boolean {
   const model = getModelConfig(modelValue);
   return Boolean(user && model?.freeUnlimited);
 }
 
-// Get acceptable file types for a model
 export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): string {
   const model = getModelConfig(modelValue);
   if (model?.pdf && isProUser) {
@@ -418,7 +408,6 @@ export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): st
   return 'image/*';
 }
 
-// Legacy arrays for backward compatibility (deprecated - use helper functions instead)
 export const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
 export const proRequiredModels = models.filter((m) => m.pro).map((m) => m.value);
 export const freeUnlimitedModels = models.filter((m) => m.freeUnlimited).map((m) => m.value);

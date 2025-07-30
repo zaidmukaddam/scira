@@ -40,7 +40,6 @@ export function InstallPrompt() {
           className="fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto md:max-w-sm p-3 bg-card text-card-foreground shadow-xl rounded-lg border border-border overflow-hidden z-100"
         >
           <div className="flex items-start justify-between gap-3">
-            {/* App Icon */}
             <Image
               src="/apple-icon.png"
               alt="App Icon"
@@ -50,7 +49,7 @@ export function InstallPrompt() {
             />
 
             <div className="flex-grow">
-              <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
+              <p className="text-sm font-semibold text-foreground">Install Atlas on your device</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
                 Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}
                 <span role="img" aria-label="plus icon" className="text-primary font-medium">
@@ -59,7 +58,6 @@ export function InstallPrompt() {
               </p>
             </div>
 
-            {/* Close Button */}
             <motion.button
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}

@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  scira.app:
+  atlas.app:
     build:
       context: .
       dockerfile: Dockerfile

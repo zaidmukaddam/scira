@@ -4,10 +4,8 @@ import os
 
 daytona = Daytona(DaytonaConfig(api_key=os.getenv("DAYTONA_API_KEY")))
 
-# Generate a unique name for the image
-snapshot_name = f"scira-analysis:{int(time.time())}"
+snapshot_name = f"atlas-analysis:{int(time.time())}"
 
-# Create a Python image
 image = (
     Image.debian_slim("3.12")
     .pip_install(["numpy", "pandas", "matplotlib", "scipy", "scikit-learn", "yfinance", "requests", "keras", "uv", "torch", "torchvision", "torchaudio"])
@@ -18,7 +16,6 @@ image = (
         )
     )
 
-# Create the image and stream the build logs
 print(f"=== Creating Image: {snapshot_name} ===")
 daytona.snapshot.create(
     CreateSnapshotParams(

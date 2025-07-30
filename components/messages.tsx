@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { Share } from '@phosphor-icons/react';
 import { EnhancedErrorDisplay } from '@/components/message';
 
-// Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
   part: any;
   messageIndex: number;
@@ -30,20 +29,20 @@ interface MessagesProps {
   suggestedQuestions: string[];
   setSuggestedQuestions: (questions: string[]) => void;
   status: string;
-  error: Error | null; // Add error from useChat
-  user?: any; // Add user prop
-  selectedVisibilityType?: 'public' | 'private'; // Add visibility type
-  chatId?: string; // Add chatId prop
-  onVisibilityChange?: (visibility: 'public' | 'private') => void; // Add visibility change handler
-  initialMessages?: any[]; // Add initial messages prop to detect existing chat
-  isOwner?: boolean; // Add ownership prop
+  error: Error | null;
+  user?: any;
+  selectedVisibilityType?: 'public' | 'private';
+  chatId?: string;
+  onVisibilityChange?: (visibility: 'public' | 'private') => void;
+  initialMessages?: any[];
+  isOwner?: boolean;
 }
 
-const SciraLogoHeader = () => (
+const AtlasLogoHeader = () => (
   <div className="flex items-center gap-2 my-1.5">
     <Image
-      src="/scira.png"
-      alt="Scira"
+      src="/atlas.png"
+      alt="Atlas"
       className="size-7 invert dark:invert-0"
       width={100}
       height={100}
@@ -51,7 +50,7 @@ const SciraLogoHeader = () => (
       quality={100}
       priority
     />
-    <h2 className="text-xl font-normal font-be-vietnam-pro text-foreground dark:text-foreground">Scira</h2>
+    <h2 className="text-xl font-normal font-be-vietnam-pro text-foreground dark:text-foreground">Atlas</h2>
   </div>
 );
 
@@ -73,35 +72,27 @@ const Messages: React.FC<MessagesProps> = React.memo(
     initialMessages,
     isOwner,
   }) => {
-    // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
     const [reasoningFullscreenMap, setReasoningFullscreenMap] = useState<Record<string, boolean>>({});
     const reasoningScrollRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
 
-    // Scroll to bottom immediately (without animation) when opening existing chat
     useEffect(() => {
       if (initialMessages && initialMessages.length > 0 && !hasInitialScrolled && messagesEndRef.current) {
-        // Use scrollTo with instant behavior for existing chats
         messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
         setHasInitialScrolled(true);
       }
     }, [initialMessages, hasInitialScrolled]);
 
-    // Filter messages to only show the ones we want to display
     const memoizedMessages = useMemo(() => {
       return messages.filter((message) => {
-        // Keep all user messages
         if (message.role === 'user') return true;
 
-        // For assistant messages
         if (message.role === 'assistant') {
-          // Keep messages that have tool invocations
           if (message.parts?.some((part: any) => part.type === 'tool-invocation')) {
             return true;
           }
-          // Keep messages that have text parts but no tool invocations
           if (
             message.parts?.some((part: any) => part.type === 'text') ||
             !message.parts?.some((part: any) => part.type === 'tool-invocation')
@@ -114,13 +105,11 @@ const Messages: React.FC<MessagesProps> = React.memo(
       });
     }, [messages]);
 
-    // Check if the last message is from a user and we're expecting an AI response
     const isWaitingForResponse = useMemo(() => {
       const lastMessage = memoizedMessages[memoizedMessages.length - 1];
       return lastMessage?.role === 'user' && (status === 'submitted' || status === 'streaming');
     }, [memoizedMessages, status]);
 
-    // Check if there are any active tool invocations in the current messages
     const hasActiveToolInvocations = useMemo(() => {
       const lastMessage = memoizedMessages[memoizedMessages.length - 1];
       if (lastMessage?.role === 'assistant') {
@@ -129,27 +118,21 @@ const Messages: React.FC<MessagesProps> = React.memo(
       return false;
     }, [memoizedMessages]);
 
-    // Check if we need to show retry due to missing assistant response (different from error status)
     const isMissingAssistantResponse = useMemo(() => {
       const lastMessage = memoizedMessages[memoizedMessages.length - 1];
 
-      // Case 1: Last message is user and no assistant response yet
       if (lastMessage?.role === 'user' && status === 'ready' && !error) {
         return true;
       }
 
-      // Case 2: Last message is assistant but lacks **visible** content
       if (lastMessage?.role === 'assistant' && status === 'ready' && !error) {
         const parts = lastMessage.parts || [];
 
-        // Only count content that the user can actually see (text or tool invocation)
         const hasVisibleText = parts.some((part: any) => part.type === 'text' && part.text && part.text.trim() !== '');
         const hasToolInvocations = parts.some((part: any) => part.type === 'tool-invocation');
 
-        // Legacy content field support
         const hasLegacyContent = lastMessage.content && lastMessage.content.trim() !== '';
 
-        // If there is NO visible content at all, we consider the response incomplete
         if (!hasVisibleText && !hasToolInvocations && !hasLegacyContent) {
           return true;
         }
@@ -158,22 +141,18 @@ const Messages: React.FC<MessagesProps> = React.memo(
       return false;
     }, [memoizedMessages, status, error]);
 
-    // Memoize the retry handler
     const handleRetry = useCallback(async () => {
       try {
         const lastUserMessage = messages.findLast((m) => m.role === 'user');
         if (!lastUserMessage) return;
 
-        // Step 1: Delete trailing messages if user is authenticated
         if (user && lastUserMessage.id) {
           await deleteTrailingMessages({
             id: lastUserMessage.id,
           });
         }
 
-        // Step 2: Update local state to remove assistant messages
         const newMessages = [];
-        // Find the index of the last user message
         for (let i = 0; i < messages.length; i++) {
           newMessages.push(messages[i]);
           if (messages[i].id === lastUserMessage.id) {
@@ -181,18 +160,15 @@ const Messages: React.FC<MessagesProps> = React.memo(
           }
         }
 
-        // Step 3: Update UI state
         setMessages(newMessages);
         setSuggestedQuestions([]);
 
-        // Step 4: Reload
         await reload();
       } catch (error) {
         console.error('Error in retry:', error);
       }
     }, [messages, user, setMessages, setSuggestedQuestions, reload]);
 
-    // Handle rendering of message parts - memoized with useCallback
     const renderPart = useCallback(
       (
         part: UIMessage['parts'][number],
@@ -201,16 +177,14 @@ const Messages: React.FC<MessagesProps> = React.memo(
         parts: UIMessage['parts'],
         message: UIMessage,
       ): React.ReactNode => {
-        // Case 1: Skip rendering text parts that should be superseded by tool invocations
         if (part.type === 'text') {
-          // For empty text parts in a streaming message, show loading animation only if no tool invocations are present
           if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations) {
             return (
               <div
                 key={`${messageIndex}-${partIndex}-loading`}
                 className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
               >
-                <SciraLogoHeader />
+                <AtlasLogoHeader />
                 <div className="flex space-x-2 ml-8 mt-2">
                   <div
                     className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
@@ -229,10 +203,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
             );
           }
 
-          // Skip empty text parts entirely for non-streaming states
           if (!part.text || part.text.trim() === '') return null;
 
-          // Detect text sandwiched between step-start and tool-invocation
           const prevPart = parts[partIndex - 1];
           const nextPart = parts[partIndex + 1];
           if (prevPart?.type === 'step-start' && nextPart?.type === 'tool-invocation') {
@@ -245,7 +217,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
               }),
             );
 
-            // Extract this text but don't render it in its original position
             return null;
           }
         }
@@ -258,10 +229,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
                   <MarkdownRenderer content={part.text} />
                 </div>
 
-                {/* Add buttons below the text with visible labels */}
                 {status === 'ready' && (
                   <div className="flex items-center gap-3 mt-2.5 mb-5 !-ml-1">
-                    {/* Only show reload for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <Button
                         variant="ghost"
@@ -271,16 +240,13 @@ const Messages: React.FC<MessagesProps> = React.memo(
                             const lastUserMessage = messages.findLast((m) => m.role === 'user');
                             if (!lastUserMessage) return;
 
-                            // Step 1: Delete trailing messages if user is authenticated
                             if (user && lastUserMessage.id) {
                               await deleteTrailingMessages({
                                 id: lastUserMessage.id,
                               });
                             }
 
-                            // Step 2: Update local state to remove assistant messages
                             const newMessages = [];
-                            // Find the index of the last user message
                             for (let i = 0; i < messages.length; i++) {
                               newMessages.push(messages[i]);
                               if (messages[i].id === lastUserMessage.id) {
@@ -288,11 +254,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
                               }
                             }
 
-                            // Step 3: Update UI state
                             setMessages(newMessages);
                             setSuggestedQuestions([]);
 
-                            // Step 4: Reload
                             await reload();
                           } catch (error) {
                             console.error('Error in reload:', error);
@@ -304,7 +268,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
                         Rewrite
                       </Button>
                     )}
-                    {/* Only show share for authenticated owners */}
                     {user && isOwner && selectedVisibilityType === 'private' && chatId && onVisibilityChange && (
                       <Button
                         variant="ghost"
@@ -356,11 +319,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
                   ?.toolName ?? null)
               : null;
 
-            // Separate expanded and fullscreen states
             const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
             const isFullscreen = reasoningFullscreenMap[sectionKey] ?? false;
 
-            // Separate setters for each state
             const setIsExpanded = (v: boolean) => setReasoningVisibilityMap((prev) => ({ ...prev, [sectionKey]: v }));
             const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap((prev) => ({ ...prev, [sectionKey]: v }));
 
@@ -382,14 +343,12 @@ const Messages: React.FC<MessagesProps> = React.memo(
           case 'step-start': {
             const firstStepStartIndex = parts.findIndex((p) => p.type === 'step-start');
             if (partIndex === firstStepStartIndex) {
-              // Render logo and title for the first step-start
               return (
                 <div key={`${messageIndex}-${partIndex}-step-start-logo`}>
-                  <SciraLogoHeader />
+                  <AtlasLogoHeader />
                 </div>
               );
             }
-            // For subsequent step-start parts, render an empty div
             return <div key={`${messageIndex}-${partIndex}-step-start`}></div>;
           }
           case 'tool-invocation':
@@ -421,36 +380,29 @@ const Messages: React.FC<MessagesProps> = React.memo(
       ],
     );
 
-    // Auto-scroll to bottom when messages change
     useEffect(() => {
       if (messagesEndRef.current) {
-        // Scroll when status changes to submitted/streaming (new user input) or when new messages are added
         if (status === 'streaming' || status === 'submitted') {
           messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         } else if (hasInitialScrolled && memoizedMessages.length > 0) {
-          // Also scroll for message updates when not in initial load
           messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
       }
     }, [memoizedMessages.length, status, hasInitialScrolled]);
 
-    // Add effect for auto-scrolling reasoning content
     useEffect(() => {
-      // Find active reasoning parts that are not complete
       const activeReasoning = messages.flatMap((message, messageIndex) =>
         (message.parts || [])
           .map((part: any, partIndex: number) => ({ part, messageIndex, partIndex }))
           .filter(({ part }: PartInfo) => part.type === 'reasoning')
           .filter(({ messageIndex, partIndex }: PartInfo) => {
             const message = messages[messageIndex];
-            // Check if reasoning is complete
             return !(message.parts || []).some(
               (p: any, i: number) => i > partIndex && (p.type === 'text' || p.type === 'tool-invocation'),
             );
           }),
       );
 
-      // Auto-scroll when active reasoning
       if (activeReasoning.length > 0 && reasoningScrollRef.current) {
         reasoningScrollRef.current.scrollTop = reasoningScrollRef.current.scrollHeight;
       }
@@ -470,17 +422,13 @@ const Messages: React.FC<MessagesProps> = React.memo(
             const isCurrentMessageAssistant = message.role === 'assistant';
             const isLastMessage = index === memoizedMessages.length - 1;
 
-            // Determine proper spacing between messages
             let messageClasses = '';
 
             if (isCurrentMessageUser && isNextMessageAssistant) {
-              // Reduce space between user message and its response
               messageClasses = 'mb-0';
             } else if (isCurrentMessageAssistant && index < memoizedMessages.length - 1) {
-              // Add border and spacing only if this is not the last assistant message
               messageClasses = 'mb-6 pb-6 border-b border-border dark:border-border';
             } else if (isCurrentMessageAssistant && index === memoizedMessages.length - 1) {
-              // Last assistant message should have no bottom margin (min-height is now handled in Message component)
               messageClasses = 'mb-0';
             } else {
               messageClasses = 'mb-0';
@@ -513,11 +461,10 @@ const Messages: React.FC<MessagesProps> = React.memo(
           })}
         </div>
 
-        {/* Loading animation when status is submitted with min-height to reserve space */}
         {status === 'submitted' && !hasActiveToolInvocations && (
           <div className="flex items-start min-h-[calc(100vh-18rem)] !m-0 !p-0">
             <div className="w-full !m-0 !p-0">
-              <SciraLogoHeader />
+              <AtlasLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
                 <div
                   className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
@@ -536,11 +483,10 @@ const Messages: React.FC<MessagesProps> = React.memo(
           </div>
         )}
 
-        {/* Missing assistant response error */}
         {isMissingAssistantResponse && (
           <div className="flex items-start min-h-[calc(100vh-18rem)]">
             <div className="w-full">
-              <SciraLogoHeader />
+              <AtlasLogoHeader />
 
               <div className="bg-secondary/30 dark:bg-secondary/20 border border-secondary dark:border-secondary rounded-lg p-4 mb-4 max-w-2xl">
                 <div className="flex items-start gap-3">
@@ -577,7 +523,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
           </div>
         )}
 
-        {/* Show global error when there is no assistant message to display it */}
         {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
           <EnhancedErrorDisplay
             error={error}
@@ -592,7 +537,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    // Custom comparison function to prevent unnecessary re-renders
     return (
       prevProps.messages === nextProps.messages &&
       prevProps.status === nextProps.status &&
@@ -604,7 +548,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
   },
 );
 
-// Add a display name for better debugging
 Messages.displayName = 'Messages';
 
 export default Messages;
