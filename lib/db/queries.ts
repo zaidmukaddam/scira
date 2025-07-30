@@ -16,12 +16,7 @@ import {
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db } from './index'; // Use unified database connection
-import { 
-  getDodoPayments, 
-  setDodoPayments, 
-  getDodoProStatus, 
-  setDodoProStatus 
-} from '../performance-cache';
+import { getDodoPayments, setDodoPayments, getDodoProStatus, setDodoProStatus } from '../performance-cache';
 
 type VisibilityType = 'public' | 'private';
 
@@ -605,11 +600,11 @@ export async function hasSuccessfulDodoPayment({ userId }: { userId: string }) {
     // Fallback to database query
     const payments = await getSuccessfulPaymentsByUserId({ userId });
     const hasPayments = payments.length > 0;
-    
+
     // Cache the result
     const statusData = { hasPayments, isProUser: false };
     setDodoProStatus(userId, statusData);
-    
+
     return hasPayments;
   } catch (error) {
     console.error('Error checking DodoPayments status:', error);
@@ -620,20 +615,21 @@ export async function hasSuccessfulDodoPayment({ userId }: { userId: string }) {
 export async function isDodoPaymentsProExpired({ userId }: { userId: string }) {
   try {
     const payments = await getSuccessfulPaymentsByUserId({ userId });
-    
+
     if (payments.length === 0) {
       return true; // No payments = expired
     }
-    
+
     // Get the most recent successful payment
-    const mostRecentPayment = payments
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-    
+    const mostRecentPayment = payments.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+
     // Check if it's older than 1 month
     const paymentDate = new Date(mostRecentPayment.createdAt);
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
+
     return paymentDate <= oneMonthAgo;
   } catch (error) {
     console.error('Error checking DodoPayments expiration:', error);
@@ -644,24 +640,25 @@ export async function isDodoPaymentsProExpired({ userId }: { userId: string }) {
 export async function getDodoPaymentsExpirationInfo({ userId }: { userId: string }) {
   try {
     const payments = await getSuccessfulPaymentsByUserId({ userId });
-    
+
     if (payments.length === 0) {
       return null;
     }
-    
+
     // Get the most recent successful payment
-    const mostRecentPayment = payments
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-    
+    const mostRecentPayment = payments.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+
     // Calculate expiration date (1 month from payment)
     const expirationDate = new Date(mostRecentPayment.createdAt);
     expirationDate.setMonth(expirationDate.getMonth() + 1);
-    
+
     // Calculate days until expiration
     const now = new Date();
     const diffTime = expirationDate.getTime() - now.getTime();
     const daysUntilExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return {
       paymentDate: mostRecentPayment.createdAt,
       expirationDate,

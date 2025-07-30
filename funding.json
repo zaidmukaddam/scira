@@ -8,7 +8,7 @@
         "phone": "",
         "description": "I built Atlas, a minimalistic open source AI Powered Search Engine.",
         "webpageUrl": {
-            "url": "https://github.com/intimetec/atlas"
+            "url": "https://github.com/In-Time-Tec/atlas"
         }
     },
     "projects": [
@@ -17,10 +17,10 @@
             "name": "Atlas",
             "description": "Atlas is a minimalistic open source AI Powered Search Engine.",
             "webpageUrl": {
-                "url": "https://github.com/intimetec/atlas"
+                "url": "https://github.com/In-Time-Tec/atlas"
             },
             "repositoryUrl": {
-                "url": "https://github.com/intimetec/atlas"
+                "url": "https://github.com/In-Time-Tec/atlas"
             },
             "licenses": [
                 "spdx:MIT"
@@ -37,7 +37,7 @@
             {
                 "guid": "github",
                 "type": "other",
-                "address": "https://github.com/sponsors/intimetec",
+                "address": "https://github.com/sponsors/In-Time-Tec",
                 "description": "Github Sponsor"
             },
             {

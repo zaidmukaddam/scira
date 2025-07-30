@@ -55,12 +55,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/raycast',
-        destination: 'https://www.raycast.com/intimetec/atlas',
+        destination: 'https://www.raycast.com/In-Time-Tec/atlas',
         permanent: true,
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/intimetec/project/atlas-ai-20',
+        destination: 'https://peerlist.io/In-Time-Tec/project/atlas-ai-20',
         permanent: true,
       },
     ];

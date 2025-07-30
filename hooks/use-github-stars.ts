@@ -11,7 +11,7 @@ export function useGitHubStars() {
     queryKey: ['github-stars'],
     queryFn: async (): Promise<number> => {
       try {
-        const response = await fetch('https://api.github.com/repos/intimetec/atlas');
+        const response = await fetch('https://api.github.com/repos/In-Time-Tec/atlas');
         if (!response.ok) {
           throw new Error('Failed to fetch GitHub stars');
         }
