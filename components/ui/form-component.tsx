@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-// /components/ui/form-component.tsx
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatRequestOptions, CreateMessage, Message } from 'ai';
@@ -488,7 +486,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
-const MAX_FILES = 4;
+const MAX_FILES = 10;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_INPUT_CHARS = 10000;
 
@@ -501,7 +499,6 @@ const fileToDataURL = (file: File): Promise<string> => {
   });
 };
 
-// Debounce utility function
 const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T => {
   let timeout: NodeJS.Timeout;
   return ((...args: any[]) => {
@@ -722,7 +719,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   const [open, setOpen] = useState(false);
   const isExtreme = selectedGroup === 'extreme';
 
-  // Memoize visible groups calculation
   const visibleGroups = useMemo(
     () =>
       searchGroups.filter((group) => {
@@ -741,13 +737,11 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
 
   const handleToggleExtreme = useCallback(() => {
     if (isExtreme) {
-      // Switch back to web mode
       const webGroup = searchGroups.find((group) => group.id === 'web');
       if (webGroup) {
         onGroupSelect(webGroup);
       }
     } else {
-      // Switch to extreme mode
       const extremeGroup = searchGroups.find((group) => group.id === 'extreme');
       if (extremeGroup) {
         onGroupSelect(extremeGroup);
@@ -767,9 +761,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
 
   return (
     <div className="flex items-center">
-      {/* Toggle Switch Container */}
       <div className="flex items-center bg-background border border-border rounded-lg !gap-1 !py-1 !px-0.75 h-8">
-        {/* Group Selector Side */}
         <Popover open={open && !isExtreme} onOpenChange={(newOpen) => !isExtreme && setOpen(newOpen)}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -781,7 +773,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                   size="sm"
                   onClick={() => {
                     if (isExtreme) {
-                      // Switch back to web mode when clicking groups in extreme mode
                       const webGroup = searchGroups.find((group) => group.id === 'web');
                       if (webGroup) {
                         onGroupSelect(webGroup);
@@ -881,7 +872,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
           </PopoverContent>
         </Popover>
 
-        {/* Extreme Mode Side */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -964,10 +954,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     };
   }, [cleanupMediaRecorder]);
 
-  // Global typing detection to auto-focus form
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      // Don't interfere if user is already typing in an input, textarea, or contenteditable
       const target = event.target as HTMLElement;
       if (
         target.tagName === 'INPUT' ||
@@ -978,12 +966,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Don't interfere with keyboard shortcuts (Ctrl/Cmd + key)
       if (event.ctrlKey || event.metaKey || event.altKey) {
         return;
       }
 
-      // Don't interfere with function keys, arrow keys, etc.
       if (
         event.key.length > 1 && // Multi-character keys like 'Enter', 'Escape', etc.
         !['Backspace', 'Delete', 'Space'].includes(event.key)
@@ -991,22 +977,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      // Don't focus if form is already focused
       if (inputRef.current && document.activeElement === inputRef.current) {
         return;
       }
 
-      // Don't focus if recording is active
       if (isRecording) {
         return;
       }
 
-      // Focus the input and add the typed character
       if (inputRef.current && event.key.length === 1) {
         inputRef.current.focus();
-        // If it's a printable character, add it to the input
         if (event.key !== ' ' || input.length > 0) {
-          // Allow space only if there's already content
           setInput(input + event.key);
           event.preventDefault();
         }
@@ -1773,10 +1754,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }
   }, [inputRef]);
 
-  // Debounced resize function
   const debouncedResize = useMemo(() => debounce(resizeTextarea, 100), [resizeTextarea]);
 
-  // Resize textarea when input value changes
   useEffect(() => {
     debouncedResize();
   }, [input, debouncedResize]);
@@ -1871,7 +1850,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
             </div>
           )}
 
-          {/* Form container */}
           <div className="relative">
             <div className="rounded-xl bg-muted border border-border focus-within:border-ring transition-colors duration-200">
               {isRecording ? (
@@ -1908,10 +1886,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   value={input}
                   onChange={handleInput}
                   onInput={(e) => {
-                    // Auto-resize textarea based on content
                     const target = e.target as HTMLTextAreaElement;
 
-                    // Reset height to auto first to get the actual scroll height
                     target.style.height = 'auto';
 
                     const scrollHeight = target.scrollHeight;
@@ -1925,7 +1901,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       target.style.overflowY = 'hidden';
                     }
 
-                    // Ensure the cursor position is visible by scrolling to bottom if needed
                     requestAnimationFrame(() => {
                       const cursorPosition = target.selectionStart;
                       if (cursorPosition === target.value.length) {
@@ -1959,7 +1934,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 />
               )}
 
-              {/* Toolbar as a separate block - no absolute positioning */}
               <div
                 className={cn(
                   'flex justify-between items-center rounded-t-none rounded-b-xl',
@@ -2046,7 +2020,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   ) : input.length === 0 && attachments.length === 0 ? (
-                    /* Show Voice Recording Button when no input */
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
@@ -2083,7 +2056,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    /* Show Send Button when there is input */
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
