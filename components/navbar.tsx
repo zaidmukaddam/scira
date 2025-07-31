@@ -2,7 +2,7 @@
 
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share, X } from '@phosphor-icons/react';
+import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share, X, FolderOpen } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -157,6 +157,19 @@ const Navbar = memo(
                 <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
               </Button>
             </Link>
+            {user && (
+              <Link href="/library">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-lg hover:bg-accent/50 group transition-all hover:scale-105 pointer-events-auto"
+                >
+                  <FolderOpen size={16} className="group-hover:scale-110 transition-all" />
+                  <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">Library</span>
+                </Button>
+              </Link>
+            )}
           </div>
 
           {user && !hasActiveSubscription && !showProLoading && (

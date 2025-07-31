@@ -76,8 +76,8 @@ export const message = pgTable('message', {
   chatId: text('chat_id')
     .notNull()
     .references(() => chat.id, { onDelete: 'cascade' }),
-  role: text('role').notNull(), // user, assistant, or tool
-  parts: json('parts').notNull(), // Store parts as JSON in the database
+  role: text('role').notNull(),
+  parts: json('parts').notNull(),
   attachments: json('attachments').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -92,7 +92,6 @@ export const stream = pgTable('stream', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
-// Subscription table for Polar webhook data
 export const subscription = pgTable('subscription', {
   id: text('id').primaryKey(),
   createdAt: timestamp('createdAt').notNull(),
@@ -114,12 +113,11 @@ export const subscription = pgTable('subscription', {
   checkoutId: text('checkoutId').notNull(),
   customerCancellationReason: text('customerCancellationReason'),
   customerCancellationComment: text('customerCancellationComment'),
-  metadata: text('metadata'), // JSON string
-  customFieldData: text('customFieldData'), // JSON string
+  metadata: text('metadata'),
+  customFieldData: text('customFieldData'),
   userId: text('userId').references(() => user.id),
 });
 
-// Extreme search usage tracking table
 export const extremeSearchUsage = pgTable('extreme_search_usage', {
   id: text('id')
     .primaryKey()
@@ -134,7 +132,6 @@ export const extremeSearchUsage = pgTable('extreme_search_usage', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-// Message usage tracking table
 export const messageUsage = pgTable('message_usage', {
   id: text('id')
     .primaryKey()
@@ -149,7 +146,6 @@ export const messageUsage = pgTable('message_usage', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-// Custom instructions table
 export const customInstructions = pgTable('custom_instructions', {
   id: text('id')
     .primaryKey()
@@ -162,9 +158,8 @@ export const customInstructions = pgTable('custom_instructions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-// Payment table for Dodo Payments webhook data
 export const payment = pgTable('payment', {
-  id: text('id').primaryKey(), // payment_id from webhook
+  id: text('id').primaryKey(),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at'),
   brandId: text('brand_id'),
@@ -188,15 +183,85 @@ export const payment = pgTable('payment', {
   subscriptionId: text('subscription_id'),
   tax: integer('tax'),
   totalAmount: integer('total_amount').notNull(),
-  // JSON fields for complex objects
-  billing: json('billing'), // Billing address object
-  customer: json('customer'), // Customer data object
-  disputes: json('disputes'), // Disputes array
-  metadata: json('metadata'), // Metadata object
-  productCart: json('product_cart'), // Product cart array
-  refunds: json('refunds'), // Refunds array
-  // Foreign key to user
+  billing: json('billing'),
+  customer: json('customer'),
+  disputes: json('disputes'),
+  metadata: json('metadata'),
+  productCart: json('product_cart'),
+  refunds: json('refunds'),
   userId: text('user_id').references(() => user.id),
+});
+
+export const fileFolder = pgTable('file_folder', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  parentId: text('parent_id'),
+  color: text('color'),
+  icon: text('icon'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const fileLibrary = pgTable('file_library', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  filename: text('filename').notNull(),
+  originalName: text('original_name').notNull(),
+  contentType: text('content_type').notNull(),
+  size: integer('size').notNull(),
+  url: text('url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  folderId: text('folder_id').references(() => fileFolder.id, { onDelete: 'set null' }),
+  tags: json('tags').$type<string[]>(),
+  description: text('description'),
+  metadata: json('metadata'),
+  isPublic: boolean('is_public').notNull().default(false),
+  publicId: text('public_id').unique(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const fileUsage = pgTable('file_usage', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  fileId: text('file_id')
+    .notNull()
+    .references(() => fileLibrary.id, { onDelete: 'cascade' }),
+  messageId: text('message_id')
+    .notNull()
+    .references(() => message.id, { onDelete: 'cascade' }),
+  chatId: text('chat_id')
+    .notNull()
+    .references(() => chat.id, { onDelete: 'cascade' }),
+  usedAt: timestamp('used_at').notNull().defaultNow(),
+});
+
+export const fileShare = pgTable('file_share', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  fileId: text('file_id')
+    .notNull()
+    .references(() => fileLibrary.id, { onDelete: 'cascade' }),
+  sharedByUserId: text('shared_by_user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  sharedWithUserId: text('shared_with_user_id')
+    .references(() => user.id, { onDelete: 'cascade' }),
+  shareToken: text('share_token').unique(),
+  permissions: text('permissions').notNull().default('read'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -211,3 +276,7 @@ export type Payment = InferSelectModel<typeof payment>;
 export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
+export type FileFolder = InferSelectModel<typeof fileFolder>;
+export type FileLibrary = InferSelectModel<typeof fileLibrary>;
+export type FileUsage = InferSelectModel<typeof fileUsage>;
+export type FileShare = InferSelectModel<typeof fileShare>;

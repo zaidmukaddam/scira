@@ -26,6 +26,9 @@ import { checkImageModeration } from '@/app/actions';
 import { Crown, LockIcon, MicrophoneIcon, CpuIcon } from '@phosphor-icons/react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { FileLibraryDialog, FileLibraryFile } from '@/components/file-library';
+import { FolderOpen, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -443,6 +446,8 @@ interface Attachment {
   contentType: string;
   url: string;
   size: number;
+  isFromLibrary?: boolean;
+  libraryFileId?: string;
 }
 
 const ArrowUpIcon = ({ size = 16 }: { size?: number }) => {
@@ -643,6 +648,11 @@ const AttachmentPreview: React.FC<{
           {isUploadingAttachment(attachment) ? 'Uploading...' : formatFileSize((attachment as Attachment).size)}
         </p>
       </div>
+      {!isUploadingAttachment(attachment) && (attachment as Attachment).isFromLibrary && (
+        <div className="absolute -top-1 -left-1 p-0.5 rounded-full bg-primary text-primary-foreground z-10">
+          <FolderOpen className="h-2.5 w-2.5" />
+        </div>
+      )}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -928,6 +938,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [showLibraryDialog, setShowLibraryDialog] = useState(false);
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
 
   const isProUser = useMemo(
     () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
@@ -1287,6 +1299,37 @@ const FormComponent: React.FC<FormComponentProps> = ({
     },
     [setAttachments],
   );
+
+  const handleLibraryFileSelect = useCallback(
+    (files: FileLibraryFile[]) => {
+      const libraryAttachments: Attachment[] = files.map((file) => ({
+        name: file.originalName,
+        contentType: file.contentType,
+        url: file.url,
+        size: file.size,
+        isFromLibrary: true,
+        libraryFileId: file.id,
+      }));
+
+      const totalAttachments = attachments.length + libraryAttachments.length;
+      if (totalAttachments > MAX_FILES) {
+        toast.error(`You can only attach up to ${MAX_FILES} files.`);
+        return;
+      }
+
+      setAttachments((currentAttachments) => [...currentAttachments, ...libraryAttachments]);
+      
+      toast.success(
+        `${libraryAttachments.length} file${libraryAttachments.length > 1 ? 's' : ''} selected from library`,
+      );
+    },
+    [attachments.length, setAttachments],
+  );
+
+  const openLibraryDialog = useCallback(() => {
+    setShowLibraryDialog(true);
+    setShowAttachmentMenu(false);
+  }, []);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -1654,6 +1697,24 @@ const FormComponent: React.FC<FormComponentProps> = ({
           model: selectedModel,
         });
 
+        const libraryFiles = attachments.filter(att => att.isFromLibrary && att.libraryFileId);
+        if (libraryFiles.length > 0) {
+          libraryFiles.forEach(file => {
+            fetch('/api/files/track-usage', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                fileId: file.libraryFileId,
+                usage: 'chat_message',
+              }),
+            }).catch(error => {
+              console.warn('Failed to track file usage:', error);
+            });
+          });
+        }
+
         if (user) {
           window.history.replaceState({}, '', `/search/${chatId}`);
         }
@@ -1708,6 +1769,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     } else {
       fileInputRef.current?.click();
     }
+    setShowAttachmentMenu(false);
   }, [attachments.length, status, fileInputRef]);
 
   const handleKeyDown = useCallback(
@@ -1964,46 +2026,58 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
 
                 <div className={cn('flex items-center flex-shrink-0 gap-2')}>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <button
-                        className={cn(
-                          "group rounded-lg p-1.75 h-8 w-8 border transition-colors duration-200",
-                          hasVisionSupport(selectedModel)
-                            ? "border-border bg-background text-foreground hover:bg-accent"
-                            : "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                        )}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          if (hasVisionSupport(selectedModel)) {
-                            triggerFileInput();
-                          }
-                        }}
-                        disabled={!hasVisionSupport(selectedModel)}
+                  <DropdownMenu open={showAttachmentMenu} onOpenChange={setShowAttachmentMenu}>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className={cn(
+                              "group rounded-lg p-1.75 h-8 w-8 border transition-colors duration-200 flex items-center justify-center",
+                              hasVisionSupport(selectedModel)
+                                ? "border-border bg-background text-foreground hover:bg-accent"
+                                : "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                            )}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (hasVisionSupport(selectedModel)) {
+                                setShowAttachmentMenu(!showAttachmentMenu);
+                              }
+                            }}
+                            disabled={!hasVisionSupport(selectedModel)}
+                          >
+                            <PaperclipIcon size={16} />
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
-                        <span className="block">
-                          <PaperclipIcon size={16} />
-                        </span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      sideOffset={6}
-                      className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-[11px]">
-                          {hasVisionSupport(selectedModel) ? 'Attach File' : 'File Upload Unavailable'}
-                        </span>
-                        <span className="text-[10px] text-accent leading-tight">
-                          {hasVisionSupport(selectedModel) 
-                            ? (hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image')
-                            : 'Selected model does not support file uploads'}
-                        </span>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">
+                            {hasVisionSupport(selectedModel) ? 'Attach File' : 'File Upload Unavailable'}
+                          </span>
+                          <span className="text-[10px] text-accent leading-tight">
+                            {hasVisionSupport(selectedModel) 
+                              ? (hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image')
+                              : 'Selected model does not support file uploads'}
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end" sideOffset={4}>
+                      <DropdownMenuItem onClick={triggerFileInput}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={openLibraryDialog}>
+                        <FolderOpen className="w-4 h-4 mr-2" />
+                        Browse Library
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   {isProcessing ? (
                     <Tooltip delayDuration={300}>
@@ -2103,6 +2177,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
           </div>
         </div>
       </TooltipProvider>
+      
+      <FileLibraryDialog
+        open={showLibraryDialog}
+        onOpenChange={setShowLibraryDialog}
+        onFileSelect={handleLibraryFileSelect}
+        multiple={true}
+        mode="select"
+      />
     </div>
   );
 };
