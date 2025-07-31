@@ -1964,36 +1964,46 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
 
                 <div className={cn('flex items-center flex-shrink-0 gap-2')}>
-                  {hasVisionSupport(selectedModel) && (
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <button
-                          className="group rounded-lg p-1.75 h-8 w-8 border border-border bg-background text-foreground hover:bg-accent transition-colors duration-200"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={cn(
+                          "group rounded-lg p-1.75 h-8 w-8 border transition-colors duration-200",
+                          hasVisionSupport(selectedModel)
+                            ? "border-border bg-background text-foreground hover:bg-accent"
+                            : "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                        )}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          if (hasVisionSupport(selectedModel)) {
                             triggerFileInput();
-                          }}
-                        >
-                          <span className="block">
-                            <PaperclipIcon size={16} />
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="bottom"
-                        sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
+                          }
+                        }}
+                        disabled={!hasVisionSupport(selectedModel)}
                       >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Attach File</span>
-                          <span className="text-[10px] text-accent leading-tight">
-                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
-                          </span>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                        <span className="block">
+                          <PaperclipIcon size={16} />
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      sideOffset={6}
+                      className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-[11px]">
+                          {hasVisionSupport(selectedModel) ? 'Attach File' : 'File Upload Unavailable'}
+                        </span>
+                        <span className="text-[10px] text-accent leading-tight">
+                          {hasVisionSupport(selectedModel) 
+                            ? (hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image')
+                            : 'Selected model does not support file uploads'}
+                        </span>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
 
                   {isProcessing ? (
                     <Tooltip delayDuration={300}>
