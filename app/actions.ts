@@ -1,6 +1,7 @@
 // app/actions.ts
 'use server';
 
+import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText } from 'ai';
@@ -1936,5 +1937,41 @@ export async function testLookoutAction({ id }: { id: string }) {
   } catch (error) {
     console.error('Error testing lookout:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// Server action to get user's geolocation using Vercel
+export async function getUserLocation() {
+  'use server';
+
+  try {
+    const { headers } = await import('next/headers');
+    const headersList = await headers();
+
+    // Create a mock request object with headers for geolocation
+    const request = {
+      headers: headersList,
+    } as any;
+
+    const locationData = geolocation(request);
+
+    return {
+      country: locationData.country || '',
+      countryCode: locationData.country || '',
+      city: locationData.city || '',
+      region: locationData.region || '',
+      isIndia: locationData.country === 'IN',
+      loading: false,
+    };
+  } catch (error) {
+    console.error('Failed to get location from Vercel:', error);
+    return {
+      country: 'Unknown',
+      countryCode: '',
+      city: '',
+      region: '',
+      isIndia: false,
+      loading: false,
+    };
   }
 }

@@ -207,7 +207,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     // Check Polar subscription
     const hasPolarSub = isCurrentPlan(STARTER_TIER);
     // Check DodoPayments Pro status
-    const hasDodoProAccess = user?.isProUser && user?.dodoProStatus?.isProUser;
+    const hasDodoProAccess = user?.isProUser && user?.proSource === 'dodo';
 
     return hasPolarSub || hasDodoProAccess;
   };
@@ -215,7 +215,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
   // Get the source of Pro access for display
   const getProAccessSource = () => {
     if (isCurrentPlan(STARTER_TIER)) return 'polar';
-    if (user?.dodoProStatus?.isProUser) return 'dodo';
+    if (user?.proSource === 'dodo') return 'dodo';
     return null;
   };
 
