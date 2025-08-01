@@ -76,10 +76,10 @@ importers:
         version: 2.1.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@polar-sh/better-auth':
         specifier: ^1.0.8
-        version: 1.0.8(@polar-sh/sdk@0.34.8(zod@3.25.76))(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        version: 1.0.8(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@polar-sh/sdk':
-        specifier: ^0.34.8
-        version: 0.34.8(zod@3.25.76)
+        specifier: ^0.34.9
+        version: 0.34.9
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1447,12 +1447,11 @@ packages:
       '@polar-sh/sdk': ^0.34.8
       better-auth: ^1.2.7
 
-  '@polar-sh/sdk@0.34.8':
-    resolution: {integrity: sha512-9GVBaB0XlSxS/0GTPThPkWWb31vPOZr67onMC772dKjzRd7o9WJ9WTXY1d2btmFFoxqdxJutGxXptI3mmFl0aw==}
+  '@polar-sh/sdk@0.34.9':
+    resolution: {integrity: sha512-+kzQ3IlO67+/eSC4kmbZbmqdPjmvAr8zjTsavyx/u5lqwrerutvhpDzCCBQMlFnEVgeXArF+Rf6FQKkqKrgpxA==}
     hasBin: true
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
-      zod: ^3
     peerDependenciesMeta:
       '@modelcontextprotocol/sdk':
         optional: true
@@ -7503,13 +7502,13 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  '@polar-sh/better-auth@1.0.8(@polar-sh/sdk@0.34.8(zod@3.25.76))(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@polar-sh/better-auth@1.0.8(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
-      '@polar-sh/sdk': 0.34.8(zod@3.25.76)
+      '@polar-sh/sdk': 0.34.9
       better-auth: https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod: 3.25.76
 
-  '@polar-sh/sdk@0.34.8(zod@3.25.76)':
+  '@polar-sh/sdk@0.34.9':
     dependencies:
       standardwebhooks: 1.0.0
       zod: 3.25.76
