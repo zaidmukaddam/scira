@@ -10,6 +10,7 @@ import { DiscountConfig } from '@/lib/discount';
 import { cn } from '@/lib/utils';
 import { PRICING } from '@/lib/constants';
 import { SlidingNumber } from '@/components/core/sliding-number';
+import { useLocation } from '@/hooks/use-location';
 
 interface DiscountBannerProps {
   discountConfig: DiscountConfig;
@@ -19,6 +20,7 @@ interface DiscountBannerProps {
 }
 
 export function DiscountBanner({ discountConfig, onClose, onClaim, className }: DiscountBannerProps) {
+  const location = useLocation();
   const [isVisible, setIsVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
@@ -127,22 +129,24 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
       };
     }
 
-    // Calculate INR pricing
+    // Calculate INR pricing (only for India)
     let inrPricing = null;
-    if (discountConfig.inrPrice) {
-      inrPricing = {
-        originalPrice: defaultINRPrice,
-        finalPrice: discountConfig.inrPrice,
-        savings: defaultINRPrice - discountConfig.inrPrice,
-      };
-    } else if (discountConfig.percentage) {
-      const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
-      const inrFinalPrice = defaultINRPrice - inrSavings;
-      inrPricing = {
-        originalPrice: defaultINRPrice,
-        finalPrice: inrFinalPrice,
-        savings: inrSavings,
-      };
+    if (location.isIndia) {
+      if (discountConfig.inrPrice) {
+        inrPricing = {
+          originalPrice: defaultINRPrice,
+          finalPrice: discountConfig.inrPrice,
+          savings: defaultINRPrice - discountConfig.inrPrice,
+        };
+      } else if (discountConfig.percentage) {
+        const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
+        const inrFinalPrice = defaultINRPrice - inrSavings;
+        inrPricing = {
+          originalPrice: defaultINRPrice,
+          finalPrice: inrFinalPrice,
+          savings: inrSavings,
+        };
+      }
     }
 
     if (usdPricing || inrPricing) {
