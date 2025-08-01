@@ -62,6 +62,13 @@ export default function CheckoutPage() {
     },
   });
 
+  // Auto-populate email from session
+  useEffect(() => {
+    if (session?.user?.email) {
+      form.setValue('customer.email', session.user.email);
+    }
+  }, [session, form]);
+
   // Fetch discount configuration
   useEffect(() => {
     const fetchDiscountConfig = async () => {
@@ -265,7 +272,13 @@ export default function CheckoutPage() {
                         <FormItem>
                           <FormLabel>Email Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="john@example.com" type="email" {...field} />
+                            <Input
+                              placeholder="john@example.com"
+                              type="email"
+                              {...field}
+                              disabled
+                              className="bg-zinc-50 dark:bg-zinc-900"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
