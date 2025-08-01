@@ -301,7 +301,7 @@ const ChatInterface = memo(
       data,
       status,
       error,
-      // experimental_resume,
+      experimental_resume,
     } = useChat(chatOptions);
 
     // Handle text highlighting and quoting
@@ -331,13 +331,13 @@ const ChatInterface = memo(
       console.log('[error instance]:', error instanceof Error, error instanceof ChatSDKError);
     }
 
-    // useAutoResume({
-    //   autoResume: false,
-    //   initialMessages: initialMessages || [],
-    //   experimental_resume,
-    //   data,
-    //   setMessages,
-    // });
+    useAutoResume({
+      autoResume: false,
+      initialMessages: initialMessages || [],
+      experimental_resume,
+      data,
+      setMessages,
+    });
 
     useEffect(() => {
       if (status) {
