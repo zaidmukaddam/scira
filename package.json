@@ -89,7 +89,7 @@
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
     "knip": "^5.62.0",
-    "lucide-react": "^0.525.0",
+    "lucide-react": "^0.536.0",
     "luxon": "^3.7.1",
     "mapbox-gl": "^3.13.0",
     "marked-react": "^3.0.1",

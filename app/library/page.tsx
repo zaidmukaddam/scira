@@ -1,11 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Grid3X3, List, Upload, FolderPlus, X, Files, HardDrive } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserData } from '@/hooks/use-user-data';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +32,7 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-export default function LibraryPage() {
+function LibraryPageContent() {
   const { data: user, isLoading: userLoading } = useUserData();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,7 +145,7 @@ export default function LibraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full overflow-y-auto">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -355,5 +357,18 @@ export default function LibraryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LibraryPage() {
+  return (
+    <Suspense>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col h-svh">
+          <LibraryPageContent />
+        </SidebarInset>
+      </SidebarProvider>
+    </Suspense>
   );
 }

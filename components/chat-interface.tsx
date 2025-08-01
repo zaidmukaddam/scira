@@ -15,7 +15,6 @@ import { suggestQuestions, updateChatVisibility } from '@/app/actions';
 
 import { ChatDialogs } from '@/components/chat-dialogs';
 import Messages from '@/components/messages';
-import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import FormComponent from '@/components/ui/form-component';
 
@@ -43,6 +42,9 @@ interface ChatInterfaceProps {
   initialMessages?: any[];
   initialVisibility?: 'public' | 'private';
   isOwner?: boolean;
+  onHistoryClick?: () => void;
+  commandDialogOpen?: boolean;
+  setCommandDialogOpen?: (open: boolean) => void;
 }
 
 const ChatInterface = memo(
@@ -51,6 +53,9 @@ const ChatInterface = memo(
     initialMessages,
     initialVisibility = 'private',
     isOwner = true,
+    onHistoryClick,
+    commandDialogOpen: externalCommandDialogOpen,
+    setCommandDialogOpen: externalSetCommandDialogOpen,
   }: ChatInterfaceProps): React.JSX.Element => {
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
@@ -74,7 +79,12 @@ const ChatInterface = memo(
 
     const [chatState, dispatch] = useReducer(
       chatReducer,
-      createInitialState(initialVisibility, persistedHasShownUpgradeDialog, persistedHasShownSignInPrompt, false),
+      createInitialState(
+        initialVisibility,
+        persistedHasShownUpgradeDialog,
+        persistedHasShownSignInPrompt,
+        externalCommandDialogOpen || false,
+      ),
     );
 
     const {
@@ -371,13 +381,17 @@ const ChatInterface = memo(
       const down = (e: KeyboardEvent) => {
         if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
-          dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: !chatState.commandDialogOpen });
+          if (externalSetCommandDialogOpen) {
+            externalSetCommandDialogOpen(!externalCommandDialogOpen);
+          } else {
+            dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: !chatState.commandDialogOpen });
+          }
         }
       };
 
       document.addEventListener('keydown', down);
       return () => document.removeEventListener('keydown', down);
-    }, [chatState.commandDialogOpen]);
+    }, [chatState.commandDialogOpen, externalCommandDialogOpen, externalSetCommandDialogOpen]);
 
     const handleModelChange = useCallback(
       (model: string) => {
@@ -408,26 +422,18 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
-        <Navbar
-          isDialogOpen={chatState.anyDialogOpen}
-          chatId={initialChatId || (messages.length > 0 ? chatId : null)}
-          selectedVisibilityType={chatState.selectedVisibilityType}
-          onVisibilityChange={handleVisibilityChange}
-          status={status}
-          user={user}
-          onHistoryClick={() => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: true })}
-          isOwner={isOwner}
-          subscriptionData={subscriptionData}
-          isProUser={isUserPro}
-          isProStatusLoading={proStatusLoading}
-          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
-          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-        />
-
+      <div className="flex flex-col font-sans! items-center h-full bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
         <ChatDialogs
-          commandDialogOpen={chatState.commandDialogOpen}
-          setCommandDialogOpen={(open) => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open })}
+          commandDialogOpen={
+            externalCommandDialogOpen !== undefined ? externalCommandDialogOpen : chatState.commandDialogOpen
+          }
+          setCommandDialogOpen={(open) => {
+            if (externalSetCommandDialogOpen) {
+              externalSetCommandDialogOpen(open);
+            } else {
+              dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open });
+            }
+          }}
           showSignInPrompt={chatState.showSignInPrompt}
           setShowSignInPrompt={(open) => dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: open })}
           hasShownSignInPrompt={chatState.hasShownSignInPrompt}
@@ -447,10 +453,10 @@ const ChatInterface = memo(
         />
 
         <div
-          className={`w-full p-2 sm:p-4 ${
+          className={`w-full p-2 sm:p-4 flex-1 flex flex-col ${
             status === 'ready' && messages.length === 0
-              ? 'min-h-screen! flex! flex-col! items-center! justify-center!' // Center everything when no messages
-              : 'mt-20! sm:mt-16! flex flex-col!' // Add top margin when showing messages
+              ? 'items-center justify-center' // Center everything when no messages
+              : '' // Normal flow when messages exist
           }`}
         >
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
@@ -534,7 +540,7 @@ const ChatInterface = memo(
                 className={cn(
                   'transition-all duration-500 w-full max-w-[95%] sm:max-w-2xl mx-auto',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative' // Centered position when no messages
+                    ? 'mt-8' // Add some margin when centered
                     : 'fixed bottom-6 sm:bottom-4 left-0 right-0 z-20', // Fixed bottom when messages exist
                 )}
               >

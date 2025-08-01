@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
-import { ChatInterface } from '@/components/chat-interface';
 import { getUser } from '@/lib/auth-utils';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { Message } from '@/lib/db/schema';
 import { Metadata } from 'next';
+import ClientWrapper from './client-wrapper';
 
 interface UIMessage {
   id: string;
@@ -138,7 +138,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const isOwner = user ? user.id === chat.userId : false;
 
   return (
-    <ChatInterface
+    <ClientWrapper
       initialChatId={id}
       initialMessages={initialMessages}
       initialVisibility={chat.visibility as 'public' | 'private'}
