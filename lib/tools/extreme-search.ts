@@ -126,16 +126,18 @@ const getContents = async (links: string[]) => {
   }
 };
 
-const extremeSearch = async (prompt: string, dataStream: DataStreamWriter): Promise<Research> => {
+const extremeSearch = async (prompt: string, dataStream: DataStreamWriter | undefined): Promise<Research> => {
   const allSources: SearchResult[] = [];
 
-  dataStream.writeMessageAnnotation({
-    status: { title: 'Planning research' },
-  });
+  if (dataStream) {
+    dataStream.writeMessageAnnotation({
+      status: { title: 'Planning research' },
+    });
+  }
 
   // plan out the research
   const { object: plan } = await generateObject({
-    model: scira.languageModel('scira-x-fast'),
+    model: scira.languageModel('scira-default'),
     schema: z.object({
       plan: z
         .array(
@@ -171,16 +173,18 @@ Plan Guidelines:
   const totalTodos = plan.plan.reduce((acc, curr) => acc + curr.todos.length, 0);
   console.log(`Total todos: ${totalTodos}`);
 
-  dataStream.writeMessageAnnotation({
-    status: { title: 'Research plan ready, starting up research agent' },
-    plan: plan.plan,
-  });
+  if (dataStream) {
+    dataStream.writeMessageAnnotation({
+      status: { title: 'Research plan ready, starting up research agent' },
+      plan: plan.plan,
+    });
+  }
 
   let toolResults: any[] = [];
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-x-fast-mini'),
+    model: scira.languageModel('scira-default'),
     maxSteps: totalTodos,
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
@@ -261,9 +265,11 @@ ${JSON.stringify(plan.plan)}
           const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
           const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
 
-          dataStream.writeMessageAnnotation({
-            status: { type: 'code', title: title, code: code },
-          });
+          if (dataStream) {
+            dataStream.writeMessageAnnotation({
+              status: { type: 'code', title: title, code: code },
+            });
+          }
           const response = await runCode(code, missingLibs);
 
           // Extract chart data if present, and if so then map and remove the png with chart.png
@@ -278,15 +284,17 @@ ${JSON.stringify(plan.plan)}
 
           console.log('Charts:', response.artifacts?.charts);
 
-          dataStream.writeMessageAnnotation({
-            status: {
-              type: 'result',
-              title: title,
-              code: code,
-              result: response.result,
-              charts: charts,
-            },
-          });
+          if (dataStream) {
+            dataStream.writeMessageAnnotation({
+              status: {
+                type: 'result',
+                title: title,
+                code: code,
+                result: response.result,
+                charts: charts,
+              },
+            });
+          }
 
           return {
             result: response.result,
@@ -297,45 +305,50 @@ ${JSON.stringify(plan.plan)}
       webSearch: {
         description: 'Search the web for information on a topic',
         parameters: z.object({
-          query: z.string().describe('The search query to achieve the todo').max(100),
+          query: z.string().describe('The search query to achieve the todo').max(150),
           category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
         }),
         execute: async ({ query, category }, { toolCallId }) => {
           console.log('Web search query:', query);
           console.log('Category:', category);
 
-          dataStream.writeMessageAnnotation({
-            status: { title: `Searching the web for "${query}"` },
-          });
-
+          if (dataStream) {
+            dataStream.writeMessageAnnotation({
+              status: { title: `Searching the web for "${query}"` },
+            });
+          }
           // Add a query annotation to display in the UI
           // Use a consistent format for query annotations
-          dataStream.writeMessageAnnotation({
-            type: 'search_query',
-            queryId: toolCallId,
-            query: query,
-          });
-
+          if (dataStream) {
+            dataStream.writeMessageAnnotation({
+              type: 'search_query',
+              queryId: toolCallId,
+              query: query,
+            });
+          }
           let results = await searchWeb(query, category);
           console.log(`Found ${results.length} results for query "${query}"`);
 
           // Add these sources to our total collection
           allSources.push(...results);
 
-          results.forEach(async (source) => {
-            dataStream.writeMessageAnnotation({
-              type: 'source',
-              queryId: toolCallId,
-              source: { title: source.title, url: source.url },
+          if (dataStream) {
+            results.forEach(async (source) => {
+              dataStream.writeMessageAnnotation({
+                type: 'source',
+                queryId: toolCallId,
+                source: { title: source.title, url: source.url },
+              });
             });
-          });
-
+          }
           // Get full content for the top results
           if (results.length > 0) {
             try {
-              dataStream.writeMessageAnnotation({
-                status: { title: `Reading content from search results for "${query}"` },
-              });
+              if (dataStream) {
+                dataStream.writeMessageAnnotation({
+                  status: { title: `Reading content from search results for "${query}"` },
+                });
+              }
 
               // Get the URLs from the results
               const urls = results.map((r) => r.url);
@@ -346,18 +359,19 @@ ${JSON.stringify(plan.plan)}
               // Only update results if we actually got content results
               if (contentsResults && contentsResults.length > 0) {
                 // For each content result, add a content annotation
-                contentsResults.forEach((content) => {
-                  dataStream.writeMessageAnnotation({
-                    type: 'content',
-                    queryId: toolCallId,
-                    content: {
-                      title: content.title,
-                      url: content.url,
-                      text: content.content.slice(0, 500) + '...', // Truncate for annotation
-                    },
+                if (dataStream) {
+                  contentsResults.forEach((content) => {
+                    dataStream.writeMessageAnnotation({
+                      type: 'content',
+                      queryId: toolCallId,
+                      content: {
+                        title: content.title,
+                        url: content.url,
+                        text: content.content.slice(0, 500) + '...', // Truncate for annotation
+                      },
+                    });
                   });
-                });
-
+                }
                 // Update results with full content, but keep original results as fallback
                 results = contentsResults.map((content) => {
                   const originalResult = results.find((r) => r.url === content.url);
@@ -397,9 +411,11 @@ ${JSON.stringify(plan.plan)}
     },
   });
 
-  dataStream.writeMessageAnnotation({
-    status: { title: 'Research completed' },
-  });
+  if (dataStream) {
+    dataStream.writeMessageAnnotation({
+      status: { title: 'Research completed' },
+    });
+  }
 
   const chartResults = toolResults.filter(
     (result) =>
@@ -427,7 +443,7 @@ ${JSON.stringify(plan.plan)}
   };
 };
 
-export const extremeSearchTool = (dataStream: DataStreamWriter) =>
+export const extremeSearchTool = (dataStream: DataStreamWriter | undefined) =>
   tool({
     description: 'Use this tool to conduct an extreme search on a given topic.',
     parameters: z.object({

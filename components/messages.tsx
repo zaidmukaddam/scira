@@ -4,13 +4,19 @@ import { UIMessage } from '@ai-sdk/ui-utils';
 import { ReasoningPartView, ReasoningPart } from '@/components/reasoning-part';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle, Copy } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/markdown';
+import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import ToolInvocationListView from '@/components/tool-invocation-list-view';
 import { deleteTrailingMessages } from '@/app/actions';
 import { toast } from 'sonner';
-import { Share } from '@phosphor-icons/react';
+import { Share, ShareIcon, CopyIcon } from '@phosphor-icons/react';
 import { EnhancedErrorDisplay } from '@/components/message';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { ArrowsClockwiseIcon } from '@phosphor-icons/react/dist/ssr';
+
+import { HugeiconsIcon } from '@hugeicons/react';
+import { RepeatIcon, Copy01Icon, Share03Icon } from '@hugeicons/core-free-icons';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -37,6 +43,7 @@ interface MessagesProps {
   onVisibilityChange?: (visibility: 'public' | 'private') => void; // Add visibility change handler
   initialMessages?: any[]; // Add initial messages prop to detect existing chat
   isOwner?: boolean; // Add ownership prop
+  onHighlight?: (text: string) => void; // Add highlight handler
 }
 
 const SciraLogoHeader = () => (
@@ -72,6 +79,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
     onVisibilityChange,
     initialMessages,
     isOwner,
+    onHighlight,
   }) => {
     // Track visibility state for each reasoning section using messageIndex-partIndex as key
     const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
@@ -255,89 +263,109 @@ const Messages: React.FC<MessagesProps> = React.memo(
             return (
               <div key={`${messageIndex}-${partIndex}-text`}>
                 <div>
-                  <MarkdownRenderer content={part.text} />
+                  <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
+                    <MarkdownRenderer content={part.text} />
+                  </ChatTextHighlighter>
                 </div>
 
-                {/* Add buttons below the text with visible labels */}
+                {/* Add compact buttons below the text with tooltips */}
                 {status === 'ready' && (
-                  <div className="flex items-center gap-3 mt-2.5 mb-5 !-ml-1">
+                  <div className="flex items-center gap-1 mt-2.5 mb-5 !-ml-1">
                     {/* Only show reload for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            const lastUserMessage = messages.findLast((m) => m.role === 'user');
-                            if (!lastUserMessage) return;
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={async () => {
+                                try {
+                                  const lastUserMessage = messages.findLast((m) => m.role === 'user');
+                                  if (!lastUserMessage) return;
 
-                            // Step 1: Delete trailing messages if user is authenticated
-                            if (user && lastUserMessage.id) {
-                              await deleteTrailingMessages({
-                                id: lastUserMessage.id,
-                              });
-                            }
+                                  // Step 1: Delete trailing messages if user is authenticated
+                                  if (user && lastUserMessage.id) {
+                                    await deleteTrailingMessages({
+                                      id: lastUserMessage.id,
+                                    });
+                                  }
 
-                            // Step 2: Update local state to remove assistant messages
-                            const newMessages = [];
-                            // Find the index of the last user message
-                            for (let i = 0; i < messages.length; i++) {
-                              newMessages.push(messages[i]);
-                              if (messages[i].id === lastUserMessage.id) {
-                                break;
-                              }
-                            }
+                                  // Step 2: Update local state to remove assistant messages
+                                  const newMessages = [];
+                                  // Find the index of the last user message
+                                  for (let i = 0; i < messages.length; i++) {
+                                    newMessages.push(messages[i]);
+                                    if (messages[i].id === lastUserMessage.id) {
+                                      break;
+                                    }
+                                  }
 
-                            // Step 3: Update UI state
-                            setMessages(newMessages);
-                            setSuggestedQuestions([]);
+                                  // Step 3: Update UI state
+                                  setMessages(newMessages);
+                                  setSuggestedQuestions([]);
 
-                            // Step 4: Reload
-                            await reload();
-                          } catch (error) {
-                            console.error('Error in reload:', error);
-                          }
-                        }}
-                        className="h-6 !p-1 text-xs rounded-full"
-                      >
-                        <RefreshCw className="h-3.5 w-3.5 mr-0.5" />
-                        Rewrite
-                      </Button>
+                                  // Step 4: Reload
+                                  await reload();
+                                } catch (error) {
+                                  console.error('Error in reload:', error);
+                                }
+                              }}
+                              className="size-8 p-0 rounded-full"
+                            >
+                              <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Rewrite</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     {/* Only show share for authenticated owners */}
                     {user && isOwner && selectedVisibilityType === 'private' && chatId && onVisibilityChange && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            await onVisibilityChange('public');
-                            const url = `${window.location.origin}/search/${chatId}`;
-                            await navigator.clipboard.writeText(url);
-                            toast.success('Link copied to clipboard');
-                          } catch (error) {
-                            console.error('Error sharing chat:', error);
-                            toast.error('Failed to share chat');
-                          }
-                        }}
-                        className="h-6 !p-1 text-xs rounded-full"
-                      >
-                        <Share className="h-3.5 w-3.5 mr-0.5" />
-                        Share
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={async () => {
+                                try {
+                                  await onVisibilityChange('public');
+                                  const url = `${window.location.origin}/search/${chatId}`;
+                                  await navigator.clipboard.writeText(url);
+                                  toast.success('Link copied to clipboard');
+                                } catch (error) {
+                                  console.error('Error sharing chat:', error);
+                                  toast.error('Failed to share chat');
+                                }
+                              }}
+                              className="size-8 p-0 rounded-full"
+                            >
+                              <HugeiconsIcon icon={Share03Icon} size={32} color="currentColor" strokeWidth={2} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Share</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(part.text);
-                        toast.success('Copied to clipboard');
-                      }}
-                      className="h-6 !p-1 text-xs rounded-full"
-                    >
-                      <Copy className="h-3.5 w-3.5 mr-0.5" />
-                      Copy
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              navigator.clipboard.writeText(part.text);
+                              toast.success('Copied to clipboard');
+                            }}
+                            className="size-8 p-0 rounded-full"
+                          >
+                            <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )}
               </div>
@@ -352,8 +380,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
                 i > partIndex && (p.type === 'text' || p.type === 'tool-invocation'),
             );
             const parallelTool = hasParallelToolInvocation
-              ? (parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation
-                  ?.toolName ?? null)
+              ? parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation?.toolName ??
+                null
               : null;
 
             // Separate expanded and fullscreen states
@@ -418,6 +446,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         reload,
         reasoningVisibilityMap,
         reasoningFullscreenMap,
+        onHighlight,
       ],
     );
 
@@ -507,6 +536,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
                   isMissingAssistantResponse={isMissingAssistantResponse}
                   handleRetry={handleRetry}
                   isOwner={isOwner}
+                  onHighlight={onHighlight}
                 />
               </div>
             );

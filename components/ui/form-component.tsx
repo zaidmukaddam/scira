@@ -15,17 +15,26 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { TelescopeIcon, X, Check, ChevronsUpDown, Globe } from 'lucide-react';
+import { X, Check, ChevronsUpDown } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/ui-utils';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { UserWithProStatus } from '@/hooks/use-user-data';
+import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration } from '@/app/actions';
-import { Crown, LockIcon, MicrophoneIcon, CpuIcon } from '@phosphor-icons/react';
+import { LockIcon } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  CpuIcon,
+  GlobalSearchIcon,
+  AiMicIcon,
+  AtomicPowerIcon,
+  Crown02Icon,
+  DocumentAttachmentIcon,
+} from '@hugeicons/core-free-icons';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -38,7 +47,7 @@ interface ModelSwitcherProps {
   status: 'submitted' | 'streaming' | 'ready' | 'error';
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
-  user?: UserWithProStatus | null;
+  user?: ComprehensiveUserData | null;
 }
 
 const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
@@ -155,7 +164,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 className,
               )}
             >
-              <CpuIcon className="h-4 w-4" />
+              <HugeiconsIcon icon={CpuIcon} size={24} color="currentColor" strokeWidth={2} />
               <span className="text-xs font-medium sm:block hidden">{currentModel?.label || 'Select Model'}</span>
               <ChevronsUpDown className="h-4 w-4 opacity-50" />
             </Button>
@@ -233,7 +242,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 {requiresAuth ? (
                                   <LockIcon className="size-3 text-muted-foreground" />
                                 ) : (
-                                  <Crown className="size-3 text-muted-foreground" />
+                                  <HugeiconsIcon
+                                    icon={Crown02Icon}
+                                    size={12}
+                                    color="currentColor"
+                                    strokeWidth={1.5}
+                                    className="text-muted-foreground"
+                                  />
                                 )}
                               </div>
                               <div className="text-[9px] text-muted-foreground truncate leading-tight">
@@ -269,7 +284,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 if (requiresAuth) {
                                   return <LockIcon className="size-3 text-muted-foreground" />;
                                 } else if (requiresPro) {
-                                  return <Crown className="size-3 text-muted-foreground" />;
+                                  return (
+                                    <HugeiconsIcon
+                                      icon={Crown02Icon}
+                                      size={12}
+                                      color="currentColor"
+                                      strokeWidth={1.5}
+                                      className="text-muted-foreground"
+                                    />
+                                  );
                                 }
                                 return null;
                               })()}
@@ -300,7 +323,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                    <Crown className="w-4 h-4 text-primary-foreground" weight="fill" />
+                    <HugeiconsIcon
+                      icon={Crown02Icon}
+                      size={16}
+                      color="currentColor"
+                      strokeWidth={1.5}
+                      className="text-primary-foreground"
+                    />
                   </div>
                   <div>
                     <h2 className="text-lg font-medium text-foreground">{selectedProModel?.label} requires Pro</h2>
@@ -683,7 +712,7 @@ interface FormComponentProps {
   attachments: Array<Attachment>;
   setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
   chatId: string;
-  user: UserWithProStatus | null;
+  user: ComprehensiveUserData | null;
   subscriptionData?: any;
   handleSubmit: (
     event?: {
@@ -799,13 +828,13 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                 >
                   {selectedGroupData && !isExtreme && (
                     <>
-                      <selectedGroupData.icon className="h-4 w-4" />
-                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                      <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
+                      <ChevronsUpDown className="size-4.5 opacity-50" />
                     </>
                   )}
                   {isExtreme && (
                     <>
-                      <Globe className="h-3.5 w-3.5" />
+                      <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
                     </>
                   )}
                 </Button>
@@ -861,7 +890,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                          <Icon className="size-4 text-muted-foreground flex-shrink-0" />
+                          <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="font-medium truncate text-[11px] text-foreground">{group.name}</div>
                             <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
@@ -893,7 +922,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                 isExtreme ? 'bg-accent text-foreground hover:bg-accent/80' : 'text-muted-foreground hover:bg-accent',
               )}
             >
-              <TelescopeIcon className="h-4 w-4" />
+              <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
@@ -1782,14 +1811,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, [input, debouncedResize]);
 
   return (
-    <div className={cn('flex flex-col w-full')}>
+    <div className={cn('flex flex-col w-full bg-background max-w-2xl mx-auto')}>
       <TooltipProvider>
         <div
           className={cn(
             'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
             hasInteracted ? 'z-51' : '',
             isDragging && 'ring-1 ring-border',
-            attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/70 p-1' : 'bg-transparent',
+            // attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/70 p-1' : 'bg-transparent',
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -1937,10 +1966,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
                     '!bg-muted',
-                    'border-0!',
+                    '!border-0',
                     'text-foreground',
-                    'focus:ring-0! focus-visible:ring-0!',
-                    'px-4! py-4!',
+                    'focus:!ring-0 focus-visible:!ring-0',
+                    '!px-4 !py-4',
                     'touch-manipulation',
                     'whatsize',
                   )}
@@ -2002,7 +2031,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block">
-                            <PaperclipIcon size={16} />
+                            <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} />
                           </span>
                         </button>
                       </TooltipTrigger>
@@ -2063,7 +2092,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block">
-                            <MicrophoneIcon size={16} />
+                            <HugeiconsIcon icon={AiMicIcon} size={16} color="currentColor" strokeWidth={1.5} />
                           </span>
                         </button>
                       </TooltipTrigger>

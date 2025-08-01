@@ -199,6 +199,38 @@ export const payment = pgTable('payment', {
   userId: text('user_id').references(() => user.id),
 });
 
+// Lookout table for scheduled searches
+export const lookout = pgTable('lookout', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  prompt: text('prompt').notNull(),
+  frequency: text('frequency').notNull(), // 'once', 'daily', 'weekly', 'monthly', 'yearly'
+  cronSchedule: text('cron_schedule').notNull(),
+  timezone: text('timezone').notNull().default('UTC'),
+  nextRunAt: timestamp('next_run_at').notNull(),
+  qstashScheduleId: text('qstash_schedule_id'),
+  status: text('status').notNull().default('active'), // 'active', 'paused', 'archived', 'running'
+  lastRunAt: timestamp('last_run_at'),
+  lastRunChatId: text('last_run_chat_id'),
+  // Store all run history as JSON
+  runHistory: json('run_history').$type<Array<{
+    runAt: string; // ISO date string
+    chatId: string;
+    status: 'success' | 'error' | 'timeout';
+    error?: string;
+    duration?: number; // milliseconds
+    tokensUsed?: number;
+    searchesPerformed?: number;
+  }>>().default([]),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;
 export type Account = InferSelectModel<typeof account>;
@@ -211,3 +243,4 @@ export type Payment = InferSelectModel<typeof payment>;
 export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
+export type Lookout = InferSelectModel<typeof lookout>;

@@ -701,19 +701,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return <InlineCode key={generateKey()} code={codeString} />;
     },
     link(href, text) {
-      const citationIndex = citationLinks.findIndex((link) => link.link === href);
+      let citationIndex = citationLinks.findIndex((link) => link.link === href);
       if (citationIndex !== -1) {
         // For citations, show the citation text in the hover card
         const citationText = citationLinks[citationIndex].text;
         return renderCitation(citationIndex, citationText, href);
       }
-      return isValidUrl(href) ? (
-        renderHoverCard(href, text)
-      ) : (
-        <a key={generateKey()} href={href} className="text-primary hover:underline font-medium">
-          {text}
-        </a>
-      );
+
+      if (isValidUrl(href)) {
+        // Add this link to citations if it's not already there
+        citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
+        citationIndex = citationLinks.length - 1;
+        const citationText = citationLinks[citationIndex].text;
+        return renderCitation(citationIndex, citationText, href);
+      } else {
+        // For non-valid URLs, still use the same citation UI
+        citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
+        citationIndex = citationLinks.length - 1;
+        const citationText = citationLinks[citationIndex].text;
+        return renderCitation(citationIndex, citationText, href);
+      }
     },
     heading(children, level) {
       const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;

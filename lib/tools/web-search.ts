@@ -56,7 +56,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
       topics: z.array(
         z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general.'),
       ),
-      quality: z.enum(['default', 'best']).describe('Search quality level. Default is default.'),
+      quality: z.enum(['default', 'best']).describe('Search quality x speed level. Default is default.'),
       include_domains: z
         .array(z.string())
         .describe('An array of domains to include in all search results. Default is an empty list.'),
@@ -107,7 +107,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
 
           const searchOptions: any = {
             text: true,
-            type: quality === 'best' ? 'auto' : 'hybrid',
+            type: quality === 'best' ? 'hybrid' : 'auto',
             numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
             livecrawl: 'preferred',
             useAutoprompt: true,

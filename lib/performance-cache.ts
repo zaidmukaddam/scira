@@ -184,6 +184,10 @@ export function invalidateUserCaches(userId: string) {
   paymentCache.delete(createPaymentKey(userId));
   paymentExpirationCache.delete(createPaymentExpirationKey(userId));
   dodoProStatusCache.delete(createDodoProStatusKey(userId));
+
+  // Invalidate the new unified user data cache
+  const { clearUserDataCache } = require('@/lib/user-data-server');
+  clearUserDataCache(userId);
 }
 
 export function invalidateAllCaches() {

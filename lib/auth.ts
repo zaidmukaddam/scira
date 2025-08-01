@@ -13,6 +13,7 @@ import {
   payment,
   customInstructions,
   stream,
+  lookout,
 } from '@/lib/db/schema';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db';
@@ -71,6 +72,7 @@ export const auth = betterAuth({
       payment,
       customInstructions,
       stream,
+      lookout,
     },
   }),
   socialProviders: {
@@ -396,6 +398,12 @@ export const auth = betterAuth({
                   });
 
                 console.log('✅ Upserted subscription:', data.id);
+
+                // Invalidate user caches when subscription changes
+                if (validUserId) {
+                  invalidateUserCaches(validUserId);
+                  console.log('🗑️ Invalidated caches for user:', validUserId);
+                }
               } catch (error) {
                 console.error('💥 Error processing subscription webhook:', error);
                 // Don't throw - let webhook succeed to avoid retries

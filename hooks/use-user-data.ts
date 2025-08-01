@@ -1,84 +1,120 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSubDetails, getCurrentUser, getProUserStatusOnly } from '@/app/actions';
-import { User } from '@/lib/db/schema';
+import { getCurrentUser } from '@/app/actions';
+import { type ComprehensiveUserData } from '@/lib/user-data';
 import { shouldBypassRateLimits } from '@/ai/providers';
 
-export type UserWithProStatus = User & {
-  isProUser: boolean;
-  subscriptionData?: any;
-  paymentHistory?: any;
-  dodoProStatus?: any;
-  proSource?: 'polar' | 'dodo' | 'none';
-  expiresAt?: Date;
-};
-
-// Hook for user data
 export function useUserData() {
-  return useQuery({
-    queryKey: ['user'],
+  const {
+    data: userData,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ['comprehensive-user-data'],
     queryFn: getCurrentUser,
-    staleTime: 1000 * 60 * 5, // 5 minutes - user data doesn't change often
-    gcTime: 1000 * 60 * 10, // 10 minutes cache retention
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    retry: 2, // Retry failed requests twice
-  });
-}
-
-// Fast hook for just pro user status - optimized for navbar/settings
-export function useProStatusOnly() {
-  return useQuery({
-    queryKey: ['pro-status-only'],
-    queryFn: getProUserStatusOnly,
     staleTime: 1000 * 60 * 30, // 30 minutes - matches server cache
     gcTime: 1000 * 60 * 60, // 1 hour cache retention
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: 2,
   });
-}
-
-// Hook for subscription data with user dependency
-export function useSubscriptionData(user: User | null) {
-  return useQuery({
-    queryKey: ['subscription', user?.id],
-    queryFn: getSubDetails,
-    enabled: !!user, // Only run when user exists
-    staleTime: 1000 * 60 * 30, // 30 minutes - Pro status doesn't change frequently
-    gcTime: 1000 * 60 * 60 * 2, // 2 hours cache retention for subscription data
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    retry: 1, // Only retry once for subscription checks
-  });
-}
-
-// Combined hook for Pro user status with optimized caching
-export function useProUserStatus() {
-  const { data: user, isLoading: userLoading } = useUserData();
 
   // Helper function to check if user should have unlimited access for specific models
   const shouldBypassLimitsForModel = (selectedModel: string) => {
-    return shouldBypassRateLimits(selectedModel, user);
+    return shouldBypassRateLimits(selectedModel, userData);
   };
 
   return {
-    user: (user || null) as UserWithProStatus | null,
-    subscriptionData: user?.subscriptionData,
-    paymentHistory: user?.paymentHistory,
-    dodoProStatus: user?.dodoProStatus,
-    proSource: user?.proSource,
-    expiresAt: user?.expiresAt,
-    isProUser: Boolean(user?.isProUser),
-    isLoading: Boolean(userLoading),
-    // Pro users should never see limit checks
-    shouldCheckLimits: !userLoading && user && !user.isProUser,
+    // Core user data
+    user: userData,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+
+    // Quick access to commonly used properties
+    isProUser: Boolean(userData?.isProUser),
+    proSource: userData?.proSource || 'none',
+    subscriptionStatus: userData?.subscriptionStatus || 'none',
+
+    // Polar subscription details
+    polarSubscription: userData?.polarSubscription,
+    hasPolarSubscription: Boolean(userData?.polarSubscription),
+
+    // DodoPayments details
+    dodoPayments: userData?.dodoPayments,
+    hasDodoPayments: Boolean(userData?.dodoPayments?.hasPayments),
+    dodoExpiresAt: userData?.dodoPayments?.expiresAt,
+    isDodoExpiring: Boolean(userData?.dodoPayments?.isExpiringSoon),
+    isDodoExpired: Boolean(userData?.dodoPayments?.isExpired),
+
+    // Payment history
+    paymentHistory: userData?.paymentHistory || [],
+
+    // Rate limiting helpers
+    shouldCheckLimits: !isLoading && userData && !userData.isProUser,
     shouldBypassLimitsForModel,
+
+    // Subscription status checks
+    hasActiveSubscription: userData?.subscriptionStatus === 'active',
+    isSubscriptionCanceled: userData?.subscriptionStatus === 'canceled',
+    isSubscriptionExpired: userData?.subscriptionStatus === 'expired',
+    hasNoSubscription: userData?.subscriptionStatus === 'none',
+
+    // Legacy compatibility helpers
+    subscriptionData: userData?.polarSubscription
+      ? {
+          hasSubscription: true,
+          subscription: userData.polarSubscription,
+        }
+      : { hasSubscription: false },
+
+    // Map dodoPayments to legacy dodoProStatus structure for settings dialog
+    dodoProStatus: userData?.dodoPayments
+      ? {
+          isProUser: userData.proSource === 'dodo' && userData.isProUser,
+          hasPayments: userData.dodoPayments.hasPayments,
+          expiresAt: userData.dodoPayments.expiresAt,
+          mostRecentPayment: userData.dodoPayments.mostRecentPayment,
+          daysUntilExpiration: userData.dodoPayments.daysUntilExpiration,
+          isExpired: userData.dodoPayments.isExpired,
+          isExpiringSoon: userData.dodoPayments.isExpiringSoon,
+          source: userData.proSource,
+        }
+      : null,
+
+    expiresAt: userData?.dodoPayments?.expiresAt,
   };
 }
 
-// Fast hook for components that only need pro status (navbar, settings)
-export function useFastProStatus() {
-  const { data: isProUser, isLoading } = useProStatusOnly();
+// Lightweight hook for components that only need to know if user is pro
+export function useIsProUser() {
+  const { isProUser, isLoading } = useUserData();
+  return { isProUser, isLoading };
+}
+
+// Hook for components that need subscription status but not all user data
+export function useSubscriptionStatus() {
+  const {
+    subscriptionStatus,
+    proSource,
+    hasActiveSubscription,
+    isSubscriptionCanceled,
+    isSubscriptionExpired,
+    hasNoSubscription,
+    isLoading,
+  } = useUserData();
 
   return {
-    isProUser: Boolean(isProUser),
+    subscriptionStatus,
+    proSource,
+    hasActiveSubscription,
+    isSubscriptionCanceled,
+    isSubscriptionExpired,
+    hasNoSubscription,
     isLoading,
   };
 }
+
+// Export the comprehensive type for components that need it
+export type { ComprehensiveUserData };

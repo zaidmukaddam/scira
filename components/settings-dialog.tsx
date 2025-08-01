@@ -26,7 +26,6 @@ import { SEARCH_LIMITS } from '@/lib/constants';
 import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
   Gear,
-  Crown,
   MagnifyingGlass,
   Lightning,
   TrendUp,
@@ -36,6 +35,8 @@ import {
   Calendar,
   NotePencil,
 } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
@@ -48,7 +49,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
-import { useFastProStatus } from '@/hooks/use-user-data';
+import { useIsProUser } from '@/hooks/use-user-data';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -63,12 +64,12 @@ interface SettingsDialogProps {
 
 // Component for Profile Information
 function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading }: any) {
-  const { isProUser: fastProStatus, isLoading: fastProLoading } = useFastProStatus();
+  const { isProUser: fastProStatus, isLoading: fastProLoading } = useIsProUser();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Use comprehensive Pro status from user data (includes both Polar + DodoPayments)
-  const isProUserActive = user?.isProUser || fastProStatus;
-  const showProLoading = fastProLoading || isProStatusLoading;
+  const isProUserActive: boolean = user?.isProUser || fastProStatus || false;
+  const showProLoading: boolean = Boolean(fastProLoading || isProStatusLoading);
 
   return (
     <div className="space-y-4">
@@ -93,7 +94,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
           ) : (
             isProUserActive && (
               <Badge className="bg-primary text-primary-foreground border-0 text-xs font-medium">
-                <Crown className="h-3 w-3 mr-1" />
+                <HugeiconsIcon icon={Crown02Icon} size={12} color="currentColor" strokeWidth={1.5} className="mr-1" />
                 PRO USER
               </Badge>
             )
@@ -348,7 +349,7 @@ function UsageSection({ user }: any) {
 
           <div className={cn('bg-card rounded-lg border border-border', isMobile ? 'p-3' : 'p-4')}>
             <div className={cn('flex items-center gap-2', isMobile ? 'mb-1.5' : 'mb-2')}>
-              <Crown className={isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+              <HugeiconsIcon icon={Crown02Icon} size={isMobile ? 14 : 16} color="currentColor" strokeWidth={1.5} />
               <span className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Upgrade to Pro</span>
             </div>
             <p className={cn('text-muted-foreground mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
@@ -476,7 +477,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   // Check for active status from either source
   const hasActiveSubscription =
     subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-  const hasDodoProStatus = dodoProStatus?.isProUser;
+  const hasDodoProStatus = dodoProStatus?.isProUser || (user?.proSource === 'dodo' && user?.isProUser);
   const isProUserActive = hasActiveSubscription || hasDodoProStatus;
   const subscription = subscriptionData?.subscription;
 
@@ -501,7 +502,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             <div className={cn('flex items-start justify-between', isMobile ? 'mb-2' : 'mb-3')}>
               <div className="flex items-center gap-2">
                 <div className={cn('bg-primary-foreground/20 rounded', isMobile ? 'p-1' : 'p-1.5')}>
-                  <Crown className={isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+                  <HugeiconsIcon icon={Crown02Icon} size={isMobile ? 14 : 16} color="currentColor" strokeWidth={1.5} />
                 </div>
                 <div>
                   <h3 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>
@@ -576,7 +577,13 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             >
               <div className="flex items-start gap-2">
                 <div className={cn('bg-yellow-100 dark:bg-yellow-900/40 rounded', isMobile ? 'p-1' : 'p-1.5')}>
-                  <Crown className={cn('text-yellow-600 dark:text-yellow-500', isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
+                  <HugeiconsIcon
+                    icon={Crown02Icon}
+                    size={isMobile ? 14 : 16}
+                    color="currentColor"
+                    strokeWidth={1.5}
+                    className={cn('text-yellow-600 dark:text-yellow-500')}
+                  />
                 </div>
                 <div className="flex-1">
                   <h4
@@ -614,7 +621,13 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       ) : (
         <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
           <div className={cn('text-center border-2 border-dashed rounded-lg bg-muted/20', isMobile ? 'p-4' : 'p-6')}>
-            <Crown className={cn('mx-auto text-muted-foreground mb-3', isMobile ? 'h-6 w-6' : 'h-8 w-8')} />
+            <HugeiconsIcon
+              icon={Crown02Icon}
+              size={isMobile ? 24 : 32}
+              color="currentColor"
+              strokeWidth={1.5}
+              className={cn('mx-auto text-muted-foreground mb-3')}
+            />
             <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>No Active Subscription</h3>
             <p className={cn('text-muted-foreground mb-4', isMobile ? 'text-[11px]' : 'text-xs')}>
               Upgrade to Pro for unlimited access
@@ -622,7 +635,13 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             <div className="space-y-2">
               <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-8 text-xs' : 'h-9')}>
                 <Link href="/pricing">
-                  <Crown className={isMobile ? 'h-3 w-3 mr-1.5' : 'h-3.5 w-3.5 mr-2'} />
+                  <HugeiconsIcon
+                    icon={Crown02Icon}
+                    size={isMobile ? 12 : 14}
+                    color="currentColor"
+                    strokeWidth={1.5}
+                    className={isMobile ? 'mr-1.5' : 'mr-2'}
+                  />
                   Upgrade to Pro
                 </Link>
               </Button>
@@ -1111,7 +1130,11 @@ export function SettingsDialog({
   const tabItems = [
     { value: 'profile', label: 'Account', icon: User },
     { value: 'usage', label: 'Usage', icon: ChartLineUp },
-    { value: 'subscription', label: 'Subscription', icon: Crown },
+    {
+      value: 'subscription',
+      label: 'Subscription',
+      icon: () => <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />,
+    },
     { value: 'instructions', label: 'Customize', icon: NotePencil },
     { value: 'memories', label: 'Memories', icon: Memory },
   ];

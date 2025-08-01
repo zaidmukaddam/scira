@@ -17,7 +17,6 @@ import {
   SignOut,
   SignIn,
   UserCircle,
-  Bookmark,
   Eye,
   EyeSlash,
   Info,
@@ -26,11 +25,13 @@ import {
   GithubLogo,
   Bug,
   Sun,
-  Crown,
   Lightning,
   Gear,
   Code,
+  Book,
 } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Crown02Icon, BinocularsIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
@@ -39,6 +40,7 @@ import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
+import { Mail } from 'lucide-react';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -75,8 +77,12 @@ const UserProfile = memo(
     const router = useRouter();
 
     // Use passed user prop if available, otherwise fall back to session
+    // BUT only use session for authentication check, not for settings dialog data
     const currentUser = user || session?.user;
     const isAuthenticated = !!(user || session);
+
+    // For settings dialog, always use the passed user prop (has unified data structure)
+    const settingsUser = user;
 
     // Use passed Pro status instead of calculating it
     const hasActiveSubscription = isProUser;
@@ -226,7 +232,13 @@ const UserProfile = memo(
                     <div className="px-3 py-2">
                       <div className="flex items-center gap-2.5 text-sm">
                         <div className="size-6 rounded-md bg-muted/50 border border-border flex items-center justify-center">
-                          <Crown size={14} className="text-foreground" />
+                          <HugeiconsIcon
+                            icon={Crown02Icon}
+                            size={14}
+                            color="currentColor"
+                            strokeWidth={1.5}
+                            className="text-foreground"
+                          />
                         </div>
                         <div className="flex flex-col">
                           <span className="font-medium text-foreground text-sm">Scira Pro</span>
@@ -261,6 +273,12 @@ const UserProfile = memo(
                     <span>Settings</span>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
+                  <div className="w-full flex items-center gap-2">
+                    <HugeiconsIcon size={16} icon={BinocularsIcon} />
+                    <span>Lookout</span>
+                  </div>
+                </DropdownMenuItem>
               </>
             )}
 
@@ -282,6 +300,14 @@ const UserProfile = memo(
                 <span>About</span>
               </Link>
             </DropdownMenuItem>
+            {/* Blog */}
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <Link href="/blog" className="w-full flex items-center gap-2">
+                <Book size={16} />
+                <span>Blog</span>
+              </Link>
+            </DropdownMenuItem>
+
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href="/terms" className="w-full flex items-center gap-2">
                 <FileText size={16} />
@@ -414,7 +440,7 @@ const UserProfile = memo(
         <SettingsDialog
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          user={currentUser}
+          user={settingsUser}
           subscriptionData={subscriptionData}
           isProUser={isProUser}
           isProStatusLoading={isProStatusLoading}

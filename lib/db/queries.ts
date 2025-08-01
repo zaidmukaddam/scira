@@ -13,15 +13,12 @@ import {
   messageUsage,
   customInstructions,
   payment,
+  lookout,
+  type Lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db } from './index'; // Use unified database connection
-import { 
-  getDodoPayments, 
-  setDodoPayments, 
-  getDodoProStatus, 
-  setDodoProStatus 
-} from '../performance-cache';
+import { getDodoPayments, setDodoPayments, getDodoProStatus, setDodoProStatus } from '../performance-cache';
 
 type VisibilityType = 'public' | 'private';
 
@@ -30,6 +27,15 @@ export async function getUser(email: string): Promise<Array<User>> {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user by email');
+  }
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  try {
+    const [selectedUser] = await db.select().from(user).where(eq(user.id, id));
+    return selectedUser || null;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get user by id');
   }
 }
 
@@ -605,11 +611,11 @@ export async function hasSuccessfulDodoPayment({ userId }: { userId: string }) {
     // Fallback to database query
     const payments = await getSuccessfulPaymentsByUserId({ userId });
     const hasPayments = payments.length > 0;
-    
+
     // Cache the result
     const statusData = { hasPayments, isProUser: false };
     setDodoProStatus(userId, statusData);
-    
+
     return hasPayments;
   } catch (error) {
     console.error('Error checking DodoPayments status:', error);
@@ -620,20 +626,21 @@ export async function hasSuccessfulDodoPayment({ userId }: { userId: string }) {
 export async function isDodoPaymentsProExpired({ userId }: { userId: string }) {
   try {
     const payments = await getSuccessfulPaymentsByUserId({ userId });
-    
+
     if (payments.length === 0) {
       return true; // No payments = expired
     }
-    
+
     // Get the most recent successful payment
-    const mostRecentPayment = payments
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-    
+    const mostRecentPayment = payments.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+
     // Check if it's older than 1 month
     const paymentDate = new Date(mostRecentPayment.createdAt);
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
+
     return paymentDate <= oneMonthAgo;
   } catch (error) {
     console.error('Error checking DodoPayments expiration:', error);
@@ -644,24 +651,25 @@ export async function isDodoPaymentsProExpired({ userId }: { userId: string }) {
 export async function getDodoPaymentsExpirationInfo({ userId }: { userId: string }) {
   try {
     const payments = await getSuccessfulPaymentsByUserId({ userId });
-    
+
     if (payments.length === 0) {
       return null;
     }
-    
+
     // Get the most recent successful payment
-    const mostRecentPayment = payments
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-    
+    const mostRecentPayment = payments.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+
     // Calculate expiration date (1 month from payment)
     const expirationDate = new Date(mostRecentPayment.createdAt);
     expirationDate.setMonth(expirationDate.getMonth() + 1);
-    
+
     // Calculate days until expiration
     const now = new Date();
     const diffTime = expirationDate.getTime() - now.getTime();
     const daysUntilExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return {
       paymentDate: mostRecentPayment.createdAt,
       expirationDate,
@@ -672,5 +680,218 @@ export async function getDodoPaymentsExpirationInfo({ userId }: { userId: string
   } catch (error) {
     console.error('Error getting DodoPayments expiration info:', error);
     return null;
+  }
+}
+
+// Lookout CRUD operations
+export async function createLookout({
+  userId,
+  title,
+  prompt,
+  frequency,
+  cronSchedule,
+  timezone,
+  nextRunAt,
+  qstashScheduleId,
+}: {
+  userId: string;
+  title: string;
+  prompt: string;
+  frequency: string;
+  cronSchedule: string;
+  timezone: string;
+  nextRunAt: Date;
+  qstashScheduleId?: string;
+}) {
+  try {
+    const [newLookout] = await db
+      .insert(lookout)
+      .values({
+        userId,
+        title,
+        prompt,
+        frequency,
+        cronSchedule,
+        timezone,
+        nextRunAt,
+        qstashScheduleId,
+      })
+      .returning();
+
+    console.log('✅ Created lookout with ID:', newLookout.id, 'for user:', userId);
+    return newLookout;
+  } catch (error) {
+    console.error('❌ Failed to create lookout:', error);
+    throw new ChatSDKError('bad_request:database', 'Failed to create lookout');
+  }
+}
+
+export async function getLookoutsByUserId({ userId }: { userId: string }) {
+  try {
+    return await db.select().from(lookout).where(eq(lookout.userId, userId)).orderBy(desc(lookout.createdAt));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get lookouts by user id');
+  }
+}
+
+export async function getLookoutById({ id }: { id: string }) {
+  try {
+    console.log('🔍 Looking up lookout with ID:', id);
+    const [selectedLookout] = await db.select().from(lookout).where(eq(lookout.id, id));
+
+    if (selectedLookout) {
+      console.log('✅ Found lookout:', selectedLookout.id, selectedLookout.title);
+    } else {
+      console.log('❌ No lookout found with ID:', id);
+    }
+
+    return selectedLookout;
+  } catch (error) {
+    console.error('❌ Error fetching lookout by ID:', id, error);
+    throw new ChatSDKError('bad_request:database', 'Failed to get lookout by id');
+  }
+}
+
+export async function updateLookout({
+  id,
+  title,
+  prompt,
+  frequency,
+  cronSchedule,
+  timezone,
+  nextRunAt,
+  qstashScheduleId,
+}: {
+  id: string;
+  title?: string;
+  prompt?: string;
+  frequency?: string;
+  cronSchedule?: string;
+  timezone?: string;
+  nextRunAt?: Date;
+  qstashScheduleId?: string;
+}) {
+  try {
+    const updateData: any = { updatedAt: new Date() };
+    if (title !== undefined) updateData.title = title;
+    if (prompt !== undefined) updateData.prompt = prompt;
+    if (frequency !== undefined) updateData.frequency = frequency;
+    if (cronSchedule !== undefined) updateData.cronSchedule = cronSchedule;
+    if (timezone !== undefined) updateData.timezone = timezone;
+    if (nextRunAt !== undefined) updateData.nextRunAt = nextRunAt;
+    if (qstashScheduleId !== undefined) updateData.qstashScheduleId = qstashScheduleId;
+
+    const [updatedLookout] = await db.update(lookout).set(updateData).where(eq(lookout.id, id)).returning();
+
+    return updatedLookout;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update lookout');
+  }
+}
+
+export async function updateLookoutStatus({ id, status }: { id: string; status: 'active' | 'paused' | 'archived' | 'running' }) {
+  try {
+    const [updatedLookout] = await db
+      .update(lookout)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(lookout.id, id))
+      .returning();
+
+    return updatedLookout;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update lookout status');
+  }
+}
+
+export async function updateLookoutLastRun({
+  id,
+  lastRunAt,
+  lastRunChatId,
+  nextRunAt,
+  runStatus = 'success',
+  error,
+  duration,
+  tokensUsed,
+  searchesPerformed,
+}: {
+  id: string;
+  lastRunAt: Date;
+  lastRunChatId: string;
+  nextRunAt?: Date;
+  runStatus?: 'success' | 'error' | 'timeout';
+  error?: string;
+  duration?: number;
+  tokensUsed?: number;
+  searchesPerformed?: number;
+}) {
+  try {
+    // Get current lookout to append to run history
+    const currentLookout = await getLookoutById({ id });
+    if (!currentLookout) {
+      throw new Error('Lookout not found');
+    }
+
+    const currentHistory = (currentLookout.runHistory as any[]) || [];
+    
+    // Add new run to history
+    const newRun = {
+      runAt: lastRunAt.toISOString(),
+      chatId: lastRunChatId,
+      status: runStatus,
+      ...(error && { error }),
+      ...(duration && { duration }),
+      ...(tokensUsed && { tokensUsed }),
+      ...(searchesPerformed && { searchesPerformed }),
+    };
+
+    // Keep only last 100 runs to prevent unbounded growth
+    const updatedHistory = [...currentHistory, newRun].slice(-100);
+
+    const updateData: any = { 
+      lastRunAt, 
+      lastRunChatId, 
+      runHistory: updatedHistory,
+      updatedAt: new Date() 
+    };
+    if (nextRunAt) updateData.nextRunAt = nextRunAt;
+
+    const [updatedLookout] = await db.update(lookout).set(updateData).where(eq(lookout.id, id)).returning();
+
+    return updatedLookout;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update lookout last run');
+  }
+}
+
+// New function to get run statistics
+export async function getLookoutRunStats({ id }: { id: string }) {
+  try {
+    const lookout = await getLookoutById({ id });
+    if (!lookout) return null;
+
+    const runHistory = (lookout.runHistory as any[]) || [];
+    
+    return {
+      totalRuns: runHistory.length,
+      successfulRuns: runHistory.filter(run => run.status === 'success').length,
+      failedRuns: runHistory.filter(run => run.status === 'error').length,
+      averageDuration: runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) / runHistory.length || 0,
+      lastWeekRuns: runHistory.filter(run => 
+        new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      ).length,
+    };
+  } catch (error) {
+    console.error('Error getting lookout run stats:', error);
+    return null;
+  }
+}
+
+export async function deleteLookout({ id }: { id: string }) {
+  try {
+    const [deletedLookout] = await db.delete(lookout).where(eq(lookout.id, id)).returning();
+
+    return deletedLookout;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to delete lookout');
   }
 }

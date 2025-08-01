@@ -1,17 +1,6 @@
 'use client';
 
-import {
-  Brain,
-  Search,
-  FileText,
-  ShieldCheck,
-  ArrowUpRight,
-  Check,
-  Bot,
-  X,
-  GraduationCap,
-  Sparkles,
-} from 'lucide-react';
+import { Brain, Search, FileText, ShieldCheck, ArrowUpRight, Bot, X, GraduationCap, Eye } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -41,6 +30,8 @@ import { models } from '@/ai/providers';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
+import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
+import { PRICING } from '@/lib/constants';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -48,7 +39,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { PRICING } from '@/lib/constants';
+
 import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export default function AboutPage() {
@@ -430,7 +421,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Brain className="h-6 w-6 text-primary" />
@@ -458,6 +449,16 @@ export default function AboutPage() {
               <h3 className="text-lg font-semibold mb-2">Open Source</h3>
               <p className="text-muted-foreground">
                 Fully open source and transparent. Contribute to development or self-host your own instance.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <Eye className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Scira Lookout</h3>
+              <p className="text-muted-foreground">
+                Schedule automated searches to monitor trends and get regular updates on topics that matter to you.
               </p>
             </div>
           </div>
@@ -607,7 +608,7 @@ export default function AboutPage() {
 
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Free Plan */}
-            <div className="bg-background/50 border border-border/50 rounded-xl p-8 hover:border-border/80 transition-colors">
+            <div className="bg-background/50 border border-border/50 rounded-xl p-8 hover:border-border/80 transition-colors flex flex-col">
               <div className="mb-8">
                 <h3 className="text-xl font-medium mb-2">Free</h3>
                 <p className="text-muted-foreground/70 mb-4">Get started with essential features</p>
@@ -623,7 +624,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 flex-1 mb-8">
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
                   <span className="text-muted-foreground">10 searches per day</span>
@@ -640,6 +641,10 @@ export default function AboutPage() {
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
                   <span className="text-muted-foreground">Search history</span>
                 </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
+                  <span className="text-muted-foreground">No Lookout access</span>
+                </li>
               </ul>
 
               <Button
@@ -652,7 +657,7 @@ export default function AboutPage() {
             </div>
 
             {/* Pro Plan */}
-            <div className="bg-background border border-primary/30 rounded-xl p-8 relative hover:border-primary/50 transition-colors">
+            <div className="bg-background border border-primary/30 rounded-xl p-8 relative hover:border-primary/50 transition-colors flex flex-col">
               <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
 
               <div className="mb-8">
@@ -675,7 +680,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 flex-1 mb-8">
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                   <span className="text-muted-foreground">Unlimited searches</span>
@@ -691,6 +696,16 @@ export default function AboutPage() {
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                   <span className="text-muted-foreground">Priority support</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <span className="text-muted-foreground">
+                    Scira Lookout ({LOOKOUT_LIMITS.TOTAL_LOOKOUTS} automated searches)
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <span className="text-muted-foreground">Up to {LOOKOUT_LIMITS.DAILY_LOOKOUTS} daily lookouts</span>
                 </li>
               </ul>
 

@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     useCache: true,
-    devtoolSegmentExplorer: true,
     optimizePackageImports: ['@phosphor-icons/react'],
     serverActions: {
       bodySizeLimit: '10mb',
@@ -24,8 +23,10 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
+  serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
   transpilePackages: ['geist', '@daytonaio/sdk'],
   output: 'standalone',
+  devIndicators: false,
   async headers() {
     return [
       {
@@ -62,6 +63,11 @@ const nextConfig: NextConfig = {
       {
         source: '/plst',
         destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
+        permanent: true,
+      },
+      {
+        source: '/blog',
+        destination: 'https://blog.scira.ai',
         permanent: true,
       },
     ];

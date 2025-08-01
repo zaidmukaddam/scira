@@ -182,7 +182,12 @@ export async function POST(req: Request) {
           canProceed: true,
           messageCount: messageCountResult.count,
           isProUser: false,
-          subscriptionData: user.subscriptionData,
+          subscriptionData: user.polarSubscription
+            ? {
+                hasSubscription: true,
+                subscription: { ...user.polarSubscription, organizationId: null },
+              }
+            : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
         });
@@ -200,7 +205,12 @@ export async function POST(req: Request) {
         canProceed: true,
         messageCount: 0, // Not relevant for pro users
         isProUser: true,
-        subscriptionData: user.subscriptionData,
+        subscriptionData: user.polarSubscription
+          ? {
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
+          : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0, // Not relevant for pro users
       });

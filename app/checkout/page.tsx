@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,8 +16,10 @@ import { betterauthClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/use-location';
 import { useSession } from '@/lib/auth-client';
-import { useProUserStatus } from '@/hooks/use-user-data';
+import { useIsProUser } from '@/hooks/use-user-data';
 import { PRICING } from '@/lib/constants';
+import { getDiscountConfigAction } from '@/app/actions';
+import { DiscountConfig } from '@/lib/discount';
 
 const checkoutSchema = z.object({
   customer: z.object({
@@ -37,10 +39,11 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
   const router = useRouter();
   const location = useLocation();
   const { data: session, isPending } = useSession();
-  const { isProUser, isLoading: isProStatusLoading } = useProUserStatus();
+  const { isProUser, isLoading: isProStatusLoading } = useIsProUser();
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -58,6 +61,62 @@ export default function CheckoutPage() {
       },
     },
   });
+
+  // Fetch discount configuration
+  useEffect(() => {
+    const fetchDiscountConfig = async () => {
+      try {
+        const config = await getDiscountConfigAction();
+
+        // Add original price if not already present (let edge config handle discount details)
+        const isDevMode = config.dev || process.env.NODE_ENV === 'development';
+
+        if ((config.enabled || isDevMode) && !config.originalPrice) {
+          config.originalPrice = PRICING.PRO_MONTHLY;
+        }
+        setDiscountConfig(config);
+      } catch (error) {
+        console.error('Failed to fetch discount config:', error);
+      }
+    };
+
+    fetchDiscountConfig();
+  }, []);
+
+  // Helper function to calculate discounted price
+  const getDiscountedPrice = (originalPrice: number, isINR: boolean = false) => {
+    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+    const shouldApplyDiscount = isDevMode
+      ? discountConfig.code && discountConfig.message
+      : discountConfig.enabled && discountConfig.code && discountConfig.message;
+
+    if (!shouldApplyDiscount) {
+      return originalPrice;
+    }
+
+    // Use INR price directly if available
+    if (isINR && discountConfig.inrPrice) {
+      return discountConfig.inrPrice;
+    }
+
+    // Apply percentage discount
+    if (discountConfig.percentage) {
+      return Math.round(originalPrice - (originalPrice * discountConfig.percentage) / 100);
+    }
+
+    return originalPrice;
+  };
+
+  // Check if discount should be shown
+  const shouldShowDiscount = () => {
+    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+    return isDevMode
+      ? discountConfig.code && discountConfig.message && (discountConfig.percentage || discountConfig.inrPrice)
+      : discountConfig.enabled &&
+          discountConfig.code &&
+          discountConfig.message &&
+          (discountConfig.percentage || discountConfig.inrPrice);
+  };
 
   const onSubmit = async (data: CheckoutFormData) => {
     setIsLoading(true);
@@ -148,7 +207,16 @@ export default function CheckoutPage() {
           </p>
           <div className="mt-4 space-y-2">
             <div className="inline-flex items-center bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-sm">
-              🇮🇳 One-time payment: ₹{PRICING.PRO_MONTHLY_INR} for 1 month access
+              🇮🇳 One-time payment:{' '}
+              {shouldShowDiscount() ? (
+                <>
+                  <span className="line-through text-muted-foreground mr-2">₹{PRICING.PRO_MONTHLY_INR}</span>₹
+                  {getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
+                </>
+              ) : (
+                `₹${PRICING.PRO_MONTHLY_INR}`
+              )}{' '}
+              for 1 month access
             </div>
             <div className="text-xs text-muted-foreground text-center space-y-1">
               <p>GST and tax details will be calculated and shown during checkout</p>

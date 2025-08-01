@@ -63,7 +63,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
           <div className="space-y-8">
             <div>
-              <h2 className="text-3xl font-semibold text-foreground mb-3">Search that actually understands you</h2>
+              <h2 className="text-3xl font-semibold text-foreground mb-3">AI Search that actually understands you</h2>
               <p className="text-muted-foreground">Skip the ads. Get real answers. From the latest AI models.</p>
             </div>
 
