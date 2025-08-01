@@ -2029,26 +2029,27 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   <DropdownMenu open={showAttachmentMenu} onOpenChange={setShowAttachmentMenu}>
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className={cn(
-                              "group rounded-lg p-1.75 h-8 w-8 border transition-colors duration-200 flex items-center justify-center",
-                              hasVisionSupport(selectedModel)
-                                ? "border-border bg-background text-foreground hover:bg-accent"
-                                : "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                            )}
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              if (hasVisionSupport(selectedModel)) {
+                        {hasVisionSupport(selectedModel) ? (
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="group rounded-lg p-1.75 h-8 w-8 border border-border bg-background text-foreground hover:bg-accent transition-colors duration-200 flex items-center justify-center"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
                                 setShowAttachmentMenu(!showAttachmentMenu);
-                              }
-                            }}
-                            disabled={!hasVisionSupport(selectedModel)}
+                              }}
+                            >
+                              <PaperclipIcon size={16} />
+                            </button>
+                          </DropdownMenuTrigger>
+                        ) : (
+                          <button
+                            className="group rounded-lg p-1.75 h-8 w-8 border border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50 transition-colors duration-200 flex items-center justify-center"
+                            disabled
                           >
                             <PaperclipIcon size={16} />
                           </button>
-                        </DropdownMenuTrigger>
+                        )}
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -2067,16 +2068,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         </div>
                       </TooltipContent>
                     </Tooltip>
-                    <DropdownMenuContent align="end" sideOffset={4}>
-                      <DropdownMenuItem onClick={triggerFileInput}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Files
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={openLibraryDialog}>
-                        <FolderOpen className="w-4 h-4 mr-2" />
-                        Browse Library
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                    {hasVisionSupport(selectedModel) && (
+                      <DropdownMenuContent align="end" sideOffset={4}>
+                        <DropdownMenuItem onClick={triggerFileInput}>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Files
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={openLibraryDialog}>
+                          <FolderOpen className="w-4 h-4 mr-2" />
+                          Browse Library
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    )}
                   </DropdownMenu>
 
                   {isProcessing ? (

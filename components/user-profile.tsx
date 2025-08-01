@@ -36,6 +36,7 @@ import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
+import { FolderOpen } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
@@ -265,6 +266,16 @@ const UserProfile = memo(
                 <ThemeSwitcher />
               </div>
             </DropdownMenuItem>
+
+            {isAuthenticated && (
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/library')}>
+                <div className="w-full flex items-center gap-2">
+                  <FolderOpen size={16} />
+                  <span>Library</span>
+                </div>
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuSeparator />
 
             <DropdownMenuItem className="cursor-pointer" asChild>
