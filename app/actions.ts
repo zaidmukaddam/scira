@@ -1916,7 +1916,7 @@ export async function testLookoutAction({ id }: { id: string }) {
     }
 
     // Make a POST request to the lookout API endpoint to trigger the run
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/lookout`, {
+    const response = await fetch('https://scira.ai/api/lookout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
