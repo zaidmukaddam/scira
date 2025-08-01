@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { DiscountConfig } from '@/lib/discount';
 import { cn } from '@/lib/utils';
 import { PRICING } from '@/lib/constants';
+import { SlidingNumber } from '@/components/core/sliding-number';
 
 interface DiscountBannerProps {
   discountConfig: DiscountConfig;
@@ -21,6 +22,14 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
   const [isVisible, setIsVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
+  const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number }>(
+    {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    },
+  );
 
   // Calculate time remaining
   useEffect(() => {
@@ -37,6 +46,9 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
           const days = Math.floor(difference / (1000 * 60 * 60 * 24));
           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+          setCountdownTime({ days, hours, minutes, seconds });
 
           if (days > 0) {
             setTimeLeft(`Starts in ${days}d ${hours}h`);
@@ -58,6 +70,9 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
           const days = Math.floor(difference / (1000 * 60 * 60 * 24));
           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+          setCountdownTime({ days, hours, minutes, seconds });
 
           if (days > 0) {
             setTimeLeft(`Expires in ${days}d ${hours}h`);
@@ -68,13 +83,14 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
           }
         } else {
           setTimeLeft('Expired');
+          setCountdownTime({ days: 0, hours: 0, minutes: 0, seconds: 0 });
           setIsVisible(false);
         }
       }
     };
 
     updateTimeLeft();
-    const interval = setInterval(updateTimeLeft, 60000); // Update every minute
+    const interval = setInterval(updateTimeLeft, 1000); // Update every second for precise countdown
 
     return () => clearInterval(interval);
   }, [discountConfig.startsAt, discountConfig.expiresAt]);
@@ -165,26 +181,63 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
 
   return (
     <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <CardTitle className="text-base font-medium">
+            <div className="flex items-center gap-3 mb-2">
+              <CardTitle className="text-lg font-semibold">
                 {discountConfig.message || 'Special Offer Available'}
               </CardTitle>
               {discountConfig.percentage && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-sm font-medium px-2.5 py-1">
                   {discountConfig.percentage}% OFF
                 </Badge>
               )}
             </div>
-            {timeLeft && timeLeft !== 'Expired' && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>{timeLeft}</span>
-              </div>
-            )}
           </div>
+
+          {/* Countdown Timer */}
+          {timeLeft && timeLeft !== 'Expired' && (
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <Clock className="h-3 w-3" />
+                <span>Offer ends in:</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {countdownTime.days > 0 && (
+                  <>
+                    <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
+                      <div className="text-sm font-semibold">
+                        <SlidingNumber value={countdownTime.days} padStart={true} />
+                      </div>
+                      <span className="text-xs text-muted-foreground">days</span>
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">:</span>
+                  </>
+                )}
+                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
+                  <div className="text-sm font-semibold">
+                    <SlidingNumber value={countdownTime.hours} padStart={true} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">hrs</span>
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">:</span>
+                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
+                  <div className="text-sm font-semibold">
+                    <SlidingNumber value={countdownTime.minutes} padStart={true} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">min</span>
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">:</span>
+                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
+                  <div className="text-sm font-semibold">
+                    <SlidingNumber value={countdownTime.seconds} padStart={true} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">sec</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {onClose && (
             <CardAction>
