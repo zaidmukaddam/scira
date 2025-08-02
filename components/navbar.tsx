@@ -2,7 +2,9 @@
 
 import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Crown, Lightning, Share, X, FolderOpen } from '@phosphor-icons/react';
+import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Share, X } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
@@ -10,10 +12,10 @@ import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { User } from '@/lib/db/schema';
 import { LinkedinLogo, RedditLogo, XLogo } from '@phosphor-icons/react';
 import { ClassicLoader } from '@/components/ui/loading';
 import { useRouter } from 'next/navigation';
+import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 type VisibilityType = 'public' | 'private';
 
@@ -23,7 +25,7 @@ interface NavbarProps {
   selectedVisibilityType: VisibilityType;
   onVisibilityChange: (visibility: VisibilityType) => void | Promise<void>;
   status: string;
-  user: User | null;
+  user: ComprehensiveUserData | null;
   onHistoryClick: () => void;
   isOwner?: boolean;
   subscriptionData?: any;
@@ -223,7 +225,7 @@ const Navbar = memo(
                             )}
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72 p-3">
+                        <DropdownMenuContent align="end" className="w-64 sm:w-72 p-3 ml-2 sm:m-auto">
                           <div className="space-y-3">
                             <header className="flex justify-between items-center">
                               <h4 className="text-sm font-medium">Share Link</h4>
@@ -357,7 +359,7 @@ const Navbar = memo(
                             )}
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72 p-3">
+                        <DropdownMenuContent align="end" className="w-64 sm:w-72 p-3 ml-2 sm:m-auto">
                           <div className="space-y-3">
                             <header className="flex justify-between items-center">
                               <h4 className="text-sm font-medium">Share</h4>
@@ -453,11 +455,17 @@ const Navbar = memo(
                       Loading subscription status...
                     </TooltipContent>
                   </Tooltip>
-                ) : subscriptionData && hasActiveSubscription ? (
+                ) : hasActiveSubscription ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-1.5 bg-muted/50 border border-border">
-                        <Crown size={14} className="text-foreground" />
+                        <HugeiconsIcon
+                          icon={Crown02Icon}
+                          size={14}
+                          color="currentColor"
+                          strokeWidth={1.5}
+                          className="text-foreground"
+                        />
                         <span className="text-xs font-medium text-foreground hidden sm:inline">Pro</span>
                       </div>
                     </TooltipTrigger>

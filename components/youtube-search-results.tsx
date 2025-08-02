@@ -148,7 +148,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
   return (
     <div
-      className="w-[280px] h-[300px] rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200 relative mr-4"
+      className="w-[280px] h-[350px] rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200 relative mr-4"
       onTouchStart={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SEARCH_LIMITS, PRICING } from '@/lib/constants';
+import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
 import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
@@ -54,35 +55,54 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     const fetchDiscountConfig = async () => {
       try {
         const config = await getDiscountConfigAction();
-        if (config.enabled && !config.originalPrice) {
+
+        // Add original price if not already present (let edge config handle discount details)
+        const isDevMode = config.dev || process.env.NODE_ENV === 'development';
+
+        if ((config.enabled || isDevMode) && !config.originalPrice) {
           config.originalPrice = PRICING.PRO_MONTHLY;
         }
         setDiscountConfig(config);
 
-        if (config.expiresAt) {
-          updateCountdown(config.expiresAt);
+        // Set initial countdown based on startsAt or expiresAt
+        if (config.startsAt || config.expiresAt) {
+          updateCountdown(config.startsAt, config.expiresAt);
         } else {
+          // Default 24-hour countdown if no timing set
           const endTime = new Date();
           endTime.setHours(endTime.getHours() + 24);
-          updateCountdown(endTime);
+          updateCountdown(undefined, endTime);
         }
       } catch (error) {
         console.error('Failed to fetch discount config:', error);
       }
     };
 
-    const updateCountdown = (endTime: Date) => {
+    const updateCountdown = (startsAt?: Date, expiresAt?: Date) => {
       const calculateTimeLeft = () => {
         const now = new Date().getTime();
-        const difference = new Date(endTime).getTime() - now;
 
-        if (difference > 0) {
+        // Check if discount hasn't started yet
+        if (startsAt && now < startsAt.getTime()) {
+          const difference = startsAt.getTime() - now;
           const days = Math.floor(difference / (1000 * 60 * 60 * 24));
           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
           setCountdownTime({ days, hours, minutes, seconds });
+          return;
+        }
+
+        // Check if discount is active and count down to expiration
+        if (expiresAt) {
+          const difference = expiresAt.getTime() - now;
+          if (difference > 0) {
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+            setCountdownTime({ days, hours, minutes, seconds });
+          }
         }
       };
 
@@ -94,6 +114,41 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     fetchDiscountConfig();
   }, []);
 
+  // Helper function to calculate discounted price
+  const getDiscountedPrice = (originalPrice: number, isINR: boolean = false) => {
+    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+    const shouldApplyDiscount = isDevMode
+      ? discountConfig.code && discountConfig.message
+      : discountConfig.enabled && discountConfig.code && discountConfig.message;
+
+    if (!shouldApplyDiscount) {
+      return originalPrice;
+    }
+
+    // Use INR price directly if available
+    if (isINR && discountConfig.inrPrice) {
+      return discountConfig.inrPrice;
+    }
+
+    // Apply percentage discount
+    if (discountConfig.percentage) {
+      return Math.round(originalPrice - (originalPrice * discountConfig.percentage) / 100);
+    }
+
+    return originalPrice;
+  };
+
+  // Check if discount should be shown
+  const shouldShowDiscount = () => {
+    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+    return isDevMode
+      ? discountConfig.code && discountConfig.message && (discountConfig.percentage || discountConfig.inrPrice)
+      : discountConfig.enabled &&
+          discountConfig.code &&
+          discountConfig.message &&
+          (discountConfig.percentage || discountConfig.inrPrice);
+  };
+
   const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
     if (!user) {
       router.push('/sign-up');
@@ -104,11 +159,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       if (paymentMethod === 'dodo') {
         router.push('/checkout');
       } else {
-        const checkoutOptions: any = {
+        await authClient.checkout({
           products: [productId],
           slug: slug,
-        };
-        await authClient.checkout(checkoutOptions);
+        });
       }
     } catch (error) {
       console.error('Checkout failed:', error);
@@ -147,14 +201,15 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   const hasProAccess = () => {
     const hasPolarSub = isCurrentPlan(STARTER_TIER);
-    const hasDodoProAccess = user?.isProUser && user?.dodoProStatus?.isProUser;
+    // Check DodoPayments Pro status
+    const hasDodoProAccess = user?.isProUser && user?.proSource === 'dodo';
 
     return hasPolarSub || hasDodoProAccess;
   };
 
   const getProAccessSource = () => {
     if (isCurrentPlan(STARTER_TIER)) return 'polar';
-    if (user?.dodoProStatus?.isProUser) return 'dodo';
+    if (user?.proSource === 'dodo') return 'dodo';
     return null;
   };
 
@@ -201,106 +256,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         </div>
       </div>
 
-      {discountConfig.enabled && (
-        <div className="max-w-4xl mx-auto px-6 mb-8">
-          <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden animate-in slide-in-from-top-2 duration-500">
-            <div className="px-6 py-5">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <h3 className="text-base font-medium">Special Limited-Time Offer</h3>
-                    {discountConfig.percentage && (
-                      <Badge className="bg-black dark:bg-white text-white dark:text-black px-2.5 py-1 text-xs font-medium">
-                        {discountConfig.percentage}% OFF
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    {location.isIndia ? (
-                      <>
-                        <span className="text-zinc-500 dark:text-zinc-400 line-through">
-                          ₹{PRICING.PRO_MONTHLY_INR}/month
-                        </span>
-                        <span className="text-lg font-semibold">
-                          ₹
-                          {discountConfig.finalPrice
-                            ? (discountConfig.finalPrice * 100).toFixed(0)
-                            : PRICING.PRO_MONTHLY_INR -
-                              (PRICING.PRO_MONTHLY_INR * (discountConfig.percentage || 0)) / 100}
-                          /month
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-zinc-500 dark:text-zinc-400 line-through">
-                          ${discountConfig.originalPrice}/month
-                        </span>
-                        <span className="text-lg font-semibold">
-                          $
-                          {discountConfig.finalPrice
-                            ? discountConfig.finalPrice.toFixed(2)
-                            : (discountConfig.originalPrice || 0) -
-                              ((discountConfig.originalPrice || 0) * (discountConfig.percentage || 0)) / 100}
-                          /month
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">First month</span>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Offer ends in:</p>
-                  <div className="flex items-center gap-1.5">
-                    {countdownTime.days > 0 && (
-                      <>
-                        <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
-                          <SlidingNumber value={countdownTime.days} padStart={true} />
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">days</span>
-                        </div>
-                        <span className="text-lg font-medium">:</span>
-                      </>
-                    )}
-                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
-                      <SlidingNumber value={countdownTime.hours} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">hrs</span>
-                    </div>
-                    <span className="text-lg font-medium">:</span>
-                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
-                      <SlidingNumber value={countdownTime.minutes} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">min</span>
-                    </div>
-                    <span className="text-lg font-medium">:</span>
-                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-md min-w-[42px] text-center">
-                      <SlidingNumber value={countdownTime.seconds} padStart={true} />
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">sec</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {discountConfig.code && (
-                <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDiscountClaim(discountConfig.code || '')}
-                    className="w-full sm:w-auto"
-                  >
-                    {discountConfig.code ? `Claim discount: ${discountConfig.code}` : 'Claim discount'}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <DiscountBanner
         discountConfig={discountConfig}
         onClaim={handleDiscountClaim}
-        className="max-w-4xl mx-auto px-6 mb-8 hidden"
+        className="max-w-[850px] mx-6 sm:mx-auto px-4 mb-8 flex"
       />
 
       <div className="max-w-4xl mx-auto px-6 pb-24">
@@ -335,6 +294,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
                   <span className="text-zinc-700 dark:text-zinc-300">Search history</span>
                 </li>
+                <li className="flex items-center text-[15px]">
+                  <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mr-4 flex-shrink-0"></div>
+                  <span className="text-zinc-700 dark:text-zinc-300">No Lookout access</span>
+                </li>
               </ul>
             </div>
 
@@ -365,6 +328,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 </Badge>
               </div>
             )}
+            {!hasProAccess() && shouldShowDiscount() && (
+              <div className="absolute -top-4 right-4 z-10">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
+                  {discountConfig.percentage}% OFF
+                </Badge>
+              </div>
+            )}
 
             <div className="bg-white dark:bg-zinc-900 border-[1.5px] border-black dark:border-white rounded-xl p-10 relative shadow-sm">
               <div className="mb-10">
@@ -384,9 +354,20 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 {!location.loading && location.isIndia ? (
                   <div className="space-y-4 mb-6">
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-4 border rounded-lg bg-secondary space-y-1">
+                      <div className="p-4 border rounded-lg bg-background space-y-1">
                         <div>
-                          <span className="text-2xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
+                          {shouldShowDiscount() ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground line-through">
+                                ₹{PRICING.PRO_MONTHLY_INR}
+                              </span>
+                              <span className="text-2xl font-light">
+                                ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-2xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
+                          )}
                           <div className="text-xs text-muted-foreground">+18% GST</div>
                         </div>
                         <div className="text-xs text-muted-foreground">One-time</div>
@@ -397,9 +378,21 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         </div>
                       </div>
                       <div className="p-4 border rounded-lg bg-muted space-y-1">
-                        <div className="text-2xl font-light">{PRICING.PRO_MONTHLY} USD</div>
+                        {shouldShowDiscount() ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground line-through">${PRICING.PRO_MONTHLY}</span>
+                            <span className="text-2xl font-light">${getDiscountedPrice(PRICING.PRO_MONTHLY)} USD</span>
+                          </div>
+                        ) : (
+                          <div className="text-2xl font-light">${PRICING.PRO_MONTHLY} USD</div>
+                        )}
                         <div className="text-xs text-muted-foreground">Monthly</div>
                         <div className="text-xs text-foreground">Recurring</div>
+                        {shouldShowDiscount() && discountConfig.discountAvail && (
+                          <div className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                            {discountConfig.discountAvail}
+                          </div>
+                        )}
                         <div className="mt-2 space-y-0.5">
                           <div className="text-[10px] text-muted-foreground font-medium">💳 Card Payment</div>
                           <div className="text-[10px] text-muted-foreground">Debit and credit both work</div>
@@ -414,6 +407,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                       {location.loading ? (
                         <div className="animate-pulse">
                           <div className="h-12 w-20 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
+                        </div>
+                      ) : shouldShowDiscount() ? (
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-2xl font-light text-muted-foreground line-through">$15</span>
+                          <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">
+                            ${getDiscountedPrice(PRICING.PRO_MONTHLY)}
+                          </span>
                         </div>
                       ) : (
                         <span className="text-4xl font-light text-zinc-900 dark:text-zinc-100 tracking-tight">$15</span>
@@ -449,6 +449,18 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   <li className="flex items-center text-[15px]">
                     <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
                     <span className="text-zinc-700 dark:text-zinc-300">Early access to features</span>
+                  </li>
+                  <li className="flex items-center text-[15px]">
+                    <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                    <span className="text-zinc-700 dark:text-zinc-300">
+                      Scira Lookout ({LOOKOUT_LIMITS.TOTAL_LOOKOUTS} automated searches)
+                    </span>
+                  </li>
+                  <li className="flex items-center text-[15px]">
+                    <div className="w-1 h-1 bg-black dark:bg-white rounded-full mr-4 flex-shrink-0"></div>
+                    <span className="text-zinc-700 dark:text-zinc-300">
+                      Up to {LOOKOUT_LIMITS.DAILY_LOOKOUTS} daily lookouts
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -514,7 +526,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                         onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
                       >
-                        🇮🇳 Pay ₹{PRICING.PRO_MONTHLY_INR} (1 month access)
+                        🇮🇳 Pay ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)} (1 month access)
                         <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                       </Button>
                       <Button
@@ -522,9 +534,14 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         className="w-full h-9 group font-normal text-sm tracking-[-0.01em] transition-all duration-200"
                         onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
                       >
-                        💳 Subscribe ${PRICING.PRO_MONTHLY}/month
+                        💳 Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
                         <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                       </Button>
+                      {shouldShowDiscount() && discountConfig.discountAvail && (
+                        <p className="text-xs text-green-600 dark:text-green-400 text-center mt-1 font-medium">
+                          {discountConfig.discountAvail}
+                        </p>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground text-center">
                       Indian payment: One-time • Card payment: Recurring subscription

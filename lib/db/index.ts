@@ -3,12 +3,12 @@ import postgres from 'postgres';
 import * as schema from '@/lib/db/schema';
 import { serverEnv } from '@/env/server';
 
-// Unified connection with optimized pooling
+// Unified connection with optimized pooling for better consistency
 const client = postgres(serverEnv.DATABASE_URL, {
-  max: 50,
-  idle_timeout: 20,
-  connect_timeout: 10,
-  prepare: false,
+  max: 200, // Reduced pool size for better consistency
+  idle_timeout: 60,
+  connect_timeout: 30,
+  prepare: true, // Enable prepared statements for better performance and consistency
 });
 
 export const db = drizzle(client, { schema });

@@ -21,7 +21,6 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import PlaceholderImage from '@/components/placeholder-image';
 
 // Types
@@ -102,7 +101,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         <div className="relative w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
           {faviconUrl ? (
-            <Image
+            <img
               src={faviconUrl}
               alt=""
               width={24}
@@ -301,10 +300,9 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             {failedImages.has(image.url) ? (
               <PlaceholderImage className="absolute inset-0" variant="compact" size="md" />
             ) : (
-              <Image
+              <img
                 src={image.url}
                 alt={image.description || ''}
-                fill
                 className="object-cover"
                 onError={() => handleImageError(image.url)}
               />
@@ -350,10 +348,9 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                 {failedImages.has(currentImage.url) ? (
                   <PlaceholderImage className="absolute inset-0" variant="default" size="lg" />
                 ) : (
-                  <Image
+                  <img
                     src={currentImage.url}
                     alt={currentImage.description || ''}
-                    fill
                     className="object-contain rounded-lg"
                     onError={() => handleImageError(currentImage.url)}
                   />

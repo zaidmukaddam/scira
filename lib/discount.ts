@@ -8,10 +8,14 @@ export interface DiscountConfig {
   originalPrice?: number;
   finalPrice?: number;
   firstMonthPrice?: number;
+  inrPrice?: number;
   isFirstMonthOnly?: boolean;
+  startsAt?: Date;
   expiresAt?: Date;
   buttonText?: string;
   variant?: 'default' | 'urgent' | 'success';
+  discountAvail?: string;
+  dev?: boolean;
 }
 
 /**
@@ -35,19 +39,36 @@ export async function getDiscountConfig(): Promise<DiscountConfig> {
         originalPrice: Number((edgeDiscountConfig as any).originalPrice) || undefined,
         finalPrice: Number((edgeDiscountConfig as any).finalPrice) || undefined,
         firstMonthPrice: Number((edgeDiscountConfig as any).firstMonthPrice) || undefined,
+        inrPrice: Number((edgeDiscountConfig as any).inrPrice) || undefined,
         isFirstMonthOnly: Boolean((edgeDiscountConfig as any).isFirstMonthOnly),
+        startsAt: (edgeDiscountConfig as any).startsAt ? new Date((edgeDiscountConfig as any).startsAt) : undefined,
         expiresAt: (edgeDiscountConfig as any).expiresAt ? new Date((edgeDiscountConfig as any).expiresAt) : undefined,
         buttonText: (edgeDiscountConfig as any).buttonText,
         variant: (edgeDiscountConfig as any).variant || 'default',
+        discountAvail: (edgeDiscountConfig as any).discountAvail,
+        dev: Boolean((edgeDiscountConfig as any).dev),
       };
 
-      // Check if discount has expired
-      if (config.expiresAt && config.expiresAt < new Date()) {
-        return defaultConfig;
+      const now = new Date();
+
+      // In dev mode or development environment, bypass timing checks
+      if (!config.dev && process.env.NODE_ENV !== 'development') {
+        // Check if discount has not started yet
+        if (config.startsAt && config.startsAt > now) {
+          return defaultConfig;
+        }
+
+        // Check if discount has expired
+        if (config.expiresAt && config.expiresAt < now) {
+          return defaultConfig;
+        }
       }
 
-      // Only return if enabled and has required fields
-      if (config.enabled && config.code && config.message) {
+      // In dev mode, ignore enabled flag; otherwise check if enabled and has required fields
+      const isDevMode = config.dev || process.env.NODE_ENV === 'development';
+      const shouldShow = isDevMode ? config.code && config.message : config.enabled && config.code && config.message;
+
+      if (shouldShow) {
         return config;
       }
     }
@@ -56,12 +77,4 @@ export async function getDiscountConfig(): Promise<DiscountConfig> {
   }
 
   return defaultConfig;
-}
-
-/**
- * Server action to get discount configuration
- */
-export async function getDiscountConfigAction(): Promise<DiscountConfig> {
-  'use server';
-  return await getDiscountConfig();
 }

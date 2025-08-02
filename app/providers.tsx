@@ -20,9 +20,11 @@ if (typeof window !== 'undefined') {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-      gcTime: 1000 * 60 * 10, // 10 minutes
+      staleTime: 1000 * 60 * 0.5, // 30 seconds
+      refetchOnWindowFocus: true, // Enable for real-time updates
+      gcTime: 1000 * 60 * 0.5, // 30 seconds
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
 });

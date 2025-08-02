@@ -1,15 +1,7 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Globe, Book, TelescopeIcon, DollarSign } from 'lucide-react';
-import {
-  ChatsCircleIcon,
-  CodeIcon,
-  MemoryIcon,
-  RedditLogoIcon,
-  YoutubeLogoIcon,
-  XLogoIcon,
-} from '@phosphor-icons/react/ssr';
+import { GlobalSearchIcon, Database02Icon, CodeIcon, AtomicPowerIcon, Bitcoin02Icon, MicroscopeIcon, NewTwitterIcon, RedditIcon, YoutubeIcon, ChattingIcon } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,14 +24,14 @@ export const searchGroups = [
     id: 'web' as const,
     name: 'Web',
     description: 'Search across the entire internet powered by Exa AI',
-    icon: Globe,
+    icon: GlobalSearchIcon,
     show: true,
   },
   {
     id: 'memory' as const,
     name: 'Memory',
     description: 'Your personal memory companion',
-    icon: MemoryIcon,
+    icon: Database02Icon,
     show: true,
     requireAuth: true,
   },
@@ -54,49 +46,49 @@ export const searchGroups = [
     id: 'crypto' as const,
     name: 'Crypto',
     description: 'Cryptocurrency research powered by CoinGecko',
-    icon: DollarSign,
+    icon: Bitcoin02Icon,
     show: true,
   },
   {
     id: 'chat' as const,
     name: 'Chat',
     description: 'Talk to the model directly.',
-    icon: ChatsCircleIcon,
+    icon: ChattingIcon,
     show: true,
   },
   {
     id: 'x' as const,
     name: 'X',
     description: 'Search X posts',
-    icon: XLogoIcon,
+    icon: NewTwitterIcon,
     show: true,
   },
   {
     id: 'reddit' as const,
     name: 'Reddit',
     description: 'Search Reddit posts',
-    icon: RedditLogoIcon,
+    icon: RedditIcon,
     show: true,
   },
   {
     id: 'academic' as const,
     name: 'Academic',
     description: 'Search academic papers powered by Exa',
-    icon: Book,
+    icon: MicroscopeIcon,
     show: true,
   },
   {
     id: 'youtube' as const,
     name: 'YouTube',
     description: 'Search YouTube videos powered by Exa',
-    icon: YoutubeLogoIcon,
+    icon: YoutubeIcon,
     show: true,
   },
   {
     id: 'extreme' as const,
     name: 'Extreme',
     description: 'Deep research with multiple sources and analysis',
-    icon: TelescopeIcon,
+    icon: AtomicPowerIcon,
     show: true,
   },
 ] as const;

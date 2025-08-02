@@ -29,18 +29,69 @@ export const youtubeSearchTool = tool({
   description: 'Search YouTube videos using Exa AI and get detailed video information.',
   parameters: z.object({
     query: z.string().describe('The search query for YouTube videos'),
+    timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']),
   }),
-  execute: async ({ query }: { query: string }) => {
+  execute: async ({
+    query,
+    timeRange,
+  }: {
+    query: string;
+    timeRange: 'day' | 'week' | 'month' | 'year' | 'anytime';
+  }) => {
     try {
       const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
       console.log('query', query);
+      console.log('timeRange', timeRange);
+      let startDate: string | undefined;
+      let endDate: string | undefined;
 
-      const searchResult = await exa.searchAndContents(query, {
+      const now = new Date();
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+      switch (timeRange) {
+        case 'day':
+          startDate = formatDate(new Date(now.getTime() - 24 * 60 * 60 * 1000));
+          endDate = formatDate(now);
+          break;
+        case 'week':
+          startDate = formatDate(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+          endDate = formatDate(now);
+          break;
+        case 'month':
+          startDate = formatDate(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
+          endDate = formatDate(now);
+          break;
+        case 'year':
+          startDate = formatDate(new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000));
+          endDate = formatDate(now);
+          break;
+        case 'anytime':
+          // Don't set dates for anytime - let Exa use its defaults
+          break;
+      }
+
+      const searchOptions: any = {
         type: 'auto',
-        numResults: 8,
+        numResults: 5,
         includeDomains: ['youtube.com', 'youtu.be', 'm.youtube.com'],
+      };
+
+      if (startDate) {
+        searchOptions.startPublishedDate = startDate;
+      }
+      if (endDate) {
+        searchOptions.endPublishedDate = endDate;
+      }
+
+      console.log('📅 Search date range:', {
+        timeRange,
+        startDate,
+        endDate,
+        searchOptions,
       });
+
+      const searchResult = await exa.searchAndContents(query, searchOptions);
 
       console.log('🎥 YouTube Search Results:', searchResult);
 

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   keywords: [
     'atlas.ai',
     'perplexity alternative',
-    'ai search engine',
+  'ai search engine',
     'search engine',
     'atlas ai',
     'Atlas AI',

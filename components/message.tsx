@@ -26,9 +26,12 @@ import {
 } from 'lucide-react';
 import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
+import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
-import { Crown, PlusCircle, User } from '@phosphor-icons/react';
+import { PlusCircle, User } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Crown02Icon } from '@hugeicons/core-free-icons';
 
 // Define MessagePart type
 type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | StepStartUIPart;
@@ -93,7 +96,15 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
       case 'auth':
         return <User className="h-4 w-4 text-blue-500 dark:text-blue-300" weight="fill" />;
       case 'upgrade':
-        return <Crown className="h-4 w-4 text-amber-500 dark:text-amber-300" weight="fill" />;
+        return (
+          <HugeiconsIcon
+            icon={Crown02Icon}
+            size={16}
+            color="currentColor"
+            strokeWidth={1.5}
+            className="text-amber-500 dark:text-amber-300"
+          />
+        );
       case 'warning':
         return <AlertCircle className="h-4 w-4 text-orange-500 dark:text-orange-300" />;
       default:
@@ -230,7 +241,15 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
               {actions.primary && canPerformAction(actions.primary.action) && (
                 <Button onClick={() => handleAction(actions.primary!.action)} className={colors.button} size="sm">
                   {actions.primary.action === 'signin' && <LogIn className="mr-2 h-3.5 w-3.5" />}
-                  {actions.primary.action === 'upgrade' && <Crown className="mr-2 h-3.5 w-3.5" />}
+                  {actions.primary.action === 'upgrade' && (
+                    <HugeiconsIcon
+                      icon={Crown02Icon}
+                      size={14}
+                      color="currentColor"
+                      strokeWidth={1.5}
+                      className="mr-2"
+                    />
+                  )}
                   {actions.primary.action === 'retry' && <RefreshCw className="mr-2 h-3.5 w-3.5" />}
                   {actions.primary.label}
                 </Button>
@@ -270,6 +289,7 @@ interface MessageProps {
   isMissingAssistantResponse?: boolean;
   handleRetry?: () => Promise<void>;
   isOwner?: boolean;
+  onHighlight?: (text: string) => void;
 }
 
 // Message Editor Component
@@ -367,13 +387,17 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         }}
         className="w-full"
       >
-        <div className="relative border rounded-md p-1.5! pb-1.5! pt-2! mb-3! bg-muted/30 dark:bg-muted/30">
+        <div className="relative border rounded-md mb-3!">
           <Textarea
             ref={textareaRef}
             value={draftContent}
             onChange={handleInput}
             autoFocus
-            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden relative w-full resize-none bg-transparent hover:bg-muted/10 focus:bg-muted/20 dark:hover:bg-muted/10 dark:focus:bg-muted/20 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto] transition-colors rounded-sm"
+            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden
+            [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden
+            relative w-full resize-none
+            border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-2 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto]
+            transition-colors rounded-sm"
             placeholder="Edit your message..."
             style={{
               lineHeight: '1.625',
@@ -461,6 +485,7 @@ export const Message: React.FC<MessageProps> = ({
   isMissingAssistantResponse,
   handleRetry,
   isOwner = true,
+  onHighlight,
 }) => {
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
@@ -486,19 +511,19 @@ export const Message: React.FC<MessageProps> = ({
 
     // Very short messages (like single words or short phrases)
     if (length <= 50 && lines === 1) {
-      return '[&>*]:text-xl sm:[&>*]:text-2xl'; // Smaller on mobile
+      return '[&>*]:!text-xl sm:[&>*]:!text-2xl'; // Smaller on mobile
     }
     // Short messages (one line, moderate length)
     else if (length <= 120 && lines === 1) {
-      return '[&>*]:text-lg sm:[&>*]:text-xl'; // Smaller on mobile
+      return '[&>*]:!text-lg sm:[&>*]:!text-xl'; // Smaller on mobile
     }
     // Medium messages (2-3 lines or longer single line)
     else if (lines <= 3 || length <= 200) {
-      return '[&>*]:text-base sm:[&>*]:text-lg'; // Smaller on mobile
+      return '[&>*]:!text-base sm:[&>*]:!text-lg'; // Smaller on mobile
     }
     // Longer messages
     else {
-      return '[&>*]:text-sm sm:[&>*]:text-base'; // Even smaller on mobile
+      return '[&>*]:!text-sm sm:[&>*]:!text-base'; // Even smaller on mobile
     }
   };
 
@@ -546,7 +571,13 @@ export const Message: React.FC<MessageProps> = ({
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
-                          <MarkdownRenderer content={preprocessLaTeX(part.text)} />
+                          <ChatTextHighlighter
+                            className={`${getDynamicFontSize(part.text)}`}
+                            onHighlight={onHighlight}
+                            removeHighlightOnClick={true}
+                          >
+                            <MarkdownRenderer content={preprocessLaTeX(part.text)} />
+                          </ChatTextHighlighter>
 
                           {!isExpanded && exceedsMaxHeight && (
                             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -565,7 +596,9 @@ export const Message: React.FC<MessageProps> = ({
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
-                      <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                      <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
+                        <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                      </ChatTextHighlighter>
 
                       {!isExpanded && exceedsMaxHeight && (
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />

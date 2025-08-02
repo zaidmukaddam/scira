@@ -5,7 +5,8 @@ import 'katex/dist/katex.min.css';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 
 import { useChat, UseChatOptions } from '@ai-sdk/react';
-import { Crown } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
@@ -21,7 +22,7 @@ import FormComponent from '@/components/ui/form-component';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
-import { useProUserStatus } from '@/hooks/use-user-data';
+import { useUserData } from '@/hooks/use-user-data';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 
 import { SEARCH_LIMITS } from '@/lib/constants';
@@ -73,7 +74,11 @@ const ChatInterface = memo(
       false,
     );
     const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] = useLocalStorage(
-      'atlas-signin-prompt-shown',
+      'scira-signin-prompt-shown',
+      false,
+    );
+    const [persistedHasShownLookoutAnnouncement, setPersitedHasShownLookoutAnnouncement] = useLocalStorage(
+      'scira-lookout-announcement-shown',
       false,
     );
 
@@ -83,7 +88,7 @@ const ChatInterface = memo(
         initialVisibility,
         persistedHasShownUpgradeDialog,
         persistedHasShownSignInPrompt,
-        externalCommandDialogOpen || false,
+        persistedHasShownLookoutAnnouncement,
       ),
     );
 
@@ -94,7 +99,7 @@ const ChatInterface = memo(
       isLoading: proStatusLoading,
       shouldCheckLimits: shouldCheckUserLimits,
       shouldBypassLimitsForModel,
-    } = useProUserStatus();
+    } = useUserData();
 
     const initialState = useMemo(
       () => ({
@@ -159,6 +164,19 @@ const ChatInterface = memo(
         }
       };
     }, [user, chatState.hasShownSignInPrompt, setPersitedHasShownSignInPrompt]);
+
+    // Timer for lookout announcement - show after 30 seconds for authenticated users
+    useEffect(() => {
+      if (user && !chatState.hasShownAnnouncementDialog) {
+        const timer = setTimeout(() => {
+          dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: true });
+          dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: true });
+          setPersitedHasShownLookoutAnnouncement(true);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+      }
+    }, [user, chatState.hasShownAnnouncementDialog, setPersitedHasShownLookoutAnnouncement]);
 
     type VisibilityType = 'public' | 'private';
 
@@ -260,6 +278,26 @@ const ChatInterface = memo(
       experimental_resume,
     } = useChat(chatOptions);
 
+    // Handle text highlighting and quoting
+    const handleHighlight = useCallback(
+      (text: string) => {
+        const quotedText = `> ${text.replace(/\n/g, '\n> ')}\n\n`;
+        setInput((prev) => prev + quotedText);
+
+        // Focus the input after adding the quote
+        setTimeout(() => {
+          const inputElement = document.querySelector('textarea[placeholder*="Ask"]') as HTMLTextAreaElement;
+          if (inputElement) {
+            inputElement.focus();
+            // Move cursor to end
+            inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length);
+          }
+        }, 100);
+      },
+      [setInput],
+    );
+
+    // Debug error structure
     if (error) {
       console.log('[useChat error]:', error);
       console.log('[error type]:', typeof error);
@@ -373,10 +411,20 @@ const ChatInterface = memo(
     useEffect(() => {
       dispatch({
         type: 'SET_ANY_DIALOG_OPEN',
-        payload: chatState.commandDialogOpen || chatState.showSignInPrompt || chatState.showUpgradeDialog,
+        payload:
+          chatState.commandDialogOpen ||
+          chatState.showSignInPrompt ||
+          chatState.showUpgradeDialog ||
+          chatState.showAnnouncementDialog,
       });
-    }, [chatState.commandDialogOpen, chatState.showSignInPrompt, chatState.showUpgradeDialog]);
+    }, [
+      chatState.commandDialogOpen,
+      chatState.showSignInPrompt,
+      chatState.showUpgradeDialog,
+      chatState.showAnnouncementDialog,
+    ]);
 
+    // Keyboard shortcut for command dialog
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
         if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -422,7 +470,24 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center h-full bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
+      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
+        <Navbar
+          isDialogOpen={chatState.anyDialogOpen}
+          chatId={initialChatId || (messages.length > 0 ? chatId : null)}
+          selectedVisibilityType={chatState.selectedVisibilityType}
+          onVisibilityChange={handleVisibilityChange}
+          status={status}
+          user={user || null}
+          onHistoryClick={() => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: true })}
+          isOwner={isOwner}
+          subscriptionData={subscriptionData}
+          isProUser={isUserPro}
+          isProStatusLoading={proStatusLoading}
+          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+        />
+
+        {/* Chat Dialogs Component */}
         <ChatDialogs
           commandDialogOpen={
             externalCommandDialogOpen !== undefined ? externalCommandDialogOpen : chatState.commandDialogOpen
@@ -448,6 +513,13 @@ const ChatInterface = memo(
             dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
             setPersitedHasShownUpgradeDialog(value);
           }}
+          showLookoutAnnouncement={chatState.showAnnouncementDialog}
+          setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
+          hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
+          setHasShownLookoutAnnouncement={(value) => {
+            dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
+            setPersitedHasShownLookoutAnnouncement(value);
+          }}
           user={user}
           setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
         />
@@ -472,7 +544,7 @@ const ChatInterface = memo(
               <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
                 <div className="text-center space-y-4">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
-                    <Crown className="h-4 w-4" />
+                    <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />
                     <span className="text-sm font-medium">Daily limit reached</span>
                   </div>
                   <div>
@@ -501,7 +573,13 @@ const ChatInterface = memo(
                       size="sm"
                       className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
                     >
-                      <Crown className="h-3 w-3 mr-1.5" />
+                      <HugeiconsIcon
+                        icon={Crown02Icon}
+                        size={12}
+                        color="currentColor"
+                        strokeWidth={1.5}
+                        className="mr-1.5"
+                      />
                       Upgrade
                     </Button>
                   </div>
@@ -528,6 +606,7 @@ const ChatInterface = memo(
                 onVisibilityChange={handleVisibilityChange}
                 initialMessages={initialMessages}
                 isOwner={isOwner}
+                onHighlight={handleHighlight}
               />
             )}
 
@@ -538,10 +617,10 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 w-full max-w-[95%] sm:max-w-2xl mx-auto',
+                  'transition-all duration-500 bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'mt-8' // Add some margin when centered
-                    : 'fixed bottom-6 sm:bottom-4 left-0 right-0 z-20', // Fixed bottom when messages exist
+                    ? 'relative max-w-2xl mx-auto w-full' // Centered position when no messages
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-2 sm:!pb-6 mt-1 mx-2 p-0', // Fixed bottom when messages exist
                 )}
               >
                 <FormComponent
@@ -585,7 +664,13 @@ const ChatInterface = memo(
               <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Crown className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
+                    <HugeiconsIcon
+                      icon={Crown02Icon}
+                      size={14}
+                      color="currentColor"
+                      strokeWidth={1.5}
+                      className="text-muted-foreground dark:text-muted-foreground"
+                    />
                     <span className="text-sm text-foreground dark:text-foreground">
                       Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
                     </span>
