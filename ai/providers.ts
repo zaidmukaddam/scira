@@ -273,7 +273,7 @@ export const models = [
     experimental: false,
     category: 'Pro',
     pdf: false,
-    pro: false,
+    pro: true,
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 200000,
