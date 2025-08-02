@@ -49,7 +49,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
-import { useIsProUser } from '@/hooks/use-user-data';
+import { useIsProUser } from '@/contexts/user-context';
 
 interface SettingsDialogProps {
   open: boolean;

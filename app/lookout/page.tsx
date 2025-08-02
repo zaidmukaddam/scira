@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useUserData } from '@/hooks/use-user-data';
+import { useUser } from '@/contexts/user-context';
 import { useLookouts } from '@/hooks/use-lookouts';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { LookoutDetailsSidebar } from './components/lookout-details-sidebar';
@@ -65,7 +65,7 @@ export default function LookoutPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   // Authentication and Pro status
-  const { user, isProUser, isLoading: isProStatusLoading } = useUserData();
+  const { user, isProUser, isLoading: isProStatusLoading } = useUser();
   const router = useRouter();
 
   // Lookouts data and mutations

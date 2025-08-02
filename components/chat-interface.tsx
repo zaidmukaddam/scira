@@ -30,7 +30,7 @@ import FormComponent from '@/components/ui/form-component';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
-import { useUserData } from '@/hooks/use-user-data';
+import { useUser } from '@/contexts/user-context';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 
 // Utility and type imports
@@ -40,13 +40,6 @@ import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
 
 // State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
-
-interface Attachment {
-  name: string;
-  contentType: string;
-  url: string;
-  size: number;
-}
 
 interface ChatInterfaceProps {
   initialChatId?: string;
@@ -106,7 +99,7 @@ const ChatInterface = memo(
       isLoading: proStatusLoading,
       shouldCheckLimits: shouldCheckUserLimits,
       shouldBypassLimitsForModel,
-    } = useUserData();
+    } = useUser();
 
     const initialState = useMemo(
       () => ({

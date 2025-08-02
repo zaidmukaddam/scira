@@ -811,9 +811,11 @@ export const Message: React.FC<MessageProps> = ({
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestionClick(question)}
-                  className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b last:border-none border-border dark:border-border hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
+                  className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b last:border-none border-border dark:border-border"
                 >
-                  <span className="text-foreground text-sm dark:text-foreground font-normal pr-3">{question}</span>
+                  <span className="text-foreground text-sm dark:text-foreground font-normal pr-3 hover:text-secondary dark:hover:text-primary">
+                    {question}
+                  </span>
                   <PlusCircle size={22} className="text-primary flex-shrink-0 pr-1" />
                 </button>
               ))}
