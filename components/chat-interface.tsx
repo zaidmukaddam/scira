@@ -471,21 +471,6 @@ const ChatInterface = memo(
 
     return (
       <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
-        <Navbar
-          isDialogOpen={chatState.anyDialogOpen}
-          chatId={initialChatId || (messages.length > 0 ? chatId : null)}
-          selectedVisibilityType={chatState.selectedVisibilityType}
-          onVisibilityChange={handleVisibilityChange}
-          status={status}
-          user={user || null}
-          onHistoryClick={() => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: true })}
-          isOwner={isOwner}
-          subscriptionData={subscriptionData}
-          isProUser={isUserPro}
-          isProStatusLoading={proStatusLoading}
-          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
-          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-        />
 
         {/* Chat Dialogs Component */}
         <ChatDialogs

@@ -11,7 +11,7 @@ import { Separator } from '@radix-ui/react-separator';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
-import { useProUserStatus } from '@/hooks/use-user-data';
+import { useUserData } from '@/hooks/use-user-data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const Home = () => {
@@ -20,7 +20,7 @@ const Home = () => {
     'atlas-custom-instructions-enabled',
     true,
   );
-  const { user, subscriptionData, isProUser, isLoading: isProStatusLoading } = useProUserStatus();
+  const { user, subscriptionData, isProUser, isLoading: isProStatusLoading } = useUserData();
 
   return (
     <Suspense>
