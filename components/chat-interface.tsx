@@ -332,7 +332,7 @@ const ChatInterface = memo(
     }
 
     useAutoResume({
-      autoResume: false,
+      autoResume: true,
       initialMessages: initialMessages || [],
       experimental_resume,
       data,
