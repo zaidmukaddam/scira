@@ -9,11 +9,9 @@ export const xSearchTool = tool({
     query: z.string().describe('The search query for X posts').nullable(),
     startDate: z
       .string()
-      .nullable()
       .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)'),
     endDate: z
       .string()
-      .nullable()
       .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
     xHandles: z
       .array(z.string())
