@@ -13,7 +13,6 @@ import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
 import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
-import { SlidingNumber } from '@/components/core/sliding-number';
 import { useLocation } from '@/hooks/use-location';
 
 type SubscriptionDetails = {

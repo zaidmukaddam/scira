@@ -92,8 +92,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     };
 
     updateTimeLeft();
-    const interval = setInterval(updateTimeLeft, 1000); // Update every second for precise countdown
-
+    const interval = setInterval(updateTimeLeft, 1000);
     return () => clearInterval(interval);
   }, [discountConfig.startsAt, discountConfig.expiresAt]);
 
@@ -106,18 +105,15 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     if (discountConfig.code) {
       onClaim?.(discountConfig.code);
       setIsCopied(true);
-      // Reset the copied state after 2 seconds
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
   // Calculate pricing if not provided but percentage and originalPrice are available
   const calculatePricing = () => {
-    // Use actual pricing constants
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
     const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
-    // Calculate USD pricing
     let usdPricing = null;
     if (discountConfig.percentage) {
       const usdSavings = (defaultUSDPrice * discountConfig.percentage) / 100;
@@ -129,7 +125,6 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
       };
     }
 
-    // Calculate INR pricing (only for India)
     let inrPricing = null;
     if (location.isIndia) {
       if (discountConfig.inrPrice) {
@@ -162,7 +157,6 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
 
   const pricing = calculatePricing();
 
-  // In dev mode, ignore enabled flag; otherwise check if enabled
   const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
   const shouldShow = isDevMode
     ? discountConfig.code && discountConfig.message
@@ -172,187 +166,139 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     return null;
   }
 
-  const getVariantStyles = () => {
-    switch (discountConfig.variant) {
-      case 'urgent':
-        return 'border-amber-200 dark:border-amber-800/50';
-      case 'success':
-        return 'border-green-200 dark:border-green-800/50';
-      default:
-        return '';
-    }
-  };
-
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <CardTitle className="text-lg font-semibold">
-                {discountConfig.message || 'Special Offer Available'}
-              </CardTitle>
+    <Card className={cn('border border-border/50 bg-gradient-to-r from-background to-muted/20', className)}>
+      <CardContent className="px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: Message and Discount */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex items-center gap-2">
               {discountConfig.percentage && (
-                <Badge variant="secondary" className="text-sm font-medium px-2.5 py-1">
+                <Badge
+                  variant="secondary"
+                  className="h-5 px-2 text-xs font-medium bg-primary/10 text-primary border-primary/20"
+                >
+                  <Percent className="h-3 w-3 mr-1" />
                   {discountConfig.percentage}% OFF
                 </Badge>
               )}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground leading-tight">
+                {discountConfig.message || 'Special Offer Available'}
+              </p>
+              {pricing && (
+                <div className="flex items-center gap-2 mt-0.5">
+                  {pricing.usd && (
+                    <span className="text-xs text-muted-foreground">
+                      <span className="line-through">${pricing.usd.originalPrice}</span>
+                      <span className="ml-1 font-medium text-foreground">${pricing.usd.finalPrice.toFixed(2)}/mo</span>
+                    </span>
+                  )}
+                  {pricing.inr && (
+                    <span className="text-xs text-muted-foreground">
+                      <span className="line-through">₹{pricing.inr.originalPrice}</span>
+                      <span className="ml-1 font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Countdown Timer */}
+          {/* Center: Countdown Timer */}
           {timeLeft && timeLeft !== 'Expired' && (
-            <div className="flex flex-col items-end">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Clock className="h-3 w-3" />
-                <span>Offer ends in:</span>
-              </div>
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1">
                 {countdownTime.days > 0 && (
                   <>
-                    <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
-                      <div className="text-sm font-semibold">
+                    <div className="bg-muted border rounded px-1.5 py-0.5 min-w-[28px] text-center">
+                      <span className="text-xs font-mono font-medium">
                         <SlidingNumber value={countdownTime.days} padStart={true} />
-                      </div>
-                      <span className="text-xs text-muted-foreground">days</span>
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-muted-foreground">:</span>
+                    <span className="text-xs text-muted-foreground">d</span>
                   </>
                 )}
-                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
-                  <div className="text-sm font-semibold">
+                <div className="bg-muted border rounded px-1.5 py-0.5 min-w-[28px] text-center">
+                  <span className="text-xs font-mono font-medium">
                     <SlidingNumber value={countdownTime.hours} padStart={true} />
-                  </div>
-                  <span className="text-xs text-muted-foreground">hrs</span>
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-muted-foreground">:</span>
-                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
-                  <div className="text-sm font-semibold">
+                <span className="text-xs text-muted-foreground">h</span>
+                <div className="bg-muted border rounded px-1.5 py-0.5 min-w-[28px] text-center">
+                  <span className="text-xs font-mono font-medium">
                     <SlidingNumber value={countdownTime.minutes} padStart={true} />
-                  </div>
-                  <span className="text-xs text-muted-foreground">min</span>
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-muted-foreground">:</span>
-                <div className="bg-background border border-border p-2 rounded-md min-w-[40px] text-center">
-                  <div className="text-sm font-semibold">
+                <span className="text-xs text-muted-foreground">m</span>
+                <div className="bg-muted border rounded px-1.5 py-0.5 min-w-[28px] text-center">
+                  <span className="text-xs font-mono font-medium">
                     <SlidingNumber value={countdownTime.seconds} padStart={true} />
-                  </div>
-                  <span className="text-xs text-muted-foreground">sec</span>
+                  </span>
                 </div>
+                <span className="text-xs text-muted-foreground">s</span>
               </div>
             </div>
           )}
 
-          {onClose && (
-            <CardAction>
-              <Button variant="ghost" size="icon" onClick={handleClose} className="h-7 w-7">
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            {discountConfig.code && onClaim && (
+              <Button
+                onClick={handleClaim}
+                variant={isCopied ? 'secondary' : 'default'}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                disabled={isCopied}
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="h-3 w-3 mr-1" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3 mr-1" />
+                    {discountConfig.code}
+                  </>
+                )}
+              </Button>
+            )}
+
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={handleClose} className="h-7 w-7 p-0">
                 <X className="h-3 w-3" />
                 <span className="sr-only">Close</span>
               </Button>
-            </CardAction>
-          )}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3 pt-0">
-        {/* Pricing Information */}
-        {pricing && (
-          <div className="p-4 bg-background/50 dark:bg-background/30 rounded-lg border border-border/50 space-y-4">
-            {/* USD Pricing */}
-            {pricing.usd && (
-              <div>
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground line-through">
-                      ${pricing.usd.originalPrice}/month
-                    </span>
-                    <span className="text-lg font-semibold text-foreground">
-                      ${pricing.usd.finalPrice.toFixed(2)}/month
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    Save ${pricing.usd.savings.toFixed(2)}/month
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  💳 Monthly recurring subscription
-                  {discountConfig.discountAvail && (
-                    <span className="block text-green-600 dark:text-green-400 font-medium">
-                      {discountConfig.discountAvail}
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-
-            {/* INR Pricing */}
-            {pricing.inr && (
-              <div>
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground line-through">₹{pricing.inr.originalPrice}</span>
-                    <span className="text-lg font-semibold text-foreground">₹{pricing.inr.finalPrice}</span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    Save ₹{pricing.inr.savings}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">🇮🇳 One month access • Discount applied at checkout</p>
-              </div>
             )}
           </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {discountConfig.code && onClaim && (
-            <Button
-              onClick={handleClaim}
-              variant={isCopied ? 'secondary' : 'default'}
-              className="flex-1"
-              disabled={isCopied}
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Code copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  {discountConfig.buttonText || `Copy code: ${discountConfig.code}`}
-                </>
-              )}
-            </Button>
-          )}
         </div>
 
-        {/* Redemption Instructions */}
+        {/* Expandable Instructions */}
         {discountConfig.code && (
-          <Accordion type="single" collapsible className="border-0">
+          <Accordion type="single" collapsible className="mt-2">
             <AccordionItem value="instructions" className="border-0">
-              <AccordionTrigger className="py-2 px-0 hover:no-underline text-sm text-muted-foreground hover:text-foreground">
-                <div className="flex items-center gap-2">
-                  <Question className="h-4 w-4" />
-                  <span>How to redeem this code?</span>
+              <AccordionTrigger className="py-1 px-0 hover:no-underline text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Question className="h-3 w-3" />
+                  <span>How to redeem?</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-2 pb-0">
-                <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                   {[
-                    { step: 1, title: 'Click upgrade', desc: 'Start by clicking the upgrade button' },
-                    { step: 2, title: 'Find discount section', desc: 'Look for "Discount" on checkout page' },
-                    { step: 3, title: 'Enter code', desc: `Paste: ${discountConfig.code}` },
-                    { step: 4, title: 'Click apply', desc: 'Click "Apply" to activate discount' },
-                  ].map(({ step, title, desc }) => (
-                    <div key={step} className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">
+                    { step: '1', text: 'Click upgrade' },
+                    { step: '2', text: 'Find discount section' },
+                    { step: '3', text: `Enter ${discountConfig.code}` },
+                    { step: '4', text: 'Click apply' },
+                  ].map(({ step, text }) => (
+                    <div key={step} className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0">
                         {step}
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">{title}</p>
-                        <p className="text-muted-foreground text-xs mt-0.5">{desc}</p>
-                      </div>
+                      <span className="text-muted-foreground">{text}</span>
                     </div>
                   ))}
                 </div>
