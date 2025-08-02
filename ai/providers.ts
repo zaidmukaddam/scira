@@ -44,6 +44,7 @@ export const scira = customProvider({
       model: huggingface('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
       middleware,
     }),
+    'scira-qwen-coder': huggingface('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-deepseek-v3': wrapLanguageModel({
       model: huggingface('deepseek-ai/DeepSeek-V3-0324:fireworks-ai'),
       middleware,
@@ -162,6 +163,20 @@ export const models = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 40960,
+  },
+  {
+    value: 'scira-qwen-coder',
+    label: 'Qwen 3 Coder',
+    description: "Alibaba's advanced coding LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 130000,
   },
   {
     value: 'scira-deepseek-v3',

@@ -132,7 +132,7 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).$withCache();
     return selectedChat;
   } catch (error) {
     console.log('Error getting chat by id', error);
@@ -789,7 +789,13 @@ export async function updateLookout({
   }
 }
 
-export async function updateLookoutStatus({ id, status }: { id: string; status: 'active' | 'paused' | 'archived' | 'running' }) {
+export async function updateLookoutStatus({
+  id,
+  status,
+}: {
+  id: string;
+  status: 'active' | 'paused' | 'archived' | 'running';
+}) {
   try {
     const [updatedLookout] = await db
       .update(lookout)
@@ -832,7 +838,7 @@ export async function updateLookoutLastRun({
     }
 
     const currentHistory = (currentLookout.runHistory as any[]) || [];
-    
+
     // Add new run to history
     const newRun = {
       runAt: lastRunAt.toISOString(),
@@ -847,11 +853,11 @@ export async function updateLookoutLastRun({
     // Keep only last 100 runs to prevent unbounded growth
     const updatedHistory = [...currentHistory, newRun].slice(-100);
 
-    const updateData: any = { 
-      lastRunAt, 
-      lastRunChatId, 
+    const updateData: any = {
+      lastRunAt,
+      lastRunChatId,
       runHistory: updatedHistory,
-      updatedAt: new Date() 
+      updatedAt: new Date(),
     };
     if (nextRunAt) updateData.nextRunAt = nextRunAt;
 
@@ -870,15 +876,14 @@ export async function getLookoutRunStats({ id }: { id: string }) {
     if (!lookout) return null;
 
     const runHistory = (lookout.runHistory as any[]) || [];
-    
+
     return {
       totalRuns: runHistory.length,
-      successfulRuns: runHistory.filter(run => run.status === 'success').length,
-      failedRuns: runHistory.filter(run => run.status === 'error').length,
+      successfulRuns: runHistory.filter((run) => run.status === 'success').length,
+      failedRuns: runHistory.filter((run) => run.status === 'error').length,
       averageDuration: runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) / runHistory.length || 0,
-      lastWeekRuns: runHistory.filter(run => 
-        new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      ).length,
+      lastWeekRuns: runHistory.filter((run) => new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        .length,
     };
   } catch (error) {
     console.error('Error getting lookout run stats:', error);
