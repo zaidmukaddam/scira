@@ -438,6 +438,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             By subscribing, you agree to our{' '}
             <Link href="/terms" className="text-foreground hover:underline">
               Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy-policy" className="text-foreground hover:underline">
+              Privacy Policy
             </Link>
           </p>
           <p className="text-sm text-muted-foreground">
