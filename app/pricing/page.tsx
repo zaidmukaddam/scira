@@ -13,7 +13,7 @@ export default async function PricingPage() {
         hasSubscription: true,
         subscription: {
           ...user.polarSubscription,
-          organizationId: null, // Add missing field for compatibility
+          organizationId: null,
         },
       }
     : { hasSubscription: false };

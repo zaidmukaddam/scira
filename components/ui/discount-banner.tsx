@@ -167,7 +167,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
   }
 
   return (
-    <Card className={cn('border border-border/50 bg-gradient-to-r from-background to-muted/20', className)}>
+    <Card className={cn('border border-border/50', className)}>
       <CardContent className="px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Left: Message and Discount */}
