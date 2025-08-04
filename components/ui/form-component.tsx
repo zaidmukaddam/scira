@@ -1818,7 +1818,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
             hasInteracted ? 'z-51' : '',
             isDragging && 'ring-1 ring-border',
-            // attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/70 p-1' : 'bg-transparent',
+            attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/50 p-1' : 'bg-transparent',
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
