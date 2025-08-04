@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   keywords: [
     'scira.ai',
     'perplexity alternative',
-  'ai search engine',
+    'ai search engine',
     'search engine',
     'scira ai',
     'Scira AI',
@@ -70,8 +70,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0A0A' },
+    { media: '(prefers-color-scheme: light)', color: '#F9F9F9' },
+    { media: '(prefers-color-scheme: dark)', color: '#111111' },
   ],
 };
 

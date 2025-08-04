@@ -576,7 +576,7 @@ export const Message: React.FC<MessageProps> = ({
                             onHighlight={onHighlight}
                             removeHighlightOnClick={true}
                           >
-                            <MarkdownRenderer content={preprocessLaTeX(part.text)} />
+                            <MarkdownRenderer content={preprocessLaTeX(part.text)} isUserMessage={true} />
                           </ChatTextHighlighter>
 
                           {!isExpanded && exceedsMaxHeight && (
@@ -597,7 +597,7 @@ export const Message: React.FC<MessageProps> = ({
                       }`}
                     >
                       <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
-                        <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                        <MarkdownRenderer content={preprocessLaTeX(message.content)} isUserMessage={true} />
                       </ChatTextHighlighter>
 
                       {!isExpanded && exceedsMaxHeight && (
@@ -701,7 +701,7 @@ export const Message: React.FC<MessageProps> = ({
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
-                  <MarkdownRenderer content={preprocessLaTeX(message.content)} />
+                  <MarkdownRenderer content={preprocessLaTeX(message.content)} isUserMessage={true} />
 
                   {!isExpanded && exceedsMaxHeight && (
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />

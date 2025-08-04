@@ -68,6 +68,9 @@ importers:
       '@hugeicons/react':
         specifier: ^1.0.5
         version: 1.0.5(react@19.1.0)
+      '@mendable/firecrawl-js':
+        specifier: ^1.29.3
+        version: 1.29.3
       '@neondatabase/serverless':
         specifier: ^1.0.1
         version: 1.0.1
@@ -1318,6 +1321,10 @@ packages:
   '@mapbox/whoots-js@3.1.0':
     resolution: {integrity: sha512-Es6WcD0nO5l+2BOQS4uLfNPYQaNDfbot3X1XUoloz+x0mPDS3eeORZJl06HXjwBG1fOGwCRnzK88LMdxKRrd6Q==}
     engines: {node: '>=6.0.0'}
+
+  '@mendable/firecrawl-js@1.29.3':
+    resolution: {integrity: sha512-+uvDktesJmVtiwxMtimq+3f5bKlsan4T7TokxOI7DbxFkApwrRNss5GYEXbInveMTz8LpGth/9Ch5BTwCqrpfA==}
+    engines: {node: '>=22.0.0'}
 
   '@mistralai/mistralai@1.7.5':
     resolution: {integrity: sha512-5YfNVSYm8r/zbYAVYfAEILGOvyFYMSgmgr5q8SYFhlxBWwvmxV/p/FNH5PihVZPbE4fNpa8aFo7JNX6jbWhWcg==}
@@ -6096,6 +6103,9 @@ packages:
     resolution: {integrity: sha512-3KS2b+kL7fsuk/eJZ7EQdnEmQoaho/r6KUef7hxvltNA5DR8NAUM+8wJMbJyZ4G9/7i3v5zPBIMN5aybAh2/Jg==}
     engines: {node: '>= 0.4'}
 
+  typescript-event-target@1.1.1:
+    resolution: {integrity: sha512-dFSOFBKV6uwaloBCCUhxlD3Pr/P1a/tJdcmPrTXCHlEFD3faj0mztjcGn6VBAhQ0/Bdy8K3VWrrqwbt/ffsYsg==}
+
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -7390,6 +7400,15 @@ snapshots:
       '@mapbox/point-geometry': 0.1.0
 
   '@mapbox/whoots-js@3.1.0': {}
+
+  '@mendable/firecrawl-js@1.29.3':
+    dependencies:
+      axios: 1.11.0
+      typescript-event-target: 1.1.1
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.6(zod@3.25.76)
+    transitivePeerDependencies:
+      - debug
 
   '@mistralai/mistralai@1.7.5(zod@3.25.76)':
     dependencies:
@@ -12934,6 +12953,8 @@ snapshots:
       is-typed-array: 1.1.15
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
+
+  typescript-event-target@1.1.1: {}
 
   typescript@5.8.3: {}
 

@@ -563,47 +563,50 @@ const ChatInterface = memo(
 
             {/* Show initial limit exceeded message */}
             {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
-                <div className="text-center space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
-                    <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Daily limit reached</span>
+              <div className="mt-16 mx-auto max-w-sm">
+                <div className="bg-card backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl overflow-hidden">
+                  {/* Header Section */}
+                  <div className="text-center px-8 pt-8 pb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/30 rounded-full mb-6">
+                      <HugeiconsIcon icon={Crown02Icon} size={28} className="text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">Daily limit reached</h2>
                   </div>
-                  <div>
-                    <p className="text-foreground dark:text-foreground mb-2">
-                      You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
-                    </p>
-                    <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                      Upgrade to continue with unlimited searches and premium features.
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        refetchUsage();
-                      }}
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Refresh
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        window.location.href = '/pricing';
-                      }}
-                      size="sm"
-                      className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
-                    >
-                      <HugeiconsIcon
-                        icon={Crown02Icon}
-                        size={12}
-                        color="currentColor"
-                        strokeWidth={1.5}
-                        className="mr-1.5"
-                      />
-                      Upgrade
-                    </Button>
+
+                  {/* Content Section */}
+                  <div className="text-center px-8 pb-8">
+                    <div className="space-y-4 mb-8">
+                      <p className="text-base text-foreground leading-relaxed font-medium">
+                        You&apos;ve used all{' '}
+                        <span className="text-primary font-semibold">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT}</span> searches
+                        for today
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                        Upgrade to Pro for unlimited searches, faster responses, and premium features
+                      </p>
+                    </div>
+
+                    {/* Actions Section */}
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => {
+                          window.location.href = '/pricing';
+                        }}
+                        className="w-full h-11 font-semibold text-base"
+                      >
+                        <HugeiconsIcon icon={Crown02Icon} size={18} className="mr-2.5" strokeWidth={1.5} />
+                        Upgrade to Pro
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          refetchUsage();
+                        }}
+                        className="w-full h-10 text-muted-foreground hover:text-foreground font-medium"
+                      >
+                        Try refreshing
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

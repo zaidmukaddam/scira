@@ -2,46 +2,98 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
+import FirecrawlApp, { CrawlParams, CrawlStatusResponse } from '@mendable/firecrawl-js';
 
 export const retrieveTool = tool({
-  description: 'Retrieve the full content from a URL using Exa AI, including text, title, summary, images, and more.',
+  description:
+    'Retrieve the full content from a URL using Exa AI, with Firecrawl as a fallback. Returns text, title, summary, images, and more.',
   parameters: z.object({
     url: z.string().describe('The URL to retrieve the information from.'),
     include_summary: z.boolean().describe('Whether to include a summary of the content. Default is true.'),
     live_crawl: z
-      .enum(['never', 'auto', 'always'])
+      .enum(['never', 'auto', 'preferred'])
       .describe('Whether to crawl the page immediately. Options: never, auto, always. Default is "always".'),
   }),
   execute: async ({
     url,
     include_summary = true,
-    live_crawl = 'always',
+    live_crawl = 'preferred',
   }: {
     url: string;
     include_summary?: boolean;
-    live_crawl?: 'never' | 'auto' | 'always';
+    live_crawl?: 'never' | 'auto' | 'preferred';
   }) => {
     try {
       const exa = new Exa(serverEnv.EXA_API_KEY as string);
+      const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
 
       console.log(`Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`);
 
       const start = Date.now();
+      let result;
+      let usingFirecrawl = false;
 
-      const result = await exa.getContents([url], {
-        text: true,
-        summary: include_summary ? true : undefined,
-        livecrawl: live_crawl,
-      });
+      try {
+        // Try Exa AI first
+        result = await exa.getContents([url], {
+          text: true,
+          summary: include_summary ? true : undefined,
+          livecrawl: live_crawl,
+        });
 
-      if (!result.results || result.results.length === 0) {
-        console.error('Exa AI error: No content retrieved');
-        return { error: 'Failed to retrieve content', results: [] };
+        // Check if Exa returned results
+        if (!result.results || result.results.length === 0 || !result.results[0].text) {
+          console.log('Exa AI returned no content, falling back to Firecrawl');
+          usingFirecrawl = true;
+        }
+      } catch (exaError) {
+        console.error('Exa AI error:', exaError);
+        console.log('Falling back to Firecrawl');
+        usingFirecrawl = true;
       }
 
+      // Use Firecrawl as fallback
+      if (usingFirecrawl) {
+        try {
+          const scrapeResponse = await firecrawl.scrapeUrl(url, {
+            formats: ['markdown'],
+          });
+
+          if (!scrapeResponse.success) {
+            throw new Error(`Firecrawl failed: ${scrapeResponse.error}`);
+          }
+
+          console.log(`Firecrawl successfully scraped ${url}`);
+
+          // Format Firecrawl response to match expected output
+          return {
+            base_url: url,
+            results: [
+              {
+                url: url,
+                content: scrapeResponse.markdown || scrapeResponse.html || '',
+                title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
+                description: scrapeResponse.metadata?.description || `Content retrieved from ${url}`,
+                author: scrapeResponse.metadata?.author || undefined,
+                publishedDate: scrapeResponse.metadata?.publishedDate || undefined,
+                image: scrapeResponse.metadata?.image || scrapeResponse.metadata?.ogImage || undefined,
+                favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
+                language: scrapeResponse.metadata?.language || 'en',
+              },
+            ],
+            response_time: (Date.now() - start) / 1000,
+            source: 'firecrawl',
+          };
+        } catch (firecrawlError) {
+          console.error('Firecrawl error:', firecrawlError);
+          return { error: 'Both Exa AI and Firecrawl failed to retrieve content', results: [] };
+        }
+      }
+
+      // Return Exa results if successful
       return {
         base_url: url,
-        results: result.results.map((item) => {
+        results: result!.results.map((item) => {
           const typedItem = item as any;
           return {
             url: item.url,
@@ -56,6 +108,7 @@ export const retrieveTool = tool({
           };
         }),
         response_time: (Date.now() - start) / 1000,
+        source: 'exa',
       };
     } catch (error) {
       console.error('Exa AI error:', error);

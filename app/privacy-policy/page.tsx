@@ -55,9 +55,7 @@ export default function PrivacyPage() {
 
             <motion.div variants={item} className="text-center">
               <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
-              <p className="text-muted-foreground mt-3">
-                Last updated: July 24, 2025
-              </p>
+              <p className="text-muted-foreground mt-3">Last updated: July 24, 2025</p>
             </motion.div>
           </motion.div>
         </div>
@@ -89,7 +87,8 @@ export default function PrivacyPage() {
               <strong>Account Information:</strong> Email address and profile information when you create an account.
             </li>
             <li>
-              <strong>Subscription Data:</strong> Information about your subscription status and payment history (but not payment details).
+              <strong>Subscription Data:</strong> Information about your subscription status and payment history (but
+              not payment details).
             </li>
             <li>
               <strong>Cookies and Similar Technologies:</strong> We use cookies and similar tracking technologies to
@@ -97,9 +96,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment 
-            card details, bank information, UPI details, or other sensitive payment data. All payment information is 
-            handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective 
+            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
+            card details, bank information, UPI details, or other sensitive payment data. All payment information is
+            handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective
             privacy policies and security standards.
           </p>
 
@@ -129,8 +128,9 @@ export default function PrivacyPage() {
                 xAI, and others to process search queries and provide results
               </li>
               <li>
-                <strong>Payment Processors:</strong> We use Polar and DodoPayments to process payments and manage subscriptions. 
-                These providers handle all payment data directly and have their own privacy policies governing payment information.
+                <strong>Payment Processors:</strong> We use Polar and DodoPayments to process payments and manage
+                subscriptions. These providers handle all payment data directly and have their own privacy policies
+                governing payment information.
               </li>
             </ul>
             <li>
@@ -142,9 +142,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly 
-            to our payment processors (Polar for subscriptions, DodoPayments for one-time payments) and is not stored 
-            on our servers. We only receive confirmation of successful payments and subscription status updates.
+            <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly to
+            our payment processors (Polar for subscriptions, DodoPayments for one-time payments) and is not stored on
+            our servers. We only receive confirmation of successful payments and subscription status updates.
           </p>
 
           <h2>Data Security</h2>

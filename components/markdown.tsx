@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 interface MarkdownRendererProps {
   content: string;
+  isUserMessage?: boolean;
 }
 
 interface CitationLink {
@@ -106,7 +107,7 @@ const preprocessLaTeX = (content: string) => {
   return content;
 };
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMessage = false }) => {
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
 
@@ -701,6 +702,21 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return <InlineCode key={generateKey()} code={codeString} />;
     },
     link(href, text) {
+      // For user messages, display links as plain text with URL
+      if (isUserMessage) {
+        const linkText = typeof text === 'string' ? text : href;
+        // If link text and href are different, show both
+        if (linkText !== href && linkText !== '') {
+          return (
+            <span key={generateKey()}>
+              {linkText} ({href})
+            </span>
+          );
+        }
+        // Otherwise just show the URL
+        return <span key={generateKey()}>{href}</span>;
+      }
+
       let citationIndex = citationLinks.findIndex((link) => link.link === href);
       if (citationIndex !== -1) {
         // For citations, show the citation text in the hover card
