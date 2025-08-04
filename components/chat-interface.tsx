@@ -470,8 +470,7 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
-
+      <div className="flex flex-col h-full bg-background">
         {/* Chat Dialogs Component */}
         <ChatDialogs
           commandDialogOpen={
@@ -509,138 +508,145 @@ const ChatInterface = memo(
           setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
         />
 
-        <div
-          className={`w-full p-2 sm:p-4 flex-1 flex flex-col ${
-            status === 'ready' && messages.length === 0
-              ? 'items-center justify-center' // Center everything when no messages
-              : '' // Normal flow when messages exist
-          }`}
-        >
-          <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
-            {status === 'ready' && messages.length === 0 && (
-              <div className="text-center m-0 mb-2">
-                <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                  atlas
-                </h1>
-              </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div
+            className={cn(
+              'flex-1 overflow-auto font-sans! scroll-smooth bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground',
+              'flex flex-col',
+              status === 'ready' && messages.length === 0 && 'justify-center',
             )}
+          >
+            <div className={`w-full max-w-[95%] sm:max-w-2xl p-2 sm:p-4 space-y-6 mx-auto transition-all duration-300`}>
+              {status === 'ready' && messages.length === 0 && (
+                <div className="text-center m-0 mb-2">
+                  <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                    atlas
+                  </h1>
+                </div>
+              )}
 
-            {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
-                <div className="text-center space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
-                    <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Daily limit reached</span>
-                  </div>
-                  <div>
-                    <p className="text-foreground dark:text-foreground mb-2">
-                      You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
-                    </p>
-                    <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                      Upgrade to continue with unlimited searches and premium features.
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        refetchUsage();
-                      }}
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Refresh
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        window.location.href = '/pricing';
-                      }}
-                      size="sm"
-                      className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
-                    >
-                      <HugeiconsIcon
-                        icon={Crown02Icon}
-                        size={12}
-                        color="currentColor"
-                        strokeWidth={1.5}
-                        className="mr-1.5"
-                      />
-                      Upgrade
-                    </Button>
+              {status === 'ready' && messages.length === 0 && isLimitBlocked && (
+                <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
+                  <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
+                      <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />
+                      <span className="text-sm font-medium">Daily limit reached</span>
+                    </div>
+                    <div>
+                      <p className="text-foreground dark:text-foreground mb-2">
+                        You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
+                      </p>
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                        Upgrade to continue with unlimited searches and premium features.
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          refetchUsage();
+                        }}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        Refresh
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          window.location.href = '/pricing';
+                        }}
+                        size="sm"
+                        className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
+                      >
+                        <HugeiconsIcon
+                          icon={Crown02Icon}
+                          size={12}
+                          color="currentColor"
+                          strokeWidth={1.5}
+                          className="mr-1.5"
+                        />
+                        Upgrade
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {messages.length > 0 && (
-              <Messages
-                messages={messages}
-                lastUserMessageIndex={lastUserMessageIndex}
-                input={input}
-                setInput={setInput}
-                setMessages={setMessages}
-                append={append}
-                reload={reload}
-                suggestedQuestions={chatState.suggestedQuestions}
-                setSuggestedQuestions={(questions) => dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })}
-                status={status}
-                error={error ?? null}
-                user={user}
-                selectedVisibilityType={chatState.selectedVisibilityType}
-                chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
-                onVisibilityChange={handleVisibilityChange}
-                initialMessages={initialMessages}
-                isOwner={isOwner}
-                onHighlight={handleHighlight}
-              />
-            )}
+              {messages.length > 0 && (
+                <Messages
+                  messages={messages}
+                  lastUserMessageIndex={lastUserMessageIndex}
+                  input={input}
+                  setInput={setInput}
+                  setMessages={setMessages}
+                  append={append}
+                  reload={reload}
+                  suggestedQuestions={chatState.suggestedQuestions}
+                  setSuggestedQuestions={(questions) =>
+                    dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })
+                  }
+                  status={status}
+                  error={error ?? null}
+                  user={user}
+                  selectedVisibilityType={chatState.selectedVisibilityType}
+                  chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
+                  onVisibilityChange={handleVisibilityChange}
+                  initialMessages={initialMessages}
+                  isOwner={isOwner}
+                  onHighlight={handleHighlight}
+                />
+              )}
 
-            <div ref={bottomRef} />
+              <div ref={bottomRef} />
+            </div>
           </div>
 
           {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-background',
+                  'sticky bottom-0 bg-background',
+                  'pb-4',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative max-w-2xl mx-auto w-full' // Centered position when no messages
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-2 sm:!pb-6 mt-1 mx-2 p-0', // Fixed bottom when messages exist
+                    ? 'border-transparent' // No border when no messages
+                    : '', // Show border when messages exist
                 )}
               >
-                <FormComponent
-                  chatId={chatId}
-                  user={user!}
-                  subscriptionData={subscriptionData}
-                  input={input}
-                  setInput={setInput}
-                  attachments={chatState.attachments}
-                  setAttachments={(attachments) => {
-                    const newAttachments =
-                      typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
-                    dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
-                  }}
-                  handleSubmit={handleSubmit}
-                  fileInputRef={fileInputRef}
-                  inputRef={inputRef}
-                  stop={stop}
-                  messages={messages as any}
-                  append={append}
-                  selectedModel={selectedModel}
-                  setSelectedModel={handleModelChange}
-                  resetSuggestedQuestions={resetSuggestedQuestions}
-                  lastSubmittedQueryRef={lastSubmittedQueryRef}
-                  selectedGroup={selectedGroup}
-                  setSelectedGroup={setSelectedGroup}
-                  showExperimentalModels={messages.length === 0}
-                  status={status}
-                  setHasSubmitted={(hasSubmitted) => {
-                    const newValue =
-                      typeof hasSubmitted === 'function' ? hasSubmitted(chatState.hasSubmitted) : hasSubmitted;
-                    dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
-                  }}
-                  isLimitBlocked={isLimitBlocked}
-                />
+                <div className="max-w-[95%] sm:max-w-2xl mx-auto">
+                  <FormComponent
+                    chatId={chatId}
+                    user={user!}
+                    subscriptionData={subscriptionData}
+                    input={input}
+                    setInput={setInput}
+                    attachments={chatState.attachments}
+                    setAttachments={(attachments) => {
+                      const newAttachments =
+                        typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
+                      dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
+                    }}
+                    handleSubmit={handleSubmit}
+                    fileInputRef={fileInputRef}
+                    inputRef={inputRef}
+                    stop={stop}
+                    messages={messages as any}
+                    append={append}
+                    selectedModel={selectedModel}
+                    setSelectedModel={handleModelChange}
+                    resetSuggestedQuestions={resetSuggestedQuestions}
+                    lastSubmittedQueryRef={lastSubmittedQueryRef}
+                    selectedGroup={selectedGroup}
+                    setSelectedGroup={setSelectedGroup}
+                    showExperimentalModels={messages.length === 0}
+                    status={status}
+                    setHasSubmitted={(hasSubmitted) => {
+                      const newValue =
+                        typeof hasSubmitted === 'function' ? hasSubmitted(chatState.hasSubmitted) : hasSubmitted;
+                      dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
+                    }}
+                    isLimitBlocked={isLimitBlocked}
+                  />
+                </div>
               </div>
             )}
 
