@@ -255,7 +255,6 @@ function UsageSection({ user }: any) {
 
   const searchCount = usageData?.searchCount;
   const extremeSearchCount = usageData?.extremeSearchCount;
-  const subscriptionDetails = usageData?.subscriptionDetails;
 
   const handleRefreshUsage = async () => {
     try {

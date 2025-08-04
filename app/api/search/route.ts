@@ -108,7 +108,8 @@ export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
-  const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
+  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled } =
+    await req.json();
   const { latitude, longitude } = geolocation(req);
 
   console.log('--------------------------------');
@@ -129,6 +130,10 @@ export async function POST(req: Request) {
   }
   let customInstructions: CustomInstructions | null = null;
 
+  console.log('--------------------------------');
+  console.log('Custom Instructions Enabled:', isCustomInstructionsEnabled);
+  console.log('--------------------------------');
+
   // Check if model requires authentication (fast check)
   const authRequiredModels = ['scira-anthropic', 'scira-google'];
   if (authRequiredModels.includes(model) && !user) {
@@ -144,6 +149,8 @@ export async function POST(req: Request) {
 
   if (user) {
     customInstructions = await getCustomInstructions(user);
+    console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
+    console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
     const isProUser = user.isProUser;
 
@@ -358,7 +365,7 @@ export async function POST(req: Request) {
         experimental_activeTools: [...activeTools],
         system:
           instructions +
-          (customInstructions
+          (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
           (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
