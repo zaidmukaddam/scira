@@ -16,70 +16,118 @@ interface PostMessageUpgradeDialogProps {
 export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: PostMessageUpgradeDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] p-0 gap-0">
+      <DialogContent className="sm:max-w-[420px]">
         <DialogTitle className="sr-only">Upgrade to Scira Pro</DialogTitle>
-        <div className="p-6 space-y-5">
-          {/* Header */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <HugeiconsIcon
-                  icon={Crown02Icon}
-                  size={16}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary-foreground"
-                />
-              </div>
-              <div>
-                <h2 className="text-lg font-medium text-foreground">Upgrade to Scira Pro</h2>
-                <p className="text-sm text-muted-foreground">Get unlimited access to all features</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Features */}
-          <div className="space-y-3">
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-foreground">Unlimited daily searches</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-foreground">Access to all AI models</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-foreground">Priority support</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                <span className="text-foreground">Early access to new features</span>
-              </div>
-            </div>
+        {/* Header */}
+        <div className="text-center space-y-2 pb-4">
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <HugeiconsIcon
+              icon={Crown02Icon}
+              size={24}
+              color="currentColor"
+              strokeWidth={1.5}
+              className="text-primary"
+            />
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)} size="sm" className="flex-1">
-              Maybe Later
-            </Button>
-            <Button
-              onClick={() => {
-                window.location.href = '/pricing';
-              }}
-              size="sm"
-              className="flex-1"
-            >
-              <HugeiconsIcon icon={Crown02Icon} size={12} color="currentColor" strokeWidth={1.5} className="mr-1.5" />
-              Upgrade Now
-            </Button>
-          </div>
-
-          {/* Additional info */}
-          <p className="text-xs text-muted-foreground text-center">Start your free trial today. Cancel anytime.</p>
+          <h2 className="text-xl font-semibold text-foreground">Unlock Pro Features</h2>
+          <p className="text-sm text-muted-foreground">Get unlimited access and enhanced capabilities</p>
         </div>
+
+        {/* Features */}
+        <div className="space-y-3 py-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <HugeiconsIcon
+                icon={BinocularsIcon}
+                size={12}
+                color="currentColor"
+                strokeWidth={2}
+                className="text-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+              <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg
+                className="w-3 h-3 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
+              <p className="text-xs text-muted-foreground">No daily limits on your research</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg
+                className="w-3 h-3 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
+              <p className="text-xs text-muted-foreground">Access to all AI models including Grok 4, Claude and o3</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg
+                className="w-3 h-3 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Priority Support</p>
+              <p className="text-xs text-muted-foreground">Get help when you need it most</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-2 pt-4">
+          <Button
+            onClick={() => {
+              window.location.href = '/pricing';
+            }}
+            className="w-full"
+          >
+            Upgrade to Pro
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="w-full text-muted-foreground hover:text-foreground"
+          >
+            Not now
+          </Button>
+        </div>
+
+        {/* Additional info */}
+        <p className="text-xs text-muted-foreground text-center pt-2">Cancel anytime • Secure payment</p>
       </DialogContent>
     </Dialog>
   );
