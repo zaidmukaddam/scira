@@ -51,15 +51,22 @@ export function FileGrid({ files, selectedFiles, onFileSelect, loading, multiple
     onFileSelect(file);
   };
 
-  const handleCheckboxChange = (file: FileLibraryFile) => {
+  const handleCheckboxChange = (file: FileLibraryFile, e: React.MouseEvent) => {
+    e.stopPropagation();
     onFileSelect(file);
   };
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 h-full overflow-auto">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="aspect-square bg-muted animate-pulse rounded-lg" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 h-full overflow-auto">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="aspect-[4/3] bg-muted/50 animate-pulse rounded-lg" />
+            <div className="space-y-2">
+              <div className="h-4 bg-muted/50 animate-pulse rounded w-3/4" />
+              <div className="h-3 bg-muted/30 animate-pulse rounded w-1/2" />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -68,17 +75,17 @@ export function FileGrid({ files, selectedFiles, onFileSelect, loading, multiple
   if (files.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        <div className="text-center">
-          <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No files found</p>
-          <p className="text-sm">Upload files or adjust your search</p>
+        <div className="text-center max-w-sm">
+          <File className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium mb-2">No files found</p>
+          <p className="text-sm text-muted-foreground">Try adjusting your search or upload new files to get started</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 h-full overflow-auto">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 h-full overflow-auto pr-1">
       {files.map((file) => {
         const IconComponent = getFileIcon(file.contentType);
         const selected = isFileSelected(file, selectedFiles);
@@ -88,46 +95,64 @@ export function FileGrid({ files, selectedFiles, onFileSelect, loading, multiple
           <div
             key={file.id}
             className={cn(
-              'group relative aspect-square border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md',
-              selected && 'ring-2 ring-primary bg-primary/5',
+              'group relative cursor-pointer transition-all duration-200',
+              'hover:scale-[1.02] active:scale-[0.98]',
             )}
             onClick={() => handleFileClick(file)}
           >
-            {multiple && (
-              <div className="absolute top-2 left-2 z-10">
-                <Checkbox
-                  checked={selected}
-                  onCheckedChange={() => handleCheckboxChange(file)}
-                  className="bg-background"
-                />
-              </div>
-            )}
+            <div
+              className={cn(
+                'relative overflow-hidden rounded-lg border border-border/50 bg-card',
+                'hover:border-border hover:shadow-lg',
+                'transition-all duration-200',
+                selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background border-primary',
+              )}
+            >
+              {multiple && (
+                <div 
+                  className="absolute top-2 left-2 z-10"
+                  onClick={(e) => handleCheckboxChange(file, e)}
+                >
+                  <div className={cn(
+                    "w-5 h-5 rounded border-2 bg-background/90 backdrop-blur-sm transition-all",
+                    "hover:scale-110",
+                    selected 
+                      ? "border-primary bg-primary" 
+                      : "border-border hover:border-foreground/50"
+                  )}>
+                    {selected && (
+                      <svg className="w-3 h-3 text-primary-foreground m-auto" viewBox="0 0 16 16">
+                        <path
+                          fill="currentColor"
+                          d="M6.5 10.5L3.5 7.5L2 9L6.5 13.5L14 6L12.5 4.5L6.5 10.5Z"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              )}
 
-            <div className="flex flex-col h-full">
-              <div className="flex-1 flex items-center justify-center mb-2">
-                {isImage && file.thumbnailUrl ? (
+              <div className="aspect-[4/3] bg-muted/30 overflow-hidden">
+                {isImage && (file.thumbnailUrl || file.url) ? (
                   <img
-                    src={file.thumbnailUrl}
+                    src={file.thumbnailUrl || file.url}
                     alt={file.originalName}
-                    className="max-w-full max-h-full object-contain rounded"
-                  />
-                ) : isImage ? (
-                  <img
-                    src={file.url}
-                    alt={file.originalName}
-                    className="max-w-full max-h-full object-contain rounded"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
-                  <IconComponent className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                    <IconComponent className="w-12 h-12 text-muted-foreground/50" />
+                  </div>
                 )}
               </div>
 
-              <div className="space-y-1">
-                <p className="text-xs font-medium truncate" title={file.originalName}>
+              <div className="p-3 space-y-1.5 bg-card">
+                <p className="text-sm font-medium truncate" title={file.originalName}>
                   {file.originalName}
                 </p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{formatFileSize(file.size)}</span>
+                  <span className="font-medium">{formatFileSize(file.size)}</span>
                   <span>{formatDate(file.createdAt)}</span>
                 </div>
               </div>

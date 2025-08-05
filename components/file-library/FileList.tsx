@@ -127,9 +127,9 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
   if (loading) {
     return (
       <div className="h-full overflow-auto">
-        <div className="space-y-2">
+        <div className="space-y-1">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+            <div key={i} className="h-14 bg-muted/30 animate-pulse rounded-md" />
           ))}
         </div>
       </div>
@@ -139,10 +139,10 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
   if (files.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        <div className="text-center">
-          <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No files found</p>
-          <p className="text-sm">Upload files or adjust your search</p>
+        <div className="text-center max-w-sm">
+          <File className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium mb-2">No files found</p>
+          <p className="text-sm text-muted-foreground">Try adjusting your search or upload new files to get started</p>
         </div>
       </div>
     );
@@ -151,13 +151,13 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
   return (
     <div className="h-full overflow-auto">
       <div className="min-w-full">
-        <div className="grid grid-cols-12 gap-4 p-3 border-b bg-muted/50 sticky top-0 text-sm font-medium">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-border/50 bg-muted/30 backdrop-blur-sm sticky top-0 z-10">
           {multiple && <div className="col-span-1"></div>}
           <div className={cn('col-span-1', !multiple && 'col-span-2')}>
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 font-medium text-left justify-start"
+              className="h-auto p-0 font-medium text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => handleSort('type')}
             >
               Type
@@ -168,7 +168,7 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 font-medium text-left justify-start"
+              className="h-auto p-0 font-medium text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => handleSort('name')}
             >
               Name
@@ -179,7 +179,7 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 font-medium text-left justify-start"
+              className="h-auto p-0 font-medium text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => handleSort('size')}
             >
               Size
@@ -190,7 +190,7 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 font-medium text-left justify-start"
+              className="h-auto p-0 font-medium text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => handleSort('date')}
             >
               Modified
@@ -199,7 +199,7 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
           </div>
         </div>
 
-        <div className="space-y-1">
+        <div className="divide-y divide-border/30">
           {sortedFiles.map((file) => {
             const IconComponent = getFileIcon(file.contentType);
             const selected = isFileSelected(file, selectedFiles);
@@ -208,21 +208,47 @@ export function FileList({ files, selectedFiles, onFileSelect, loading, multiple
               <div
                 key={file.id}
                 className={cn(
-                  'grid grid-cols-12 gap-4 p-3 hover:bg-muted/50 cursor-pointer transition-colors',
-                  selected && 'bg-primary/5 border-l-2 border-l-primary',
+                  'grid grid-cols-12 gap-4 px-4 py-3 hover:bg-muted/40 cursor-pointer transition-all',
+                  'group relative',
+                  selected && 'bg-primary/5 hover:bg-primary/10',
                 )}
                 onClick={() => handleFileClick(file)}
               >
+                {selected && (
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary" />
+                )}
                 {multiple && (
                   <div className="col-span-1 flex items-center">
-                    <Checkbox checked={selected} onCheckedChange={() => handleCheckboxChange(file)} />
+                    <div
+                      className={cn(
+                        "w-4 h-4 rounded border-2 transition-all",
+                        selected 
+                          ? "border-primary bg-primary" 
+                          : "border-border hover:border-foreground/50 bg-background"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCheckboxChange(file);
+                      }}
+                    >
+                      {selected && (
+                        <svg className="w-2.5 h-2.5 text-primary-foreground m-auto" viewBox="0 0 16 16">
+                          <path
+                            fill="currentColor"
+                            d="M6.5 10.5L3.5 7.5L2 9L6.5 13.5L14 6L12.5 4.5L6.5 10.5Z"
+                          />
+                        </svg>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className={cn('col-span-1 flex items-center', !multiple && 'col-span-2')}>
-                  <IconComponent className="w-5 h-5 text-muted-foreground" />
+                  <div className="p-1.5 rounded-md bg-muted/50 group-hover:bg-muted">
+                    <IconComponent className="w-4 h-4 text-muted-foreground" />
+                  </div>
                 </div>
                 <div className={cn('col-span-4 flex items-center min-w-0', !multiple && 'col-span-5')}>
-                  <span className="truncate" title={file.originalName}>
+                  <span className="truncate font-medium text-sm" title={file.originalName}>
                     {file.originalName}
                   </span>
                 </div>
