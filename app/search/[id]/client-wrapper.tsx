@@ -22,7 +22,7 @@ export default function ClientWrapper({
     <Suspense>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="flex flex-col h-svh">
+        <SidebarInset className="flex flex-col h-full">
           <div className="flex-1 overflow-hidden">
             <ChatInterface
               initialChatId={initialChatId}

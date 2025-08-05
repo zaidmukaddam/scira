@@ -135,6 +135,7 @@
     "zod": "^3.25.74"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/canvas-confetti": "^1.9.0",
     "@types/google.maps": "^3.58.1",
@@ -152,7 +153,9 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.32.0",
     "eslint-config-next": "15.4.5",
+    "playwright": "^1.54.2",
     "postcss": ">=8.5.5",
+    "puppeteer": "^24.15.0",
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"

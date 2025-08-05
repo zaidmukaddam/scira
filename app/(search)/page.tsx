@@ -26,7 +26,7 @@ const Home = () => {
     <Suspense>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="flex flex-col h-svh">
+        <SidebarInset className="flex flex-col h-full">
           <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-4">
             <div className="flex items-center gap-1">
               <SidebarTrigger className="-ml-1" />

@@ -365,7 +365,7 @@ export default function LibraryPage() {
     <Suspense>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="flex flex-col h-svh">
+        <SidebarInset className="flex flex-col h-full">
           <LibraryPageContent />
         </SidebarInset>
       </SidebarProvider>

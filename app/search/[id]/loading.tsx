@@ -88,7 +88,7 @@ export default function Loading() {
                 </div>
               </div>
 
-              <div className="min-h-[calc(100vh-18rem)]">
+              <div className="min-h-[calc(100vh)]">
                 <div className="w-full">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-6 w-6 bg-muted rounded animate-pulse" />

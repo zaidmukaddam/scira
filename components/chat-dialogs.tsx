@@ -105,10 +105,6 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
         e.preventDefault();
         router.push('/lookout');
         onOpenChange(false);
-      } else if ((e.metaKey || e.ctrlKey) && (e.key === 'b' || e.key === 'B')) {
-        e.preventDefault();
-        router.push('/blog');
-        onOpenChange(false);
       }
     };
 

@@ -188,10 +188,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         if (part.type === 'text') {
           if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations) {
             return (
-              <div
-                key={`${messageIndex}-${partIndex}-loading`}
-                className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
-              >
+              <div key={`${messageIndex}-${partIndex}-loading`} className="flex flex-col !m-0 !p-0">
                 <AtlasLogoHeader />
                 <div className="flex space-x-2 ml-8 mt-2">
                   <div
@@ -350,8 +347,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
                 i > partIndex && (p.type === 'text' || p.type === 'tool-invocation'),
             );
             const parallelTool = hasParallelToolInvocation
-              ? parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation?.toolName ??
-                null
+              ? (parts.find((p: UIMessage['parts'][number]) => p.type === 'tool-invocation')?.toolInvocation
+                  ?.toolName ?? null)
               : null;
 
             const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
@@ -449,7 +446,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
     }
 
     return (
-      <div className="space-y-0 mb-32 flex flex-col">
+      <div className="space-y-0 flex flex-col">
         <div className="flex-grow">
           {memoizedMessages.map((message, index) => {
             const isNextMessageAssistant =
@@ -499,7 +496,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         </div>
 
         {status === 'submitted' && !hasActiveToolInvocations && (
-          <div className="flex items-start min-h-[calc(100vh-18rem)] !m-0 !p-0">
+          <div className="flex items-start !m-0 !p-0">
             <div className="w-full !m-0 !p-0">
               <AtlasLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
@@ -521,7 +518,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         )}
 
         {isMissingAssistantResponse && (
-          <div className="flex items-start min-h-[calc(100vh-18rem)]">
+          <div className="flex items-start">
             <div className="w-full">
               <AtlasLogoHeader />
 
