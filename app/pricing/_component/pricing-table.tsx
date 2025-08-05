@@ -202,9 +202,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
       {/* Discount Banner */}
       {shouldShowDiscount() && (
-        <div className="max-w-4xl mx-auto px-16 mb-8">
+        <div className="max-w-4xl mx-auto px-6 sm:px-16 mb-8">
           <DiscountBanner discountConfig={discountConfig} onClaim={handleDiscountClaim} className="mx-auto" />
-        </div>
+      </div>
       )}
 
       {/* Pricing Cards */}
