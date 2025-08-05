@@ -393,6 +393,13 @@ export async function POST(req: Request) {
                 }
               : {}),
           },
+          groq: {
+            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+            ? {
+                reasoning_effort: 'high',
+              }
+            : {}),
+          },
         },
         tools: {
           // Stock & Financial Tools
