@@ -303,7 +303,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
               <img
                 src={image.url}
                 alt={image.description || ''}
-                className="object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
                 onError={() => handleImageError(image.url)}
               />
             )}
@@ -351,7 +351,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                   <img
                     src={currentImage.url}
                     alt={currentImage.description || ''}
-                    className="object-contain rounded-lg"
+                    className="w-full h-full object-contain rounded-lg"
                     onError={() => handleImageError(currentImage.url)}
                   />
                 )}
