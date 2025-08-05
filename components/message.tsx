@@ -785,7 +785,7 @@ export const Message: React.FC<MessageProps> = ({
     const isLastAssistantMessage = isLastMessage && message.role === 'assistant';
 
     return (
-      <div className={isLastAssistantMessage ? 'min-h-[calc(100vh-18rem)]' : ''}>
+      <div className={isLastAssistantMessage ? '' : ''}>
         {message.parts?.map((part: MessagePart, partIndex: number) =>
           renderPart(part, index, partIndex, message.parts as MessagePart[], message),
         )}
@@ -857,7 +857,7 @@ export const EditableAttachmentsBadge = ({
 
           return (
             <div
-              key={i}
+              key={`${attachment.url}-${i}`}
               className="group flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-2 py-1 bg-muted dark:bg-muted border border-border dark:border-border"
             >
               <button
@@ -1072,7 +1072,7 @@ export const EditableAttachmentsBadge = ({
                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 max-w-full">
                   {fileAttachments.map((attachment, idx) => (
                     <button
-                      key={idx}
+                      key={`${attachment.url}-thumb-${idx}`}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
                         selectedIndex === idx
@@ -1153,7 +1153,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
 
           return (
             <button
-              key={i}
+              key={`${attachment.url}-${i}`}
               onClick={() => {
                 setSelectedIndex(i);
                 setIsOpen(true);
@@ -1357,7 +1357,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 max-w-full">
                   {fileAttachments.map((attachment, idx) => (
                     <button
-                      key={idx}
+                      key={`${attachment.url}-thumb-${idx}`}
                       onClick={() => setSelectedIndex(idx)}
                       className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
                         selectedIndex === idx
