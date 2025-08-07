@@ -353,35 +353,7 @@ export const models = [
     freeUnlimited: false,
     maxOutputTokens: 65000,
   },
-  {
-    value: 'scira-o4-mini',
-    label: 'o4 mini',
-    description: "OpenAI's faster mini reasoning LLM",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Pro',
-    pdf: false,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 100000,
-  },
-  {
-    value: 'scira-o3',
-    label: 'o3',
-    description: "OpenAI's big reasoning LLM",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Pro',
-    pdf: false,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 100000,
-  },
-
+  
   // Experimental Models
   {
     value: 'scira-llama-4',
