@@ -331,7 +331,6 @@ export async function POST(req: Request) {
               topK: 40,
             }
             : {
-                temperature: 0,
               }),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
