@@ -331,7 +331,7 @@ export async function POST(req: Request) {
               topK: 40,
             }
             : {
-              }),
+            }),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
@@ -344,17 +344,15 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model === 'scira-o4-mini' || model === 'scira-o3'
+            ...(model === 'scira-5'
+              || model === 'scira-5-mini'
+              || model === 'scira-5-nano'
               ? {
                 strictSchemas: true,
+                reasoningEffort: 'minimal',
                 reasoningSummary: 'detailed',
                 serviceTier: 'flex',
-              }
-              : {}),
-            ...(model === 'scira-4.1-mini'
-              ? {
                 parallelToolCalls: false,
-                strictSchemas: true,
               }
               : {}),
           } as OpenAIResponsesProviderOptions,
@@ -464,6 +462,7 @@ export async function POST(req: Request) {
           console.log('reasoning details: ', event.reasoning);
           console.log('Steps: ', event.steps);
           console.log('Messages: ', event.response.messages);
+          console.log('Message content: ', event.response.messages[event.response.messages.length - 1].content);
           console.log('Response Body: ', event.response.body);
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);

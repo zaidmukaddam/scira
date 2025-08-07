@@ -21,8 +21,7 @@ export const scira = customProvider({
     'scira-default': xai('grok-3-mini'),
     'scira-x-fast-mini': xai('grok-3-mini-fast'),
     'scira-x-fast': xai('grok-3-fast'),
-    'scira-nano': openai.responses('gpt-4.1-nano'),
-    'scira-4.1-mini': openai.responses('gpt-4.1-mini'),
+    'scira-nano': openai.responses('gpt-5-nano'),
     'scira-grok-3': xai('grok-3-fast'),
     'scira-grok-4': xai('grok-4'),
     'scira-gpt-oss-120': wrapLanguageModel({
@@ -38,8 +37,6 @@ export const scira = customProvider({
     'scira-5-nano': openai.responses('gpt-5-nano'),
     'scira-5-mini': openai.responses('gpt-5-mini'),
     'scira-5': openai.responses('gpt-5'),
-    'scira-o4-mini': openai.responses('o4-mini-2025-04-16'),
-    'scira-o3': openai.responses('o3'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
