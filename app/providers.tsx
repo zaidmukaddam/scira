@@ -9,6 +9,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { UserProvider } from '@/contexts/user-context';
+import { DataStreamProvider } from '@/components/data-stream-provider';
 
 if (typeof window !== 'undefined') {
   posthog.init(clientEnv.NEXT_PUBLIC_POSTHOG_KEY!, {
@@ -34,11 +35,13 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
+      <DataStreamProvider>
         <PostHogProvider client={posthog}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TooltipProvider>{children}</TooltipProvider>
           </ThemeProvider>
         </PostHogProvider>
+        </DataStreamProvider>
       </UserProvider>
     </QueryClientProvider>
   );

@@ -2,14 +2,13 @@
 'use client';
 
 import React, { memo, useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
-import { ToolInvocation } from 'ai';
+import { DataContent, DataUIPart, ToolCallPart, ToolResultPart } from 'ai';
 import { motion } from 'framer-motion';
 import { Wave } from '@foobar404/wave';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, LucideIcon, User2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import Link from 'next/link';
 import { generateSpeech } from '@/app/actions';
 import Image from 'next/image';
 import MemoryManager from '@/components/memory-manager';
@@ -47,6 +46,7 @@ import {
   YoutubeIcon,
 } from 'lucide-react';
 import { Memory, Clock as PhosphorClock, RedditLogo, RoadHorizon, XLogo } from '@phosphor-icons/react';
+import { ChatMessage, CustomUIDataTypes, DataExtremeSearchPart, DataQueryCompletionPart } from '@/lib/types';
 
 // Type definitions for YouTube components
 
@@ -186,7 +186,7 @@ export const SearchLoadingState = ({
 };
 
 // Dedicated nearby search skeleton loading state
-const NearbySearchSkeleton = ({ type }: { type: string }) => {
+export const NearbySearchSkeleton = ({ type }: { type: string }) => {
   return (
     <div className="relative w-full h-[70vh] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4">
       {/* Header skeleton */}
@@ -309,7 +309,7 @@ const OutputBlock = memo(({ output, error }: { output?: string; error?: string }
 });
 OutputBlock.displayName = 'OutputBlock';
 
-function CodeInterpreterView({
+export function CodeInterpreterView({
   code,
   output,
   language = 'python',
@@ -458,16 +458,76 @@ const CopyButton = memo(({ text }: { text: string }) => {
 });
 CopyButton.displayName = 'CopyButton';
 
+// Enhanced interface to support both old and new systems
+interface ToolInvocationProps {
+  // Old system
+  toolInvocation?: ToolCallPart;
+  annotations?: DataQueryCompletionPart[] | DataUIPart<CustomUIDataTypes>[];
+  
+  // New granular system
+  part?: {
+    type: string;
+    state: 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
+    input?: any;
+    output?: any;
+    errorText?: string;
+  };
+}
+
 // Now let's add the ToolInvocationListView
 const ToolInvocationListView = memo(
-  ({ toolInvocations, annotations }: { toolInvocations: ToolInvocation[]; annotations: any }) => {
+  ({ toolInvocation, annotations, part }: ToolInvocationProps) => {
     const renderToolInvocation = useCallback(
-      (toolInvocation: ToolInvocation, _index: number) => {
-        const args = JSON.parse(JSON.stringify(toolInvocation.args));
-        const result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
+      () => {
+        // Support both old and new systems
+        let toolName: string;
+        let args: any;
+        let result: any;
+        let isLoading: boolean;
+        let hasError: boolean;
+        let errorMessage: string | undefined;
 
-        if (toolInvocation.toolName === 'find_place_on_map') {
-          if (!result) {
+        if (part) {
+          // New granular state system
+          toolName = part.type.replace('tool-', '').replace('tool_', '');
+          args = part.input;
+          result = part.output;
+          isLoading = part.state === 'input-streaming' || part.state === 'input-available';
+          hasError = part.state === 'output-error';
+          errorMessage = part.errorText;
+        } else if (toolInvocation) {
+          // Old system (backward compatibility)
+          toolName = toolInvocation.toolName;
+          args = toolInvocation.input;
+          result = 'result' in toolInvocation ? JSON.parse(JSON.stringify(toolInvocation.result)) : null;
+          isLoading = !result;
+          hasError = false;
+          errorMessage = undefined;
+        } else {
+          return null;
+        }
+
+        // Handle error state for new system
+        if (hasError && errorMessage) {
+          return (
+            <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                    <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Tool execution failed</h3>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">{errorMessage}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        if (toolName === 'find_place_on_map') {
+          if (isLoading) {
             return <SearchLoadingState icon={MapPin} text="Finding locations..." color="blue" />;
           }
 
@@ -621,42 +681,42 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'movie_or_tv_search') {
-          if (!result) {
+        if (toolName === 'movie_or_tv_search') {
+          if (isLoading) {
             return <SearchLoadingState icon={Film} text="Discovering entertainment content..." color="violet" />;
           }
 
           return <TMDBResult result={result} />;
         }
 
-        if (toolInvocation.toolName === 'trending_movies') {
-          if (!result) {
+        if (toolName === 'trending_movies') {
+          if (isLoading) {
             return <SearchLoadingState icon={Film} text="Loading trending movies..." color="blue" />;
           }
           return <TrendingResults result={result} type="movie" />;
         }
 
-        if (toolInvocation.toolName === 'trending_tv') {
-          if (!result) {
+        if (toolName === 'trending_tv') {
+          if (isLoading) {
             return <SearchLoadingState icon={Tv} text="Loading trending TV shows..." color="blue" />;
           }
           return <TrendingResults result={result} type="tv" />;
         }
 
-        if (toolInvocation.toolName === 'youtube_search') {
+        if (toolName === 'youtube_search') {
           return <YouTubeSearchResults results={result} isLoading={!result} />;
         }
 
-        if (toolInvocation.toolName === 'academic_search') {
-          if (!result) {
+        if (toolName === 'academic_search') {
+          if (isLoading) {
             return <SearchLoadingState icon={Book} text="Searching academic papers..." color="violet" />;
           }
 
           return <AcademicPapersCard results={result.results} />;
         }
 
-        if (toolInvocation.toolName === 'nearby_places_search') {
-          if (!result) {
+        if (toolName === 'nearby_places_search') {
+          if (isLoading) {
             return <NearbySearchSkeleton type={args.type} />;
           }
 
@@ -720,8 +780,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'get_weather_data') {
-          if (!result) {
+        if (toolName === 'get_weather_data') {
+          if (isLoading) {
             return (
               <Card className="my-2 py-0 shadow-none bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 gap-0">
                 <CardHeader className="py-2 px-3 sm:px-4">
@@ -778,15 +838,15 @@ const ToolInvocationListView = memo(
           return <WeatherChart result={result} />;
         }
 
-        if (toolInvocation.toolName === 'currency_converter') {
+        if (toolName === 'currency_converter') {
           return <CurrencyConverter toolInvocation={toolInvocation} result={result} />;
         }
 
-        if (toolInvocation.toolName === 'stock_chart') {
+        if (toolName === 'stock_chart') {
           return (
             <div className="flex flex-col gap-3 w-full mt-4">
               {/* Only show the badge when loading, hide it after results are loaded */}
-              {!result && (
+              {isLoading && (
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -820,7 +880,7 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'code_interpreter') {
+        if (toolName === 'code_interpreter') {
           return (
             <div className="space-y-3 w-full overflow-hidden">
               <CodeInterpreterView
@@ -843,30 +903,34 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'extreme_search') {
+        if (toolName === 'extreme_search') {
           return (
             <Suspense fallback={<ComponentLoader />}>
-              <ExtremeSearch toolInvocation={toolInvocation} annotations={annotations} />
+              <ExtremeSearch 
+                // @ts-ignore - ToolCallPart & ToolResultPart intersection resolves to never due to conflicting type properties
+                toolInvocation={toolInvocation || { toolName, input: args, result }} 
+                annotations={annotations as DataExtremeSearchPart[]} 
+              />
             </Suspense>
           );
         }
 
-        if (toolInvocation.toolName === 'web_search') {
+        if (toolName === 'web_search') {
           return (
             <div className="mt-2 relative isolate overflow-hidden">
               <Suspense fallback={<ComponentLoader />}>
                 <MultiSearch
                   result={result}
                   args={args}
-                  annotations={annotations?.filter((a: any) => a.type === 'query_completion') || []}
+                  annotations={(annotations || []).filter((a) => a.type === 'data-query_completion') as DataQueryCompletionPart[]}
                 />
               </Suspense>
             </div>
           );
         }
 
-        if (toolInvocation.toolName === 'retrieve') {
-          if (!result) {
+        if (toolName === 'retrieve') {
+          if (isLoading) {
             return (
               <div className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900">
                 <div className="h-36 bg-neutral-50 dark:bg-neutral-800/50 animate-pulse relative overflow-hidden">
@@ -1105,12 +1169,12 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'text_translate') {
-          return <TranslationTool toolInvocation={toolInvocation} result={result} />;
+        if (toolName === 'text-translate') {
+          return <TranslationTool args={args} result={result} />;
         }
 
-        if (toolInvocation.toolName === 'track_flight') {
-          if (!result) {
+        if (toolName === 'track_flight') {
+          if (isLoading) {
             return (
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
@@ -1149,8 +1213,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'datetime') {
-          if (!result) {
+        if (toolName === 'datetime') {
+          if (isLoading) {
             return (
               <div className="flex items-center gap-3 py-4 px-2">
                 <div className="h-5 w-5 relative">
@@ -1283,15 +1347,15 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'memory_manager') {
-          if (!result) {
+        if (toolName === 'memory_manager') {
+          if (isLoading) {
             return <SearchLoadingState icon={Memory} text="Managing memories..." color="violet" />;
           }
           return <MemoryManager result={result} />;
         }
 
-        if (toolInvocation.toolName === 'mcp_search') {
-          if (!result) {
+        if (toolName === 'mcp_search') {
+          if (isLoading) {
             return <SearchLoadingState icon={Server} text="Searching MCP servers..." color="blue" />;
           }
 
@@ -1321,8 +1385,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'reddit_search') {
-          if (!result) {
+        if (toolName === 'reddit_search') {
+          if (isLoading) {
             return <SearchLoadingState icon={RedditLogo} text="Searching Reddit..." color="orange" />;
           }
 
@@ -1333,8 +1397,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'x_search') {
-          if (!result) {
+        if (toolName === 'x_search') {
+          if (isLoading) {
             return <SearchLoadingState icon={XLogo} text="Searching X (Twitter)..." color="gray" />;
           }
 
@@ -1345,8 +1409,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'coin_tickers') {
-          if (!result) {
+        if (toolName === 'coin_tickers') {
+          if (isLoading) {
             return <SearchLoadingState icon={DollarSign} text="Fetching crypto ticker data..." color="orange" />;
           }
 
@@ -1357,8 +1421,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'coin_chart_range') {
-          if (!result) {
+        if (toolName === 'coin_chart_range') {
+          if (isLoading) {
             return <SearchLoadingState icon={TrendingUpIcon} text="Loading crypto price chart..." color="blue" />;
           }
 
@@ -1369,8 +1433,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'coin_ohlc') {
-          if (!result) {
+        if (toolName === 'coin_ohlc') {
+          if (isLoading) {
             return <SearchLoadingState icon={TrendingUpIcon} text="Loading OHLC candlestick data..." color="green" />;
           }
 
@@ -1388,8 +1452,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'contract_chart') {
-          if (!result) {
+        if (toolName === 'contract_chart') {
+          if (isLoading) {
             return <SearchLoadingState icon={TrendingUpIcon} text="Loading contract chart data..." color="violet" />;
           }
 
@@ -1400,8 +1464,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'coin_data') {
-          if (!result) {
+        if (toolName === 'coin_data') {
+          if (isLoading) {
             return <SearchLoadingState icon={DollarSign} text="Fetching comprehensive coin data..." color="blue" />;
           }
 
@@ -1412,8 +1476,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'coin_data_by_contract') {
-          if (!result) {
+        if (toolName === 'coin_data_by_contract') {
+          if (isLoading) {
             return <SearchLoadingState icon={DollarSign} text="Fetching token data by contract..." color="violet" />;
           }
 
@@ -1424,8 +1488,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'onchain_token_price') {
-          if (!result) {
+        if (toolName === 'onchain_token_price') {
+          if (isLoading) {
             return <SearchLoadingState icon={DollarSign} text="Fetching onchain token prices..." color="blue" />;
           }
 
@@ -1436,8 +1500,8 @@ const ToolInvocationListView = memo(
           );
         }
 
-        if (toolInvocation.toolName === 'greeting') {
-          if (!result) {
+        if (toolName === 'greeting') {
+          if (isLoading) {
             return <SearchLoadingState icon={User2} text="Preparing greeting..." color="gray" />;
           }
 
@@ -1471,10 +1535,10 @@ const ToolInvocationListView = memo(
 
         return null;
       },
-      [annotations],
+      [annotations, part],
     );
 
-    const TranslationTool: React.FC<{ toolInvocation: ToolInvocation; result: any }> = ({ toolInvocation, result }) => {
+    const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result }) => {
       const [isPlaying, setIsPlaying] = useState(false);
       const [audioUrl, setAudioUrl] = useState<string | null>(null);
       const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1565,7 +1629,7 @@ const ToolInvocationListView = memo(
                   <span className="font-medium text-neutral-900 dark:text-neutral-100">Translation</span>
                   <span className="text-neutral-400">•</span>
                   <span className="text-neutral-500 dark:text-neutral-400">
-                    {result.detectedLanguage} → {toolInvocation.args.to}
+                    {result.detectedLanguage} → {args ? args.to : ''}
                   </span>
                 </div>
 
@@ -1576,13 +1640,13 @@ const ToolInvocationListView = memo(
                       {result.detectedLanguage}
                     </div>
                     <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
-                      {toolInvocation.args.text}
+                      {args ? args.text : ''}
                     </div>
                   </div>
 
                   <div className="group/text">
                     <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1 opacity-70">
-                      {toolInvocation.args.to}
+                      {args ? args.to : ''}
                     </div>
                     <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 leading-relaxed break-words">
                       {result.translatedText}
@@ -1647,16 +1711,20 @@ const ToolInvocationListView = memo(
       );
     };
 
+    const keyId = toolInvocation?.toolCallId || part?.type || 'unknown';
+    
     return (
       <>
-        {toolInvocations.map((toolInvocation: ToolInvocation, toolIndex: number) => (
-          <div key={`tool-${toolIndex}`}>{renderToolInvocation(toolInvocation, toolIndex)}</div>
-        ))}
+        <div key={`tool-${keyId}`}>{renderToolInvocation()}</div>
       </>
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.toolInvocations === nextProps.toolInvocations && prevProps.annotations === nextProps.annotations;
+    return (
+      prevProps.toolInvocation === nextProps.toolInvocation && 
+      prevProps.annotations === nextProps.annotations &&
+      prevProps.part === nextProps.part
+    );
   },
 );
 

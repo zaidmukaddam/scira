@@ -8,27 +8,18 @@ import {
   getCustomInstructions,
 } from '@/app/actions';
 import {
-  convertToCoreMessages,
+  convertToModelMessages,
   streamText,
   NoSuchToolError,
-  appendResponseMessages,
-  CoreToolMessage,
-  CoreAssistantMessage,
-  createDataStream,
+  createUIMessageStream,
   generateObject,
+  stepCountIs,
+  JsonToSseTransformStream,
 } from 'ai';
-import {
-  scira,
-  getMaxOutputTokens,
-  requiresAuthentication,
-  requiresProSubscription,
-  shouldBypassRateLimits,
-} from '@/ai/providers';
+import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
 import {
   createStreamId,
   getChatById,
-  getMessagesByChatId,
-  getStreamIdsByChatId,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
@@ -38,13 +29,10 @@ import {
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
-import { differenceInSeconds } from 'date-fns';
-import { Chat, CustomInstructions } from '@/lib/db/schema';
-import { auth } from '@/lib/auth';
+import { CustomInstructions } from '@/lib/db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
-// Import all tools from the organized tool files
 import {
   stockChartTool,
   currencyConverterTool,
@@ -72,21 +60,13 @@ import {
   redditSearchTool,
   extremeSearchTool,
 } from '@/lib/tools';
-
-type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
-type ResponseMessage = ResponseMessageWithoutId & { id: string };
-
-function getTrailingMessageId({ messages }: { messages: Array<ResponseMessage> }): string | null {
-  const trailingMessage = messages.at(-1);
-
-  if (!trailingMessage) return null;
-
-  return trailingMessage.id;
-}
+import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
+import { XaiProviderOptions } from '@ai-sdk/xai';
+import { GroqProviderOptions } from '@ai-sdk/groq';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-function getStreamContext() {
+export function getStreamContext() {
   if (!globalStreamContext) {
     try {
       globalStreamContext = createResumableStreamContext({
@@ -191,9 +171,9 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.polarSubscription
             ? {
-                hasSubscription: true,
-                subscription: { ...user.polarSubscription, organizationId: null },
-              }
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
             : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
@@ -214,9 +194,9 @@ export async function POST(req: Request) {
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+            hasSubscription: true,
+            subscription: { ...user.polarSubscription, organizationId: null },
+          }
           : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0, // Not relevant for pro users
@@ -246,8 +226,8 @@ export async function POST(req: Request) {
   });
 
   // Start streaming immediately while background operations continue
-  const stream = createDataStream({
-    execute: async (dataStream) => {
+  const stream = createUIMessageStream({
+    execute: async ({ writer: dataStream }) => {
       // Wait for critical checks to complete
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
@@ -336,31 +316,24 @@ export async function POST(req: Request) {
 
       const result = streamText({
         model: scira.languageModel(model),
-        messages: convertToCoreMessages(messages),
+        messages: convertToModelMessages(messages),
         ...(model.includes('scira-qwen-32b')
           ? {
-              temperature: 0.6,
-              topP: 0.95,
-              topK: 20,
-              minP: 0,
-            }
-          : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
+            temperature: 0.6,
+            topP: 0.95,
+            topK: 20,
+            minP: 0,
+          }
+          : model.includes('scira-deepseek-v3')
             ? {
-                temperature: 0.6,
-                topP: 1,
-                topK: 40,
-              }
-            : model.includes('scira-qwen-235b')
-              ? {
-                  temperature: 0.7,
-                  topP: 0.8,
-                  minP: 0,
-                  presencePenalty: 0.5,
-                }
-              : {
-                  temperature: 0,
-                }),
-        maxSteps: 3,
+              temperature: 0.6,
+              topP: 1,
+              topK: 40,
+            }
+            : {
+                temperature: 0,
+              }),
+        stopWhen: stepCountIs(3),
         maxRetries: 10,
         experimental_activeTools: [...activeTools],
         system:
@@ -374,32 +347,34 @@ export async function POST(req: Request) {
           openai: {
             ...(model === 'scira-o4-mini' || model === 'scira-o3'
               ? {
-                  strictSchemas: true,
-                  reasoningSummary: 'detailed',
-                  serviceTier: 'flex',
-                }
+                strictSchemas: true,
+                reasoningSummary: 'detailed',
+                serviceTier: 'flex',
+              }
               : {}),
             ...(model === 'scira-4.1-mini'
               ? {
-                  parallelToolCalls: false,
-                  strictSchemas: true,
-                }
+                parallelToolCalls: false,
+                strictSchemas: true,
+              }
               : {}),
-          },
+          } as OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
-                  reasoningEffort: 'low',
-                }
+                reasoningEffort: 'low',
+              }
               : {}),
-          },
+          } as XaiProviderOptions,
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
-            ? {
-                reasoning_effort: 'high',
+              ? {
+                reasoningEffort: 'high',
               }
-            : {}),
-          },
+              : {}),
+            parallelToolCalls: false,
+            structuredOutputs: true,
+          } as GroqProviderOptions,
         },
         tools: {
           // Stock & Financial Tools
@@ -437,7 +412,7 @@ export async function POST(req: Request) {
           extreme_search: extremeSearchTool(dataStream),
           greeting: greetingTool,
         },
-        experimental_repairToolCall: async ({ toolCall, tools, parameterSchema, error }) => {
+        experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
             return null; // do not attempt to fix invalid tool names
           }
@@ -445,19 +420,19 @@ export async function POST(req: Request) {
           console.log('Fixing tool call================================');
           console.log('toolCall', toolCall);
           console.log('tools', tools);
-          console.log('parameterSchema', parameterSchema);
+          console.log('parameterSchema', inputSchema);
           console.log('error', error);
 
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-4o-mini'),
-            schema: tool.parameters,
+            model: scira.languageModel('scira-g2'),
+            schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
-              JSON.stringify(toolCall.args),
+              JSON.stringify(toolCall.input),
               `The tool accepts the following schema:`,
-              JSON.stringify(parameterSchema(toolCall)),
+              JSON.stringify(inputSchema(toolCall)),
               'Please fix the arguments.',
               'Do not use print statements stock chart tool.',
               `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
@@ -486,8 +461,8 @@ export async function POST(req: Request) {
         },
         onFinish: async (event) => {
           console.log('Fin reason: ', event.finishReason);
-          console.log('Reasoning: ', event.reasoning);
-          console.log('reasoning details: ', event.reasoningDetails);
+          console.log('Reasoning: ', event.reasoningText);
+          console.log('reasoning details: ', event.reasoning);
           console.log('Steps: ', event.steps);
           console.log('Messages: ', event.response.messages);
           console.log('Response Body: ', event.response.body);
@@ -497,83 +472,57 @@ export async function POST(req: Request) {
 
           // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {
-            // FIRST: Generate and update title for new conversations (highest priority)
-            try {
-              const chat = await getChatById({ id });
-              if (chat && chat.title === 'New conversation') {
-                console.log('Generating title for new conversation...');
-                const title = await generateTitleFromUserMessage({
-                  message: messages[messages.length - 1],
-                });
-
-                console.log('--------------------------------');
-                console.log('Generated title: ', title);
-                console.log('--------------------------------');
-
-                // Update the chat with the generated title
-                await updateChatTitleById({ chatId: id, title });
-              }
-            } catch (titleError) {
-              console.error('Failed to generate or update title:', titleError);
-              // Title generation failure shouldn't break the conversation
-            }
-
-            // Track message usage for rate limiting (deletion-proof)
-            // Only track usage for models that are not free unlimited
-            try {
-              if (!shouldBypassRateLimits(model, user)) {
-                await incrementMessageUsage({ userId: user.id });
-              }
-            } catch (error) {
-              console.error('Failed to track message usage:', error);
-            }
-
-            // Track extreme search usage if it was used successfully
-            if (group === 'extreme') {
+            after(async () => {
+              // FIRST: Generate and update title for new conversations (highest priority)
               try {
-                // Check if extreme_search tool was actually called
-                const extremeSearchUsed = event.steps?.some((step) =>
-                  step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
-                );
+                const chat = await getChatById({ id });
+                if (chat && chat.title === 'New conversation') {
+                  console.log('Generating title for new conversation...');
+                  const title = await generateTitleFromUserMessage({
+                    message: messages[messages.length - 1],
+                  });
 
-                if (extremeSearchUsed) {
-                  console.log('Extreme search was used successfully, incrementing count');
-                  await incrementExtremeSearchUsage({ userId: user.id });
+                  console.log('--------------------------------');
+                  console.log('Generated title: ', title);
+                  console.log('--------------------------------');
+
+                  // Update the chat with the generated title
+                  await updateChatTitleById({ chatId: id, title });
+                }
+              } catch (titleError) {
+                console.error('Failed to generate or update title:', titleError);
+              }
+            });
+
+            after(async () => {
+              // Track message usage for rate limiting (deletion-proof)
+              // Only track usage for models that are not free unlimited
+              try {
+                if (!shouldBypassRateLimits(model, user)) {
+                  await incrementMessageUsage({ userId: user.id });
                 }
               } catch (error) {
-                console.error('Failed to track extreme search usage:', error);
+                console.error('Failed to track message usage:', error);
               }
-            }
+            });
 
-            // LAST: Save assistant message (after title is generated)
-            try {
-              const assistantId = getTrailingMessageId({
-                messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
+            if (group === 'extreme') {
+              after(async () => {
+                // Track extreme search usage if it was used successfully
+                try {
+                  // Check if extreme_search tool was actually called
+                  const extremeSearchUsed = event.steps?.some((step) =>
+                    step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
+                  );
+
+                  if (extremeSearchUsed) {
+                    console.log('Extreme search was used successfully, incrementing count');
+                    await incrementExtremeSearchUsage({ userId: user.id });
+                  }
+                } catch (error) {
+                  console.error('Failed to track extreme search usage:', error);
+                }
               });
-
-              if (!assistantId) {
-                throw new Error('No assistant message found!');
-              }
-
-              const [, assistantMessage] = appendResponseMessages({
-                messages: [messages[messages.length - 1]],
-                responseMessages: event.response.messages,
-              });
-
-              await saveMessages({
-                messages: [
-                  {
-                    id: assistantId,
-                    chatId: id,
-                    role: assistantMessage.role,
-                    parts: assistantMessage.parts,
-                    attachments: assistantMessage.experimental_attachments ?? [],
-                    createdAt: new Date(),
-                  },
-                ],
-              });
-            } catch (error) {
-              console.error('Failed to save assistant message:', error);
             }
           }
 
@@ -597,9 +546,11 @@ export async function POST(req: Request) {
 
       result.consumeStream();
 
-      result.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
-      });
+      dataStream.merge(
+        result.toUIMessageStream({
+          sendReasoning: true,
+        }),
+      );
     },
     onError(error) {
       console.log('Error: ', error);
@@ -608,104 +559,31 @@ export async function POST(req: Request) {
       }
       return 'Oops, an error occurred!';
     },
+    onFinish: async ({ messages }) => {
+      console.log('onFinish', messages);
+      if (user) {
+        console.log('Saving messages');
+        await saveMessages({
+          messages: messages.map((message) => ({
+            id: message.id,
+            role: message.role,
+            parts: message.parts,
+            createdAt: new Date(),
+            attachments: [],
+            chatId: id,
+          })),
+        });
+        console.log('Messages saved');
+      }
+    },
   });
   const streamContext = getStreamContext();
 
   if (streamContext) {
-    return new Response(await streamContext.resumableStream(streamId, () => stream));
+    return new Response(
+      await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+    );
   } else {
-    return new Response(stream);
+    return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   }
-}
-
-export async function GET(request: Request) {
-  const streamContext = getStreamContext();
-  const resumeRequestedAt = new Date();
-
-  if (!streamContext) {
-    return new Response(null, { status: 204 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const chatId = searchParams.get('chatId');
-
-  if (!chatId) {
-    return new ChatSDKError('bad_request:api', 'Chat ID is required').toResponse();
-  }
-
-  const session = await auth.api.getSession(request);
-
-  if (!session?.user) {
-    return new ChatSDKError('unauthorized:auth', 'Authentication required to resume chat stream').toResponse();
-  }
-
-  let chat: Chat | null;
-
-  try {
-    chat = await getChatById({ id: chatId });
-  } catch {
-    return new ChatSDKError('not_found:chat').toResponse();
-  }
-
-  if (!chat) {
-    return new ChatSDKError('not_found:chat').toResponse();
-  }
-
-  if (chat.visibility === 'private' && chat.userId !== session.user.id) {
-    return new ChatSDKError('forbidden:chat', 'Access denied to private chat').toResponse();
-  }
-
-  const streamIds = await getStreamIdsByChatId({ chatId });
-
-  if (!streamIds.length) {
-    return new ChatSDKError('not_found:stream').toResponse();
-  }
-
-  const recentStreamId = streamIds.at(-1);
-
-  if (!recentStreamId) {
-    return new ChatSDKError('not_found:stream').toResponse();
-  }
-
-  const emptyDataStream = createDataStream({
-    execute: () => {},
-  });
-
-  const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
-
-  /*
-   * For when the generation is streaming during SSR
-   * but the resumable stream has concluded at this point.
-   */
-  if (!stream) {
-    const messages = await getMessagesByChatId({ id: chatId });
-    const mostRecentMessage = messages.at(-1);
-
-    if (!mostRecentMessage) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    if (mostRecentMessage.role !== 'assistant') {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
-
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const restoredStream = createDataStream({
-      execute: (buffer) => {
-        buffer.writeData({
-          type: 'append-message',
-          message: JSON.stringify(mostRecentMessage),
-        });
-      },
-    });
-
-    return new Response(restoredStream, { status: 200 });
-  }
-
-  return new Response(stream, { status: 200 });
 }

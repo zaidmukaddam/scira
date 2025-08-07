@@ -14,7 +14,7 @@ import {
   Cancel01Icon,
   TestTubeIcon,
 } from '@hugeicons/core-free-icons';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
+
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -183,20 +183,8 @@ export function LookoutDetailsSidebar({
   };
 
   return (
-    <Sidebar side="right" className="!w-full h-full border-none shadow-none !max-w-xl rounded-2xl">
-      <SidebarHeader className="border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Activity01Icon} size={16} color="currentColor" strokeWidth={1.5} />
-            <span className="font-medium text-sm">Lookout Details</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-7 w-7 p-0">
-            <HugeiconsIcon icon={Cancel01Icon} size={14} color="currentColor" strokeWidth={1.5} />
-          </Button>
-        </div>
-      </SidebarHeader>
-
-      <SidebarContent className="px-4 py-4 space-y-6">
+    <div className="h-full flex flex-col">
+      <div className="px-3 sm:px-4 py-4 space-y-6 flex-1 overflow-y-auto">
         {showAnalytics ? (
           /* Analytics View */
           <div className="space-y-5">
@@ -356,7 +344,7 @@ export function LookoutDetailsSidebar({
             {/* Statistics */}
             <div>
               <h3 className="text-sm font-medium text-foreground mb-3">Statistics</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 border rounded-md bg-muted/30">
                   <div className="text-xs text-muted-foreground mb-1">Total Runs</div>
                   <div className="text-lg font-semibold">{totalRuns}</div>
@@ -443,9 +431,10 @@ export function LookoutDetailsSidebar({
             </div>
           </>
         )}
-      </SidebarContent>
+      </div>
 
-      <SidebarFooter className="border-t px-4 py-3">
+      {/* Footer */}
+      <div className="border-t px-3 sm:px-4 py-3 flex-shrink-0">
         <div className="flex gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -479,7 +468,13 @@ export function LookoutDetailsSidebar({
                 onClick={() => onTest?.(lookout.id)}
                 disabled={lookout.status === 'running' || lookout.status === 'archived'}
               >
-                <HugeiconsIcon icon={TestTubeIcon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
+                <HugeiconsIcon 
+                  icon={TestTubeIcon} 
+                  size={14} 
+                  color="currentColor" 
+                  strokeWidth={1.5} 
+                  className="mr-1" 
+                />
                 Test
               </Button>
             </TooltipTrigger>
@@ -501,7 +496,13 @@ export function LookoutDetailsSidebar({
                 className="flex-1 text-xs h-8"
                 onClick={() => setShowAnalytics(!showAnalytics)}
               >
-                <HugeiconsIcon icon={Chart01Icon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
+                <HugeiconsIcon 
+                  icon={Chart01Icon} 
+                  size={14} 
+                  color="currentColor" 
+                  strokeWidth={1.5} 
+                  className="mr-1" 
+                />
                 {showAnalytics ? 'Overview' : 'Analytics'}
               </Button>
             </TooltipTrigger>
@@ -510,7 +511,7 @@ export function LookoutDetailsSidebar({
             </TooltipContent>
           </Tooltip>
         </div>
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </div>
   );
 }

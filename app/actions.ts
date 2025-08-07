@@ -4,7 +4,7 @@
 import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { generateObject, UIMessage, generateText } from 'ai';
+import { generateObject, UIMessage, generateText, generateId } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
@@ -54,9 +54,9 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-nano'),
+    model: scira.languageModel('scira-g2'),
     temperature: 0,
-    maxTokens: 512,
+    maxOutputTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
@@ -103,16 +103,13 @@ export async function suggestQuestions(history: any[]) {
   };
 }
 
-export async function checkImageModeration(images: any) {
+export async function checkImageModeration(images: string[]) {
   const { text } = await generateText({
     model: groq('meta-llama/llama-guard-4-12b'),
     messages: [
       {
         role: 'user',
-        content: images.map((image: any) => ({
-          type: 'image',
-          image: image,
-        })),
+        content: images[0]
       },
     ],
   });
@@ -177,24 +174,6 @@ export async function generateSpeech(text: string) {
   return {
     audio: `data:audio/mp3;base64,${base64Audio}`,
   };
-}
-
-export async function fetchMetadata(url: string) {
-  try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
-    const html = await response.text();
-
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
-
-    const title = titleMatch ? titleMatch[1] : '';
-    const description = descMatch ? descMatch[1] : '';
-
-    return { title, description };
-  } catch (error) {
-    console.error('Error fetching metadata:', error);
-    return null;
-  }
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility
@@ -1590,7 +1569,8 @@ export async function createScheduledLookout({
 
           if (delay > 0) {
             await qstash.publish({
-              url: `https://scira.ai/api/lookout`,
+              // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+              url: process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
               body: JSON.stringify({
                 lookoutId: lookout.id,
                 prompt,
@@ -1620,7 +1600,8 @@ export async function createScheduledLookout({
           console.log('📅 Cron schedule with timezone:', cronSchedule);
 
           const scheduleResponse = await qstash.schedules.create({
-            destination: `https://scira.ai/api/lookout`,
+            // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+            destination: process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
             method: 'POST',
             cron: cronSchedule,
             body: JSON.stringify({
@@ -1816,7 +1797,8 @@ export async function updateLookoutAction({
 
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({
-          destination: `https://scira.ai/api/lookout`,
+          // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+          destination: process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
           method: 'POST',
           cron: cronSchedule,
           body: JSON.stringify({
@@ -1917,7 +1899,7 @@ export async function testLookoutAction({ id }: { id: string }) {
     }
 
     // Make a POST request to the lookout API endpoint to trigger the run
-    const response = await fetch('https://scira.ai/api/lookout', {
+    const response = await fetch(process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

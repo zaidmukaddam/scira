@@ -106,7 +106,6 @@ export default function AboutPage() {
           </Alert>
         </div>
       )}
-
       {/* Terms Dialog */}
       <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
         <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
@@ -173,7 +172,6 @@ export default function AboutPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
         <div className="container max-w-7xl mx-auto px-4">
@@ -254,7 +252,6 @@ export default function AboutPage() {
           </div>
         </div>
       </header>
-
       {/* Hero Section */}
       <section className="py-24 px-4">
         <div className="container max-w-4xl mx-auto text-center space-y-12">
@@ -327,7 +324,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Stats Section */}
       <section className="py-16 px-4 border-y border-border">
         <div className="container max-w-4xl mx-auto">
@@ -353,7 +349,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Awards Section */}
       <section className="py-16 px-4">
         <div className="container max-w-4xl mx-auto">
@@ -410,7 +405,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-6xl mx-auto">
@@ -464,7 +458,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Technology Stack */}
       <section className="py-20 px-4">
         <div className="container max-w-6xl mx-auto">
@@ -502,7 +495,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Featured on Vercel Section */}
       <section className="py-16 px-4 border-y border-border">
         <div className="container max-w-6xl mx-auto">
@@ -529,7 +521,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Models Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-6xl mx-auto">
@@ -577,7 +568,7 @@ export default function AboutPage() {
                               Vision
                             </Badge>
                           )}
-                          {model.reasoning && (
+                          {model.reasoningText && (
                             <Badge variant="outline" className="text-xs">
                               Reasoning
                             </Badge>
@@ -597,7 +588,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Pricing Section */}
       <section className="py-20 px-4">
         <div className="container max-w-4xl mx-auto">
@@ -737,7 +727,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* FAQ Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-4xl mx-auto">
@@ -806,7 +795,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="border-t border-border py-12 px-4">
         <div className="container max-w-6xl mx-auto">

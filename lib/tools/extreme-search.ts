@@ -7,11 +7,14 @@
 
 import Exa from 'exa-js';
 import { Daytona } from '@daytonaio/sdk';
-import { DataStreamWriter, generateObject, generateText, tool } from 'ai';
+import { generateObject, generateText, stepCountIs, tool } from 'ai';
+import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 import { scira } from '@/ai/providers';
 import { SNAPSHOT_NAME } from '@/lib/constants';
+import { ChatMessage } from '../types';
+import FirecrawlApp from '@mendable/firecrawl-js';
 
 const pythonLibsAvailable = [
   'pandas',
@@ -43,7 +46,8 @@ const runCode = async (code: string, installLibs: string[] = []) => {
   return result;
 };
 
-export const exa = new Exa(serverEnv.EXA_API_KEY);
+const exa = new Exa(serverEnv.EXA_API_KEY);
+const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
 
 type SearchResult = {
   title: string;
@@ -76,8 +80,8 @@ const searchWeb = async (query: string, category?: SearchCategory) => {
       type: 'hybrid',
       ...(category
         ? {
-            category: category as SearchCategory,
-          }
+          category: category as SearchCategory,
+        }
         : {}),
     });
     console.log(`searchWeb received ${results.length} results from Exa API`);
@@ -100,6 +104,10 @@ const searchWeb = async (query: string, category?: SearchCategory) => {
 
 const getContents = async (links: string[]) => {
   console.log(`getContents called with ${links.length} URLs:`, links);
+  const results: SearchResult[] = [];
+  const failedUrls: string[] = [];
+
+  // First, try Exa for all URLs
   try {
     const result = await exa.getContents(links, {
       text: {
@@ -110,34 +118,85 @@ const getContents = async (links: string[]) => {
     });
     console.log(`getContents received ${result.results.length} results from Exa API`);
 
-    const mappedResults = result.results.map((r) => ({
-      title: r.title,
-      url: r.url,
-      content: r.text,
-      publishedDate: r.publishedDate,
-      favicon: r.favicon,
-    }));
+    // Process Exa results
+    for (const r of result.results) {
+      if (r.text && r.text.trim()) {
+        results.push({
+          title: r.title || r.url.split('/').pop() || 'Retrieved Content',
+          url: r.url,
+          content: r.text,
+          publishedDate: r.publishedDate || '',
+          favicon: r.favicon || `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
+        });
+      } else {
+        // Add URLs with no content to failed list for Firecrawl fallback
+        failedUrls.push(r.url);
+      }
+    }
 
-    console.log(`getContents returning ${mappedResults.length} mapped results`);
-    return mappedResults;
+    // Add any URLs that weren't returned by Exa to the failed list
+    const exaUrls = result.results.map(r => r.url);
+    const missingUrls = links.filter(url => !exaUrls.includes(url));
+    failedUrls.push(...missingUrls);
+
   } catch (error) {
-    console.error('Error in getContents:', error);
-    return [];
+    console.error('Exa API error:', error);
+    console.log('Adding all URLs to Firecrawl fallback list');
+    failedUrls.push(...links);
   }
+
+  // Use Firecrawl as fallback for failed URLs
+  if (failedUrls.length > 0) {
+    console.log(`Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
+    
+    for (const url of failedUrls) {
+      try {
+        const scrapeResponse = await firecrawl.scrapeUrl(url, {
+          formats: ['markdown'],
+        });
+
+        if (scrapeResponse.success && scrapeResponse.markdown) {
+          console.log(`Firecrawl successfully scraped ${url}`);
+          
+          results.push({
+            title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
+            url: url,
+            content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
+            publishedDate: scrapeResponse.metadata?.publishedDate || '',
+            favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
+          });
+        } else {
+          console.error(`Firecrawl failed for ${url}:`, scrapeResponse.error);
+        }
+      } catch (firecrawlError) {
+        console.error(`Firecrawl error for ${url}:`, firecrawlError);
+      }
+    }
+  }
+
+  console.log(`getContents returning ${results.length} total results (${results.length - failedUrls.length + (results.filter(r => failedUrls.includes(r.url)).length)} from Exa, ${results.filter(r => failedUrls.includes(r.url)).length} from Firecrawl)`);
+  return results;
 };
 
-const extremeSearch = async (prompt: string, dataStream: DataStreamWriter | undefined): Promise<Research> => {
+async function extremeSearch(
+  prompt: string,
+  dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
+): Promise<Research> {
   const allSources: SearchResult[] = [];
 
   if (dataStream) {
-    dataStream.writeMessageAnnotation({
-      status: { title: 'Planning research' },
+    dataStream.write({
+      type: 'data-extreme_search',
+      data: {
+        kind: 'plan',
+        status: { title: 'Planning research' },
+      },
     });
   }
 
   // plan out the research
   const { object: plan } = await generateObject({
-    model: scira.languageModel('scira-default'),
+    model: scira.languageModel('scira-x-fast'),
     schema: z.object({
       plan: z
         .array(
@@ -174,9 +233,13 @@ Plan Guidelines:
   console.log(`Total todos: ${totalTodos}`);
 
   if (dataStream) {
-    dataStream.writeMessageAnnotation({
-      status: { title: 'Research plan ready, starting up research agent' },
-      plan: plan.plan,
+    dataStream.write({
+      type: 'data-extreme_search',
+      data: {
+        kind: 'plan',
+        status: { title: 'Research plan ready, starting up research agent' },
+        plan: plan.plan,
+      },
     });
   }
 
@@ -184,8 +247,8 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-default'),
-    maxSteps: totalTodos,
+    model: scira.languageModel('scira-x-fast-mini'),
+    stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 
@@ -224,7 +287,7 @@ Only use code when:
 Code guidelines (when absolutely necessary):
 - Keep code simple and focused on the specific calculation or analysis needed
 - Always end with print() statements for any results
-- Prefer data visualization (line charts, bar charts) when showing trends
+- Prefer data visualization (line charts, bar charts only) when showing trends or any comparisons or other visualizations
 - Import required libraries: pandas, numpy, matplotlib, scipy as needed
 
 ### RESEARCH WORKFLOW:
@@ -253,7 +316,7 @@ ${JSON.stringify(plan.plan)}
     tools: {
       codeRunner: {
         description: 'Run Python code in a sandbox',
-        parameters: z.object({
+        inputSchema: z.object({
           title: z.string().describe('The title of what you are running the code for'),
           code: z.string().describe('The Python code to run with proper syntax and imports'),
         }),
@@ -266,8 +329,15 @@ ${JSON.stringify(plan.plan)}
           const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
 
           if (dataStream) {
-            dataStream.writeMessageAnnotation({
-              status: { type: 'code', title: title, code: code },
+            dataStream.write({
+              type: 'data-extreme_search',
+              data: {
+                kind: 'code',
+                codeId: `code-${Date.now()}`,
+                title: title,
+                code: code,
+                status: 'running',
+              },
             });
           }
           const response = await runCode(code, missingLibs);
@@ -285,11 +355,14 @@ ${JSON.stringify(plan.plan)}
           console.log('Charts:', response.artifacts?.charts);
 
           if (dataStream) {
-            dataStream.writeMessageAnnotation({
-              status: {
-                type: 'result',
+            dataStream.write({
+              type: 'data-extreme_search',
+              data: {
+                kind: 'code',
+                codeId: `code-${Date.now()}`,
                 title: title,
                 code: code,
+                status: 'completed',
                 result: response.result,
                 charts: charts,
               },
@@ -304,7 +377,7 @@ ${JSON.stringify(plan.plan)}
       },
       webSearch: {
         description: 'Search the web for information on a topic',
-        parameters: z.object({
+        inputSchema: z.object({
           query: z.string().describe('The search query to achieve the todo').max(150),
           category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
         }),
@@ -313,19 +386,17 @@ ${JSON.stringify(plan.plan)}
           console.log('Category:', category);
 
           if (dataStream) {
-            dataStream.writeMessageAnnotation({
-              status: { title: `Searching the web for "${query}"` },
+            dataStream.write({
+              type: 'data-extreme_search',
+              data: {
+                kind: 'query',
+                queryId: toolCallId,
+                query: query,
+                status: 'started',
+              },
             });
           }
-          // Add a query annotation to display in the UI
-          // Use a consistent format for query annotations
-          if (dataStream) {
-            dataStream.writeMessageAnnotation({
-              type: 'search_query',
-              queryId: toolCallId,
-              query: query,
-            });
-          }
+          // Query annotation already sent above
           let results = await searchWeb(query, category);
           console.log(`Found ${results.length} results for query "${query}"`);
 
@@ -334,10 +405,17 @@ ${JSON.stringify(plan.plan)}
 
           if (dataStream) {
             results.forEach(async (source) => {
-              dataStream.writeMessageAnnotation({
-                type: 'source',
-                queryId: toolCallId,
-                source: { title: source.title, url: source.url },
+              dataStream.write({
+                type: 'data-extreme_search',
+                data: {
+                  kind: 'source',
+                  queryId: toolCallId,
+                  source: {
+                    title: source.title,
+                    url: source.url,
+                    favicon: source.favicon,
+                  },
+                },
               });
             });
           }
@@ -345,8 +423,14 @@ ${JSON.stringify(plan.plan)}
           if (results.length > 0) {
             try {
               if (dataStream) {
-                dataStream.writeMessageAnnotation({
-                  status: { title: `Reading content from search results for "${query}"` },
+                dataStream.write({
+                  type: 'data-extreme_search',
+                  data: {
+                    kind: 'query',
+                    queryId: toolCallId,
+                    query: query,
+                    status: 'reading_content',
+                  },
                 });
               }
 
@@ -361,13 +445,17 @@ ${JSON.stringify(plan.plan)}
                 // For each content result, add a content annotation
                 if (dataStream) {
                   contentsResults.forEach((content) => {
-                    dataStream.writeMessageAnnotation({
-                      type: 'content',
-                      queryId: toolCallId,
-                      content: {
-                        title: content.title,
-                        url: content.url,
-                        text: content.content.slice(0, 500) + '...', // Truncate for annotation
+                    dataStream.write({
+                      type: 'data-extreme_search',
+                      data: {
+                        kind: 'content',
+                        queryId: toolCallId,
+                        content: {
+                          title: content.title || '',
+                          url: content.url,
+                          text: (content.content || '').slice(0, 500) + '...', // Truncate for annotation
+                          favicon: content.favicon || '',
+                        },
                       },
                     });
                   });
@@ -392,6 +480,19 @@ ${JSON.stringify(plan.plan)}
             }
           }
 
+          // Mark query as completed
+          if (dataStream) {
+            dataStream.write({
+              type: 'data-extreme_search',
+              data: {
+                kind: 'query',
+                queryId: toolCallId,
+                query: query,
+                status: 'completed',
+              },
+            });
+          }
+
           return results.map((r) => ({
             title: r.title,
             url: r.url,
@@ -403,7 +504,7 @@ ${JSON.stringify(plan.plan)}
     },
     onStepFinish: (step) => {
       console.log('Step finished:', step.finishReason);
-      console.log('Step:', step.stepType);
+      console.log('Step:', step);
       if (step.toolResults) {
         console.log('Tool results:', step.toolResults);
         toolResults.push(...step.toolResults);
@@ -412,8 +513,12 @@ ${JSON.stringify(plan.plan)}
   });
 
   if (dataStream) {
-    dataStream.writeMessageAnnotation({
-      status: { title: 'Research completed' },
+    dataStream.write({
+      type: 'data-extreme_search',
+      data: {
+        kind: 'plan',
+        status: { title: 'Research completed' },
+      },
     });
   }
 
@@ -441,12 +546,12 @@ ${JSON.stringify(plan.plan)}
     ),
     charts,
   };
-};
+}
 
-export const extremeSearchTool = (dataStream: DataStreamWriter | undefined) =>
-  tool({
+export function extremeSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | undefined) {
+  return tool({
     description: 'Use this tool to conduct an extreme search on a given topic.',
-    parameters: z.object({
+    inputSchema: z.object({
       prompt: z
         .string()
         .describe(
@@ -468,3 +573,4 @@ export const extremeSearchTool = (dataStream: DataStreamWriter | undefined) =>
       };
     },
   });
+};

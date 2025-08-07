@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const datetimeTool = tool({
   description: "Get the current date and time in the user's timezone",
-  parameters: z.object({}),
+  inputSchema: z.object({}),
   execute: async () => {
     try {
       const now = new Date();

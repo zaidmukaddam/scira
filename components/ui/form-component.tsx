@@ -2,7 +2,6 @@
 // /components/ui/form-component.tsx
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
@@ -19,7 +18,7 @@ import { X, Check, ChevronsUpDown } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
-import { UIMessage } from '@ai-sdk/ui-utils';
+import { UIMessage } from 'ai';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
@@ -37,14 +36,16 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { UseChatHelpers } from '@ai-sdk/react';
+import { ChatMessage } from '@/lib/types';
 
 interface ModelSwitcherProps {
   selectedModel: string;
   setSelectedModel: (value: string) => void;
   className?: string;
   attachments: Array<Attachment>;
-  messages: Array<Message>;
-  status: 'submitted' | 'streaming' | 'ready' | 'error';
+  messages: Array<UIMessage>;
+  status: UseChatHelpers<ChatMessage>['status'];
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
   user?: ComprehensiveUserData | null;
@@ -81,7 +82,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const hasAttachments = useMemo(
       () =>
         attachments.length > 0 ||
-        messages.some((msg) => msg.experimental_attachments && msg.experimental_attachments.length > 0),
+        messages.some((msg) => msg.parts?.filter((part) => part.type === "file") && msg.parts?.filter((part) => part.type === "file").length > 0),
       [attachments.length, messages],
     );
 
@@ -471,7 +472,8 @@ ModelSwitcher.displayName = 'ModelSwitcher';
 
 interface Attachment {
   name: string;
-  contentType: string;
+  contentType?: string;
+  mediaType?: string;
   url: string;
   size: number;
 }
@@ -714,20 +716,11 @@ interface FormComponentProps {
   chatId: string;
   user: ComprehensiveUserData | null;
   subscriptionData?: any;
-  handleSubmit: (
-    event?: {
-      preventDefault?: () => void;
-    },
-    chatRequestOptions?: ChatRequestOptions,
-  ) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   stop: () => void;
   messages: Array<UIMessage>;
-  append: (
-    message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions,
-  ) => Promise<string | null | undefined>;
+  sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   selectedModel: string;
   setSelectedModel: (value: string) => void;
   resetSuggestedQuestions: () => void;
@@ -735,7 +728,7 @@ interface FormComponentProps {
   selectedGroup: SearchGroupId;
   setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
   showExperimentalModels: boolean;
-  status: 'submitted' | 'streaming' | 'ready' | 'error';
+  status: UseChatHelpers<ChatMessage>['status'];
   setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
   isLimitBlocked?: boolean;
 }
@@ -743,7 +736,7 @@ interface FormComponentProps {
 interface GroupSelectorProps {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
-  status: 'submitted' | 'streaming' | 'ready' | 'error';
+  status: UseChatHelpers<ChatMessage>['status'];
 }
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
@@ -944,7 +937,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   setInput,
   attachments,
   setAttachments,
-  handleSubmit,
+  sendMessage,
   fileInputRef,
   inputRef,
   stop,
@@ -1709,10 +1702,23 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setHasSubmitted(true);
         lastSubmittedQueryRef.current = input.trim();
 
-        handleSubmit(event, {
-          experimental_attachments: attachments,
+        sendMessage({
+          role: 'user',
+          parts: [
+            ...attachments.map((attachment) => ({
+              type: 'file' as const,
+              url: attachment.url,
+              name: attachment.name,
+              mediaType: attachment.contentType || attachment.mediaType || '',
+            })),
+            {
+              type: 'text',
+              text: input,
+            },
+          ],
         });
 
+        setInput('');
         setAttachments([]);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -1724,7 +1730,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     [
       input,
       attachments,
-      handleSubmit,
+      sendMessage,
       setAttachments,
       fileInputRef,
       lastSubmittedQueryRef,
@@ -2076,7 +2082,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </Tooltip>
                   ) : input.length === 0 && attachments.length === 0 ? (
                     /* Show Voice Recording Button when no input */
-                    <Tooltip delayDuration={300}>
+                    (<Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
                           className={cn(
@@ -2110,10 +2116,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           </span>
                         </div>
                       </TooltipContent>
-                    </Tooltip>
+                    </Tooltip>)
                   ) : (
                     /* Show Send Button when there is input */
-                    <Tooltip delayDuration={300}>
+                    (<Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <button
                           className="group rounded-lg flex p-1.5 m-auto size-7.5 border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary transition-colors duration-200"
@@ -2142,7 +2148,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <span className="font-medium text-[11px]">Send Message</span>
                       </TooltipContent>
-                    </Tooltip>
+                    </Tooltip>)
                   )}
                 </div>
               </div>

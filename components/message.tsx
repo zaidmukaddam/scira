@@ -24,7 +24,7 @@ import {
   RefreshCw,
   LogIn,
 } from 'lucide-react';
-import { TextUIPart, ReasoningUIPart, ToolInvocationUIPart, SourceUIPart, StepStartUIPart } from '@ai-sdk/ui-utils';
+import { TextUIPart, ReasoningUIPart, ToolCallPart, SourceUrlUIPart, StepStartUIPart, FileUIPart, ModelMessage, UIMessagePart } from 'ai';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
@@ -32,9 +32,9 @@ import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateL
 import { PlusCircle, User } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Crown02Icon } from '@hugeicons/core-free-icons';
+import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
+import { UseChatHelpers } from '@ai-sdk/react';
 
-// Define MessagePart type
-type MessagePart = TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | StepStartUIPart;
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -265,40 +265,41 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 export { EnhancedErrorDisplay };
 
 interface MessageProps {
-  message: any;
+  message: ChatMessage;
   index: number;
   lastUserMessageIndex: number;
   renderPart: (
-    part: MessagePart,
+    part: ChatMessage['parts'][number],
     messageIndex: number,
     partIndex: number,
-    parts: MessagePart[],
-    message: any,
+    parts: ChatMessage['parts'][number][],
+    message: ChatMessage,
   ) => React.ReactNode;
-  status: string;
-  messages: any[];
-  setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
-  append: (message: any, options?: any) => Promise<string | null | undefined>;
+  status: UseChatHelpers<ChatMessage>['status'];
+  messages: ChatMessage[];
+  setMessages: UseChatHelpers<ChatMessage>['setMessages'];
+  sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
+  regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   setSuggestedQuestions: (questions: string[]) => void;
   suggestedQuestions: string[];
   user?: any;
   selectedVisibilityType?: 'public' | 'private';
-  reload: () => Promise<string | null | undefined>;
   isLastMessage?: boolean;
   error?: any;
   isMissingAssistantResponse?: boolean;
   handleRetry?: () => Promise<void>;
   isOwner?: boolean;
   onHighlight?: (text: string) => void;
+  shouldReduceHeight?: boolean;
 }
 
 // Message Editor Component
 interface MessageEditorProps {
-  message: any;
+  message: ChatMessage;
   setMode: (mode: 'view' | 'edit') => void;
-  setMessages: (messages: any[] | ((prevMessages: any[]) => any[])) => void;
-  reload: () => Promise<string | null | undefined>;
-  messages: any[];
+  setMessages: UseChatHelpers<ChatMessage>['setMessages'];
+  regenerate: UseChatHelpers<ChatMessage>['regenerate'];
+  messages: ChatMessage[];
   setSuggestedQuestions: (questions: string[]) => void;
 }
 
@@ -306,12 +307,12 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   message,
   setMode,
   setMessages,
-  reload,
+  regenerate,
   messages,
   setSuggestedQuestions,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [draftContent, setDraftContent] = useState<string>(message.content);
+  const [draftContent, setDraftContent] = useState<string>(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -361,7 +362,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 const updatedMessage = {
                   ...message,
                   content: draftContent.trim(),
-                  parts: [{ type: 'text', text: draftContent.trim() }],
+                  parts: [{ type: 'text', text: draftContent.trim() } as TextUIPart],
                 };
                 newMessages.push(updatedMessage);
                 break;
@@ -377,7 +378,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             setMode('view');
 
             // Step 4: Reload to generate new response (same as rewrite logic)
-            await reload();
+            await regenerate();
           } catch (error) {
             console.error('Error updating message:', error);
             toast.error('Failed to update message. Please try again.');
@@ -410,7 +411,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
               variant="ghost"
               size="icon"
               className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-              disabled={isSubmitting || draftContent.trim() === message.content.trim()}
+              disabled={isSubmitting || draftContent.trim() === message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim()}
             >
               {isSubmitting ? (
                 <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -434,20 +435,20 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
       </form>
 
       {/* Show editable attachments */}
-      {message.experimental_attachments && message.experimental_attachments.length > 0 && (
+      {message.parts && message.parts.length > 0 && (
         <div className="mt-1.5">
           <EditableAttachmentsBadge
-            attachments={message.experimental_attachments}
+            attachments={message.parts.filter((part) => part.type === "file") as unknown as Attachment[]}
             onRemoveAttachment={(index) => {
               // Handle attachment removal
-              const updatedAttachments = message.experimental_attachments.filter((_: any, i: number) => i !== index);
+              const updatedAttachments = message.parts.filter((_: ChatMessage['parts'][number], i: number) => i !== index);
               // Update the message with new attachments
               setMessages((messages) => {
                 const messageIndex = messages.findIndex((m) => m.id === message.id);
                 if (messageIndex !== -1) {
                   const updatedMessage = {
                     ...message,
-                    experimental_attachments: updatedAttachments,
+                    parts: updatedAttachments,
                   };
                   const updatedMessages = [...messages];
                   updatedMessages[messageIndex] = updatedMessage;
@@ -474,18 +475,19 @@ export const Message: React.FC<MessageProps> = ({
   status,
   messages,
   setMessages,
-  append,
+  sendMessage,
   setSuggestedQuestions,
   suggestedQuestions,
   user,
   selectedVisibilityType = 'private',
-  reload,
+  regenerate,
   isLastMessage,
   error,
   isMissingAssistantResponse,
   handleRetry,
   isOwner = true,
   onHighlight,
+  shouldReduceHeight = false,
 }) => {
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
@@ -502,7 +504,7 @@ export const Message: React.FC<MessageProps> = ({
       const contentHeight = messageContentRef.current.scrollHeight;
       setExceedsMaxHeight(contentHeight > USER_MESSAGE_MAX_HEIGHT);
     }
-  }, [message.content]);
+  }, [message.parts?.map((part) => part.type === "text" ? part.text : '').join('')]);
 
   // Dynamic font size based on content length with mobile responsiveness
   const getDynamicFontSize = (content: string) => {
@@ -534,12 +536,12 @@ export const Message: React.FC<MessageProps> = ({
 
       setSuggestedQuestions([]);
 
-      await append({
-        content: question.trim(),
-        role: 'user',
+      await sendMessage({
+        parts: [{ type: 'text', text: question.trim() } as UIMessagePart<CustomUIDataTypes, ChatTools>],
+        role: 'user'
       });
     },
-    [append, setSuggestedQuestions, user, selectedVisibilityType],
+    [sendMessage, setSuggestedQuestions, user, selectedVisibilityType],
   );
 
   if (message.role === 'user') {
@@ -553,7 +555,7 @@ export const Message: React.FC<MessageProps> = ({
                 message={message}
                 setMode={setMode}
                 setMessages={setMessages}
-                reload={reload}
+                regenerate={regenerate}
                 messages={messages}
                 setSuggestedQuestions={setSuggestedQuestions}
               />
@@ -561,7 +563,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="group relative">
                 <div className="relative">
                   {/* Render user message parts */}
-                  {message.parts?.map((part: MessagePart, partIndex: number) => {
+                  {message.parts?.map((part: ChatMessage['parts'][number], partIndex: number) => {
                     if (part.type === 'text') {
                       return (
                         <div
@@ -592,12 +594,12 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '')} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
                       <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
-                        <MarkdownRenderer content={preprocessLaTeX(message.content)} isUserMessage={true} />
+                        <MarkdownRenderer content={preprocessLaTeX(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '')} isUserMessage={true} />
                       </ChatTextHighlighter>
 
                       {!isExpanded && exceedsMaxHeight && (
@@ -655,7 +657,7 @@ export const Message: React.FC<MessageProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigator.clipboard.writeText(message.content);
+                        navigator.clipboard.writeText(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '');
                         toast.success('Copied to clipboard');
                       }}
                       className={`h-7 w-7 ${
@@ -669,8 +671,8 @@ export const Message: React.FC<MessageProps> = ({
                     </Button>
                   </div>
                 </div>
-                {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                  <AttachmentsBadge attachments={message.experimental_attachments} />
+                {message.parts?.filter((part) => part.type === "file") && message.parts?.filter((part) => part.type === "file").length > 0 && (
+                  <AttachmentsBadge attachments={message.parts?.filter((part) => part.type === "file") as unknown as Attachment[]} />
                 )}
               </div>
             )}
@@ -688,7 +690,7 @@ export const Message: React.FC<MessageProps> = ({
               message={message}
               setMode={setMode}
               setMessages={setMessages}
-              reload={reload}
+              regenerate={regenerate}
               messages={messages}
               setSuggestedQuestions={setSuggestedQuestions}
             />
@@ -697,11 +699,11 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.content)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '')} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
-                  <MarkdownRenderer content={preprocessLaTeX(message.content)} isUserMessage={true} />
+                  <MarkdownRenderer content={preprocessLaTeX(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '')} isUserMessage={true} />
 
                   {!isExpanded && exceedsMaxHeight && (
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -757,7 +759,7 @@ export const Message: React.FC<MessageProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      navigator.clipboard.writeText(message.content);
+                      navigator.clipboard.writeText(message.parts?.map((part) => part.type === "text" ? part.text : '').join('').trim() || '');
                       toast.success('Copied to clipboard');
                     }}
                     className={`h-7 w-7 ${
@@ -771,8 +773,8 @@ export const Message: React.FC<MessageProps> = ({
                   </Button>
                 </div>
               </div>
-              {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-                <AttachmentsBadge attachments={message.experimental_attachments} />
+              {message.parts?.filter((part) => part.type === "file") && message.parts?.filter((part) => part.type === "file").length > 0 && (
+                <AttachmentsBadge attachments={message.parts?.filter((part) => part.type === "file") as unknown as Attachment[]} />
               )}
             </div>
           )}
@@ -782,13 +784,12 @@ export const Message: React.FC<MessageProps> = ({
   }
 
   if (message.role === 'assistant') {
-    const isLastAssistantMessage = isLastMessage && message.role === 'assistant';
-
     return (
-      <div className={isLastAssistantMessage ? 'min-h-[calc(100vh-18rem)]' : ''}>
-        {message.parts?.map((part: MessagePart, partIndex: number) =>
-          renderPart(part, index, partIndex, message.parts as MessagePart[], message),
-        )}
+      <div className={shouldReduceHeight ? '' : 'min-h-[calc(100vh-18rem)]'}>
+        {message.parts?.map((part: ChatMessage['parts'][number], partIndex: number) => {
+          console.log(`🔧 Rendering part ${partIndex}:`, { type: part.type, hasText: !!(part as any).text });
+          return renderPart(part, index, partIndex, message.parts as ChatMessage['parts'][number][], message);
+        })}
 
         {/* Display error message with retry button */}
         {error && (
@@ -834,18 +835,18 @@ export const EditableAttachmentsBadge = ({
   attachments,
   onRemoveAttachment,
 }: {
-  attachments: any[];
+  attachments: Attachment[];
   onRemoveAttachment: (index: number) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const fileAttachments = attachments.filter(
-    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
+    (att) => att.contentType?.startsWith('image/') || att.mediaType?.startsWith('image/') || att.contentType === 'application/pdf' || att.mediaType === 'application/pdf' 
   );
 
   if (fileAttachments.length === 0) return null;
 
-  const isPdf = (attachment: any) => attachment.contentType === 'application/pdf';
+  const isPdf = (attachment: Attachment) => attachment.contentType === 'application/pdf' || attachment.mediaType === 'application/pdf';
 
   return (
     <>
@@ -855,7 +856,7 @@ export const EditableAttachmentsBadge = ({
           const fileName = attachment.name || `File ${i + 1}`;
           const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
 
-          const isImage = attachment.contentType?.startsWith('image/');
+          const isImage = attachment.contentType?.startsWith('image/') || attachment.mediaType?.startsWith('image/');
 
           return (
             <div
@@ -1118,9 +1119,6 @@ export const EditableAttachmentsBadge = ({
                 <span className="truncate max-w-[70%]">
                   {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
                 </span>
-                {fileAttachments[selectedIndex].size && (
-                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
-                )}
               </div>
             </footer>
           </div>
@@ -1131,16 +1129,20 @@ export const EditableAttachmentsBadge = ({
 };
 
 // Export the attachments badge component for reuse
-export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
+export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const fileAttachments = attachments.filter(
-    (att) => att.contentType?.startsWith('image/') || att.contentType === 'application/pdf',
+    (att) => att.contentType?.startsWith('image/') || att.mediaType?.startsWith('image/') || att.contentType === 'application/pdf' || att.mediaType === 'application/pdf' 
   );
+
+  React.useEffect(() => {
+    console.log('fileAttachments', fileAttachments);
+  }, [fileAttachments]);
 
   if (fileAttachments.length === 0) return null;
 
-  const isPdf = (attachment: any) => attachment.contentType === 'application/pdf';
+  const isPdf = (attachment: Attachment) => attachment.contentType === 'application/pdf' || attachment.mediaType === 'application/pdf';
 
   return (
     <>
@@ -1151,7 +1153,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
           const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
 
           const fileExtension = fileName.split('.').pop()?.toLowerCase();
-          const isImage = attachment.contentType?.startsWith('image/');
+          const isImage = attachment.contentType?.startsWith('image/') || attachment.mediaType?.startsWith('image/');
 
           return (
             <button
@@ -1325,7 +1327,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                   <div className="flex items-center justify-center h-[60vh]">
                     <img
                       src={fileAttachments[selectedIndex].url}
-                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`} 
                       className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
                     />
                   </div>
@@ -1403,9 +1405,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: any[] }) => {
                 <span className="truncate max-w-[70%]">
                   {fileAttachments[selectedIndex].name || `File ${selectedIndex + 1}`}
                 </span>
-                {fileAttachments[selectedIndex].size && (
-                  <span>{Math.round(fileAttachments[selectedIndex].size / 1024)} KB</span>
-                )}
               </div>
             </footer>
           </div>

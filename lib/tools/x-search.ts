@@ -1,11 +1,12 @@
-import { tool } from 'ai';
+import { generateText, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 import { getTweet } from 'react-tweet/api';
+import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
 export const xSearchTool = tool({
   description: 'Search X (formerly Twitter) posts using xAI Live Search.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The search query for X posts').nullable(),
     startDate: z
       .string()
@@ -51,48 +52,43 @@ export const xSearchTool = tool({
       console.log('[X search parameters]: ', searchParameters);
       console.log('[X search handles]: ', xHandles);
 
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${serverEnv.XAI_API_KEY}`,
+      const { text, sources } = await generateText({
+        model: xai('grok-3-latest'),
+        system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
+        messages: [{ role: 'user', content: `${query}` }],
+        providerOptions: {
+          xai: {
+            searchParameters: {
+              mode: 'on',
+              ...(startDate && { fromDate: startDate }),
+              ...(endDate && { toDate: endDate }),
+              maxSearchResults: maxResults,
+              returnCitations: true,
+              sources: [
+                xHandles && xHandles.length > 0
+                  ? { type: 'x', xHandles: xHandles, safeSearch: false }
+                  : { type: 'x' },
+              ],
+            },
+          } as XaiProviderOptions
         },
-        body: JSON.stringify({
-          model: 'grok-3-latest',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-            },
-            {
-              role: 'user',
-              content: `${query}`,
-            },
-          ],
-          search_parameters: searchParameters,
-        }),
+        onStepFinish: (step) => {
+          console.log('[X search step]: ', step);
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`xAI API error: ${response.status} ${response.statusText}`);
-      }
+      console.log('[X search data]: ', text);
 
-      const data = await response.json();
-
-      console.log('[X search data]: ', data);
-
-      const sources = [];
-      const citations = data.citations || [];
+      const citations = sources || [];
+      let allSources = [];
 
       if (citations.length > 0) {
         const tweetFetchPromises = citations
-          .filter((url: any) => typeof url === 'string' && url.includes('x.com'))
-          .map(async (url: string) => {
+          .filter((link) => link.sourceType === 'url')
+          .map(async (link) => {
             try {
-              const match = url.match(/\/status\/(\d+)/);
-              if (!match) return null;
-
-              const tweetId = match[1];
+              const tweetUrl = link.sourceType === 'url' ? link.url : "";
+              const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
 
               const tweetData = await getTweet(tweetId);
               if (!tweetData) return null;
@@ -102,23 +98,23 @@ export const xSearchTool = tool({
 
               return {
                 text: text,
-                link: url,
+                link: tweetUrl,
               };
             } catch (error) {
-              console.error(`Error fetching tweet data for ${url}:`, error);
+              console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ""}:`, error);
               return null;
             }
           });
 
         const tweetResults = await Promise.all(tweetFetchPromises);
 
-        sources.push(...tweetResults.filter((result) => result !== null));
+        allSources.push(...tweetResults.filter((result) => result !== null));
       }
 
       return {
-        content: data.choices[0]?.message?.content || '',
+        content: text,
         citations: citations,
-        sources: sources,
+        sources: allSources,
         query,
         dateRange: `${startDate} to ${endDate}`,
         handles: xHandles || [],

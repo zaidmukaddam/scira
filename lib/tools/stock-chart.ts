@@ -52,7 +52,7 @@ interface NewsGroup {
 
 export const stockChartTool = tool({
   description: 'Get stock data and news for given stock symbols.',
-  parameters: z.object({
+  inputSchema: z.object({
     title: z.string().describe('The title of the chart.'),
     news_queries: z.array(z.string()).describe('The news queries to search for.'),
     icon: z.enum(['stock', 'date', 'calculation', 'default']).describe('The icon to display for the chart.'),

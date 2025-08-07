@@ -1,13 +1,6 @@
 // /app/api/lookout/route.ts
-import { generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
-import {
-  convertToCoreMessages,
-  streamText,
-  appendResponseMessages,
-  CoreToolMessage,
-  CoreAssistantMessage,
-  createDataStream,
-} from 'ai';
+import { generateTitleFromUserMessage } from '@/app/actions';
+import { convertToModelMessages, streamText, createUIMessageStream, stepCountIs, JsonToSseTransformStream } from 'ai';
 import { scira } from '@/ai/providers';
 import {
   createStreamId,
@@ -26,19 +19,56 @@ import { after } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { CronExpressionParser } from 'cron-parser';
 import { sendLookoutCompletionEmail } from '@/lib/email';
+import { db } from '@/lib/db';
+import { subscription, payment } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 // Import extreme search tool
 import { extremeSearchTool } from '@/lib/tools';
 
-type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
-type ResponseMessage = ResponseMessageWithoutId & { id: string };
+// Helper function to check if a user is pro by userId
+async function checkUserIsProById(userId: string): Promise<boolean> {
+  try {
+    // Check for active Polar subscription
+    const polarSubscriptions = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
 
-function getTrailingMessageId({ messages }: { messages: Array<ResponseMessage> }): string | null {
-  const trailingMessage = messages.at(-1);
+    // Check if any Polar subscription is active
+    const activePolarSubscription = polarSubscriptions.find((sub) => {
+      const now = new Date();
+      const isActive = sub.status === 'active' && new Date(sub.currentPeriodEnd) > now;
+      return isActive;
+    });
 
-  if (!trailingMessage) return null;
+    if (activePolarSubscription) {
+      return true;
+    }
 
-  return trailingMessage.id;
+    // Check for Dodo payments (Indian users)
+    const dodoPayments = await db
+      .select()
+      .from(payment)
+      .where(eq(payment.userId, userId));
+
+    const successfulDodoPayments = dodoPayments
+      .filter((p) => p.status === 'succeeded')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (successfulDodoPayments.length > 0) {
+      const mostRecentPayment = successfulDodoPayments[0];
+      const paymentDate = new Date(mostRecentPayment.createdAt);
+      const subscriptionEndDate = new Date(paymentDate);
+      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // 1 month duration
+      return subscriptionEndDate > new Date();
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking pro status:', error);
+    return false; // Fail closed - don't allow access if we can't verify
+  }
 }
 
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -105,10 +135,16 @@ export async function POST(req: Request) {
       return new Response('User not found', { status: 404 });
     }
 
+    // Check if user is pro (lookouts are a pro feature)
+    const isUserPro = await checkUserIsProById(userId);
+    if (!isUserPro) {
+      console.error('User is not pro, cannot run lookout:', userId);
+      return new Response('Lookouts require a Pro subscription', { status: 403 });
+    }
+
     // Generate a new chat ID for this scheduled search
     const chatId = uuidv4();
     const streamId = 'stream-' + uuidv4();
-
 
     // Create the chat
     await saveChat({
@@ -151,13 +187,13 @@ export async function POST(req: Request) {
     });
 
     // Create data stream with execute function
-    const stream = createDataStream({
-      execute: async (dataStream) => {
+    const stream = createUIMessageStream({
+      execute: async ({ writer: dataStream }) => {
         // Start streaming
         const result = streamText({
           model: scira.languageModel('scira-grok-4'),
-          messages: convertToCoreMessages([userMessage]),
-          maxSteps: 2,
+          messages: convertToModelMessages([userMessage]),
+          stopWhen: stepCountIs(2),
           maxRetries: 10,
           experimental_activeTools: ['extreme_search'],
           system: ` You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
@@ -272,38 +308,14 @@ export async function POST(req: Request) {
                   await incrementExtremeSearchUsage({ userId: userResult.id });
                 }
 
-                // Save assistant message
-                const assistantId = getTrailingMessageId({
-                  messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
-                });
-
-                if (assistantId) {
-                  const [, assistantMessage] = appendResponseMessages({
-                    messages: [userMessage],
-                    responseMessages: event.response.messages,
-                  });
-
-                  await saveMessages({
-                    messages: [
-                      {
-                        id: assistantId,
-                        chatId,
-                        role: assistantMessage.role,
-                        parts: assistantMessage.parts,
-                        attachments: assistantMessage.experimental_attachments ?? [],
-                        createdAt: new Date(),
-                      },
-                    ],
-                  });
-                }
-
                 // Calculate run duration
                 runDuration = Date.now() - requestStartTime;
 
                 // Count searches performed (look for extreme_search tool calls)
-                const searchesPerformed = event.steps?.reduce((total, step) => {
-                  return total + (step.toolCalls?.filter(call => call.toolName === 'extreme_search').length || 0);
-                }, 0) || 0;
+                const searchesPerformed =
+                  event.steps?.reduce((total, step) => {
+                    return total + (step.toolCalls?.filter((call) => call.toolName === 'extreme_search').length || 0);
+                  }, 0) || 0;
 
                 // Update lookout with last run info including metrics
                 await updateLookoutLastRun({
@@ -352,13 +364,11 @@ export async function POST(req: Request) {
                   try {
                     // Extract assistant response - use event.text which contains the full response
                     let assistantResponseText = event.text || '';
-                    
+
                     // If event.text is empty, try extracting from messages
                     if (!assistantResponseText.trim()) {
-                      const assistantMessages = event.response.messages.filter(
-                        (msg: any) => msg.role === 'assistant'
-                      );
-                      
+                      const assistantMessages = event.response.messages.filter((msg: any) => msg.role === 'assistant');
+
                       for (const msg of assistantMessages) {
                         if (typeof msg.content === 'string') {
                           assistantResponseText += msg.content + '\n';
@@ -376,9 +386,8 @@ export async function POST(req: Request) {
                     console.log('📧 First 200 chars:', assistantResponseText.substring(0, 200));
 
                     const trimmedResponse = assistantResponseText.trim() || 'No response available.';
-                    const finalResponse = trimmedResponse.length > 2000 
-                      ? trimmedResponse.substring(0, 2000) + '...' 
-                      : trimmedResponse;
+                    const finalResponse =
+                      trimmedResponse.length > 2000 ? trimmedResponse.substring(0, 2000) + '...' : trimmedResponse;
 
                     await sendLookoutCompletionEmail({
                       to: userResult.email,
@@ -412,11 +421,11 @@ export async function POST(req: Request) {
           },
           onError: async (event) => {
             console.log('Error: ', event.error);
-            
+
             // Calculate run duration and capture error
             runDuration = Date.now() - requestStartTime;
-            runError = event.error as string || 'Unknown error occurred';
-            
+            runError = (event.error as string) || 'Unknown error occurred';
+
             // Update lookout with failed run info
             try {
               await updateLookoutLastRun({
@@ -430,7 +439,7 @@ export async function POST(req: Request) {
             } catch (updateError) {
               console.error('Failed to update lookout with error info:', updateError);
             }
-            
+
             // Set lookout status back to active on error
             try {
               await updateLookoutStatus({
@@ -441,7 +450,7 @@ export async function POST(req: Request) {
             } catch (statusError) {
               console.error('Failed to reset lookout status after error:', statusError);
             }
-            
+
             const requestEndTime = Date.now();
             const processingTime = (requestEndTime - requestStartTime) / 1000;
             console.log('--------------------------------');
@@ -452,22 +461,48 @@ export async function POST(req: Request) {
 
         result.consumeStream();
 
-        result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
+        dataStream.merge(
+          result.toUIMessageStream({
+            sendReasoning: true,
+          }),
+        );
       },
       onError(error) {
         console.log('Error: ', error);
         return 'Oops, an error occurred in scheduled search!';
+      },
+      onFinish: async ({ messages }) => {
+        if (userId) {
+          // Validate user exists and is Pro user
+          const user = await getUserById(userId);
+          const isUserPro = user ? await checkUserIsProById(userId) : false;
+
+          if (user && isUserPro) {
+            await saveMessages({
+              messages: messages.map((message) => ({
+                id: message.id,
+                role: message.role,
+                parts: message.parts,
+                createdAt: new Date(),
+                attachments: [],
+                chatId: chatId,
+              })),
+            });
+          } else {
+            console.error('User validation failed in onFinish - user not found or not pro:', userId);
+          }
+        }
       },
     });
 
     const streamContext = getStreamContext();
 
     if (streamContext) {
-      return new Response(await streamContext.resumableStream(streamId, () => stream));
+      return new Response(
+        await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+      );
     } else {
-      return new Response(stream);
+      return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
     }
   } catch (error) {
     console.error('Error in lookout API:', error);

@@ -3,15 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Minimize2, Maximize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Marked from 'marked-react';
-
-export interface ReasoningPart {
-  type: 'reasoning';
-  reasoning: string;
-  details: Array<{ type: 'text'; text: string }>;
-}
+import { ReasoningUIPart } from 'ai';
 
 interface ReasoningPartViewProps {
-  part: ReasoningPart;
+  part: ReasoningUIPart;
   sectionKey: string;
   isComplete: boolean;
   duration: string | null;
@@ -171,7 +166,6 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
     part,
     sectionKey,
     isComplete,
-    duration,
     parallelTool,
     isExpanded,
     isFullscreen,
@@ -185,26 +179,23 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
       if (!isComplete && scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [isComplete, part.details]);
+    }, [isComplete, part.text]);
 
     // Also scroll when details change, even if isComplete doesn't change
     useEffect(() => {
-      if (!isComplete && scrollRef.current && part.details && part.details.length > 0) {
+      if (!isComplete && scrollRef.current && part.text && part.text.length > 0) {
         setTimeout(() => {
           if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
           }
         }, 10);
       }
-    }, [part.details, isComplete]);
+    }, [part.text, isComplete]);
 
-    // Check if all content is empty (just newlines or whitespace)
-    const hasNonEmptyDetails =
-      part.details && part.details.some((detail) => detail.type === 'text' && !isEmptyContent(detail.text));
-    const hasNonEmptyReasoning = part.reasoning && !isEmptyContent(part.reasoning);
+    const hasNonEmptyReasoning = part.text && !isEmptyContent(part.text);
 
     // If all content is empty, don't render the reasoning section
-    if (!hasNonEmptyDetails && !hasNonEmptyReasoning) {
+    if (!hasNonEmptyReasoning) {
       return null;
     }
 
@@ -298,39 +289,11 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                       },
                     )}
                   >
-                    {part.details && part.details.length > 0 ? (
-                      part.details
-                        .filter((detail) => detail.type === 'text' && !isEmptyContent(detail.text))
-                        .map((detail, detailIndex) =>
-                          detail.type === 'text' ? (
-                            <div
-                              key={detailIndex}
-                              className={cn(
-                                'px-2.5 py-2 text-xs leading-relaxed',
-                                detailIndex !==
-                                  part.details.filter((d) => d.type === 'text' && !isEmptyContent(d.text)).length - 1 &&
-                                  'border-b border-border/80',
-                              )}
-                            >
-                              <div className="text-muted-foreground prose prose-sm max-w-none">
-                                <MarkdownRenderer content={detail.text} />
-                              </div>
-                            </div>
-                          ) : (
-                            '<redacted>'
-                          ),
-                        )
-                    ) : part.reasoning && !isEmptyContent(part.reasoning) ? (
-                      <div className="px-2.5 py-2 text-xs leading-relaxed">
-                        <div className="text-muted-foreground prose prose-sm max-w-none">
-                          <MarkdownRenderer content={part.reasoning} />
-                        </div>
+                    <div className="px-2.5 py-2 text-xs leading-relaxed">
+                      <div className="text-muted-foreground prose prose-sm max-w-none">
+                        <MarkdownRenderer content={part.text} />
                       </div>
-                    ) : (
-                      <div className="px-2.5 py-2 text-xs">
-                        <div className="text-muted-foreground/70 italic">Waiting for reasoning...</div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

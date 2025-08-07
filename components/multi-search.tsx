@@ -22,6 +22,8 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
+import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
+import type {DataUIPart} from 'ai';
 
 // Types
 type SearchImage = {
@@ -52,18 +54,6 @@ type MultiSearchArgs = {
   maxResults: number[];
   topics: ('general' | 'news' | 'finance')[];
   searchDepth: ('basic' | 'advanced')[];
-};
-
-type QueryCompletion = {
-  type: 'query_completion';
-  data: {
-    query: string;
-    index: number;
-    total: number;
-    status: 'started' | 'completed' | 'error';
-    resultsCount: number;
-    imagesCount: number;
-  };
 };
 
 // Constants
@@ -396,7 +386,7 @@ ImageGallery.displayName = 'ImageGallery';
 // Loading State Component
 const LoadingState: React.FC<{
   queries: string[];
-  annotations: QueryCompletion[];
+  annotations: DataUIPart<CustomUIDataTypes>[];
 }> = ({ queries, annotations }) => {
   const completedCount = annotations.length;
   const totalResults = annotations.reduce((sum, a) => sum + a.data.resultsCount, 0);
@@ -574,7 +564,7 @@ const MultiSearch = ({
 }: {
   result: MultiSearchResponse | null;
   args: MultiSearchArgs;
-  annotations?: QueryCompletion[];
+  annotations?: DataQueryCompletionPart[];
 }) => {
   const [isClient, setIsClient] = React.useState(false);
   const [sourcesOpen, setSourcesOpen] = React.useState(false);

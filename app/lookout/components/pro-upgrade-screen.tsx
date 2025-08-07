@@ -70,7 +70,7 @@ export function ProUpgradeScreen({ user, isProUser, isProStatusLoading }: ProUpg
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => router.push('/new')}>
                   Back to Search
                 </Button>

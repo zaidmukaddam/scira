@@ -6,7 +6,7 @@ import { SNAPSHOT_NAME } from '@/lib/constants';
 
 export const codeInterpreterTool = tool({
   description: 'Write and execute Python code.',
-  parameters: z.object({
+  inputSchema: z.object({
     title: z.string().describe('The title of the code snippet.'),
     code: z
       .string()

@@ -1,0 +1,170 @@
+import { z } from 'zod';
+import type {
+  academicSearchTool,
+  codeInterpreterTool,
+  coinDataByContractTool,
+  coinDataTool,
+  coinOhlcTool,
+  currencyConverterTool,
+  redditSearchTool,
+  retrieveTool,
+  trendingMoviesTool,
+  textTranslateTool,
+  xSearchTool,
+  stockChartTool,
+  webSearchTool,
+  youtubeSearchTool,
+  weatherTool,
+  findPlaceOnMapTool,
+  nearbyPlacesSearchTool,
+  flightTrackerTool,
+  datetimeTool,
+  mcpSearchTool,
+  memoryManagerTool,
+  extremeSearchTool,
+  greetingTool,
+  movieTvSearchTool,
+  trendingTvTool,
+} from '@/lib/tools';
+
+import type { InferUITool, UIMessage } from 'ai';
+
+export type DataPart = { type: 'append-message'; message: string };
+export type DataQueryCompletionPart = {
+  type: 'data-query_completion';
+  data: {
+    query: string;
+    index: number;
+    total: number;
+    status: 'started' | 'completed' | 'error';
+    resultsCount: number;
+    imagesCount: number;
+  }
+};
+
+export type DataExtremeSearchPart = {
+  type: 'data-extreme_search';
+  data: 
+    | { 
+        kind: 'plan'; 
+        status: { title: string }; 
+        plan?: Array<{ title: string; todos: string[] }> 
+      }
+    | { 
+        kind: 'query'; 
+        queryId: string; 
+        query: string; 
+        status: 'started' | 'reading_content' | 'completed' | 'error' 
+      }
+    | { 
+        kind: 'source'; 
+        queryId: string; 
+        source: { title: string; url: string; favicon?: string } 
+      }
+    | { 
+        kind: 'content'; 
+        queryId: string; 
+        content: { title: string; url: string; text: string; favicon?: string } 
+      }
+    | { 
+        kind: 'code'; 
+        codeId: string; 
+        title: string; 
+        code: string; 
+        status: 'running' | 'completed' | 'error'; 
+        result?: string; 
+        charts?: any[] 
+      };
+};
+
+export const messageMetadataSchema = z.object({
+  createdAt: z.string(),
+});
+
+export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
+
+type weatherTool = InferUITool<typeof weatherTool>;
+type academicSearchTool = InferUITool<typeof academicSearchTool>;
+type codeInterpreterTool = InferUITool<typeof codeInterpreterTool>;
+type coinDataTool = InferUITool<typeof coinDataTool>;
+type coinOhlcTool = InferUITool<typeof coinOhlcTool>;
+type currencyConverterTool = InferUITool<typeof currencyConverterTool>;
+type redditSearchTool = InferUITool<typeof redditSearchTool>;
+type retrieveTool = InferUITool<typeof retrieveTool>;
+type trendingMoviesTool = InferUITool<typeof trendingMoviesTool>;
+type textTranslateTool = InferUITool<typeof textTranslateTool>;
+type xSearchTool = InferUITool<typeof xSearchTool>;
+type stockChartTool = InferUITool<typeof stockChartTool>;
+type greetingTool = InferUITool<typeof greetingTool>;
+type flightTrackerTool = InferUITool<typeof flightTrackerTool>;
+type findPlaceOnMapTool = InferUITool<typeof findPlaceOnMapTool>;
+type nearbyPlacesSearchTool = InferUITool<typeof nearbyPlacesSearchTool>;
+type webSearch = InferUITool<ReturnType<typeof webSearchTool>>;
+type extremeSearch = InferUITool<ReturnType<typeof extremeSearchTool>>;
+type memoryManagerTool = InferUITool<typeof memoryManagerTool>;
+type movieTvSearchTool = InferUITool<typeof movieTvSearchTool>;
+type trendingTvTool = InferUITool<typeof trendingTvTool>;
+type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
+type coinDataByContractTool = InferUITool<typeof coinDataByContractTool>;
+type datetimeTool = InferUITool<typeof datetimeTool>;
+type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
+
+export type ChatTools = {
+  stock_chart: stockChartTool;
+  currency_converter: currencyConverterTool;
+  coin_data: coinDataTool;
+  coin_data_by_contract: coinDataByContractTool;
+  coin_ohlc: coinOhlcTool;
+
+  // Search & Content Tools
+  x_search: xSearchTool;
+  web_search: webSearch;
+  academic_search: academicSearchTool;
+  youtube_search: youtubeSearchTool;
+  reddit_search: redditSearchTool;
+  retrieve: retrieveTool;
+
+  // Media & Entertainment
+  movie_or_tv_search: movieTvSearchTool;
+  trending_movies: trendingMoviesTool;
+  trending_tv: trendingTvTool;
+
+  // Location & Maps
+  find_place_on_map: findPlaceOnMapTool;
+  nearby_places_search: nearbyPlacesSearchTool;
+  get_weather_data: weatherTool;
+
+  // Utility Tools
+  text_translate: textTranslateTool;
+  code_interpreter: codeInterpreterTool;
+  track_flight: flightTrackerTool;
+  datetime: datetimeTool;
+  mcp_search: mcpSearchTool;
+  memory_manager: memoryManagerTool;
+  extreme_search: extremeSearch;
+  greeting: greetingTool;
+};
+
+export type CustomUIDataTypes = {
+  appendMessage: string;
+  id: string;
+  'message-annotations': any;
+  'query_completion': {
+    query: string;
+    index: number;
+    total: number;
+    status: 'started' | 'completed' | 'error';
+    resultsCount: number;
+    imagesCount: number;
+  };
+  'extreme_search': DataExtremeSearchPart['data'];
+};
+
+export type ChatMessage = UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>;
+
+export interface Attachment {
+  name: string;
+  url: string;
+  contentType?: string;
+  mediaType?: string;
+}

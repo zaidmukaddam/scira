@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, json, varchar, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, json, varchar, integer, uuid } from 'drizzle-orm/pg-core';
 import { generateId } from 'ai';
 import { InferSelectModel } from 'drizzle-orm';
 
@@ -53,10 +53,7 @@ export const verification = pgTable('verification', {
 });
 
 export const chat = pgTable('chat', {
-  id: text('id')
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => generateId()),
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
   userId: text('userId')
     .notNull()
     .references(() => user.id),
@@ -218,15 +215,19 @@ export const lookout = pgTable('lookout', {
   lastRunAt: timestamp('last_run_at'),
   lastRunChatId: text('last_run_chat_id'),
   // Store all run history as JSON
-  runHistory: json('run_history').$type<Array<{
-    runAt: string; // ISO date string
-    chatId: string;
-    status: 'success' | 'error' | 'timeout';
-    error?: string;
-    duration?: number; // milliseconds
-    tokensUsed?: number;
-    searchesPerformed?: number;
-  }>>().default([]),
+  runHistory: json('run_history')
+    .$type<
+      Array<{
+        runAt: string; // ISO date string
+        chatId: string;
+        status: 'success' | 'error' | 'timeout';
+        error?: string;
+        duration?: number; // milliseconds
+        tokensUsed?: number;
+        searchesPerformed?: number;
+      }>
+    >()
+    .default([]),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

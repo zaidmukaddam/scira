@@ -27,7 +27,7 @@ interface VideoResult {
 
 export const youtubeSearchTool = tool({
   description: 'Search YouTube videos using Exa AI and get detailed video information.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The search query for YouTube videos'),
     timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']),
   }),
@@ -384,7 +384,7 @@ export const youtubeSearchTool = tool({
           if (failedBatchResults.length > 0) {
             console.log(
               `  🚨 Failed reasons:`,
-              failedBatchResults.map((r) => r.reason?.message || 'Unknown'),
+              failedBatchResults.map((r) => (r as PromiseRejectedResult).reason?.message || 'Unknown'),
             );
           }
 

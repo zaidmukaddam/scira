@@ -4,15 +4,9 @@ import { getUser } from '@/lib/auth-utils';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { Message } from '@/lib/db/schema';
 import { Metadata } from 'next';
-
-interface UIMessage {
-  id: string;
-  parts: any;
-  role: 'user' | 'assistant' | 'system' | 'tool';
-  content: string;
-  createdAt: Date;
-  experimental_attachments?: Array<any>;
-}
+import { UIMessage, UIMessagePart } from 'ai';
+import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
+import { formatISO } from 'date-fns';
 
 // metadata
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -75,40 +69,71 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   } as Metadata;
 }
 
-function convertToUIMessages(messages: Array<Message>): Array<UIMessage> {
+export function convertToUIMessages(messages: Message[]): ChatMessage[] {
+  console.log('Messages: ', messages);
+  
   return messages.map((message) => {
-    // Ensure parts are properly structured
-    let processedParts = message.parts;
-
-    // If parts is missing or empty for a user message, create a text part from empty string
-    if (message.role === 'user' && (!processedParts || !Array.isArray(processedParts) || processedParts.length === 0)) {
-      // Create an empty text part since there's no content property in DBMessage
-      processedParts = [
-        {
-          type: 'text',
-          text: '',
-        },
-      ];
-    }
-
-    // Extract content from parts or use empty string
-    const content =
-      processedParts && Array.isArray(processedParts)
-        ? processedParts
-            .filter((part: any) => part.type === 'text')
-            .map((part: any) => part.text)
-            .join('\n')
-        : '';
-
+    // Handle the parts array which comes from JSON in the database
+    const partsArray = Array.isArray(message.parts) ? message.parts : [];
+    const convertedParts = partsArray.map((part: unknown) => convertLegacyToolInvocation(part));
+    
     return {
       id: message.id,
-      parts: processedParts,
-      role: message.role as UIMessage['role'],
-      content,
-      createdAt: message.createdAt,
-      experimental_attachments: (message.attachments as Array<any>) ?? [],
+      role: message.role as 'user' | 'assistant' | 'system',
+      parts: convertedParts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
+      metadata: {
+        createdAt: formatISO(message.createdAt),
+      },
     };
   });
+}
+
+function convertLegacyToolInvocation(part: unknown): unknown {
+  // Check if this is a legacy tool-invocation part
+  if (
+    typeof part === 'object' && 
+    part !== null && 
+    'type' in part && 
+    part.type === 'tool-invocation' &&
+    'toolInvocation' in part &&
+    typeof part.toolInvocation === 'object' &&
+    part.toolInvocation !== null &&
+    'toolName' in part.toolInvocation
+  ) {
+    const toolInvocation = part.toolInvocation as {
+      toolName: string;
+      toolCallId: string;
+      state: string;
+      args: unknown;
+      result: unknown;
+    };
+
+    // Map old state to new state
+    const mapState = (oldState: string): string => {
+      switch (oldState) {
+        case 'result':
+          return 'output-available';
+        case 'partial-result':
+          return 'input-available';
+        case 'call':
+          return 'input-streaming';
+        default:
+          return oldState; // Keep unknown states as-is
+      }
+    };
+
+    // Return the new format
+    return {
+      type: `tool-${toolInvocation.toolName}`,
+      toolCallId: toolInvocation.toolCallId,
+      state: mapState(toolInvocation.state),
+      input: toolInvocation.args,
+      output: toolInvocation.result,
+    };
+  }
+
+  // Return the part unchanged if it's not a legacy tool-invocation
+  return part;
 }
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {

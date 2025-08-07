@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const greetingTool = tool({
   description: 'Generate a professional greeting for the user',
-  parameters: z.object({
+  inputSchema: z.object({
     name: z.string().nullable().describe('User name to personalize the greeting'),
     style: z.enum(['professional', 'casual', 'formal']).nullable().describe('Greeting style'),
     includeTimeOfDay: z.boolean().nullable().describe('Whether to include time-specific greeting'),

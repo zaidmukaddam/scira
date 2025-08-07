@@ -4,7 +4,7 @@ import { serverEnv } from '@/env/server';
 
 export const coinDataTool = tool({
   description: 'Get comprehensive coin data including metadata and market data by coin ID.',
-  parameters: z.object({
+  inputSchema: z.object({
     coinId: z.string().describe('The coin ID (e.g., bitcoin, ethereum, solana)'),
     localization: z.boolean().nullable().describe('Include all localized languages in response (default: true)'),
     tickers: z.boolean().nullable().describe('Include tickers data (default: true)'),
@@ -74,7 +74,7 @@ export const coinDataTool = tool({
 
 export const coinDataByContractTool = tool({
   description: 'Get coin data by token contract address on a specific platform.',
-  parameters: z.object({
+  inputSchema: z.object({
     platformId: z.string().describe('The platform ID (e.g., ethereum, binance-smart-chain, polygon-pos)'),
     contractAddress: z.string().describe('The contract address of the token'),
     localization: z.boolean().nullable().describe('Include all localized languages in response (default: true)'),
@@ -149,7 +149,7 @@ export const coinDataByContractTool = tool({
 
 export const coinOhlcTool = tool({
   description: 'Get coin OHLC (Open, High, Low, Close) data for candlestick charts with comprehensive coin data.',
-  parameters: z.object({
+  inputSchema: z.object({
     coinId: z.string().describe('The coin ID (e.g., bitcoin, ethereum, solana)'),
     vsCurrency: z.string().nullable().describe('The target currency of market data (usd, eur, jpy, etc.)'),
     days: z.number().nullable().describe('Data up to number of days ago (1/7/14/30/90/180/365/max)'),

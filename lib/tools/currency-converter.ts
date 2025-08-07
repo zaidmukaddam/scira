@@ -6,7 +6,7 @@ import { SNAPSHOT_NAME } from '@/lib/constants';
 
 export const currencyConverterTool = tool({
   description: 'Convert currency from one to another using yfinance',
-  parameters: z.object({
+  inputSchema: z.object({
     from: z.string().describe('The source currency code.'),
     to: z.string().describe('The target currency code.'),
     amount: z.number().describe('The amount to convert. Default is 1.'),

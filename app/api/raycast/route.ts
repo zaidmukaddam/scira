@@ -1,7 +1,7 @@
 import { serverEnv } from '@/env/server';
 import { xai } from '@ai-sdk/xai';
 import { tavily } from '@tavily/core';
-import { convertToCoreMessages, tool, customProvider, generateText } from 'ai';
+import { convertToModelMessages, tool, customProvider, generateText, stepCountIs } from 'ai';
 import { z } from 'zod';
 
 const scira = customProvider({
@@ -105,28 +105,19 @@ export async function POST(req: Request) {
   const { text, steps } = await generateText({
     model: scira.languageModel(model),
     system: systemPrompt,
-    maxSteps: 5,
-    messages: convertToCoreMessages(messages),
+    stopWhen: stepCountIs(2),
+    messages: convertToModelMessages(messages),
     temperature: 0,
     experimental_activeTools: activeTools,
     tools: {
       web_search: tool({
         description: 'Search the web for information with multiple queries, max results and search depth.',
-        parameters: z.object({
+        inputSchema: z.object({
           queries: z.array(z.string().describe('Array of search queries to look up on the web.')),
-          maxResults: z.array(
-            z.number().describe('Array of maximum number of results to return per query.').default(10),
-          ),
-          topics: z.array(
-            z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for.').default('general'),
-          ),
-          searchDepth: z.array(
-            z.enum(['basic', 'advanced']).describe('Array of search depths to use.').default('basic'),
-          ),
-          exclude_domains: z
-            .array(z.string())
-            .describe('A list of domains to exclude from all search results.')
-            .default([]),
+          maxResults: z.array(z.number().describe('Array of maximum number of results to return per query.')),
+          topics: z.array(z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for.')),
+          searchDepth: z.array(z.enum(['basic', 'advanced']).describe('Array of search depths to use.')),
+          exclude_domains: z.array(z.string()).describe('A list of domains to exclude from all search results.'),
         }),
         execute: async ({
           queries,
@@ -182,7 +173,7 @@ export async function POST(req: Request) {
       }),
       x_search: tool({
         description: 'Search X (formerly Twitter) posts using xAI Live Search.',
-        parameters: z.object({
+        inputSchema: z.object({
           query: z.string().describe('The search query for X posts'),
           startDate: z.string().describe('The start date of the search in the format YYYY-MM-DD'),
           endDate: z.string().describe('The end date of the search in the format YYYY-MM-DD'),

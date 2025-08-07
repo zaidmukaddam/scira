@@ -2,10 +2,17 @@
 
 import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { PlusSignIcon, BinocularsIcon, RefreshIcon } from '@hugeicons/core-free-icons';
+import { PlusSignIcon, BinocularsIcon, RefreshIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +28,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 import { useLookouts } from '@/hooks/use-lookouts';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { LookoutDetailsSidebar } from './components/lookout-details-sidebar';
 import { toast } from 'sonner';
 
@@ -52,6 +60,7 @@ interface Lookout {
 
 export default function LookoutPage() {
   const [activeTab, setActiveTab] = React.useState('active');
+  const isMobile = useIsMobile();
 
   // Random examples state
   const [randomExamples, setRandomExamples] = React.useState(() => getRandomExamples(3));
@@ -253,7 +262,7 @@ export default function LookoutPage() {
           <div
             className={`fixed inset-0 z-40 transition-all duration-300 ease-out ${
               isSidebarOpen
-                ? 'bg-black/20 backdrop-blur-sm opacity-100'
+                ? 'bg-black/10 backdrop-blur-sm opacity-100'
                 : 'bg-black/0 backdrop-blur-0 opacity-0 pointer-events-none'
             }`}
             onClick={() => setIsSidebarOpen(false)}
@@ -261,21 +270,37 @@ export default function LookoutPage() {
 
           {/* Sidebar */}
           <div
-            className={`fixed right-0 top-0 h-screen max-w-xl w-full bg-background border-l z-50 shadow-xl transform transition-all duration-500 ease-out ${
+            className={`fixed right-0 top-0 h-screen w-full sm:max-w-xl bg-background border-l z-50 shadow-xl transform transition-all duration-500 ease-out overflow-y-auto ${
               isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <SidebarProvider open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-              <LookoutDetailsSidebar
-                lookout={selectedLookout as any}
-                allLookouts={allLookouts as any}
-                isOpen={isSidebarOpen}
-                onOpenChange={setIsSidebarOpen}
-                onLookoutChange={handleLookoutChange as any}
-                onEditLookout={handleEditLookout as any}
-                onTest={handleTest}
-              />
-            </SidebarProvider>
+            <div className="h-full flex flex-col">
+              {/* Header */}
+              <div className="border-b px-3 sm:px-4 py-3 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={1.5} />
+                    <span className="font-medium text-sm">Lookout Details</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)} className="h-7 w-7 p-0">
+                    <HugeiconsIcon icon={Cancel01Icon} size={14} color="currentColor" strokeWidth={1.5} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                <LookoutDetailsSidebar
+                  lookout={selectedLookout as any}
+                  allLookouts={allLookouts as any}
+                  isOpen={isSidebarOpen}
+                  onOpenChange={setIsSidebarOpen}
+                  onLookoutChange={handleLookoutChange as any}
+                  onEditLookout={handleEditLookout as any}
+                  onTest={handleTest}
+                />
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -287,69 +312,141 @@ export default function LookoutPage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col justify-center py-8">
           <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header with Tabs and Add button */}
-            <div className="flex justify-between items-center mb-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="bg-muted">
-                  <TabsTrigger value="active">Active</TabsTrigger>
-                  <TabsTrigger value="archived">Archived</TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              <div className="flex items-center gap-2">
+            {/* Header with Title, Tabs and Actions */}
+            <div className="mb-6 space-y-4">
+              {/* Title - Always at top */}
+              <div className="flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={BinocularsIcon} size={32} color="currentColor" strokeWidth={1.5} />
                 <h1 className="text-2xl font-semibold font-be-vietnam-pro">Scira Lookout</h1>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleManualRefresh}
-                  disabled={isMutating}
-                  title="Refresh lookouts"
-                >
-                  <HugeiconsIcon
-                    icon={RefreshIcon}
-                    size={16}
-                    color="currentColor"
-                    strokeWidth={1.5}
-                    className={isMutating ? 'animate-spin' : ''}
-                  />
-                </Button>
-                <Dialog open={formHook.isCreateDialogOpen} onOpenChange={formHook.handleDialogOpenChange}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" disabled={!canCreateMore}>
+              {isMobile ? (
+                /* Mobile Layout: Actions first, then Tabs */
+                <div className="space-y-3">
+                  {/* Action buttons - prominent on mobile */}
+                  <div className="flex gap-3">
+                    <Drawer open={formHook.isCreateDialogOpen} onOpenChange={formHook.handleDialogOpenChange}>
+                      <DrawerTrigger asChild>
+                        <Button className="flex-1" disabled={!canCreateMore}>
+                          <HugeiconsIcon
+                            icon={PlusSignIcon}
+                            size={16}
+                            color="currentColor"
+                            strokeWidth={1.5}
+                            className="mr-2"
+                          />
+                          Add New Lookout
+                        </Button>
+                      </DrawerTrigger>
+                      <DrawerContent className="max-h-[85vh]">
+                        <DrawerHeader className="pb-4">
+                          <DrawerTitle className="text-lg">
+                            {formHook.editingLookout ? 'Edit Lookout' : 'Create New Lookout'}
+                          </DrawerTitle>
+                        </DrawerHeader>
+
+                        <div className="px-4 pb-4 overflow-y-auto flex-1">
+                          <LookoutForm
+                            formHook={formHook}
+                            isMutating={isMutating}
+                            activeDailyLookouts={activeDailyLookouts}
+                            totalLookouts={totalLookouts}
+                            canCreateMore={canCreateMore}
+                            canCreateDailyMore={canCreateDailyMore}
+                            createLookout={createLookout}
+                            updateLookout={updateLookout}
+                          />
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={handleManualRefresh}
+                      disabled={isMutating}
+                      title="Refresh lookouts"
+                      className="px-3"
+                    >
                       <HugeiconsIcon
-                        icon={PlusSignIcon}
+                        icon={RefreshIcon}
                         size={16}
                         color="currentColor"
                         strokeWidth={1.5}
-                        className="mr-1"
+                        className={isMutating ? 'animate-spin' : ''}
                       />
-                      Add new
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader className="pb-4">
-                      <DialogTitle className="text-lg">
-                        {formHook.editingLookout ? 'Edit Lookout' : 'Create New Lookout'}
-                      </DialogTitle>
-                    </DialogHeader>
+                  </div>
+                  
+                  {/* Tabs for mobile */}
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="bg-muted w-full">
+                      <TabsTrigger value="active" className="flex-1">Active</TabsTrigger>
+                      <TabsTrigger value="archived" className="flex-1">Archived</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              ) : (
+                /* Desktop Layout: Tabs and Actions side by side */
+                <div className="flex justify-between items-center">
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="bg-muted">
+                      <TabsTrigger value="active">Active</TabsTrigger>
+                      <TabsTrigger value="archived">Archived</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
 
-                    <LookoutForm
-                      formHook={formHook}
-                      isMutating={isMutating}
-                      activeDailyLookouts={activeDailyLookouts}
-                      totalLookouts={totalLookouts}
-                      canCreateMore={canCreateMore}
-                      canCreateDailyMore={canCreateDailyMore}
-                      createLookout={createLookout}
-                      updateLookout={updateLookout}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleManualRefresh}
+                      disabled={isMutating}
+                      title="Refresh lookouts"
+                    >
+                      <HugeiconsIcon
+                        icon={RefreshIcon}
+                        size={16}
+                        color="currentColor"
+                        strokeWidth={1.5}
+                        className={isMutating ? 'animate-spin' : ''}
+                      />
+                      <span className="ml-1.5">Refresh</span>
+                    </Button>
+                    <Dialog open={formHook.isCreateDialogOpen} onOpenChange={formHook.handleDialogOpenChange}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" disabled={!canCreateMore}>
+                          <HugeiconsIcon
+                            icon={PlusSignIcon}
+                            size={16}
+                            color="currentColor"
+                            strokeWidth={1.5}
+                            className="mr-1"
+                          />
+                          Add new
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto">
+                        <DialogHeader className="pb-4">
+                          <DialogTitle className="text-lg">
+                            {formHook.editingLookout ? 'Edit Lookout' : 'Create New Lookout'}
+                          </DialogTitle>
+                        </DialogHeader>
+
+                        <LookoutForm
+                          formHook={formHook}
+                          isMutating={isMutating}
+                          activeDailyLookouts={activeDailyLookouts}
+                          totalLookouts={totalLookouts}
+                          canCreateMore={canCreateMore}
+                          canCreateDailyMore={canCreateDailyMore}
+                          createLookout={createLookout}
+                          updateLookout={updateLookout}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Limit Warnings */}
@@ -437,7 +534,7 @@ export default function LookoutPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Lookout</AlertDialogTitle>
             <AlertDialogDescription>
@@ -445,11 +542,13 @@ export default function LookoutPage() {
               run history.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)} className="w-full sm:w-auto">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
             >
               Delete
             </AlertDialogAction>

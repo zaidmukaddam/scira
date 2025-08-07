@@ -2,7 +2,8 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
-import { DataStreamWriter } from 'ai';
+import { UIMessageStreamWriter } from 'ai';
+import { ChatMessage } from '../types';
 
 const extractDomain = (url: string): string => {
   const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
@@ -43,10 +44,10 @@ const processDomains = (domains?: string[]): string[] | undefined => {
   return processedDomains.every((domain) => domain.trim() === '') ? undefined : processedDomains;
 };
 
-export const webSearchTool = (dataStream: DataStreamWriter) =>
-  tool({
+export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
+  return tool({
     description: 'Search the web for information with 5-10 queries, max results and search depth.',
-    parameters: z.object({
+    inputSchema: z.object({
       queries: z.array(
         z.string().describe('Array of search queries to look up on the web. Default is 5 to 10 queries.'),
       ),
@@ -93,8 +94,8 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
         const currentMaxResults = maxResults[index] || maxResults[0] || 10;
 
         try {
-          dataStream.writeMessageAnnotation({
-            type: 'query_completion',
+          dataStream.write({
+            type: 'data-query_completion',
             data: {
               query,
               index,
@@ -127,7 +128,7 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
           const data = await exa.searchAndContents(query, searchOptions);
 
           const images: { url: string; description: string }[] = [];
-          const results = data.results.map((result: any) => {
+          const results = data.results.map((result) => {
             if (result.image) {
               images.push({
                 url: result.image,
@@ -144,8 +145,8 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
             };
           });
 
-          dataStream.writeMessageAnnotation({
-            type: 'query_completion',
+          dataStream.write({
+            type: 'data-query_completion',
             data: {
               query,
               index,
@@ -164,8 +165,8 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
         } catch (error) {
           console.error(`Exa search error for query "${query}":`, error);
 
-          dataStream.writeMessageAnnotation({
-            type: 'query_completion',
+          dataStream.write({
+            type: 'data-query_completion',
             data: {
               query,
               index,
@@ -191,3 +192,4 @@ export const webSearchTool = (dataStream: DataStreamWriter) =>
       };
     },
   });
+};

@@ -4,7 +4,7 @@ import { serverEnv } from '@/env/server';
 
 export const weatherTool = tool({
   description: 'Get the weather data for a location using either location name or coordinates with OpenWeather API.',
-  parameters: z.object({
+  inputSchema: z.object({
     location: z
       .string()
       .nullable()

@@ -32,7 +32,7 @@ interface GoogleResult {
 export const findPlaceOnMapTool = tool({
   description:
     'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().nullable().describe('Address or place name to search for (for forward geocoding)'),
     latitude: z.number().nullable().describe('Latitude for reverse geocoding'),
     longitude: z.number().nullable().describe('Longitude for reverse geocoding'),
@@ -113,7 +113,7 @@ export const findPlaceOnMapTool = tool({
 
 export const nearbyPlacesSearchTool = tool({
   description: 'Search for nearby places using Google Places Nearby Search API.',
-  parameters: z.object({
+  inputSchema: z.object({
     location: z.string().describe('The location name or coordinates to search around'),
     latitude: z.number().nullable().describe('Latitude of the search center'),
     longitude: z.number().nullable().describe('Longitude of the search center'),

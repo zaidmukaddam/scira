@@ -5,7 +5,7 @@
 import 'katex/dist/katex.min.css';
 
 // React and React-related imports
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
 
 // Third-party library imports
 import { useChat, UseChatOptions } from '@ai-sdk/react';
@@ -40,6 +40,9 @@ import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
 
 // State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
+import { useDataStream } from './data-stream-provider';
+import { DefaultChatTransport, DataUIPart } from 'ai';
+import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 
 interface ChatInterfaceProps {
   initialChatId?: string;
@@ -58,6 +61,7 @@ const ChatInterface = memo(
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
+    const [input, setInput] = useState<string>('');
 
     // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
@@ -101,6 +105,8 @@ const ChatInterface = memo(
       shouldBypassLimitsForModel,
     } = useUser();
 
+    const { setDataStream } = useDataStream();
+
     const initialState = useMemo(
       () => ({
         query: query || q,
@@ -129,7 +135,7 @@ const ChatInterface = memo(
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Generate a consistent ID for new chats
-    const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
+    const chatId = useMemo(() => initialChatId ?? uuidv4(), []);
 
     // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
@@ -192,116 +198,107 @@ const ChatInterface = memo(
 
     type VisibilityType = 'public' | 'private';
 
-    const chatOptions: UseChatOptions = useMemo(
-      () => ({
-        id: chatId,
+    // Create refs to store current values to avoid closure issues
+    const selectedModelRef = useRef(selectedModel);
+    const selectedGroupRef = useRef(selectedGroup);
+    const isCustomInstructionsEnabledRef = useRef(isCustomInstructionsEnabled);
+
+    // Update refs whenever state changes - this ensures we always have current values
+    selectedModelRef.current = selectedModel;
+    selectedGroupRef.current = selectedGroup;
+    isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
+
+    const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat({
+      id: chatId,
+      transport: new DefaultChatTransport({
         api: '/api/search',
-        experimental_throttle: selectedModel === 'scira-anthropic' ? 1000 : 100,
-        sendExtraMessageFields: true,
-        maxSteps: 3,
-        body: {
-          id: chatId,
-          model: selectedModel,
-          group: selectedGroup,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          ...(initialChatId ? { chat_id: initialChatId } : {}),
-          selectedVisibilityType: chatState.selectedVisibilityType,
-          isCustomInstructionsEnabled: isCustomInstructionsEnabled,
+        prepareSendMessagesRequest({ messages, body }) {
+          // Use ref values to get current state
+          return {
+            body: {
+              id: chatId,
+              messages,
+              model: selectedModelRef.current,
+              group: selectedGroupRef.current,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
+              ...(initialChatId ? { chat_id: initialChatId } : {}),
+              ...body,
+            },
+          };
         },
-        onFinish: async (message, { finishReason }) => {
-          console.log('[finish reason]:', finishReason);
+      }),
+      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 1000 : 100,
+      onData: (dataPart) => {
+        console.log('onData<Client>', dataPart);
+        setDataStream((ds) => (ds ? [...ds, dataPart as DataUIPart<CustomUIDataTypes>] : []));
+      },
+      onFinish: async ({ message }) => {
+        console.log('onFinish<Client>', message.parts);
+        // Refresh usage data after message completion for authenticated users
+        if (user) {
+          refetchUsage();
+        }
 
-          // Refresh usage data after message completion for authenticated users
-          if (user) {
-            refetchUsage();
-          }
+        // Check if this is the first message completion and user is not Pro
+        const isFirstMessage = messages.length <= 1;
 
-          // Check if this is the first message completion and user is not Pro
-          const isFirstMessage = messages.length <= 1;
+        console.log('Upgrade dialog check:', {
+          isFirstMessage,
+          isProUser: isUserPro,
+          hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
+          user: !!user,
+          messagesLength: messages.length,
+        });
 
-          console.log('Upgrade dialog check:', {
-            isFirstMessage,
-            isProUser: isUserPro,
-            hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
-            user: !!user,
-            messagesLength: messages.length,
-          });
+        // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
+        if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
+          console.log('Showing upgrade dialog...');
+          setTimeout(() => {
+            dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
+            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
+            setPersitedHasShownUpgradeDialog(true);
+          }, 1000);
+        }
 
-          // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-          if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
-            console.log('Showing upgrade dialog...');
-            setTimeout(() => {
-              dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
-              dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
-              setPersitedHasShownUpgradeDialog(true);
-            }, 1000);
-          }
-
-          // Only generate suggested questions if authenticated user or private chat
-          if (
-            message.content &&
-            (finishReason === 'stop' || finishReason === 'length') &&
-            (user || chatState.selectedVisibilityType === 'private')
-          ) {
-            const newHistory = [
-              { role: 'user', content: lastSubmittedQueryRef.current },
-              { role: 'assistant', content: message.content },
-            ];
-            const { questions } = await suggestQuestions(newHistory);
-            dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
-          }
-        },
-        onError: (error) => {
-          // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
-          if (error instanceof ChatSDKError) {
-            console.log('ChatSDK Error:', error.type, error.surface, error.message);
-            // Only show toast for certain error types that need immediate attention
-            if (error.type === 'offline' || error.surface === 'stream') {
-              toast.error('Connection Error', {
-                description: error.message,
-              });
-            }
-          } else {
-            console.error('Chat error:', error.cause, error.message);
-            toast.error('An error occurred.', {
-              description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
+        // Only generate suggested questions if authenticated user or private chat
+        if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
+          const lastPart = message.parts[message.parts.length - 1];
+          const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
+          const newHistory = [
+            { role: 'user', content: lastSubmittedQueryRef.current },
+            { role: 'assistant', content: lastPartText },
+          ];
+          console.log('newHistory', newHistory);
+          const { questions } = await suggestQuestions(newHistory);
+          dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+        }
+      },
+      onError: (error) => {
+        // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
+        if (error instanceof ChatSDKError) {
+          console.log('ChatSDK Error:', error.type, error.surface, error.message);
+          // Only show toast for certain error types that need immediate attention
+          if (error.type === 'offline' || error.surface === 'stream') {
+            toast.error('Connection Error', {
+              description: error.message,
             });
           }
-        },
-        initialMessages: initialMessages,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }),
-      [
-        selectedModel,
-        selectedGroup,
-        chatId,
-        initialChatId,
-        initialMessages,
-        chatState.selectedVisibilityType,
-        isCustomInstructionsEnabled,
-      ],
-    );
-
-    const {
-      input,
-      messages,
-      setInput,
-      append,
-      handleSubmit,
-      setMessages,
-      reload,
-      stop,
-      data,
-      status,
-      error,
-      experimental_resume,
-    } = useChat(chatOptions);
+        } else {
+          console.error('Chat error:', error.cause, error.message);
+          toast.error('An error occurred.', {
+            description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
+          });
+        }
+      },
+      messages: initialMessages || [],
+    });
 
     // Handle text highlighting and quoting
     const handleHighlight = useCallback(
       (text: string) => {
         const quotedText = `> ${text.replace(/\n/g, '\n> ')}\n\n`;
-        setInput((prev) => prev + quotedText);
+        setInput((prev: string) => prev + quotedText);
 
         // Focus the input after adding the quote
         setTimeout(() => {
@@ -327,9 +324,10 @@ const ChatInterface = memo(
     useAutoResume({
       autoResume: true,
       initialMessages: initialMessages || [],
-      experimental_resume,
-      data,
-      setMessages,
+      resumeStream,
+      setMessages: (messages) => {
+        setMessages(messages as ChatMessage[]);
+      },
     });
 
     useEffect(() => {
@@ -350,12 +348,12 @@ const ChatInterface = memo(
       if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
         initializedRef.current = true;
         console.log('[initial query]:', initialState.query);
-        append({
-          content: initialState.query,
+        sendMessage({
+          parts: [{ type: 'text', text: initialState.query }],
           role: 'user',
         });
       }
-    }, [initialState.query, append, setInput, messages.length, initialChatId]);
+    }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
 
     // Generate suggested questions when opening a chat directly
     useEffect(() => {
@@ -373,9 +371,26 @@ const ChatInterface = memo(
           const lastAssistantMessage = initialMessages.filter((m) => m.role === 'assistant').pop();
 
           if (lastUserMessage && lastAssistantMessage) {
+            // Extract content from parts similar to onFinish callback
+            const getUserContent = (message: typeof lastUserMessage) => {
+              if (message.parts && message.parts.length > 0) {
+                const lastPart = message.parts[message.parts.length - 1];
+                return lastPart.type === 'text' ? lastPart.text : '';
+              }
+              return message.content || '';
+            };
+
+            const getAssistantContent = (message: typeof lastAssistantMessage) => {
+              if (message.parts && message.parts.length > 0) {
+                const lastPart = message.parts[message.parts.length - 1];
+                return lastPart.type === 'text' ? lastPart.text : '';
+              }
+              return message.content || '';
+            };
+
             const newHistory = [
-              { role: 'user', content: lastUserMessage.content },
-              { role: 'assistant', content: lastAssistantMessage.content },
+              { role: 'user', content: getUserContent(lastUserMessage) },
+              { role: 'assistant', content: getAssistantContent(lastAssistantMessage) },
             ];
             try {
               const { questions } = await suggestQuestions(newHistory);
@@ -615,13 +630,15 @@ const ChatInterface = memo(
             {/* Use the Messages component */}
             {messages.length > 0 && (
               <Messages
-                messages={messages}
+                messages={messages as ChatMessage[]}
                 lastUserMessageIndex={lastUserMessageIndex}
                 input={input}
                 setInput={setInput}
-                setMessages={setMessages}
-                append={append}
-                reload={reload}
+                setMessages={(messages) => {
+                  setMessages(messages as ChatMessage[]);
+                }}
+                sendMessage={sendMessage}
+                regenerate={regenerate}
                 suggestedQuestions={chatState.suggestedQuestions}
                 setSuggestedQuestions={(questions) => dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })}
                 status={status}
@@ -646,8 +663,8 @@ const ChatInterface = memo(
                 className={cn(
                   'transition-all duration-500 bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative max-w-2xl mx-auto w-full' // Centered position when no messages
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-2 sm:!pb-6 mt-1 mx-2 p-0', // Fixed bottom when messages exist
+                    ? 'relative max-w-2xl mx-auto w-full'
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-4 sm:!pb-6 mt-1 mx-2 p-0',
                 )}
               >
                 <FormComponent
@@ -662,12 +679,11 @@ const ChatInterface = memo(
                       typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
                     dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
                   }}
-                  handleSubmit={handleSubmit}
                   fileInputRef={fileInputRef}
                   inputRef={inputRef}
                   stop={stop}
-                  messages={messages as any}
-                  append={append}
+                  messages={messages as ChatMessage[]}
+                  sendMessage={sendMessage}
                   selectedModel={selectedModel}
                   setSelectedModel={handleModelChange}
                   resetSuggestedQuestions={resetSuggestedQuestions}
