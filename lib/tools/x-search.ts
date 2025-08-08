@@ -5,12 +5,13 @@ import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
 export const xSearchTool = tool({
-  description: 'Search X (formerly Twitter) posts using xAI Live Search.',
+  description:
+    'Search X (formerly Twitter) posts using xAI Live Search for the past 7 days by default otherwise user can specify a date range.',
   inputSchema: z.object({
     query: z.string().describe('The search query for X posts').nullable(),
     startDate: z
       .string()
-      .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)'),
+      .describe('The start date of the search in the format YYYY-MM-DD (always default to 7 days ago if not specified)'),
     endDate: z
       .string()
       .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
