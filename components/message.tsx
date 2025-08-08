@@ -571,7 +571,7 @@ export const Message: React.FC<MessageProps> = ({
     // Check if the message has parts that should be rendered
     if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
       return (
-        <div className="mb-2! px-0">
+        <div className="mb-0! px-0">
           <div className="grow min-w-0">
             {mode === 'edit' ? (
               <MessageEditor
