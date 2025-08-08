@@ -370,7 +370,6 @@ export async function POST(req: Request) {
               : {}),
           } satisfies XaiProviderOptions,
           groq: {
-            reasoningEffort: 'default',
             parallelToolCalls: false,
             structuredOutputs: true,
           } as GroqProviderOptions,
