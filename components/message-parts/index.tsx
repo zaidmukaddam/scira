@@ -96,7 +96,7 @@ const NearbySearchSkeleton = lazy(() =>
 
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
-  <div className="flex space-x-2 ml-8 mt-2">
+  <div className="flex space-x-2 mt-2">
     <div
       className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
       style={{ animationDelay: '0ms' }}

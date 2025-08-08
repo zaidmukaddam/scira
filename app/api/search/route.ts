@@ -337,8 +337,15 @@ export async function POST(req: Request) {
               topP: 1,
               topK: 40,
             }
-            : {
-            }),
+            : model.includes('scira-qwen-235')
+              ? {
+                temperature: 0.7,
+                topP: 0.8,
+                topK: 20,
+                minP: 0,
+                presencePenalty: 1.5
+              }
+              : {}),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
         ...(model.includes('scira-5') ? {
