@@ -282,7 +282,7 @@ export const models = [
   {
     value: 'scira-5-high',
     label: 'GPT 5 (Max)',
-    description: "OpenAI's latest flagship LLM with max reasoning",
+    description: "OpenAI's latest flagship reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
