@@ -685,7 +685,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       }
 
       return (
-        <p key={generateKey()} className="my-5 leading-relaxed text-foreground !text-pretty">
+        <p key={generateKey()} className="my-5 leading-relaxed text-foreground">
           {children}
         </p>
       );
