@@ -14,12 +14,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { RepeatIcon, Copy01Icon, Share03Icon } from '@hugeicons/core-free-icons';
-import { 
-  ChatMessage, 
-  CustomUIDataTypes, 
-  DataQueryCompletionPart,
-  DataExtremeSearchPart
-} from '@/lib/types';
+import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import Image from 'next/image';
@@ -101,8 +96,19 @@ const NearbySearchSkeleton = lazy(() =>
 
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
-  <div className="flex items-center justify-center py-8">
-    <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+  <div className="flex space-x-2 ml-8 mt-2">
+    <div
+      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+      style={{ animationDelay: '0ms' }}
+    ></div>
+    <div
+      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+      style={{ animationDelay: '150ms' }}
+    ></div>
+    <div
+      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+      style={{ animationDelay: '300ms' }}
+    ></div>
   </div>
 );
 
@@ -172,7 +178,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     regenerate,
     onHighlight,
     annotations,
-  }) => {    
+  }) => {
     // Handle text parts
     if (part.type === 'text') {
       // For empty text parts in a streaming message, show loading animation only if no tool invocations are present
@@ -413,7 +419,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         // Legacy tool invocation without state - show as loading or fallback
         console.warn('Legacy tool part without state:', part);
         return (
-          <div key={`${messageIndex}-${partIndex}-tool-legacy`} className="my-4 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg">
+          <div
+            key={`${messageIndex}-${partIndex}-tool-legacy`}
+            className="my-4 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg"
+          >
             <h3 className="font-medium mb-2">Tool: {toolName}</h3>
             <pre className="text-xs overflow-auto">{JSON.stringify(part, null, 2)}</pre>
           </div>
@@ -424,7 +433,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     // Handle legacy tool-invocation parts (with type assertion)
     if ((part as any).type === 'tool-invocation') {
       return (
-        <div key={`${messageIndex}-${partIndex}-tool-invocation`} className="my-4 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg">
+        <div
+          key={`${messageIndex}-${partIndex}-tool-invocation`}
+          className="my-4 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg"
+        >
           <h3 className="font-medium mb-2">Tool Invocation (Legacy)</h3>
           <pre className="text-xs overflow-auto">{JSON.stringify(part, null, 2)}</pre>
         </div>
@@ -1146,7 +1158,11 @@ const ToolPartRenderer = memo(
                   </CardHeader>
                   <CardContent className="pt-0 px-3 pb-3">
                     <Suspense fallback={<ComponentLoader />}>
-                      <MCPServerList servers={part.output.servers || []} query={part.output.query} error={part.output.error} />
+                      <MCPServerList
+                        servers={part.output.servers || []}
+                        query={part.output.query}
+                        error={part.output.error}
+                      />
                     </Suspense>
                   </CardContent>
                 </Card>
@@ -1317,9 +1333,11 @@ const ToolPartRenderer = memo(
                 <ExtremeSearch
                   // @ts-ignore - Complex type intersection resolved to never
                   toolInvocation={{ toolName: 'extreme_search', input: part.input, result: part.output }}
-                  annotations={annotations?.filter(annotation => 
-                    annotation.type === 'data-extreme_search'
-                  ) as DataExtremeSearchPart[] || []}
+                  annotations={
+                    (annotations?.filter(
+                      (annotation) => annotation.type === 'data-extreme_search',
+                    ) as DataExtremeSearchPart[]) || []
+                  }
                 />
               </Suspense>
             );

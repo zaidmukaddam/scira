@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { getUser } from '@/lib/auth-utils';
-import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
+import { getChatById, getMessagesByChatId, updateChatTitleById } from '@/lib/db/queries';
 import { Message } from '@/lib/db/schema';
 import { Metadata } from 'next';
 import { UIMessage, UIMessagePart } from 'ai';
 import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { formatISO } from 'date-fns';
+import { generateTitleFromUserMessage } from '@/app/actions';
 
 // metadata
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -17,10 +18,32 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!chat) {
     return { title: 'Scira Chat' };
   }
-  let title;
+  let title: string | undefined;
+  const isOwner = !!user && user.id === chat.userId;
+  const isDefaultTitle = typeof chat.title === 'string' && chat.title.trim().toLowerCase() === 'new conversation';
+
+  // If the title is still the default and the requester is the owner, generate and persist a better title
+  if (isOwner && isDefaultTitle) {
+    try {
+      const messagesFromDb = await getMessagesByChatId({ id, offset: 0 });
+      const uiMessages = convertToUIMessages(messagesFromDb);
+      const firstUserMessage = uiMessages.find((m) => m.role === 'user');
+      if (firstUserMessage) {
+        const generated = await generateTitleFromUserMessage({ message: firstUserMessage as unknown as UIMessage });
+        const newTitle = (generated || '').toString().trim();
+        if (newTitle && newTitle.toLowerCase() !== 'new conversation') {
+          await updateChatTitleById({ chatId: id, title: newTitle });
+          title = newTitle;
+        }
+      }
+    } catch (err) {
+      // Fallback to existing title on any failure
+      title = chat.title;
+    }
+  }
   // if chat is public, return title
   if (chat.visibility === 'public') {
-    title = chat.title;
+    title = title ?? chat.title;
   }
   // if chat is private, return title
   if (chat.visibility === 'private') {
@@ -30,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (user!.id !== chat.userId) {
       title = 'Scira Chat';
     }
-    title = chat.title;
+    title = title ?? chat.title;
   }
   return {
     title: title,

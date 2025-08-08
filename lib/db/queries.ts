@@ -180,8 +180,6 @@ export async function getMessagesByChatId({
   limit?: number;
   offset?: number;
 }) {
-  'use cache';
-
   try {
     return await db
       .select()
