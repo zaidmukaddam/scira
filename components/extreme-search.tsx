@@ -336,7 +336,7 @@ const ExtremeSourceCard: React.FC<{
         'group relative bg-background',
         'border border-neutral-200 dark:border-neutral-800',
         'rounded-xl p-4 transition-all duration-200',
-        'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+        'hover:border-neutral-300 dark:hover:border-neutral-700',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
@@ -1287,7 +1287,7 @@ const ExtremeSearchComponent = ({
             'bg-background',
             'border border-neutral-200 dark:border-neutral-800',
             'data-[state=open]:rounded-b-none cursor-pointer',
-            sourcesAccordionOpen ? 'rounded-t-2xl' : 'rounded-2xl',
+            sourcesAccordionOpen ? 'rounded-t-lg' : 'rounded-lg',
           )}
           onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
         >
@@ -1336,7 +1336,7 @@ const ExtremeSearchComponent = ({
                 'overflow-hidden',
                 'bg-background',
                 'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-xl',
+                'rounded-b-lg',
               )}
             >
               <div className="p-3 space-y-3">
@@ -1374,7 +1374,7 @@ const ExtremeSearchComponent = ({
     return (
       <div className="space-y-2">
         {/* Research Process */}
-        <Card className="!p-0 !gap-0 rounded-xl">
+        <Card className="!p-0 !gap-0 rounded-lg shadow-none">
           <div
             className="flex items-center justify-between p-3 cursor-pointer"
             onClick={() => setResearchProcessOpen(!researchProcessOpen)}
@@ -1422,7 +1422,7 @@ const ExtremeSearchComponent = ({
 
   // In-progress view
   return (
-    <Card className="!p-0 !m-0 !gap-0 rounded-lg">
+    <Card className="!p-0 !m-0 !gap-0 rounded-lg shadow-none">
       <div className="py-3 px-4 border-b bg-neutral-50 dark:bg-neutral-900 rounded-t-lg">
         <div className="text-sm font-medium">
           {state === 'input-streaming' || state === 'input-available' ? (

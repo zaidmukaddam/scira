@@ -13,6 +13,8 @@ import {
   CommandInput,
 } from '@/components/ui/command';
 import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { SearchList02Icon } from '@hugeicons/core-free-icons';
 import { ListMagnifyingGlass } from '@phosphor-icons/react';
 import {
   isToday,
@@ -1113,7 +1115,7 @@ export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void
           className="size-8 p-0! m-0!"
           aria-label="Chat History"
         >
-          <ListMagnifyingGlass className="size-6" weight="light" />
+          <HugeiconsIcon icon={SearchList02Icon} className="size-6" />
           <span className="sr-only">Chat History</span>
         </Button>
       </TooltipTrigger>

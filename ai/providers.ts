@@ -21,7 +21,7 @@ export const scira = customProvider({
     'scira-default': xai('grok-3-mini'),
     'scira-x-fast-mini': xai('grok-3-mini-fast'),
     'scira-x-fast': xai('grok-3-fast'),
-    'scira-nano': openai.responses('gpt-5-nano'),
+    'scira-nano': groq('llama-3.3-70b-versatile'),
     'scira-grok-3': xai('grok-3-fast'),
     'scira-grok-4': xai('grok-4'),
     'scira-gpt-oss-120': wrapLanguageModel({
@@ -36,16 +36,12 @@ export const scira = customProvider({
     'scira-g2': xai('grok-2-latest'),
     'scira-5-nano': openai.responses('gpt-5-nano'),
     'scira-5-mini': openai.responses('gpt-5-mini'),
-    'scira-5': openai.responses('gpt-5'),
+    'scira-5':  openai.responses('gpt-5'),
+    'scira-5-high': openai.responses('gpt-5'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
     }),
-    'scira-qwen-30b': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-30B-A3B:fireworks-ai'),
-      middleware,
-    }),
-    'scira-qwen-235b': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:together'),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-deepseek-v3': wrapLanguageModel({
       model: huggingface.chat('deepseek-ai/DeepSeek-V3-0324:fireworks-ai'),
@@ -237,21 +233,21 @@ export const models = [
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 16000,
+    maxOutputTokens: 128000,
   },
   {
     value: 'scira-5-mini',
     label: 'GPT 5 Mini',
     description: "OpenAI's latest flagship mini LLM",
     vision: true,
-    reasoning: false,
+    reasoning: true,
     experimental: false,
     category: 'Mini',
     pdf: false,
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 16000,
+    maxOutputTokens: 128000,
   },
   {
     value: 'scira-google-lite',
@@ -265,7 +261,7 @@ export const models = [
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 64000,
+    maxOutputTokens: 10000,
   },
 
   // Pro Models
@@ -274,14 +270,28 @@ export const models = [
     label: 'GPT 5',
     description: "OpenAI's latest flagship LLM",
     vision: true,
-    reasoning: false,
+    reasoning: true,
     experimental: false,
     category: 'Pro',
     pdf: false,
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 16000,
+    maxOutputTokens: 128000,
+  },
+  {
+    value: 'scira-5-high',
+    label: 'GPT 5 (Max)',
+    description: "OpenAI's latest flagship LLM with max reasoning",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 128000,
   },
   {
     value: 'scira-anthropic',
@@ -295,7 +305,7 @@ export const models = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 64000,
+    maxOutputTokens: 8000,
   },
   {
     value: 'scira-google',
@@ -309,7 +319,7 @@ export const models = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 65000,
+    maxOutputTokens: 10000,
   },
   {
     value: 'scira-glm',
@@ -323,7 +333,7 @@ export const models = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
-    maxOutputTokens: 130000,
+    maxOutputTokens: 13000,
   },
   {
     value: 'scira-kimi-k2',
@@ -351,9 +361,9 @@ export const models = [
     pro: true,
     requiresAuth: false,
     freeUnlimited: false,
-    maxOutputTokens: 65000,
+    maxOutputTokens: 10000,
   },
-  
+
   // Experimental Models
   {
     value: 'scira-llama-4',

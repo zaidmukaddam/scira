@@ -657,6 +657,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
       return components.length === 1 ? components[0] : <Fragment key={generateKey()}>{components}</Fragment>;
     },
+    hr() {
+      return <div />;
+    },
     paragraph(children) {
       // Check if the paragraph contains only a LaTeX block placeholder
       if (typeof children === 'string') {

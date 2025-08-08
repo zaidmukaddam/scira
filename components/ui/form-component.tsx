@@ -1048,8 +1048,53 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     } else {
       try {
+        // Environment and feature checks
+        if (typeof window === 'undefined') {
+          toast.error('Voice recording is only available in the browser.');
+          return;
+        }
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+          toast.error('Voice recording is not supported in this browser.');
+          return;
+        }
+
+        // Best-effort permissions hint (not supported in all browsers)
+        try {
+          const permApi: any = (navigator as any).permissions;
+          if (permApi?.query) {
+            const status = await permApi.query({ name: 'microphone' as any });
+            if (status?.state === 'denied') {
+              toast.error('Microphone access is denied. Enable it in your browser settings.');
+              return;
+            }
+          }
+        } catch {
+          // Ignore permissions API errors; proceed to request directly
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
+
+        // Pick a supported MIME type to maximize cross-browser compatibility (e.g., Safari)
+        const candidateMimeTypes = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4;codecs=mp4a.40.2',
+          'audio/mp4',
+          'audio/ogg;codecs=opus',
+          'audio/mpeg',
+        ];
+        const isTypeSupported = (type: string) =>
+          typeof MediaRecorder !== 'undefined' && (MediaRecorder as any).isTypeSupported?.(type);
+        const selectedMimeType = candidateMimeTypes.find((t) => isTypeSupported(t));
+
+        let recorder: MediaRecorder;
+        try {
+          recorder = selectedMimeType ? new MediaRecorder(stream, { mimeType: selectedMimeType }) : new MediaRecorder(stream);
+        } catch (e) {
+          // Fallback: try without options
+          recorder = new MediaRecorder(stream);
+        }
         mediaRecorderRef.current = recorder;
 
         recorder.addEventListener('dataavailable', async (event) => {
@@ -1058,7 +1103,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             try {
               const formData = new FormData();
-              formData.append('audio', audioBlob, 'recording.webm');
+              const extension = (() => {
+                const type = (audioBlob?.type || '').toLowerCase();
+                if (type.includes('mp4')) return 'mp4';
+                if (type.includes('ogg')) return 'ogg';
+                if (type.includes('mpeg')) return 'mp3';
+                return 'webm';
+              })();
+              formData.append('audio', audioBlob, `recording.${extension}`);
               const response = await fetch('/api/transcribe', {
                 method: 'POST',
                 body: formData,
@@ -1077,10 +1129,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
               }
             } catch (error) {
               console.error('Error during transcription request:', error);
+              toast.error('Failed to transcribe audio. Please try again.');
             } finally {
               cleanupMediaRecorder();
             }
           }
+        });
+
+        recorder.addEventListener('error', (e) => {
+          console.error('MediaRecorder error:', e);
+          toast.error('Recording failed. Please try again or switch browser.');
+          cleanupMediaRecorder();
         });
 
         recorder.addEventListener('stop', () => {
@@ -1091,6 +1150,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setIsRecording(true);
       } catch (error) {
         console.error('Error accessing microphone:', error);
+        toast.error('Could not access microphone. Please allow mic permission.');
         setIsRecording(false);
       }
     }

@@ -332,6 +332,25 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
     // Handle reasoning parts
     if (part.type === 'reasoning') {
+      // If previous part is also reasoning, skip rendering to avoid duplicate sections
+      const prevPart = parts[partIndex - 1];
+      if (prevPart && prevPart.type === 'reasoning') {
+        return null;
+      }
+
+      // Merge consecutive reasoning parts into a single block
+      let nextIndex = partIndex;
+      const mergedTexts: string[] = [];
+      while (nextIndex < parts.length && parts[nextIndex]?.type === 'reasoning') {
+        const r = parts[nextIndex] as unknown as ReasoningUIPart;
+        if (typeof r.text === 'string' && r.text.length > 0) {
+          mergedTexts.push(r.text);
+        }
+        nextIndex += 1;
+      }
+
+      const mergedPart: ReasoningUIPart = { ...(part as ReasoningUIPart), text: mergedTexts.join('\n\n') };
+
       const sectionKey = `${messageIndex}-${partIndex}`;
       const hasParallelToolInvocation = parts.some((p: ChatMessage['parts'][number]) => p.type.startsWith('tool-'));
       const isComplete = parts.some(
@@ -351,7 +370,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       return (
         <ReasoningPartView
           key={sectionKey}
-          part={part as ReasoningUIPart}
+          part={mergedPart}
           sectionKey={sectionKey}
           isComplete={isComplete}
           duration={null}

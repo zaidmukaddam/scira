@@ -16,7 +16,7 @@ import {
   stepCountIs,
   JsonToSseTransformStream,
 } from 'ai';
-import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits } from '@/ai/providers';
+import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits, models } from '@/ai/providers';
 import {
   createStreamId,
   getChatById,
@@ -82,6 +82,11 @@ export function getStreamContext() {
   }
 
   return globalStreamContext;
+}
+
+const getMaxOutputTokens = (model: string) => {
+  const modelConfig = models.find((m) => m.value === model);
+  return modelConfig?.maxOutputTokens ?? 4000;
 }
 
 export async function POST(req: Request) {
@@ -314,6 +319,8 @@ export async function POST(req: Request) {
       console.log(`Time to reach streamText: ${setupTime.toFixed(2)} seconds`);
       console.log('--------------------------------');
 
+      const maxTokens = getMaxOutputTokens(model);
+
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToModelMessages(messages),
@@ -334,6 +341,9 @@ export async function POST(req: Request) {
             }),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
+        ...(model.includes('scira-5') ? {
+          maxOutputTokens: maxTokens,
+        } : {}),
         experimental_activeTools: [...activeTools],
         system:
           instructions +
@@ -344,25 +354,21 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model === 'scira-5'
-              || model === 'scira-5-mini'
-              || model === 'scira-5-nano'
-              ? {
-                strictSchemas: true,
-                reasoningEffort: 'minimal',
-                reasoningSummary: 'detailed',
-                serviceTier: 'flex',
-                parallelToolCalls: false,
-              }
-              : {}),
-          } as OpenAIResponsesProviderOptions,
+            ...(model.includes('scira-5') ? {
+              include: ["reasoning.encrypted_content"],
+              reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+              reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+              parallelToolCalls: false,
+              strictJsonSchema: true,
+            } : {}),
+          } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
                 reasoningEffort: 'low',
               }
               : {}),
-          } as XaiProviderOptions,
+          } satisfies XaiProviderOptions,
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {

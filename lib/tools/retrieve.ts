@@ -57,6 +57,9 @@ export const retrieveTool = tool({
         try {
           const scrapeResponse = await firecrawl.scrapeUrl(url, {
             formats: ['markdown'],
+            onlyMainContent: true,
+            parsePDF: true,
+            maxAge: 14400000,
           });
 
           if (!scrapeResponse.success) {

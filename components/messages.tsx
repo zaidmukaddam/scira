@@ -39,8 +39,6 @@ interface MessagesProps {
   onHighlight?: (text: string) => void; // Add highlight handler
 }
 
-
-
 const Messages: React.FC<MessagesProps> = React.memo(
   ({
     messages,
@@ -81,15 +79,18 @@ const Messages: React.FC<MessagesProps> = React.memo(
       console.log('=== FILTERING MESSAGES START ===');
       console.log('Raw messages array:', messages);
       console.log('Raw messages length:', messages.length);
-      
+
       const filtered = messages.filter((message) => {
         console.log('Processing message:', {
           role: message.role,
           id: message.id,
-          parts: message.parts?.map(p => ({ type: p.type, hasContent: !!(p as any).text || !!(p as any).input || !!(p as any).output })),
-          partsLength: message.parts?.length
+          parts: message.parts?.map((p) => ({
+            type: p.type,
+            hasContent: !!(p as any).text || !!(p as any).input || !!(p as any).output,
+          })),
+          partsLength: message.parts?.length,
         });
-        
+
         // Keep all user messages
         if (message.role === 'user') {
           console.log('✅ Keeping user message:', message.id);
@@ -101,11 +102,11 @@ const Messages: React.FC<MessagesProps> = React.memo(
           console.log('✅ Keeping assistant message:', message.id);
           return true;
         }
-        
+
         console.log('❌ Filtering out message:', message.role, message.id);
         return false;
       });
-      
+
       console.log('Filtered messages length:', filtered.length);
       console.log('Filtered messages:', filtered);
       console.log('=== FILTERING MESSAGES END ===');
@@ -116,7 +117,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
     const hasActiveToolInvocations = useMemo(() => {
       const lastMessage = memoizedMessages[memoizedMessages.length - 1];
       console.log('hasActiveToolInvocations - lastMessage:', lastMessage);
-      
+
       // Only consider tools as "active" if we're currently streaming AND the last message is assistant with tools
       if (status === 'streaming' && lastMessage?.role === 'assistant') {
         const hasTools = lastMessage.parts?.some((part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'));
@@ -183,7 +184,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         setSuggestedQuestions([]);
 
         // Step 4: Reload
-        await regenerate({ messageId: newMessages[newMessages.length - 1].id });
+        await regenerate();
       } catch (error) {
         console.error('Error in retry:', error);
       }
@@ -253,7 +254,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
       if (status === 'submitted') {
         return true;
       }
-      
+
       if (status === 'streaming') {
         const lastMessage = memoizedMessages[memoizedMessages.length - 1];
         // Show loading if only user message exists (no assistant response yet)
@@ -266,22 +267,45 @@ const Messages: React.FC<MessagesProps> = React.memo(
           return partsCount <= 1;
         }
       }
-      
+
       return false;
     }, [status, memoizedMessages]);
 
-    // Check if assistant message should have reduced height (when loading animation is also showing)
-    const shouldReduceAssistantHeight = useMemo(() => {
-      if (shouldShowLoading && status === 'streaming') {
-        const lastMessage = memoizedMessages[memoizedMessages.length - 1];
-        // Reduce height when assistant message exists but loading is also showing
-        if (lastMessage?.role === 'assistant') {
-          const partsCount = lastMessage.parts?.length || 0;
-          return partsCount <= 1;
-        }
+    // Compute index of the most recent assistant message; only that one should keep min-height
+    const lastAssistantIndex = useMemo(() => {
+      for (let i = memoizedMessages.length - 1; i >= 0; i -= 1) {
+        if (memoizedMessages[i]?.role === 'assistant') return i;
+      }
+      return -1;
+    }, [memoizedMessages]);
+
+    // Index of actively streaming assistant (only when last message is assistant during streaming)
+    const activeAssistantIndex = useMemo(() => {
+      const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+      if (status === 'streaming' && lastMessage?.role === 'assistant') {
+        return memoizedMessages.length - 1;
+      }
+      return -1;
+    }, [memoizedMessages, status]);
+
+    // Is the active assistant in the initial skeleton phase (0 or 1 parts)?
+    const isActiveAssistantSkeleton = useMemo(() => {
+      const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+      if (status === 'streaming' && lastMessage?.role === 'assistant') {
+        const partsCount = lastMessage.parts?.length || 0;
+        return partsCount <= 1;
       }
       return false;
-    }, [shouldShowLoading, status, memoizedMessages]);
+    }, [memoizedMessages, status]);
+
+    // Loader reserves min-height when submitted, or streaming after user, or
+    // streaming with assistant in skeleton phase (0/1 parts)
+    const shouldReserveLoaderMinHeight = useMemo(() => {
+      const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+      if (status === 'submitted') return true;
+      if (status === 'streaming' && (lastMessage?.role === 'user' || isActiveAssistantSkeleton)) return true;
+      return false;
+    }, [memoizedMessages, status, isActiveAssistantSkeleton]);
 
     // Auto-scroll to bottom when messages change
     useEffect(() => {
@@ -320,13 +344,16 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
     console.log('=== RENDER CHECK ===');
     console.log('memoizedMessages.length:', memoizedMessages.length);
-    console.log('memoizedMessages roles:', memoizedMessages.map(m => m.role));
-    
+    console.log(
+      'memoizedMessages roles:',
+      memoizedMessages.map((m) => m.role),
+    );
+
     if (memoizedMessages.length === 0) {
       console.log('❌ No messages to render, returning null');
       return null;
     }
-    
+
     console.log('✅ Proceeding to render', memoizedMessages.length, 'messages');
 
     return (
@@ -337,7 +364,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
             console.log('Message role:', message.role);
             console.log('Message id:', message.id);
             console.log('Message parts count:', message.parts?.length);
-            
+
             const isNextMessageAssistant =
               index < memoizedMessages.length - 1 && memoizedMessages[index + 1].role === 'assistant';
             const isCurrentMessageUser = message.role === 'user';
@@ -383,7 +410,19 @@ const Messages: React.FC<MessagesProps> = React.memo(
                   handleRetry={handleRetry}
                   isOwner={isOwner}
                   onHighlight={onHighlight}
-                  shouldReduceHeight={isLastMessage && shouldReduceAssistantHeight}
+                  shouldReduceHeight={
+                    message.role === 'assistant'
+                      ? status === 'submitted'
+                        ? true
+                        : status === 'streaming'
+                          ? activeAssistantIndex !== -1
+                            ? index === activeAssistantIndex
+                              ? isActiveAssistantSkeleton
+                              : true
+                            : true
+                          : index !== lastAssistantIndex
+                      : false
+                  }
                 />
               </div>
             );
@@ -392,7 +431,9 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
         {/* Loading animation when status is submitted or streaming with minimal assistant content */}
         {shouldShowLoading && (
-          <div className="flex items-start min-h-[calc(100vh-18rem)] !m-0 !p-0">
+          <div
+            className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+          >
             <div className="w-full !m-0 !p-0">
               <SciraLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
@@ -413,46 +454,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
           </div>
         )}
 
-        {/* Missing assistant response error */}
-        {isMissingAssistantResponse && (
-          <div className="flex items-start min-h-[calc(100vh-18rem)]">
-            <div className="w-full">
-              <SciraLogoHeader />
-
-              <div className="bg-secondary/30 dark:bg-secondary/20 border border-secondary dark:border-secondary rounded-lg p-4 mb-4 max-w-2xl">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-secondary-foreground dark:text-secondary-foreground mb-1">
-                      No response generated
-                    </h3>
-                    <p className="text-sm text-secondary-foreground/80 dark:text-secondary-foreground/80">
-                      It looks like the assistant didn&apos;t provide a response to your message.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-4 py-3 flex items-center justify-between">
-                <p className="text-muted-foreground dark:text-muted-foreground text-xs">
-                  {!user && selectedVisibilityType === 'public'
-                    ? 'Please sign in to retry or try a different prompt'
-                    : 'Try regenerating the response or rephrase your question'}
-                </p>
-                {(user || selectedVisibilityType === 'private') && (
-                  <Button
-                    onClick={handleRetry}
-                    className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                    size="sm"
-                  >
-                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    Generate Response
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Missing assistant response UI is now handled inside the assistant Message */}
 
         {/* Show global error when there is no assistant message to display it */}
         {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
@@ -485,4 +487,3 @@ const Messages: React.FC<MessagesProps> = React.memo(
 Messages.displayName = 'Messages';
 
 export default Messages;
-

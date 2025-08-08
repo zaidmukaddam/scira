@@ -5,8 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Geist } from 'next/font/google';
-
+import { Be_Vietnam_Pro, Inter } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 
@@ -75,10 +74,11 @@ export const viewport: Viewport = {
   ],
 };
 
-const geist = Geist({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
   preload: true,
+  weight: 'variable',
   display: 'swap',
 });
 
@@ -97,7 +97,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />

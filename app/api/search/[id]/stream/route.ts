@@ -90,6 +90,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const restoredStream = createUIMessageStream<ChatMessage>({
       execute: ({ writer }) => {
+        console.log('Restoring stream...');
+        console.log('Most recent message: ', mostRecentMessage);
         writer.write({
           type: 'data-appendMessage',
           data: JSON.stringify(mostRecentMessage),

@@ -41,34 +41,47 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
   const renderer = {
     code(code: string, language?: string) {
       return (
-        <pre key={Math.random()} className="bg-muted p-1.5 rounded text-xs overflow-x-auto my-2">
-          <code className="text-muted-foreground">{code}</code>
+        <pre
+          key={Math.random()}
+          className="bg-muted/70 dark:bg-muted/50 border border-border/60 rounded px-2 py-1.5 text-xs overflow-x-auto my-2"
+        >
+          <code className="text-foreground/90">{code}</code>
         </pre>
       );
     },
     codespan(code: string) {
       return (
-        <code key={Math.random()} className="bg-muted px-1 py-0.5 rounded text-xs">
+        <code
+          key={Math.random()}
+          className="bg-muted/70 dark:bg-muted/50 text-foreground px-1 py-0.5 rounded border border-border/50 text-[11px]"
+        >
           {code}
         </code>
       );
     },
     paragraph(text: ReactNode) {
       return (
-        <p key={Math.random()} className="mb-2 last:mb-0">
+        <p key={Math.random()} className="mb-2 last:mb-0 text-muted-foreground">
           {text}
         </p>
+      );
+    },
+    strong(text: ReactNode) {
+      return (
+        <strong key={Math.random()} className="text-foreground font-semibold">
+          {text}
+        </strong>
       );
     },
     heading(text: ReactNode, level: number) {
       const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const classes = {
-        h1: 'text-sm font-semibold mb-2 mt-3',
-        h2: 'text-xs font-semibold mb-1.5 mt-2.5',
-        h3: 'text-xs font-medium mb-1.5 mt-2',
-        h4: 'text-xs font-medium mb-1 mt-1.5',
-        h5: 'text-xs font-normal mb-1 mt-1.5',
-        h6: 'text-xs font-normal mb-1 mt-1.5',
+        h1: 'text-sm font-semibold mb-2 mt-3 text-foreground',
+        h2: 'text-xs font-semibold mb-1.5 mt-2.5 text-foreground',
+        h3: 'text-xs font-medium mb-1.5 mt-2 text-foreground',
+        h4: 'text-xs font-medium mb-1 mt-1.5 text-foreground',
+        h5: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
+        h6: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
       };
 
       const className = classes[`h${level}` as keyof typeof classes] || '';
@@ -85,7 +98,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:underline"
+          className="text-primary hover:text-primary underline-offset-2 hover:underline"
         >
           {text}
         </a>
@@ -94,14 +107,17 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     list(body: ReactNode, ordered: boolean) {
       const Type = ordered ? 'ol' : 'ul';
       return (
-        <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-4 mb-2 last:mb-1`}>
+        <Type
+          key={Math.random()}
+          className={`${ordered ? 'list-decimal' : 'list-disc'} pl-4 mb-2 last:mb-1 marker:text-muted-foreground/60 text-muted-foreground`}
+        >
           {body}
         </Type>
       );
     },
     listItem(text: ReactNode) {
       return (
-        <li key={Math.random()} className="mb-0.5">
+        <li key={Math.random()} className="mb-0.5 text-muted-foreground">
           {text}
         </li>
       );
@@ -110,7 +126,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       return (
         <blockquote
           key={Math.random()}
-          className="border-l-2 border-border pl-2 py-0.5 my-2 italic text-muted-foreground"
+          className="border-l-2 border-border pl-2 py-1 my-2 italic bg-muted/30 text-muted-foreground rounded"
         >
           {text}
         </blockquote>
@@ -122,7 +138,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     table(children: ReactNode[]) {
       return (
         <div key={Math.random()} className="overflow-x-auto mb-2">
-          <table className="min-w-full border-collapse text-xs">{children}</table>
+          <table className="min-w-full border border-border/60 rounded text-xs">{children}</table>
         </div>
       );
     },
@@ -137,11 +153,14 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       const align = flags.align ? `text-${flags.align}` : '';
 
       return flags.header ? (
-        <th key={Math.random()} className={`px-1.5 py-0.5 font-medium bg-muted/50 ${align}`}>
+        <th
+          key={Math.random()}
+          className={`px-1.5 py-1 font-medium bg-muted/60 text-foreground border border-border/60 ${align}`}
+        >
           {children}
         </th>
       ) : (
-        <td key={Math.random()} className={`px-1.5 py-0.5 ${align}`}>
+        <td key={Math.random()} className={`px-1.5 py-1 text-muted-foreground border border-border/60 ${align}`}>
           {children}
         </td>
       );

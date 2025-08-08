@@ -5,6 +5,7 @@ import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText, generateId } from 'ai';
+import type { CoreMessage, ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
@@ -33,7 +34,7 @@ import {
   deleteLookout,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
-import { groq } from '@ai-sdk/groq';
+import { GroqProviderOptions, groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
 // Removed old subscription imports - now using unified user data approach
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
@@ -104,14 +105,19 @@ export async function suggestQuestions(history: any[]) {
 }
 
 export async function checkImageModeration(images: string[]) {
+  const messages: ModelMessage[] = images.map((image) => ({
+    role: 'user',
+    content: [{ type: 'image', image: image }],
+  }));
+
   const { text } = await generateText({
     model: groq('meta-llama/llama-guard-4-12b'),
-    messages: [
-      {
-        role: 'user',
-        content: images[0]
+    messages,
+    providerOptions: {
+      groq: {
+        service_tier: 'flex',
       },
-    ],
+    },
   });
   return text;
 }
@@ -126,6 +132,11 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - the title should creative and unique
     - do not use quotes or colons`,
     prompt: JSON.stringify(message),
+    providerOptions: {
+      groq: {
+        service_tier: 'flex',
+      },
+    },
   });
 
   return title;
@@ -1113,9 +1124,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-        hasSubscription: true,
-        subscription: userData.polarSubscription,
-      }
+      hasSubscription: true,
+      subscription: userData.polarSubscription,
+    }
     : { hasSubscription: false };
 }
 
