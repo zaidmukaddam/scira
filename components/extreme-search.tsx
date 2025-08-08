@@ -11,17 +11,7 @@ import type { Research } from '@/lib/tools/extreme-search';
 import type { ToolUIPart } from 'ai';
 import React, { useEffect, useState, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronDown,
-  ChevronRight,
-  ArrowUpRight,
-  Globe,
-  Search,
-  ExternalLink,
-  Target,
-  Zap,
-  Brain,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, ArrowUpRight, Globe, Search, ExternalLink, Target, Zap, Brain } from 'lucide-react';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactECharts, { EChartsOption } from 'echarts-for-react';
@@ -1078,9 +1068,7 @@ const ExtremeSearchComponent = ({
                           );
                         } else if (query.sources.length === 0 && !isLoading) {
                           return (
-                            <p className="text-xs text-muted-foreground py-1 mt-1">
-                              No sources found for this query.
-                            </p>
+                            <p className="text-xs text-muted-foreground py-1 mt-1">No sources found for this query.</p>
                           );
                         }
                         return null;
@@ -1498,12 +1486,8 @@ const ExtremeSearchComponent = ({
                   )}
 
                   <div className="flex items-center gap-1 py-0.5 px-1 rounded-sm relative min-h-[18px]">
-                    <span className="text-foreground text-xs min-w-0 flex-1 font-medium">
-                      {item.title}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.todos?.length || 0} tasks
-                    </span>
+                    <span className="text-foreground text-xs min-w-0 flex-1 font-medium">{item.title}</span>
+                    <span className="text-xs text-muted-foreground">{item.todos?.length || 0} tasks</span>
                   </div>
                 </motion.div>
               ))}
@@ -1516,9 +1500,7 @@ const ExtremeSearchComponent = ({
           <div className="mb-3">
             <div className="flex items-center gap-1.5 mb-2">
               <Target className="w-3.5 h-3.5 text-primary/50" />
-              <h4 className="text-sm font-medium text-foreground">
-                Preparing Research Strategy
-              </h4>
+              <h4 className="text-sm font-medium text-foreground">Preparing Research Strategy</h4>
             </div>
 
             <div className="space-y-1 relative ml-3">

@@ -663,8 +663,8 @@ const ChatInterface = memo(
                 className={cn(
                   'transition-all duration-500 bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative max-w-2xl mx-auto w-full'
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-4 sm:!pb-6 mt-1 mx-2 p-0',
+                    ? 'relative max-w-2xl mx-auto w-full rounded-xl'
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-2 p-0',
                 )}
               >
                 <FormComponent

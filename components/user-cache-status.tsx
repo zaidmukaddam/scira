@@ -12,17 +12,8 @@ interface UserCacheStatusProps {
 }
 
 export function UserCacheStatus({ className }: UserCacheStatusProps) {
-  const {
-    user,
-    isLoading,
-    isProUser,
-    isCached,
-    clearCache,
-    refetch,
-    isRefetching,
-    subscriptionStatus,
-    proSource,
-  } = useUser();
+  const { user, isLoading, isProUser, isCached, clearCache, refetch, isRefetching, subscriptionStatus, proSource } =
+    useUser();
 
   const handleClearCache = () => {
     clearCache();
@@ -61,18 +52,14 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Email:</span>
-              <span className="text-sm font-medium truncate max-w-[150px]">
-                {user.email || 'N/A'}
-              </span>
+              <span className="text-sm font-medium truncate max-w-[150px]">{user.email || 'N/A'}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Pro Status:</span>
               <div className="flex items-center gap-1">
                 {isProUser && <Crown className="h-3 w-3 text-yellow-500" />}
-                <span className="text-sm font-medium">
-                  {isProUser ? 'Pro User' : 'Free User'}
-                </span>
+                <span className="text-sm font-medium">{isProUser ? 'Pro User' : 'Free User'}</span>
               </div>
             </div>
 
@@ -87,10 +74,7 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Subscription:</span>
-                  <Badge
-                    variant={subscriptionStatus === 'active' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
+                  <Badge variant={subscriptionStatus === 'active' ? 'default' : 'secondary'} className="text-xs">
                     {subscriptionStatus}
                   </Badge>
                 </div>
@@ -99,9 +83,7 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">User ID:</span>
-              <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">
-                {user.id.slice(-8)}
-              </span>
+              <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">{user.id.slice(-8)}</span>
             </div>
           </div>
         ) : (
@@ -121,39 +103,23 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span className="text-muted-foreground">
-                Load Time: {isCached ? '~0ms' : '~300ms'}
-              </span>
+              <span className="text-muted-foreground">Load Time: {isCached ? '~0ms' : '~300ms'}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className={`h-2 w-2 rounded-full ${isCached ? 'bg-green-500' : 'bg-blue-500'}`} />
-              <span className="text-muted-foreground">
-                {isCached ? 'Instant' : 'Network'}
-              </span>
+              <span className="text-muted-foreground">{isCached ? 'Instant' : 'Network'}</span>
             </div>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isRefetching}
-            className="flex-1"
-          >
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching} className="flex-1">
             <RefreshCw className={`h-3 w-3 mr-1 ${isRefetching ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearCache}
-            disabled={!isCached}
-            className="flex-1"
-          >
+          <Button variant="outline" size="sm" onClick={handleClearCache} disabled={!isCached} className="flex-1">
             <Trash2 className="h-3 w-3 mr-1" />
             Clear Cache
           </Button>
@@ -163,8 +129,8 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
         {isCached && (
           <div className="bg-muted/50 rounded-lg p-2">
             <p className="text-xs text-muted-foreground">
-              💡 This data was loaded instantly from localStorage cache.
-              Fresh data is being fetched in the background for next time.
+              💡 This data was loaded instantly from localStorage cache. Fresh data is being fetched in the background
+              for next time.
             </p>
           </div>
         )}

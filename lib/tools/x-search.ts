@@ -65,16 +65,14 @@ export const xSearchTool = tool({
               maxSearchResults: maxResults,
               returnCitations: true,
               sources: [
-                xHandles && xHandles.length > 0
-                  ? { type: 'x', xHandles: xHandles, safeSearch: false }
-                  : { type: 'x' },
+                xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles, safeSearch: false } : { type: 'x' },
               ],
             },
-          } as XaiProviderOptions
+          } as XaiProviderOptions,
         },
         onStepFinish: (step) => {
           console.log('[X search step]: ', step);
-        }
+        },
       });
 
       console.log('[X search data]: ', text);
@@ -87,8 +85,8 @@ export const xSearchTool = tool({
           .filter((link) => link.sourceType === 'url')
           .map(async (link) => {
             try {
-              const tweetUrl = link.sourceType === 'url' ? link.url : "";
-              const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
+              const tweetUrl = link.sourceType === 'url' ? link.url : '';
+              const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
 
               const tweetData = await getTweet(tweetId);
               if (!tweetData) return null;
@@ -101,7 +99,7 @@ export const xSearchTool = tool({
                 link: tweetUrl,
               };
             } catch (error) {
-              console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ""}:`, error);
+              console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
               return null;
             }
           });

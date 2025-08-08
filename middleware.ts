@@ -19,6 +19,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith('/api/search/:id')) {
+    return NextResponse.next();
+  }
+
   // If user is authenticated but trying to access auth routes
   if (sessionCookie && authRoutes.some((route) => pathname.startsWith(route))) {
     console.log('Redirecting to home');

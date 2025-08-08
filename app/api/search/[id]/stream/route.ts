@@ -59,7 +59,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 
   const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => {},
+    execute: () => {
+      console.log('Empty data stream');
+    },
   });
 
   const stream = await streamContext.resumableStream(recentStreamId, () =>
@@ -72,19 +74,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
    */
   if (!stream) {
     const messages = await getMessagesByChatId({ id: chatId });
+    console.log('Messages: ', messages);
     const mostRecentMessage = messages.at(-1);
 
     if (!mostRecentMessage) {
+      console.log('No most recent message found');
       return new Response(emptyDataStream, { status: 200 });
     }
 
     if (mostRecentMessage.role !== 'assistant') {
+      console.log('Most recent message is not an assistant message');
       return new Response(emptyDataStream, { status: 200 });
     }
 
     const messageCreatedAt = new Date(mostRecentMessage.createdAt);
 
     if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
+      console.log('Most recent message is too old');
       return new Response(emptyDataStream, { status: 200 });
     }
 

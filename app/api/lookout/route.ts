@@ -30,10 +30,7 @@ import { extremeSearchTool } from '@/lib/tools';
 async function checkUserIsProById(userId: string): Promise<boolean> {
   try {
     // Check for active Polar subscription
-    const polarSubscriptions = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.userId, userId));
+    const polarSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
 
     // Check if any Polar subscription is active
     const activePolarSubscription = polarSubscriptions.find((sub) => {
@@ -47,10 +44,7 @@ async function checkUserIsProById(userId: string): Promise<boolean> {
     }
 
     // Check for Dodo payments (Indian users)
-    const dodoPayments = await db
-      .select()
-      .from(payment)
-      .where(eq(payment.userId, userId));
+    const dodoPayments = await db.select().from(payment).where(eq(payment.userId, userId));
 
     const successfulDodoPayments = dodoPayments
       .filter((p) => p.status === 'succeeded')

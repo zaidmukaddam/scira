@@ -87,7 +87,7 @@ export function getStreamContext() {
 const getMaxOutputTokens = (model: string) => {
   const modelConfig = models.find((m) => m.value === model);
   return modelConfig?.maxOutputTokens ?? 4000;
-}
+};
 
 export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
@@ -101,9 +101,14 @@ export async function POST(req: Request) {
   console.log('Location: ', latitude, longitude);
   console.log('--------------------------------');
 
+
   console.log('--------------------------------');
   console.log('Messages: ', messages);
   console.log('--------------------------------');
+
+  console.log('Running with model: ', model.trim());
+  console.log('Group: ', group);
+  console.log('Timezone: ', timezone);
 
   const userCheckTime = Date.now();
   const user = await getCurrentUser();
@@ -139,12 +144,40 @@ export async function POST(req: Request) {
 
     const isProUser = user.isProUser;
 
+    try {
+      const existingChat = await getChatById({ id });
+      if (!existingChat) {
+        const title = await generateTitleFromUserMessage({
+          message: messages[messages.length - 1],
+        });
+        console.log('--------------------------------');
+        console.log('Generated title: ', title);
+        console.log('--------------------------------');
+        await saveChat({
+          id,
+          userId: user.id,
+          title: title,
+          visibility: selectedVisibilityType,
+        });
+        console.log('✅ Early chat creation completed for authenticated user');
+      } else {
+        if (existingChat.userId !== user.id) {
+          throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+        }
+      }
+      // Create stream record as early as possible for resumable streaming
+      await createStreamId({ streamId, chatId: id });
+      console.log('✅ Early stream creation completed');
+    } catch (earlyChatError) {
+      console.error('Early chat creation failed:', earlyChatError);
+      return new ChatSDKError('bad_request:database', 'Failed to initialize chat').toResponse();
+    }
+
     // Check if model requires Pro subscription
     if (requiresProSubscription(model) && !isProUser) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
 
-    // For non-pro users, check usage limits upfront
     if (!isProUser) {
       const criticalChecksStartTime = Date.now();
 
@@ -160,11 +193,10 @@ export async function POST(req: Request) {
           return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
         }
 
-        // Check if user should bypass limits for free unlimited models
         const shouldBypassLimits = shouldBypassRateLimits(model, user);
 
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
-          const dailyLimit = 100; // Non-pro users have a daily limit
+          const dailyLimit = 100;
           if (messageCountResult.count >= dailyLimit) {
             return new ChatSDKError('rate_limit:chat', 'Daily search limit reached').toResponse();
           }
@@ -188,14 +220,13 @@ export async function POST(req: Request) {
         return new ChatSDKError('bad_request:api', 'Failed to verify user access').toResponse();
       }
     } else {
-      // Pro users skip all usage limit checks
       const criticalChecksStartTime = Date.now();
       console.log(
         `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
       );
       criticalChecksPromise = Promise.resolve({
         canProceed: true,
-        messageCount: 0, // Not relevant for pro users
+        messageCount: 0,
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
@@ -204,11 +235,10 @@ export async function POST(req: Request) {
           }
           : { hasSubscription: false },
         shouldBypassLimits: true,
-        extremeSearchUsage: 0, // Not relevant for pro users
+        extremeSearchUsage: 0,
       });
     }
   } else {
-    // For anonymous users, check if model requires authentication
     if (requiresAuthentication(model)) {
       return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
     }
@@ -223,7 +253,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // Get configuration in parallel with critical checks
   const configStartTime = Date.now();
   const configPromise = getGroupConfig(group).then((config) => {
     console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
@@ -233,7 +262,6 @@ export async function POST(req: Request) {
   // Start streaming immediately while background operations continue
   const stream = createUIMessageStream({
     execute: async ({ writer: dataStream }) => {
-      // Wait for critical checks to complete
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
       console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
@@ -242,39 +270,15 @@ export async function POST(req: Request) {
         throw criticalResult.error;
       }
 
-      // Get configuration
       const configWaitStartTime = Date.now();
       const { tools: activeTools, instructions } = await configPromise;
       console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
 
-      // Critical: Ensure chat exists before streaming starts
       if (user) {
-        const chatCheckStartTime = Date.now();
-        const chat = await getChatById({ id });
-        console.log(`⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`);
-
-        if (!chat) {
-          // Create chat without title first - title will be generated in onFinish
-          const chatCreateStartTime = Date.now();
-          await saveChat({
-            id,
-            userId: user.id,
-            title: 'New conversation', // Temporary title that will be updated in onFinish
-            visibility: selectedVisibilityType,
-          });
-          console.log(`⏱️  Chat creation took: ${((Date.now() - chatCreateStartTime) / 1000).toFixed(2)}s`);
-        } else {
-          if (chat.userId !== user.id) {
-            throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
-          }
-        }
-
-        // Save user message and create stream ID in background (non-blocking)
         const backgroundOperations = (async () => {
           try {
             const backgroundStartTime = Date.now();
-            await Promise.all([
-              saveMessages({
+            await saveMessages({
                 messages: [
                   {
                     chatId: id,
@@ -285,9 +289,7 @@ export async function POST(req: Request) {
                     createdAt: new Date(),
                   },
                 ],
-              }),
-              createStreamId({ streamId, chatId: id }),
-            ]);
+              });
             console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
 
             console.log('--------------------------------');
@@ -295,24 +297,14 @@ export async function POST(req: Request) {
             console.log('--------------------------------');
           } catch (error) {
             console.error('Error in background message operations:', error);
-            // These are non-critical errors that shouldn't stop the stream
           }
         })();
 
-        // Start background operations but don't wait for them
         backgroundOperations.catch((error) => {
           console.error('Background operations failed:', error);
         });
       }
 
-      console.log('--------------------------------');
-      console.log('Messages: ', messages);
-      console.log('--------------------------------');
-      console.log('Running with model: ', model.trim());
-      console.log('Group: ', group);
-      console.log('Timezone: ', timezone);
-
-      // Calculate time to reach streamText
       const preStreamTime = Date.now();
       const setupTime = (preStreamTime - requestStartTime) / 1000;
       console.log('--------------------------------');
@@ -343,15 +335,17 @@ export async function POST(req: Request) {
                 topP: 0.8,
                 topK: 20,
                 minP: 0,
-                presencePenalty: 1.5
+                presencePenalty: 1.5,
               }
               : {}),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
-        ...(model.includes('scira-5') ? {
-          maxOutputTokens: maxTokens,
-        } : {}),
-        experimental_activeTools: [...activeTools],
+        ...(model.includes('scira-5')
+          ? {
+            maxOutputTokens: maxTokens,
+          }
+          : {}),
+        activeTools: [...activeTools],
         system:
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
@@ -361,13 +355,15 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model.includes('scira-5') ? {
-              include: ["reasoning.encrypted_content"],
-              reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
-              reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-              parallelToolCalls: false,
-              strictJsonSchema: true,
-            } : {}),
+            ...(model.includes('scira-5')
+              ? {
+                include: ['reasoning.encrypted_content'],
+                reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+                reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+                parallelToolCalls: false,
+                strictJsonSchema: true,
+              }
+              : {}),
           } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
@@ -484,30 +480,6 @@ export async function POST(req: Request) {
           // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {
             after(async () => {
-              // FIRST: Generate and update title for new conversations (highest priority)
-              try {
-                const chat = await getChatById({ id });
-                if (chat && chat.title === 'New conversation') {
-                  console.log('Generating title for new conversation...');
-                  const title = await generateTitleFromUserMessage({
-                    message: messages[messages.length - 1],
-                  });
-
-                  console.log('--------------------------------');
-                  console.log('Generated title: ', title);
-                  console.log('--------------------------------');
-
-                  // Update the chat with the generated title
-                  await updateChatTitleById({ chatId: id, title });
-                }
-              } catch (titleError) {
-                console.error('Failed to generate or update title:', titleError);
-              }
-            });
-
-            after(async () => {
-              // Track message usage for rate limiting (deletion-proof)
-              // Only track usage for models that are not free unlimited
               try {
                 if (!shouldBypassRateLimits(model, user)) {
                   await incrementMessageUsage({ userId: user.id });
@@ -519,9 +491,7 @@ export async function POST(req: Request) {
 
             if (group === 'extreme') {
               after(async () => {
-                // Track extreme search usage if it was used successfully
                 try {
-                  // Check if extreme_search tool was actually called
                   const extremeSearchUsed = event.steps?.some((step) =>
                     step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
                   );
@@ -537,7 +507,6 @@ export async function POST(req: Request) {
             }
           }
 
-          // Calculate and log overall request processing time
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');
@@ -546,7 +515,6 @@ export async function POST(req: Request) {
         },
         onError(event) {
           console.log('Error: ', event.error);
-          // Calculate and log processing time even on error
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');

@@ -18,7 +18,7 @@ export function EmptyState({
   title,
   description,
   children,
-  variant = 'dashed'
+  variant = 'dashed',
 }: EmptyStateProps) {
   return (
     <Card className={variant === 'dashed' ? 'border-dashed shadow-none' : 'shadow-none'}>
@@ -33,9 +33,7 @@ export function EmptyState({
           />
         </div>
         <h3 className="text-lg font-medium mb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">{description}</p>
         {children}
       </CardContent>
     </Card>

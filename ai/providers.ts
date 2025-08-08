@@ -36,7 +36,7 @@ export const scira = customProvider({
     'scira-g2': xai('grok-2-latest'),
     'scira-5-nano': openai.responses('gpt-5-nano'),
     'scira-5-mini': openai.responses('gpt-5-mini'),
-    'scira-5':  openai.responses('gpt-5'),
+    'scira-5': openai.responses('gpt-5'),
     'scira-5-high': openai.responses('gpt-5'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
@@ -169,7 +169,7 @@ export const models = [
   {
     value: 'scira-glm-air',
     label: 'GLM 4.5 Air',
-    description: "GLM 4.5 Air",
+    description: 'GLM 4.5 Air',
     vision: false,
     reasoning: true,
     experimental: false,
@@ -339,7 +339,7 @@ export const models = [
   {
     value: 'scira-glm',
     label: 'GLM 4.5',
-    description: "GLM 4.5",
+    description: 'GLM 4.5',
     vision: false,
     reasoning: true,
     experimental: false,

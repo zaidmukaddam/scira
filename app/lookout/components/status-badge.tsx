@@ -2,12 +2,7 @@
 
 import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  Clock01Icon,
-  PauseIcon,
-  PlayIcon,
-  Archive01Icon,
-} from '@hugeicons/core-free-icons';
+import { Clock01Icon, PauseIcon, PlayIcon, Archive01Icon } from '@hugeicons/core-free-icons';
 import { Badge } from '@/components/ui/badge';
 import { BorderTrail } from '@/components/core/border-trail';
 
@@ -62,12 +57,7 @@ export function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
           }}
         />
       )}
-      <HugeiconsIcon
-        icon={config.icon}
-        size={iconSize}
-        color="currentColor"
-        strokeWidth={1.5}
-      />
+      <HugeiconsIcon icon={config.icon} size={iconSize} color="currentColor" strokeWidth={1.5} />
       {config.label}
     </Badge>
   );

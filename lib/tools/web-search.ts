@@ -192,4 +192,4 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
       };
     },
   });
-};
+}

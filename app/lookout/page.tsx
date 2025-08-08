@@ -6,13 +6,7 @@ import { PlusSignIcon, BinocularsIcon, RefreshIcon, Cancel01Icon } from '@hugeic
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -359,7 +353,7 @@ export default function LookoutPage() {
                         </div>
                       </DrawerContent>
                     </Drawer>
-                    
+
                     <Button
                       variant="outline"
                       onClick={handleManualRefresh}
@@ -376,12 +370,16 @@ export default function LookoutPage() {
                       />
                     </Button>
                   </div>
-                  
+
                   {/* Tabs for mobile */}
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="bg-muted w-full">
-                      <TabsTrigger value="active" className="flex-1">Active</TabsTrigger>
-                      <TabsTrigger value="archived" className="flex-1">Archived</TabsTrigger>
+                      <TabsTrigger value="active" className="flex-1">
+                        Active
+                      </TabsTrigger>
+                      <TabsTrigger value="archived" className="flex-1">
+                        Archived
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>

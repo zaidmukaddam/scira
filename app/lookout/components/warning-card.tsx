@@ -19,7 +19,8 @@ const warningConfig = {
   },
   'daily-limit': {
     icon: AlarmClockIcon,
-    message: "You've reached the maximum of 5 active daily lookouts. Pause or delete existing daily lookouts to create new ones.",
+    message:
+      "You've reached the maximum of 5 active daily lookouts. Pause or delete existing daily lookouts to create new ones.",
   },
   custom: {
     icon: Alert02Icon,
@@ -27,18 +28,15 @@ const warningConfig = {
   },
 };
 
-export function WarningCard({
-  type,
-  icon,
-  message,
-  className = ''
-}: WarningCardProps) {
+export function WarningCard({ type, icon, message, className = '' }: WarningCardProps) {
   const config = warningConfig[type];
   const IconComponent = icon || config.icon;
   const displayMessage = message || config.message;
 
   return (
-    <Card className={`mb-6 border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20 shadow-none ${className}`}>
+    <Card
+      className={`mb-6 border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20 shadow-none ${className}`}
+    >
       <CardContent className="flex items-center gap-2 py-3">
         <HugeiconsIcon
           icon={IconComponent}
@@ -47,9 +45,7 @@ export function WarningCard({
           strokeWidth={1.5}
           className="text-orange-600 dark:text-orange-400 flex-shrink-0"
         />
-        <p className="text-sm text-orange-600 dark:text-orange-400">
-          {displayMessage}
-        </p>
+        <p className="text-sm text-orange-600 dark:text-orange-400">{displayMessage}</p>
       </CardContent>
     </Card>
   );

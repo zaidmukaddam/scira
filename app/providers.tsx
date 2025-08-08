@@ -35,12 +35,12 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-      <DataStreamProvider>
-        <PostHogProvider client={posthog}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <TooltipProvider>{children}</TooltipProvider>
-          </ThemeProvider>
-        </PostHogProvider>
+        <DataStreamProvider>
+          <PostHogProvider client={posthog}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              <TooltipProvider>{children}</TooltipProvider>
+            </ThemeProvider>
+          </PostHogProvider>
         </DataStreamProvider>
       </UserProvider>
     </QueryClientProvider>

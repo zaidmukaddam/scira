@@ -181,16 +181,7 @@ const isEmptyContent = (content: string): boolean => {
 };
 
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
-  ({
-    part,
-    sectionKey,
-    isComplete,
-    parallelTool,
-    isExpanded,
-    isFullscreen,
-    setIsFullscreen,
-    setIsExpanded,
-  }) => {
+  ({ part, sectionKey, isComplete, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new content is added during reasoning

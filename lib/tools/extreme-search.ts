@@ -80,8 +80,8 @@ const searchWeb = async (query: string, category?: SearchCategory) => {
       type: 'hybrid',
       ...(category
         ? {
-          category: category as SearchCategory,
-        }
+            category: category as SearchCategory,
+          }
         : {}),
     });
     console.log(`searchWeb received ${results.length} results from Exa API`);
@@ -135,10 +135,9 @@ const getContents = async (links: string[]) => {
     }
 
     // Add any URLs that weren't returned by Exa to the failed list
-    const exaUrls = result.results.map(r => r.url);
-    const missingUrls = links.filter(url => !exaUrls.includes(url));
+    const exaUrls = result.results.map((r) => r.url);
+    const missingUrls = links.filter((url) => !exaUrls.includes(url));
     failedUrls.push(...missingUrls);
-
   } catch (error) {
     console.error('Exa API error:', error);
     console.log('Adding all URLs to Firecrawl fallback list');
@@ -148,7 +147,7 @@ const getContents = async (links: string[]) => {
   // Use Firecrawl as fallback for failed URLs
   if (failedUrls.length > 0) {
     console.log(`Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
-    
+
     for (const url of failedUrls) {
       try {
         const scrapeResponse = await firecrawl.scrapeUrl(url, {
@@ -157,7 +156,7 @@ const getContents = async (links: string[]) => {
 
         if (scrapeResponse.success && scrapeResponse.markdown) {
           console.log(`Firecrawl successfully scraped ${url}`);
-          
+
           results.push({
             title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
             url: url,
@@ -174,7 +173,9 @@ const getContents = async (links: string[]) => {
     }
   }
 
-  console.log(`getContents returning ${results.length} total results (${results.length - failedUrls.length + (results.filter(r => failedUrls.includes(r.url)).length)} from Exa, ${results.filter(r => failedUrls.includes(r.url)).length} from Firecrawl)`);
+  console.log(
+    `getContents returning ${results.length} total results (${results.length - failedUrls.length + results.filter((r) => failedUrls.includes(r.url)).length} from Exa, ${results.filter((r) => failedUrls.includes(r.url)).length} from Firecrawl)`,
+  );
   return results;
 };
 
@@ -573,4 +574,4 @@ export function extremeSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>
       };
     },
   });
-};
+}

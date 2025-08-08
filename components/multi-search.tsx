@@ -23,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
 import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
-import type {DataUIPart} from 'ai';
+import type { DataUIPart } from 'ai';
 
 // Types
 type SearchImage = {
@@ -81,7 +81,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         'group relative bg-white dark:bg-neutral-900',
         'border border-neutral-200 dark:border-neutral-800',
         'rounded-xl p-4 transition-all duration-200',
-        'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+        'hover:border-neutral-300 dark:hover:border-neutral-700',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}

@@ -11,16 +11,8 @@ interface TextShimmerProps {
   spread?: number;
 }
 
-export function TextShimmer({
-  children,
-  as: Component = 'p',
-  className,
-  duration = 2,
-  spread = 2,
-}: TextShimmerProps) {
-  const MotionComponent = motion.create(
-    Component as keyof React.JSX.IntrinsicElements
-  );
+export function TextShimmer({ children, as: Component = 'p', className, duration = 2, spread = 2 }: TextShimmerProps) {
+  const MotionComponent = motion.create(Component as keyof React.JSX.IntrinsicElements);
 
   const dynamicSpread = useMemo(() => {
     return children.length * spread;
@@ -33,7 +25,7 @@ export function TextShimmer({
         'text-transparent [--base-color:#a1a1aa] [--base-gradient-color:#000]',
         '[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--base-gradient-color),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]',
         'dark:[--base-color:#71717a] dark:[--base-gradient-color:#ffffff] dark:[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--base-gradient-color),#0000_calc(50%+var(--spread)))]',
-        className
+        className,
       )}
       initial={{ backgroundPosition: '100% center' }}
       animate={{ backgroundPosition: '0% center' }}

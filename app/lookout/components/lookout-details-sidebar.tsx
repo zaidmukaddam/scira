@@ -468,13 +468,7 @@ export function LookoutDetailsSidebar({
                 onClick={() => onTest?.(lookout.id)}
                 disabled={lookout.status === 'running' || lookout.status === 'archived'}
               >
-                <HugeiconsIcon 
-                  icon={TestTubeIcon} 
-                  size={14} 
-                  color="currentColor" 
-                  strokeWidth={1.5} 
-                  className="mr-1" 
-                />
+                <HugeiconsIcon icon={TestTubeIcon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
                 Test
               </Button>
             </TooltipTrigger>
@@ -496,13 +490,7 @@ export function LookoutDetailsSidebar({
                 className="flex-1 text-xs h-8"
                 onClick={() => setShowAnalytics(!showAnalytics)}
               >
-                <HugeiconsIcon 
-                  icon={Chart01Icon} 
-                  size={14} 
-                  color="currentColor" 
-                  strokeWidth={1.5} 
-                  className="mr-1" 
-                />
+                <HugeiconsIcon icon={Chart01Icon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
                 {showAnalytics ? 'Overview' : 'Analytics'}
               </Button>
             </TooltipTrigger>
