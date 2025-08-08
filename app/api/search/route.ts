@@ -370,9 +370,14 @@ export async function POST(req: Request) {
               : {}),
           } satisfies XaiProviderOptions,
           groq: {
+            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+              ? {
+                reasoning_effort: 'high',
+              }
+              : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
-          } as GroqProviderOptions,
+          },
         },
         tools: {
           // Stock & Financial Tools
