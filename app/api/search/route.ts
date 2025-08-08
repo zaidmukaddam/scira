@@ -279,17 +279,17 @@ export async function POST(req: Request) {
           try {
             const backgroundStartTime = Date.now();
             await saveMessages({
-                messages: [
-                  {
-                    chatId: id,
-                    id: messages[messages.length - 1].id,
-                    role: 'user',
-                    parts: messages[messages.length - 1].parts,
-                    attachments: messages[messages.length - 1].experimental_attachments ?? [],
-                    createdAt: new Date(),
-                  },
-                ],
-              });
+              messages: [
+                {
+                  chatId: id,
+                  id: messages[messages.length - 1].id,
+                  role: 'user',
+                  parts: messages[messages.length - 1].parts,
+                  attachments: messages[messages.length - 1].experimental_attachments ?? [],
+                  createdAt: new Date(),
+                },
+              ],
+            });
             console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
 
             console.log('--------------------------------');
@@ -362,6 +362,8 @@ export async function POST(req: Request) {
                 reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
                 parallelToolCalls: false,
                 strictJsonSchema: true,
+                serviceTier: 'flex',
+                textVerbosity: "medium"
               }
               : {}),
           } satisfies OpenAIResponsesProviderOptions,
@@ -375,12 +377,12 @@ export async function POST(req: Request) {
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {
-                reasoning_effort: 'high',
+                reasoningEffort: 'high',
               }
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
-          },
+          } satisfies GroqProviderOptions,
         },
         tools: {
           // Stock & Financial Tools

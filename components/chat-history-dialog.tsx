@@ -1112,7 +1112,7 @@ export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void
           variant="ghost"
           size="icon"
           onClick={onClickAction}
-          className="size-8 p-0! m-0!"
+          className="size-8 p-0! m-0! rounded-full hover:bg-muted/50"
           aria-label="Chat History"
         >
           <HugeiconsIcon icon={SearchList02Icon} className="size-6" />

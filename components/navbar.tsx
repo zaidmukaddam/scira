@@ -56,16 +56,7 @@ const Navbar = memo(
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
-    const [isBannerDismissed, setIsBannerDismissed] = useState(false);
     const router = useRouter();
-
-    // Check localStorage for banner dismissal on component mount
-    useEffect(() => {
-      const dismissed = localStorage.getItem('mobile-banner-dismissed');
-      if (dismissed === 'true') {
-        setIsBannerDismissed(true);
-      }
-    }, []);
 
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
@@ -121,32 +112,11 @@ const Navbar = memo(
       }
     };
 
-    const handleDismissBanner = () => {
-      setIsBannerDismissed(true);
-      localStorage.setItem('mobile-banner-dismissed', 'true');
-    };
-
     return (
       <>
-        {/* Mobile Warning Banner */}
-        {!isBannerDismissed && (
-          <div className="fixed top-0 left-0 right-0 z-40 bg-yellow-50/95 dark:bg-yellow-950/95 backdrop-blur-sm border-b border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 py-2 px-4 text-sm font-medium md:hidden flex items-center justify-between">
-            <div className="flex-1 text-center">⚠️ We do NOT support mobile yet. Use with caution.</div>
-            <button
-              onClick={handleDismissBanner}
-              className="ml-2 p-1 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded transition-colors"
-              aria-label="Dismiss banner"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
         <div
           className={cn(
-            'fixed left-0 right-0 z-30 flex justify-between items-center p-3 transition-colors duration-200',
-            'md:top-0', // Add top margin on mobile to account for banner
-            !isBannerDismissed ? 'top-10' : 'top-0',
+            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center p-3 transition-colors duration-200',
             isDialogOpen
               ? 'bg-transparent pointer-events-none'
               : status === 'streaming' || status === 'ready'
@@ -459,7 +429,7 @@ const Navbar = memo(
                 ) : hasActiveSubscription ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-1.5 bg-muted/50 border border-border">
+                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-2 bg-muted/50 border border-border">
                         <HugeiconsIcon
                           icon={Crown02Icon}
                           size={14}

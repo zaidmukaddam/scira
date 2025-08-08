@@ -169,10 +169,10 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg p-0 gap-0 max-h-[85svh] sm:max-h-[85vh] overflow-y-auto">
         <DialogTitle className="sr-only">Introducing Scira Lookout</DialogTitle>
         {/* Hero Image */}
-        <div className="relative h-64">
+        <div className="relative h-40 sm:h-64">
           <Image
             src="/lookout-promo.png"
             alt="Scira Lookout"
@@ -182,15 +182,15 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
           />
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-6 sm:p-8 space-y-6">
           {/* Header */}
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm font-medium">
               New
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-foreground tracking-tight">Introducing Scira Lookout</h2>
-              <p className="text-base text-muted-foreground leading-relaxed">
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">Introducing Scira Lookout</h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 Automated search monitoring that runs on your schedule. Set up searches that track trends, monitor
                 developments, and keep you informed without manual effort.
               </p>
@@ -199,7 +199,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
 
           {/* Key capabilities */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-foreground uppercase tracking-wide">Key Capabilities</h3>
+            <h3 className="text-xs sm:text-sm font-medium text-foreground uppercase tracking-wide">Key Capabilities</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-foreground"></div>
@@ -218,17 +218,17 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
 
           {/* Actions */}
           <div className="space-y-3">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={() => {
                   router.push('/lookout');
                   onOpenChange(false);
                 }}
-                className="flex-1 group"
+                className="w-full sm:flex-1 group"
               >
                 <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
                 Explore Lookout
-                <span className="ml-auto text-base font-mono">⌘ ⏎</span>
+                <span className="sm:ml-auto text-base font-mono hidden sm:inline">⌘ ⏎</span>
               </Button>
               <Button
                 variant="outline"
@@ -236,11 +236,11 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                   router.push('/blog');
                   onOpenChange(false);
                 }}
-                className="flex-1 group shadow-none"
+                className="w-full sm:flex-1 group shadow-none"
               >
                 <HugeiconsIcon icon={BookOpen01Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
                 Read Blog
-                <span className="ml-auto font-mono text-base">{isMac ? '⌘' : 'Ctrl'} B</span>
+                <span className="sm:ml-auto font-mono text-base hidden sm:inline">{isMac ? '⌘' : 'Ctrl'} B</span>
               </Button>
             </div>
             <Button variant="ghost" onClick={() => onOpenChange(false)} size="sm" className="w-full">

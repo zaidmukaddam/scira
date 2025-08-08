@@ -581,7 +581,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       inlinePattern.lastIndex = 0;
 
       // Process the text to replace placeholders with LaTeX components
-      let processedText = text;
       const components: any[] = [];
       let lastEnd = 0;
 
@@ -686,7 +685,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       }
 
       return (
-        <p key={generateKey()} className="my-5 leading-relaxed text-foreground">
+        <p key={generateKey()} className="my-5 leading-relaxed text-foreground !text-pretty">
           {children}
         </p>
       );
@@ -837,7 +836,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
   };
 
   return (
-    <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
+    <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
       <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );

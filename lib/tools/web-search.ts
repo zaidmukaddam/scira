@@ -46,7 +46,7 @@ const processDomains = (domains?: string[]): string[] | undefined => {
 
 export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
   return tool({
-    description: 'Search the web for information with 5-10 queries, max results and search depth.',
+    description: 'Search the web for information with 5-10 queries, max results, search depth, topics, and quality.',
     inputSchema: z.object({
       queries: z.array(
         z.string().describe('Array of search queries to look up on the web. Default is 5 to 10 queries.'),
@@ -55,7 +55,7 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
         z.number().describe('Array of maximum number of results to return per query. Default is 10.'),
       ),
       topics: z.array(
-        z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general.'),
+        z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.'),
       ),
       quality: z.enum(['default', 'best']).describe('Search quality x speed level. Default is default.'),
       include_domains: z

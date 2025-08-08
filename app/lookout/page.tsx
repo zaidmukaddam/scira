@@ -514,7 +514,7 @@ export default function LookoutPage() {
                         {example.title}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="bg-accent/50 border !-mb-1 border-accent rounded-t-lg mx-3 p-4 grow h-28 group-hover:bg-accent/70 group-hover:border-primary/20 transition-all duration-200">
+                    <CardContent className="bg-accent/50 border !mb-0 sm:!-mb-1 border-accent rounded-t-lg mx-3 p-4 grow h-28 sm:h-28 group-hover:bg-accent/70 group-hover:border-primary/20 transition-all duration-200">
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                         {example.prompt.slice(0, 100)}...
                       </p>

@@ -570,7 +570,7 @@ const ChatInterface = memo(
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
-                <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
                   scira
                 </h1>
               </div>
@@ -664,7 +664,7 @@ const ChatInterface = memo(
                   'transition-all duration-500 bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
                     ? 'relative max-w-2xl mx-auto w-full rounded-xl'
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-2 p-0',
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
                 )}
               >
                 <FormComponent

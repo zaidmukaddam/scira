@@ -777,16 +777,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
     }
   }, [isExtreme, onGroupSelect]);
 
-  const handleGroupChange = useCallback(
-    (value: string) => {
-      const group = visibleGroups.find((g) => g.id === value);
-      if (group) {
-        onGroupSelect(group);
-      }
-    },
-    [visibleGroups, onGroupSelect],
-  );
-
   return (
     <div className="flex items-center">
       {/* Toggle Switch Container */}

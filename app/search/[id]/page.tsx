@@ -75,7 +75,11 @@ export function convertToUIMessages(messages: Message[]): ChatMessage[] {
   return messages.map((message) => {
     // Handle the parts array which comes from JSON in the database
     const partsArray = Array.isArray(message.parts) ? message.parts : [];
-    const convertedParts = partsArray.map((part: unknown) => convertLegacyToolInvocation(part));
+    const convertedParts = partsArray
+      // First convert legacy tool invocations
+      .map((part: unknown) => convertLegacyToolInvocation(part))
+      // Then convert legacy reasoning parts
+      .map((part: unknown) => convertLegacyReasoningPart(part));
 
     return {
       id: message.id,
@@ -133,6 +137,62 @@ function convertLegacyToolInvocation(part: unknown): unknown {
   }
 
   // Return the part unchanged if it's not a legacy tool-invocation
+  return part;
+}
+
+// Convert legacy reasoning structures to the standard ReasoningUIPart shape
+function convertLegacyReasoningPart(part: unknown): unknown {
+  if (typeof part !== 'object' || part === null || !('type' in part)) {
+    return part;
+  }
+
+  // Narrow the type
+  const maybePart = part as {
+    type?: unknown;
+    text?: unknown;
+    reasoning?: unknown;
+    details?: unknown;
+  };
+
+  // Only handle legacy reasoning-like entries
+  if (maybePart.type === 'reasoning') {
+    // If already in the desired shape (has string text), keep as-is
+    if (typeof maybePart.text === 'string' && maybePart.text.length > 0) {
+      return part;
+    }
+
+    // Collect text from possible legacy fields
+    const mainText = typeof maybePart.reasoning === 'string' ? maybePart.reasoning : '';
+
+    let detailsText = '';
+    if (Array.isArray(maybePart.details)) {
+      const collected: string[] = [];
+      for (const entry of maybePart.details as Array<unknown>) {
+        if (
+          typeof entry === 'object' &&
+          entry !== null &&
+          'type' in entry &&
+          (entry as { type?: unknown }).type === 'text' &&
+          'text' in entry &&
+          typeof (entry as { text?: unknown }).text === 'string'
+        ) {
+          collected.push((entry as { text: string }).text);
+        }
+      }
+      if (collected.length > 0) {
+        detailsText = collected.join('\n\n');
+      }
+    }
+
+    const combinedText = [mainText, detailsText].filter((v) => v && v.trim().length > 0).join('\n\n');
+
+    return {
+      type: 'reasoning',
+      text: combinedText,
+    };
+  }
+
+  // Some logs store step markers; ignore or pass-through for non-reasoning types
   return part;
 }
 

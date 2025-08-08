@@ -1188,7 +1188,7 @@ export function SettingsDialog({
 
               {/* Bottom tab navigation - compact and accessible */}
               <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 shrink-0">
-                <TabsList className="w-full h-14 p-1 bg-transparent rounded-none grid grid-cols-5 gap-1">
+                <TabsList className="w-full h-14 p-1 bg-transparent rounded-none grid grid-cols-5 gap-1 !mb-2">
                   {tabItems.map((item) => (
                     <TabsTrigger
                       key={item.value}

@@ -40,7 +40,7 @@ import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
 import { User } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon, PlusSignCircleIcon } from '@hugeicons/core-free-icons';
+import { Copy01Icon, Crown02Icon, PencilEdit02Icon, PlusSignCircleIcon, UserCircleIcon } from '@hugeicons/core-free-icons';
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
@@ -535,8 +535,8 @@ export const Message: React.FC<MessageProps> = ({
     const lines = content.split('\n').length;
 
     // Very short messages (like single words or short phrases)
-    if (length <= 50 && lines === 1) {
-      return '[&>*]:!text-lg sm:[&>*]:!text-xl'; // Smaller on mobile
+    if (length <= 20 && lines === 1) {
+      return '[&>*]:!text-lg sm:[&>*]:text-xl font-normal'; // Smaller on mobile
     }
     // Short messages (one line, moderate length)
     else if (length <= 120 && lines === 1) {
@@ -571,7 +571,7 @@ export const Message: React.FC<MessageProps> = ({
     // Check if the message has parts that should be rendered
     if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
       return (
-        <div className="mb-0! px-0">
+        <div className="mb-2! px-0">
           <div className="grow min-w-0">
             {mode === 'edit' ? (
               <MessageEditor
@@ -592,17 +592,22 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
-                          <ChatTextHighlighter
-                            className={`${getDynamicFontSize(part.text)}`}
-                            onHighlight={onHighlight}
-                            removeHighlightOnClick={true}
-                          >
-                            <MarkdownRenderer content={preprocessLaTeX(part.text)} isUserMessage={true} />
-                          </ChatTextHighlighter>
+                          <div className="flex items-center justify-start gap-2">
+                            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7" />
+                            <div className="flex-1 grow h-full">
+                              <ChatTextHighlighter
+                                className={`${getDynamicFontSize(part.text)}`}
+                                onHighlight={onHighlight}
+                                removeHighlightOnClick={true}
+                              >
+                                <MarkdownRenderer content={preprocessLaTeX(part.text)} isUserMessage={true} />
+                              </ChatTextHighlighter>
+                            </div>
+                          </div>
 
                           {!isExpanded && exceedsMaxHeight && (
                             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -626,17 +631,22 @@ export const Message: React.FC<MessageProps> = ({
                         !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                       }`}
                     >
-                      <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
-                        <MarkdownRenderer
-                          content={preprocessLaTeX(
-                            message.parts
-                              ?.map((part) => (part.type === 'text' ? part.text : ''))
-                              .join('')
-                              .trim() || '',
-                          )}
-                          isUserMessage={true}
-                        />
-                      </ChatTextHighlighter>
+                      <div className="flex items-start gap-1">
+                        <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                        <div className="min-w-0">
+                          <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
+                            <MarkdownRenderer
+                              content={preprocessLaTeX(
+                                message.parts
+                                  ?.map((part) => (part.type === 'text' ? part.text : ''))
+                                  .join('')
+                                  .trim() || '',
+                              )}
+                              isUserMessage={true}
+                            />
+                          </ChatTextHighlighter>
+                        </div>
+                      </div>
 
                       {!isExpanded && exceedsMaxHeight && (
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -658,7 +668,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
+                  <div className="absolute -right-1 -top-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
@@ -670,25 +680,11 @@ export const Message: React.FC<MessageProps> = ({
                           disabled={status === 'submitted' || status === 'streaming'}
                           aria-label="Edit message"
                         >
-                          <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 15 15"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-3.5 w-3.5"
-                          >
-                            <path
-                              d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                              fill="currentColor"
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <HugeiconsIcon icon={PencilEdit02Icon} size={24} className="flex-shrink-0 pl-1 size-6" />
                         </Button>
-                        <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
                       </>
                     )}
+                    <Separator orientation="vertical" className="h-5 bg-black dark:bg-white" />
                     <Button
                       variant="ghost"
                       size="icon"
@@ -708,7 +704,7 @@ export const Message: React.FC<MessageProps> = ({
                       } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
                       aria-label="Copy message"
                     >
-                      <Copy className="h-3.5 w-3.5" />
+                      <HugeiconsIcon icon={Copy01Icon} size={24} className="flex-shrink-0 pr-1 size-6" />
                     </Button>
                   </div>
                 </div>
@@ -752,15 +748,20 @@ export const Message: React.FC<MessageProps> = ({
                     !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                   }`}
                 >
-                  <MarkdownRenderer
-                    content={preprocessLaTeX(
-                      message.parts
-                        ?.map((part) => (part.type === 'text' ? part.text : ''))
-                        .join('')
-                        .trim() || '',
-                    )}
-                    isUserMessage={true}
-                  />
+                  <div className="flex items-start gap-1">
+                    <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                    <div className="min-w-0">
+                      <MarkdownRenderer
+                        content={preprocessLaTeX(
+                          message.parts
+                            ?.map((part) => (part.type === 'text' ? part.text : ''))
+                            .join('')
+                            .trim() || '',
+                        )}
+                        isUserMessage={true}
+                      />
+                    </div>
+                  </div>
 
                   {!isExpanded && exceedsMaxHeight && (
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -793,25 +794,15 @@ export const Message: React.FC<MessageProps> = ({
                         disabled={status === 'submitted' || status === 'streaming'}
                         aria-label="Edit message"
                       >
-                        <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 15 15"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-3.5 w-3.5"
-                        >
-                          <path
-                            d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L9.94915 6.83442L13.5382 3.24535L12.5 2.20711ZM8.99997 1.49997C9.27611 1.49997 9.49997 1.72383 9.49997 1.99997C9.49997 2.27611 9.27611 2.49997 8.99997 2.49997H4.49997C3.67154 2.49997 2.99997 3.17154 2.99997 3.99997V11C2.99997 11.8284 3.67154 12.5 4.49997 12.5H11.5C12.3284 12.5 13 11.8284 13 11V6.49997C13 6.22383 13.2238 5.99997 13.5 5.99997C13.7761 5.99997 14 6.22383 14 6.49997V11C14 12.3807 12.8807 13.5 11.5 13.5H4.49997C3.11926 13.5 1.99997 12.3807 1.99997 11V3.99997C1.99997 2.61926 3.11926 1.49997 4.49997 1.49997H8.99997Z"
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <HugeiconsIcon
+                          icon={PencilEdit02Icon}
+                          size={24}
+                          className="text-primary flex-shrink-0 pl-1 size-6"
+                        />
                       </Button>
-                      <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
                     </>
                   )}
+                  <Separator orientation="vertical" className="h-5 bg-black dark:bg-white" />
                   <Button
                     variant="ghost"
                     size="icon"
@@ -831,7 +822,7 @@ export const Message: React.FC<MessageProps> = ({
                     } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
                     aria-label="Copy message"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    <HugeiconsIcon icon={Copy01Icon} size={24} className="flex-shrink-0 pr-1 size-6" />
                   </Button>
                 </div>
               </div>
@@ -925,7 +916,7 @@ export const Message: React.FC<MessageProps> = ({
                   onClick={() => handleSuggestedQuestionClick(question)}
                   className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b last:border-none border-border dark:border-border"
                 >
-                  <span className="text-foreground text-sm dark:text-foreground font-normal pr-3 hover:text-secondary dark:hover:text-primary">
+                  <span className="text-foreground text-sm dark:text-foreground font-normal pr-3 hover:text-primary/80 dark:hover:text-primary/80">
                     {question}
                   </span>
                   <HugeiconsIcon icon={PlusSignCircleIcon} size={22} className="text-primary flex-shrink-0 pr-1" />

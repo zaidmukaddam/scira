@@ -82,6 +82,21 @@ export function LookoutForm({
         />
       </div>
 
+      {/* Instructions */}
+      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+        <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">Instructions</Label>
+        <div className="flex-1">
+          <Textarea
+            name="prompt"
+            placeholder="Enter detailed instructions for what you want the lookout to search for and analyze..."
+            rows={6}
+            className="resize-none text-sm h-40"
+            defaultValue={editingLookout?.prompt || selectedExample?.prompt || ''}
+            required
+          />
+        </div>
+      </div>
+
       {/* Frequency Selection */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
         <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">Frequency</Label>
@@ -197,20 +212,7 @@ export function LookoutForm({
         <input type="hidden" name="timezone" value={selectedTimezone} />
       </div>
 
-      {/* Instructions */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-        <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">Instructions</Label>
-        <div className="flex-1">
-          <Textarea
-            name="prompt"
-            placeholder="Enter detailed instructions for what you want the lookout to search for and analyze..."
-            rows={6}
-            className="resize-none text-sm h-40"
-            defaultValue={editingLookout?.prompt || selectedExample?.prompt || ''}
-            required
-          />
-        </div>
-      </div>
+      
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 rounded-md p-2">
         <HugeiconsIcon icon={AlarmClockIcon} size={12} color="currentColor" strokeWidth={1.5} />
