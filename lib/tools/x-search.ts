@@ -41,7 +41,7 @@ export const xSearchTool = tool({
         mode: 'on',
         ...(startDate && { from_date: startDate }),
         ...(endDate && { to_date: endDate }),
-        ...(maxResults && { max_search_results: maxResults }),
+        ...(maxResults && { max_search_results: maxResults < 15 ? 15 : maxResults }),
         return_citations: true,
         sources: [
           xHandles && xHandles.length > 0
@@ -49,6 +49,18 @@ export const xSearchTool = tool({
             : { type: 'x', safe_search: false },
         ],
       };
+
+      // if startDate is not provided, set it to 7 days ago
+      if (!startDate) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        startDate = sevenDaysAgo.toISOString().split('T')[0];
+      }
+
+      // if endDate is not provided, set it to today
+      if (!endDate) {
+        endDate = new Date().toISOString().split('T')[0];
+      }
 
       console.log('[X search parameters]: ', searchParameters);
       console.log('[X search handles]: ', xHandles);

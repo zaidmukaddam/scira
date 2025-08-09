@@ -30,8 +30,8 @@ importers:
         specifier: 2.0.8
         version: 2.0.8(react@19.1.0)(zod@3.25.76)
       '@ai-sdk/xai':
-        specifier: 2.0.2
-        version: 2.0.2(zod@3.25.76)
+        specifier: 2.0.3
+        version: 2.0.3(zod@3.25.76)
       '@aws-sdk/client-s3':
         specifier: ^3.835.0
         version: 3.850.0
@@ -75,8 +75,8 @@ importers:
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@polar-sh/better-auth':
-        specifier: ^1.0.8
-        version: 1.0.8(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        specifier: ^1.1.0
+        version: 1.1.0(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@polar-sh/sdk':
         specifier: ^0.34.9
         version: 0.34.9
@@ -153,8 +153,8 @@ importers:
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.1.11)
       '@tanstack/react-query':
-        specifier: ^5.84.1
-        version: 5.84.1(react@19.1.0)
+        specifier: ^5.84.2
+        version: 5.84.2(react@19.1.0)
       '@tavily/core':
         specifier: ^0.5.10
         version: 0.5.10
@@ -213,8 +213,8 @@ importers:
         specifier: ^16.5.0
         version: 16.6.1
       drizzle-orm:
-        specifier: ^0.44.3
-        version: 0.44.3(@cloudflare/workers-types@4.20250726.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.4)(@upstash/redis@1.35.3)(kysely@0.28.3)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7)
+        specifier: ^0.44.4
+        version: 0.44.4(@cloudflare/workers-types@4.20250726.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.4)(@upstash/redis@1.35.3)(kysely@0.28.3)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7)
       echarts:
         specifier: ^5.6.0
         version: 5.6.0
@@ -252,8 +252,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       lucide-react:
-        specifier: ^0.536.0
-        version: 0.536.0(react@19.1.0)
+        specifier: ^0.539.0
+        version: 0.539.0(react@19.1.0)
       luxon:
         specifier: ^3.7.1
         version: 3.7.1
@@ -282,8 +282,8 @@ importers:
         specifier: ^3.4.7
         version: 3.4.7
       posthog-js:
-        specifier: ^1.258.2
-        version: 1.258.2
+        specifier: ^1.259.0
+        version: 1.259.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -333,8 +333,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       resend:
-        specifier: ^4.7.0
-        version: 4.7.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: ^6.0.1
+        version: 6.0.1(@react-email/render@1.2.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       resumable-stream:
         specifier: ^2.2.3
         version: 2.2.3
@@ -474,8 +474,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/openai-compatible@1.0.2':
-    resolution: {integrity: sha512-VqTEzo1ueUsS9FGHtyoAHK11nPIgtziwwGGy5qtGOs+JRcZVEdPqcWe1n2+Ichl4edchoAHo/tygAymaiom9mg==}
+  '@ai-sdk/openai-compatible@1.0.3':
+    resolution: {integrity: sha512-SE49TeOGppPtP4GTOXAl7WOhXXx42/VKpei3pNozjrD8NTkLX29Mib5t06VB5leaMjHNmyJMLECiWbWQV5W1ug==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -506,8 +506,8 @@ packages:
       zod:
         optional: true
 
-  '@ai-sdk/xai@2.0.2':
-    resolution: {integrity: sha512-4P10qVSUj1/Ufem3UHNLExW8hHxGO+aYBDs3vQLmOXJyuCWnk2lsefOJz3XNvNpW0Avavl0A4rJyHS9W9gGglQ==}
+  '@ai-sdk/xai@2.0.3':
+    resolution: {integrity: sha512-9Hsim5y4KJa+6DQBvoKcCp6ooWvfdbn1quOCEgSAnni6OJBL6QuImOcDmRr/YE6hrYo2RgLF56MtI2OyQqbh5w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -1452,9 +1452,9 @@ packages:
       react: '>= 16.8'
       react-dom: '>= 16.8'
 
-  '@polar-sh/better-auth@1.0.8':
-    resolution: {integrity: sha512-yPU7FqdCVzfei6P3M4sFtsM29qcmjF/BZjHyJFq6fekuRFVG9ETHg2YNoQ7yx2SV6PsBM5Gr1paF6FAXYDeGcg==}
-    version: 1.0.8
+  '@polar-sh/better-auth@1.1.0':
+    resolution: {integrity: sha512-oyFtL92aXTRumG9G9jyENkrKTMOGieUSb8L7aKM7Rvq8bHOEZaZ4PZcR+S+jJ7XznTBwbbCRUEqr1Tk4yvo4VQ==}
+    version: 1.1.0
     engines: {node: '>=16'}
     peerDependencies:
       '@polar-sh/sdk': ^0.34.8
@@ -2099,13 +2099,6 @@ packages:
     peerDependencies:
       react: ^18.0 || ^19.0 || ^19.0.0-rc
 
-  '@react-email/render@1.1.2':
-    resolution: {integrity: sha512-RnRehYN3v9gVlNMehHPHhyp2RQo7+pSkHDtXPvg3s0GbzM9SQMW4Qrf8GRNvtpLC4gsI+Wt0VatNRUFqjvevbw==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^18.0 || ^19.0 || ^19.0.0-rc
-      react-dom: ^18.0 || ^19.0 || ^19.0.0-rc
-
   '@react-email/render@1.2.0':
     resolution: {integrity: sha512-5fpbV16VYR9Fmk8t7xiwPNAjxjdI8XzVtlx9J9OkhOsIHdr2s5DwAj8/MXzWa9qRYJyLirQ/l7rBSjjgyRAomw==}
     engines: {node: '>=18.0.0'}
@@ -2594,8 +2587,8 @@ packages:
   '@tanstack/query-core@5.83.1':
     resolution: {integrity: sha512-OG69LQgT7jSp+5pPuCfzltq/+7l2xoweggjme9vlbCPa/d7D7zaqv5vN/S82SzSYZ4EDLTxNO1PWrv49RAS64Q==}
 
-  '@tanstack/react-query@5.84.1':
-    resolution: {integrity: sha512-zo7EUygcWJMQfFNWDSG7CBhy8irje/XY0RDVKKV4IQJAysb+ZJkkJPcnQi+KboyGUgT+SQebRFoTqLuTtfoDLw==}
+  '@tanstack/react-query@5.84.2':
+    resolution: {integrity: sha512-cZadySzROlD2+o8zIfbD978p0IphuQzRWiiH3I2ugnTmz4jbjc0+TdibpwqxlzynEen8OulgAg+rzdNF37s7XQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3591,8 +3584,8 @@ packages:
     resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
 
-  drizzle-orm@0.44.3:
-    resolution: {integrity: sha512-8nIiYQxOpgUicEL04YFojJmvC4DNO4KoyXsEIqN44+g6gNBr6hmVpWk3uyAt4CaTiRGDwoU+alfqNNeonLAFOQ==}
+  drizzle-orm@0.44.4:
+    resolution: {integrity: sha512-ZyzKFpTC/Ut3fIqc2c0dPZ6nhchQXriTsqTNs4ayRgl6sZcFlMs9QZKPSHXK4bdOf41GHGWf+FrpcDDYwW+W6Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -4743,8 +4736,8 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lucide-react@0.536.0:
-    resolution: {integrity: sha512-2PgvNa9v+qz4Jt/ni8vPLt4jwoFybXHuubQT8fv4iCW5TjDxkbZjNZZHa485ad73NSEn/jdsEtU57eE1g+ma8A==}
+  lucide-react@0.539.0:
+    resolution: {integrity: sha512-VVISr+VF2krO91FeuCrm1rSOLACQUYVy7NQkzrOty52Y8TlTPcXcMdQFj9bYzBgXbWCiywlwSZ3Z8u6a+6bMlg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -5413,8 +5406,8 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
-  posthog-js@1.258.2:
-    resolution: {integrity: sha512-XBSeiN4HjiYsy3tW5zss8WOJF2JXTQXAYw2wZ+zjqQuzzi7kkLEXjIgsVrBnt5Opwhqn0krZVsb0ZBw34dIiyQ==}
+  posthog-js@1.259.0:
+    resolution: {integrity: sha512-6usLnJshky8fQ82ask7PIJh4BSFOU0VkRbFg8Zanm/HIlYMG1VOdRWlToA63JXeO7Bzm9TuREq1wFm5U2VEVCg==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -5669,9 +5662,14 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
-  resend@4.7.0:
-    resolution: {integrity: sha512-30IbXGBUbmDweQH2IlO53XOXX7ndjYV9xFZ8IEBiWqefqQ/qmTsgrX0Ab6MUnmobJXbpdReVv+iXGRQPubQL5Q==}
+  resend@6.0.1:
+    resolution: {integrity: sha512-xNZ0gKAOqQcH83lXsqNOwBbpKROnsZpQr9mXRdG6hrHTF9G9Il2pkoTRtq7rJzXMvCZX+I79oahsbSeaYOWRFA==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@react-email/render': ^1.1.0
+    peerDependenciesMeta:
+      '@react-email/render':
+        optional: true
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -6362,7 +6360,7 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai-compatible@1.0.2(zod@3.25.76)':
+  '@ai-sdk/openai-compatible@1.0.3(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
@@ -6396,9 +6394,9 @@ snapshots:
     optionalDependencies:
       zod: 3.25.76
 
-  '@ai-sdk/xai@2.0.2(zod@3.25.76)':
+  '@ai-sdk/xai@2.0.3(zod@3.25.76)':
     dependencies:
-      '@ai-sdk/openai-compatible': 1.0.2(zod@3.25.76)
+      '@ai-sdk/openai-compatible': 1.0.3(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
       zod: 3.25.76
@@ -7525,7 +7523,7 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  '@polar-sh/better-auth@1.0.8(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@polar-sh/better-auth@1.1.0(@polar-sh/sdk@0.34.9)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
       '@polar-sh/sdk': 0.34.9
       better-auth: https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -8186,14 +8184,6 @@ snapshots:
     dependencies:
       react: 19.1.0
 
-  '@react-email/render@1.1.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      html-to-text: 9.0.5
-      prettier: 3.6.2
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-      react-promise-suspense: 0.3.4
-
   '@react-email/render@1.2.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       html-to-text: 9.0.5
@@ -8785,7 +8775,7 @@ snapshots:
 
   '@tanstack/query-core@5.83.1': {}
 
-  '@tanstack/react-query@5.84.1(react@19.1.0)':
+  '@tanstack/react-query@5.84.2(react@19.1.0)':
     dependencies:
       '@tanstack/query-core': 5.83.1
       react: 19.1.0
@@ -9803,7 +9793,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.3(@cloudflare/workers-types@4.20250726.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.4)(@upstash/redis@1.35.3)(kysely@0.28.3)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7):
+  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250726.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.4)(@upstash/redis@1.35.3)(kysely@0.28.3)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250726.0
       '@neondatabase/serverless': 1.0.1
@@ -11149,7 +11139,7 @@ snapshots:
       yallist: 4.0.0
     optional: true
 
-  lucide-react@0.536.0(react@19.1.0):
+  lucide-react@0.539.0(react@19.1.0):
     dependencies:
       react: 19.1.0
 
@@ -12088,7 +12078,7 @@ snapshots:
 
   postgres@3.4.7: {}
 
-  posthog-js@1.258.2:
+  posthog-js@1.259.0:
     dependencies:
       core-js: 3.44.0
       fflate: 0.4.8
@@ -12418,12 +12408,9 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  resend@4.7.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
-    dependencies:
-      '@react-email/render': 1.1.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-    transitivePeerDependencies:
-      - react
-      - react-dom
+  resend@6.0.1(@react-email/render@1.2.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)):
+    optionalDependencies:
+      '@react-email/render': 1.2.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
   resolve-from@4.0.0: {}
 

@@ -320,7 +320,6 @@ export async function POST(req: Request) {
           ? {
             temperature: 0.6,
             topP: 0.95,
-            topK: 20,
             minP: 0,
           }
           : model.includes('scira-deepseek-v3')
@@ -380,6 +379,11 @@ export async function POST(req: Request) {
                 reasoningEffort: 'high',
               }
               : {}),
+            ...(model === 'scira-qwen-32b'
+              ? {
+                reasoningEffort: "none"
+              }
+              : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
           } satisfies GroqProviderOptions,
@@ -434,7 +438,7 @@ export async function POST(req: Request) {
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-g2'),
+            model: scira.languageModel('scira-grok-3'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,

@@ -570,9 +570,16 @@ const ChatInterface = memo(
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
-                <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                  scira
-                </h1>
+                <div className="inline-flex items-center gap-3">
+                  <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                    scira
+                  </h1>
+                  {isUserPro && (
+                    <h1 className="text-2xl font-baumans! leading-4 inline-block !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                      pro
+                    </h1>
+                  )}
+                </div>
               </div>
             )}
 
@@ -661,7 +668,7 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-background',
+                  'transition-all duration-500 bg-bottom bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
                     ? 'relative max-w-2xl mx-auto w-full rounded-xl'
                     : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',

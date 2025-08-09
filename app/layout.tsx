@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Inter } from 'next/font/google';
+import { Be_Vietnam_Pro, Inter, Baumans, Geist } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 
@@ -82,12 +82,28 @@ const inter = Inter({
   display: 'swap',
 });
 
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  preload: true,
+  display: 'swap',
+  weight: 'variable',
+});
+
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['latin'],
   variable: '--font-be-vietnam-pro',
   preload: true,
   display: 'swap',
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+});
+
+const baumans = Baumans({
+  subsets: ['latin'],
+  variable: '--font-baumans',
+  preload: true,
+  display: 'swap',
+  weight: ['400'],
 });
 
 export default function RootLayout({
@@ -97,7 +113,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />

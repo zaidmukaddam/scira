@@ -15,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { cn } from '@/lib/utils';
 import { LinkedinLogo, RedditLogo, XLogo } from '@phosphor-icons/react';
 import { ClassicLoader } from '@/components/ui/loading';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 type VisibilityType = 'public' | 'private';
@@ -57,6 +57,8 @@ const Navbar = memo(
     const [privateDropdownOpen, setPrivateDropdownOpen] = useState(false);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const router = useRouter();
+    const pathname = usePathname();
+    const isSearchWithId = useMemo(() => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)), [pathname]);
 
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
@@ -136,13 +138,25 @@ const Navbar = memo(
                 <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
               </Button>
             </Link>
+
+            {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
+            {user && !hasActiveSubscription && !showProLoading && (
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-md h-7 px-2 text-xs sm:hidden"
+                onClick={() => router.push('/pricing')}
+              >
+                Upgrade
+              </Button>
+            )}
           </div>
 
           {/* Centered Upgrade Button */}
           {user && !hasActiveSubscription && !showProLoading && (
             <div
               className={cn(
-                'flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
+              'hidden sm:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
                 isDialogOpen ? 'pointer-events-auto' : '',
               )}
             >
@@ -412,7 +426,7 @@ const Navbar = memo(
             )}
 
             {/* Subscription Status - show loading or Pro status only */}
-            {user && (
+            {user && isSearchWithId && (
               <>
                 {showProLoading ? (
                   <Tooltip>
@@ -429,15 +443,10 @@ const Navbar = memo(
                 ) : hasActiveSubscription ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 p-2 bg-muted/50 border border-border">
-                        <HugeiconsIcon
-                          icon={Crown02Icon}
-                          size={14}
-                          color="currentColor"
-                          strokeWidth={1.5}
-                          className="text-foreground"
-                        />
-                        <span className="text-xs font-medium text-foreground hidden sm:inline">Pro</span>
+                      <div className="pointer-events-auto">
+                        <span className="font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 pb-1.25 sm:pt-1 leading-5 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                          <span>pro</span>
+                        </span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>

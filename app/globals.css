@@ -289,6 +289,7 @@
 
 @theme inline {
   --font-be-vietnam-pro: var(--font-be-vietnam-pro);
+  --font-baumans: var(--font-baumans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

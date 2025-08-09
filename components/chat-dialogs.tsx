@@ -169,7 +169,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 max-h-[85svh] sm:max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg p-0 gap-0 max-h-[85svh] sm:max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Introducing Scira Lookout</DialogTitle>
         {/* Hero Image */}
         <div className="relative h-40 sm:h-64">

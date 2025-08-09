@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
@@ -18,29 +19,25 @@ import {
   ExternalLink,
   Maximize2,
   FileText,
-  Plus,
   AlignLeft,
   AlertCircle,
   RefreshCw,
   LogIn,
 } from 'lucide-react';
-import {
-  TextUIPart,
-  ReasoningUIPart,
-  ToolCallPart,
-  SourceUrlUIPart,
-  StepStartUIPart,
-  FileUIPart,
-  ModelMessage,
-  UIMessagePart,
-} from 'ai';
+import { TextUIPart, UIMessagePart } from 'ai';
 import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
 import { User } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Copy01Icon, Crown02Icon, PencilEdit02Icon, PlusSignCircleIcon, UserCircleIcon } from '@hugeicons/core-free-icons';
+import {
+  Copy01Icon,
+  Crown02Icon,
+  PencilEdit02Icon,
+  PlusSignCircleIcon,
+  UserCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
@@ -597,7 +594,20 @@ export const Message: React.FC<MessageProps> = ({
                           }`}
                         >
                           <div className="flex items-center justify-start gap-2">
-                            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7" />
+                            {user ? (
+                              <Avatar className="size-7 rounded-md !p-0 !m-0">
+                                <AvatarImage
+                                  src={user.image ?? ''}
+                                  alt={user.name ?? ''}
+                                  className="rounded-md !p-0 !m-0 size-7 "
+                                />
+                                <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
+                                  {(user.name || user.email || '?').charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                            ) : (
+                              <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7" />
+                            )}
                             <div className="flex-1 grow h-full">
                               <ChatTextHighlighter
                                 className={`${getDynamicFontSize(part.text)}`}
@@ -632,7 +642,20 @@ export const Message: React.FC<MessageProps> = ({
                       }`}
                     >
                       <div className="flex items-start gap-1">
-                        <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                        {user ? (
+                          <Avatar className="flex-shrink-0 pl-1 size-6 rounded-md">
+                            <AvatarImage
+                              src={user.image ?? ''}
+                              alt={user.name ?? ''}
+                              className="rounded-md p-0 m-0 size-6"
+                            />
+                            <AvatarFallback className="rounded-md text-xs p-0 m-0 size-6">
+                              {(user.name || user.email || '?').charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                        )}
                         <div className="min-w-0">
                           <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
                             <MarkdownRenderer
@@ -749,7 +772,20 @@ export const Message: React.FC<MessageProps> = ({
                   }`}
                 >
                   <div className="flex items-start gap-1">
-                    <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                    {user ? (
+                      <Avatar className="flex-shrink-0 pl-1 size-6 rounded-md">
+                        <AvatarImage
+                          src={user.image ?? ''}
+                          alt={user.name ?? ''}
+                          className="rounded-md p-0 m-0 size-6"
+                        />
+                        <AvatarFallback className="rounded-md text-xs p-0 m-0 size-6">
+                          {(user.name || user.email || '?').charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                    )}
                     <div className="min-w-0">
                       <MarkdownRenderer
                         content={preprocessLaTeX(

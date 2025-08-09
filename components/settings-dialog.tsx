@@ -72,7 +72,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
   const showProLoading: boolean = Boolean(fastProLoading || isProStatusLoading);
 
   return (
-    <div className="space-y-4">
+    <div>
       <div className={cn('flex flex-col items-center text-center space-y-3', isMobile ? 'pb-2' : 'pb-4')}>
         <Avatar className={isMobile ? 'h-16 w-16' : 'h-20 w-20'}>
           <AvatarImage src={user?.image || ''} />
@@ -93,10 +93,15 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
             <Skeleton className="h-5 w-16 mx-auto" />
           ) : (
             isProUserActive && (
-              <Badge className="bg-primary text-primary-foreground border-0 text-xs font-medium">
-                <HugeiconsIcon icon={Crown02Icon} size={12} color="currentColor" strokeWidth={1.5} className="mr-1" />
-                PRO USER
-              </Badge>
+              <span
+                className={cn(
+                  'font-baumans! px-2 pt-1 pb-2 inline-flex leading-5 mt-2 items-center rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background',
+                  'bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground',
+                  'dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground',
+                )}
+              >
+                pro user
+              </span>
             )
           )}
         </div>
@@ -848,7 +853,14 @@ function CustomInstructionsSection({
               placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px] max-h-[30vh] resize-y text-sm"
+              className="min-h-[120px] resize-y text-sm"
+              style={{ maxHeight: '30dvh' }}
+              onFocus={(e) => {
+                // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
+                try {
+                  e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                } catch {}
+              }}
               disabled={isSaving || !enabled}
             />
           )}
@@ -1125,6 +1137,36 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const [currentTab, setCurrentTab] = useState('profile');
   const isMobile = useMediaQuery('(max-width: 768px)');
+  // Dynamically stabilize drawer height on mobile when the virtual keyboard opens (PWA/iOS)
+  const [mobileDrawerPxHeight, setMobileDrawerPxHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isMobile || !open) {
+      setMobileDrawerPxHeight(null);
+      return;
+    }
+
+    const updateHeight = () => {
+      try {
+        // Prefer VisualViewport for accurate height when keyboard is open
+        const visualHeight = (window as any).visualViewport?.height ?? window.innerHeight;
+        const computed = Math.min(600, Math.round(visualHeight * 0.85));
+        setMobileDrawerPxHeight(computed);
+      } catch {
+        setMobileDrawerPxHeight(null);
+      }
+    };
+
+    updateHeight();
+    const vv: VisualViewport | undefined = (window as any).visualViewport;
+    vv?.addEventListener('resize', updateHeight);
+    window.addEventListener('orientationchange', updateHeight);
+
+    return () => {
+      vv?.removeEventListener('resize', updateHeight);
+      window.removeEventListener('orientationchange', updateHeight);
+    };
+  }, [isMobile, open]);
 
   const tabItems = [
     { value: 'profile', label: 'Account', icon: User },
@@ -1174,7 +1216,13 @@ export function SettingsDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[85vh] max-h-[600px] p-0 [&[data-vaul-drawer]]:transition-none overflow-hidden">
+        <DrawerContent
+          className="h-[85vh] max-h-[600px] p-0 [&[data-vaul-drawer]]:transition-none overflow-hidden"
+          style={{
+            height: mobileDrawerPxHeight ?? undefined,
+            maxHeight: mobileDrawerPxHeight ?? undefined,
+          }}
+        >
           <div className="flex flex-col h-full max-h-full">
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
@@ -1184,11 +1232,13 @@ export function SettingsDialog({
             {/* Content area with tabs */}
             <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden">
               {/* Tab content - takes up most space */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">{contentSections}</div>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 overscroll-contain">
+                {contentSections}
+              </div>
 
               {/* Bottom tab navigation - compact and accessible */}
-              <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 shrink-0">
-                <TabsList className="w-full h-14 p-1 bg-transparent rounded-none grid grid-cols-5 gap-1 !mb-2">
+              <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-[calc(env(safe-area-inset-bottom)+1rem)] shrink-0">
+                <TabsList className="w-full py-1 h-14 bg-transparent rounded-none grid grid-cols-5 gap-1 !mb-2 px-4">
                   {tabItems.map((item) => (
                     <TabsTrigger
                       key={item.value}

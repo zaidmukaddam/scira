@@ -1867,7 +1867,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, [input, debouncedResize]);
 
   return (
-    <div className={cn('flex flex-col w-full bg-background max-w-2xl mx-auto')}>
+    <div className={cn('flex flex-col w-full !bg-bottom bg-background max-w-2xl mx-auto')}>
       <TooltipProvider>
         <div
           className={cn(
@@ -2078,8 +2078,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   {hasVisionSupport(selectedModel) && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <button
-                          className="group rounded-lg p-1.75 h-8 w-8 border border-border bg-background text-foreground hover:bg-accent transition-colors duration-200"
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="group rounded-lg transition-colors duration-200 !size-8"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2089,7 +2091,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <span className="block">
                             <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} />
                           </span>
-                        </button>
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -2109,8 +2111,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   {isProcessing ? (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <button
-                          className="group rounded-lg p-1.5 size-7.5 border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors duration-200"
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="group rounded-lg transition-colors duration-200 !size-8"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2120,7 +2124,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <span className="block">
                             <StopIcon size={16} />
                           </span>
-                        </button>
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -2134,12 +2138,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     /* Show Voice Recording Button when no input */
                     (<Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <button
+                        <Button
+                          size="icon"
+                          variant={isRecording ? 'destructive' : 'default'}
                           className={cn(
-                            'group rounded-lg p-1.5 size-7.5 transition-colors duration-200',
-                            isRecording
-                              ? 'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                              : 'border border-primary bg-primary text-primary-foreground hover:bg-primary/90',
+                            'group rounded-lg m-auto transition-colors duration-200 !size-8',
                           )}
                           onClick={(event) => {
                             event.preventDefault();
@@ -2150,7 +2153,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <span className="block">
                             <HugeiconsIcon icon={AiMicIcon} size={16} color="currentColor" strokeWidth={1.5} />
                           </span>
-                        </button>
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
@@ -2171,8 +2174,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     /* Show Send Button when there is input */
                     (<Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
-                        <button
-                          className="group rounded-lg flex p-1.5 m-auto size-7.5 border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary transition-colors duration-200"
+                        <Button
+                          size="icon"
+                          className="group rounded-lg flex m-auto transition-colors duration-200 !size-8"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2189,7 +2193,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <span className="block">
                             <ArrowUpIcon size={16} />
                           </span>
-                        </button>
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent
                         side="bottom"
