@@ -112,50 +112,73 @@ export const NearbySearchSkeleton = ({ type }: { type: string }) => {
   return (
     <div className="relative w-full h-[70vh] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4">
       {/* Header skeleton */}
-      <div className="absolute top-4 left-4 z-20 flex gap-2">
-        <div className="h-6 w-12 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
-        <div className="h-6 w-24 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
+      <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-2">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-28 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
+          <div className="h-6 w-40 bg-neutral-200 dark:bg-neutral-700 rounded-full animate-pulse" />
+        </div>
+        {/* View toggle skeleton */}
+        <div className="relative flex rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 p-0.5 shadow-lg">
+          <div className="px-4 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 animate-pulse">
+            <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded" />
+          </div>
+          <div className="px-4 py-1 rounded-full">
+            <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+          </div>
+        </div>
       </div>
 
-      {/* View toggle skeleton */}
-      <div className="absolute top-4 right-4 z-20 flex rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 p-0.5 shadow-lg">
-        <div className="px-4 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 animate-pulse">
-          <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded" />
-        </div>
-        <div className="px-4 py-1 rounded-full">
-          <div className="h-4 w-8 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-        </div>
-      </div>
+      {/* Content split: map (top) + list preview (bottom) */}
+      <div className="w-full h-full flex flex-col">
+        {/* Map area */}
+        <div className="relative flex-1 min-h-[45%] bg-neutral-100 dark:bg-neutral-800 animate-pulse">
+          <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
 
-      {/* Map skeleton */}
-      <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 relative animate-pulse">
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
+          {/* Mock markers */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="w-6 h-6 bg-blue-400 rounded-full opacity-60 animate-pulse" />
+          </div>
+          <div className="absolute top-1/3 right-1/3 -translate-x-1/2 -translate-y-1/2">
+            <div className="w-6 h-6 bg-blue-400 rounded-full opacity-40 animate-pulse" />
+          </div>
+          <div className="absolute bottom-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2">
+            <div className="w-6 h-6 bg-blue-400 rounded-full opacity-50 animate-pulse" />
+          </div>
 
-        {/* Mock markers */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="w-6 h-6 bg-blue-400 rounded-full opacity-60 animate-pulse"></div>
-        </div>
-        <div className="absolute top-1/3 right-1/3 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="w-6 h-6 bg-blue-400 rounded-full opacity-40 animate-pulse"></div>
-        </div>
-        <div className="absolute bottom-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="w-6 h-6 bg-blue-400 rounded-full opacity-50 animate-pulse"></div>
-        </div>
+          {/* Loading text overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
+              <TextShimmer className="text-sm font-medium" duration={2}>
+                {`Finding nearby ${type}...`}
+              </TextShimmer>
+            </div>
+          </div>
 
-        {/* Loading text overlay */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-blue-500 animate-pulse" />
-            <TextShimmer className="text-sm font-medium" duration={2}>
-              {`Finding nearby ${type}...`}
-            </TextShimmer>
+          {/* Map controls skeleton */}
+          <div className="absolute bottom-4 right-4 space-y-2">
+            <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
+            <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
           </div>
         </div>
 
-        {/* Map controls skeleton */}
-        <div className="absolute bottom-4 right-4 space-y-2">
-          <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
-          <div className="w-8 h-8 bg-neutral-300 dark:bg-neutral-700 rounded shadow-sm animate-pulse" />
+        {/* List preview area */}
+        <div className="h-[38%] bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 px-4 sm:px-6 py-3 overflow-hidden">
+          <div className="mx-auto max-w-3xl space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="h-16 w-20 sm:h-20 sm:w-28 rounded-md bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-2/3 rounded bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                  <div className="h-3 w-1/2 rounded bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                  <div className="flex gap-2">
+                    <div className="h-5 w-16 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                    <div className="h-5 w-12 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

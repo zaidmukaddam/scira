@@ -60,10 +60,10 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
       quality: z.enum(['default', 'best']).describe('Search quality x speed level. Default is default.'),
       include_domains: z
         .array(z.string())
-        .describe('An array of domains to include in all search results. Default is an empty list.'),
+        .describe('An array of domains to include in all search results. Default is an empty list like []'),
       exclude_domains: z
         .array(z.string())
-        .describe('An array of domains to exclude from all search results. Default is an empty list.'),
+        .describe('An array of domains to exclude from all search results. Default is an empty list like []'),
     }),
     execute: async ({
       queries,

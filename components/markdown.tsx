@@ -836,7 +836,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
   };
 
   return (
-    <div className="mt-2 markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
+    <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
       <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );

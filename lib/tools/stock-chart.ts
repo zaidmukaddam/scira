@@ -1,12 +1,9 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { Daytona } from '@daytonaio/sdk';
+import { Valyu } from 'valyu-js';
 import { tavily } from '@tavily/core';
 import Exa from 'exa-js';
-import { generateObject } from 'ai';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
-import { SNAPSHOT_NAME } from '@/lib/constants';
 
 const CURRENCY_SYMBOLS = {
   USD: '$',
@@ -90,11 +87,6 @@ export const stockChartTool = tool({
     console.log('Interval:', interval);
     console.log('News queries:', news_queries);
 
-    const formattedCurrencySymbols = (currency_symbols || stock_symbols.map(() => 'USD')).map((currency) => {
-      const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS];
-      return symbol || currency;
-    });
-
     let news_results: NewsGroup[] = [];
 
     const tvly = tavily({ apiKey: serverEnv.TAVILY_API_KEY });
@@ -170,8 +162,8 @@ export const stockChartTool = tool({
           .searchAndContents(`${symbol} financial report analysis`, {
             text: true,
             category: 'financial report',
-            livecrawl: 'always',
-            type: 'auto',
+            livecrawl: 'preferred',
+            type: 'hybrid',
             numResults: 10,
             summary: {
               query: 'all important information relevent to the important for investors',
@@ -214,126 +206,144 @@ export const stockChartTool = tool({
         }
       });
 
-      for (const group of exaResults) {
-        for (let i = 0; i < group.results.length; i++) {
-          const result = group.results[i];
-          if (!result.title || result.title.trim() === '') {
-            try {
-              const { object } = await generateObject({
-                model: scira.languageModel('scira-nano'),
-                prompt: `Complete the following financial report with an appropriate title. The report is about ${
-                  group.query
-                } and contains this content: ${result.content.substring(0, 500)}...`,
-                schema: z.object({
-                  title: z.string().describe('A descriptive title for the financial report'),
-                }),
-              });
-              group.results[i].title = object.title;
-            } catch (error) {
-              console.error(`Error generating title for ${group.query} report:`, error);
-              group.results[i].title = `${group.query} Financial Report`;
-            }
-          }
-        }
-      }
-
       news_results = [...news_results, ...exaResults];
     } catch (error) {
       console.error('Error fetching Exa financial reports:', error);
     }
 
-    const code = `
-import yfinance as yf
-import matplotlib.pyplot as plt
-import pandas as pd
-from datetime import datetime
+    type ValyuOHLC = {
+      datetime: string;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      volume: number;
+    };
 
-${stock_symbols
-  .map(
-    (symbol) =>
-      `${symbol.toLowerCase().replace('.', '')} = yf.download('${symbol}', period='${interval}', interval='1d')`,
-  )
-  .join('\n')}
+    type ValyuResult = {
+      id?: string;
+      title: string;
+      url: string;
+      content: ValyuOHLC[];
+      metadata?: {
+        ticker?: string;
+        name?: string;
+        interval?: string;
+        start?: string;
+        end?: string;
+        exchange?: string;
+      };
+    };
 
-# Create the plot
-plt.figure(figsize=(10, 6))
-${stock_symbols
-  .map(
-    (symbol) => `
-# Convert datetime64 index to strings to make it serializable
-${symbol.toLowerCase().replace('.', '')}.index = ${symbol.toLowerCase().replace('.', '')}.index.strftime('%Y-%m-%d')
-plt.plot(${symbol.toLowerCase().replace('.', '')}.index, ${symbol
-      .toLowerCase()
-      .replace('.', '')}['Close'], label='${symbol} ${
-      formattedCurrencySymbols[stock_symbols.indexOf(symbol)]
-    }', color='blue')
-`,
-  )
-  .join('\n')}
+    const sanitizeTicker = (symbol: string): string => {
+      const upper = symbol.toUpperCase();
+      const base = upper.split('.')[0];
+      return base.replace(/[^A-Z]/g, '');
+    };
 
-# Customize the chart
-plt.title('${title}')
-plt.xlabel('Date')
-plt.ylabel('Closing Price')
-plt.legend()
-plt.grid(True)
-plt.show()`;
+    const intervalToQueryRange = (raw: string): string => {
+      const mapping: Record<string, string> = {
+        '1d': '1 day',
+        '5d': '5 days',
+        '1mo': '1 month',
+        '3mo': '3 months',
+        '6mo': '6 months',
+        '1y': '1 year',
+        '2y': '2 years',
+        '5y': '5 years',
+        '10y': '10 years',
+        ytd: 'year to date',
+        max: 'max',
+      };
+      return mapping[raw] ?? '5 years';
+    };
 
-    console.log('Code:', code);
+    const sanitizedTickers = stock_symbols.map(sanitizeTicker);
+    const rangeText = intervalToQueryRange(interval);
 
-    const daytona = new Daytona({
-      apiKey: serverEnv.DAYTONA_API_KEY,
-      target: 'us',
-    });
+    const valyu = new Valyu(serverEnv.VALYU_API_KEY);
+    const query = `What are the ${rangeText} historical stock prices for ${sanitizedTickers.join(
+      ' and ',
+    )}?`;
 
-    const sandbox = await daytona.create({
-      snapshot: SNAPSHOT_NAME,
-    });
-
-    const execution = await sandbox.process.codeRun(code);
-    let message = '';
-
-    if (execution.result === execution.artifacts?.stdout) {
-      message += execution.result;
-    } else if (execution.result && execution.result !== execution.artifacts?.stdout) {
-      message += execution.result;
-    } else if (execution.artifacts?.stdout && execution.artifacts?.stdout !== execution.result) {
-      message += execution.artifacts.stdout;
-    } else {
-      message += execution.result;
-    }
-
-    console.log('execution exit code: ', execution.exitCode);
-    console.log('execution result: ', execution.result);
-
-    console.log('Chart details: ', execution.artifacts?.charts);
-    if (execution.artifacts?.charts) {
-      console.log('showing chart');
-      execution.artifacts.charts[0].elements.map((element: any) => {
-        console.log(element.points);
+    let valyuResults: ValyuResult[] = [];
+    try {
+      const response = await valyu.search(query, {
+        searchType: 'proprietary',
+        relevanceThreshold: 0.6,
+        isToolCall: false,
+        includedSources: ['valyu/valyu-stocks-US'],
       });
+
+      const isValyuOHLCArray = (value: unknown): value is ValyuOHLC[] => {
+        return (
+          Array.isArray(value) &&
+          value.every(
+            (v) =>
+              typeof v === 'object' &&
+              v !== null &&
+              'datetime' in (v as Record<string, unknown>) &&
+              'close' in (v as Record<string, unknown>),
+          )
+        );
+      };
+
+      const isValyuResult = (obj: unknown): obj is ValyuResult => {
+        if (!obj || typeof obj !== 'object') return false;
+        const r = obj as Record<string, unknown>;
+        return (
+          typeof r['title'] === 'string' &&
+          typeof r['url'] === 'string' &&
+          isValyuOHLCArray(r['content'])
+        );
+      };
+
+      if (response && Array.isArray(response.results)) {
+        valyuResults = (response.results as unknown[]).filter(isValyuResult) as ValyuResult[];
+      }
+    } catch (error) {
+      console.error('Error fetching Valyu data:', error);
     }
 
-    if (execution.artifacts?.charts === undefined) {
-      console.log('No chart found');
-    }
+    const getTickerFromResult = (r: ValyuResult): string | undefined => {
+      if (r.metadata?.ticker) return r.metadata.ticker.toUpperCase();
+      if (r.id) {
+        const match = r.id.match(/valyu-stocks-US:([A-Z.]+)\s/);
+        if (match && match[1]) return match[1].split('.')[0];
+      }
 
-    await sandbox.delete();
+      const titleMatch = r.title.match(/Price of\s+([A-Z.]+)\s+/i);
+      if (titleMatch && titleMatch[1]) return titleMatch[1].toUpperCase().split('.')[0];
+      return undefined;
+    };
 
-    const chart = execution.artifacts?.charts?.[0] ?? undefined;
-    const chartData = chart
-      ? {
-          type: chart.type,
-          title: chart.title,
-          elements: chart.elements,
-          png: undefined,
-        }
-      : undefined;
+    const elements = sanitizedTickers.map((ticker) => {
+      const resultForTicker = valyuResults.find((r) => getTickerFromResult(r) === ticker);
+      const points: Array<[string, number]> = (resultForTicker?.content || [])
+        .map((c) => [c.datetime, Number(c.close)] as [string, number])
+        .filter(([, close]) => Number.isFinite(close));
+      return {
+        label: ticker,
+        points,
+      };
+    });
+
+    const chartData = {
+      type: 'line',
+      title,
+      x_label: 'Date',
+      y_label: 'Price',
+      x_scale: 'datetime',
+      elements,
+      png: undefined,
+    };
+
+    const outputCurrencyCodes = currency_symbols || stock_symbols.map(() => 'USD');
 
     return {
-      message: message.trim(),
+      message: 'Fetched historical prices from Valyu (US)',
       chart: chartData,
-      currency_symbols: formattedCurrencySymbols,
+      currency_symbols: outputCurrencyCodes,
       news_results: news_results,
     };
   },

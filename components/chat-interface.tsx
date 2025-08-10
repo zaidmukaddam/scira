@@ -668,7 +668,7 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-bottom bg-background',
+                  'transition-all duration-500 !bg-bottom bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
                     ? 'relative max-w-2xl mx-auto w-full rounded-xl'
                     : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',

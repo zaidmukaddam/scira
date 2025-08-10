@@ -2,16 +2,40 @@ import { notFound } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { getUser } from '@/lib/auth-utils';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
-import { Message } from '@/lib/db/schema';
+import { Message, type Chat } from '@/lib/db/schema';
 import { Metadata } from 'next';
 import { UIMessage, UIMessagePart } from 'ai';
 import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { formatISO } from 'date-fns';
 
+async function sleep(durationMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, durationMs));
+}
+
+async function fetchChatWithBackoff(id: string): Promise<Chat | undefined> {
+  const maximumWaitMs = 5000;
+  let delayMs = 250;
+  const deadline = Date.now() + maximumWaitMs;
+
+  // First immediate attempt
+  let chat = await getChatById({ id });
+  if (chat) return chat;
+
+  while (Date.now() < deadline) {
+    const remainingMs = deadline - Date.now();
+    await sleep(Math.min(delayMs, remainingMs));
+    chat = await getChatById({ id });
+    if (chat) return chat;
+    delayMs = Math.min(delayMs * 2, maximumWaitMs);
+  }
+
+  return undefined;
+}
+
 // metadata
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const id = (await params).id;
-  const chat = await getChatById({ id });
+  const chat = await fetchChatWithBackoff(id);
   const user = await getUser();
   // if not chat, return Scira Chat
   if (!chat) {
@@ -199,7 +223,7 @@ function convertLegacyReasoningPart(part: unknown): unknown {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
-  const chat = await getChatById({ id });
+  const chat = await fetchChatWithBackoff(id);
 
   if (!chat) {
     notFound();

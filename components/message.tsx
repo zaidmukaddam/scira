@@ -518,6 +518,18 @@ export const Message: React.FC<MessageProps> = ({
   // Mode state for editing
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
+  // Determine if user message should top-align avatar based on combined text length
+  const combinedUserText: string = React.useMemo(() => {
+    return (
+      message.parts
+        ?.map((part) => (part.type === 'text' ? part.text : ''))
+        .join('')
+        .trim() || ''
+    );
+  }, [message.parts]);
+
+  const shouldTopAlignUser: boolean = combinedUserText.length > 50;
+
   // Check if message content exceeds max height
   React.useEffect(() => {
     if (messageContentRef.current) {
@@ -589,13 +601,13 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
                           }`}
                         >
-                          <div className="flex items-center justify-start gap-2">
+                          <div className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}>
                             {user ? (
-                              <Avatar className="size-7 rounded-md !p-0 !m-0">
+                              <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
                                 <AvatarImage
                                   src={user.image ?? ''}
                                   alt={user.name ?? ''}
@@ -606,9 +618,9 @@ export const Message: React.FC<MessageProps> = ({
                                 </AvatarFallback>
                               </Avatar>
                             ) : (
-                              <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7" />
+                              <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
                             )}
-                            <div className="flex-1 grow h-full">
+                            <div className="flex-1 grow min-w-0">
                               <ChatTextHighlighter
                                 className={`${getDynamicFontSize(part.text)}`}
                                 onHighlight={onHighlight}
@@ -632,7 +644,7 @@ export const Message: React.FC<MessageProps> = ({
                   {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(
+                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(
                         message.parts
                           ?.map((part) => (part.type === 'text' ? part.text : ''))
                           .join('')
@@ -643,7 +655,7 @@ export const Message: React.FC<MessageProps> = ({
                     >
                       <div className="flex items-start gap-1">
                         {user ? (
-                          <Avatar className="flex-shrink-0 pl-1 size-6 rounded-md">
+                          <Avatar className="flex-shrink-0 self-start pl-1 size-6 rounded-md">
                             <AvatarImage
                               src={user.image ?? ''}
                               alt={user.name ?? ''}
@@ -654,7 +666,7 @@ export const Message: React.FC<MessageProps> = ({
                             </AvatarFallback>
                           </Avatar>
                         ) : (
-                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 self-start pl-1 size-6" />
                         )}
                         <div className="min-w-0">
                           <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
@@ -691,7 +703,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute -right-1 -top-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
+                  <div className="absolute right-0 -top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                     {/* Only show edit button for owners OR unauthenticated users on private chats */}
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
@@ -762,7 +774,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(
+                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(
                     message.parts
                       ?.map((part) => (part.type === 'text' ? part.text : ''))
                       .join('')
@@ -773,7 +785,7 @@ export const Message: React.FC<MessageProps> = ({
                 >
                   <div className="flex items-start gap-1">
                     {user ? (
-                      <Avatar className="flex-shrink-0 pl-1 size-6 rounded-md">
+                      <Avatar className="flex-shrink-0 self-start pl-1 size-6 rounded-md">
                         <AvatarImage
                           src={user.image ?? ''}
                           alt={user.name ?? ''}
@@ -784,7 +796,7 @@ export const Message: React.FC<MessageProps> = ({
                         </AvatarFallback>
                       </Avatar>
                     ) : (
-                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 pl-1 size-6" />
+                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 self-start pl-1 size-6" />
                     )}
                     <div className="min-w-0">
                       <MarkdownRenderer
@@ -882,9 +894,9 @@ export const Message: React.FC<MessageProps> = ({
           console.log(`🔧 Rendering part ${partIndex}:`, { type: part.type, hasText: !!(part as any).text });
           const key = `${message.id || index}-part-${partIndex}-${part.type}`;
           return (
-            <React.Fragment key={key}>
+            <div key={key}>
               {renderPart(part, index, partIndex, message.parts as ChatMessage['parts'][number][], message)}
-            </React.Fragment>
+            </div>
           );
         })}
 

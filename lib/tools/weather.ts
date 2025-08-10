@@ -7,12 +7,12 @@ export const weatherTool = tool({
   inputSchema: z.object({
     location: z
       .string()
-      .nullable()
+      .optional()
       .describe(
         'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Required if latitude and longitude are not provided.',
       ),
-    latitude: z.number().nullable().describe('The latitude coordinate. Required if location is not provided.'),
-    longitude: z.number().nullable().describe('The longitude coordinate. Required if location is not provided.'),
+    latitude: z.number().optional().describe('The latitude coordinate. Required if location is not provided.'),
+    longitude: z.number().optional().describe('The longitude coordinate. Required if location is not provided.'),
   }),
   execute: async ({
     location,

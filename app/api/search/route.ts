@@ -360,7 +360,7 @@ export async function POST(req: Request) {
                 reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
                 reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
                 parallelToolCalls: false,
-                strictJsonSchema: true,
+                strictJsonSchema: false,
                 serviceTier: 'flex',
                 textVerbosity: "medium"
               }

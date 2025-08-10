@@ -348,76 +348,107 @@
   }
 }
 
-/* Custom styles for Mapbox */
-@layer utilities {
-  /* Mapbox popup styles */
-  .mapboxgl-popup {
-    z-index: 12 !important;
-  }
+/* Hide Leaflet attribution globally */
+.leaflet-control-attribution {
+  display: none !important;
+}
 
-  .mapboxgl-popup-content {
-    @apply rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 p-0 overflow-hidden;
-  }
+/* Polished Leaflet zoom control (light/dark aware) */
+.leaflet-control-zoom,
+.custom-zoom-control.leaflet-bar {
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(6px);
+}
 
-  .mapboxgl-popup-close-button {
-    @apply text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-lg w-6 h-6 flex items-center justify-center;
-  }
+.dark .leaflet-control-zoom,
+.dark .custom-zoom-control.leaflet-bar {
+  border-color: hsl(var(--border));
+  background: rgba(9, 9, 11, 0.6);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
 
-  .mapboxgl-popup-close-button:hover {
-    @apply bg-neutral-100 dark:bg-neutral-800 rounded;
-  }
+.leaflet-control-zoom a,
+.custom-zoom-control .zoom-btn {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid hsl(var(--border));
+  transition: background-color 150ms ease, color 150ms ease;
+}
 
-  .mapboxgl-popup-tip {
-    @apply border-t-neutral-200 dark:border-t-neutral-800;
-  }
+.leaflet-control-zoom a:last-child,
+.custom-zoom-control .zoom-btn:last-child {
+  border-bottom: none;
+}
 
-  /* Custom marker styles */
-  .custom-marker {
-    @apply cursor-pointer;
-  }
+.leaflet-control-zoom a:hover,
+.custom-zoom-control .zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
 
-  .custom-marker:focus {
-    @apply outline-none;
-  }
+.dark .leaflet-control-zoom a:hover,
+.dark .custom-zoom-control .zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 
-  .custom-marker:focus > div {
-    @apply ring-2 ring-blue-500 ring-offset-2;
-  }
+.leaflet-control-zoom a:active,
+.custom-zoom-control .zoom-btn:active {
+  background: rgba(0, 0, 0, 0.08);
+}
 
-  /* Map controls styling - minimal and compatible */
-  .mapboxgl-ctrl-group {
-    z-index: 10 !important;
-  }
+.dark .leaflet-control-zoom a:active,
+.dark .custom-zoom-control .zoom-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
 
-  .mapboxgl-ctrl-attrib {
-    z-index: 10 !important;
-  }
+.leaflet-control-zoom a:focus,
+.custom-zoom-control .zoom-btn:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
 
-  /* Navigation controls positioning - avoid overlap with view toggle */
-  .mapboxgl-ctrl-bottom-right {
-    bottom: 16px !important;
-    right: 16px !important;
-  }
+.leaflet-control-zoom a.leaflet-disabled,
+.custom-zoom-control .zoom-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent !important;
+}
 
-  .mapboxgl-ctrl-bottom-left {
-    bottom: 16px !important;
-    left: 16px !important;
-  }
+/* Touch-friendly sizing */
+.leaflet-touch .leaflet-control-zoom a,
+.leaflet-touch .custom-zoom-control .zoom-btn {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  font-size: 18px;
+}
 
-  /* Responsive positioning for nearby search component */
-  .nearby-search-map .mapboxgl-ctrl-bottom-right {
-    bottom: 16px !important;
-    right: 16px !important;
-  }
+/* Divider between zoom buttons */
+.custom-zoom-control .divider {
+  height: 1px;
+  background: hsl(var(--border));
+}
 
-  /* In list view, adjust bottom position to account for reduced map height */
-  .nearby-search-map.list-view .mapboxgl-ctrl-bottom-right {
-    bottom: 8px !important;
-    right: 8px !important;
-  }
-
-  /* Ensure place card overlays have proper z-index */
-  .place-card-overlay {
-    z-index: 15 !important;
-  }
+/* Thin horizontal scrollbar for the map's place-card scroller */
+.nearby-search-map::-webkit-scrollbar {
+  height: 8px;
+}
+.nearby-search-map::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 9999px;
+}
+.nearby-search-map::-webkit-scrollbar-track {
+  background: transparent;
 }

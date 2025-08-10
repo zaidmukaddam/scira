@@ -10,7 +10,7 @@ interface CurrencyConverterProps {
 }
 
 export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterProps) => {
-  const [amount, setAmount] = useState<string>(toolInvocation.args.amount || '1');
+  const [amount, setAmount] = useState<string>(toolInvocation.input.amount || '1');
   const [error, setError] = useState<string | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
 
@@ -28,8 +28,8 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
     setIsSwapped(!isSwapped);
   };
 
-  const fromCurrency = isSwapped ? toolInvocation.args.to : toolInvocation.args.from;
-  const toCurrency = isSwapped ? toolInvocation.args.from : toolInvocation.args.to;
+  const fromCurrency = isSwapped ? toolInvocation.input.to : toolInvocation.input.from;
+  const toCurrency = isSwapped ? toolInvocation.input.from : toolInvocation.input.to;
 
   const convertedAmount = result?.convertedAmount
     ? isSwapped

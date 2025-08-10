@@ -3,7 +3,17 @@ import React, { useState } from 'react';
 import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
-import { MapPin, Star, ExternalLink, Navigation, Globe, Phone, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import {
+  MapPin,
+  Star,
+  MapTrifold,
+  NavigationArrow,
+  Globe,
+  Phone,
+  CaretDown,
+  CaretUp,
+  Clock,
+} from '@phosphor-icons/react';
 
 interface Location {
   lat: number;
@@ -25,6 +35,13 @@ interface Place {
   vicinity: string;
   rating?: number;
   reviews_count?: number;
+  reviews?: Array<{
+    author_name?: string;
+    rating?: number;
+    text?: string;
+    time_description?: string;
+    relative_time_description?: string;
+  }>;
   price_level?: number;
   description?: string;
   photos?: Photo[];
@@ -48,6 +65,8 @@ interface PlaceCardProps {
   onClick: () => void;
   isSelected?: boolean;
   variant?: 'overlay' | 'list';
+  showHours?: boolean;
+  className?: string;
 }
 
 const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours, timezone }) => {
@@ -70,15 +89,15 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
         className="w-full flex items-center justify-between text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-1 px-1 py-1 rounded transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Clock className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+          <Clock size={12} className="text-neutral-400 dark:text-neutral-500" />
           <span className="text-xs text-neutral-600 dark:text-neutral-400">
             Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span>
           </span>
         </div>
         {isOpen ? (
-          <ChevronUp className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+          <CaretUp size={12} className="text-neutral-400 dark:text-neutral-500" />
         ) : (
-          <ChevronDown className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+          <CaretDown size={12} className="text-neutral-400 dark:text-neutral-500" />
         )}
       </button>
 
@@ -110,8 +129,14 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
   );
 };
 
-const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = false, variant = 'list' }) => {
-  const [showHours, setShowHours] = useState(false);
+const PlaceCard: React.FC<PlaceCardProps> = ({
+  place,
+  onClick,
+  isSelected = false,
+  variant = 'list',
+  showHours = true,
+  className,
+}) => {
   const [imageError, setImageError] = useState(false);
   const isOverlay = variant === 'overlay';
 
@@ -149,13 +174,16 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
   };
 
   const statusDisplay = getStatusDisplay();
+  const allReviews = place.reviews ?? [];
+  const textReviews = allReviews.filter((r) => (r.text ?? '').trim().length > 0);
+  const reviewsToShow = (textReviews.length > 0 ? textReviews : allReviews).slice(0, 1);
   const displayHours = place.hours || place.opening_hours || [];
   const hasValidImage = place.photos?.[0]?.url && !imageError;
 
   const cardContent = (
-    <div className="flex gap-3">
+    <div className="flex gap-3 max-sm:gap-2">
       {/* Clean Image Container */}
-      <div className="relative w-16 h-16 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-neutral-50 dark:bg-neutral-900 shrink-0">
+      <div className="relative w-16 h-16 max-sm:w-14 max-sm:h-14 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-neutral-50 dark:bg-neutral-900 shrink-0">
         {hasValidImage ? (
           <img
             src={place.photos![0].url}
@@ -175,41 +203,73 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="space-y-1">
+        <div className="space-y-1.5 max-sm:space-y-1">
           {/* Title and Rating Row */}
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm leading-tight truncate">
+            <h3 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm max-sm:text-[13px] leading-tight truncate">
               {place.name}
             </h3>
             {place.rating && (
               <div className="flex items-center gap-1 shrink-0">
-                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                <Star size={12} weight="fill" className="text-amber-500 fill-amber-500" />
+                <span className="text-xs max-sm:text-[11px] font-medium text-neutral-900 dark:text-neutral-100">
                   {place.rating.toFixed(1)}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Status */}
-          {statusDisplay && <div className={cn('text-xs font-medium', statusDisplay.color)}>{statusDisplay.text}</div>}
+          {/* Status - reserve line height even if absent for uniform cards */}
+          <div className={cn('text-xs font-medium min-h-[18px]', statusDisplay?.color)}>
+            {statusDisplay?.text || ''}
+          </div>
 
-          {/* Address */}
-          {place.vicinity && (
-            <div className="flex items-start gap-1">
-              <MapPin className="w-3 h-3 text-neutral-400 dark:text-neutral-500 mt-0.5 shrink-0" />
-              <span className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{place.vicinity}</span>
-            </div>
-          )}
+          {/* Address - keep two-line block height consistent */}
+          <div className="min-h-[32px]">
+            {place.vicinity && (
+              <div className="flex items-start gap-1">
+                <MapPin size={12} className="text-neutral-400 dark:text-neutral-500 mt-0.5 shrink-0" />
+                <span className="text-xs max-sm:text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-2">
+                  {place.vicinity}
+                </span>
+              </div>
+            )}
+          </div>
 
-          {/* Review Count */}
-          {place.reviews_count && place.reviews_count > 0 && (
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">{place.reviews_count} reviews</div>
-          )}
+          {/* Reviews (normalize height in overlay to keep cards even) */}
+          <div className={cn('mt-1 space-y-2', isOverlay && 'min-h-[48px] sm:min-h-[52px]')}>
+            {reviewsToShow.length > 0 && (
+              <>
+                {reviewsToShow.map((rev, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      'text-xs max-sm:text-[11px] text-neutral-700 dark:text-neutral-300 border-l-2 border-neutral-200 dark:border-neutral-700 pl-2',
+                      idx > 0 && 'hidden sm:block',
+                    )}
+                  >
+                    {rev.text && <p className="line-clamp-2 leading-snug">“{rev.text}”</p>}
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                      {rev.author_name && <span className="font-medium">{rev.author_name}</span>}
+                      {typeof rev.rating === 'number' && (
+                        <span className="inline-flex items-center gap-1">
+                          <Star size={12} weight="fill" className="text-amber-500 fill-amber-500" />
+                          {rev.rating.toFixed(1)}
+                        </span>
+                      )}
+                      {(rev.time_description || rev.relative_time_description) && (
+                        <span>· {rev.time_description ?? rev.relative_time_description}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Clean Action Buttons */}
-        <div className="flex gap-1 mt-3">
+        <div className="flex flex-wrap gap-2 sm:gap-1 mt-3">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -218,9 +278,9 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
                 '_blank',
               );
             }}
-            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
           >
-            <Navigation className="w-3 h-3" />
+            <NavigationArrow size={12} />
             Directions
           </button>
 
@@ -230,9 +290,9 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
                 e.stopPropagation();
                 window.open(`tel:${place.phone}`, '_blank');
               }}
-              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <Phone className="w-3 h-3" />
+              <Phone size={12} />
               Call
             </button>
           )}
@@ -243,9 +303,9 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
                 e.stopPropagation();
                 window.open(place.website, '_blank');
               }}
-              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <Globe className="w-3 h-3" />
+              <Globe size={12} />
               Website
             </button>
           )}
@@ -256,9 +316,9 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
                 e.stopPropagation();
                 window.open(`https://www.google.com/maps/place/?q=place_id:${place.place_id}`, '_blank');
               }}
-              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <ExternalLink className="w-3 h-3" />
+              <MapTrifold size={12} />
               Maps
             </button>
           )}
@@ -270,13 +330,18 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
   if (isOverlay) {
     return (
       <div
-        className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg"
+        className={cn(
+          'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-3 sm:p-4 w-full',
+          className,
+        )}
         onClick={onClick}
       >
         {cardContent}
 
         {/* Hours Section for Overlay */}
-        {displayHours && displayHours.length > 0 && <HoursSection hours={displayHours} timezone={place.timezone} />}
+        {showHours && displayHours && displayHours.length > 0 && (
+          <HoursSection hours={displayHours} timezone={place.timezone} />
+        )}
       </div>
     );
   }
@@ -285,15 +350,18 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onClick, isSelected = fals
     <div
       onClick={onClick}
       className={cn(
-        'w-full p-4 cursor-pointer transition-colors border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-neutral-900 shadow-sm',
-        'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:shadow-md',
-        isSelected && 'ring-1 ring-neutral-900 dark:ring-neutral-100 shadow-md',
+        'w-full p-4 max-sm:p-3 cursor-pointer transition-colors border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-neutral-900',
+        'hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
+        isSelected && 'ring-1 ring-neutral-900 dark:ring-neutral-100',
+        className,
       )}
     >
       {cardContent}
 
       {/* Hours Section */}
-      {displayHours && displayHours.length > 0 && <HoursSection hours={displayHours} timezone={place.timezone} />}
+      {showHours && displayHours && displayHours.length > 0 && (
+        <HoursSection hours={displayHours} timezone={place.timezone} />
+      )}
     </div>
   );
 };

@@ -194,6 +194,7 @@ const groupTools = {
   web: [
     'web_search',
     'greeting',
+    'code_interpreter',
     'get_weather_data',
     'retrieve',
     'text_translate',
@@ -209,7 +210,7 @@ const groupTools = {
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
   reddit: ['reddit_search', 'datetime'] as const,
-  analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
+  stocks: ['stock_chart', 'currency_converter', 'datetime'] as const,
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: [] as const,
   extreme: ['extreme_search'] as const,
@@ -241,7 +242,7 @@ const groupInstructions = {
   - A tool should only be called once per response cycle
   - Follow the tool guidelines below for each tool as per the user's request
   - Calling the same tool multiple times with different parameters is allowed
-  - Always mandatory to run the tool first before writing the response to ensure accuracy and relevance
+  - Always run the tool first before writing the response to ensure accuracy and relevance
 
   #### Multi Query Web Search:
   - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 6 queries are allowed
@@ -252,9 +253,80 @@ const groupInstructions = {
   - Always put the values in array format for the required parameters
   - Put the latest year in the queries to get the latest information or just "latest".
 
-  #### Retrieve Tool:
+  #### Retrieve Web Page Tool:
   - Use this for extracting information from specific URLs provided
   - Do not use this tool for general web searches
+
+  #### Code Interpreter Tool:
+  - NEVER write any text, analysis or thoughts before running the tool
+  - Use this Python-only sandbox for calculations, data analysis, or visualizations
+  - matplotlib, pandas, numpy, sympy, and yfinance are available
+  - Include necessary imports for libraries you use
+  - Include library installations (!pip install <library_name>) where required
+  - Keep code simple and concise unless complexity is absolutely necessary
+  - ⚠️ NEVER use unnecessary intermediate variables or assignments
+
+  ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
+  - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
+  - NEVER leave variables hanging without print() at the end
+  - NEVER use bare variable names as final statements (e.g., result alone)
+  - ALWAYS wrap final outputs in print() function: print(final_result)
+  - For multiple outputs, use separate print() statements for each
+  - For calculations: Always end with print(calculation_result)
+  - For data analysis: Always end with print(analysis_summary)
+  - For string operations: Always end with print(string_result)
+  - For mathematical computations: Always end with print(math_result)
+  - Even for simple operations: Always end with print(simple_result)
+  - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
+  - Use only essential code - avoid boilerplate, comments, or explanatory code
+
+  ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
+  \`\`\`python
+  # Simple calculation
+  result = 2 + 2
+  print(result)  # MANDATORY
+
+  # String operation
+  word = "strawberry"
+  count_r = word.count('r')
+  print(count_r)  # MANDATORY
+
+  # Data analysis
+  import pandas as pd
+  data = pd.Series([1, 2, 3, 4, 5])
+  mean_value = data.mean()
+  print(mean_value)  # MANDATORY
+
+  # Multiple outputs
+  x = 10
+  y = 20
+  sum_val = x + y
+  product = x * y
+  print(f"Sum: {sum_val}")  # MANDATORY
+  print(f"Product: {product}")  # MANDATORY
+  \`\`\`
+
+  ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
+  \`\`\`python
+  # BAD - No print statement
+  word = "strawberry"
+  count_r = word.count('r')
+  count_r  # WRONG - bare variable
+
+  # BAD - No print for calculation
+  result = 2 + 2
+  result  # WRONG - bare variable
+
+  # BAD - Missing print for final output
+  data.mean()  # WRONG - no print wrapper
+  \`\`\`
+
+  ### ENFORCEMENT RULES:
+  - If you write code without print() at the end, it is AUTOMATICALLY WRONG
+  - Every code block MUST end with at least one print() statement
+  - No bare variables, expressions, or function calls as final statements
+  - This rule applies to ALL code regardless of complexity or purpose
+  - Always use the print() function for final output!!! This is very important!!!
 
   #### MCP Server Search:
   - Use the 'mcp_search' tool to search for Model Context Protocol servers in the Smithery registry
@@ -338,7 +410,7 @@ const groupInstructions = {
      BAD LINK USAGE (DO NOT DO THIS):
      LLMs are powerful language models. You can learn more about them here [Link]. For detailed information about training, check out this article [Link]. See this guide for architecture details [Link].
 
-     ⚠️ ABSOLUTELY FORBIDDEN (NEVER DO THIS):
+     ⚠️ ABSOLUTELY FORBIDDEN (NEVER WRITE IN THIS FORMAT):
      ## Further Reading and Official Documentation
      - [xAI Docs: Overview](https://docs.x.ai/docs/overview)
      - [Grok 3 Beta — The Age of Reasoning Agents](https://x.ai/news/grok-3)
@@ -642,83 +714,11 @@ const groupInstructions = {
   - All citations must be inline, placed immediately after the relevant information
   - Format citations as: [Post Title - r/subreddit](URL)
   `,
-  analysis: `
+  stocks: `
   You are a code runner, stock analysis and currency conversion expert.
 
   ### Tool Guidelines:
-  #### Code Interpreter Tool:
-  - ⚠️ URGENT: Run code_interpreter tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
-  - NEVER write any text, analysis or thoughts before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Use this Python-only sandbox for calculations, data analysis, or visualizations
-  - matplotlib, pandas, numpy, sympy, and yfinance are available
-  - Include necessary imports for libraries you use
-  - Include library installations (!pip install <library_name>) where required
-  - Keep code simple and concise unless complexity is absolutely necessary
-  - ⚠️ NEVER use unnecessary intermediate variables or assignments
-
-  ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
-  - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
-  - NEVER leave variables hanging without print() at the end
-  - NEVER use bare variable names as final statements (e.g., result alone)
-  - ALWAYS wrap final outputs in print() function: print(final_result)
-  - For multiple outputs, use separate print() statements for each
-  - For calculations: Always end with print(calculation_result)
-  - For data analysis: Always end with print(analysis_summary)
-  - For string operations: Always end with print(string_result)
-  - For mathematical computations: Always end with print(math_result)
-  - Even for simple operations: Always end with print(simple_result)
-  - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
-  - Use only essential code - avoid boilerplate, comments, or explanatory code
-
-  ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
-  \`\`\`python
-  # Simple calculation
-  result = 2 + 2
-  print(result)  # MANDATORY
-
-  # String operation
-  word = "strawberry"
-  count_r = word.count('r')
-  print(count_r)  # MANDATORY
-
-  # Data analysis
-  import pandas as pd
-  data = pd.Series([1, 2, 3, 4, 5])
-  mean_value = data.mean()
-  print(mean_value)  # MANDATORY
-
-  # Multiple outputs
-  x = 10
-  y = 20
-  sum_val = x + y
-  product = x * y
-  print(f"Sum: {sum_val}")  # MANDATORY
-  print(f"Product: {product}")  # MANDATORY
-  \`\`\`
-
-  ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
-  \`\`\`python
-  # BAD - No print statement
-  word = "strawberry"
-  count_r = word.count('r')
-  count_r  # WRONG - bare variable
-
-  # BAD - No print for calculation
-  result = 2 + 2
-  result  # WRONG - bare variable
-
-  # BAD - Missing print for final output
-  data.mean()  # WRONG - no print wrapper
-  \`\`\`
-
-  ### ENFORCEMENT RULES:
-  - If you write code without print() at the end, it is AUTOMATICALLY WRONG
-  - Every code block MUST end with at least one print() statement
-  - No bare variables, expressions, or function calls as final statements
-  - This rule applies to ALL code regardless of complexity or purpose
-  - Always use the print() function for final output!!! This is very important!!!
-
+  
   #### Stock Charts Tool:
   - Use yfinance to get stock data and matplotlib for visualization
   - Support multiple currencies through currency_symbols parameter

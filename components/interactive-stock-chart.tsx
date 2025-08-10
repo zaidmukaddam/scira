@@ -5,6 +5,9 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Newspaper } from 'lucide-react';
 import { ChartBar } from '@phosphor-icons/react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Chart03Icon } from '@hugeicons/core-free-icons';
 
 // Currency symbol mapping with modern design tokens
 const CURRENCY_SYMBOLS = {
@@ -185,7 +188,7 @@ export const InteractiveStockChart = React.memo(
         const firstPrice = points[0]?.value || 0;
         const lastPrice = points[points.length - 1]?.value || 0;
         const priceChange = lastPrice - firstPrice;
-        const percentChange = ((priceChange / firstPrice) * 100).toFixed(2);
+        const percentChange = firstPrice > 0 ? ((priceChange / firstPrice) * 100).toFixed(2) : '0.00';
         const seriesColor = getSeriesColor(index);
 
         return {
@@ -440,60 +443,41 @@ export const InteractiveStockChart = React.memo(
     }, [processedData, interval, getTooltipFormatter, isDark, isMobile]);
 
     return (
-      <div className="w-full rounded-lg border border-border/50 overflow-hidden shadow-xs">
-        <div className="bg-card px-3 py-2 border-b border-border/40 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary"
-            >
-              <path
-                d="M21 21H4.6C4.03995 21 3.75992 21 3.54601 20.891C3.35785 20.7951 3.20487 20.6422 3.10899 20.454C3 20.2401 3 19.9601 3 19.4V3"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M7 14.5L12 9.5L17 14.5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <h2 className="text-sm font-medium text-foreground/90">Financial Stock Chart</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-primary/70"
-              >
-                <path
-                  d="M12 8V12L15 15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-              </svg>
-              <span>YFinance • {lastUpdated}</span>
-            </div>
-            <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">LATEST</div>
-          </div>
-        </div>
+      <div className="w-full rounded-lg border !border-primary/20 overflow-hidden shadow-none">
+        <Accordion type="single" collapsible defaultValue="open">
+          <AccordionItem value="open" className="border-0">
+            <AccordionTrigger className="bg-card px-3 py-2 border-b border-border/40 flex gap-8 no-underline hover:no-underline">
+              <div className="flex items-center gap-2">
+                <HugeiconsIcon icon={Chart03Icon} className="size-4" strokeWidth={1.5} />
+                <h2 className="text-sm font-medium text-foreground/90">Financial Stock Chart</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-primary/70"
+                  >
+                    <path
+                      d="M12 8V12L15 15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                  <span>Valyu • {lastUpdated}</span>
+                </div>
+                <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">LATEST</div>
+              </div>
+            </AccordionTrigger>
 
-        <div className="p-3 bg-muted/10">
+            <AccordionContent className="p-0">
+              <div className="p-3 bg-muted/10">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-base font-semibold text-foreground/90">{title}</h2>
             <Badge
@@ -694,7 +678,10 @@ export const InteractiveStockChart = React.memo(
               </div>
             </div>
           )}
-        </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     );
   },

@@ -1,6 +1,5 @@
-import { generateText, stepCountIs, tool } from 'ai';
+import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { serverEnv } from '@/env/server';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
@@ -8,7 +7,7 @@ export const xSearchTool = tool({
   description:
     'Search X (formerly Twitter) posts using xAI Live Search for the past 7 days by default otherwise user can specify a date range.',
   inputSchema: z.object({
-    query: z.string().describe('The search query for X posts').nullable(),
+    query: z.string().describe('The search query for X posts').optional(),
     startDate: z
       .string()
       .describe('The start date of the search in the format YYYY-MM-DD (always default to 7 days ago if not specified)'),
@@ -17,11 +16,11 @@ export const xSearchTool = tool({
       .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
     xHandles: z
       .array(z.string())
-      .nullable()
+      .optional()
       .describe(
         'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles like "@elonmusk" or "@openai"',
       ),
-    maxResults: z.number().nullable().describe('Maximum number of search results to return (default 15)'),
+    maxResults: z.number().optional().describe('Maximum number of search results to return (default 15)'),
   }),
   execute: async ({
     query,
@@ -30,11 +29,11 @@ export const xSearchTool = tool({
     xHandles,
     maxResults = 15,
   }: {
-    query: string | null;
-    startDate: string | null;
-    endDate: string | null;
-    xHandles: string[] | null;
-    maxResults: number | null;
+    query?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    xHandles?: string[] | null;
+    maxResults?: number | null;
   }) => {
     try {
       const searchParameters: any = {

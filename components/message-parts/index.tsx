@@ -225,7 +225,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       }
 
       return (
-        <div key={`${messageIndex}-${partIndex}-text`}>
+        <div key={`${messageIndex}-${partIndex}-text`} className="mt-2">
           <div>
             <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
               <MarkdownRenderer content={part.text} />
@@ -670,30 +670,31 @@ const ToolPartRenderer = memo(
             }
 
             return (
-              <div className="w-full my-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-                {/* Compact Header */}
-                <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                        {places.length} Location{places.length !== 1 ? 's' : ''} Found
-                      </h3>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {part.output.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
-                      </p>
+              <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-[hsl(var(--primary))]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold truncate">
+                          {places.length} Location{places.length !== 1 ? 's' : ''} Found
+                        </h3>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]">
+                          {part.output.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Compact Map */}
-                <div className="relative h-[400px] min-h-[300px] bg-neutral-50 dark:bg-neutral-900">
+                {/* Map */}
+                <div className="relative h-[360px] sm:h-[400px] bg-[hsl(var(--muted))]">
                   <Suspense fallback={<ComponentLoader />}>
                     <MapComponent
-                      center={{
-                        lat: places[0].location.lat,
-                        lng: places[0].location.lng,
-                      }}
+                      center={{ lat: places[0].location.lat, lng: places[0].location.lng }}
                       places={places.map((place: any) => ({
                         name: place.name,
                         location: place.location,
@@ -706,42 +707,38 @@ const ToolPartRenderer = memo(
                   </Suspense>
                 </div>
 
-                {/* Place Cards */}
-                <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {/* Results list */}
+                <div className="p-3 divide-y divide-[hsl(var(--border))]">
                   {places.map((place: any, index: number) => (
-                    <div
-                      key={place.place_id || index}
-                      className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
-                    >
+                    <div key={place.place_id || index} className="py-3">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                          <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                          <MapPin className="h-4 w-4 text-[hsl(var(--primary))]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                            {place.name}
-                          </h4>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="text-sm font-medium text-ellipsis overflow-hidden whitespace-nowrap">
+                              {place.name}
+                            </h4>
+                            <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                              {place.location.lat.toFixed(4)}, {place.location.lng.toFixed(4)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 line-clamp-2">
                             {place.formatted_address}
                           </p>
                           {place.types && place.types.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {place.types.slice(0, 3).map((type: string, typeIndex: number) => (
-                                <Badge
+                                <span
                                   key={typeIndex}
-                                  variant="secondary"
-                                  className="rounded-md bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 border-0 text-xs"
+                                  className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] capitalize"
                                 >
                                   {type.replace(/_/g, ' ')}
-                                </Badge>
+                                </span>
                               ))}
                             </div>
                           )}
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          <div className="text-xs text-neutral-400 dark:text-neutral-500">
-                            {place.location.lat.toFixed(4)}, {place.location.lng.toFixed(4)}
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -1247,6 +1244,7 @@ const ToolPartRenderer = memo(
                       vicinity: place.formatted_address,
                       rating: place.rating,
                       reviews_count: place.reviews_count,
+                      reviews: place.reviews,
                       price_level: place.price_level,
                       photos: place.photos,
                       is_closed: !place.is_open,
@@ -1274,7 +1272,6 @@ const ToolPartRenderer = memo(
           case 'input-streaming':
             return <div className="text-sm text-neutral-500">Preparing currency conversion...</div>;
           case 'input-available':
-            return <SearchLoadingState icon={DollarSign} text="Converting currency..." color="green" />;
           case 'output-available':
             return (
               <Suspense fallback={<ComponentLoader />}>
