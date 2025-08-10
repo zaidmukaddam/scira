@@ -15,6 +15,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith('/api/raycast')) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith('/polar/webhooks')) {
     return NextResponse.next();
   }

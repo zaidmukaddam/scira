@@ -1,11 +1,12 @@
 import { webSearchTool } from '@/lib/tools';
 import { xSearchTool } from '@/lib/tools/x-search';
+import { groq } from '@ai-sdk/groq';
 import { xai } from '@ai-sdk/xai';
 import { convertToModelMessages, customProvider, generateText, stepCountIs } from 'ai';
 
 const scira = customProvider({
   languageModels: {
-    'scira-default': xai('grok-3-mini'),
+    'scira-default': groq('openai/gpt-oss-20b'),
   },
 });
 
@@ -28,6 +29,7 @@ Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month:
 - Always make multiple targeted queries (2-4) to get comprehensive results.
 - Never use the same query twice and always make more than 2 queries.
 - Specify the year or "latest" in queries to fetch recent information.
+- You can select "general", "news" or "finance" in the search type.
 - Place citations directly after relevant sentences or paragraphs.
 - Citation format: [Source Title](URL)
 - Ensure citations adhere strictly to the required format.
@@ -54,6 +56,8 @@ Remember, you are designed to be efficient and helpful in the Raycast environmen
     If the user gives you a specific time like start date and end date, then add them in the parameters. default is 1 week.
     Always provide the citations at the end of each paragraph and in the end of sentences where you use it in which they are referred to with the given format to the information provided.
     Citation format: [Post Title](URL)
+
+    The X handle can any company, person, or organization mentioned in the post that you know of or the user is asking about.
 
     # Latex and Currency Formatting to be used:
     - Always use '$' for inline equations and '$$' for block equations.
