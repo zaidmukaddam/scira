@@ -265,68 +265,69 @@ const groupInstructions = {
   - Include library installations (!pip install <library_name>) where required
   - Keep code simple and concise unless complexity is absolutely necessary
   - ⚠️ NEVER use unnecessary intermediate variables or assignments
+  - More rules are below:
 
-  ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
-  - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
-  - NEVER leave variables hanging without print() at the end
-  - NEVER use bare variable names as final statements (e.g., result alone)
-  - ALWAYS wrap final outputs in print() function: print(final_result)
-  - For multiple outputs, use separate print() statements for each
-  - For calculations: Always end with print(calculation_result)
-  - For data analysis: Always end with print(analysis_summary)
-  - For string operations: Always end with print(string_result)
-  - For mathematical computations: Always end with print(math_result)
-  - Even for simple operations: Always end with print(simple_result)
-  - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
-  - Use only essential code - avoid boilerplate, comments, or explanatory code
+    ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
+    - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
+    - NEVER leave variables hanging without print() at the end
+    - NEVER use bare variable names as final statements (e.g., result alone)
+    - ALWAYS wrap final outputs in print() function: print(final_result)
+    - For multiple outputs, use separate print() statements for each
+    - For calculations: Always end with print(calculation_result)
+    - For data analysis: Always end with print(analysis_summary)
+    - For string operations: Always end with print(string_result)
+    - For mathematical computations: Always end with print(math_result)
+    - Even for simple operations: Always end with print(simple_result)
+    - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
+    - Use only essential code - avoid boilerplate, comments, or explanatory code
 
-  ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
-  \`\`\`python
-  # Simple calculation
-  result = 2 + 2
-  print(result)  # MANDATORY
+    ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
+    \`\`\`python
+    # Simple calculation
+    result = 2 + 2
+    print(result)  # MANDATORY
 
-  # String operation
-  word = "strawberry"
-  count_r = word.count('r')
-  print(count_r)  # MANDATORY
+    # String operation
+    word = "strawberry"
+    count_r = word.count('r')
+    print(count_r)  # MANDATORY
 
-  # Data analysis
-  import pandas as pd
-  data = pd.Series([1, 2, 3, 4, 5])
-  mean_value = data.mean()
-  print(mean_value)  # MANDATORY
+    # Data analysis
+    import pandas as pd
+    data = pd.Series([1, 2, 3, 4, 5])
+    mean_value = data.mean()
+    print(mean_value)  # MANDATORY
 
-  # Multiple outputs
-  x = 10
-  y = 20
-  sum_val = x + y
-  product = x * y
-  print(f"Sum: {sum_val}")  # MANDATORY
-  print(f"Product: {product}")  # MANDATORY
-  \`\`\`
+    # Multiple outputs
+    x = 10
+    y = 20
+    sum_val = x + y
+    product = x * y
+    print(f"Sum: {sum_val}")  # MANDATORY
+    print(f"Product: {product}")  # MANDATORY
+    \`\`\`
 
-  ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
-  \`\`\`python
-  # BAD - No print statement
-  word = "strawberry"
-  count_r = word.count('r')
-  count_r  # WRONG - bare variable
+    ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
+    \`\`\`python
+    # BAD - No print statement
+    word = "strawberry"
+    count_r = word.count('r')
+    count_r  # WRONG - bare variable
 
-  # BAD - No print for calculation
-  result = 2 + 2
-  result  # WRONG - bare variable
+    # BAD - No print for calculation
+    result = 2 + 2
+    result  # WRONG - bare variable
 
-  # BAD - Missing print for final output
-  data.mean()  # WRONG - no print wrapper
-  \`\`\`
+    # BAD - Missing print for final output
+    data.mean()  # WRONG - no print wrapper
+    \`\`\`
 
-  ### ENFORCEMENT RULES:
-  - If you write code without print() at the end, it is AUTOMATICALLY WRONG
-  - Every code block MUST end with at least one print() statement
-  - No bare variables, expressions, or function calls as final statements
-  - This rule applies to ALL code regardless of complexity or purpose
-  - Always use the print() function for final output!!! This is very important!!!
+    ### ENFORCEMENT RULES:
+    - If you write code without print() at the end, it is AUTOMATICALLY WRONG
+    - Every code block MUST end with at least one print() statement
+    - No bare variables, expressions, or function calls as final statements
+    - This rule applies to ALL code regardless of complexity or purpose
+    - Always use the print() function for final output!!! This is very important!!!
 
   #### MCP Server Search:
   - Use the 'mcp_search' tool to search for Model Context Protocol servers in the Smithery registry

@@ -44,7 +44,7 @@ const processDomains = (domains?: string[]): string[] | undefined => {
   return processedDomains.every((domain) => domain.trim() === '') ? undefined : processedDomains;
 };
 
-export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
+export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | undefined) {
   return tool({
     description: 'Search the web for information with 5-10 queries, max results, search depth, topics, and quality.',
     inputSchema: z.object({
@@ -94,7 +94,7 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
         const currentMaxResults = maxResults[index] || maxResults[0] || 10;
 
         try {
-          dataStream.write({
+          dataStream?.write({
             type: 'data-query_completion',
             data: {
               query,
@@ -116,12 +116,20 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
           };
 
           const processedIncludeDomains = processDomains(include_domains);
-          if (processedIncludeDomains) {
-            searchOptions.includeDomains = processedIncludeDomains;
-          }
-
           const processedExcludeDomains = processDomains(exclude_domains);
-          if (processedExcludeDomains) {
+
+          const hasIncludeDomains = Array.isArray(processedIncludeDomains) && processedIncludeDomains.length > 0;
+          const hasExcludeDomains = Array.isArray(processedExcludeDomains) && processedExcludeDomains.length > 0;
+
+          if (hasIncludeDomains && hasExcludeDomains) {
+            // Prefer includeDomains when both are provided
+            searchOptions.includeDomains = processedIncludeDomains;
+            console.warn(
+              'Both include_domains and exclude_domains provided; prefer include_domains and ignore exclude_domains.'
+            );
+          } else if (hasIncludeDomains) {
+            searchOptions.includeDomains = processedIncludeDomains;
+          } else if (hasExcludeDomains) {
             searchOptions.excludeDomains = processedExcludeDomains;
           }
 
@@ -145,7 +153,7 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
             };
           });
 
-          dataStream.write({
+          dataStream?.write({
             type: 'data-query_completion',
             data: {
               query,
@@ -165,7 +173,7 @@ export function webSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>) {
         } catch (error) {
           console.error(`Exa search error for query "${query}":`, error);
 
-          dataStream.write({
+          dataStream?.write({
             type: 'data-query_completion',
             data: {
               query,

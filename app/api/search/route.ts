@@ -332,7 +332,6 @@ export async function POST(req: Request) {
               ? {
                 temperature: 0.7,
                 topP: 0.8,
-                topK: 20,
                 minP: 0,
                 presencePenalty: 1.5,
               }
