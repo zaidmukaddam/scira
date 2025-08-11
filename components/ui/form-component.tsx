@@ -90,7 +90,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [attachments.length, messages],
     );
 
-    const isFilePart = useCallback((p: any): p is { type: 'file'; mediaType?: string } => {
+    const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
       return typeof p === 'object' && p !== null && 'type' in (p as Record<string, unknown>) &&
         (p as { type: unknown }).type === 'file';
     }, []);
@@ -131,17 +131,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       return availableModels.filter((model) => model.pdf);
     }, [availableModels, hasImageAttachments, hasPdfAttachments]);
 
-    const sortedModels = useMemo(() => {
-      const categoryOrder = ['Mini', 'Pro', 'Experimental'];
-      return [...filteredModels].sort((a, b) => {
-        const aIdx = categoryOrder.indexOf(a.category);
-        const bIdx = categoryOrder.indexOf(b.category);
-        if (aIdx !== bIdx) return aIdx - bIdx;
-        // Non-pro before pro within same category
-        if (a.pro !== b.pro) return a.pro ? 1 : -1;
-        return a.label.localeCompare(b.label);
-      });
-    }, [filteredModels]);
+    const sortedModels = useMemo(() => filteredModels, [filteredModels]);
 
     const groupedModels = useMemo(
       () =>
@@ -264,7 +254,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <CommandInput placeholder="Search models..." className="h-9" />
               <CommandEmpty>No model found.</CommandEmpty>
               <CommandList className="max-h-[15em]">
-                {Object.entries(groupedModels).map(([category, categoryModels], categoryIndex) => (
+                {orderedGroupEntries.map(([category, categoryModels], categoryIndex) => (
                   <CommandGroup key={category}>
                     {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
                     <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">{category} Models</div>

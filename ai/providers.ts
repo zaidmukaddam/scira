@@ -371,7 +371,7 @@ export const models: Model[] = [
     category: 'Pro',
     pdf: true,
     pro: true,
-    requiresAuth: false,
+    requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
   },
