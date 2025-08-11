@@ -122,31 +122,37 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
       window.location.reload();
     }, []);
 
-    const handlePlaceCardClick = useCallback((place: Place) => {
-      setSelectedPlace(place);
-      const idx = places.findIndex((p) => p.place_id === place.place_id);
-      const resolved = idx >= 0 ? idx : null;
-      setSelectedIndex(resolved);
-      setActiveIndex(resolved);
-    }, [places]);
+    const handlePlaceCardClick = useCallback(
+      (place: Place) => {
+        setSelectedPlace(place);
+        const idx = places.findIndex((p) => p.place_id === place.place_id);
+        const resolved = idx >= 0 ? idx : null;
+        setSelectedIndex(resolved);
+        setActiveIndex(resolved);
+      },
+      [places],
+    );
 
     const handleViewModeChange = useCallback((mode: 'map' | 'list') => {
       setViewMode(mode);
     }, []);
 
     // Memoize the place selection handler for the map
-    const handlePlaceSelect = useCallback((place: Place | null) => {
-      setSelectedPlace(place);
-      if (place) {
-        const idx = places.findIndex((p) => p.place_id === place.place_id);
-        const resolved = idx >= 0 ? idx : null;
-        setSelectedIndex(resolved);
-        setActiveIndex(resolved);
-      } else {
-        setSelectedIndex(null);
-        setActiveIndex(null);
-      }
-    }, [places]);
+    const handlePlaceSelect = useCallback(
+      (place: Place | null) => {
+        setSelectedPlace(place);
+        if (place) {
+          const idx = places.findIndex((p) => p.place_id === place.place_id);
+          const resolved = idx >= 0 ? idx : null;
+          setSelectedIndex(resolved);
+          setActiveIndex(resolved);
+        } else {
+          setSelectedIndex(null);
+          setActiveIndex(null);
+        }
+      },
+      [places],
+    );
 
     const selectByIndex = useCallback(
       (nextIndex: number) => {
@@ -209,7 +215,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
       dragMovedRef.current = false;
       dragStartXRef.current = e.clientX;
       dragStartScrollRef.current = listContainerRef.current.scrollLeft;
-      
+
       const handleMouseMove = (ev: MouseEvent) => {
         if (!isDraggingRef.current || !listContainerRef.current) return;
         ev.preventDefault();
@@ -217,13 +223,13 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
         if (Math.abs(dx) > 3) dragMovedRef.current = true;
         listContainerRef.current.scrollLeft = dragStartScrollRef.current - dx;
       };
-      
+
       const handleMouseUp = () => {
         isDraggingRef.current = false;
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
       };
-      
+
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }, []);
@@ -287,7 +293,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
           <div className="flex items-center gap-2 flex-wrap max-sm:w-full">
             <Badge
               variant="secondary"
-              className="bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-700/60 shadow-[0_4px_12px_0_rgba(0,0,0,0.15),0_2px_4px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_12px_0_rgba(0,0,0,0.4),0_2px_4px_0_rgba(0,0,0,0.3)] text-neutral-900 dark:text-neutral-100 font-semibold rounded-full px-4 py-1.25"
+              className="bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 text-neutral-900 dark:text-neutral-100 font-semibold rounded-full px-4 py-1.25"
             >
               <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <span>
@@ -310,7 +316,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
           </div>
 
           {/* View Toggle */}
-          <div className="relative flex rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 p-0.5 shadow-lg max-sm:self-start">
+          <div className="relative flex rounded-full bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 p-0.5 max-sm:self-start">
             {/* Sliding background indicator */}
             <div
               className={cn(
@@ -404,12 +410,14 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
                           >
                             <div className="relative">
                               <div className="absolute -top-2 -left-2 z-20">
-                                <div className={cn(
-                                  'h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold shadow-md border',
-                                  isSel
-                                    ? 'bg-black text-white dark:bg-white dark:text-black border-neutral-200 dark:border-neutral-800'
-                                    : 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100 border-neutral-200 dark:border-neutral-800'
-                                )}>
+                                <div
+                                  className={cn(
+                                    'h-6 w-6 rounded-full flex items-center justify-center text-xs font-semibold shadow-md border',
+                                    isSel
+                                      ? 'bg-black text-white dark:bg-white dark:text-black border-neutral-200 dark:border-neutral-800'
+                                      : 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100 border-neutral-200 dark:border-neutral-800',
+                                  )}
+                                >
                                   {index + 1}
                                 </div>
                               </div>
