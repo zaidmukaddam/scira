@@ -41,6 +41,7 @@ import {
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
+import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -288,7 +289,7 @@ interface MessageProps {
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   setSuggestedQuestions: (questions: string[]) => void;
   suggestedQuestions: string[];
-  user?: any;
+  user?: ComprehensiveUserData | null;
   selectedVisibilityType?: 'public' | 'private';
   isLastMessage?: boolean;
   error?: any;
@@ -307,6 +308,7 @@ interface MessageEditorProps {
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   messages: ChatMessage[];
   setSuggestedQuestions: (questions: string[]) => void;
+  user?: ComprehensiveUserData | null;
 }
 
 const MessageEditor: React.FC<MessageEditorProps> = ({
@@ -316,6 +318,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   regenerate,
   messages,
   setSuggestedQuestions,
+  user,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [draftContent, setDraftContent] = useState<string>(
@@ -357,38 +360,54 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
           try {
             setIsSubmitting(true);
 
-            // Step 1: Delete trailing messages if message has an ID (same as rewrite logic)
-            if (message.id) {
+            if (user && message.id) {
               await deleteTrailingMessages({
                 id: message.id,
               });
             }
 
-            // Step 2: Update local state to include only messages up to and including the edited message (same as rewrite logic)
-            const newMessages = [];
-            // Find the index of the message being edited
-            for (let i = 0; i < messages.length; i++) {
-              if (messages[i].id === message.id) {
-                // Add the updated message
-                const updatedMessage = {
-                  ...message,
-                  content: draftContent.trim(),
-                  parts: [{ type: 'text', text: draftContent.trim() } as TextUIPart],
-                };
-                newMessages.push(updatedMessage);
-                break;
-              } else {
-                newMessages.push(messages[i]);
-              }
-            }
+            setMessages((messages) => {
+              const index = messages.findIndex((m) => m.id === message.id);
 
-            // Step 3: Update UI state (same as rewrite logic)
-            setMessages(newMessages);
+              if (index !== -1) {
+                const originalParts = Array.isArray(message.parts) ? message.parts : [];
+
+                // Replace existing text part(s) with a single updated text part, preserving non-text parts and order
+                const updatedTextPart = { type: 'text', text: draftContent } as ChatMessage['parts'][number];
+                const mergedParts: ChatMessage['parts'][number][] = [];
+                let textInserted = false;
+
+                for (const p of originalParts) {
+                  if (p.type === 'text') {
+                    if (!textInserted) {
+                      mergedParts.push(updatedTextPart);
+                      textInserted = true;
+                    }
+                  } else {
+                    mergedParts.push(p);
+                  }
+                }
+
+                if (!textInserted) {
+                  mergedParts.unshift(updatedTextPart);
+                }
+
+                const updatedMessage: ChatMessage = {
+                  ...message,
+                  parts: mergedParts,
+                };
+
+                const before = messages.slice(0, index);
+                return [...before, updatedMessage];
+              }
+
+              return messages;
+            });
+
             setSuggestedQuestions([]);
 
             setMode('view');
 
-            // Step 4: Reload to generate new response (same as rewrite logic)
             await regenerate();
           } catch (error) {
             console.error('Error updating message:', error);
@@ -590,6 +609,7 @@ export const Message: React.FC<MessageProps> = ({
                 regenerate={regenerate}
                 messages={messages}
                 setSuggestedQuestions={setSuggestedQuestions}
+                user={user}
               />
             ) : (
               <div className="group relative">
@@ -768,6 +788,7 @@ export const Message: React.FC<MessageProps> = ({
               regenerate={regenerate}
               messages={messages}
               setSuggestedQuestions={setSuggestedQuestions}
+                user={user}
             />
           ) : (
             <div className="group relative">

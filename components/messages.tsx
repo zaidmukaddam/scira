@@ -10,6 +10,7 @@ import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
+import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -30,7 +31,7 @@ interface MessagesProps {
   setSuggestedQuestions: (questions: string[]) => void;
   status: UseChatHelpers<ChatMessage>['status'];
   error: Error | null; // Add error from useChat
-  user?: any; // Add user prop
+  user?: ComprehensiveUserData | null; // Add user prop
   selectedVisibilityType?: 'public' | 'private'; // Add visibility type
   chatId?: string; // Add chatId prop
   onVisibilityChange?: (visibility: 'public' | 'private') => void; // Add visibility change handler
