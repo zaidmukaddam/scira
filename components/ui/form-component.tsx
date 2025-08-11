@@ -2130,7 +2130,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="group rounded-lg transition-colors duration-200 !size-8"
+                          className="group rounded-full transition-colors duration-200 !size-8 border-0 !shadow-none hover:!bg-primary/30 hover:!border-0"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2163,7 +2163,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="group rounded-lg transition-colors duration-200 !size-8"
+                          className="group rounded-full transition-colors duration-200 !size-8"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2171,7 +2171,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           }}
                         >
                           <span className="block">
-                            <StopIcon size={16} />
+                            <StopIcon size={14} />
                           </span>
                         </Button>
                       </TooltipTrigger>
@@ -2191,7 +2191,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           size="icon"
                           variant={isRecording ? 'destructive' : 'default'}
                           className={cn(
-                            'group rounded-lg m-auto transition-colors duration-200 !size-8',
+                            'group rounded-full m-auto transition-colors duration-200 !size-8',
                           )}
                           onClick={(event) => {
                             event.preventDefault();
@@ -2225,7 +2225,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <TooltipTrigger asChild>
                         <Button
                           size="icon"
-                          className="group rounded-lg flex m-auto transition-colors duration-200 !size-8"
+                          className="group rounded-full flex m-auto transition-colors duration-200 !size-8"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
