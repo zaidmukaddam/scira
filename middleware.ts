@@ -10,6 +10,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   console.log('Pathname: ', pathname);
 
+  if (pathname.startsWith('/new')) {
+    return NextResponse.next();
+  }
+
   // /api/payments/webhooks is a webhook endpoint that should be accessible without authentication
   if (pathname.startsWith('/api/payments/webhooks')) {
     return NextResponse.next();

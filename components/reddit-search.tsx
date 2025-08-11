@@ -65,7 +65,7 @@ const RedditSourceCard: React.FC<{
         <div className="relative w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center overflow-hidden shrink-0">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
           <Image
-            src={`https://www.reddit.com/r/${subreddit}/favicon.ico`}
+            src={`https://www.reddit.com/favicon.ico`}
             alt=""
             width={24}
             height={24}

@@ -74,13 +74,13 @@ export const xSearchTool = tool({
               mode: 'on',
               ...(startDate && { fromDate: startDate }),
               ...(endDate && { toDate: endDate }),
-              maxSearchResults: maxResults,
+              maxSearchResults: maxResults ? (maxResults < 15 ? 15 : maxResults) : 15,
               returnCitations: true,
               sources: [
-                xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles, safeSearch: false } : { type: 'x' },
+                xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' },
               ],
             },
-          } as XaiProviderOptions,
+          } satisfies XaiProviderOptions,
         },
         onStepFinish: (step) => {
           console.log('[X search step]: ', step);
