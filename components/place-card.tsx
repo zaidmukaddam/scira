@@ -148,23 +148,70 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
   };
 
   const getStatusDisplay = (): { text: string; color: string } | null => {
-    if (!place.timezone || (place.is_closed === undefined && place.is_open === undefined) || !place.next_open_close) {
+    const hasOpenState = place.is_closed !== undefined || place.is_open !== undefined;
+    if (!hasOpenState && (!place.timezone || !place.next_open_close)) {
       return null;
     }
 
-    const timeStr = formatTime(place.next_open_close, place.timezone);
-    const isClosed = place.is_closed ?? !place.is_open;
+    const isClosed = place.is_closed ?? (place.is_open === undefined ? undefined : !place.is_open);
 
-    if (isClosed) {
-      return {
-        text: `Closed · Opens ${timeStr}`,
-        color: 'text-red-600 dark:text-red-400',
-      };
+    // If we have next open/close time and timezone, show the richer status
+    if (place.next_open_close && place.timezone) {
+      const timeStr = formatTime(place.next_open_close, place.timezone);
+      if (isClosed === true) {
+        return {
+          text: `Closed · Opens ${timeStr}`,
+          color: 'text-red-600 dark:text-red-400',
+        };
+      }
+      if (isClosed === false) {
+        return {
+          text: `Open · Closes ${timeStr}`,
+          color: 'text-emerald-600 dark:text-emerald-400',
+        };
+      }
     }
-    return {
-      text: `Open · Closes ${timeStr}`,
-      color: 'text-emerald-600 dark:text-emerald-400',
+
+    // Fallback: try deriving today's opening/closing from weekday text if provided
+    const hoursArray = place.hours || place.opening_hours || [];
+    const getTodayHoursString = (): string | null => {
+      if (!hoursArray.length) return null;
+      const now = place.timezone ? DateTime.now().setZone(place.timezone) : DateTime.now();
+      const currentDay = now.weekdayLong;
+      if (!currentDay) return null;
+      const entry = hoursArray.find((h) => h.startsWith(currentDay));
+      if (!entry) return null;
+      const parts = entry.split(': ');
+      if (parts.length < 2) return null;
+      return parts[1];
     };
+
+    const extractOpenClose = (hoursStr: string): { open?: string; close?: string } => {
+      const lower = hoursStr.toLowerCase();
+      if (lower.includes('closed')) return {};
+      // Split on en dash or hyphen
+      const [openPart, closePart] = hoursStr.split(/[–-]/);
+      const open = openPart?.trim();
+      const close = closePart?.trim();
+      return { open, close };
+    };
+
+    // Fallback when we only know open_now (nearby search) without timing info
+    if (isClosed === true) {
+      const todayHours = getTodayHoursString();
+      if (todayHours) {
+        const { open } = extractOpenClose(todayHours);
+        if (open) {
+          return { text: `Closed · Opens ${open}`, color: 'text-red-600 dark:text-red-400' };
+        }
+      }
+      return { text: 'Closed', color: 'text-red-600 dark:text-red-400' };
+    }
+    if (isClosed === false) {
+      return { text: 'Open now', color: 'text-emerald-600 dark:text-emerald-400' };
+    }
+
+    return null;
   };
 
   // Convert Google Places price level (0-4) to dollar signs

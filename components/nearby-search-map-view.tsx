@@ -277,7 +277,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
     return (
       <div
         className={cn(
-          'relative w-full h-[560px] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 my-4 nearby-search-map',
+          'relative w-full h-[560px] bg-white dark:bg-neutral-900 rounded-lg overflow-hidden !border-2 !border-primary/50 dark:!border-primary/10 my-4 nearby-search-map',
           viewMode === 'list' && 'list-view',
           viewMode === 'map' && places.length > 0 && 'map-has-list',
         )}
