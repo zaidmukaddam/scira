@@ -486,7 +486,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
             /* On small screens, prefer moving controls up rather than centering (for reachability) */
             .nearby-search-map.map-has-list .leaflet-bottom.leaflet-right {
               top: auto !important;
-              bottom: 12.5rem !important;
+              bottom: 14.5rem !important;
               right: 8px !important;
               transform: none;
             }
