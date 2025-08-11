@@ -60,7 +60,22 @@ export const scira = customProvider({
   },
 });
 
-export const models = [
+interface Model {
+  value: string;
+  label: string;
+  description: string;
+  vision: boolean;
+  reasoning: boolean;
+  experimental: boolean;
+  category: string;
+  pdf: boolean;
+  pro: boolean;
+  requiresAuth: boolean;
+  freeUnlimited: boolean;
+  maxOutputTokens: number;
+}
+
+export const models: Model[] = [
   // Free Unlimited Models (xAI)
   {
     value: 'scira-default',
@@ -128,7 +143,7 @@ export const models = [
     reasoning: false,
     experimental: false,
     category: 'Mini',
-    pdf: false,
+    pdf: true,
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
@@ -142,7 +157,7 @@ export const models = [
     reasoning: true,
     experimental: false,
     category: 'Mini',
-    pdf: false,
+    pdf: true,
     pro: false,
     requiresAuth: true,
     freeUnlimited: false,
@@ -228,7 +243,7 @@ export const models = [
     reasoning: true,
     experimental: false,
     category: 'Pro',
-    pdf: false,
+    pdf: true,
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
@@ -242,7 +257,7 @@ export const models = [
     reasoning: true,
     experimental: false,
     category: 'Pro',
-    pdf: false,
+    pdf: true,
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,

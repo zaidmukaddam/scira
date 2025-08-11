@@ -82,18 +82,70 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const hasAttachments = useMemo(
       () =>
         attachments.length > 0 ||
-        messages.some((msg) => msg.parts?.filter((part) => part.type === "file") && msg.parts?.filter((part) => part.type === "file").length > 0),
+        messages.some(
+          (msg) =>
+            msg.parts?.filter((part) => part.type === 'file') &&
+            msg.parts?.filter((part) => part.type === 'file').length > 0,
+        ),
       [attachments.length, messages],
     );
 
-    const filteredModels = useMemo(
-      () => (hasAttachments ? availableModels.filter((model) => model.vision) : availableModels),
-      [hasAttachments, availableModels],
-    );
+    const isFilePart = useCallback((p: any): p is { type: 'file'; mediaType?: string } => {
+      return typeof p === 'object' && p !== null && 'type' in (p as Record<string, unknown>) &&
+        (p as { type: unknown }).type === 'file';
+    }, []);
+
+    const hasImageAttachments = useMemo(() => {
+      const attachmentHasImage = attachments.some((att) => {
+        const ct = att.contentType || att.mediaType || '';
+        return ct.startsWith('image/');
+      });
+      const messagesHaveImage = messages.some((msg) =>
+        (msg.parts || []).some((part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType.startsWith('image/')),
+      );
+      return attachmentHasImage || messagesHaveImage;
+    }, [attachments, messages, isFilePart]);
+
+    const hasPdfAttachments = useMemo(() => {
+      const attachmentHasPdf = attachments.some((att) => {
+        const ct = att.contentType || att.mediaType || '';
+        return ct === 'application/pdf';
+      });
+      const messagesHavePdf = messages.some((msg) =>
+        (msg.parts || []).some((part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType === 'application/pdf'),
+      );
+      return attachmentHasPdf || messagesHavePdf;
+    }, [attachments, messages, isFilePart]);
+
+    const filteredModels = useMemo(() => {
+      if (!hasImageAttachments && !hasPdfAttachments) {
+        return availableModels;
+      }
+      if (hasImageAttachments && hasPdfAttachments) {
+        return availableModels.filter((model) => model.vision && model.pdf);
+      }
+      if (hasImageAttachments) {
+        return availableModels.filter((model) => model.vision);
+      }
+      // Only PDFs attached
+      return availableModels.filter((model) => model.pdf);
+    }, [availableModels, hasImageAttachments, hasPdfAttachments]);
+
+    const sortedModels = useMemo(() => {
+      const categoryOrder = ['Mini', 'Pro', 'Experimental'];
+      return [...filteredModels].sort((a, b) => {
+        const aIdx = categoryOrder.indexOf(a.category);
+        const bIdx = categoryOrder.indexOf(b.category);
+        if (aIdx !== bIdx) return aIdx - bIdx;
+        // Non-pro before pro within same category
+        if (a.pro !== b.pro) return a.pro ? 1 : -1;
+        return a.label.localeCompare(b.label);
+      });
+    }, [filteredModels]);
 
     const groupedModels = useMemo(
       () =>
-        filteredModels.reduce(
+        sortedModels.reduce(
           (acc, model) => {
             const category = model.category;
             if (!acc[category]) {
@@ -104,8 +156,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           },
           {} as Record<string, typeof availableModels>,
         ),
-      [filteredModels],
+      [sortedModels],
     );
+
+    const orderedGroupEntries = useMemo(() => {
+      const groupOrder = ['Mini', 'Pro', 'Experimental'];
+      return groupOrder
+        .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
+        .map((category) => [category, groupedModels[category]] as const);
+    }, [groupedModels]);
 
     const currentModel = useMemo(
       () => availableModels.find((m) => m.value === selectedModel),
