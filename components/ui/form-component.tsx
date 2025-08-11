@@ -1916,7 +1916,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, [input, debouncedResize]);
 
   return (
-    <div className={cn('flex flex-col w-full !bg-bottom bg-background max-w-2xl mx-auto')}>
+    <div className={cn('flex flex-col w-full max-w-2xl mx-auto')}>
       <TooltipProvider>
         <div
           className={cn(
