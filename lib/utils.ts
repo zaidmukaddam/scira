@@ -28,13 +28,6 @@ export const searchGroups = [
     show: true,
   },
   {
-    id: 'chat' as const,
-    name: 'Chat',
-    description: 'Talk to the model directly.',
-    icon: ChattingIcon,
-    show: true,
-  },
-  {
     id: 'x' as const,
     name: 'X',
     description: 'Search X posts',
@@ -60,6 +53,13 @@ export const searchGroups = [
     name: 'Academic',
     description: 'Search academic papers powered by Exa',
     icon: MicroscopeIcon,
+    show: true,
+  },
+  {
+    id: 'chat' as const,
+    name: 'Chat',
+    description: 'Talk to the model directly.',
+    icon: ChattingIcon,
     show: true,
   },
   {
