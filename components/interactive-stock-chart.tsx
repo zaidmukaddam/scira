@@ -446,33 +446,35 @@ export const InteractiveStockChart = React.memo(
       <div className="w-full rounded-lg border !border-primary/20 overflow-hidden shadow-none">
         <Accordion type="single" collapsible defaultValue="open">
           <AccordionItem value="open" className="border-0">
-            <AccordionTrigger className="bg-card px-3 py-2 border-b border-border/40 flex gap-8 no-underline hover:no-underline">
-              <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={Chart03Icon} className="size-4" strokeWidth={1.5} />
-                <h2 className="text-sm font-medium text-foreground/90">Financial Stock Chart</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-primary/70"
-                  >
-                    <path
-                      d="M12 8V12L15 15"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  <span>Valyu • {lastUpdated}</span>
+            <AccordionTrigger className="bg-card px-3 py-2 border-b border-border/40 no-underline hover:no-underline items-center">
+              <div className="w-full flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <HugeiconsIcon icon={Chart03Icon} className="size-4" strokeWidth={1.5} />
+                  <h2 className="text-sm font-medium text-foreground/90 truncate">Financial Stock Chart</h2>
                 </div>
-                <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">LATEST</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-primary/70"
+                    >
+                      <path
+                        d="M12 8V12L15 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                    <span className="truncate">Valyu • {lastUpdated}</span>
+                  </div>
+                  <div className="hidden sm:inline-flex text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">LATEST</div>
+                </div>
               </div>
             </AccordionTrigger>
 
