@@ -194,7 +194,7 @@ export const models: Model[] = [
   {
     value: 'scira-glm-air',
     label: 'GLM 4.5 Air',
-    description: 'GLM 4.5 Air',
+    description: "Zhipu AI's efficient base LLM",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -350,7 +350,7 @@ export const models: Model[] = [
   {
     value: 'scira-glm',
     label: 'GLM 4.5',
-    description: 'GLM 4.5',
+    description: "Zhipu AI's advanced base LLM",
     vision: false,
     reasoning: true,
     experimental: false,
