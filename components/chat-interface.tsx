@@ -354,7 +354,11 @@ const ChatInterface = memo(
           parts: [{ type: 'text', text: initialState.query }],
           role: 'user',
         });
-        window.history.replaceState({}, '', `/search/${chatId}`);
+        if (user && chatId) {
+          setTimeout(() => {
+            window.history.replaceState({}, '', `/search/${chatId}`);
+          }, 5000);
+        }
       }
     }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
 
