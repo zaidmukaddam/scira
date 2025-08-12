@@ -933,40 +933,42 @@ export const Message: React.FC<MessageProps> = ({
 
         {/* Missing assistant response UI moved inside assistant message */}
         {isMissingAssistantResponse && (
-          <div className="flex items-start mt-4">
+          <div className="flex items-start">
             <div className="w-full">
               <SciraLogoHeader />
 
-              <div className="bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4 mb-4 max-w-2xl">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-secondary-foreground dark:text-secondary-foreground mb-1">
-                      No response generated
-                    </h3>
-                    <p className="text-sm text-secondary-foreground/80 dark:text-secondary-foreground/80">
-                      It looks like the assistant didn’t provide a response to your message.
-                    </p>
+              <div className="flex flex-col gap-4 bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4">
+                <div className=" mb-4 max-w-2xl">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-secondary-foreground dark:text-secondary-foreground mb-1">
+                        No response generated
+                      </h3>
+                      <p className="text-sm text-secondary-foreground/80 dark:text-secondary-foreground/80">
+                        It looks like the assistant didn’t provide a response to your message.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="px-4 py-3 flex items-center justify-between">
-                <p className="text-muted-foreground dark:text-muted-foreground text-xs">
-                  {!user && selectedVisibilityType === 'public'
-                    ? 'Please sign in to retry or try a different prompt'
-                    : 'Try regenerating the response or rephrase your question'}
-                </p>
-                {(user || selectedVisibilityType === 'private') && (
-                  <Button
-                    onClick={handleRetry}
-                    className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                    size="sm"
-                  >
-                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    Generate Response
-                  </Button>
-                )}
+                <div className="px-4 py-3 flex items-center justify-between bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg mb-4 max-w-2xl">
+                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">
+                    {!user && selectedVisibilityType === 'public'
+                      ? 'Please sign in to retry or try a different prompt'
+                      : 'Try regenerating the response or rephrase your question'}
+                  </p>
+                  {(user || selectedVisibilityType === 'private') && (
+                    <Button
+                      onClick={handleRetry}
+                      className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                      size="sm"
+                    >
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                      Generate Response
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

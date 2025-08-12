@@ -13,8 +13,8 @@ async function sleep(durationMs: number): Promise<void> {
 }
 
 async function fetchChatWithBackoff(id: string): Promise<Chat | undefined> {
-  const maximumWaitMs = 5000;
-  let delayMs = 250;
+  const maximumWaitMs = 15000;
+  let delayMs = 500;
   const deadline = Date.now() + maximumWaitMs;
 
   // First immediate attempt

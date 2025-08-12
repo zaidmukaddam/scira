@@ -350,15 +350,13 @@ const ChatInterface = memo(
       if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
         initializedRef.current = true;
         console.log('[initial query]:', initialState.query);
+        if (user && chatId) {
+          window.history.replaceState({}, '', `/search/${chatId}`);
+        }
         sendMessage({
           parts: [{ type: 'text', text: initialState.query }],
           role: 'user',
         });
-        if (user && chatId) {
-          setTimeout(() => {
-            window.history.replaceState({}, '', `/search/${chatId}`);
-          }, 10000);
-        }
       }
     }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
 
@@ -674,12 +672,12 @@ const ChatInterface = memo(
           {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
             !isLimitBlocked && (
               <div
-              className={cn(
-                'transition-all duration-500 bg-[linear-gradient(to_top,theme(colors.background)_96px,transparent_0)]',
-                messages.length === 0 && !chatState.hasSubmitted
-                  ? 'relative max-w-2xl mx-auto w-full rounded-xl'
-                  : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
-              )}
+                className={cn(
+                  'transition-all duration-500 bg-[linear-gradient(to_top,theme(colors.background)_96px,transparent_0)]',
+                  messages.length === 0 && !chatState.hasSubmitted
+                    ? 'relative max-w-2xl mx-auto w-full rounded-xl'
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
+                )}
               >
                 <FormComponent
                   chatId={chatId}

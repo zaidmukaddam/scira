@@ -63,6 +63,7 @@ import {
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
   console.log('--------------------------------');
 
   // Check if model requires authentication (fast check)
-  const authRequiredModels = ['scira-anthropic', 'scira-google'];
+  const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
   if (authRequiredModels.includes(model) && !user) {
     return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
   }
@@ -137,11 +138,10 @@ export async function POST(req: Request) {
     isProUser?: boolean;
   }> = Promise.resolve({ canProceed: true });
 
-  if (user) {
-    customInstructions = await getCustomInstructions(user);
-    console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
-    console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
+  // Get custom instructions in parallel with other operations (declare outside user block for scope)
+  const customInstructionsPromise = user ? getCustomInstructions(user) : Promise.resolve(null);
 
+  if (user) {
     const isProUser = user.isProUser;
 
     try {
@@ -271,8 +271,14 @@ export async function POST(req: Request) {
       }
 
       const configWaitStartTime = Date.now();
-      const { tools: activeTools, instructions } = await configPromise;
-      console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
+        configPromise,
+        customInstructionsPromise
+      ]);
+      customInstructions = customInstructionsResult;
+      console.log(`⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
+      console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
       if (user) {
         const backgroundOperations = (async () => {
@@ -386,6 +392,9 @@ export async function POST(req: Request) {
             parallelToolCalls: false,
             structuredOutputs: true,
           } satisfies GroqProviderOptions,
+          google: {
+            structuredOutputs: true,
+          } satisfies GoogleGenerativeAIProviderOptions,
         },
         tools: {
           // Stock & Financial Tools

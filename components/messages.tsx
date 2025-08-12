@@ -138,18 +138,20 @@ const Messages: React.FC<MessagesProps> = React.memo(
         return true;
       }
 
-      // Case 2: Last message is assistant but lacks **visible** content
+      // Case 2: Last message is assistant but lacks visible content
       if (lastMessage?.role === 'assistant' && status === 'ready' && !error) {
         const parts = lastMessage.parts || [];
 
-        // Only count content that the user can actually see (text or tool invocation)
         const hasVisibleText = parts.some(
           (part: ChatMessage['parts'][number]) => part.type === 'text' && part.text && part.text.trim() !== '',
         );
-        const hasToolInvocations = parts.some((part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'));
+        const hasToolInvocations = parts.some(
+          (part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'),
+        );
+        const hasVisibleContent = hasVisibleText || hasToolInvocations;
 
-        // If there is NO visible content at all, we consider the response incomplete
-        if (!hasVisibleText && !hasToolInvocations) {
+        // If there is no visible content at all, consider the response missing
+        if (!hasVisibleContent) {
           return true;
         }
       }
@@ -435,7 +437,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
           <div
             className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
           >
-            <div className="w-full !m-0 !p-0 !mt-4">
+            <div className="w-full !m-0 !p-0">
               <SciraLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
                 <div
