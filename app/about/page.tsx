@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/navigation-menu';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 export default function AboutPage() {
   const router = useRouter();
@@ -179,14 +180,7 @@ export default function AboutPage() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <Image
-                  src="/scira.png"
-                  alt="Scira"
-                  width={100}
-                  height={100}
-                  className="size-8 invert dark:invert-0 transition-transform group-hover:scale-110"
-                  quality={100}
-                />
+                <SciraLogo className="size-8 transition-transform group-hover:scale-110" />
               </div>
               <span className="text-xl font-bold tracking-tight">Scira</span>
             </Link>
@@ -195,22 +189,22 @@ export default function AboutPage() {
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link href="/" legacyBehavior passHref>
+                  <Link href="/" passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Search</NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/pricing" legacyBehavior passHref>
+                  <Link href="/pricing" passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Pricing</NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/terms" legacyBehavior passHref>
+                  <Link href="/terms" passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Terms</NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/privacy-policy" legacyBehavior passHref>
+                  <Link href="/privacy-policy" passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Privacy</NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -257,14 +251,7 @@ export default function AboutPage() {
         <div className="container max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-6">
             <div className="flex items-center justify-center gap-3 mb-8">
-              <Image
-                src="/scira.png"
-                alt="Scira"
-                width={100}
-                height={100}
-                className="size-12 invert dark:invert-0"
-                quality={100}
-              />
+              <SciraLogo className="size-12" />
               <h1 className="text-4xl font-bold">Scira</h1>
             </div>
 
@@ -800,7 +787,7 @@ export default function AboutPage() {
         <div className="container max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <Image src="/scira.png" alt="Scira" width={32} height={32} className="h-8 w-8 invert dark:invert-0" />
+              <SciraLogo className="size-8" />
               <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Scira. All rights reserved.</p>
             </div>
 

@@ -18,6 +18,6 @@ export const db = drizzle(client, {
     url: process.env.UPSTASH_REDIS_REST_URL!,
     token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     global: true,
-    config: { ex: 300 },
+    config: { ex: 60 },
   }),
 });

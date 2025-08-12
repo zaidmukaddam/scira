@@ -685,7 +685,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       }
 
       return (
-        <p key={generateKey()} className="my-5 leading-relaxed text-foreground">
+        <p key={generateKey()} className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}>
           {children}
         </p>
       );
@@ -710,13 +710,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         // If link text and href are different, show both
         if (linkText !== href && linkText !== '') {
           return (
-            <span key={generateKey()}>
+            <span key={generateKey()} className="break-all">
               {linkText} ({href})
             </span>
           );
         }
         // Otherwise just show the URL
-        return <span key={generateKey()}>{href}</span>;
+        return <span key={generateKey()} className="break-all">{href}</span>;
       }
 
       let citationIndex = citationLinks.findIndex((link) => link.link === href);

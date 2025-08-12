@@ -186,7 +186,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
-            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
+            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0 !mt-4"
           >
             <SciraLogoHeader />
             <div className="flex space-x-2 ml-8 mt-2">

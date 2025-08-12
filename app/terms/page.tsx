@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,24 +41,14 @@ export default function TermsPage() {
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <NextImage
-                    src="/scira.png"
-                    alt="Scira Logo"
-                    className="h-8 w-8 opacity-90 invert dark:invert-0"
-                    width={32}
-                    height={32}
-                    unoptimized
-                    quality={100}
-                  />
+                  <SciraLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
 
             <motion.div variants={item} className="text-center">
               <h1 className="text-4xl font-bold tracking-tight">Terms of Service</h1>
-              <p className="text-muted-foreground mt-3">
-                Last updated: July 24, 2025
-              </p>
+              <p className="text-muted-foreground mt-3">Last updated: July 24, 2025</p>
             </motion.div>
           </motion.div>
         </div>
@@ -170,9 +161,9 @@ export default function TermsPage() {
             </li>
           </ul>
           <p>
-            <strong>Important:</strong> Scira AI does not store any payment card details, bank information, or other 
-            sensitive payment data. All payment information is processed directly by our payment providers according 
-            to their respective privacy policies and security standards.
+            <strong>Important:</strong> Scira AI does not store any payment card details, bank information, or other
+            sensitive payment data. All payment information is processed directly by our payment providers according to
+            their respective privacy policies and security standards.
           </p>
           <p>For paid subscriptions:</p>
           <ul>
@@ -263,15 +254,7 @@ export default function TermsPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <NextImage
-                  src="/scira.png"
-                  alt="Scira Logo"
-                  className="h-4 w-4 opacity-80 invert dark:invert-0"
-                  width={16}
-                  height={16}
-                  unoptimized
-                  quality={100}
-                />
+                <SciraLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
@@ -287,10 +270,7 @@ export default function TermsPage() {
               <Link href="/terms" className="text-foreground font-medium">
                 Terms
               </Link>
-              <Link
-                href="/privacy-policy"
-                className="hover:text-foreground transition-colors"
-              >
+              <Link href="/privacy-policy" className="hover:text-foreground transition-colors">
                 Privacy
               </Link>
             </div>

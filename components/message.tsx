@@ -42,6 +42,7 @@ import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/typ
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { cn } from '@/lib/utils';
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -418,7 +419,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         }}
         className="w-full"
       >
-        <div className="relative border rounded-md mb-3!">
+        <div className="relative border rounded-md mb-3! bg-foreground/10">
           <Textarea
             ref={textareaRef}
             value={draftContent}
@@ -504,7 +505,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
 };
 
 // Max height for collapsed user messages (in pixels)
-const USER_MESSAGE_MAX_HEIGHT = 100;
+const USER_MESSAGE_MAX_HEIGHT = 120;
 
 export const Message: React.FC<MessageProps> = ({
   message,
@@ -621,11 +622,13 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
-                            !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${
+                            !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                           }`}
                         >
-                          <div className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}>
+                          <div
+                            className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
+                          >
                             {user ? (
                               <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
                                 <AvatarImage
@@ -638,9 +641,13 @@ export const Message: React.FC<MessageProps> = ({
                                 </AvatarFallback>
                               </Avatar>
                             ) : (
-                              <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
+                              <HugeiconsIcon
+                                icon={UserCircleIcon}
+                                size={24}
+                                className="size-7 flex-shrink-0 self-start"
+                              />
                             )}
-                            <div className="flex-1 grow min-w-0">
+                            <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl rounded-tl-none p-2">
                               <ChatTextHighlighter
                                 className={`${getDynamicFontSize(part.text)}`}
                                 onHighlight={onHighlight}
@@ -670,7 +677,7 @@ export const Message: React.FC<MessageProps> = ({
                           .join('')
                           .trim() || '',
                       )} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
-                        !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                        !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                       }`}
                     >
                       <div className="flex items-start gap-1">
@@ -686,7 +693,11 @@ export const Message: React.FC<MessageProps> = ({
                             </AvatarFallback>
                           </Avatar>
                         ) : (
-                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 self-start pl-1 size-6" />
+                          <HugeiconsIcon
+                            icon={UserCircleIcon}
+                            size={24}
+                            className="flex-shrink-0 self-start pl-1 size-6"
+                          />
                         )}
                         <div className="min-w-0">
                           <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
@@ -723,8 +734,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute right-0 -top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
-                    {/* Only show edit button for owners OR unauthenticated users on private chats */}
+                  <div className="absolute right-0 -bottom-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
                         <Button
@@ -788,7 +798,7 @@ export const Message: React.FC<MessageProps> = ({
               regenerate={regenerate}
               messages={messages}
               setSuggestedQuestions={setSuggestedQuestions}
-                user={user}
+              user={user}
             />
           ) : (
             <div className="group relative">
@@ -801,7 +811,7 @@ export const Message: React.FC<MessageProps> = ({
                       .join('')
                       .trim() || '',
                   )} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
-                    !isExpanded && exceedsMaxHeight ? 'max-h-[100px]' : ''
+                    !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                   }`}
                 >
                   <div className="flex items-start gap-1">
@@ -910,7 +920,7 @@ export const Message: React.FC<MessageProps> = ({
 
   if (message.role === 'assistant') {
     return (
-      <div className={shouldReduceHeight ? '' : 'min-h-[calc(100vh-18rem)]'}>
+      <div className={cn(shouldReduceHeight ? '' : 'min-h-[calc(100vh-18rem)]', '!mt-4')}>
         {message.parts?.map((part: ChatMessage['parts'][number], partIndex: number) => {
           console.log(`🔧 Rendering part ${partIndex}:`, { type: part.type, hasText: !!(part as any).text });
           const key = `${message.id || index}-part-${partIndex}-${part.type}`;
@@ -923,11 +933,11 @@ export const Message: React.FC<MessageProps> = ({
 
         {/* Missing assistant response UI moved inside assistant message */}
         {isMissingAssistantResponse && (
-          <div className="flex items-start">
+          <div className="flex items-start mt-4">
             <div className="w-full">
               <SciraLogoHeader />
 
-              <div className="bg-secondary/30 dark:bg-secondary/20 border border-secondary dark:border-secondary rounded-lg p-4 mb-4 max-w-2xl">
+              <div className="bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4 mb-4 max-w-2xl">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
                   <div className="flex-1">

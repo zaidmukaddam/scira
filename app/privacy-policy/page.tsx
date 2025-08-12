@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,15 +41,7 @@ export default function PrivacyPage() {
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <NextImage
-                    src="/scira.png"
-                    alt="Scira Logo"
-                    className="h-8 w-8 opacity-90 invert dark:invert-0"
-                    width={32}
-                    height={32}
-                    unoptimized
-                    quality={100}
-                  />
+                  <SciraLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
@@ -204,15 +197,7 @@ export default function PrivacyPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <NextImage
-                  src="/scira.png"
-                  alt="Scira Logo"
-                  className="h-4 w-4 opacity-80 invert dark:invert-0"
-                  width={16}
-                  height={16}
-                  unoptimized
-                  quality={100}
-                />
+                <SciraLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Scira AI by Zaid Mukaddam

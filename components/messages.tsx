@@ -435,7 +435,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
           <div
             className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
           >
-            <div className="w-full !m-0 !p-0">
+            <div className="w-full !m-0 !p-0 !mt-4">
               <SciraLogoHeader />
               <div className="flex space-x-2 ml-8 mt-2">
                 <div
