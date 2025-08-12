@@ -331,6 +331,7 @@ const groupInstructions = {
   #### Retrieve Web Page Tool:
   - Use this for extracting information from specific URLs provided
   - Do not use this tool for general web searches
+  - If the retrive tool is fails, use the web_search tool with the domnain included in the query
 
   #### Code Interpreter Tool:
   - NEVER write any text, analysis or thoughts before running the tool
