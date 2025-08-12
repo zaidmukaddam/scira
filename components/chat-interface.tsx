@@ -357,7 +357,7 @@ const ChatInterface = memo(
         if (user && chatId) {
           setTimeout(() => {
             window.history.replaceState({}, '', `/search/${chatId}`);
-          }, 5000);
+          }, 10000);
         }
       }
     }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
