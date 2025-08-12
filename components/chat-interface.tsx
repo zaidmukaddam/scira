@@ -350,9 +350,6 @@ const ChatInterface = memo(
       if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
         initializedRef.current = true;
         console.log('[initial query]:', initialState.query);
-        if (user && chatId) {
-          window.history.replaceState({}, '', `/search/${chatId}`);
-        }
         sendMessage({
           parts: [{ type: 'text', text: initialState.query }],
           role: 'user',
