@@ -647,7 +647,7 @@ export const Message: React.FC<MessageProps> = ({
                                 className="size-7 flex-shrink-0 self-start"
                               />
                             )}
-                            <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl rounded-tl-none p-2">
+                            <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
                               <ChatTextHighlighter
                                 className={`${getDynamicFontSize(part.text)}`}
                                 onHighlight={onHighlight}
