@@ -9,29 +9,29 @@ importers:
   .:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: 2.0.1
-        version: 2.0.1(zod@3.25.76)
-      '@ai-sdk/elevenlabs':
-        specifier: 1.0.1
-        version: 1.0.1(zod@3.25.76)
-      '@ai-sdk/google':
-        specifier: 2.0.4
-        version: 2.0.4(zod@3.25.76)
-      '@ai-sdk/groq':
-        specifier: 2.0.5
-        version: 2.0.5(zod@3.25.76)
-      '@ai-sdk/mistral':
         specifier: 2.0.2
         version: 2.0.2(zod@3.25.76)
-      '@ai-sdk/openai':
-        specifier: 2.0.10
-        version: 2.0.10(zod@3.25.76)
-      '@ai-sdk/react':
-        specifier: 2.0.10
-        version: 2.0.10(react@19.1.0)(zod@3.25.76)
-      '@ai-sdk/xai':
+      '@ai-sdk/elevenlabs':
+        specifier: 1.0.2
+        version: 1.0.2(zod@3.25.76)
+      '@ai-sdk/google':
         specifier: 2.0.5
         version: 2.0.5(zod@3.25.76)
+      '@ai-sdk/groq':
+        specifier: 2.0.6
+        version: 2.0.6(zod@3.25.76)
+      '@ai-sdk/mistral':
+        specifier: 2.0.3
+        version: 2.0.3(zod@3.25.76)
+      '@ai-sdk/openai':
+        specifier: 2.0.11
+        version: 2.0.11(zod@3.25.76)
+      '@ai-sdk/react':
+        specifier: 2.0.11
+        version: 2.0.11(react@19.1.0)(zod@3.25.76)
+      '@ai-sdk/xai':
+        specifier: 2.0.6
+        version: 2.0.6(zod@3.25.76)
       '@aws-sdk/client-s3':
         specifier: ^3.835.0
         version: 3.850.0
@@ -46,10 +46,10 @@ importers:
         version: 0.25.5
       '@dodopayments/better-auth':
         specifier: ^1.1.1
-        version: 1.1.1(dodopayments@1.47.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)
+        version: 1.1.1(dodopayments@1.49.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)
       '@dodopayments/core':
-        specifier: ^0.1.14
-        version: 0.1.14(encoding@0.1.13)(zod@3.25.76)
+        specifier: ^0.1.15
+        version: 0.1.15(encoding@0.1.13)(zod@3.25.76)
       '@eslint/plugin-kit':
         specifier: 0.3.4
         version: 0.3.4
@@ -76,10 +76,10 @@ importers:
         version: 2.1.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@polar-sh/better-auth':
         specifier: ^1.1.0
-        version: 1.1.0(@polar-sh/sdk@0.34.10)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        version: 1.1.0(@polar-sh/sdk@0.34.11)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@polar-sh/sdk':
-        specifier: ^0.34.10
-        version: 0.34.10
+        specifier: ^0.34.11
+        version: 0.34.11
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -153,8 +153,8 @@ importers:
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.1.11)
       '@tanstack/react-query':
-        specifier: ^5.84.2
-        version: 5.84.2(react@19.1.0)
+        specifier: ^5.85.0
+        version: 5.85.0(react@19.1.0)
       '@tavily/core':
         specifier: ^0.5.10
         version: 0.5.10
@@ -180,8 +180,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       ai:
-        specifier: 5.0.10
-        version: 5.0.10(zod@3.25.76)
+        specifier: 5.0.11
+        version: 5.0.11(zod@3.25.76)
       axios:
         specifier: ^1.10.0
         version: 1.11.0
@@ -207,8 +207,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       dodopayments:
-        specifier: 1.47.0
-        version: 1.47.0(encoding@0.1.13)
+        specifier: 1.49.0
+        version: 1.49.0(encoding@0.1.13)
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -435,56 +435,56 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@2.0.1':
-    resolution: {integrity: sha512-HtNbpNV9qXQosHu00+CBMEcdTerwZY+kpVMNak0xP/P5TF6XkPf7IyizhLuc7y5zcXMjZCMA7jDGkcEdZCEdkw==}
+  '@ai-sdk/anthropic@2.0.2':
+    resolution: {integrity: sha512-R3xmEbbntgdKo/S3TDuW77RYALpo/OKQm4oSjQmryDAFiVGB6X6guZAr7FWt48C4fKGROScAu+y1MJTbzisfOQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/elevenlabs@1.0.1':
-    resolution: {integrity: sha512-ewMwxaQ7rt3vFzpVOvBAtDsFv6inWdkrENSrn7ws/+WxiwEcPhOejp0xqg1CkKsMT5lVC1AMDPycm23AON1sbg==}
+  '@ai-sdk/elevenlabs@1.0.2':
+    resolution: {integrity: sha512-068j9beM/cI5IWdg29VOZRpD5M0W1YqBCdWF4hMbFdnwhadqDSGoCXsGSKcke5c3gVh9OAASHei3ERrvicgWtQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/gateway@1.0.4':
-    resolution: {integrity: sha512-1roLdgMbFU3Nr4MC97/te7w6OqxsWBkDUkpbCcvxF3jz/ku91WVaJldn/PKU8feMKNyI5W9wnqhbjb1BqbExOQ==}
+  '@ai-sdk/gateway@1.0.5':
+    resolution: {integrity: sha512-GOhxiHm2nfuS618Ia13AWxEIhCsj5+tFaw6sjSO7pvMZT03QgFAJyX4xBYj+3i3mfIvw+yJOvyhVu1fI+pAHQA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/google@2.0.4':
-    resolution: {integrity: sha512-d8CF3uzabVqxPwcuXLVv5OIq55bM5oKKNNMQacYQMEv3I9W6EYYYeaM9Buo+/yi1IdKsRIPsa9LQO/H9S9x8yQ==}
+  '@ai-sdk/google@2.0.5':
+    resolution: {integrity: sha512-jZjfD5MwVbujFxy4RJFIysNHRpfOomFFlq1rMDFSHwSdDkT1r3SQN0ORDu5RR750lss6W2PiujbH6cum/o/y3w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/groq@2.0.5':
-    resolution: {integrity: sha512-zF9N4Nse7nw3hAZ+DVXloKQwBf6cD6f6WrrnPbeHqi9U6qSS6Wws1V4s/KGbajzXpVo6u/Ps2cKAcNSE1R65HA==}
+  '@ai-sdk/groq@2.0.6':
+    resolution: {integrity: sha512-669flAKA+2swTQXHwcUj3x+s7vus0Mo5fkTFdcw1czUZpi/fjaxeTgJaRmGrSjhgOZEXo6ICsn1WVI3V+y2mWg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/mistral@2.0.2':
-    resolution: {integrity: sha512-M/WsScz4aijnF0lbTD9fuI6fQmT7+6RLDM5xvVNl6xMGd0qfmhdIVkZg0wZUFPu1yQFMPC1cHxQBSA+hcjB8Xw==}
+  '@ai-sdk/mistral@2.0.3':
+    resolution: {integrity: sha512-YrC+i8D4viUVoPLECUAky2ZhtUUOTco8MNcpmufwawTuKz2OXa3+whGKOZMBxUeBwTV/2YMrKNYH3YFIx3OX3w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/openai-compatible@1.0.5':
-    resolution: {integrity: sha512-4eXN6m1x6gs+PJEqjCi2G5RKAgydCkH1mMqDngc3Cz11lojehGdthQfr696jCT/qQY1UZDOu2PVFWcYPgTFV2A==}
+  '@ai-sdk/openai-compatible@1.0.6':
+    resolution: {integrity: sha512-QeujvwQOMMqx1FF8sOh9nc8Mt5fwB45Gyy60iTq9vCKI27XKESGjslcJLX4B8xHJqsI6SvQMW7fj5/h0oMQ2hg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/openai@2.0.10':
-    resolution: {integrity: sha512-vnB6Jk2Qb245fajaWjG3q6N0QQy/uej7kZ0QR9xxq09x++3Tx/UPOcgAKMhFFA2fnuGpkFSRKoiDCyp/E3RARQ==}
+  '@ai-sdk/openai@2.0.11':
+    resolution: {integrity: sha512-t4i+vS825EC0Gc2DdTsC5UkXIu1ScOi363noTD8DuFZp6WFPHRnW6HCyEQKxEm6cNjv3BW89rdXWqq932IFJhA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/provider-utils@3.0.1':
-    resolution: {integrity: sha512-/iP1sKc6UdJgGH98OCly7sWJKv+J9G47PnTjIj40IJMUQKwDrUMyf7zOOfRtPwSuNifYhSoJQ4s1WltI65gJ/g==}
+  '@ai-sdk/provider-utils@3.0.2':
+    resolution: {integrity: sha512-0a5a6VafkV6+0irdpqnub8WE6qzG2VMsDBpXb9NQIz8c4TG8fI+GSTFIL9sqrLEwXrHdiRj7fwJsrir4jClL0w==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -493,8 +493,8 @@ packages:
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@2.0.10':
-    resolution: {integrity: sha512-8Wq1vtuokfal3DNIRA6ckRwoKZ1imoSUS0VUgT11eDkOm33PP3A770jGqK0NV0uKh9odyy5fpGtswI2pxMCPug==}
+  '@ai-sdk/react@2.0.11':
+    resolution: {integrity: sha512-XL73e7RSOQjYRCJQ96sDY6TxrMJK9YBgI518E6Jy306BjRwy5XyY94e/DN71TE6VpiwDzxixlymfDK90Ro95Jg==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -503,8 +503,8 @@ packages:
       zod:
         optional: true
 
-  '@ai-sdk/xai@2.0.5':
-    resolution: {integrity: sha512-YqhReQdh5dbCrNpg4xKVVaZe3LlUZ+c0n/RhgjC2X7AfKfJlGR+yfHsT9LJsbu3PhSzOQyGWeAvGqrCJSMetqQ==}
+  '@ai-sdk/xai@2.0.6':
+    resolution: {integrity: sha512-yf/idKQOuJpFnQ3Pa7E2DifjT7Y0XFeKInoBeM/dUKOPb4N1bbw0GAo0uhisAR2rsnzi9J06a5owDSaifijIQw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -717,8 +717,8 @@ packages:
       dodopayments: ^1.42.0
       zod: ^3.25.73
 
-  '@dodopayments/core@0.1.14':
-    resolution: {integrity: sha512-clU7Nfn8bXJQEs05dd2FI1/HgplivtZ42b7Z0YyMSTRKTVba/BEvS6j5PUnTcdCpBuX13BGhc/014pTL8jvlgA==}
+  '@dodopayments/core@0.1.15':
+    resolution: {integrity: sha512-L6q8H6XK/rmp+L54yw0V26lqSbXCqKtKlzLFYD7W/fJywtxxj0jG7MUsjrCimnHdLig2YkGv3Jnt+FBDrgEa7A==}
     peerDependencies:
       zod: ^3.25.74
 
@@ -1434,8 +1434,8 @@ packages:
       '@polar-sh/sdk': ^0.34.8
       better-auth: ^1.2.7
 
-  '@polar-sh/sdk@0.34.10':
-    resolution: {integrity: sha512-bSanXJjvgGwqHpBBKGRNrMR8gWEhD0eJ6KTn7dNqM8oNYBoMGsneIrfxHSnq9t6oTJL6GzZcMygisvZi3Pu3Aw==}
+  '@polar-sh/sdk@0.34.11':
+    resolution: {integrity: sha512-xyHAhmzNyelm/AxWpILJpzwpkpgbezaxjfH6zWIWO8yMuZfs9U8acSBF+2bkrR62fe9KAP9rXCnSHSW+vlymmA==}
     hasBin: true
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
@@ -2561,8 +2561,8 @@ packages:
   '@tanstack/query-core@5.83.1':
     resolution: {integrity: sha512-OG69LQgT7jSp+5pPuCfzltq/+7l2xoweggjme9vlbCPa/d7D7zaqv5vN/S82SzSYZ4EDLTxNO1PWrv49RAS64Q==}
 
-  '@tanstack/react-query@5.84.2':
-    resolution: {integrity: sha512-cZadySzROlD2+o8zIfbD978p0IphuQzRWiiH3I2ugnTmz4jbjc0+TdibpwqxlzynEen8OulgAg+rzdNF37s7XQ==}
+  '@tanstack/react-query@5.85.0':
+    resolution: {integrity: sha512-t1HMfToVMGfwEJRya6GG7gbK0luZJd+9IySFNePL1BforU1F3LqQ3tBC2Rpvr88bOrlU6PXyMLgJD0Yzn4ztUw==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3005,8 +3005,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.10:
-    resolution: {integrity: sha512-oPvaifsnHZzT3I07qI9jgWDOGpXDAFSXJ54rgpeHSq6qKQlQ3vwaCgQz861wb+5iJ/kk+B/qm3i5Yfghc/+XSw==}
+  ai@5.0.11:
+    resolution: {integrity: sha512-PtiQAnhlWuN3Y2z9PifM/9XIQ0HIoHjZqEu7zHffyGEXiqHLtrJpt4IiGVzUTAKxXM5JCtO9sD/hwGXDp7ZYsw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -3502,8 +3502,8 @@ packages:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
 
-  dodopayments@1.47.0:
-    resolution: {integrity: sha512-EW10QAp3uU1z+gf/5+TytNuySXzapO/YwQoB1xhinsxTZu350ZAeZRWYrkcc0ALW/fQCqYDSf3IrqhvtuHtHGA==}
+  dodopayments@1.49.0:
+    resolution: {integrity: sha512-t8Ygm5bDDjEA6edu9q/6R1t0dubLeGzvHjGbG4aekaS6QlBAcU24ETNK4XoBYYwFjtyDFffirxYU03GMqVNq3g==}
 
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
@@ -6213,55 +6213,55 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@2.0.1(zod@3.25.76)':
+  '@ai-sdk/anthropic@2.0.2(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/elevenlabs@1.0.1(zod@3.25.76)':
+  '@ai-sdk/elevenlabs@1.0.2(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.4(zod@3.25.76)':
+  '@ai-sdk/gateway@1.0.5(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/google@2.0.4(zod@3.25.76)':
+  '@ai-sdk/google@2.0.5(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/groq@2.0.5(zod@3.25.76)':
+  '@ai-sdk/groq@2.0.6(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/mistral@2.0.2(zod@3.25.76)':
+  '@ai-sdk/mistral@2.0.3(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai-compatible@1.0.5(zod@3.25.76)':
+  '@ai-sdk/openai-compatible@1.0.6(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai@2.0.10(zod@3.25.76)':
+  '@ai-sdk/openai@2.0.11(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.1(zod@3.25.76)':
+  '@ai-sdk/provider-utils@3.0.2(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
@@ -6273,21 +6273,21 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.10(react@19.1.0)(zod@3.25.76)':
+  '@ai-sdk/react@2.0.11(react@19.1.0)(zod@3.25.76)':
     dependencies:
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
-      ai: 5.0.10(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
+      ai: 5.0.11(zod@3.25.76)
       react: 19.1.0
       swr: 2.3.4(react@19.1.0)
       throttleit: 2.1.0
     optionalDependencies:
       zod: 3.25.76
 
-  '@ai-sdk/xai@2.0.5(zod@3.25.76)':
+  '@ai-sdk/xai@2.0.6(zod@3.25.76)':
     dependencies:
-      '@ai-sdk/openai-compatible': 1.0.5(zod@3.25.76)
+      '@ai-sdk/openai-compatible': 1.0.6(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       zod: 3.25.76
 
   '@alloc/quick-lru@5.2.0': {}
@@ -6833,17 +6833,17 @@ snapshots:
       - aws-crt
       - debug
 
-  '@dodopayments/better-auth@1.1.1(dodopayments@1.47.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)':
+  '@dodopayments/better-auth@1.1.1(dodopayments@1.49.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)':
     dependencies:
-      '@dodopayments/core': 0.1.14(encoding@0.1.13)(zod@3.25.76)
-      dodopayments: 1.47.0(encoding@0.1.13)
+      '@dodopayments/core': 0.1.15(encoding@0.1.13)(zod@3.25.76)
+      dodopayments: 1.49.0(encoding@0.1.13)
       zod: 3.25.76
     transitivePeerDependencies:
       - encoding
 
-  '@dodopayments/core@0.1.14(encoding@0.1.13)(zod@3.25.76)':
+  '@dodopayments/core@0.1.15(encoding@0.1.13)(zod@3.25.76)':
     dependencies:
-      dodopayments: 1.47.0(encoding@0.1.13)
+      dodopayments: 1.49.0(encoding@0.1.13)
       standardwebhooks: 1.0.0
       zod: 3.25.76
     transitivePeerDependencies:
@@ -7396,13 +7396,13 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  '@polar-sh/better-auth@1.1.0(@polar-sh/sdk@0.34.10)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@polar-sh/better-auth@1.1.0(@polar-sh/sdk@0.34.11)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
-      '@polar-sh/sdk': 0.34.10
+      '@polar-sh/sdk': 0.34.11
       better-auth: https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod: 3.25.76
 
-  '@polar-sh/sdk@0.34.10':
+  '@polar-sh/sdk@0.34.11':
     dependencies:
       standardwebhooks: 1.0.0
       zod: 3.25.76
@@ -8648,7 +8648,7 @@ snapshots:
 
   '@tanstack/query-core@5.83.1': {}
 
-  '@tanstack/react-query@5.84.2(react@19.1.0)':
+  '@tanstack/react-query@5.85.0(react@19.1.0)':
     dependencies:
       '@tanstack/query-core': 5.83.1
       react: 19.1.0
@@ -9054,11 +9054,11 @@ snapshots:
       indent-string: 4.0.0
     optional: true
 
-  ai@5.0.10(zod@3.25.76):
+  ai@5.0.11(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 1.0.4(zod@3.25.76)
+      '@ai-sdk/gateway': 1.0.5(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
@@ -9594,7 +9594,7 @@ snapshots:
     dependencies:
       esutils: 2.0.3
 
-  dodopayments@1.47.0(encoding@0.1.13):
+  dodopayments@1.49.0(encoding@0.1.13):
     dependencies:
       '@types/node': 18.19.120
       '@types/node-fetch': 2.6.12
