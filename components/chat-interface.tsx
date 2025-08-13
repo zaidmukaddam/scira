@@ -1,5 +1,5 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-'use client';
 
 // CSS imports
 import 'katex/dist/katex.min.css';

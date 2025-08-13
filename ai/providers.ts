@@ -20,7 +20,7 @@ export const scira = customProvider({
   languageModels: {
     'scira-default': xai('grok-3-mini'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-grok-3': xai('grok-3'),
+    'scira-grok-3': xai('grok-3-fast'),
     'scira-grok-4': xai('grok-4'),
     'scira-gpt-oss-120': wrapLanguageModel({
       model: groq('openai/gpt-oss-120b'),

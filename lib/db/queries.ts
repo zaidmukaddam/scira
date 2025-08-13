@@ -24,7 +24,7 @@ type VisibilityType = 'public' | 'private';
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
-    return await db.select().from(user).where(eq(user.email, email));
+    return await db.select().from(user).where(eq(user.email, email)).$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user by email');
   }
@@ -187,7 +187,8 @@ export async function getMessagesByChatId({
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
+      .$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get messages by chat id');
   }
@@ -254,10 +255,8 @@ export async function updateChatTitleById({ chatId, title }: { chatId: string; t
   }
 }
 
-export async function getMessageCountByUserId({ id, differenceInHours }: { id: string; differenceInHours: number }) {
+export async function getMessageCountByUserId({ id }: { id: string }) {
   try {
-    // Use the new message usage tracking system instead
-    // This is more reliable as it won't be affected by message deletions
     return await getMessageCount({ userId: id });
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get message count by user id');
@@ -558,7 +557,7 @@ export async function getPaymentsByUserId({ userId }: { userId: string }) {
     }
 
     // Fetch from database and cache
-    const payments = await db.select().from(payment).where(eq(payment.userId, userId)).orderBy(desc(payment.createdAt));
+    const payments = await db.select().from(payment).where(eq(payment.userId, userId)).orderBy(desc(payment.createdAt)).$withCache();
     setDodoPayments(userId, payments);
     return payments;
   } catch (error) {
@@ -581,7 +580,8 @@ export async function getSuccessfulPaymentsByUserId({ userId }: { userId: string
       .select()
       .from(payment)
       .where(and(eq(payment.userId, userId), eq(payment.status, 'succeeded')))
-      .orderBy(desc(payment.createdAt));
+      .orderBy(desc(payment.createdAt))
+      .$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get successful payments by user id');
   }

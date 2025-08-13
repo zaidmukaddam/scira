@@ -920,9 +920,9 @@ export const Message: React.FC<MessageProps> = ({
 
   if (message.role === 'assistant') {
     return (
-      <div className={cn(shouldReduceHeight ? '' : 'min-h-[calc(100vh-18rem)]', '!mt-4')}>
+      <div className={cn(shouldReduceHeight ? '' : 'min-h-[calc(100vh-18rem)]', '')}>
         {message.parts?.map((part: ChatMessage['parts'][number], partIndex: number) => {
-          console.log(`🔧 Rendering part ${partIndex}:`, { type: part.type, hasText: !!(part as any).text });
+          console.log(`🔧 Rendering part ${partIndex}:`, { type: part.type, hasText: part.type === 'text' });
           const key = `${message.id || index}-part-${partIndex}-${part.type}`;
           return (
             <div key={key}>

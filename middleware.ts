@@ -5,12 +5,14 @@ const authRoutes = ['/sign-in', '/sign-up'];
 const protectedRoutes = ['/lookout'];
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
-
   const { pathname } = request.nextUrl;
   console.log('Pathname: ', pathname);
+  if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
+    return NextResponse.next();
+  }
 
-  if (pathname.startsWith('/new')) {
+
+  if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
     return NextResponse.next();
   }
 
@@ -27,9 +29,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/api/search/:id')) {
-    return NextResponse.next();
-  }
+  const sessionCookie = getSessionCookie(request);
 
   // If user is authenticated but trying to access auth routes
   if (sessionCookie && authRoutes.some((route) => pathname.startsWith(route))) {

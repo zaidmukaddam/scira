@@ -103,7 +103,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         .where(eq(user.id, userId))
         .then((rows) => rows[0]),
       // Polar subscriptions
-      db.select().from(subscription).where(eq(subscription.userId, userId)),
+      db.select().from(subscription).where(eq(subscription.userId, userId)).$withCache(),
       // DodoPayments data
       getPaymentsByUserId({ userId }),
       // DodoPayments expiration info
