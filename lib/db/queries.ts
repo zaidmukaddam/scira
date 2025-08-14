@@ -492,7 +492,8 @@ export async function getCustomInstructionsByUserId({ userId }: { userId: string
       .select()
       .from(customInstructions)
       .where(eq(customInstructions.userId, userId))
-      .limit(1);
+      .limit(1)
+      .$withCache();
 
     return instructions;
   } catch (error) {
