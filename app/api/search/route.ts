@@ -63,6 +63,7 @@ import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { markdownJoinerTransform } from '@/lib/parser';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -350,6 +351,7 @@ export async function POST(req: Request) {
           }
           : {}),
         activeTools: [...activeTools],
+        experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
