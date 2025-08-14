@@ -1,5 +1,7 @@
 // Performance cache with memory limits and automatic cleanup
 
+import { db } from '@/lib/db';
+
 interface CacheEntry<T> {
   data: T;
   cachedAt: number;
@@ -183,7 +185,10 @@ export function invalidateUserCaches(userId: string) {
   // Invalidate DodoPayments caches
   paymentCache.delete(createPaymentKey(userId));
   paymentExpirationCache.delete(createPaymentExpirationKey(userId));
-  dodoProStatusCache.delete(createDodoProStatusKey(userId));
+  dodoProStatusCache.delete(createDodoProStatusKey(userId)); 
+
+  // Invalidate the db cache
+  db.$cache.invalidate({ tables: ['users', 'subscriptions', 'payments'] });
 
   // Invalidate the new unified user data cache
   const { clearUserDataCache } = require('@/lib/user-data-server');
