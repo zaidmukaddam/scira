@@ -41,6 +41,9 @@ importers:
       '@babel/runtime':
         specifier: '>=7.27.0'
         version: 7.28.2
+      '@databuddy/sdk':
+        specifier: ^1.4.2
+        version: 1.4.2
       '@daytonaio/sdk':
         specifier: ^0.25.5
         version: 0.25.5
@@ -703,6 +706,9 @@ packages:
 
   '@cloudflare/workers-types@4.20250726.0':
     resolution: {integrity: sha512-NtM1yVBKJFX4LgSoZkVU0EDhWWvSb1vt6REO+uMYZRgx1HAfQz9GDN6bBB0B+fm2ZIxzt6FzlDbmrXpGJ2M/4Q==}
+
+  '@databuddy/sdk@1.4.2':
+    resolution: {integrity: sha512-WhfjUcfmKQrl1qSmFTfwd/suvN02O/SIpJSEJda+f9zJYzRNCiYx6oPOgGuzmB0fdYEtNM/GQxfblN+7AaaNGw==}
 
   '@date-fns/tz@1.2.0':
     resolution: {integrity: sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==}
@@ -6816,6 +6822,8 @@ snapshots:
   '@cfworker/json-schema@4.1.1': {}
 
   '@cloudflare/workers-types@4.20250726.0': {}
+
+  '@databuddy/sdk@1.4.2': {}
 
   '@date-fns/tz@1.2.0': {}
 
