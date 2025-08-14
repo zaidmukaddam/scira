@@ -18,17 +18,17 @@ importers:
         specifier: 2.0.6
         version: 2.0.6(zod@3.25.76)
       '@ai-sdk/groq':
-        specifier: 2.0.7
-        version: 2.0.7(zod@3.25.76)
+        specifier: 2.0.8
+        version: 2.0.8(zod@3.25.76)
       '@ai-sdk/mistral':
         specifier: 2.0.4
         version: 2.0.4(zod@3.25.76)
       '@ai-sdk/openai':
-        specifier: 2.0.12
-        version: 2.0.12(zod@3.25.76)
+        specifier: 2.0.13
+        version: 2.0.13(zod@3.25.76)
       '@ai-sdk/react':
-        specifier: 2.0.12
-        version: 2.0.12(react@19.1.0)(zod@3.25.76)
+        specifier: 2.0.13
+        version: 2.0.13(react@19.1.0)(zod@3.25.76)
       '@ai-sdk/xai':
         specifier: 2.0.7
         version: 2.0.7(zod@3.25.76)
@@ -177,14 +177,14 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(@opentelemetry/api@1.9.0)
       '@vercel/functions':
-        specifier: ^2.2.8
-        version: 2.2.8(@aws-sdk/credential-provider-web-identity@3.848.0)
+        specifier: ^2.2.11
+        version: 2.2.11(@aws-sdk/credential-provider-web-identity@3.848.0)
       '@vercel/speed-insights':
         specifier: ^1.2.0
         version: 1.2.0(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       ai:
-        specifier: 5.0.12
-        version: 5.0.12(zod@3.25.76)
+        specifier: 5.0.13
+        version: 5.0.13(zod@3.25.76)
       axios:
         specifier: ^1.10.0
         version: 1.11.0
@@ -465,8 +465,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/groq@2.0.7':
-    resolution: {integrity: sha512-bXi0DkAFMlAS/k9BP7DlMRPnCCYPD87D6LyhgCNxDIdpOiAfS5xWkbHAoy4vRtZ/0HmyNuYCe7UCYF4ydFea9Q==}
+  '@ai-sdk/groq@2.0.8':
+    resolution: {integrity: sha512-WrnOvzTWX6+798JwgmNl9ExmFG23LRP0tOFhMi3T7sPicBWKpNnr2++uKcZfVE/Nat1zfcPjat/IB5z1po9nxg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -483,8 +483,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4
 
-  '@ai-sdk/openai@2.0.12':
-    resolution: {integrity: sha512-/09mk1WWK1A9dNunRG9NnpomlKLA3ZH+nxS3JjU19GPiAPQKdfmR5FFvF14yBUdY13yEDj1POLcHz4xhUMs2Yg==}
+  '@ai-sdk/openai@2.0.13':
+    resolution: {integrity: sha512-xt9C0Mg3+ytKnHrXFPR4JeV/V2GWaP7Awgok8eAuFHNcb9jShBLtSO0B3vNm1PtxJOwmT85tzOkZam/fRgHdYw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -499,8 +499,8 @@ packages:
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@2.0.12':
-    resolution: {integrity: sha512-r+kuyYxhgUV6RDJYDoeN3dqgdxOyarSflWGxM6rkX75gwpLL8+LF/DM3CyfWUG6uDbIRVZ1r6ag/uLoD6cxOaQ==}
+  '@ai-sdk/react@2.0.13':
+    resolution: {integrity: sha512-jlxIwmneDv1LZpNuWI2L3gn8Frb+os11JNZqwhlhRLHj4rwodg+53VLFsh65VNDbhGm/TU8g+Q165apG1yREIQ==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -2945,8 +2945,8 @@ packages:
       '@opentelemetry/api':
         optional: true
 
-  '@vercel/functions@2.2.8':
-    resolution: {integrity: sha512-Y4G2MEYCVTBtEeo6/+Ydwu5ehwryThJ7or3EM0oZa+oMDLm+z6VchDDc7rNmNIrtTS1ULcUYNqAItjs0mHMgKw==}
+  '@vercel/functions@2.2.11':
+    resolution: {integrity: sha512-NhbMW01IyepdcaQiYUt9XXodtq5SFr2gNiL7lmX/2cgjP7cKy6V+RYXKT15EbizqZ9o3j9gqdYScxd1tvY211w==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@aws-sdk/credential-provider-web-identity': '*'
@@ -3014,8 +3014,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.12:
-    resolution: {integrity: sha512-gTdzpNd+2W8YWSHtbdVruyBrB0R1F7/w0+ZCWkK64+qwQQrxc2vIbNmv6GlsZvj5OKjGldbPjWMuCUcoYTapXg==}
+  ai@5.0.13:
+    resolution: {integrity: sha512-b/UBzDXilDtsyUlf0D3/R1oyScnoMyWKKO4BHeUJD1UQ04V1rNPu27ZD7v9Em3WqvMOkWFdPYA/kCwMcF1G93A==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -6253,7 +6253,7 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/groq@2.0.7(zod@3.25.76)':
+  '@ai-sdk/groq@2.0.8(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
@@ -6271,7 +6271,7 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai@2.0.12(zod@3.25.76)':
+  '@ai-sdk/openai@2.0.13(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
@@ -6289,10 +6289,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.12(react@19.1.0)(zod@3.25.76)':
+  '@ai-sdk/react@2.0.13(react@19.1.0)(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
-      ai: 5.0.12(zod@3.25.76)
+      ai: 5.0.13(zod@3.25.76)
       react: 19.1.0
       swr: 2.3.4(react@19.1.0)
       throttleit: 2.1.0
@@ -9027,7 +9027,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
 
-  '@vercel/functions@2.2.8(@aws-sdk/credential-provider-web-identity@3.848.0)':
+  '@vercel/functions@2.2.11(@aws-sdk/credential-provider-web-identity@3.848.0)':
     dependencies:
       '@vercel/oidc': 2.0.0
     optionalDependencies:
@@ -9072,7 +9072,7 @@ snapshots:
       indent-string: 4.0.0
     optional: true
 
-  ai@5.0.12(zod@3.25.76):
+  ai@5.0.13(zod@3.25.76):
     dependencies:
       '@ai-sdk/gateway': 1.0.6(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
