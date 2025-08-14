@@ -24,7 +24,6 @@ import {
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
-  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
@@ -72,6 +71,7 @@ export function getStreamContext() {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
+        keyPrefix: 'scira-ai:resumable-stream',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
