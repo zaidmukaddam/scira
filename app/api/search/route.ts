@@ -384,11 +384,6 @@ export async function POST(req: Request) {
                 reasoningEffort: 'high',
               }
               : {}),
-            ...(model === 'scira-qwen-32b'
-              ? {
-                reasoningEffort: "none"
-              }
-              : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
           } satisfies GroqProviderOptions,
@@ -490,6 +485,7 @@ export async function POST(req: Request) {
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
           console.log('Usage: ', event.usage);
+          console.log('Total Usage: ', event.totalUsage);
 
           // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {

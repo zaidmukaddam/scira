@@ -57,7 +57,7 @@ interface StockChartProps {
   title: string;
   data: any[];
   stock_symbols: string[];
-  currency_symbols: string[];
+  currency_symbols?: string[];
   interval: '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | '10y' | 'ytd' | 'max';
   chart: {
     type: string;
@@ -154,6 +154,16 @@ export const InteractiveStockChart = React.memo(
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const [isMobile, setIsMobile] = useState<boolean>(false);
 
+    // Normalize currency symbols to match the number of series; default missing to USD
+    const normalizedCurrencySymbols = useMemo(() => {
+      const seriesCount = chart.elements.length;
+      const provided = (currency_symbols ?? []).map((code) => code.toUpperCase());
+      if (provided.length < seriesCount) {
+        provided.push(...Array(seriesCount - provided.length).fill('USD'));
+      }
+      return provided.slice(0, seriesCount);
+    }, [currency_symbols, chart.elements.length]);
+
     // Set last updated time and check if device is mobile
     useEffect(() => {
       const now = new Date();
@@ -180,7 +190,7 @@ export const InteractiveStockChart = React.memo(
               date,
               value: Number(price),
               label: stock_symbols[index],
-              currency: currency_symbols[index],
+              currency: normalizedCurrencySymbols[index],
             };
           })
           .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -199,10 +209,10 @@ export const InteractiveStockChart = React.memo(
           priceChange,
           percentChange,
           color: seriesColor,
-          currency: currency_symbols[index],
+          currency: normalizedCurrencySymbols[index],
         };
       });
-    }, [chart.elements, stock_symbols, currency_symbols]);
+    }, [chart.elements, stock_symbols, normalizedCurrencySymbols]);
 
     // Calculate total change
     const totalChange = useMemo(() => {

@@ -56,6 +56,7 @@ export const stockChartTool = tool({
     stock_symbols: z.array(z.string()).describe('The stock symbols to display for the chart.'),
     currency_symbols: z
       .array(z.string())
+      .optional()
       .describe(
         'The currency symbols for each stock/asset in the chart. Available symbols: ' +
           Object.keys(CURRENCY_SYMBOLS).join(', ') +
@@ -338,7 +339,14 @@ export const stockChartTool = tool({
       png: undefined,
     };
 
-    const outputCurrencyCodes = currency_symbols || stock_symbols.map(() => 'USD');
+    const outputCurrencyCodes = (() => {
+      const desiredLength = stock_symbols.length;
+      const provided = (currency_symbols ?? []).map((s) => s.toUpperCase());
+      if (provided.length < desiredLength) {
+        provided.push(...Array(desiredLength - provided.length).fill('USD'));
+      }
+      return provided.slice(0, desiredLength);
+    })();
 
     return {
       message: 'Fetched historical prices from Valyu (US)',

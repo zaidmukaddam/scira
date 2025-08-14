@@ -908,7 +908,11 @@ const ToolPartRenderer = memo(
                   }}
                   data={part.output.chart.elements}
                   stock_symbols={part.input.stock_symbols}
-                  currency_symbols={part.input.currency_symbols || part.input.stock_symbols.map(() => 'USD')}
+                  currency_symbols={
+                    part.output.currency_symbols ||
+                    part.input.currency_symbols ||
+                    part.input.stock_symbols.map(() => 'USD')
+                  }
                   interval={part.input.interval}
                   news_results={part.output.news_results}
                 />
