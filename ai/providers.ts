@@ -51,7 +51,6 @@ export const scira = customProvider({
     'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
     'scira-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
-    'scira-mistral': mistral('mistral-small-latest'),
     'scira-mistral-medium': mistral('mistral-medium-2508'),
     'scira-google-lite': google('gemini-2.5-flash-lite'),
     'scira-google': google('gemini-2.5-flash'),
@@ -122,20 +121,6 @@ export const models: Model[] = [
   },
 
   // Mini Models (Free/Paid)
-  {
-    value: 'scira-mistral',
-    label: 'Mistral Small',
-    description: "Mistral's small LLM",
-    vision: true,
-    reasoning: false,
-    experimental: false,
-    category: 'Mini',
-    pdf: true,
-    pro: false,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 128000,
-  },
   {
     value: 'scira-5-nano',
     label: 'GPT 5 Nano',
