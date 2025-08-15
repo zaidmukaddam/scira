@@ -4,8 +4,9 @@ import { getChatWithUserById } from '@/lib/db/queries';
 import { format } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Get chat data with user information
     const id = (await params).id;
@@ -16,17 +17,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const bgImageData = await fs.promises.readFile(bgImagePath);
     const bgImageBase64 = `data:image/png;base64,${bgImageData.toString('base64')}`;
 
-    // Read the Scira logo
-    const logoPath = path.join(process.cwd(), 'public', 'scira.png');
-    const logoData = await fs.promises.readFile(logoPath);
-    const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
-
     // Load custom fonts
-    const geistFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Geist-Regular.ttf');
-    const syneFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Syne-Bold.ttf');
+    const interFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Inter-Regular.ttf');
+    const beVietnamProFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'BeVietnamPro-Medium.ttf');
 
-    const geistFontData = await fs.promises.readFile(geistFontPath);
-    const syneFontData = await fs.promises.readFile(syneFontPath);
+    const interFontData = await fs.promises.readFile(interFontPath);
+    const beVietnamProFontData = await fs.promises.readFile(beVietnamProFontPath);
 
     // If chat doesn't exist or isn't public, return a default OG image
     if (!chatWithUser || chatWithUser.visibility !== 'public') {
@@ -44,10 +40,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               position: 'relative',
-              fontFamily: 'Syne',
+              fontFamily: 'Inter',
             }}
           >
-            {/* Clean overlay for contrast */}
+            {/* Clean overlay */}
             <div
               style={{
                 position: 'absolute',
@@ -55,7 +51,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'linear-gradient(120deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.10) 100%)',
+                background: 'rgba(0,0,0,0.35)',
                 zIndex: 1,
               }}
             />
@@ -66,28 +62,33 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                textAlign: 'center',
               }}
             >
-              <img
-                src={logoBase64}
-                width={140}
-                height={140}
-                alt="Scira AI"
-                style={{
-                  objectFit: 'contain',
-                  marginBottom: 28,
-                }}
-              />
+              <SciraLogo width={120} height={120} color="#ffffff" />
               <div
                 style={{
-                  fontSize: 44,
-                  fontWeight: 700,
-                  color: 'white',
-                  letterSpacing: '-0.01em',
-                  fontFamily: 'Syne',
+                  fontSize: 56,
+                  color: '#ffffff',
+                  letterSpacing: '-0.03em',
+                  fontFamily: 'BeVietnamPro',
+                  fontWeight: 900,
+                  marginBottom: 16,
+                  textShadow: '0 3px 10px rgba(0,0,0,0.45)',
                 }}
               >
                 Scira AI
+              </div>
+              <div
+                style={{
+                  fontSize: 26,
+                  color: '#e5e7eb',
+                  fontFamily: 'Inter',
+                  fontWeight: 600,
+                  textShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                }}
+              >
+                Minimalistic AI Search engine
               </div>
             </div>
           </div>
@@ -97,13 +98,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           height: 630,
           fonts: [
             {
-              name: 'Geist',
-              data: geistFontData,
+              name: 'Inter',
+              data: interFontData,
               style: 'normal',
             },
             {
-              name: 'Syne',
-              data: syneFontData,
+              name: 'BeVietnamPro',
+              data: beVietnamProFontData,
               style: 'normal',
             },
           ],
@@ -113,6 +114,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Format the creation date
     const formattedDate = format(new Date(chatWithUser.createdAt), 'MMMM d, yyyy');
+    const authorInitial = (chatWithUser.userName || 'S').slice(0, 1).toUpperCase();
 
     // Generate the image
     return new ImageResponse(
@@ -125,12 +127,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             backgroundImage: `url(${bgImageBase64})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            padding: 0,
             position: 'relative',
-            fontFamily: 'Geist',
+            fontFamily: 'Inter',
           }}
         >
-          {/* Light overlay for subtle text enhancement */}
+          {/* Dark overlay with gradient */}
           <div
             style={{
               position: 'absolute',
@@ -138,145 +139,107 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'linear-gradient(135deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%)',
+              background: 'rgba(0,0,0,0.45)',
               zIndex: 1,
             }}
           />
 
-          {/* Content container */}
+          {/* Main content */}
           <div
             style={{
+              position: 'relative',
+              zIndex: 3,
               display: 'flex',
               flexDirection: 'column',
               width: '100%',
               height: '100%',
-              padding: '60px 80px',
-              position: 'relative',
-              zIndex: 2,
-              justifyContent: 'space-between',
+              padding: '56px 72px',
             }}
           >
-            {/* Header section - Company branding */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '20px',
-                marginBottom: '20px',
-              }}
-            >
-              <img
-                src={logoBase64}
-                width={80}
-                height={80}
-                alt="Scira AI"
-                style={{
-                  objectFit: 'contain',
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div
-                  style={{
-                    fontSize: 36,
-                    fontWeight: 800,
-                    color: 'white',
-                    letterSpacing: '-0.02em',
-                    fontFamily: 'Syne',
-                    lineHeight: 1,
-                  }}
-                >
-                  Scira AI
-                </div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    color: 'rgba(255,255,255,0.85)',
-                    fontWeight: 500,
-                    letterSpacing: '0.02em',
-                    fontFamily: 'Geist',
-                    marginTop: '4px',
-                  }}
-                >
-                  Minimalistic AI Search Engine
-                </div>
-              </div>
-            </div>
-
-            {/* Article title section */}
+            {/* Main title section - left aligned, vertically centered */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'flex-start',
+                maxWidth: 900,
                 flex: 1,
                 justifyContent: 'center',
-                maxWidth: '900px',
-                margin: '0 auto',
-                textAlign: 'center',
               }}
             >
+              {/* Large title with creative typography */}
               <div
                 style={{
-                  fontSize: 52,
-                  fontWeight: 800,
-                  color: 'white',
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.02em',
-                  fontFamily: 'Syne',
-                  marginBottom: '24px',
-                  textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  fontSize: 72,
+                  fontWeight: 900,
+                  color: '#fafafa',
+                  lineHeight: 0.95,
+                  letterSpacing: '-0.04em',
+                  fontFamily: 'BeVietnamPro',
+                  marginBottom: 24,
+                  textShadow: '0 6px 24px rgba(0,0,0,0.45)',
                 }}
               >
                 {chatWithUser.title}
               </div>
-
-              {/* Article metadata */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '32px',
-                  fontSize: 20,
-                  color: 'rgba(255,255,255,0.9)',
-                  fontWeight: 500,
-                  fontFamily: 'Geist',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ opacity: 0.7 }}>By</span>
-                  <span style={{ fontWeight: 600 }}>{chatWithUser.userName}</span>
-                </div>
-                <div
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                    borderRadius: '50%',
-                  }}
-                />
-                <div>{formattedDate}</div>
-              </div>
             </div>
 
-            {/* Footer section */}
+            {/* Bottom bar: brand + tagline (left) and author + date (right) */}
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'center',
+                justifyContent: 'space-between',
                 alignItems: 'center',
+                marginTop: 48,
               }}
             >
-              <div
-                style={{
-                  fontSize: 24,
-                  color: 'rgba(255,255,255,0.95)',
-                  fontWeight: 600,
-                  letterSpacing: '0.01em',
-                  textAlign: 'center',
-                  fontFamily: 'Syne',
-                }}
-              >
-                Start your search at scira.ai
+              {/* Left: brand and tagline */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <SciraLogo width={28} height={28} color="#ffffff" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 18, color: '#ffffff', fontFamily: 'BeVietnamPro', fontWeight: 800 }}>Scira AI</div>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)' }} />
+                  <div style={{ fontSize: 16, color: '#e5e7eb', fontFamily: 'Inter', fontWeight: 600 }}>Minimalistic AI Search engine</div>
+                </div>
+              </div>
+
+              {/* Right: author and date */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {chatWithUser.userImage ? (
+                  <img
+                    src={chatWithUser.userImage}
+                    width={36}
+                    height={36}
+                    alt={chatWithUser.userName || 'User'}
+                    style={{
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1px solid rgba(255,255,255,0.35)',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontFamily: 'BeVietnamPro',
+                      fontSize: 16,
+                      border: '1px solid rgba(255,255,255,0.25)',
+                    }}
+                  >
+                    {authorInitial}
+                  </div>
+                )}
+                <div style={{ fontSize: 16, color: '#e4e4e7', fontFamily: 'Inter', fontWeight: 600 }}>{chatWithUser.userName}</div>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.45)' }} />
+                <div style={{ fontSize: 16, color: '#a1a1aa', fontFamily: 'Inter', fontWeight: 500 }}>{formattedDate}</div>
               </div>
             </div>
           </div>
@@ -287,13 +250,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         height: 630,
         fonts: [
           {
-            name: 'Geist',
-            data: geistFontData,
+            name: 'Inter',
+            data: interFontData,
             style: 'normal',
           },
           {
-            name: 'Syne',
-            data: syneFontData,
+            name: 'BeVietnamPro',
+            data: beVietnamProFontData,
             style: 'normal',
           },
         ],
