@@ -114,26 +114,47 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
     const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
-    let usdPricing = null;
-    if (discountConfig.percentage) {
-      const usdSavings = (defaultUSDPrice * discountConfig.percentage) / 100;
-      const usdFinalPrice = defaultUSDPrice - usdSavings;
+    // USD pricing: prefer explicit finalPrice over percentage
+    let usdPricing = null as
+      | { originalPrice: number; finalPrice: number; savings: number }
+      | null;
+    if (typeof discountConfig.finalPrice === 'number') {
+      const original =
+        typeof discountConfig.originalPrice === 'number'
+          ? discountConfig.originalPrice
+          : defaultUSDPrice;
+      const final = discountConfig.finalPrice;
       usdPricing = {
-        originalPrice: defaultUSDPrice,
+        originalPrice: original,
+        finalPrice: final,
+        savings: original - final,
+      };
+    } else if (typeof discountConfig.percentage === 'number') {
+      const base =
+        typeof discountConfig.originalPrice === 'number'
+          ? discountConfig.originalPrice
+          : defaultUSDPrice;
+      const usdSavings = (base * discountConfig.percentage) / 100;
+      const usdFinalPrice = base - usdSavings;
+      usdPricing = {
+        originalPrice: base,
         finalPrice: usdFinalPrice,
         savings: usdSavings,
       };
     }
 
-    let inrPricing = null;
+    // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
+    let inrPricing = null as
+      | { originalPrice: number; finalPrice: number; savings: number }
+      | null;
     if (location.isIndia) {
-      if (discountConfig.inrPrice) {
+      if (typeof discountConfig.inrPrice === 'number') {
         inrPricing = {
           originalPrice: defaultINRPrice,
           finalPrice: discountConfig.inrPrice,
           savings: defaultINRPrice - discountConfig.inrPrice,
         };
-      } else if (discountConfig.percentage) {
+      } else if (typeof discountConfig.percentage === 'number') {
         const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
         const inrFinalPrice = defaultINRPrice - inrSavings;
         inrPricing = {
