@@ -129,23 +129,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       });
     });
 
-    // Then, extract and protect monetary amounts
-    const monetaryBlocks: Array<{ id: string; content: string }> = [];
-
-    // Protect common monetary patterns
-    const monetaryPatterns = [
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B))\b/g,
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?=\s|$|[.,;!?])/g,
-    ];
-
-    monetaryPatterns.forEach((pattern) => {
-      modifiedContent = modifiedContent.replace(pattern, (match) => {
-        const id = `MONETARY${monetaryBlocks.length}END`;
-        monetaryBlocks.push({ id, content: match });
-        return id;
-      });
-    });
-
     // Then extract and protect LaTeX blocks
     const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
 
@@ -163,7 +146,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       });
     });
 
-    // Process LaTeX patterns (monetary amounts are already protected)
+    // Process LaTeX patterns (before monetary protection to avoid false positives)
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
       { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
@@ -173,6 +156,23 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       modifiedContent = modifiedContent.replace(pattern, (match) => {
         const id = `LATEXINLINE${latexBlocks.length}END`;
         latexBlocks.push({ id, content: match, isBlock });
+        return id;
+      });
+    });
+
+    // Now, extract and protect monetary amounts (after LaTeX is placeholdered)
+    const monetaryBlocks: Array<{ id: string; content: string }> = [];
+
+    // Protect common monetary patterns
+    const monetaryPatterns = [
+      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B))\b/g,
+      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?=\s|$|[.,;!?])/g,
+    ];
+
+    monetaryPatterns.forEach((pattern) => {
+      modifiedContent = modifiedContent.replace(pattern, (match) => {
+        const id = `MONETARY${monetaryBlocks.length}END`;
+        monetaryBlocks.push({ id, content: match });
         return id;
       });
     });
@@ -685,7 +685,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       }
 
       return (
-        <p key={generateKey()} className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}>
+        <p
+          key={generateKey()}
+          className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
+        >
           {children}
         </p>
       );
@@ -716,7 +719,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
           );
         }
         // Otherwise just show the URL
-        return <span key={generateKey()} className="break-all">{href}</span>;
+        return (
+          <span key={generateKey()} className="break-all">
+            {href}
+          </span>
+        );
       }
 
       let citationIndex = citationLinks.findIndex((link) => link.link === href);
