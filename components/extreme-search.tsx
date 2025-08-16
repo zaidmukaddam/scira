@@ -19,6 +19,7 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { DataExtremeSearchPart } from '@/lib/types';
 import XSearch from '@/components/x-search';
+import { XLogoIcon } from '@phosphor-icons/react/dist/ssr';
 
 // Minimal color palette for charts with better contrast
 const CHART_COLORS = {
@@ -266,7 +267,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
     // Handle line charts with points data
     if (chart.type === 'line') {
       const colorPalette = Object.values(CHART_COLORS);
-      
+
       return {
         ...baseOption,
         tooltip: {
@@ -293,7 +294,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               axisValue = Math.round(axisValue).toString();
             }
             let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${axisValue}</div>`;
-            
+
             params.forEach((param: any) => {
               // For line charts, param.value is [x, y] array - we want the y value
               let displayValue;
@@ -302,14 +303,14 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               } else {
                 displayValue = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
               }
-              
+
               result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
               result += `<span style="display: inline-block; width: 8px; height: 8px; background-color: ${param.color}; border-radius: 50%; margin-right: 8px; flex-shrink: 0;"></span>`;
               result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; margin-right: 8px; font-size: ${isMobile ? '10px' : '11px'};">${param.seriesName}:</span>`;
               result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${displayValue}</span>`;
               result += `</div>`;
             });
-            
+
             return result;
           },
         },
@@ -378,40 +379,41 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             },
           },
         },
-        series: chart.elements?.map((element: any, index: number) => {
-          const colorSet = colorPalette[index % colorPalette.length];
-          return {
-            name: element.label,
-            type: 'line',
-            data: element.points || [],
-            smooth: false,
-            symbol: 'circle',
-            symbolSize: isMobile ? 4 : 6,
-            lineStyle: {
-              width: isMobile ? 2 : 3,
-              color: colorSet[0],
-            },
-            itemStyle: {
-              color: colorSet[0],
-              borderColor: isDark ? '#262626' : '#ffffff',
-              borderWidth: 1,
-            },
-            emphasis: {
-              itemStyle: {
-                color: colorSet[1],
-                shadowBlur: 8,
-                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+        series:
+          chart.elements?.map((element: any, index: number) => {
+            const colorSet = colorPalette[index % colorPalette.length];
+            return {
+              name: element.label,
+              type: 'line',
+              data: element.points || [],
+              smooth: false,
+              symbol: 'circle',
+              symbolSize: isMobile ? 4 : 6,
+              lineStyle: {
+                width: isMobile ? 2 : 3,
+                color: colorSet[0],
               },
-            },
-          };
-        }) || [],
+              itemStyle: {
+                color: colorSet[0],
+                borderColor: isDark ? '#262626' : '#ffffff',
+                borderWidth: 1,
+              },
+              emphasis: {
+                itemStyle: {
+                  color: colorSet[1],
+                  shadowBlur: 8,
+                  shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+                },
+              },
+            };
+          }) || [],
       };
     }
 
     // Handle bar charts
     if (chart.type === 'bar') {
       const colorPalette = Object.values(CHART_COLORS);
-      
+
       return {
         ...baseOption,
         tooltip: {
@@ -431,7 +433,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           borderRadius: 8,
           formatter: function (params: any) {
             let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params[0].name}</div>`;
-            
+
             params.forEach((param: any) => {
               const value = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
               result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
@@ -440,7 +442,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${value}</span>`;
               result += `</div>`;
             });
-            
+
             return result;
           },
         },
@@ -512,7 +514,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
     // Handle scatter charts
     if (chart.type === 'scatter') {
       const colorPalette = Object.values(CHART_COLORS);
-      
+
       return {
         ...baseOption,
         tooltip: {
@@ -532,10 +534,10 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           borderRadius: 8,
           formatter: function (params: any) {
             let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.seriesName}</div>`;
-            
+
             const xValue = Array.isArray(params.value) ? params.value[0] : params.value;
             const yValue = Array.isArray(params.value) ? params.value[1] : params.value;
-            
+
             result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
             result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">X:</span>`;
             result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof xValue === 'number' ? xValue.toLocaleString() : xValue}</span>`;
@@ -544,7 +546,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Y:</span>`;
             result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof yValue === 'number' ? yValue.toLocaleString() : yValue}</span>`;
             result += `</div>`;
-            
+
             return result;
           },
         },
@@ -604,34 +606,35 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             },
           },
         },
-        series: chart.elements?.map((element: any, index: number) => {
-          const colorSet = colorPalette[index % colorPalette.length];
-          return {
-            name: element.label || `Series ${index + 1}`,
-            type: 'scatter',
-            data: element.points || element.data || [],
-            symbolSize: isMobile ? 6 : 8,
-            itemStyle: {
-              color: colorSet[0],
-              borderColor: isDark ? '#262626' : '#ffffff',
-              borderWidth: 1,
-            },
-            emphasis: {
+        series:
+          chart.elements?.map((element: any, index: number) => {
+            const colorSet = colorPalette[index % colorPalette.length];
+            return {
+              name: element.label || `Series ${index + 1}`,
+              type: 'scatter',
+              data: element.points || element.data || [],
+              symbolSize: isMobile ? 6 : 8,
               itemStyle: {
-                color: colorSet[1],
-                shadowBlur: 10,
-                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+                color: colorSet[0],
+                borderColor: isDark ? '#262626' : '#ffffff',
+                borderWidth: 1,
               },
-            },
-          };
-        }) || [],
+              emphasis: {
+                itemStyle: {
+                  color: colorSet[1],
+                  shadowBlur: 10,
+                  shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+                },
+              },
+            };
+          }) || [],
       };
     }
 
     // Handle box and whisker charts
     if (chart.type === 'box_and_whisker') {
       const colorPalette = Object.values(CHART_COLORS);
-      
+
       return {
         ...baseOption,
         tooltip: {
@@ -651,17 +654,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           borderRadius: 8,
           formatter: function (params: any) {
             let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.name}</div>`;
-            
+
             if (Array.isArray(params.value) && params.value.length >= 5) {
               const [min, q1, median, q3, max] = params.value;
               const stats = [
                 ['Min', min],
-                ['Q1', q1], 
+                ['Q1', q1],
                 ['Median', median],
                 ['Q3', q3],
-                ['Max', max]
+                ['Max', max],
               ];
-              
+
               stats.forEach(([label, value]) => {
                 result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">`;
                 result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">${label}:</span>`;
@@ -669,7 +672,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
                 result += `</div>`;
               });
             }
-            
+
             return result;
           },
         },
@@ -717,17 +720,18 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           {
             name: chart.title || 'Box Plot',
             type: 'boxplot',
-            data: chart.elements?.map((element: any) => {
-              // Handle different data formats for box plots
-              if (element.boxplot_data) {
-                return element.boxplot_data; // [min, q1, median, q3, max]
-              } else if (element.values) {
-                return element.values; // Raw values that ECharts will process
-              } else if (element.data) {
-                return element.data;
-              }
-              return element.value || [];
-            }) || [],
+            data:
+              chart.elements?.map((element: any) => {
+                // Handle different data formats for box plots
+                if (element.boxplot_data) {
+                  return element.boxplot_data; // [min, q1, median, q3, max]
+                } else if (element.values) {
+                  return element.values; // Raw values that ECharts will process
+                } else if (element.data) {
+                  return element.data;
+                }
+                return element.value || [];
+              }) || [],
             itemStyle: {
               color: colorPalette[0][0],
               borderColor: colorPalette[0][0],
@@ -954,7 +958,7 @@ interface XSearchExecution {
   result?: {
     content: string;
     citations: any[];
-    sources: Array<{ text: string; link: string }>;
+    sources: Array<{ text: string; link: string; title?: string }>;
     dateRange: string;
     handles: string[];
   };
@@ -1330,6 +1334,112 @@ const ExtremeSearchComponent = ({
     return [];
   }, [toolInvocation, annotations]);
 
+  // Build a single chronological list for the timeline
+  type TimelineItem =
+    | { kind: 'query'; item: SearchQuery }
+    | { kind: 'x_search'; item: XSearchExecution }
+    | { kind: 'code'; item: CodeExecution };
+
+  const combinedTimelineItems = useMemo<TimelineItem[]>(() => {
+    // Completed state: preserve order from toolResults
+    if (isCompleted && 'output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+      const toolResults = researchData?.research?.toolResults || [];
+
+      return toolResults
+        .map((tr: any): TimelineItem | null => {
+          if (tr.toolName === 'webSearch') {
+            const sources = (tr.result || tr.output || []).map((source: any) => ({
+              title: source.title || '',
+              url: source.url || '',
+              content: source.content || '',
+              publishedDate: source.publishedDate || '',
+              favicon:
+                source.favicon ||
+                `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+            }));
+            const query: SearchQuery = {
+              id: tr.toolCallId || `query-${Math.random().toString(36).slice(2)}`,
+              query: tr.args?.query || tr.input?.query || 'Search',
+              status: 'completed',
+              sources,
+              content: [],
+            };
+            return { kind: 'query', item: query };
+          }
+          if (tr.toolName === 'xSearch') {
+            const xItem: XSearchExecution = {
+              id: tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`,
+              query: tr.args?.query || tr.input?.query || 'X search',
+              startDate: tr.args?.startDate || tr.input?.startDate || '',
+              endDate: tr.args?.endDate || tr.input?.endDate || '',
+              handles: tr.args?.xHandles || tr.input?.xHandles || [],
+              status: 'completed',
+              result: tr.result || tr.output || undefined,
+            };
+            return { kind: 'x_search', item: xItem };
+          }
+          if (tr.toolName === 'codeRunner') {
+            const codeItem: CodeExecution = {
+              id: tr.toolCallId || `code-${Math.random().toString(36).slice(2)}`,
+              title: tr.args?.title || tr.input?.title || 'Code Execution',
+              code: tr.args?.code || tr.input?.code || '',
+              status: 'completed',
+              result: (tr.result || tr.output || {}).result || '',
+              charts: (tr.result || tr.output || {}).charts || [],
+            };
+            return { kind: 'code', item: codeItem };
+          }
+          return null;
+        })
+        .filter(Boolean) as TimelineItem[];
+    }
+
+    // In-progress: order by annotations arrival
+    if (annotations?.length) {
+      const seen: Record<string, boolean> = {};
+      const items: TimelineItem[] = [];
+      for (const ann of annotations) {
+        if (ann.type !== 'data-extreme_search') continue;
+        const d = ann.data as any;
+        if (d.kind === 'query') {
+          const q = searchQueries.find((sq) => sq.id === d.queryId);
+          if (q && !seen[`q:${q.id}`]) {
+            items.push({ kind: 'query', item: q });
+            seen[`q:${q.id}`] = true;
+          }
+        } else if (d.kind === 'x_search') {
+          const x = xSearchExecutions.find((xe) => xe.id === d.xSearchId);
+          if (x && !seen[`x:${x.id}`]) {
+            items.push({ kind: 'x_search', item: x });
+            seen[`x:${x.id}`] = true;
+          }
+        } else if (d.kind === 'code') {
+          const c = codeExecutions.find((ce) => ce.id === d.codeId);
+          if (c && !seen[`c:${c.id}`]) {
+            items.push({ kind: 'code', item: c });
+            seen[`c:${c.id}`] = true;
+          }
+        }
+      }
+      if (items.length === 0) {
+        return [
+          ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
+          ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
+          ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+        ];
+      }
+      return items;
+    }
+
+    return [
+      ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
+      ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
+      ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+    ];
+  }, [isCompleted, toolInvocation, annotations, searchQueries, xSearchExecutions, codeExecutions]);
+
   // Get all sources for final result view
   const allSources = useMemo(() => {
     console.log('[ExtremeSearch] === EXTRACTING SOURCES ===');
@@ -1502,357 +1612,109 @@ const ExtremeSearchComponent = ({
   }, [searchQueries, codeExecutions, xSearchExecutions, userExpandedItems, isCompleted]);
 
   const renderTimeline = () => (
-    <div className="space-y-1 relative ml-3">
+    <div className="space-y-1 relative ml-4 mb-2">
       <AnimatePresence>
-        {/* Render search queries */}
-        {searchQueries.map((query, itemIndex) => {
-          const isActive = state === 'input-streaming' || state === 'input-available';
-          const isLoading = query.status === 'started' || query.status === 'reading_content';
-          const hasResults = query.sources.length > 0;
-          const isReadingContent = query.status === 'reading_content';
+        {combinedTimelineItems.map((timelineItem, itemIndex) => {
+          if (timelineItem.kind === 'query') {
+            const query = timelineItem.item as SearchQuery;
+            const isActive = state === 'input-streaming' || state === 'input-available';
+            const isLoading = query.status === 'started' || query.status === 'reading_content';
+            const hasResults = query.sources.length > 0;
+            const isReadingContent = query.status === 'reading_content';
 
-          console.log('[ExtremeSearch] Query status check:', {
-            queryId: query.id,
-            status: query.status,
-            isActive,
-            isLoading,
-            hasResults,
-            isReadingContent,
-            sourcesCount: query.sources.length,
-          });
+            const bulletColor = isLoading
+              ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
+              : hasResults
+                ? 'bg-primary'
+                : 'bg-yellow-500';
 
-          const bulletColor = isLoading
-            ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
-            : hasResults
-              ? 'bg-primary'
-              : 'bg-yellow-500';
-
-          return (
-            <motion.div
-              key={query.id}
-              className="space-y-0 relative"
-              initial={{ opacity: 0, y: 2 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.1,
-                delay: itemIndex * 0.01,
-              }}
-            >
-              {/* Background circle to prevent line showing through */}
-              <div
-                className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
-                style={{
-                  left: '-0.6rem',
-                  top: '5px',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-
-              {/* Timeline bullet */}
-              <div
-                className={`absolute size-1 rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                style={{
-                  left: '-0.6rem',
-                  top: '5.5px',
-                  transform: 'translateX(-50%)',
-                }}
-                title={`Status: ${query.status}`}
-              />
-
-              {/* Vertical line above bullet */}
-              {itemIndex > 0 && (
+            return (
+              <motion.div
+                key={query.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
                 <div
-                  className="absolute w-0.25 bg-border"
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
+
+                <div
+                  className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                  style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title={`Status: ${query.status}`}
+                />
+
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-neutral-300 dark:bg-neutral-700"
+                    style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
+                  />
+                )}
+
+                <div
+                  className="absolute bg-neutral-300 dark:bg-neutral-700"
                   style={{
                     left: '-0.6rem',
-                    top: '-6px',
-                    height: '12px',
+                    top: '7px',
+                    width: '2px',
+                    height: expandedItems[query.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 9px)'
+                        : '100%'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '9px'
+                        : '16px',
                     transform: 'translateX(-50%)',
                   }}
                 />
-              )}
 
-              {/* Vertical line below bullet */}
-              <div
-                className="absolute w-0.25 bg-border"
-                style={{
-                  left: '-0.6rem',
-                  top: '6px',
-                  height: expandedItems[query.id]
-                    ? itemIndex === searchQueries.length + codeExecutions.length - 1
-                      ? 'calc(100% - 6px)'
-                      : '100%'
-                    : itemIndex === searchQueries.length + codeExecutions.length - 1
-                      ? '8px'
-                      : '14px',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-
-              <div
-                className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
-                onClick={() => toggleItemExpansion(query.id)}
-              >
-                <Search className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
-
-                <span className="text-foreground text-xs min-w-0 flex-1">
-                  {isLoading && !isCompleted ? (
-                    <TextShimmer className="w-full" duration={1.5}>
-                      {query.query}
-                    </TextShimmer>
+                <div
+                  className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                  onClick={() => toggleItemExpansion(query.id)}
+                >
+                  <Search className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-foreground text-xs min-w-0 flex-1">
+                    {isLoading && !isCompleted ? (
+                      <TextShimmer className="w-full" duration={1.5}>
+                        {query.query}
+                      </TextShimmer>
+                    ) : (
+                      query.query
+                    )}
+                  </span>
+                  {expandedItems[query.id] ? (
+                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
                   ) : (
-                    query.query
+                    <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
                   )}
-                </span>
-
-                {expandedItems[query.id] ? (
-                  <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
-                ) : (
-                  <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
-                )}
-              </div>
-
-              <AnimatePresence>
-                {expandedItems[query.id] && (
-                  <motion.div
-                    key="content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      height: { duration: 0.2, ease: 'easeOut' },
-                      opacity: { duration: 0.15 },
-                    }}
-                    className="dark:border-neutral-700 overflow-hidden"
-                  >
-                    <div className="pl-0.5 py-0.5">
-                      {query.sources.length > 0 && (
-                        <motion.div
-                          className="flex flex-wrap gap-1 py-0.5"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.15 }}
-                        >
-                          {query.sources.map((source: any, index: number) => (
-                            <motion.a
-                              key={index}
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.15, delay: index * 0.02 }}
-                            >
-                              <img
-                                src={source.favicon}
-                                alt=""
-                                className="w-3 h-3 rounded-full"
-                                onError={(e) => {
-                                  e.currentTarget.src = 'https://www.google.com/s2/favicons?sz=128&domain=example.com';
-                                  (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
-                                }}
-                              />
-                              <span
-                                className="text-muted-foreground truncate max-w-[100px]"
-                                title={source.title || 'source'}
-                              >
-                                {source.title || 'source'}
-                              </span>
-                            </motion.a>
-                          ))}
-                        </motion.div>
-                      )}
-
-                      {(() => {
-                        if (isReadingContent && query.sources.length > 0 && !isCompleted) {
-                          return (
-                            <TextShimmer className="text-xs py-0.5" duration={2.5}>
-                              Reading content...
-                            </TextShimmer>
-                          );
-                        } else if (isLoading && !isCompleted) {
-                          return (
-                            <TextShimmer className="text-xs py-0.5" duration={2.5}>
-                              Searching sources...
-                            </TextShimmer>
-                          );
-                        } else if (query.sources.length === 0 && !isLoading) {
-                          return (
-                            <p className="text-xs text-muted-foreground py-1 mt-1">No sources found for this query.</p>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          );
-        })}
-
-        {/* Render X search executions */}
-        {xSearchExecutions.map((xSearch, index) => {
-          const isActive = state === 'input-streaming' || state === 'input-available';
-          const isLoading = xSearch.status === 'started';
-          const hasResults = xSearch.result && xSearch.result.citations.length > 0;
-
-          console.log('[ExtremeSearch] X search status check:', {
-            xSearchId: xSearch.id,
-            status: xSearch.status,
-            isActive,
-            isLoading,
-            hasResults,
-            resultExists: !!xSearch.result,
-          });
-
-          const bulletColor = isLoading
-            ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
-            : hasResults
-              ? 'bg-primary'
-              : 'bg-yellow-500';
-
-          const itemIndex = searchQueries.length + index;
-
-          return (
-            <motion.div
-              key={xSearch.id}
-              className="space-y-0 relative"
-              initial={{ opacity: 0, y: 2 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.1,
-                delay: itemIndex * 0.01,
-              }}
-            >
-              {/* Background circle to prevent line showing through */}
-              <div
-                className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
-                style={{
-                  left: '-0.6rem',
-                  top: '5px',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-
-              {/* Timeline bullet */}
-              <div
-                className={`absolute size-1 rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                style={{
-                  left: '-0.6rem',
-                  top: '5.5px',
-                  transform: 'translateX(-50%)',
-                }}
-                title={`Status: ${xSearch.status}`}
-              />
-
-              {/* Vertical line above bullet */}
-              {itemIndex > 0 && (
-                <div
-                  className="absolute w-0.25 bg-border"
-                  style={{
-                    left: '-0.6rem',
-                    top: '-6px',
-                    height: '12px',
-                    transform: 'translateX(-50%)',
-                  }}
-                />
-              )}
-
-              {/* Vertical line below bullet */}
-              <div
-                className="absolute w-0.25 bg-border"
-                style={{
-                  left: '-0.6rem',
-                  top: '6px',
-                  height: expandedItems[xSearch.id]
-                    ? itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
-                      ? 'calc(100% - 6px)'
-                      : '100%'
-                    : itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
-                      ? '8px'
-                      : '14px',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-
-              <div
-                className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
-                onClick={() => toggleItemExpansion(xSearch.id)}
-              >
-                <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
-                  <svg className="w-1.5 h-1.5 text-white dark:text-black fill-current" viewBox="0 0 24 24">
-                    <path d="M18.901 1.153h3.68L14.503 8.79l9.34 12.04h-7.406l-5.8-7.584L4.72 20.83H1.04l8.59-9.83L1.153 1.153h7.594l5.243 6.932 5.911-6.932zM17.61 18.816h2.04L6.57 3.24H4.385L17.61 18.816z"/>
-                  </svg>
                 </div>
 
-                <span className="text-foreground text-xs min-w-0 flex-1">
-                  {isLoading && !isCompleted ? (
-                    <TextShimmer className="w-full" duration={1.5}>
-                      {`X search: ${xSearch.query}`}
-                    </TextShimmer>
-                  ) : (
-                    `X search: ${xSearch.query}`
-                  )}
-                </span>
-
-                {xSearch.handles && xSearch.handles.length > 0 && (
-                  <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px] h-4">
-                    {xSearch.handles.length} handles
-                  </Badge>
-                )}
-
-                {expandedItems[xSearch.id] ? (
-                  <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
-                ) : (
-                  <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
-                )}
-              </div>
-
-              <AnimatePresence>
-                {expandedItems[xSearch.id] && (
-                  <motion.div
-                    key="content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      height: { duration: 0.2, ease: 'easeOut' },
-                      opacity: { duration: 0.15 },
-                    }}
-                    className="dark:border-neutral-700 overflow-hidden"
-                  >
-                    <div className="pl-0.5 py-0.5">
-                      {/* Date Range */}
-                      <div className="text-[10px] text-muted-foreground mb-1">
-                        {xSearch.startDate} to {xSearch.endDate}
-                      </div>
-
-                      {/* X search results */}
-                      {xSearch.result && xSearch.result.citations.length > 0 && (
-                        <motion.div
-                          className="flex flex-wrap gap-1 py-0.5"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.15 }}
-                        >
-                          {xSearch.result.citations.map((citation: any, index: number) => {
-                            const url = typeof citation === 'string' ? citation : citation.url;
-                            let title = typeof citation === 'object' ? citation.title : '';
-                            
-                            // If no title from citation, try to get it from sources with generated titles
-                            if (!title && xSearch.result?.sources) {
-                              const matchingSource = xSearch.result.sources.find((source: any) => source.link === url);
-                              title = matchingSource?.title || 'X post';
-                            }
-                            
-                            return (
+                <AnimatePresence>
+                  {expandedItems[query.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="dark:border-neutral-700 overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5">
+                        {query.sources.length > 0 && (
+                          <motion.div
+                            className="flex flex-wrap gap-1 py-0.5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {query.sources.map((source: any, index: number) => (
                               <motion.a
                                 key={index}
-                                href={url}
+                                href={source.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
@@ -1860,47 +1722,213 @@ const ExtremeSearchComponent = ({
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.15, delay: index * 0.02 }}
                               >
-                                <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
-                                  <svg className="w-2 h-2 text-white dark:text-black fill-current" viewBox="0 0 24 24">
-                                    <path d="M18.901 1.153h3.68L14.503 8.79l9.34 12.04h-7.406l-5.8-7.584L4.72 20.83H1.04l8.59-9.83L1.153 1.153h7.594l5.243 6.932 5.911-6.932zM17.61 18.816h2.04L6.57 3.24H4.385L17.61 18.816z"/>
-                                  </svg>
-                                </div>
+                                <img
+                                  src={source.favicon}
+                                  alt=""
+                                  className="w-3 h-3 rounded-full"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src =
+                                      'https://www.google.com/s2/favicons?sz=128&domain=example.com';
+                                    (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
+                                  }}
+                                />
                                 <span
-                                  className="text-muted-foreground truncate max-w-[140px]"
-                                  title={title}
+                                  className="text-muted-foreground truncate max-w-[100px]"
+                                  title={source.title || 'source'}
                                 >
-                                  {title}
+                                  {source.title || 'source'}
                                 </span>
                               </motion.a>
+                            ))}
+                          </motion.div>
+                        )}
+
+                        {(() => {
+                          if (isReadingContent && query.sources.length > 0 && !isCompleted) {
+                            return (
+                              <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                                Reading content...
+                              </TextShimmer>
                             );
-                          })}
-                        </motion.div>
-                      )}
+                          } else if (isLoading && !isCompleted) {
+                            return (
+                              <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                                Searching sources...
+                              </TextShimmer>
+                            );
+                          } else if (query.sources.length === 0 && !isLoading) {
+                            return (
+                              <p className="text-xs text-muted-foreground py-1 mt-1">
+                                No sources found for this query.
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
 
-                      {/* Loading state */}
-                      {isLoading && !isCompleted && (
-                        <TextShimmer className="text-xs py-0.5" duration={2.5}>
-                          Searching X posts...
-                        </TextShimmer>
-                      )}
+          if (timelineItem.kind === 'x_search') {
+            const xSearch = timelineItem.item as XSearchExecution;
+            const isActive = state === 'input-streaming' || state === 'input-available';
+            const isLoading = xSearch.status === 'started';
+            const hasResults = xSearch.result && xSearch.result.citations.length > 0;
 
-                      {/* No results state */}
-                      {xSearch.status === 'completed' && (!xSearch.result || xSearch.result.citations.length === 0) && (
-                        <p className="text-xs text-muted-foreground py-1 mt-1">No X posts found for this query.</p>
-                      )}
-                    </div>
-                  </motion.div>
+            const bulletColor = isLoading
+              ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
+              : hasResults
+                ? 'bg-primary'
+                : 'bg-yellow-500';
+
+            return (
+              <motion.div
+                key={xSearch.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '5px', transform: 'translateX(-50%)' }}
+                />
+
+                <div
+                  className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                  style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title={`Status: ${xSearch.status}`}
+                />
+
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-neutral-300 dark:bg-neutral-700"
+                    style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
+                  />
                 )}
-              </AnimatePresence>
-            </motion.div>
-          );
-        })}
 
-        {/* Render code executions */}
-        {codeExecutions.map((code, index) => {
+                <div
+                  className="absolute bg-neutral-300 dark:bg-neutral-700"
+                  style={{
+                    left: '-0.6rem',
+                    top: '7px',
+                    width: '2px',
+                    height: expandedItems[xSearch.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 9px)'
+                        : '100%'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '9px'
+                        : '16px',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <div
+                  className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                  onClick={() => toggleItemExpansion(xSearch.id)}
+                >
+                  <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
+                    <XLogoIcon className="size-2.5 text-white dark:text-black" />
+                  </div>
+                  <span className="text-foreground text-xs min-w-0 flex-1">
+                    {isLoading && !isCompleted ? (
+                      <TextShimmer className="w-full" duration={1.5}>{`X search: ${xSearch.query}`}</TextShimmer>
+                    ) : (
+                      `X search: ${xSearch.query}`
+                    )}
+                  </span>
+                  {xSearch.handles && xSearch.handles.length > 0 && (
+                    <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px] h-4">
+                      {xSearch.handles.length} handles
+                    </Badge>
+                  )}
+                  {expandedItems[xSearch.id] ? (
+                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                  ) : (
+                    <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedItems[xSearch.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="dark:border-neutral-700 overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5">
+                        <div className="text-[10px] text-muted-foreground mb-1">
+                          {xSearch.startDate} to {xSearch.endDate}
+                        </div>
+                        {xSearch.result && xSearch.result.citations.length > 0 && (
+                          <motion.div
+                            className="flex flex-wrap gap-1 py-0.5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {xSearch.result.citations.map((citation: any, index: number) => {
+                              const url = typeof citation === 'string' ? citation : citation.url;
+                              let title = typeof citation === 'object' ? citation.title : '';
+                              if (!title && xSearch.result?.sources) {
+                                const matchingSource = xSearch.result.sources.find(
+                                  (source: any) => source.link === url,
+                                );
+                                title = matchingSource?.title || 'X post';
+                              }
+                              return (
+                                <motion.a
+                                  key={index}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.15, delay: index * 0.02 }}
+                                >
+                                  <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
+                                    <XLogoIcon className="size-2.5 text-white dark:text-black" />
+                                  </div>
+                                  <span className="text-muted-foreground truncate max-w-[140px]" title={title}>
+                                    {title}
+                                  </span>
+                                </motion.a>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+
+                        {isLoading && !isCompleted && (
+                          <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                            Searching X posts...
+                          </TextShimmer>
+                        )}
+
+                        {xSearch.status === 'completed' &&
+                          (!xSearch.result || xSearch.result.citations.length === 0) && (
+                            <p className="text-xs text-muted-foreground py-1 mt-1">No X posts found for this query.</p>
+                          )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          // code
+          const code = timelineItem.item as CodeExecution;
           const isLoading = code.status === 'running';
-          const itemIndex = searchQueries.length + xSearchExecutions.length + index;
-
           const bulletColor = isLoading ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!' : 'bg-primary';
 
           return (
@@ -1910,58 +1938,39 @@ const ExtremeSearchComponent = ({
               initial={{ opacity: 0, y: 2 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.1,
-                delay: itemIndex * 0.01,
-              }}
+              transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
             >
-              {/* Background circle to prevent line showing through */}
               <div
-                className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
-                style={{
-                  left: '-0.6rem',
-                  top: '5px',
-                  transform: 'translateX(-50%)',
-                }}
+                className="absolute rounded-full bg-background z-5"
+                style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
               />
 
-              {/* Timeline bullet */}
               <div
-                className={`absolute size-1 rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                style={{
-                  left: '-0.6rem',
-                  top: '5.5px',
-                  transform: 'translateX(-50%)',
-                }}
+                className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
                 title={`Status: ${code.status}`}
               />
 
-              {/* Vertical line above bullet */}
               {itemIndex > 0 && (
                 <div
-                  className="absolute w-0.25 bg-border"
-                  style={{
-                    left: '-0.6rem',
-                    top: '-6px',
-                    height: '12px',
-                    transform: 'translateX(-50%)',
-                  }}
+                  className="absolute bg-neutral-300 dark:bg-neutral-700"
+                  style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
                 />
               )}
 
-              {/* Vertical line below bullet */}
               <div
-                className="absolute w-0.25 bg-border"
+                className="absolute bg-neutral-300 dark:bg-neutral-700"
                 style={{
                   left: '-0.6rem',
-                  top: '6px',
+                  top: '7px',
+                  width: '2px',
                   height: expandedItems[code.id]
-                    ? itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
-                      ? 'calc(100% - 6px)'
+                    ? itemIndex === combinedTimelineItems.length - 1
+                      ? 'calc(100% - 9px)'
                       : '100%'
-                    : itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
-                      ? '8px'
-                      : '14px',
+                    : itemIndex === combinedTimelineItems.length - 1
+                      ? '9px'
+                      : '16px',
                   transform: 'translateX(-50%)',
                 }}
               />
@@ -1971,7 +1980,6 @@ const ExtremeSearchComponent = ({
                 onClick={() => toggleItemExpansion(code.id)}
               >
                 <Zap className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-
                 <span className="text-foreground text-xs min-w-0 flex-1">
                   {isLoading && !isCompleted ? (
                     <TextShimmer className="w-full" duration={1.5}>
@@ -1981,7 +1989,6 @@ const ExtremeSearchComponent = ({
                     code.title
                   )}
                 </span>
-
                 {expandedItems[code.id] ? (
                   <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
                 ) : (
@@ -1996,19 +2003,13 @@ const ExtremeSearchComponent = ({
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      height: { duration: 0.2, ease: 'easeOut' },
-                      opacity: { duration: 0.15 },
-                    }}
+                    transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
                     className="dark:border-neutral-700 overflow-hidden"
                   >
                     <div className="pl-0.5 py-0.5">
-                      {/* Code Block */}
                       <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md my-1 overflow-auto max-h-[150px] text-xs font-mono">
                         <pre className="whitespace-pre-wrap break-words">{code.code}</pre>
                       </div>
-
-                      {/* Result Block (if available) */}
                       {code.result && (
                         <div className="mt-2">
                           <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mb-1">Result:</div>
@@ -2017,8 +2018,6 @@ const ExtremeSearchComponent = ({
                           </div>
                         </div>
                       )}
-
-                      {/* Charts Block (if available) */}
                       {code.charts && code.charts.length > 0 && (
                         <div className="mt-3 mb-1 space-y-4">
                           {code.charts.map((chart: any, chartIndex: number) => (
@@ -2028,8 +2027,6 @@ const ExtremeSearchComponent = ({
                           ))}
                         </div>
                       )}
-
-                      {/* If still running */}
                       {code.status === 'running' && !isCompleted && (
                         <TextShimmer className="text-xs py-0.5 mt-1" duration={2.5}>
                           Executing code...
@@ -2192,7 +2189,7 @@ const ExtremeSearchComponent = ({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
               >
-                <CardContent className="px-4 pb-4">
+                <CardContent className="mx-3 mb-0 !p-0">
                   <div className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
                     {renderTimeline()}
                   </div>
@@ -2212,7 +2209,12 @@ const ExtremeSearchComponent = ({
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-md bg-primary/10">
                   <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
                   </svg>
                 </div>
                 <h3 className="font-medium text-sm">Visualizations</h3>
@@ -2241,7 +2243,7 @@ const ExtremeSearchComponent = ({
                   }}
                   className="overflow-hidden border-t border-border"
                 >
-                  <div className="p-4 space-y-4">
+                  <div className="p-3 space-y-4">
                     {allCharts.map((chart, index) => (
                       <ExtremeChart key={index} chart={chart} />
                     ))}
@@ -2252,25 +2254,30 @@ const ExtremeSearchComponent = ({
           </Card>
         )}
 
-        {/* X Search Results */}
-        {xSearchExecutions.filter(x => x.status === 'completed' && x.result).length > 0 && (
-          <div className="space-y-3">
-            {xSearchExecutions
-              .filter(x => x.status === 'completed' && x.result)
-              .map((xSearch, index) => (
-                <XSearch 
-                  key={index}
-                  result={xSearch.result!}
-                  args={{
-                    query: xSearch.query,
-                    startDate: xSearch.startDate,
-                    endDate: xSearch.endDate,
-                    xHandles: xSearch.handles,
-                  }}
-                />
-              ))}
-          </div>
-        )}
+        {/* X Search Results (combined) */}
+        {(() => {
+          const completedX = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
+          if (completedX.length === 0) return null;
+          const combined = {
+            content: completedX.map((x) => x.result!.content).join('\n\n'),
+            citations: completedX.flatMap((x) => x.result!.citations || []),
+            sources: completedX.flatMap((x) => x.result!.sources || []),
+            query: completedX.map((x) => x.query).join(' | '),
+            dateRange: `${completedX[0].startDate || ''} to ${completedX[completedX.length - 1].endDate || ''}`,
+            handles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+          };
+          const combinedArgs = {
+            query: combined.query,
+            startDate: completedX[0].startDate,
+            endDate: completedX[completedX.length - 1].endDate,
+            xHandles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+          };
+          return (
+            <div className="space-y-3">
+              <XSearch result={combined as any} args={combinedArgs} />
+            </div>
+          );
+        })()}
 
         {/* Sources */}
         {(() => {

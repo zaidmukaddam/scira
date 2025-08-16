@@ -79,7 +79,7 @@ const searchWeb = async (query: string, category?: SearchCategory, include_domai
   try {
     const { results } = await exa.searchAndContents(query, {
       numResults: 5,
-      type: 'hybrid',
+      type: 'auto',
       ...(category
         ? {
             category: category as SearchCategory,
