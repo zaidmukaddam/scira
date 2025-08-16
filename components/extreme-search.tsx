@@ -18,6 +18,7 @@ import ReactECharts, { EChartsOption } from 'echarts-for-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { DataExtremeSearchPart } from '@/lib/types';
+import XSearch from '@/components/x-search';
 
 // Minimal color palette for charts with better contrast
 const CHART_COLORS = {
@@ -45,7 +46,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
 
   // Memoize chartOptions
   const chartOptions = useMemo(() => {
-    // Skip chart options calculation for composite charts
+    // Handle composite charts separately (no options needed, handled in render)
     if (chart.type === 'composite_chart') {
       return {};
     }
@@ -53,10 +54,10 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
     const baseOption: EChartsOption = {
       backgroundColor: 'transparent',
       grid: {
-        top: isMobile ? 50 : 65,
-        right: isMobile ? 20 : 30,
-        bottom: isMobile ? 45 : 55,
-        left: isMobile ? 45 : 60,
+        top: isMobile ? 55 : 70,
+        right: isMobile ? 25 : 35,
+        bottom: isMobile ? 55 : 65,
+        left: isMobile ? 55 : 70,
         containLabel: true,
       },
       title: {
@@ -185,7 +186,35 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
         tooltip: {
           ...baseOption.tooltip,
           trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
+          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
+          borderWidth: 0,
+          shadowBlur: 16,
+          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
+          textStyle: {
+            color: isDark ? '#ffffff' : '#1a1a1a',
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 500,
+          },
+          padding: [12, 16],
+          borderRadius: 8,
+          formatter: function (params: any) {
+            const percentage = params.percent % 1 === 0 ? params.percent.toFixed(0) : params.percent.toFixed(1);
+            const value = typeof params.value === 'number' ? params.value.toLocaleString() : params.value;
+            let result = `<div style="display: flex; align-items: center; margin-bottom: 8px;">`;
+            result += `<span style="display: inline-block; width: 12px; height: 12px; background-color: ${params.color}; border-radius: 3px; margin-right: 8px; flex-shrink: 0;"></span>`;
+            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.name}</span>`;
+            result += `</div>`;
+            result += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Value:</span>`;
+            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${value}</span>`;
+            result += `</div>`;
+            result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">`;
+            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Percentage:</span>`;
+            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${percentage}%</span>`;
+            result += `</div>`;
+            return result;
+          },
         },
         legend: {
           ...baseOption.legend,
@@ -234,6 +263,487 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       };
     }
 
+    // Handle line charts with points data
+    if (chart.type === 'line') {
+      const colorPalette = Object.values(CHART_COLORS);
+      
+      return {
+        ...baseOption,
+        tooltip: {
+          ...baseOption.tooltip,
+          trigger: 'axis',
+          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
+          borderWidth: 0,
+          shadowBlur: 16,
+          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
+          textStyle: {
+            color: isDark ? '#ffffff' : '#1a1a1a',
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 500,
+          },
+          padding: [12, 16],
+          borderRadius: 8,
+          formatter: function (params: any) {
+            let axisValue = params[0].axisValueLabel;
+            // Format X-axis value (remove unnecessary .0 from whole numbers like "2017.0" -> "2017")
+            if (axisValue && typeof axisValue === 'string') {
+              axisValue = axisValue.replace(/\.0+$/, '');
+            } else if (typeof axisValue === 'number' && axisValue % 1 === 0) {
+              axisValue = Math.round(axisValue).toString();
+            }
+            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${axisValue}</div>`;
+            
+            params.forEach((param: any) => {
+              // For line charts, param.value is [x, y] array - we want the y value
+              let displayValue;
+              if (Array.isArray(param.value) && param.value.length >= 2) {
+                displayValue = typeof param.value[1] === 'number' ? param.value[1].toLocaleString() : param.value[1];
+              } else {
+                displayValue = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
+              }
+              
+              result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
+              result += `<span style="display: inline-block; width: 8px; height: 8px; background-color: ${param.color}; border-radius: 50%; margin-right: 8px; flex-shrink: 0;"></span>`;
+              result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; margin-right: 8px; font-size: ${isMobile ? '10px' : '11px'};">${param.seriesName}:</span>`;
+              result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${displayValue}</span>`;
+              result += `</div>`;
+            });
+            
+            return result;
+          },
+        },
+        xAxis: {
+          type: 'value',
+          name: chart.x_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 25 : 30,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          // Smart axis scaling - start from nearby values, not zero
+          scale: true,
+          ...axisStyle,
+          // Prevent label overlapping
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            interval: 'auto',
+            rotate: isMobile ? 45 : 0,
+            formatter: function (value: number) {
+              // Don't format years (4-digit numbers like 2017, 2018)
+              if (value >= 1900 && value <= 2100 && value % 1 === 0) {
+                return value.toString();
+              }
+              // Format large numbers with K/M
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 10000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          name: chart.y_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 40,
+          nameRotate: 90,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          // Smart axis scaling - start from nearby values, not zero
+          scale: true,
+          ...axisStyle,
+          // Prevent label overlapping
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            formatter: function (value: number) {
+              // Format numbers nicely - use K for thousands, M for millions
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 1000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        series: chart.elements?.map((element: any, index: number) => {
+          const colorSet = colorPalette[index % colorPalette.length];
+          return {
+            name: element.label,
+            type: 'line',
+            data: element.points || [],
+            smooth: false,
+            symbol: 'circle',
+            symbolSize: isMobile ? 4 : 6,
+            lineStyle: {
+              width: isMobile ? 2 : 3,
+              color: colorSet[0],
+            },
+            itemStyle: {
+              color: colorSet[0],
+              borderColor: isDark ? '#262626' : '#ffffff',
+              borderWidth: 1,
+            },
+            emphasis: {
+              itemStyle: {
+                color: colorSet[1],
+                shadowBlur: 8,
+                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+              },
+            },
+          };
+        }) || [],
+      };
+    }
+
+    // Handle bar charts
+    if (chart.type === 'bar') {
+      const colorPalette = Object.values(CHART_COLORS);
+      
+      return {
+        ...baseOption,
+        tooltip: {
+          ...baseOption.tooltip,
+          trigger: 'axis',
+          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
+          borderWidth: 0,
+          shadowBlur: 16,
+          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
+          textStyle: {
+            color: isDark ? '#ffffff' : '#1a1a1a',
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 500,
+          },
+          padding: [12, 16],
+          borderRadius: 8,
+          formatter: function (params: any) {
+            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params[0].name}</div>`;
+            
+            params.forEach((param: any) => {
+              const value = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
+              result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
+              result += `<span style="display: inline-block; width: 8px; height: 8px; background-color: ${param.color}; border-radius: 2px; margin-right: 8px; flex-shrink: 0;"></span>`;
+              result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; margin-right: 8px; font-size: ${isMobile ? '10px' : '11px'};">${param.seriesName}:</span>`;
+              result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${value}</span>`;
+              result += `</div>`;
+            });
+            
+            return result;
+          },
+        },
+        xAxis: {
+          type: 'category',
+          name: chart.x_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 25 : 30,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          data: chart.x_tick_labels || chart.elements?.map((el: any) => el.label) || [],
+          ...axisStyle,
+        },
+        yAxis: {
+          type: 'value',
+          name: chart.y_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 40,
+          nameRotate: 90,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          // Smart axis scaling - start from nearby values, not zero
+          scale: true,
+          ...axisStyle,
+          // Prevent label overlapping
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            formatter: function (value: number) {
+              // Format numbers nicely - use K for thousands, M for millions
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 1000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        series: [
+          {
+            name: chart.title || 'Data',
+            type: 'bar',
+            data: chart.elements?.map((element: any) => element.value) || [],
+            itemStyle: {
+              color: colorPalette[0][0],
+              borderRadius: [4, 4, 0, 0],
+            },
+            emphasis: {
+              itemStyle: {
+                color: colorPalette[0][1],
+                shadowBlur: 8,
+                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+              },
+            },
+            barWidth: isMobile ? '60%' : '50%',
+          },
+        ],
+      };
+    }
+
+    // Handle scatter charts
+    if (chart.type === 'scatter') {
+      const colorPalette = Object.values(CHART_COLORS);
+      
+      return {
+        ...baseOption,
+        tooltip: {
+          ...baseOption.tooltip,
+          trigger: 'item',
+          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
+          borderWidth: 0,
+          shadowBlur: 16,
+          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
+          textStyle: {
+            color: isDark ? '#ffffff' : '#1a1a1a',
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 500,
+          },
+          padding: [12, 16],
+          borderRadius: 8,
+          formatter: function (params: any) {
+            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.seriesName}</div>`;
+            
+            const xValue = Array.isArray(params.value) ? params.value[0] : params.value;
+            const yValue = Array.isArray(params.value) ? params.value[1] : params.value;
+            
+            result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">X:</span>`;
+            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof xValue === 'number' ? xValue.toLocaleString() : xValue}</span>`;
+            result += `</div>`;
+            result += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Y:</span>`;
+            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof yValue === 'number' ? yValue.toLocaleString() : yValue}</span>`;
+            result += `</div>`;
+            
+            return result;
+          },
+        },
+        xAxis: {
+          type: 'value',
+          name: chart.x_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 25 : 30,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          scale: true,
+          ...axisStyle,
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            formatter: function (value: number) {
+              if (value >= 1900 && value <= 2100 && value % 1 === 0) {
+                return value.toString();
+              }
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 10000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          name: chart.y_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 40,
+          nameRotate: 90,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          scale: true,
+          ...axisStyle,
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            formatter: function (value: number) {
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 1000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        series: chart.elements?.map((element: any, index: number) => {
+          const colorSet = colorPalette[index % colorPalette.length];
+          return {
+            name: element.label || `Series ${index + 1}`,
+            type: 'scatter',
+            data: element.points || element.data || [],
+            symbolSize: isMobile ? 6 : 8,
+            itemStyle: {
+              color: colorSet[0],
+              borderColor: isDark ? '#262626' : '#ffffff',
+              borderWidth: 1,
+            },
+            emphasis: {
+              itemStyle: {
+                color: colorSet[1],
+                shadowBlur: 10,
+                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+              },
+            },
+          };
+        }) || [],
+      };
+    }
+
+    // Handle box and whisker charts
+    if (chart.type === 'box_and_whisker') {
+      const colorPalette = Object.values(CHART_COLORS);
+      
+      return {
+        ...baseOption,
+        tooltip: {
+          ...baseOption.tooltip,
+          trigger: 'item',
+          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
+          borderWidth: 0,
+          shadowBlur: 16,
+          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
+          textStyle: {
+            color: isDark ? '#ffffff' : '#1a1a1a',
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 500,
+          },
+          padding: [12, 16],
+          borderRadius: 8,
+          formatter: function (params: any) {
+            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.name}</div>`;
+            
+            if (Array.isArray(params.value) && params.value.length >= 5) {
+              const [min, q1, median, q3, max] = params.value;
+              const stats = [
+                ['Min', min],
+                ['Q1', q1], 
+                ['Median', median],
+                ['Q3', q3],
+                ['Max', max]
+              ];
+              
+              stats.forEach(([label, value]) => {
+                result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">`;
+                result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">${label}:</span>`;
+                result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof value === 'number' ? value.toLocaleString() : value}</span>`;
+                result += `</div>`;
+              });
+            }
+            
+            return result;
+          },
+        },
+        xAxis: {
+          type: 'category',
+          name: chart.x_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 25 : 30,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          data: chart.x_tick_labels || chart.elements?.map((el: any) => el.label) || [],
+          ...axisStyle,
+        },
+        yAxis: {
+          type: 'value',
+          name: chart.y_label || '',
+          nameLocation: 'middle',
+          nameGap: isMobile ? 35 : 40,
+          nameRotate: 90,
+          nameTextStyle: {
+            color: isDark ? '#d4d4d4' : '#525252',
+            fontSize: isMobile ? 9 : 10,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
+          scale: true,
+          ...axisStyle,
+          axisLabel: {
+            ...axisStyle.axisLabel,
+            formatter: function (value: number) {
+              if (value >= 1000000) {
+                const millions = value / 1000000;
+                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
+              } else if (value >= 1000) {
+                const thousands = value / 1000;
+                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
+              }
+              return value.toString();
+            },
+          },
+        },
+        series: [
+          {
+            name: chart.title || 'Box Plot',
+            type: 'boxplot',
+            data: chart.elements?.map((element: any) => {
+              // Handle different data formats for box plots
+              if (element.boxplot_data) {
+                return element.boxplot_data; // [min, q1, median, q3, max]
+              } else if (element.values) {
+                return element.values; // Raw values that ECharts will process
+              } else if (element.data) {
+                return element.data;
+              }
+              return element.value || [];
+            }) || [],
+            itemStyle: {
+              color: colorPalette[0][0],
+              borderColor: colorPalette[0][0],
+              borderWidth: 2,
+            },
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
+              },
+            },
+          },
+        ],
+      };
+    }
+
     // Default case - just return base options
     return {
       ...baseOption,
@@ -267,7 +777,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-background border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-sm overflow-hidden h-full"
+      className="bg-background border border-border rounded-lg shadow-none overflow-hidden h-full"
     >
       <div className="w-full p-3 h-64 sm:h-72">
         <ReactECharts
@@ -434,6 +944,22 @@ interface CodeExecution {
   charts?: any[];
 }
 
+interface XSearchExecution {
+  id: string;
+  query: string;
+  startDate: string;
+  endDate: string;
+  handles?: string[];
+  status: 'started' | 'completed' | 'error';
+  result?: {
+    content: string;
+    citations: any[];
+    sources: Array<{ text: string; link: string }>;
+    dateRange: string;
+    handles: string[];
+  };
+}
+
 const ExtremeSearchComponent = ({
   toolInvocation,
   annotations,
@@ -447,6 +973,7 @@ const ExtremeSearchComponent = ({
   const [researchProcessOpen, setResearchProcessOpen] = useState(false);
   const [sourcesAccordionOpen, setSourcesAccordionOpen] = useState(true);
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
+  const [visualizationsOpen, setVisualizationsOpen] = useState(true);
 
   // Debug what we're actually receiving
   useEffect(() => {
@@ -677,6 +1204,72 @@ const ExtremeSearchComponent = ({
     return [];
   }, [toolInvocation, annotations]);
 
+  // Extract X search executions from the ACTUAL tool invocation structure
+  const xSearchExecutions = useMemo(() => {
+    // Check if we have results in the completed tool
+    if ('output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+
+      if (researchData?.research?.toolResults) {
+        const xSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'xSearch');
+
+        console.log('[ExtremeSearch] Found xSearch results:', xSearchResults);
+
+        return xSearchResults.map((result, index) => {
+          const query = result.args?.query || result.input?.query || `X Search ${index + 1}`;
+          const startDate = result.args?.startDate || result.input?.startDate || '';
+          const endDate = result.args?.endDate || result.input?.endDate || '';
+          const handles = result.args?.xHandles || result.input?.xHandles || [];
+          const resultData = result.result || result.output || null;
+
+          console.log('[ExtremeSearch] Processing xSearch result:', {
+            toolCallId: result.toolCallId,
+            query,
+            startDate,
+            endDate,
+            handles,
+            resultData,
+          });
+
+          return {
+            id: result.toolCallId || `x-search-${index}`,
+            query,
+            startDate,
+            endDate,
+            handles,
+            status: 'completed' as const,
+            result: resultData,
+          };
+        });
+      }
+    }
+
+    // For in-progress, try to extract from annotations
+    if (annotations?.length) {
+      const xSearchMap = new Map<string, XSearchExecution>();
+
+      annotations.forEach((ann) => {
+        if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'x_search') return;
+
+        const { data } = ann;
+        xSearchMap.set(data.xSearchId, {
+          id: data.xSearchId,
+          query: data.query,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          handles: data.handles,
+          status: data.status,
+          result: data.result,
+        });
+      });
+
+      return Array.from(xSearchMap.values());
+    }
+
+    return [];
+  }, [toolInvocation, annotations]);
+
   // Extract code executions from the ACTUAL tool invocation structure
   const codeExecutions = useMemo(() => {
     // Check if we have results in the completed tool
@@ -885,9 +1478,28 @@ const ExtremeSearchComponent = ({
         }
       });
 
+      xSearchExecutions.forEach((xSearch) => {
+        const isActive = xSearch.status === 'started';
+        const wasUserControlled = userExpandedItems[xSearch.id];
+
+        // Auto-expand active X search executions (unless user manually controlled)
+        if (isActive && !prevExpanded[xSearch.id] && !wasUserControlled) {
+          console.log('[ExtremeSearch] 🤖 Auto-expanding active X search:', xSearch.id);
+          newExpanded[xSearch.id] = true;
+          shouldUpdate = true;
+        }
+
+        // Auto-collapse completed X search that was auto-expanded (not user-controlled)
+        if (xSearch.status === 'completed' && prevExpanded[xSearch.id] && !wasUserControlled) {
+          console.log('[ExtremeSearch] 🤖 Auto-collapsing completed X search:', xSearch.id);
+          newExpanded[xSearch.id] = false;
+          shouldUpdate = true;
+        }
+      });
+
       return shouldUpdate ? newExpanded : prevExpanded;
     });
-  }, [searchQueries, codeExecutions, userExpandedItems, isCompleted]);
+  }, [searchQueries, codeExecutions, xSearchExecutions, userExpandedItems, isCompleted]);
 
   const renderTimeline = () => (
     <div className="space-y-1 relative ml-3">
@@ -1081,10 +1693,213 @@ const ExtremeSearchComponent = ({
           );
         })}
 
+        {/* Render X search executions */}
+        {xSearchExecutions.map((xSearch, index) => {
+          const isActive = state === 'input-streaming' || state === 'input-available';
+          const isLoading = xSearch.status === 'started';
+          const hasResults = xSearch.result && xSearch.result.citations.length > 0;
+
+          console.log('[ExtremeSearch] X search status check:', {
+            xSearchId: xSearch.id,
+            status: xSearch.status,
+            isActive,
+            isLoading,
+            hasResults,
+            resultExists: !!xSearch.result,
+          });
+
+          const bulletColor = isLoading
+            ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
+            : hasResults
+              ? 'bg-primary'
+              : 'bg-yellow-500';
+
+          const itemIndex = searchQueries.length + index;
+
+          return (
+            <motion.div
+              key={xSearch.id}
+              className="space-y-0 relative"
+              initial={{ opacity: 0, y: 2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 0.1,
+                delay: itemIndex * 0.01,
+              }}
+            >
+              {/* Background circle to prevent line showing through */}
+              <div
+                className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
+                style={{
+                  left: '-0.6rem',
+                  top: '5px',
+                  transform: 'translateX(-50%)',
+                }}
+              />
+
+              {/* Timeline bullet */}
+              <div
+                className={`absolute size-1 rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                style={{
+                  left: '-0.6rem',
+                  top: '5.5px',
+                  transform: 'translateX(-50%)',
+                }}
+                title={`Status: ${xSearch.status}`}
+              />
+
+              {/* Vertical line above bullet */}
+              {itemIndex > 0 && (
+                <div
+                  className="absolute w-0.25 bg-border"
+                  style={{
+                    left: '-0.6rem',
+                    top: '-6px',
+                    height: '12px',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+              )}
+
+              {/* Vertical line below bullet */}
+              <div
+                className="absolute w-0.25 bg-border"
+                style={{
+                  left: '-0.6rem',
+                  top: '6px',
+                  height: expandedItems[xSearch.id]
+                    ? itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
+                      ? 'calc(100% - 6px)'
+                      : '100%'
+                    : itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
+                      ? '8px'
+                      : '14px',
+                  transform: 'translateX(-50%)',
+                }}
+              />
+
+              <div
+                className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                onClick={() => toggleItemExpansion(xSearch.id)}
+              >
+                <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
+                  <svg className="w-1.5 h-1.5 text-white dark:text-black fill-current" viewBox="0 0 24 24">
+                    <path d="M18.901 1.153h3.68L14.503 8.79l9.34 12.04h-7.406l-5.8-7.584L4.72 20.83H1.04l8.59-9.83L1.153 1.153h7.594l5.243 6.932 5.911-6.932zM17.61 18.816h2.04L6.57 3.24H4.385L17.61 18.816z"/>
+                  </svg>
+                </div>
+
+                <span className="text-foreground text-xs min-w-0 flex-1">
+                  {isLoading && !isCompleted ? (
+                    <TextShimmer className="w-full" duration={1.5}>
+                      {`X search: ${xSearch.query}`}
+                    </TextShimmer>
+                  ) : (
+                    `X search: ${xSearch.query}`
+                  )}
+                </span>
+
+                {xSearch.handles && xSearch.handles.length > 0 && (
+                  <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px] h-4">
+                    {xSearch.handles.length} handles
+                  </Badge>
+                )}
+
+                {expandedItems[xSearch.id] ? (
+                  <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                ) : (
+                  <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                )}
+              </div>
+
+              <AnimatePresence>
+                {expandedItems[xSearch.id] && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{
+                      height: { duration: 0.2, ease: 'easeOut' },
+                      opacity: { duration: 0.15 },
+                    }}
+                    className="dark:border-neutral-700 overflow-hidden"
+                  >
+                    <div className="pl-0.5 py-0.5">
+                      {/* Date Range */}
+                      <div className="text-[10px] text-muted-foreground mb-1">
+                        {xSearch.startDate} to {xSearch.endDate}
+                      </div>
+
+                      {/* X search results */}
+                      {xSearch.result && xSearch.result.citations.length > 0 && (
+                        <motion.div
+                          className="flex flex-wrap gap-1 py-0.5"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {xSearch.result.citations.map((citation: any, index: number) => {
+                            const url = typeof citation === 'string' ? citation : citation.url;
+                            let title = typeof citation === 'object' ? citation.title : '';
+                            
+                            // If no title from citation, try to get it from sources with generated titles
+                            if (!title && xSearch.result?.sources) {
+                              const matchingSource = xSearch.result.sources.find((source: any) => source.link === url);
+                              title = matchingSource?.title || 'X post';
+                            }
+                            
+                            return (
+                              <motion.a
+                                key={index}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.15, delay: index * 0.02 }}
+                              >
+                                <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
+                                  <svg className="w-2 h-2 text-white dark:text-black fill-current" viewBox="0 0 24 24">
+                                    <path d="M18.901 1.153h3.68L14.503 8.79l9.34 12.04h-7.406l-5.8-7.584L4.72 20.83H1.04l8.59-9.83L1.153 1.153h7.594l5.243 6.932 5.911-6.932zM17.61 18.816h2.04L6.57 3.24H4.385L17.61 18.816z"/>
+                                  </svg>
+                                </div>
+                                <span
+                                  className="text-muted-foreground truncate max-w-[140px]"
+                                  title={title}
+                                >
+                                  {title}
+                                </span>
+                              </motion.a>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+
+                      {/* Loading state */}
+                      {isLoading && !isCompleted && (
+                        <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                          Searching X posts...
+                        </TextShimmer>
+                      )}
+
+                      {/* No results state */}
+                      {xSearch.status === 'completed' && (!xSearch.result || xSearch.result.citations.length === 0) && (
+                        <p className="text-xs text-muted-foreground py-1 mt-1">No X posts found for this query.</p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+
         {/* Render code executions */}
         {codeExecutions.map((code, index) => {
           const isLoading = code.status === 'running';
-          const itemIndex = searchQueries.length + index;
+          const itemIndex = searchQueries.length + xSearchExecutions.length + index;
 
           const bulletColor = isLoading ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!' : 'bg-primary';
 
@@ -1141,10 +1956,10 @@ const ExtremeSearchComponent = ({
                   left: '-0.6rem',
                   top: '6px',
                   height: expandedItems[code.id]
-                    ? index === codeExecutions.length - 1
+                    ? itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
                       ? 'calc(100% - 6px)'
                       : '100%'
-                    : index === codeExecutions.length - 1
+                    : itemIndex === searchQueries.length + xSearchExecutions.length + codeExecutions.length - 1
                       ? '8px'
                       : '14px',
                   transform: 'translateX(-50%)',
@@ -1389,11 +2204,71 @@ const ExtremeSearchComponent = ({
 
         {/* Charts */}
         {allCharts.length > 0 && (
+          <Card className="!p-0 !gap-0 rounded-lg shadow-none">
+            <div
+              className={`flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors ${visualizationsOpen ? 'rounded-t-lg' : 'rounded-lg'}`}
+              onClick={() => setVisualizationsOpen(!visualizationsOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-primary/10">
+                  <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="font-medium text-sm">Visualizations</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
+                  {allCharts.length}
+                </Badge>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
+                    visualizationsOpen ? 'rotate-180' : '',
+                  )}
+                />
+              </div>
+            </div>
+            <AnimatePresence>
+              {visualizationsOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    height: { duration: 0.3, ease: 'easeOut' },
+                    opacity: { duration: 0.2 },
+                  }}
+                  className="overflow-hidden border-t border-border"
+                >
+                  <div className="p-4 space-y-4">
+                    {allCharts.map((chart, index) => (
+                      <ExtremeChart key={index} chart={chart} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        )}
+
+        {/* X Search Results */}
+        {xSearchExecutions.filter(x => x.status === 'completed' && x.result).length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-lg font-medium">Visualizations</h3>
-            {allCharts.map((chart, index) => (
-              <ExtremeChart key={index} chart={chart} />
-            ))}
+            {xSearchExecutions
+              .filter(x => x.status === 'completed' && x.result)
+              .map((xSearch, index) => (
+                <XSearch 
+                  key={index}
+                  result={xSearch.result!}
+                  args={{
+                    query: xSearch.query,
+                    startDate: xSearch.startDate,
+                    endDate: xSearch.endDate,
+                    xHandles: xSearch.handles,
+                  }}
+                />
+              ))}
           </div>
         )}
 
