@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
+import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 
 interface VideoDetails {
   title?: string;
@@ -23,6 +24,12 @@ interface VideoResult {
   likes?: string;
   summary?: string;
   publishedDate?: string;
+}
+
+interface SubtitleFragment {
+  start: string; // seconds as string from API
+  dur: string; // seconds as string from API
+  text: string;
 }
 
 export const youtubeSearchTool = tool({
@@ -71,7 +78,15 @@ export const youtubeSearchTool = tool({
           break;
       }
 
-      const searchOptions: any = {
+      interface ExaSearchOptions {
+        type?: 'auto' | 'neural' | 'keyword' | 'hybrid' | 'fast';
+        numResults?: number;
+        includeDomains?: string[];
+        startPublishedDate?: string;
+        endPublishedDate?: string;
+      }
+
+      const searchOptions: ExaSearchOptions = {
         type: 'auto',
         numResults: 5,
         includeDomains: ['youtube.com', 'youtu.be', 'm.youtube.com'],
@@ -182,176 +197,113 @@ export const youtubeSearchTool = tool({
               try {
                 console.log(`📹 Processing video ${videoId}...`);
 
-                // Use Promise.allSettled to handle partial failures gracefully
-                const [detailsResult, captionsResult, timestampsResult] = await Promise.allSettled([
-                  fetch(`${serverEnv.YT_ENDPOINT}/video-data`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      url: result.url,
-                    }),
-                  }).then((res) => (res.ok ? res.json() : null)),
+                // Fetch details and subtitles using youtube-caption-extractor
+                const details = await getVideoDetails({ videoID: videoId, lang: 'en' }).catch((e: unknown) => {
+                  console.warn(`⚠️ getVideoDetails failed for ${videoId}:`, e);
+                  return null;
+                });
 
-                  fetch(`${serverEnv.YT_ENDPOINT}/video-captions`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      url: result.url,
-                    }),
-                  })
-                    .then((res) => {
-                      console.log(`🌐 Captions fetch response status for ${videoId}:`, res.status, res.ok);
-                      if (!res.ok) {
-                        console.log(`❌ Captions fetch failed for ${videoId}: ${res.status} ${res.statusText}`);
-                        return null;
+                // Extract transcript text from subtitles (prefer details.subtitles, fallback to direct API)
+                let transcriptText: string | undefined = undefined;
+                if (details && Array.isArray(details.subtitles) && details.subtitles.length > 0) {
+                  transcriptText = details.subtitles.map((s) => s.text).join('\n');
+                } else {
+                  const subs = await getSubtitles({ videoID: videoId, lang: 'en' }).catch((e: unknown) => {
+                    console.warn(`⚠️ getSubtitles failed for ${videoId}:`, e);
+                    return null;
+                  });
+                  if (subs && Array.isArray(subs) && subs.length > 0) {
+                    transcriptText = subs.map((s) => s.text).join('\n');
+                  }
+                }
+
+                // Derive chapters from description if available (lines like "0:00 Intro" or "1:02:30 Deep dive")
+                const extractChaptersFromDescription = (description: string | undefined): string[] | undefined => {
+                  if (!description) return undefined;
+                  const lines = description.split(/\r?\n/);
+                  const chapterRegex = /^\s*((?:\d+:)?\d{1,2}:\d{2})\s*[\-|–|—]?\s*(.+)$/i;
+                  const chapters: string[] = [];
+                  for (const line of lines) {
+                    const match = line.match(chapterRegex);
+                    if (match) {
+                      const time = match[1];
+                      const title = match[2].trim();
+                      if (time && title) {
+                        chapters.push(`${time} - ${title}`);
                       }
-                      return res
-                        .json()
-                        .then((data) => {
-                          try {
-                            console.log(`📝 Raw captions response for ${videoId}:`, JSON.stringify(data));
-                            console.log(`🔍 Captions data type:`, typeof data, `isArray:`, Array.isArray(data));
-                            console.log(`🔑 Captions data keys:`, data ? Object.keys(data) : 'null');
-
-                            // Handle JSON object with captions key
-                            if (data && data.captions && typeof data.captions === 'string') {
-                              console.log(`✅ Captions SUCCESS for ${videoId}: length ${data.captions.length}`);
-                              return data.captions;
-                            } else {
-                              console.log(`⚠️ Captions FAILED for ${videoId}: data structure:`, data);
-                              return null;
-                            }
-                          } catch (error) {
-                            console.log(`⚠️ Captions JSON parsing failed for ${videoId}:`, error);
-                            return null;
-                          }
-                        })
-                        .catch((jsonError) => {
-                          console.log(`⚠️ Captions res.json() failed for ${videoId}:`, jsonError);
-                          return null;
-                        });
-                    })
-                    .catch((fetchError) => {
-                      console.log(`⚠️ Captions fetch completely failed for ${videoId}:`, fetchError);
-                      return null;
-                    }),
-
-                  fetch(`${serverEnv.YT_ENDPOINT}/video-timestamps`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      url: result.url,
-                    }),
-                  })
-                    .then((res) => {
-                      console.log(`🌐 Timestamps fetch response status for ${videoId}:`, res.status, res.ok);
-                      if (!res.ok) {
-                        console.log(`❌ Timestamps fetch failed for ${videoId}: ${res.status} ${res.statusText}`);
-                        return null;
-                      }
-                      return res
-                        .json()
-                        .then((data) => {
-                          try {
-                            console.log(`⏰ Raw timestamps response for ${videoId}:`, JSON.stringify(data));
-                            console.log(`🔍 Timestamps data type:`, typeof data, `isArray:`, Array.isArray(data));
-                            console.log(`🔑 Timestamps data keys:`, data ? Object.keys(data) : 'null');
-
-                            // Handle both direct array and JSON object with timestamps key
-                            if (Array.isArray(data)) {
-                              console.log(`✅ Timestamps SUCCESS (direct array) for ${videoId}: count ${data.length}`);
-                              return data;
-                            } else if (data && data.timestamps && Array.isArray(data.timestamps)) {
-                              console.log(
-                                `✅ Timestamps SUCCESS (from JSON) for ${videoId}: count ${data.timestamps.length}`,
-                              );
-                              console.log(`📝 First 3 timestamps for ${videoId}:`, data.timestamps.slice(0, 3));
-                              return data.timestamps;
-                            } else {
-                              console.log(`⚠️ Timestamps FAILED for ${videoId}: data structure:`, data);
-                              return null;
-                            }
-                          } catch (error) {
-                            console.log(`⚠️ Timestamps JSON parsing failed for ${videoId}:`, error);
-                            return null;
-                          }
-                        })
-                        .catch((jsonError) => {
-                          console.log(`⚠️ Timestamps res.json() failed for ${videoId}:`, jsonError);
-                          return null;
-                        });
-                    })
-                    .catch((fetchError) => {
-                      console.log(`⚠️ Timestamps fetch completely failed for ${videoId}:`, fetchError);
-                      return null;
-                    }),
-                ]);
-
-                // Debug raw Promise.allSettled results
-                console.log(`🔍 Raw Promise.allSettled results for ${videoId}:`);
-                console.log(`Details result:`, detailsResult);
-                console.log(`Captions result:`, captionsResult);
-                console.log(`Timestamps result:`, timestampsResult);
-
-                const processedVideo = {
-                  ...baseResult,
-                  details: detailsResult.status === 'fulfilled' ? detailsResult.value : undefined,
-                  captions: captionsResult.status === 'fulfilled' ? captionsResult.value || undefined : undefined,
-                  timestamps: timestampsResult.status === 'fulfilled' ? timestampsResult.value : undefined,
+                    }
+                  }
+                  return chapters.length > 0 ? chapters : undefined;
                 };
 
-                console.log(`🎯 Final processed video for ${videoId}:`, {
-                  hasCaptions: !!processedVideo.captions,
-                  captionsType: typeof processedVideo.captions,
-                  captionsLength: processedVideo.captions ? processedVideo.captions.length : 0,
-                  hasTimestamps: !!processedVideo.timestamps,
-                  timestampsType: typeof processedVideo.timestamps,
-                  timestampsIsArray: Array.isArray(processedVideo.timestamps),
-                  timestampsLength: Array.isArray(processedVideo.timestamps) ? processedVideo.timestamps.length : 0,
-                });
+                // Fallback: generate chapters from subtitles when description has no chapters
+                const generateChaptersFromSubtitles = (
+                  subs: SubtitleFragment[] | undefined,
+                  targetCount: number = 30,
+                ): string[] | undefined => {
+                  if (!subs || subs.length === 0) return undefined;
 
-                console.log(`🔍 Promise.allSettled results for ${videoId}:`);
-                console.log(
-                  `  📋 Details: ${detailsResult.status}`,
-                  detailsResult.status === 'rejected' ? detailsResult.reason : 'success',
-                );
-                console.log(
-                  `  💬 Captions: ${captionsResult.status}`,
-                  captionsResult.status === 'rejected'
-                    ? captionsResult.reason
-                    : `value: ${captionsResult.value ? 'EXISTS' : 'NULL'}`,
-                );
-                console.log(
-                  `  ⏰ Timestamps: ${timestampsResult.status}`,
-                  timestampsResult.status === 'rejected'
-                    ? timestampsResult.reason
-                    : `value: ${timestampsResult.value ? 'EXISTS' : 'NULL'}`,
-                );
+                  const parseSeconds = (s: string) => {
+                    const n = Number(s);
+                    return Number.isFinite(n) ? n : 0;
+                  };
 
-                console.log(`🎯 Final processed video for ${videoId}:`, {
-                  hasCaptions: !!processedVideo.captions,
-                  captionsLength: processedVideo.captions ? processedVideo.captions.length : 0,
-                  hasTimestamps: !!processedVideo.timestamps,
-                  timestampsLength: Array.isArray(processedVideo.timestamps) ? processedVideo.timestamps.length : 0,
-                });
+                  const last = subs[subs.length - 1];
+                  const totalDurationSec = Math.max(0, parseSeconds(last.start) + parseSeconds(last.dur));
+                  if (totalDurationSec <= 1) return undefined;
 
-                // Log sample timestamps to understand the format
-                if (
-                  processedVideo.timestamps &&
-                  Array.isArray(processedVideo.timestamps) &&
-                  processedVideo.timestamps.length > 0
-                ) {
-                  console.log(`📝 Sample timestamps for ${videoId}:`);
-                  processedVideo.timestamps.slice(0, 3).forEach((timestamp, index) => {
-                    console.log(`Sample timestamp [${index}]: ${timestamp}`);
-                  });
+                  const interval = Math.max(10, Math.floor(totalDurationSec / targetCount));
+
+                  const formatTime = (secondsTotal: number) => {
+                    const seconds = Math.max(1, Math.floor(secondsTotal)); // avoid 0:00 which UI filters out
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = seconds % 60;
+                    const pad = (n: number) => n.toString().padStart(2, '0');
+                    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+                  };
+
+                  const chapters: string[] = [];
+                  const usedTimes = new Set<number>();
+                  for (let t = interval; t < totalDurationSec; t += interval) {
+                    // find first subtitle starting at or after t
+                    const idx = subs.findIndex((sf) => parseSeconds(sf.start) >= t);
+                    const chosen = idx >= 0 ? subs[idx] : subs[subs.length - 1];
+                    const text = chosen.text?.replace(/\s+/g, ' ').trim();
+                    if (!text) continue;
+                    const key = Math.floor(parseSeconds(chosen.start));
+                    if (usedTimes.has(key)) continue;
+                    usedTimes.add(key);
+                    chapters.push(`${formatTime(key)} - ${text}`);
+                    if (chapters.length >= targetCount) break;
+                  }
+
+                  return chapters.length > 0 ? chapters : undefined;
+                };
+
+                const timestampsFromDescription = extractChaptersFromDescription(details?.description);
+                let timestamps: string[] | undefined = timestampsFromDescription;
+                if (!timestamps) {
+                  const subtitleSource: SubtitleFragment[] | undefined = (details?.subtitles as SubtitleFragment[] | undefined);
+                  if (subtitleSource && subtitleSource.length > 0) {
+                    timestamps = generateChaptersFromSubtitles(subtitleSource);
+                  } else {
+                    const subs = await getSubtitles({ videoID: videoId, lang: 'en' }).catch(() => null);
+                    timestamps = generateChaptersFromSubtitles(subs ?? undefined);
+                  }
                 }
+
+                const processedVideo: VideoResult = {
+                  ...baseResult,
+                  details: {
+                    title: details?.title,
+                    thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    provider_name: 'YouTube',
+                    provider_url: 'https://www.youtube.com',
+                  },
+                  captions: transcriptText,
+                  timestamps,
+                };
 
                 console.log(`✅ Successfully processed video ${videoId}:`, {
                   hasDetails: !!processedVideo.details,
@@ -359,8 +311,6 @@ export const youtubeSearchTool = tool({
                   hasTimestamps: !!processedVideo.timestamps,
                   timestampCount: Array.isArray(processedVideo.timestamps) ? processedVideo.timestamps.length : 0,
                   captionsLength: processedVideo.captions ? processedVideo.captions.length : 0,
-                  captionsType: typeof processedVideo.captions,
-                  timestampsType: typeof processedVideo.timestamps,
                 });
                 return processedVideo;
               } catch (error) {

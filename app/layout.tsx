@@ -2,12 +2,14 @@ import './globals.css';
 import 'katex/dist/katex.min.css';
 import 'leaflet/dist/leaflet.css';
 
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+
 import { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, Inter, Baumans } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Databuddy } from '@databuddy/sdk';
 
 import { Providers } from './providers';
 
@@ -115,6 +117,11 @@ export default function RootLayout({
             {children}
           </Providers>
         </NuqsAdapter>
+        <Databuddy
+          clientId={process.env.DATABUDDY_CLIENT_ID!}
+          enableBatching={true}
+          trackSessions={true}
+        />
         <Analytics />
         <SpeedInsights />
       </body>

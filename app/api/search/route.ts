@@ -24,7 +24,6 @@ import {
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
-  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
@@ -63,6 +62,8 @@ import {
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { markdownJoinerTransform } from '@/lib/parser';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -71,6 +72,7 @@ export function getStreamContext() {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
+        keyPrefix: 'scira-ai:resumable-stream',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
@@ -125,7 +127,7 @@ export async function POST(req: Request) {
   console.log('--------------------------------');
 
   // Check if model requires authentication (fast check)
-  const authRequiredModels = ['scira-anthropic', 'scira-google'];
+  const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
   if (authRequiredModels.includes(model) && !user) {
     return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
   }
@@ -137,11 +139,10 @@ export async function POST(req: Request) {
     isProUser?: boolean;
   }> = Promise.resolve({ canProceed: true });
 
-  if (user) {
-    customInstructions = await getCustomInstructions(user);
-    console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
-    console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
+  // Get custom instructions in parallel with other operations (declare outside user block for scope)
+  const customInstructionsPromise = user ? getCustomInstructions(user) : Promise.resolve(null);
 
+  if (user) {
     const isProUser = user.isProUser;
 
     try {
@@ -271,8 +272,14 @@ export async function POST(req: Request) {
       }
 
       const configWaitStartTime = Date.now();
-      const { tools: activeTools, instructions } = await configPromise;
-      console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
+        configPromise,
+        customInstructionsPromise
+      ]);
+      customInstructions = customInstructionsResult;
+      console.log(`⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
+      console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
       if (user) {
         const backgroundOperations = (async () => {
@@ -344,6 +351,7 @@ export async function POST(req: Request) {
           }
           : {}),
         activeTools: [...activeTools],
+        experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
@@ -378,14 +386,12 @@ export async function POST(req: Request) {
                 reasoningEffort: 'high',
               }
               : {}),
-            ...(model === 'scira-qwen-32b'
-              ? {
-                reasoningEffort: "none"
-              }
-              : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
           } satisfies GroqProviderOptions,
+          google: {
+            structuredOutputs: true,
+          } satisfies GoogleGenerativeAIProviderOptions,
         },
         tools: {
           // Stock & Financial Tools
@@ -437,7 +443,7 @@ export async function POST(req: Request) {
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-3'),
+            model: scira.languageModel('scira-kimi-k2'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -481,6 +487,7 @@ export async function POST(req: Request) {
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
           console.log('Usage: ', event.usage);
+          console.log('Total Usage: ', event.totalUsage);
 
           // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {

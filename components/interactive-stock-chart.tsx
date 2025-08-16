@@ -295,6 +295,16 @@ export const InteractiveStockChart = React.memo(
       });
     }, []);
 
+    // Normalize currency symbols to match the number of series; default missing to USD
+    const normalizedCurrencySymbols = useMemo(() => {
+      const seriesCount = chart.elements.length;
+      const provided = (currency_symbols ?? []).map((code) => code.toUpperCase());
+      if (provided.length < seriesCount) {
+        provided.push(...Array(seriesCount - provided.length).fill('USD'));
+      }
+      return provided.slice(0, seriesCount);
+    }, [currency_symbols, chart.elements.length]);
+
     // Set last updated time and check if device is mobile
     useEffect(() => {
       const now = new Date();

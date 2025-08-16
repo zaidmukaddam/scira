@@ -129,21 +129,17 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       });
     });
 
-    // Then, extract and protect monetary amounts
+    // Then, extract and protect monetary amounts BEFORE LaTeX (with strict boundaries to avoid matching math)
     const monetaryBlocks: Array<{ id: string; content: string }> = [];
 
-    // Protect common monetary patterns
-    const monetaryPatterns = [
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B))\b/g,
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?=\s|$|[.,;!?])/g,
-    ];
+    // Single robust monetary regex with word boundaries around amounts/units
+    // Matches examples: "$10", "$10.99", "$1,200", "$0.0025 per token", "$20/month", "$5 billion"
+    const monetaryRegex = /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
 
-    monetaryPatterns.forEach((pattern) => {
-      modifiedContent = modifiedContent.replace(pattern, (match) => {
-        const id = `MONETARY${monetaryBlocks.length}END`;
-        monetaryBlocks.push({ id, content: match });
-        return id;
-      });
+    modifiedContent = modifiedContent.replace(monetaryRegex, (match, prefix: string) => {
+      const id = `MONETARY${monetaryBlocks.length}END`;
+      monetaryBlocks.push({ id, content: match.slice(prefix.length) });
+      return `${prefix}${id}`;
     });
 
     // Then extract and protect LaTeX blocks
@@ -163,7 +159,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       });
     });
 
-    // Process LaTeX patterns (monetary amounts are already protected)
+    // Process LaTeX patterns
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
       { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
@@ -176,8 +172,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         return id;
       });
     });
-
-    // Now process citations (LaTeX is already protected)
 
     // Process references followed by URLs
     const refWithUrlRegex =
@@ -685,7 +679,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       }
 
       return (
-        <p key={generateKey()} className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}>
+        <p
+          key={generateKey()}
+          className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
+        >
           {children}
         </p>
       );
@@ -716,7 +713,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
           );
         }
         // Otherwise just show the URL
-        return <span key={generateKey()} className="break-all">{href}</span>;
+        return (
+          <span key={generateKey()} className="break-all">
+            {href}
+          </span>
+        );
       }
 
       let citationIndex = citationLinks.findIndex((link) => link.link === href);

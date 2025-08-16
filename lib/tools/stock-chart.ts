@@ -57,6 +57,7 @@ export const stockChartTool = tool({
     companies: z.array(z.string()).describe('Company names (e.g., "Apple", "Microsoft", "Tesla") - Valyu will resolve these to appropriate stock tickers.'),
     currency_symbols: z
       .array(z.string())
+      .optional()
       .describe(
         'The currency symbols for each stock/asset in the chart. Available symbols: ' +
           Object.keys(CURRENCY_SYMBOLS).join(', ') +

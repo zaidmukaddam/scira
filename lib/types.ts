@@ -74,6 +74,22 @@ export type DataExtremeSearchPart = {
         status: 'running' | 'completed' | 'error';
         result?: string;
         charts?: any[];
+      }
+    | {
+        kind: 'x_search';
+        xSearchId: string;
+        query: string;
+        startDate: string;
+        endDate: string;
+        handles?: string[];
+        status: 'started' | 'completed' | 'error';
+        result?: {
+          content: string;
+          citations: any[];
+          sources: Array<{ text: string; link: string; title?: string }>;
+          dateRange: string;
+          handles: string[];
+        };
       };
 };
 

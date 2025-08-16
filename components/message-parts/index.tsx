@@ -307,7 +307,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
-            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0 !mt-4"
+            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
           >
             <SciraLogoHeader />
             <div className="flex space-x-2 ml-8 mt-2">
@@ -515,7 +515,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const firstStepStartIndex = parts.findIndex((p) => p.type === 'step-start');
       if (partIndex === firstStepStartIndex) {
         return (
-          <div key={`${messageIndex}-${partIndex}-step-start-logo`}>
+          <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="!m-0 !p-0">
             <SciraLogoHeader />
           </div>
         );
@@ -884,8 +884,6 @@ const ToolPartRenderer = memo(
                 <TMDBResult result={part.output} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Movie/TV Search" />;
         }
         break;
 
@@ -901,8 +899,6 @@ const ToolPartRenderer = memo(
                 <TrendingResults result={part.output} type="movie" />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Trending Movies" />;
         }
         break;
 
@@ -918,8 +914,6 @@ const ToolPartRenderer = memo(
                 <TrendingResults result={part.output} type="tv" />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Trending TV Shows" />;
         }
         break;
 
@@ -935,8 +929,6 @@ const ToolPartRenderer = memo(
                 <AcademicPapersCard results={part.output.results} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Academic Search" />;
         }
         break;
 
@@ -1003,8 +995,6 @@ const ToolPartRenderer = memo(
                 <WeatherChart result={part.output} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Weather Data" />;
         }
         break;
 
@@ -1046,8 +1036,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Stock Chart" />;
         }
         break;
 
@@ -1089,8 +1077,6 @@ const ToolPartRenderer = memo(
                 <FlightTracker data={part.output} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Flight Tracker" />;
         }
         break;
 
@@ -1230,8 +1216,6 @@ const ToolPartRenderer = memo(
                 </div>
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Date Time" />;
         }
         break;
 
@@ -1247,8 +1231,6 @@ const ToolPartRenderer = memo(
                 <MemoryManager result={part.output} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Memory Manager" />;
         }
         break;
 
@@ -1287,8 +1269,6 @@ const ToolPartRenderer = memo(
                 </Card>
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="MCP Search" />;
         }
         break;
 
@@ -1304,8 +1284,6 @@ const ToolPartRenderer = memo(
                 <RedditSearch result={part.output} args={part.input} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Reddit Search" />;
         }
         break;
 
@@ -1321,8 +1299,6 @@ const ToolPartRenderer = memo(
                 <XSearch result={part.output} args={part.input} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="X Search" />;
         }
         break;
 
@@ -1338,8 +1314,6 @@ const ToolPartRenderer = memo(
                 <YouTubeSearchResults results={part.output} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="YouTube Search" />;
         }
         break;
 
@@ -1384,8 +1358,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Nearby Places Search" />;
         }
         break;
 
@@ -1403,8 +1375,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Currency Converter" />;
         }
         break;
 
@@ -1436,8 +1406,6 @@ const ToolPartRenderer = memo(
                 )}
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Code Interpreter" />;
         }
         break;
 
@@ -1460,8 +1428,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Extreme Search" />;
         }
         break;
 
@@ -1481,8 +1447,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Web Search" />;
         }
         break;
 
@@ -1728,8 +1692,6 @@ const ToolPartRenderer = memo(
                 </div>
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Content Retrieval" />;
         }
         break;
 
@@ -1742,8 +1704,6 @@ const ToolPartRenderer = memo(
             return <SearchLoadingState icon={Globe} text="Translating text..." color="blue" />;
           case 'output-available':
             return <TranslationTool args={part.input} result={part.output} />;
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Text Translation" />;
         }
         break;
 
@@ -1759,8 +1719,6 @@ const ToolPartRenderer = memo(
                 <CryptoTickers result={part.output} coinId={part.input.coinId} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Crypto Tickers" />;
         }
         break;
 
@@ -1776,8 +1734,6 @@ const ToolPartRenderer = memo(
                 <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Crypto Chart" />;
         }
         break;
 
@@ -1793,8 +1749,6 @@ const ToolPartRenderer = memo(
                 <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="OHLC Data" />;
         }
         break;
 
@@ -1810,8 +1764,6 @@ const ToolPartRenderer = memo(
                 <CryptoChart result={part.output} coinId={part.input.contractAddress} chartType="line" />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Contract Chart" />;
         }
         break;
 
@@ -1827,8 +1779,6 @@ const ToolPartRenderer = memo(
                 <CryptoCoinsData result={part.output} coinId={part.input.coinId} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Coin Data" />;
         }
         break;
 
@@ -1844,8 +1794,6 @@ const ToolPartRenderer = memo(
                 <CryptoCoinsData result={part.output} contractAddress={part.input.contractAddress} />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Token Data by Contract" />;
         }
         break;
 
@@ -1865,8 +1813,6 @@ const ToolPartRenderer = memo(
                 />
               </Suspense>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Onchain Token Price" />;
         }
         break;
 
@@ -1905,8 +1851,6 @@ const ToolPartRenderer = memo(
                 </div>
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName="Greeting" />;
         }
         break;
 
@@ -1924,8 +1868,6 @@ const ToolPartRenderer = memo(
                 <pre className="text-xs overflow-auto">{JSON.stringify(part.output, null, 2)}</pre>
               </div>
             );
-          case 'output-error':
-            return <ToolErrorDisplay errorText={part.errorText} toolName={toolName} />;
         }
     }
 

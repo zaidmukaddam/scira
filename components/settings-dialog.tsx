@@ -50,6 +50,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
+import { SciraLogo } from './logos/scira-logo';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -1226,7 +1227,10 @@ export function SettingsDialog({
           <div className="flex flex-col h-full max-h-full">
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
-              <DrawerTitle className="text-base font-medium">Settings</DrawerTitle>
+              <DrawerTitle className="text-base font-medium flex items-center gap-2">
+                <SciraLogo className="size-6" />
+                Settings
+              </DrawerTitle>
             </DrawerHeader>
 
             {/* Content area with tabs */}
@@ -1274,7 +1278,10 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-4xl !w-full max-h-[85vh] !p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 !m-0">
-          <DialogTitle className="text-xl font-medium tracking-normal">Settings</DialogTitle>
+          <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
+            <SciraLogo className="size-6" />
+            Settings
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">

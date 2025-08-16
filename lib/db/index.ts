@@ -1,23 +1,17 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from '@/lib/db/schema';
 import { serverEnv } from '@/env/server';
 import { upstashCache } from 'drizzle-orm/cache/upstash';
+import { neon } from '@neondatabase/serverless';
 
-// Unified connection with optimized pooling for better consistency
-const client = postgres(serverEnv.DATABASE_URL, {
-  max: 200, // Reduced pool size for better consistency
-  idle_timeout: 60,
-  connect_timeout: 30,
-  prepare: true, // Enable prepared statements for better performance and consistency
-});
+const sql = neon(serverEnv.DATABASE_URL);
 
-export const db = drizzle(client, {
+export const db = drizzle(sql, {
   schema,
   cache: upstashCache({
     url: process.env.UPSTASH_REDIS_REST_URL!,
     token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     global: true,
-    config: { ex: 60 },
+    config: { ex: 120 },
   }),
 });
