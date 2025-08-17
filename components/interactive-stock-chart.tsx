@@ -1103,12 +1103,12 @@ export const InteractiveStockChart = React.memo(
                                     </p>
                                   )}
                                 </div>
-                                <ExternalLink className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" />
+                                <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" />
                               </div>
                             </button>
                           </DialogTrigger>
                           
-                          <DialogContent className="max-w-[98vw] max-h-[90vh] w-[70vw] overflow-hidden !max-w-none">
+                          <DialogContent className="w-[70vw] overflow-hidden !max-w-none">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-3">
                                 <FileText className="size-5" />
