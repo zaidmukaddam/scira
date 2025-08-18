@@ -50,8 +50,8 @@ export const currencyConverterTool = tool({
         }
 
         // Fallback: first numeric content
-        const firstNumeric = (response.results as unknown[]).find((r) =>
-          r && typeof (r as Record<string, unknown>)['content'] === 'number',
+        const firstNumeric = (response.results as unknown[]).find(
+          (r) => r && typeof (r as Record<string, unknown>)['content'] === 'number',
         ) as ForexResult | undefined;
         return firstNumeric?.content;
       } catch (error) {
@@ -60,12 +60,10 @@ export const currencyConverterTool = tool({
       }
     };
 
-    const [forwardRateRaw, reverseRateRaw] = await Promise.all([
-      fetchRate(from, to),
-      fetchRate(to, from),
-    ]);
+    const [forwardRateRaw, reverseRateRaw] = await Promise.all([fetchRate(from, to), fetchRate(to, from)]);
 
-    const forwardRate = typeof forwardRateRaw === 'number' && Number.isFinite(forwardRateRaw) ? forwardRateRaw : undefined;
+    const forwardRate =
+      typeof forwardRateRaw === 'number' && Number.isFinite(forwardRateRaw) ? forwardRateRaw : undefined;
     const reverseRate =
       typeof reverseRateRaw === 'number' && Number.isFinite(reverseRateRaw)
         ? reverseRateRaw

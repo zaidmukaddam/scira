@@ -197,9 +197,13 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <SciraLogo width={28} height={28} color="#ffffff" />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 18, color: '#ffffff', fontFamily: 'BeVietnamPro', fontWeight: 800 }}>Scira AI</div>
+                  <div style={{ fontSize: 18, color: '#ffffff', fontFamily: 'BeVietnamPro', fontWeight: 800 }}>
+                    Scira AI
+                  </div>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)' }} />
-                  <div style={{ fontSize: 16, color: '#e5e7eb', fontFamily: 'Inter', fontWeight: 600 }}>Minimalistic AI Search engine</div>
+                  <div style={{ fontSize: 16, color: '#e5e7eb', fontFamily: 'Inter', fontWeight: 600 }}>
+                    Minimalistic AI Search engine
+                  </div>
                 </div>
               </div>
 
@@ -237,9 +241,13 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
                     {authorInitial}
                   </div>
                 )}
-                <div style={{ fontSize: 16, color: '#e4e4e7', fontFamily: 'Inter', fontWeight: 600 }}>{chatWithUser.userName}</div>
+                <div style={{ fontSize: 16, color: '#e4e4e7', fontFamily: 'Inter', fontWeight: 600 }}>
+                  {chatWithUser.userName}
+                </div>
                 <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.45)' }} />
-                <div style={{ fontSize: 16, color: '#a1a1aa', fontFamily: 'Inter', fontWeight: 500 }}>{formattedDate}</div>
+                <div style={{ fontSize: 16, color: '#a1a1aa', fontFamily: 'Inter', fontWeight: 500 }}>
+                  {formattedDate}
+                </div>
               </div>
             </div>
           </div>

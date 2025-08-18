@@ -284,7 +284,9 @@ export const youtubeSearchTool = tool({
                 const timestampsFromDescription = extractChaptersFromDescription(details?.description);
                 let timestamps: string[] | undefined = timestampsFromDescription;
                 if (!timestamps) {
-                  const subtitleSource: SubtitleFragment[] | undefined = (details?.subtitles as SubtitleFragment[] | undefined);
+                  const subtitleSource: SubtitleFragment[] | undefined = details?.subtitles as
+                    | SubtitleFragment[]
+                    | undefined;
                   if (subtitleSource && subtitleSource.length > 0) {
                     timestamps = generateChaptersFromSubtitles(subtitleSource);
                   } else {

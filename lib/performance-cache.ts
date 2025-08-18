@@ -185,7 +185,7 @@ export function invalidateUserCaches(userId: string) {
   // Invalidate DodoPayments caches
   paymentCache.delete(createPaymentKey(userId));
   paymentExpirationCache.delete(createPaymentExpirationKey(userId));
-  dodoProStatusCache.delete(createDodoProStatusKey(userId)); 
+  dodoProStatusCache.delete(createDodoProStatusKey(userId));
 
   // Invalidate the db cache
   db.$cache.invalidate({ tables: ['users', 'subscriptions', 'payments'] });

@@ -156,7 +156,7 @@ const Navbar = memo(
           {user && !hasActiveSubscription && !showProLoading && (
             <div
               className={cn(
-              'hidden sm:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
+                'hidden sm:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
                 isDialogOpen ? 'pointer-events-auto' : '',
               )}
             >

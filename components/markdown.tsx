@@ -134,7 +134,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
     // Single robust monetary regex with word boundaries around amounts/units
     // Matches examples: "$10", "$10.99", "$1,200", "$0.0025 per token", "$20/month", "$5 billion"
-    const monetaryRegex = /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
+    const monetaryRegex =
+      /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
 
     modifiedContent = modifiedContent.replace(monetaryRegex, (match, prefix: string) => {
       const id = `MONETARY${monetaryBlocks.length}END`;

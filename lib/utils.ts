@@ -1,7 +1,18 @@
 // /lib/utils.ts
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { GlobalSearchIcon, Database02Icon, AtomicPowerIcon, Bitcoin02Icon, MicroscopeIcon, NewTwitterIcon, RedditIcon, YoutubeIcon, ChattingIcon, AppleStocksIcon } from '@hugeicons/core-free-icons';
+import {
+  GlobalSearchIcon,
+  Database02Icon,
+  AtomicPowerIcon,
+  Bitcoin02Icon,
+  MicroscopeIcon,
+  NewTwitterIcon,
+  RedditIcon,
+  YoutubeIcon,
+  ChattingIcon,
+  AppleStocksIcon,
+} from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

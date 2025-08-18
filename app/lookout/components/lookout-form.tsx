@@ -212,8 +212,6 @@ export function LookoutForm({
         <input type="hidden" name="timezone" value={selectedTimezone} />
       </div>
 
-      
-
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 rounded-md p-2">
         <HugeiconsIcon icon={AlarmClockIcon} size={12} color="currentColor" strokeWidth={1.5} />
         <span>Email notifications enabled</span>

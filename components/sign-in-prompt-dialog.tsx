@@ -122,28 +122,18 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         </div>
 
         {/* Guest Option */}
-        <Button
-          variant="ghost"
-          onClick={() => onOpenChange(false)}
-          className="w-full h-10 font-normal text-sm"
-        >
+        <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full h-10 font-normal text-sm">
           Continue without account
         </Button>
 
         {/* Legal */}
         <p className="text-xs text-muted-foreground text-center mt-4">
           By continuing, you accept our{' '}
-          <Link
-            href="/terms"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
+          <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
             Terms
           </Link>
           {' & '}
-          <Link
-            href="/privacy-policy"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
+          <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-foreground">
             Privacy Policy
           </Link>
         </p>

@@ -145,9 +145,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         const hasVisibleText = parts.some(
           (part: ChatMessage['parts'][number]) => part.type === 'text' && part.text && part.text.trim() !== '',
         );
-        const hasToolInvocations = parts.some(
-          (part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'),
-        );
+        const hasToolInvocations = parts.some((part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'));
         const hasVisibleContent = hasVisibleText || hasToolInvocations;
 
         // If there is no visible content at all, consider the response missing

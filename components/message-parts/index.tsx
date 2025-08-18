@@ -86,77 +86,77 @@ const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => 
     { id: 0, label: 'Stock prices', color: 'bg-emerald-500', duration: 2000, always: true, source: 'Valyu' },
     { id: 1, label: 'Financial reports', color: 'bg-amber-500', duration: 3000, always: true, source: 'Exa' },
     { id: 2, label: 'Market news', color: 'bg-purple-500', duration: 2500, always: true, source: 'Tavily' },
-    { 
-      id: 3, 
-      label: 'Company statistics', 
-      color: 'bg-cyan-500', 
+    {
+      id: 3,
+      label: 'Company statistics',
+      color: 'bg-cyan-500',
       duration: 1500,
       show: input?.include_statistics,
-      source: 'Valyu'
+      source: 'Valyu',
     },
-    { 
-      id: 4, 
-      label: 'Financial statements', 
-      color: 'bg-indigo-500', 
+    {
+      id: 4,
+      label: 'Financial statements',
+      color: 'bg-indigo-500',
       duration: 2000,
       show: input?.include_balance_sheet || input?.include_income_statement || input?.include_cash_flow,
-      source: 'Valyu'
+      source: 'Valyu',
     },
-    { 
-      id: 5, 
-      label: 'Dividend history', 
-      color: 'bg-green-500', 
+    {
+      id: 5,
+      label: 'Dividend history',
+      color: 'bg-green-500',
       duration: 1800,
       show: input?.include_dividends,
-      source: 'Valyu'
+      source: 'Valyu',
     },
-    { 
-      id: 6, 
-      label: 'Insider trades', 
-      color: 'bg-blue-500', 
+    {
+      id: 6,
+      label: 'Insider trades',
+      color: 'bg-blue-500',
       duration: 2200,
       show: input?.include_insider_transactions,
-      source: 'Valyu'
+      source: 'Valyu',
     },
-    { 
-      id: 7, 
-      label: 'SEC filings', 
-      color: 'bg-red-500', 
+    {
+      id: 7,
+      label: 'SEC filings',
+      color: 'bg-red-500',
       duration: 4000,
       show: input?.filing_types && input.filing_types.length > 0,
-      source: 'Valyu'
+      source: 'Valyu',
     },
-    { 
-      id: 8, 
-      label: 'Market movers', 
-      color: 'bg-orange-500', 
+    {
+      id: 8,
+      label: 'Market movers',
+      color: 'bg-orange-500',
       duration: 1000,
       show: input?.include_market_movers,
-      source: 'Valyu'
+      source: 'Valyu',
     },
   ];
 
-  const steps = allSteps.filter(step => step.always || step.show);
+  const steps = allSteps.filter((step) => step.always || step.show);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     let stepStartTime = Date.now();
 
     const advanceStep = () => {
-      setCurrentStep(prev => {
+      setCurrentStep((prev) => {
         if (prev < steps.length - 1) {
-          setCompletedSteps(prevCompleted => {
+          setCompletedSteps((prevCompleted) => {
             const newCompleted = new Set(prevCompleted);
             newCompleted.add(prev);
             return newCompleted;
           });
-          
+
           const nextStep = prev + 1;
           stepStartTime = Date.now();
-          
+
           // Schedule next step
           timeoutId = setTimeout(advanceStep, steps[nextStep]?.duration || 2000);
-          
+
           return nextStep;
         }
         return prev;
@@ -1020,7 +1020,11 @@ const ToolPartRenderer = memo(
                   }}
                   data={part.output.chart.elements}
                   stock_symbols={part.input.stock_symbols}
-                  currency_symbols={part.output.currency_symbols || part.input.currency_symbols || part.input.stock_symbols?.map(() => 'USD') || ['USD']}
+                  currency_symbols={
+                    part.output.currency_symbols ||
+                    part.input.currency_symbols ||
+                    part.input.stock_symbols?.map(() => 'USD') || ['USD']
+                  }
                   interval={part.input.time_period || part.input.interval || '1 year'}
                   resolved_companies={part.output.resolved_companies}
                   earnings_data={part.output.earnings_data}

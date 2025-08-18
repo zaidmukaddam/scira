@@ -115,14 +115,10 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
     // USD pricing: prefer explicit finalPrice over percentage
-    let usdPricing = null as
-      | { originalPrice: number; finalPrice: number; savings: number }
-      | null;
+    let usdPricing = null as { originalPrice: number; finalPrice: number; savings: number } | null;
     if (typeof discountConfig.finalPrice === 'number') {
       const original =
-        typeof discountConfig.originalPrice === 'number'
-          ? discountConfig.originalPrice
-          : defaultUSDPrice;
+        typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
       const final = discountConfig.finalPrice;
       usdPricing = {
         originalPrice: original,
@@ -130,10 +126,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
         savings: original - final,
       };
     } else if (typeof discountConfig.percentage === 'number') {
-      const base =
-        typeof discountConfig.originalPrice === 'number'
-          ? discountConfig.originalPrice
-          : defaultUSDPrice;
+      const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
       const usdSavings = (base * discountConfig.percentage) / 100;
       const usdFinalPrice = base - usdSavings;
       usdPricing = {
@@ -144,9 +137,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     }
 
     // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
-    let inrPricing = null as
-      | { originalPrice: number; finalPrice: number; savings: number }
-      | null;
+    let inrPricing = null as { originalPrice: number; finalPrice: number; savings: number } | null;
     if (location.isIndia) {
       if (typeof discountConfig.inrPrice === 'number') {
         inrPricing = {

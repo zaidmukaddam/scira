@@ -33,9 +33,9 @@ export async function sendLookoutCompletionEmail({
     return { success: true, id: data.data?.id };
   } catch (error) {
     console.error('❌ Failed to send lookout completion email:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
-} 
+}

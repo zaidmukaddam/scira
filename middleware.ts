@@ -11,7 +11,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-
   if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
     return NextResponse.next();
   }

@@ -558,7 +558,12 @@ export async function getPaymentsByUserId({ userId }: { userId: string }) {
     }
 
     // Fetch from database and cache
-    const payments = await db.select().from(payment).where(eq(payment.userId, userId)).orderBy(desc(payment.createdAt)).$withCache();
+    const payments = await db
+      .select()
+      .from(payment)
+      .where(eq(payment.userId, userId))
+      .orderBy(desc(payment.createdAt))
+      .$withCache();
     setDodoPayments(userId, payments);
     return payments;
   } catch (error) {

@@ -567,7 +567,8 @@ ${JSON.stringify(plan.plan)}
 
           try {
             // Set default dates if not provided
-            const searchStartDate = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const searchStartDate =
+              startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const searchEndDate = endDate || new Date().toISOString().split('T')[0];
 
             const { text, sources } = await generateText({
@@ -582,9 +583,7 @@ ${JSON.stringify(plan.plan)}
                     toDate: searchEndDate,
                     maxSearchResults: maxResults < 15 ? 15 : maxResults,
                     returnCitations: true,
-                    sources: [
-                      xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' },
-                    ],
+                    sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
                   },
                 } satisfies XaiProviderOptions,
               },
@@ -654,7 +653,7 @@ ${JSON.stringify(plan.plan)}
             return result;
           } catch (error) {
             console.error('X search error:', error);
-            
+
             if (dataStream) {
               dataStream.write({
                 type: 'data-extreme_search',

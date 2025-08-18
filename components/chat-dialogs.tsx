@@ -189,7 +189,9 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
               New
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">Introducing Scira Lookout</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
+                Introducing Scira Lookout
+              </h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 Automated search monitoring that runs on your schedule. Set up searches that track trends, monitor
                 developments, and keep you informed without manual effort.

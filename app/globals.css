@@ -385,7 +385,9 @@
   background: transparent;
   border: none;
   border-bottom: 1px solid hsl(var(--border));
-  transition: background-color 150ms ease, color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .leaflet-control-zoom a:last-child,

@@ -49,12 +49,17 @@ interface NewsGroup {
 }
 
 export const stockChartTool = tool({
-  description: 'Get stock data and news for companies using natural language. Valyu will resolve company names to stock tickers automatically.',
+  description:
+    'Get stock data and news for companies using natural language. Valyu will resolve company names to stock tickers automatically.',
   inputSchema: z.object({
     title: z.string().describe('The title of the chart.'),
     news_queries: z.array(z.string()).describe('The news queries to search for.'),
     icon: z.enum(['stock', 'date', 'calculation', 'default']).describe('The icon to display for the chart.'),
-    companies: z.array(z.string()).describe('Company names (e.g., "Apple", "Microsoft", "Tesla") - Valyu will resolve these to appropriate stock tickers.'),
+    companies: z
+      .array(z.string())
+      .describe(
+        'Company names (e.g., "Apple", "Microsoft", "Tesla") - Valyu will resolve these to appropriate stock tickers.',
+      ),
     currency_symbols: z
       .array(z.string())
       .optional()
@@ -65,31 +70,45 @@ export const stockChartTool = tool({
       ),
     time_period: z
       .string()
-      .describe('Natural language time period (e.g., "last 6 months", "past year", "2 weeks", "since January", "last quarter", "since IPO", "all time", "maximum available"). Defaults to "1 year".'),
+      .describe(
+        'Natural language time period (e.g., "last 6 months", "past year", "2 weeks", "since January", "last quarter", "since IPO", "all time", "maximum available"). Defaults to "1 year".',
+      ),
     filing_types: z
       .array(z.enum(['10-K', '10-Q', '8-K']))
       .optional()
-      .describe('SEC filing types to retrieve (10-K for annual reports, 10-Q for quarterly reports, 8-K for current reports). If not specified, SEC filings won\'t be fetched.'),
+      .describe(
+        "SEC filing types to retrieve (10-K for annual reports, 10-Q for quarterly reports, 8-K for current reports). If not specified, SEC filings won't be fetched.",
+      ),
     sections: z
       .array(z.string())
       .optional()
-      .describe('Specific sections to retrieve from SEC filings (e.g., "MD&A", "Risk Factors", "Business", "Financial Statements", "Controls and Procedures"). If not specified, returns full filings.'),
+      .describe(
+        'Specific sections to retrieve from SEC filings (e.g., "MD&A", "Risk Factors", "Business", "Financial Statements", "Controls and Procedures"). If not specified, returns full filings.',
+      ),
     include_statistics: z
       .boolean()
       .optional()
-      .describe('Include comprehensive company statistics like P/E ratios, market cap, debt-to-equity, etc. Adds key financial metrics and ratios.'),
+      .describe(
+        'Include comprehensive company statistics like P/E ratios, market cap, debt-to-equity, etc. Adds key financial metrics and ratios.',
+      ),
     include_balance_sheet: z
       .boolean()
       .optional()
-      .describe('Include balance sheet data showing assets, liabilities, and shareholders equity. Available from 2020 onwards.'),
+      .describe(
+        'Include balance sheet data showing assets, liabilities, and shareholders equity. Available from 2020 onwards.',
+      ),
     include_income_statement: z
       .boolean()
       .optional()
-      .describe('Include income statement data with revenue, expenses, and profitability metrics. Available from 2020 onwards.'),
+      .describe(
+        'Include income statement data with revenue, expenses, and profitability metrics. Available from 2020 onwards.',
+      ),
     include_cash_flow: z
       .boolean()
       .optional()
-      .describe('Include cash flow statement showing operating, investing, and financing activities. Available from 2020 onwards.'),
+      .describe(
+        'Include cash flow statement showing operating, investing, and financing activities. Available from 2020 onwards.',
+      ),
     include_dividends: z
       .boolean()
       .optional()
@@ -101,18 +120,22 @@ export const stockChartTool = tool({
     include_market_movers: z
       .boolean()
       .optional()
-      .describe('Include today\'s biggest gainers, losers, and most active stocks in the market. Only use if user asks for it explicitly.'),
+      .describe(
+        "Include today's biggest gainers, losers, and most active stocks in the market. Only use if user asks for it explicitly.",
+      ),
     financial_period: z
       .string()
       .optional()
-      .describe('Time period for financial statements (e.g., "2020-2024", "last 3 years", "Q4 2023"). Defaults to latest available if not specified.'),
+      .describe(
+        'Time period for financial statements (e.g., "2020-2024", "last 3 years", "Q4 2023"). Defaults to latest available if not specified.',
+      ),
   }),
   execute: async ({
     title,
     icon,
     companies,
     currency_symbols,
-    time_period = "1 year",
+    time_period = '1 year',
     news_queries,
     filing_types,
     sections,
@@ -164,7 +187,7 @@ export const stockChartTool = tool({
     // Check if user is pro for premium features
     const isProUser = await isUserProCached();
     console.log('Pro user:', isProUser);
-    
+
     // Override pro-only features if user is not pro
     const actualIncludeEarnings = isProUser; // Earnings always require pro
     const actualIncludeStatistics = isProUser && include_statistics;
@@ -189,12 +212,13 @@ export const stockChartTool = tool({
       actualIncludeCashFlow,
       actualIncludeDividends,
       actualIncludeInsiderTransactions,
-      actualIncludeMarketMovers
+      actualIncludeMarketMovers,
     ].filter(Boolean).length;
 
-    const isLargeDataRequest = hasMultipleDataSources >= 3 || 
-                              (actualFilingTypes && actualFilingTypes.length > 0 && hasMultipleDataSources >= 2) ||
-                              companies.length > 2;
+    const isLargeDataRequest =
+      hasMultipleDataSources >= 3 ||
+      (actualFilingTypes && actualFilingTypes.length > 0 && hasMultipleDataSources >= 2) ||
+      companies.length > 2;
 
     // Use shorter response length for SEC filings when we expect large amounts of data
     const secResponseLength = isLargeDataRequest ? 'short' : 'max';
@@ -209,23 +233,27 @@ export const stockChartTool = tool({
     for (const query of news_queries) {
       tavilyPromises.push({ query, topic: 'finance', index: promiseIndex });
       allPromises.push(
-        tvly.search(query, {
-          topic: 'finance',
-          days: 7,
-          maxResults: 3,
-          searchDepth: 'advanced',
-        }).catch((err) => ({ results: [], error: err.message }))
+        tvly
+          .search(query, {
+            topic: 'finance',
+            days: 7,
+            maxResults: 3,
+            searchDepth: 'advanced',
+          })
+          .catch((err) => ({ results: [], error: err.message })),
       );
       promiseMap.set(`tavily-finance-${query}`, promiseIndex++);
 
       tavilyPromises.push({ query, topic: 'news', index: promiseIndex });
       allPromises.push(
-        tvly.search(query, {
-          topic: 'news',
-          days: 7,
-          maxResults: 3,
-          searchDepth: 'advanced',
-        }).catch((err) => ({ results: [], error: err.message }))
+        tvly
+          .search(query, {
+            topic: 'news',
+            days: 7,
+            maxResults: 3,
+            searchDepth: 'advanced',
+          })
+          .catch((err) => ({ results: [], error: err.message })),
       );
       promiseMap.set(`tavily-news-${query}`, promiseIndex++);
     }
@@ -235,7 +263,8 @@ export const stockChartTool = tool({
     companies.forEach((company) => {
       exaPromises.push({ company, index: promiseIndex });
       allPromises.push(
-        exa.searchAndContents(`${company} financial report analysis`, {
+        exa
+          .searchAndContents(`${company} financial report analysis`, {
             text: true,
             category: 'financial report',
             livecrawl: 'preferred',
@@ -244,27 +273,30 @@ export const stockChartTool = tool({
             summary: {
               query: 'all important information relevent to the important for investors',
             },
-        }).catch((error: any) => {
-          console.error(`Exa search error for ${company}:`, error);
-          return { results: [] };
-        })
+          })
+          .catch((error: any) => {
+            console.error(`Exa search error for ${company}:`, error);
+            return { results: [] };
+          }),
       );
       promiseMap.set(`exa-${company}`, promiseIndex++);
     });
 
     // 3. Valyu core data promises (stock prices and earnings)
     const stockQuery = `What are the stock prices for ${companies.join(' and ')} for time period ${time_period}?`;
-    
+
     allPromises.push(
-      valyu.search(stockQuery, {
-        searchType: 'proprietary',
-        isToolCall: true,
-        includedSources: ['valyu/valyu-stocks-US'],
-        maxPrice: 100
-      }).catch((error) => {
-        console.error('Error fetching Valyu stock data:', error);
-        return null;
-      })
+      valyu
+        .search(stockQuery, {
+          searchType: 'proprietary',
+          isToolCall: true,
+          includedSources: ['valyu/valyu-stocks-US'],
+          maxPrice: 100,
+        })
+        .catch((error) => {
+          console.error('Error fetching Valyu stock data:', error);
+          return null;
+        }),
     );
     promiseMap.set('valyu-stocks', promiseIndex++);
 
@@ -272,15 +304,17 @@ export const stockChartTool = tool({
     if (actualIncludeEarnings) {
       const earningsQuery = `What are the earnings for ${companies.join(' and ')} for time period ${time_period}?`;
       allPromises.push(
-        valyu.search(earningsQuery, {
-          searchType: 'proprietary',
-          isToolCall: true,
-          includedSources: ['valyu/valyu-earnings-US'],
-          maxPrice: 100
-        }).catch((error) => {
-          console.error('Error fetching Valyu earnings data:', error);
-          return null;
-        })
+        valyu
+          .search(earningsQuery, {
+            searchType: 'proprietary',
+            isToolCall: true,
+            includedSources: ['valyu/valyu-earnings-US'],
+            maxPrice: 100,
+          })
+          .catch((error) => {
+            console.error('Error fetching Valyu earnings data:', error);
+            return null;
+          }),
       );
       promiseMap.set('valyu-earnings', promiseIndex++);
     }
@@ -288,25 +322,27 @@ export const stockChartTool = tool({
     // 4. SEC filings promises
     const secPromises: { company: string; filingType: string; index: number }[] = [];
     if (actualFilingTypes && actualFilingTypes.length > 0) {
-      companies.forEach(company => {
-        actualFilingTypes.forEach(filingType => {
+      companies.forEach((company) => {
+        actualFilingTypes.forEach((filingType) => {
           let secQuery = `Get the full ${filingType} filing for ${company} for the time period "${time_period}"`;
           if (sections && sections.length > 0) {
             secQuery = `${company} sec filing ${filingType} ${sections.join(' and ')} for the time period "${time_period}"`;
           }
-          
+
           secPromises.push({ company, filingType, index: promiseIndex });
           allPromises.push(
-            valyu.search(secQuery, {
-              searchType: 'proprietary',
-              isToolCall: true,
-              includedSources: ['valyu/valyu-sec-filings'],
-              responseLength: secResponseLength,
-              maxPrice: 100
-            }).catch((error) => {
-              console.error(`Error fetching ${filingType} for ${company}:`, error);
-              return null;
-            })
+            valyu
+              .search(secQuery, {
+                searchType: 'proprietary',
+                isToolCall: true,
+                includedSources: ['valyu/valyu-sec-filings'],
+                responseLength: secResponseLength,
+                maxPrice: 100,
+              })
+              .catch((error) => {
+                console.error(`Error fetching ${filingType} for ${company}:`, error);
+                return null;
+              }),
           );
           promiseMap.set(`sec-${company}-${filingType}`, promiseIndex++);
         });
@@ -318,18 +354,20 @@ export const stockChartTool = tool({
 
     // Company statistics
     if (actualIncludeStatistics) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         financialPromises.push({ type: 'statistics', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(`${company} company statistics`, {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-statistics-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching statistics for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(`${company} company statistics`, {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-statistics-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching statistics for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`stats-${company}`, promiseIndex++);
       });
@@ -337,7 +375,7 @@ export const stockChartTool = tool({
 
     // Balance sheets
     if (actualIncludeBalanceSheet) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         const buildFinancialQuery = (company: string, statement: string) => {
           if (financial_period) {
             return `${company} ${statement} ${financial_period}`;
@@ -347,15 +385,17 @@ export const stockChartTool = tool({
 
         financialPromises.push({ type: 'balance', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(buildFinancialQuery(company, 'balance sheet'), {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-balance-sheet-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching balance sheet for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(buildFinancialQuery(company, 'balance sheet'), {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-balance-sheet-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching balance sheet for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`balance-${company}`, promiseIndex++);
       });
@@ -363,7 +403,7 @@ export const stockChartTool = tool({
 
     // Income statements
     if (actualIncludeIncomeStatement) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         const buildFinancialQuery = (company: string, statement: string) => {
           if (financial_period) {
             return `${company} ${statement} ${financial_period}`;
@@ -373,15 +413,17 @@ export const stockChartTool = tool({
 
         financialPromises.push({ type: 'income', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(buildFinancialQuery(company, 'income statement'), {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-income-statement-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching income statement for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(buildFinancialQuery(company, 'income statement'), {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-income-statement-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching income statement for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`income-${company}`, promiseIndex++);
       });
@@ -389,7 +431,7 @@ export const stockChartTool = tool({
 
     // Cash flows
     if (actualIncludeCashFlow) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         const buildFinancialQuery = (company: string, statement: string) => {
           if (financial_period) {
             return `${company} ${statement} ${financial_period}`;
@@ -399,15 +441,17 @@ export const stockChartTool = tool({
 
         financialPromises.push({ type: 'cash', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(buildFinancialQuery(company, 'cash flow'), {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-cash-flow-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching cash flow for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(buildFinancialQuery(company, 'cash flow'), {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-cash-flow-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching cash flow for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`cash-${company}`, promiseIndex++);
       });
@@ -415,18 +459,20 @@ export const stockChartTool = tool({
 
     // Dividends
     if (actualIncludeDividends) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         financialPromises.push({ type: 'dividends', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(`${company} dividends ${time_period}`, {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-dividends-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching dividends for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(`${company} dividends ${time_period}`, {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-dividends-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching dividends for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`dividends-${company}`, promiseIndex++);
       });
@@ -434,19 +480,21 @@ export const stockChartTool = tool({
 
     // Insider transactions
     if (actualIncludeInsiderTransactions) {
-      companies.forEach(company => {
+      companies.forEach((company) => {
         const timeHint = time_period && time_period.trim().length > 0 ? time_period : 'recent';
         financialPromises.push({ type: 'insider', company, index: promiseIndex });
         allPromises.push(
-          valyu.search(`${company} insider transactions ${timeHint}`, {
-            searchType: 'proprietary',
-            isToolCall: true,
-            includedSources: ['valyu/valyu-insider-transactions-US'],
-            maxPrice: 100
-          }).catch((error) => {
-            console.error(`Error fetching insider transactions for ${company}:`, error);
-            return null;
-          })
+          valyu
+            .search(`${company} insider transactions ${timeHint}`, {
+              searchType: 'proprietary',
+              isToolCall: true,
+              includedSources: ['valyu/valyu-insider-transactions-US'],
+              maxPrice: 100,
+            })
+            .catch((error) => {
+              console.error(`Error fetching insider transactions for ${company}:`, error);
+              return null;
+            }),
         );
         promiseMap.set(`insider-${company}`, promiseIndex++);
       });
@@ -456,43 +504,49 @@ export const stockChartTool = tool({
     if (actualIncludeMarketMovers) {
       financialPromises.push({ type: 'gainers', index: promiseIndex });
       allPromises.push(
-        valyu.search('top market gainers today stocks', {
-          searchType: 'proprietary',
-          isToolCall: true,
-          includedSources: ['valyu/valyu-market-movers-US'],
-          maxPrice: 100
-        }).catch((error) => {
-          console.error('Error fetching market gainers:', error);
-          return null;
-        })
+        valyu
+          .search('top market gainers today stocks', {
+            searchType: 'proprietary',
+            isToolCall: true,
+            includedSources: ['valyu/valyu-market-movers-US'],
+            maxPrice: 100,
+          })
+          .catch((error) => {
+            console.error('Error fetching market gainers:', error);
+            return null;
+          }),
       );
       promiseMap.set('gainers', promiseIndex++);
 
       financialPromises.push({ type: 'losers', index: promiseIndex });
       allPromises.push(
-        valyu.search('top market losers today stocks', {
-          searchType: 'proprietary',
-          isToolCall: true,
-          includedSources: ['valyu/valyu-market-movers-US'],
-          maxPrice: 100
-        }).catch((error) => {
-          console.error('Error fetching market losers:', error);
-          return null;
-        })
+        valyu
+          .search('top market losers today stocks', {
+            searchType: 'proprietary',
+            isToolCall: true,
+            includedSources: ['valyu/valyu-market-movers-US'],
+            maxPrice: 100,
+          })
+          .catch((error) => {
+            console.error('Error fetching market losers:', error);
+            return null;
+          }),
       );
       promiseMap.set('losers', promiseIndex++);
 
       financialPromises.push({ type: 'active', index: promiseIndex });
       allPromises.push(
-        valyu.search('most active stocks today', {
-          searchType: 'proprietary',
-          isToolCall: true,
-          includedSources: ['valyu/valyu-market-movers-US'],
-          maxPrice: 100
-        }).catch((error) => {
-          console.error('Error fetching most active stocks:', error);
-          return null;
-        })
+        valyu
+          .search('most active stocks today', {
+            searchType: 'proprietary',
+            isToolCall: true,
+            includedSources: ['valyu/valyu-market-movers-US'],
+            maxPrice: 100,
+          })
+          .catch((error) => {
+            console.error('Error fetching most active stocks:', error);
+            return null;
+          }),
       );
       promiseMap.set('active', promiseIndex++);
     }
@@ -535,34 +589,34 @@ export const stockChartTool = tool({
     });
 
     // Process Exa results
-      const exaUrlSet = new Set();
+    const exaUrlSet = new Set();
     exaPromises.forEach(({ company, index }) => {
       const result = allResults[index];
-        if (!result.results || result.results.length === 0) return;
+      if (!result.results || result.results.length === 0) return;
 
-        const processedResults = result.results
-          .filter((item: any) => {
-            if (exaUrlSet.has(item.url)) return false;
-            exaUrlSet.add(item.url);
-            return true;
-          })
-          .map((item: any) => ({
-            title: item.title || '',
-            url: item.url,
-            content: item.summary || '',
-            published_date: item.publishedDate,
-            category: 'financial',
+      const processedResults = result.results
+        .filter((item: any) => {
+          if (exaUrlSet.has(item.url)) return false;
+          exaUrlSet.add(item.url);
+          return true;
+        })
+        .map((item: any) => ({
+          title: item.title || '',
+          url: item.url,
+          content: item.summary || '',
+          published_date: item.publishedDate,
+          category: 'financial',
           query: company,
-          }));
+        }));
 
-        if (processedResults.length > 0) {
+      if (processedResults.length > 0) {
         news_results.push({
           query: company,
-            topic: 'financial',
-            results: processedResults,
-          });
-        }
-      });
+          topic: 'financial',
+          results: processedResults,
+        });
+      }
+    });
 
     type ValyuOHLC = {
       datetime: string;
@@ -616,23 +670,23 @@ export const stockChartTool = tool({
     // Process Valyu stock and earnings results
     let valyuResults: ValyuResult[] = [];
     let valyuEarningsResults: ValyuEarningsResult[] = [];
-    
+
     const stockResponse = allResults[promiseMap.get('valyu-stocks')!];
 
     console.log('Valyu stock response:', stockResponse);
 
-      const isValyuOHLCArray = (value: unknown): value is ValyuOHLC[] => {
-        return (
-          Array.isArray(value) &&
-          value.every(
-            (v) =>
-              typeof v === 'object' &&
-              v !== null &&
-              'datetime' in (v as Record<string, unknown>) &&
-              'close' in (v as Record<string, unknown>),
-          )
-        );
-      };
+    const isValyuOHLCArray = (value: unknown): value is ValyuOHLC[] => {
+      return (
+        Array.isArray(value) &&
+        value.every(
+          (v) =>
+            typeof v === 'object' &&
+            v !== null &&
+            'datetime' in (v as Record<string, unknown>) &&
+            'close' in (v as Record<string, unknown>),
+        )
+      );
+    };
 
     const isValyuEarningsArray = (value: unknown): value is ValyuEarning[] => {
       return (
@@ -643,28 +697,20 @@ export const stockChartTool = tool({
             v !== null &&
             'date' in (v as Record<string, unknown>) &&
             'eps_actual' in (v as Record<string, unknown>),
-          )
-        );
-      };
+        )
+      );
+    };
 
-      const isValyuResult = (obj: unknown): obj is ValyuResult => {
-        if (!obj || typeof obj !== 'object') return false;
-        const r = obj as Record<string, unknown>;
-        return (
-          typeof r['title'] === 'string' &&
-          typeof r['url'] === 'string' &&
-          isValyuOHLCArray(r['content'])
-        );
-      };
+    const isValyuResult = (obj: unknown): obj is ValyuResult => {
+      if (!obj || typeof obj !== 'object') return false;
+      const r = obj as Record<string, unknown>;
+      return typeof r['title'] === 'string' && typeof r['url'] === 'string' && isValyuOHLCArray(r['content']);
+    };
 
     const isValyuEarningsResult = (obj: unknown): obj is ValyuEarningsResult => {
       if (!obj || typeof obj !== 'object') return false;
       const r = obj as Record<string, unknown>;
-      return (
-        typeof r['title'] === 'string' &&
-        typeof r['url'] === 'string' &&
-        isValyuEarningsArray(r['content'])
-      );
+      return typeof r['title'] === 'string' && typeof r['url'] === 'string' && isValyuEarningsArray(r['content']);
     };
 
     // Process stock data
@@ -675,7 +721,9 @@ export const stockChartTool = tool({
     // Process earnings data (only if user is pro)
     const earningsResponse = actualIncludeEarnings ? allResults[promiseMap.get('valyu-earnings') || -1] : null;
     if (earningsResponse && Array.isArray(earningsResponse.results)) {
-      valyuEarningsResults = (earningsResponse.results as unknown[]).filter(isValyuEarningsResult) as ValyuEarningsResult[];
+      valyuEarningsResults = (earningsResponse.results as unknown[]).filter(
+        isValyuEarningsResult,
+      ) as ValyuEarningsResult[];
     }
 
     const getTickerFromResult = (r: ValyuResult): string | undefined => {
@@ -709,7 +757,7 @@ export const stockChartTool = tool({
       const points: Array<[string, number]> = result.content
         .map((c) => [c.datetime, Number(c.close)] as [string, number])
         .filter(([, close]) => Number.isFinite(close));
-      
+
       return {
         label: `${companyName} (${resolvedTicker})`,
         points,
@@ -734,7 +782,7 @@ export const stockChartTool = tool({
       const resolvedTicker = getTickerFromEarningsResult(earningsResult);
       const companyName = earningsResult.metadata?.name || resolvedTicker || 'Unknown';
 
-    return {
+      return {
         ticker: resolvedTicker,
         companyName,
         earnings: earningsResult.content.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), // Sort by date desc
@@ -811,7 +859,7 @@ export const stockChartTool = tool({
         forward_annual_dividend_yield: number;
         trailing_annual_dividend_rate: number;
         trailing_annual_dividend_yield: number;
-        "5_year_average_dividend_yield": number;
+        '5_year_average_dividend_yield': number;
         payout_ratio: number;
         dividend_frequency: string;
         dividend_date: string;
@@ -1011,18 +1059,18 @@ export const stockChartTool = tool({
       };
     };
 
-    // Process SEC filings from parallel results  
+    // Process SEC filings from parallel results
     let secFilings: SECFiling[] = [];
     if (actualFilingTypes && actualFilingTypes.length > 0) {
       const rawFilings: any[] = [];
-      
+
       secPromises.forEach(({ company, filingType, index }) => {
         const response = allResults[index];
         if (response && Array.isArray(response.results)) {
           const filings = response.results.map((result: any) => ({
             ...result,
             requestedCompany: company,
-            requestedFilingType: filingType
+            requestedFilingType: filingType,
           }));
           rawFilings.push(...filings);
         }
@@ -1030,19 +1078,20 @@ export const stockChartTool = tool({
 
       // Truncate SEC filing content if we have a lot of data to prevent token limit issues
       const maxFilingLength = isLargeDataRequest ? 15000 : 50000; // Shorter when lots of other data
-      
+
       secFilings = rawFilings
-        .filter(filing => filing && filing.content)
-        .map(filing => ({
+        .filter((filing) => filing && filing.content)
+        .map((filing) => ({
           id: filing.id,
           title: filing.title,
           url: filing.url,
-          content: filing.content.length > maxFilingLength 
-            ? filing.content.substring(0, maxFilingLength) + '\n\n[Content truncated due to length...]'
-            : filing.content,
+          content:
+            filing.content.length > maxFilingLength
+              ? filing.content.substring(0, maxFilingLength) + '\n\n[Content truncated due to length...]'
+              : filing.content,
           metadata: filing.metadata,
           requestedCompany: filing.requestedCompany,
-          requestedFilingType: filing.requestedFilingType
+          requestedFilingType: filing.requestedFilingType,
         }));
 
       console.log('SEC filings fetched:', secFilings.length);
@@ -1059,7 +1108,7 @@ export const stockChartTool = tool({
     let marketMovers: { gainers: MarketMover[]; losers: MarketMover[]; most_active: MarketMover[] } = {
       gainers: [],
       losers: [],
-      most_active: []
+      most_active: [],
     };
 
     // Process all financial data results
@@ -1068,7 +1117,7 @@ export const stockChartTool = tool({
       if (!response || !response.results || !response.results[0]) return;
 
       const result = response.results[0];
-      
+
       switch (type) {
         case 'statistics':
           if (company) {
@@ -1117,7 +1166,7 @@ export const stockChartTool = tool({
       chart: chartData,
       currency_symbols: outputCurrencyCodes,
       news_results: news_results,
-      resolved_companies: elements.map(el => ({
+      resolved_companies: elements.map((el) => ({
         name: el.label,
         ticker: el.ticker,
       })),

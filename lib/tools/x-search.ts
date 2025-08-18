@@ -10,7 +10,9 @@ export const xSearchTool = tool({
     query: z.string().describe('The search query for X posts').optional(),
     startDate: z
       .string()
-      .describe('The start date of the search in the format YYYY-MM-DD (always default to 7 days ago if not specified)'),
+      .describe(
+        'The start date of the search in the format YYYY-MM-DD (always default to 7 days ago if not specified)',
+      ),
     endDate: z
       .string()
       .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
@@ -76,9 +78,7 @@ export const xSearchTool = tool({
               ...(endDate && { toDate: endDate }),
               maxSearchResults: maxResults ? (maxResults < 15 ? 15 : maxResults) : 15,
               returnCitations: true,
-              sources: [
-                xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' },
-              ],
+              sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
             },
           } satisfies XaiProviderOptions,
         },

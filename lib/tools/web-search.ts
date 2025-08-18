@@ -55,17 +55,25 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
         z.number().describe('Array of maximum number of results to return per query. Default is 10.'),
       ),
       topics: z.array(
-        z.enum(['general', 'news', 'finance']).describe('Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.'),
+        z
+          .enum(['general', 'news', 'finance'])
+          .describe(
+            'Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.',
+          ),
       ),
       quality: z.enum(['default', 'best']).describe('Search quality x speed level. Default is default.'),
       include_domains: z
         .array(z.string())
         .optional()
-        .describe('An array of domains to include if asked by the user. Default is an empty list like []. Do not use unless instructed by the user.'),
+        .describe(
+          'An array of domains to include if asked by the user. Default is an empty list like []. Do not use unless instructed by the user.',
+        ),
       exclude_domains: z
         .array(z.string())
         .optional()
-        .describe('An array of domains to exclude if asked by the user. Default is an empty list like []. Do not use unless instructed by the user.'),
+        .describe(
+          'An array of domains to exclude if asked by the user. Default is an empty list like []. Do not use unless instructed by the user.',
+        ),
     }),
     execute: async ({
       queries,
@@ -127,7 +135,7 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
             // Prefer includeDomains when both are provided
             searchOptions.includeDomains = processedIncludeDomains;
             console.warn(
-              'Both include_domains and exclude_domains provided; prefer include_domains and ignore exclude_domains.'
+              'Both include_domains and exclude_domains provided; prefer include_domains and ignore exclude_domains.',
             );
           } else if (hasIncludeDomains) {
             searchOptions.includeDomains = processedIncludeDomains;

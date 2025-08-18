@@ -1651,7 +1651,13 @@ const ExtremeSearchComponent = ({
                 {itemIndex > 0 && (
                   <div
                     className="absolute bg-neutral-300 dark:bg-neutral-700"
-                    style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
+                    style={{
+                      left: '-0.6rem',
+                      top: '-6px',
+                      width: '2px',
+                      height: '14px',
+                      transform: 'translateX(-50%)',
+                    }}
                   />
                 )}
 
@@ -1808,7 +1814,13 @@ const ExtremeSearchComponent = ({
                 {itemIndex > 0 && (
                   <div
                     className="absolute bg-neutral-300 dark:bg-neutral-700"
-                    style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
+                    style={{
+                      left: '-0.6rem',
+                      top: '-6px',
+                      width: '2px',
+                      height: '14px',
+                      transform: 'translateX(-50%)',
+                    }}
                   />
                 )}
 

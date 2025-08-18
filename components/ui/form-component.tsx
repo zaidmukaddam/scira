@@ -91,8 +91,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     );
 
     const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
-      return typeof p === 'object' && p !== null && 'type' in (p as Record<string, unknown>) &&
-        (p as { type: unknown }).type === 'file';
+      return (
+        typeof p === 'object' &&
+        p !== null &&
+        'type' in (p as Record<string, unknown>) &&
+        (p as { type: unknown }).type === 'file'
+      );
     }, []);
 
     const hasImageAttachments = useMemo(() => {
@@ -101,7 +105,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         return ct.startsWith('image/');
       });
       const messagesHaveImage = messages.some((msg) =>
-        (msg.parts || []).some((part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType.startsWith('image/')),
+        (msg.parts || []).some(
+          (part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType.startsWith('image/'),
+        ),
       );
       return attachmentHasImage || messagesHaveImage;
     }, [attachments, messages, isFilePart]);
@@ -112,7 +118,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         return ct === 'application/pdf';
       });
       const messagesHavePdf = messages.some((msg) =>
-        (msg.parts || []).some((part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType === 'application/pdf'),
+        (msg.parts || []).some(
+          (part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType === 'application/pdf',
+        ),
       );
       return attachmentHasPdf || messagesHavePdf;
     }, [attachments, messages, isFilePart]);
@@ -1129,7 +1137,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         let recorder: MediaRecorder;
         try {
-          recorder = selectedMimeType ? new MediaRecorder(stream, { mimeType: selectedMimeType }) : new MediaRecorder(stream);
+          recorder = selectedMimeType
+            ? new MediaRecorder(stream, { mimeType: selectedMimeType })
+            : new MediaRecorder(stream);
         } catch (e) {
           // Fallback: try without options
           recorder = new MediaRecorder(stream);
@@ -2185,14 +2195,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </Tooltip>
                   ) : input.length === 0 && attachments.length === 0 ? (
                     /* Show Voice Recording Button when no input */
-                    (<Tooltip delayDuration={300}>
+                    <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
                           size="icon"
                           variant={isRecording ? 'destructive' : 'default'}
-                          className={cn(
-                            'group rounded-full m-auto transition-colors duration-200 !size-8',
-                          )}
+                          className={cn('group rounded-full m-auto transition-colors duration-200 !size-8')}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -2218,10 +2226,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           </span>
                         </div>
                       </TooltipContent>
-                    </Tooltip>)
+                    </Tooltip>
                   ) : (
                     /* Show Send Button when there is input */
-                    (<Tooltip delayDuration={300}>
+                    <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
                           size="icon"
@@ -2251,7 +2259,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <span className="font-medium text-[11px]">Send Message</span>
                       </TooltipContent>
-                    </Tooltip>)
+                    </Tooltip>
                   )}
                 </div>
               </div>

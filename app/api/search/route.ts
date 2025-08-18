@@ -103,7 +103,6 @@ export async function POST(req: Request) {
   console.log('Location: ', latitude, longitude);
   console.log('--------------------------------');
 
-
   console.log('--------------------------------');
   console.log('Messages: ', messages);
   console.log('--------------------------------');
@@ -209,9 +208,9 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.polarSubscription
             ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+                hasSubscription: true,
+                subscription: { ...user.polarSubscription, organizationId: null },
+              }
             : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
@@ -231,9 +230,9 @@ export async function POST(req: Request) {
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
-            hasSubscription: true,
-            subscription: { ...user.polarSubscription, organizationId: null },
-          }
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
           : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0,
@@ -274,10 +273,12 @@ export async function POST(req: Request) {
       const configWaitStartTime = Date.now();
       const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
         configPromise,
-        customInstructionsPromise
+        customInstructionsPromise,
       ]);
       customInstructions = customInstructionsResult;
-      console.log(`⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      console.log(
+        `⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`,
+      );
       console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
       console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
@@ -325,30 +326,30 @@ export async function POST(req: Request) {
         messages: convertToModelMessages(messages),
         ...(model.includes('scira-qwen-32b')
           ? {
-            temperature: 0.6,
-            topP: 0.95,
-            minP: 0,
-          }
+              temperature: 0.6,
+              topP: 0.95,
+              minP: 0,
+            }
           : model.includes('scira-deepseek-v3')
             ? {
-              temperature: 0.6,
-              topP: 1,
-              topK: 40,
-            }
+                temperature: 0.6,
+                topP: 1,
+                topK: 40,
+              }
             : model.includes('scira-qwen-235')
               ? {
-                temperature: 0.7,
-                topP: 0.8,
-                minP: 0,
-                presencePenalty: 1.5,
-              }
+                  temperature: 0.7,
+                  topP: 0.8,
+                  minP: 0,
+                  presencePenalty: 1.5,
+                }
               : {}),
         stopWhen: stepCountIs(3),
         maxRetries: 10,
         ...(model.includes('scira-5')
           ? {
-            maxOutputTokens: maxTokens,
-          }
+              maxOutputTokens: maxTokens,
+            }
           : {}),
         activeTools: [...activeTools],
         experimental_transform: markdownJoinerTransform(),
@@ -363,28 +364,28 @@ export async function POST(req: Request) {
           openai: {
             ...(model.includes('scira-5')
               ? {
-                include: ['reasoning.encrypted_content'],
-                reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
-                reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-                parallelToolCalls: false,
-                strictJsonSchema: false,
-                serviceTier: 'flex',
-                textVerbosity: "medium"
-              }
+                  include: ['reasoning.encrypted_content'],
+                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+                  parallelToolCalls: false,
+                  strictJsonSchema: false,
+                  serviceTier: 'flex',
+                  textVerbosity: 'medium',
+                }
               : {}),
           } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
-                reasoningEffort: 'low',
-              }
+                  reasoningEffort: 'low',
+                }
               : {}),
           } satisfies XaiProviderOptions,
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {
-                reasoningEffort: 'high',
-              }
+                  reasoningEffort: 'high',
+                }
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,

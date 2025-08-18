@@ -12,13 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 // Icons
-import {
-  ChevronDown,
-  Copy,
-  Loader2,
-  MapPin,
-  XCircle,
-} from 'lucide-react';
+import { ChevronDown, Copy, Loader2, MapPin, XCircle } from 'lucide-react';
 
 export const SearchLoadingState = ({
   icon: Icon,

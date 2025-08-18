@@ -2,7 +2,6 @@ import './globals.css';
 import 'katex/dist/katex.min.css';
 import 'leaflet/dist/leaflet.css';
 
-
 import { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, Inter, Baumans } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
@@ -117,11 +116,7 @@ export default function RootLayout({
             {children}
           </Providers>
         </NuqsAdapter>
-        <Databuddy
-          clientId={process.env.DATABUDDY_CLIENT_ID!}
-          enableBatching={true}
-          trackSessions={true}
-        />
+        <Databuddy clientId={process.env.DATABUDDY_CLIENT_ID!} enableBatching={true} trackSessions={true} />
         <Analytics />
         <SpeedInsights />
       </body>
