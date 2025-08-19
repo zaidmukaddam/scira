@@ -40,7 +40,7 @@ export const scira = customProvider({
     }),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-deepseek-v3': wrapLanguageModel({
-      model: huggingface.chat('deepseek-ai/DeepSeek-V3-0324:fireworks-ai'),
+      model: huggingface.chat('deepseek-ai/DeepSeek-V3-0324:together'),
       middleware,
     }),
     'scira-glm': wrapLanguageModel({
@@ -48,7 +48,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-glm-air': huggingface.chat('zai-org/GLM-4.5-Air:fireworks-ai'),
-    'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
+    'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:together'),
     'scira-kimi-k2': groq('moonshotai/kimi-k2-instruct'),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
     'scira-mistral-medium': mistral('mistral-medium-2508'),

@@ -18,7 +18,6 @@ import { X, Check, ChevronsUpDown } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
-import { UIMessage } from 'ai';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
@@ -44,7 +43,7 @@ interface ModelSwitcherProps {
   setSelectedModel: (value: string) => void;
   className?: string;
   attachments: Array<Attachment>;
-  messages: Array<UIMessage>;
+  messages: Array<ChatMessage>;
   status: UseChatHelpers<ChatMessage>['status'];
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
@@ -78,17 +77,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
     const [open, setOpen] = useState(false);
-
-    const hasAttachments = useMemo(
-      () =>
-        attachments.length > 0 ||
-        messages.some(
-          (msg) =>
-            msg.parts?.filter((part) => part.type === 'file') &&
-            msg.parts?.filter((part) => part.type === 'file').length > 0,
-        ),
-      [attachments.length, messages],
-    );
 
     const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
       return (
@@ -776,7 +764,7 @@ interface FormComponentProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   stop: () => void;
-  messages: Array<UIMessage>;
+  messages: Array<ChatMessage>;
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   selectedModel: string;
   setSelectedModel: (value: string) => void;

@@ -4,8 +4,8 @@
 import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { generateObject, UIMessage, generateText, generateId } from 'ai';
-import type { CoreMessage, ModelMessage } from 'ai';
+import { generateObject, UIMessage, generateText } from 'ai';
+import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
@@ -34,18 +34,17 @@ import {
   deleteLookout,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
-import { GroqProviderOptions, groq } from '@ai-sdk/groq';
+import { groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
 // Removed old subscription imports - now using unified user data approach
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
+import { getComprehensiveUserData } from '@/lib/user-data-server';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
   'use server';
 
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
   return await getComprehensiveUserData();
 }
 

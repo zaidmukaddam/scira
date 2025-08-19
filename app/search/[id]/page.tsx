@@ -4,7 +4,7 @@ import { getUser } from '@/lib/auth-utils';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { Message, type Chat } from '@/lib/db/schema';
 import { Metadata } from 'next';
-import { UIMessage, UIMessagePart } from 'ai';
+import { UIMessagePart } from 'ai';
 import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { formatISO } from 'date-fns';
 

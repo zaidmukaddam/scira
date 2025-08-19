@@ -208,7 +208,7 @@ const ChatInterface = memo(
     selectedGroupRef.current = selectedGroup;
     isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
 
-    const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat({
+    const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
       id: chatId,
       transport: new DefaultChatTransport({
         api: '/api/search',
@@ -228,7 +228,7 @@ const ChatInterface = memo(
           };
         },
       }),
-      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 1000 : 100,
+      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 100,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
         setDataStream((ds) => {
