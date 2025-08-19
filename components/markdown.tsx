@@ -13,8 +13,9 @@ import React, { useCallback, useMemo, useState, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Check, Copy, WrapText, ArrowLeftRight } from 'lucide-react';
+import { Check, Copy, WrapText, ArrowLeftRight, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface MarkdownRendererProps {
@@ -493,6 +494,79 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
   InlineCode.displayName = 'InlineCode';
 
+  const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+    const escapeCsvValue = React.useCallback((value: string) => {
+      const needsQuotes = /[",\n]/.test(value);
+      const escaped = value.replace(/"/g, '""');
+      return needsQuotes ? `"${escaped}"` : escaped;
+    }, []);
+
+    const buildCsvFromTable = React.useCallback((table: HTMLTableElement) => {
+      const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
+      const csvLines: string[] = [];
+
+      rows.forEach((row) => {
+        const cells = Array.from(row.querySelectorAll('th,td')) as (HTMLTableCellElement)[];
+        const line = cells
+          .map((cell) => escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
+          .join(',');
+        if (cells.length > 0) {
+          csvLines.push(line);
+        }
+      });
+
+      return csvLines.join('\n');
+    }, [escapeCsvValue]);
+
+    const handleDownloadCsv = React.useCallback(() => {
+      const tableEl = containerRef.current?.querySelector('[data-slot="table"]') as HTMLTableElement | null;
+      if (!tableEl) return;
+
+      const csv = buildCsvFromTable(tableEl);
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:T]/g, '-')
+        .replace(/\..+/, '');
+      a.href = url;
+      a.download = `table-${timestamp}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, [buildCsvFromTable]);
+
+    return (
+      <div className="relative group">
+        <div className="absolute -top-3 -right-1 z-10">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                className="size-7 text-xs shadow-sm"
+                onClick={handleDownloadCsv}
+                aria-label="Download CSV"
+                title="Download CSV"
+              >
+                <Download className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" sideOffset={6}>
+              Download CSV
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div ref={containerRef}>
+          <Table className="!border !rounded-lg !m-0">{children}</Table>
+        </div>
+      </div>
+    );
+  };
+
   const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
     const domain = new URL(href).hostname;
 
@@ -789,11 +863,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       );
     },
     table(children) {
-      return (
-        <Table key={generateKey()} className="!border !rounded-lg !m-0">
-          {children}
-        </Table>
-      );
+      return <MarkdownTableWithActions key={generateKey()}>{children}</MarkdownTableWithActions>;
     },
     tableRow(children) {
       return <TableRow key={generateKey()}>{children}</TableRow>;
