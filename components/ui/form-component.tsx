@@ -1411,7 +1411,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   // Typewriter effect for enhanced text
   const typewriterText = useCallback(
-    (text: string, speed: number = 30) => {
+    (text: string, speed: number = 10) => {
       if (!inputRef.current) return;
 
       setIsTypewriting(true);
