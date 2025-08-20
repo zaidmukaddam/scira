@@ -188,6 +188,8 @@ export async function POST(req: Request) {
     // Create data stream with execute function
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
+        const streamStartTime = Date.now();
+
         // Start streaming
         const result = streamText({
           model: scira.languageModel('scira-grok-4'),
@@ -466,7 +468,7 @@ export async function POST(req: Request) {
             messageMetadata({ part }) {
               if (part.type === 'finish') {
                 console.log('Finish part: ', part);
-                const processingTime = Date.now() - requestStartTime;
+                const processingTime = (Date.now() - streamStartTime) / 1000;
                 return {
                   model: 'scira-grok-4',
                   completionTime: processingTime,

@@ -327,6 +327,8 @@ export async function POST(req: Request) {
 
       const maxTokens = getMaxOutputTokens(model);
 
+      const streamStartTime = Date.now();
+
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToModelMessages(messages),
@@ -548,7 +550,8 @@ export async function POST(req: Request) {
           sendReasoning: true,
           messageMetadata: ({ part }) => {
             if (part.type === 'finish') {
-              const processingTime = (Date.now() - requestStartTime) / 1000;
+              console.log('Finish part: ', part);
+              const processingTime = (Date.now() - streamStartTime) / 1000;
               return {
                 model: model as string,
                 completionTime: processingTime,
