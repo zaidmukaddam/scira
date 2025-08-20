@@ -1,14 +1,12 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Share, X } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon } from '@hugeicons/core-free-icons';
+import { Plus, GlobeHemisphereWest, Lock, Copy, Check, Share } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/components/user-profile';
+import { UserProfile, NavigationMenu } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -173,7 +171,7 @@ const Navbar = memo(
               </div>
             </div>
           )}
-          <div className={cn('flex items-center gap-2', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div className={cn('flex items-center gap-1', isDialogOpen ? 'pointer-events-auto' : '')}>
             {/* Visibility indicator or toggle based on authentication and ownership */}
             {chatId && (
               <>
@@ -326,7 +324,7 @@ const Navbar = memo(
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="pointer-events-auto bg-muted/50 border border-border hover:bg-muted/70 transition-colors"
+                            className="!p-1 !m-0 h-7 gap-1 rounded-sm pointer-events-auto bg-muted/50 border border-border hover:bg-muted/70 transition-colors"
                             disabled={isChangingVisibility}
                           >
                             {isChangingVisibility ? (
@@ -336,7 +334,7 @@ const Navbar = memo(
                               </>
                             ) : (
                               <>
-                                <Share size={16} className="text-muted-foreground" />
+                                <Share size={14} className="text-muted-foreground" />
                                 <span className="text-sm font-medium text-muted-foreground">Share</span>
                               </>
                             )}
@@ -443,8 +441,8 @@ const Navbar = memo(
                 ) : hasActiveSubscription ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="pointer-events-auto">
-                        <span className="font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 pb-1.25 sm:pt-1 leading-5 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                      <div className="pointer-events-auto mr-1">
+                        <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                           <span>pro</span>
                         </span>
                       </div>
@@ -458,9 +456,10 @@ const Navbar = memo(
             )}
 
             {/* Chat History Button */}
-            <ChatHistoryButton onClickAction={onHistoryClick} />
-
-            {/* Memoized UserProfile component */}
+            {user && <ChatHistoryButton onClickAction={onHistoryClick} />}
+            {/* Navigation Menu - settings icon for general navigation */}
+            <NavigationMenu />
+            {/* User Profile - focused on authentication and account management */}
             <UserProfile
               user={user}
               subscriptionData={subscriptionData}

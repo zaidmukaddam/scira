@@ -14,7 +14,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     useCache: true,
-    optimizePackageImports: ['@phosphor-icons/react'],
+    optimizePackageImports: [
+      '@phosphor-icons/react',
+      'lucide-react',
+      '@hugeicons/react',
+      '@hugeicons/core-free-icons',
+      'date-fns',
+    ],
     serverActions: {
       bodySizeLimit: '10mb',
     },
@@ -73,6 +79,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    qualities: [75, 100],
     dangerouslyAllowSVG: true,
     remotePatterns: [
       {

@@ -157,22 +157,22 @@ const getContents = async (links: string[]) => {
 
     for (const url of failedUrls) {
       try {
-        const scrapeResponse = await firecrawl.scrapeUrl(url, {
+        const scrapeResponse = await firecrawl.scrape(url, {
           formats: ['markdown'],
         });
 
-        if (scrapeResponse.success && scrapeResponse.markdown) {
+        if (scrapeResponse.markdown) {
           console.log(`Firecrawl successfully scraped ${url}`);
 
           results.push({
             title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
             url: url,
             content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
-            publishedDate: scrapeResponse.metadata?.publishedDate || '',
+            publishedDate: scrapeResponse.metadata?.publishedDate as string || '',
             favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
           });
         } else {
-          console.error(`Firecrawl failed for ${url}:`, scrapeResponse.error);
+          console.error(`Firecrawl failed for ${url}:`, scrapeResponse);
         }
       } catch (firecrawlError) {
         console.error(`Firecrawl error for ${url}:`, firecrawlError);

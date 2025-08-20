@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import {
   SignOut,
   SignIn,
-  UserCircle,
   Eye,
   EyeSlash,
   Info,
@@ -25,13 +24,12 @@ import {
   GithubLogo,
   Bug,
   Sun,
-  Lightning,
   Gear,
   Code,
   Book,
 } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon, BinocularsIcon } from '@hugeicons/core-free-icons';
+import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
@@ -40,7 +38,7 @@ import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
-import { Mail } from 'lucide-react';
+import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -50,7 +48,164 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
   );
 };
 
-// Update the component to use memo
+// Navigation Menu Component - contains all the general navigation items
+const NavigationMenu = memo(() => {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session;
+  const [isOpen, setIsOpen] = useState(false);
+  const settingsIconRef = useRef<SettingsIconHandle>(null);
+
+  // Control the animation based on dropdown state
+  useEffect(() => {
+    if (isOpen) {
+      settingsIconRef.current?.startAnimation();
+    } else {
+      settingsIconRef.current?.stopAnimation();
+    }
+  }, [isOpen]);
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-md transition-colors cursor-pointer !size-6 !p-0 !m-0">
+              <SettingsIcon ref={settingsIconRef} size={18} />
+            </div>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={4}>
+          Menu
+        </TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent className="w-[240px] z-[110] mr-5">
+        {/* Lookout - only show if authenticated */}
+        {isAuthenticated && (
+          <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
+            <div className="w-full flex items-center gap-2">
+              <HugeiconsIcon size={16} icon={BinocularsIcon} />
+              <span>Lookout</span>
+            </div>
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href={'https://api.scira.ai/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <Code size={16} />
+            <span>API</span>
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
+          <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Sun size={16} />
+              <span className="text-sm">Theme</span>
+            </div>
+            <ThemeSwitcher />
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+
+        {/* About and Information */}
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/about" className="w-full flex items-center gap-2">
+            <Info size={16} />
+            <span>About</span>
+          </Link>
+        </DropdownMenuItem>
+        {/* Blog */}
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/blog" className="w-full flex items-center gap-2">
+            <Book size={16} />
+            <span>Blog</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/terms" className="w-full flex items-center gap-2">
+            <FileText size={16} />
+            <span>Terms</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/privacy-policy" className="w-full flex items-center gap-2">
+            <Shield size={16} />
+            <span>Privacy</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+
+        {/* Social and External Links */}
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href={'https://git.new/scira'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <GithubLogo size={16} />
+            <span>Github</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href={'https://x.com/sciraai'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <XLogo size={16} />
+            <span>X.com</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href={'https://www.instagram.com/scira.ai'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <InstagramLogoIcon size={16} />
+            <span>Instagram</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <VercelIcon size={14} />
+            <span>Deploy with Vercel</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <a
+            href={'https://scira.userjot.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2"
+          >
+            <Bug className="size-4" />
+            <span>Feature/Bug Request</span>
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+NavigationMenu.displayName = 'NavigationMenu';
+
+// User Profile Component - focused on user authentication and account management
 const UserProfile = memo(
   ({
     className,
@@ -119,45 +274,36 @@ const UserProfile = memo(
 
     return (
       <>
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                {isAuthenticated ? (
+        {isAuthenticated ? (
+          // Authenticated user - show avatar dropdown with account options
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn('p-0! m-0! focus:!outline-0 focus:!ring-0', signingOut && 'animate-pulse', className)}
+                    className={cn('!p-0 focus:!outline-0 focus:!ring-0', signingOut && 'animate-pulse', className)}
                     asChild
                   >
-                    <Avatar className="size-7 rounded-md border border-neutral-200 dark:border-neutral-700">
+                    <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700">
                       <AvatarImage
                         src={currentUser?.image ?? ''}
                         alt={currentUser?.name ?? ''}
-                        className="rounded-md p-0 m-0 size-7"
+                        className="rounded-md !p-0 !m-0 size-6"
                       />
-                      <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
+                      <AvatarFallback className="rounded-md text-sm !p-0 !m-0 size-6">
                         {currentUser?.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn('p-0! m-0! hover:bg-transparent!', signingIn && 'animate-pulse', className)}
-                  >
-                    <UserCircle className="size-6" />
-                  </Button>
-                )}
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={4}>
-              {isAuthenticated ? 'Account' : 'Sign In'}
-            </TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent className="w-[240px] z-[110] mr-5">
-            {isAuthenticated ? (
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={4}>
+                Account
+              </TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent className="w-[240px] z-[110] mr-5">
               <div className="p-3">
                 <div className="flex items-center gap-2">
                   <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700">
@@ -195,151 +341,21 @@ const UserProfile = memo(
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="p-3">
-                <div className="flex items-center gap-2">
-                  <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700">
-                    <AvatarFallback className="rounded-md">
-                      <UserCircle size={18} />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0">
-                    <p className="font-medium text-sm leading-none">Guest</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sign in to save your progress</p>
-                  </div>
+
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
+                <div className="w-full flex items-center gap-2">
+                  <Gear size={16} />
+                  <span>Settings</span>
                 </div>
-              </div>
-            )}
-
-            {isAuthenticated && (
-              <>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
-                  <div className="w-full flex items-center gap-2">
-                    <Gear size={16} />
-                    <span>Settings</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
-                  <div className="w-full flex items-center gap-2">
-                    <HugeiconsIcon size={16} icon={BinocularsIcon} />
-                    <span>Lookout</span>
-                  </div>
-                </DropdownMenuItem>
-              </>
-            )}
-
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://api.scira.ai/'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <Code size={16} />
-                <span>API</span>
-              </a>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
-              <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-2">
-                  <Sun size={16} />
-                  <span className="text-sm">Theme</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
+                <div className="w-full flex items-center gap-2">
+                  <HugeiconsIcon size={16} icon={BinocularsIcon} />
+                  <span>Lookout</span>
                 </div>
-                <ThemeSwitcher />
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
 
-            {/* About and Information */}
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href="/about" className="w-full flex items-center gap-2">
-                <Info size={16} />
-                <span>About</span>
-              </Link>
-            </DropdownMenuItem>
-            {/* Blog */}
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href="/blog" className="w-full flex items-center gap-2">
-                <Book size={16} />
-                <span>Blog</span>
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href="/terms" className="w-full flex items-center gap-2">
-                <FileText size={16} />
-                <span>Terms</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href="/privacy-policy" className="w-full flex items-center gap-2">
-                <Shield size={16} />
-                <span>Privacy</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Social and External Links */}
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://git.new/scira'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <GithubLogo size={16} />
-                <span>Github</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://x.com/sciraai'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <XLogo size={16} />
-                <span>X.com</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://www.instagram.com/scira.ai'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <InstagramLogoIcon size={16} />
-                <span>Instagram</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <VercelIcon size={14} />
-                <span>Deploy with Vercel</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <a
-                href={'https://scira.userjot.com'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-2"
-              >
-                <Bug className="size-4" />
-                <span>Feature/Bug Request</span>
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            {/* Auth */}
-            {isAuthenticated ? (
               <DropdownMenuItem
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
                 onClick={() =>
@@ -368,20 +384,30 @@ const UserProfile = memo(
                 <span>Sign Out</span>
                 <SignOut className="size-4" />
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                className="cursor-pointer w-full flex items-center justify-between gap-2"
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          // Unauthenticated user - show simple sign in button
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className={cn('px-3 py-1.5 text-sm', signingIn && 'animate-pulse', className)}
                 onClick={() => {
                   setSigningIn(true);
                   redirect('/sign-in');
                 }}
               >
-                <span>Sign In</span>
-                <SignIn className="size-4" />
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <SignIn className="size-4 mr-1.5" />
+                Sign In
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={4}>
+              Sign in to save your progress
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Settings Dialog */}
         <SettingsDialog
@@ -402,4 +428,4 @@ const UserProfile = memo(
 // Add a display name for the memoized component for better debugging
 UserProfile.displayName = 'UserProfile';
 
-export { UserProfile };
+export { UserProfile, NavigationMenu };

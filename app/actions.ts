@@ -141,6 +141,38 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   return title;
 }
 
+export async function enhancePrompt(raw: string) {
+  try {
+    const user = await getComprehensiveUserData();
+    if (!user || !user.isProUser) {
+      return { success: false, error: 'Pro subscription required' };
+    }
+
+    const system = `You are an expert prompt engineer.
+
+Guidelines (MANDATORY):
+- Preserve the user's original intent and constraints
+- Make the prompt specific, unambiguous, and actionable
+- Add missing context: entities, timeframe, location, format/constraints if implied
+- Remove fluff, pronouns, and vague language; use proper nouns when possible
+- Keep it concise (1-2 sentences extra max) but information-dense
+- Do NOT ask follow-up questions
+- Return ONLY the improved prompt text, with no quotes or commentary`;
+
+    const { text } = await generateText({
+      model: scira.languageModel('scira-grok-3'),
+      maxOutputTokens: 1024,
+      system,
+      prompt: raw,
+    });
+
+    return { success: true, enhanced: text.trim() };
+  } catch (error) {
+    console.error('Error enhancing prompt:', error);
+    return { success: false, error: 'Failed to enhance prompt' };
+  }
+}
+
 const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
 
 export async function generateSpeech(text: string) {
@@ -1134,9 +1166,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-        hasSubscription: true,
-        subscription: userData.polarSubscription,
-      }
+      hasSubscription: true,
+      subscription: userData.polarSubscription,
+    }
     : { hasSubscription: false };
 }
 

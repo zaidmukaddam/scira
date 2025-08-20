@@ -84,7 +84,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
-              <p className="text-xs text-muted-foreground">Access to all AI models including Grok 4, Claude and o3</p>
+              <p className="text-xs text-muted-foreground">Access to all AI models including Grok 4, Claude 4 Sonnet and GPT-5</p>
             </div>
           </div>
 

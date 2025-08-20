@@ -2,7 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
-import FirecrawlApp, { CrawlParams, CrawlStatusResponse } from '@mendable/firecrawl-js';
+import FirecrawlApp from '@mendable/firecrawl-js';
 
 export const retrieveTool = tool({
   description:
@@ -55,15 +55,15 @@ export const retrieveTool = tool({
       // Use Firecrawl as fallback
       if (usingFirecrawl) {
         try {
-          const scrapeResponse = await firecrawl.scrapeUrl(url, {
+          const scrapeResponse = await firecrawl.scrape(url, {
             formats: ['markdown'],
             onlyMainContent: true,
             parsePDF: true,
             maxAge: 14400000,
           });
 
-          if (!scrapeResponse.success) {
-            throw new Error(`Firecrawl failed: ${scrapeResponse.error}`);
+          if (!scrapeResponse) {
+            throw new Error(`Firecrawl failed: ${scrapeResponse}`);
           }
 
           console.log(`Firecrawl successfully scraped ${url}`);

@@ -64,6 +64,7 @@ import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { markdownJoinerTransform } from '@/lib/parser';
+import { ChatMessage } from '@/lib/types';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -260,7 +261,7 @@ export async function POST(req: Request) {
   });
 
   // Start streaming immediately while background operations continue
-  const stream = createUIMessageStream({
+  const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
@@ -295,6 +296,11 @@ export async function POST(req: Request) {
                   parts: messages[messages.length - 1].parts,
                   attachments: messages[messages.length - 1].experimental_attachments ?? [],
                   createdAt: new Date(),
+                  model: model,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  totalTokens: 0,
+                  completionTime: 0,
                 },
               ],
             });
@@ -341,10 +347,9 @@ export async function POST(req: Request) {
                   temperature: 0.7,
                   topP: 0.8,
                   minP: 0,
-                  presencePenalty: 1.5,
                 }
               : {}),
-        stopWhen: stepCountIs(3),
+        stopWhen: stepCountIs(5),
         maxRetries: 10,
         ...(model.includes('scira-5')
           ? {
@@ -444,7 +449,7 @@ export async function POST(req: Request) {
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-kimi-k2'),
+            model: scira.languageModel('scira-grok-3'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -484,7 +489,7 @@ export async function POST(req: Request) {
           console.log('Steps: ', event.steps);
           console.log('Messages: ', event.response.messages);
           console.log('Message content: ', event.response.messages[event.response.messages.length - 1].content);
-          console.log('Response Body: ', event.response.body);
+          console.log('Response: ', event.response);
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
           console.log('Usage: ', event.usage);
@@ -541,6 +546,19 @@ export async function POST(req: Request) {
       dataStream.merge(
         result.toUIMessageStream({
           sendReasoning: true,
+          messageMetadata: ({ part }) => {
+            if (part.type === 'finish') {
+              const processingTime = (Date.now() - requestStartTime) / 1000;
+              return {
+                model: model as string,
+                completionTime: processingTime,
+                createdAt: new Date().toISOString(),
+                totalTokens: part.totalUsage?.totalTokens ?? null,
+                inputTokens: part.totalUsage?.inputTokens ?? null,
+                outputTokens: part.totalUsage?.outputTokens ?? null,
+              };
+            }
+          },
         }),
       );
     },
@@ -563,6 +581,11 @@ export async function POST(req: Request) {
             createdAt: new Date(),
             attachments: [],
             chatId: id,
+            model: model,
+            completionTime: message.metadata?.completionTime ?? 0,
+            inputTokens: message.metadata?.inputTokens ?? 0,
+            outputTokens: message.metadata?.outputTokens ?? 0,
+            totalTokens: message.metadata?.totalTokens ?? 0,
           })),
         });
         console.log('Messages saved');

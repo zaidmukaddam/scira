@@ -14,16 +14,18 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { X, Check, ChevronsUpDown } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { X, Check, ChevronsUpDown, Wand2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
-import { checkImageModeration } from '@/app/actions';
-import { LockIcon } from '@phosphor-icons/react';
+import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
+import { DiscountConfig } from '@/lib/discount';
+import { PRICING } from '@/lib/constants';
+import { LockIcon, MagicWandIcon } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   CpuIcon,
@@ -32,11 +34,15 @@ import {
   AtomicPowerIcon,
   Crown02Icon,
   DocumentAttachmentIcon,
+  BinocularsIcon,
 } from '@hugeicons/core-free-icons';
+import { AudioLinesIcon } from '@/components/ui/audio-lines';
+import { GripIcon } from '@/components/ui/grip';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ChatMessage } from '@/lib/types';
+import { useLocation } from '@/hooks/use-location';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -77,6 +83,100 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
     const [open, setOpen] = useState(false);
+    const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
+
+    const location = useLocation();
+
+    // Fetch discount config when needed
+    const fetchDiscountConfig = useCallback(async () => {
+      if (discountConfig) return; // Already fetched
+
+      try {
+        const config = await getDiscountConfigAction();
+        setDiscountConfig(config);
+      } catch (error) {
+        console.error('Failed to fetch discount config:', error);
+      }
+    }, [discountConfig]);
+
+    // Calculate pricing with discounts
+    const calculatePricing = useCallback(() => {
+      const defaultUSDPrice = PRICING.PRO_MONTHLY;
+      const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
+
+      // Check if discount should be applied
+      const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
+      const shouldApplyDiscount = isDevMode
+        ? discountConfig?.code && discountConfig?.message
+        : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
+
+      if (!discountConfig || !shouldApplyDiscount) {
+        return {
+          usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
+          inr: location.isIndia
+            ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
+            : null,
+        };
+      }
+
+      // USD pricing: prefer explicit finalPrice over percentage
+      let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
+        originalPrice: defaultUSDPrice,
+        finalPrice: defaultUSDPrice,
+        hasDiscount: false,
+      };
+      if (typeof discountConfig.finalPrice === 'number') {
+        const original =
+          typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
+        usdPricing = {
+          originalPrice: original,
+          finalPrice: discountConfig.finalPrice,
+          hasDiscount: true,
+        };
+      } else if (typeof discountConfig.percentage === 'number') {
+        const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
+        const usdSavings = (base * discountConfig.percentage) / 100;
+        const usdFinalPrice = base - usdSavings;
+        usdPricing = {
+          originalPrice: base,
+          finalPrice: usdFinalPrice,
+          hasDiscount: true,
+        };
+      }
+
+      // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
+      let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
+      if (location.isIndia) {
+        if (typeof discountConfig.inrPrice === 'number') {
+          inrPricing = {
+            originalPrice: defaultINRPrice,
+            finalPrice: discountConfig.inrPrice,
+            hasDiscount: true,
+          };
+        } else if (typeof discountConfig.percentage === 'number') {
+          const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
+          const inrFinalPrice = defaultINRPrice - inrSavings;
+          inrPricing = {
+            originalPrice: defaultINRPrice,
+            finalPrice: inrFinalPrice,
+            hasDiscount: true,
+          };
+        } else {
+          inrPricing = {
+            originalPrice: defaultINRPrice,
+            finalPrice: defaultINRPrice,
+            hasDiscount: false,
+          };
+        }
+      }
+
+      return {
+        usd: usdPricing,
+        inr: inrPricing,
+      };
+    }, [discountConfig, location.isIndia]);
+
+    const pricing = calculatePricing();
 
     const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
       return (
@@ -177,6 +277,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
         if (requiresPro && !isProUser) {
           setSelectedProModel(model);
+          fetchDiscountConfig();
           setShowUpgradeDialog(true);
           return;
         }
@@ -278,6 +379,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 setShowSignInDialog(true);
                               } else if (requiresPro && !isProUser) {
                                 setSelectedProModel(model);
+                                fetchDiscountConfig();
                                 setShowUpgradeDialog(true);
                               }
                             }}
@@ -364,76 +466,166 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         </Popover>
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="sm:max-w-md p-0 gap-0 border !shadow-none">
-            <div className="p-6 space-y-5">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                    <HugeiconsIcon
-                      icon={Crown02Icon}
-                      size={16}
-                      color="currentColor"
-                      strokeWidth={1.5}
-                      className="text-primary-foreground"
-                    />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-medium text-foreground">{selectedProModel?.label} requires Pro</h2>
-                    <p className="text-sm text-muted-foreground">Upgrade to access premium AI models</p>
-                  </div>
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogTitle className="sr-only">Upgrade to Scira Pro</DialogTitle>
+
+            {/* Header */}
+            <div className="text-center space-y-2 pb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <HugeiconsIcon
+                  icon={Crown02Icon}
+                  size={24}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className="text-primary"
+                />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {selectedProModel?.label ? `${selectedProModel.label} requires Pro` : 'Unlock Pro Features'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {selectedProModel?.label
+                  ? 'Upgrade to access premium AI models and features'
+                  : 'Get enhanced capabilities and unlimited access'}
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-3 py-4">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={CpuIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
+                  <p className="text-xs text-muted-foreground">
+                    Access to all AI models including Grok 4, Claude and GPT-5
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Unlimited searches</p>
-                    <p className="text-xs text-muted-foreground">No daily limits or restrictions</p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={GlobalSearchIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Premium AI models</p>
-                    <p className="text-xs text-muted-foreground">Claude 4 Sonnet, Grok 4, advanced reasoning</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">PDF analysis</p>
-                    <p className="text-xs text-muted-foreground">Upload and analyze documents</p>
-                  </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
+                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
                 </div>
               </div>
 
-              <div className="bg-muted rounded-lg p-4 space-y-2">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-medium text-foreground">$15</span>
-                  <span className="text-sm text-muted-foreground">/month</span>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MagicWandIcon size={12} className="text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground">Cancel anytime</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
+                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
+                </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowUpgradeDialog(false)}
-                  className="flex-1 h-9 text-sm font-normal"
-                >
-                  Maybe later
-                </Button>
-                <Button
-                  onClick={() => {
-                    window.location.href = '/pricing';
-                  }}
-                  className="flex-1 h-9 text-sm font-normal"
-                >
-                  Upgrade now
-                </Button>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={BinocularsIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
+                </div>
               </div>
             </div>
+
+            {/* Pricing Section */}
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              {discountConfig &&
+                (() => {
+                  const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+                  const shouldShowDiscount = isDevMode
+                    ? discountConfig.code && discountConfig.message && discountConfig.percentage
+                    : discountConfig.enabled &&
+                      discountConfig.code &&
+                      discountConfig.message &&
+                      discountConfig.percentage;
+
+                  return (
+                    shouldShowDiscount && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
+                          {discountConfig.percentage}% OFF
+                        </div>
+                        {discountConfig.message && (
+                          <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>
+                        )}
+                      </div>
+                    )
+                  );
+                })()}
+              <div className="flex items-baseline gap-1">
+                {pricing.usd.hasDiscount ? (
+                  <>
+                    <span className="text-sm text-muted-foreground line-through">${pricing.usd.originalPrice}</span>
+                    <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice}</span>
+                )}
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              {pricing.inr && (
+                <div className="flex items-baseline gap-1">
+                  {pricing.inr.hasDiscount ? (
+                    <>
+                      <span className="text-sm text-muted-foreground line-through">₹{pricing.inr.originalPrice}</span>
+                      <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
+                  )}
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">Cancel anytime</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 pt-4">
+              <Button
+                onClick={() => {
+                  window.location.href = '/pricing';
+                }}
+                className="w-full"
+              >
+                Upgrade to Pro
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowUpgradeDialog(false)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                Not now
+              </Button>
+            </div>
+
+            {/* Additional info */}
+            <p className="text-xs text-muted-foreground text-center pt-2">Cancel anytime • Secure payment</p>
           </DialogContent>
         </Dialog>
 
@@ -995,6 +1187,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isTypewriting, setIsTypewriting] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
+
+  // Combined state for animations to avoid restart issues
+  const isEnhancementActive = isEnhancing || isTypewriting;
+  const audioLinesRef = useRef<any>(null);
+  const gripIconRef = useRef<any>(null);
+
+  const location = useLocation();
 
   const isProUser = useMemo(
     () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
@@ -1020,6 +1223,135 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     };
   }, [cleanupMediaRecorder]);
+
+  // Fetch discount config when needed
+  const fetchDiscountConfigForm = useCallback(async () => {
+    if (discountConfig) return; // Already fetched
+
+    try {
+      const config = await getDiscountConfigAction();
+      setDiscountConfig(config);
+    } catch (error) {
+      console.error('Failed to fetch discount config:', error);
+    }
+  }, [discountConfig]);
+
+  // Calculate pricing with discounts
+  const calculatePricing = useCallback(() => {
+    const defaultUSDPrice = PRICING.PRO_MONTHLY;
+    const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
+
+    console.log('calculatePricing called with:', {
+      discountConfig,
+      isIndia: location.isIndia,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
+    // Check if discount should be applied
+    const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
+    const shouldApplyDiscount = isDevMode
+      ? discountConfig?.code && discountConfig?.message
+      : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
+
+    console.log('Discount check:', {
+      isDevMode,
+      shouldApplyDiscount,
+      enabled: discountConfig?.enabled,
+      code: discountConfig?.code,
+      message: discountConfig?.message,
+      percentage: discountConfig?.percentage,
+    });
+
+    if (!discountConfig || !shouldApplyDiscount) {
+      console.log('No discount applied - returning default pricing');
+      return {
+        usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
+        inr: location.isIndia
+          ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
+          : null,
+      };
+    }
+
+    // USD pricing: prefer explicit finalPrice over percentage
+    let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
+      originalPrice: defaultUSDPrice,
+      finalPrice: defaultUSDPrice,
+      hasDiscount: false,
+    };
+    if (typeof discountConfig.finalPrice === 'number') {
+      const original =
+        typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
+      usdPricing = {
+        originalPrice: original,
+        finalPrice: discountConfig.finalPrice,
+        hasDiscount: true,
+      };
+    } else if (typeof discountConfig.percentage === 'number') {
+      const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
+      const usdSavings = (base * discountConfig.percentage) / 100;
+      const usdFinalPrice = base - usdSavings;
+      usdPricing = {
+        originalPrice: base,
+        finalPrice: usdFinalPrice,
+        hasDiscount: true,
+      };
+    }
+
+    // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
+    let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
+    if (location.isIndia) {
+      if (typeof discountConfig.inrPrice === 'number') {
+        inrPricing = {
+          originalPrice: defaultINRPrice,
+          finalPrice: discountConfig.inrPrice,
+          hasDiscount: true,
+        };
+      } else if (typeof discountConfig.percentage === 'number') {
+        const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
+        const inrFinalPrice = defaultINRPrice - inrSavings;
+        inrPricing = {
+          originalPrice: defaultINRPrice,
+          finalPrice: inrFinalPrice,
+          hasDiscount: true,
+        };
+      } else {
+        inrPricing = {
+          originalPrice: defaultINRPrice,
+          finalPrice: defaultINRPrice,
+          hasDiscount: false,
+        };
+      }
+    }
+
+    return {
+      usd: usdPricing,
+      inr: inrPricing,
+    };
+  }, [discountConfig, location.isIndia]);
+
+  const pricing = calculatePricing();
+
+  // Control audio lines animation
+  useEffect(() => {
+    if (audioLinesRef.current) {
+      if (isRecording) {
+        audioLinesRef.current.startAnimation();
+      } else {
+        audioLinesRef.current.stopAnimation();
+      }
+    }
+  }, [isRecording]);
+
+  // Control grip icon animation using combined state to avoid restarts
+  useEffect(() => {
+    if (gripIconRef.current) {
+      if (isEnhancementActive) {
+        gripIconRef.current.startAnimation();
+      } else {
+        gripIconRef.current.stopAnimation();
+      }
+    }
+  }, [isEnhancementActive]);
 
   // Global typing detection to auto-focus form
   useEffect(() => {
@@ -1076,6 +1408,90 @@ const FormComponent: React.FC<FormComponentProps> = ({
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, [isRecording, input, setInput]);
+
+  // Typewriter effect for enhanced text
+  const typewriterText = useCallback(
+    (text: string, speed: number = 30) => {
+      if (!inputRef.current) return;
+
+      setIsTypewriting(true);
+      let currentIndex = 0;
+
+      const typeNextChar = () => {
+        if (currentIndex <= text.length && inputRef.current) {
+          const currentText = text.substring(0, currentIndex);
+          setInput(currentText);
+
+          // Auto-resize textarea during typing
+          if (inputRef.current) {
+            inputRef.current.style.height = 'auto';
+            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+          }
+
+          currentIndex++;
+
+          if (currentIndex <= text.length) {
+            setTimeout(typeNextChar, speed);
+          } else {
+            setIsTypewriting(false);
+          }
+        }
+      };
+
+      typeNextChar();
+    },
+    [setInput, inputRef],
+  );
+
+  const handleEnhance = useCallback(async () => {
+    if (!isProUser) {
+      fetchDiscountConfigForm();
+      setShowUpgradeDialog(true);
+      return;
+    }
+    if (!input || input.trim().length === 0) {
+      toast.error('Please enter a prompt to enhance');
+      return;
+    }
+    if (isProcessing || isEnhancing) return;
+
+    const originalInput = input;
+
+    try {
+      setIsEnhancing(true);
+      toast.loading('Enhancing your prompt...', { id: 'enhance-prompt' });
+
+      const result = await enhancePrompt(input);
+
+      if (result?.success && result.enhanced) {
+        // Clear input and start typewriter
+        setInput('');
+        typewriterText(result.enhanced);
+
+        toast.success('✨ Prompt enhanced successfully!', { id: 'enhance-prompt' });
+        setIsEnhancing(false);
+        inputRef.current?.focus();
+      } else {
+        setInput(originalInput);
+        toast.error(result?.error || 'Failed to enhance prompt', { id: 'enhance-prompt' });
+        setIsEnhancing(false);
+      }
+    } catch (e) {
+      setInput(originalInput);
+      toast.error('Failed to enhance prompt', { id: 'enhance-prompt' });
+      setIsEnhancing(false);
+    }
+  }, [
+    input,
+    isProcessing,
+    isProUser,
+    setInput,
+    inputRef,
+    typewriterText,
+    isEnhancing,
+    setShowUpgradeDialog,
+    fetchDiscountConfigForm,
+  ]);
 
   const handleRecord = useCallback(async () => {
     if (isRecording && mediaRecorderRef.current) {
@@ -1210,10 +1626,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleGroupSelect = useCallback(
     (group: SearchGroup) => {
-      setSelectedGroup(group.id);
-      inputRef.current?.focus();
+      if (!isEnhancing && !isTypewriting) {
+        setSelectedGroup(group.id);
+        inputRef.current?.focus();
+      }
     },
-    [setSelectedGroup, inputRef],
+    [setSelectedGroup, inputRef, isEnhancing, isTypewriting],
   );
 
   const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
@@ -1919,7 +2337,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         <div
           className={cn(
             'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
-            hasInteracted ? 'z-51' : '',
+            hasInteracted ? 'z-50' : 'z-10',
             isDragging && 'ring-1 ring-border',
             attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/50 p-1' : 'bg-transparent',
           )}
@@ -2005,7 +2423,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           {/* Form container */}
           <div className="relative">
-            <div className="rounded-xl bg-muted border border-border focus-within:border-ring transition-colors duration-200">
+            <div
+              className={cn(
+                'rounded-xl !bg-muted border border-border focus-within:border-ring transition-all duration-200',
+                (isEnhancing || isTypewriting) && '!bg-muted',
+              )}
+            >
               {isRecording ? (
                 <Textarea
                   ref={inputRef}
@@ -2015,9 +2438,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   className={cn(
                     'w-full rounded-xl rounded-b-none md:text-base!',
                     'text-base leading-relaxed',
-                    'bg-muted',
+                    '!bg-muted',
                     'border-0!',
-                    'text-muted-foreground',
+                    '!text-muted-foreground',
                     'focus:ring-0! focus-visible:ring-0!',
                     'px-4! py-4!',
                     'touch-manipulation',
@@ -2036,9 +2459,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
               ) : (
                 <Textarea
                   ref={inputRef}
-                  placeholder={hasInteracted ? 'Ask a new question...' : 'Ask a question...'}
+                  placeholder={
+                    isEnhancing
+                      ? '✨ Enhancing your prompt...'
+                      : isTypewriting
+                        ? '✨ Writing enhanced prompt...'
+                        : hasInteracted
+                          ? 'Ask a new question...'
+                          : 'Ask a question...'
+                  }
                   value={input}
                   onChange={handleInput}
+                  disabled={isEnhancing || isTypewriting}
                   onInput={(e) => {
                     // Auto-resize textarea based on content
                     const target = e.target as HTMLTextAreaElement;
@@ -2075,6 +2507,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     '!px-4 !py-4',
                     'touch-manipulation',
                     'whatsize',
+                    'transition-all duration-200',
+                    (isEnhancing || isTypewriting) && 'text-muted-foreground cursor-wait',
                   )}
                   style={{
                     WebkitUserSelect: 'text',
@@ -2083,11 +2517,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     resize: 'none',
                   }}
                   rows={1}
-                  autoFocus={true}
+                  autoFocus={!isEnhancing && !isTypewriting}
                   onCompositionStart={() => (isCompositionActive.current = true)}
                   onCompositionEnd={() => (isCompositionActive.current = false)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={handlePaste}
+                  onKeyDown={isEnhancing || isTypewriting ? undefined : handleKeyDown}
+                  onPaste={isEnhancing || isTypewriting ? undefined : handlePaste}
                 />
               )}
 
@@ -2095,9 +2529,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
               <div
                 className={cn(
                   'flex justify-between items-center rounded-t-none rounded-b-xl',
-                  'bg-muted',
+                  '!bg-muted',
                   'border-t-0 border-border!',
                   'p-2 gap-2',
+                  'transition-all duration-200',
+                  (isEnhancing || isTypewriting) && 'pointer-events-none',
+                  isRecording && '!bg-muted text-muted-foreground',
                 )}
               >
                 <div className={cn('flex items-center gap-2')}>
@@ -2121,7 +2558,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   />
                 </div>
 
-                <div className={cn('flex items-center flex-shrink-0 gap-2')}>
+                <div className={cn('flex items-center flex-shrink-0 gap-1')}>
                   {hasVisionSupport(selectedModel) && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
@@ -2132,8 +2569,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            triggerFileInput();
+                            if (!isEnhancing && !isTypewriting) {
+                              triggerFileInput();
+                            }
                           }}
+                          disabled={isEnhancing || isTypewriting}
                         >
                           <span className="block">
                             <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} />
@@ -2155,6 +2595,64 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </Tooltip>
                   )}
 
+                  {/* Show enhance button when there's input */}
+                  {(input.length > 0 || isEnhancing || isTypewriting) && (
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className={cn(
+                            'group rounded-full transition-colors duration-200 !size-8 border-0 !shadow-none hover:!bg-primary/30 hover:!border-0',
+                            isEnhancementActive && 'bg-primary/10 border-primary/20',
+                          )}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (!isEnhancing && !isTypewriting) {
+                              handleEnhance();
+                            }
+                          }}
+                          disabled={
+                            isEnhancing ||
+                            isTypewriting ||
+                            uploadQueue.length > 0 ||
+                            status !== 'ready' ||
+                            isLimitBlocked
+                          }
+                        >
+                          <span className="block">
+                            {isEnhancementActive ? (
+                              <GripIcon ref={gripIconRef} size={16} className="text-primary" />
+                            ) : (
+                              <Wand2 className="h-4 w-4" />
+                            )}
+                          </span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={6}
+                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">
+                            {isEnhancing ? 'Enhancing…' : isTypewriting ? 'Writing…' : 'Enhance Prompt'}
+                          </span>
+                          <span className="text-[10px] text-accent leading-tight">
+                            {isEnhancing
+                              ? 'Using AI to improve your prompt'
+                              : isTypewriting
+                                ? 'Typing enhanced prompt'
+                                : isProUser
+                                  ? 'Enhance your prompt with AI'
+                                  : 'Enhance your prompt with AI (Pro feature)'}
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
                   {isProcessing ? (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
@@ -2165,8 +2663,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            stop();
+                            if (!isEnhancing && !isTypewriting) {
+                              stop();
+                            }
                           }}
+                          disabled={isEnhancing || isTypewriting}
                         >
                           <span className="block">
                             <StopIcon size={14} />
@@ -2181,7 +2682,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <span className="font-medium text-[11px]">Stop Generation</span>
                       </TooltipContent>
                     </Tooltip>
-                  ) : input.length === 0 && attachments.length === 0 ? (
+                  ) : input.length === 0 && attachments.length === 0 && !isEnhancing && !isTypewriting ? (
                     /* Show Voice Recording Button when no input */
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
@@ -2192,11 +2693,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            handleRecord();
+                            if (!isEnhancing && !isTypewriting) {
+                              handleRecord();
+                            }
                           }}
+                          disabled={isEnhancing || isTypewriting}
                         >
                           <span className="block">
-                            <HugeiconsIcon icon={AiMicIcon} size={16} color="currentColor" strokeWidth={1.5} />
+                            <AudioLinesIcon ref={audioLinesRef} size={16} />
                           </span>
                         </Button>
                       </TooltipTrigger>
@@ -2225,14 +2729,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            submitForm();
+                            if (!isEnhancing && !isTypewriting) {
+                              submitForm();
+                            }
                           }}
                           disabled={
-                            (input.length === 0 && attachments.length === 0) ||
+                            (input.length === 0 && attachments.length === 0 && !isEnhancing && !isTypewriting) ||
                             uploadQueue.length > 0 ||
                             status !== 'ready' ||
                             isLimitBlocked ||
-                            isRecording
+                            isEnhancing ||
+                            isTypewriting
                           }
                         >
                           <span className="block">
@@ -2254,6 +2761,165 @@ const FormComponent: React.FC<FormComponentProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Pro Upgrade Dialog */}
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogTitle className="sr-only">Upgrade to Scira Pro</DialogTitle>
+
+            {/* Header */}
+            <div className="text-center space-y-2 pb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <HugeiconsIcon
+                  icon={Crown02Icon}
+                  size={24}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className="text-primary"
+                />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">Unlock Pro Features</h2>
+              <p className="text-sm text-muted-foreground">Get enhanced capabilities including prompt enhancement</p>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-3 py-4">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MagicWandIcon size={12} className="text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
+                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={GlobalSearchIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
+                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={CpuIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
+                  <p className="text-xs text-muted-foreground">
+                    Access to all AI models including Grok 4, Claude and GPT-5
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <HugeiconsIcon
+                    icon={BinocularsIcon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              {discountConfig &&
+                (() => {
+                  const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+                  const shouldShowDiscount = isDevMode
+                    ? discountConfig.code && discountConfig.message && discountConfig.percentage
+                    : discountConfig.enabled &&
+                      discountConfig.code &&
+                      discountConfig.message &&
+                      discountConfig.percentage;
+
+                  return (
+                    shouldShowDiscount && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
+                          {discountConfig.percentage}% OFF
+                        </div>
+                        {discountConfig.message && (
+                          <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>
+                        )}
+                      </div>
+                    )
+                  );
+                })()}
+              <div className="flex items-baseline gap-1">
+                {pricing.usd.hasDiscount ? (
+                  <>
+                    <span className="text-sm text-muted-foreground line-through">${pricing.usd.originalPrice}</span>
+                    <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice}</span>
+                )}
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              {pricing.inr && (
+                <div className="flex items-baseline gap-1">
+                  {pricing.inr.hasDiscount ? (
+                    <>
+                      <span className="text-sm text-muted-foreground line-through">₹{pricing.inr.originalPrice}</span>
+                      <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
+                  )}
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">Cancel anytime</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 pt-4">
+              <Button
+                onClick={() => {
+                  window.location.href = '/pricing';
+                }}
+                className="w-full"
+              >
+                Upgrade to Pro
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowUpgradeDialog(false)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                Not now
+              </Button>
+            </div>
+
+            {/* Additional info */}
+            <p className="text-xs text-muted-foreground text-center pt-2">Cancel anytime • Secure payment</p>
+          </DialogContent>
+        </Dialog>
       </TooltipProvider>
     </div>
   );

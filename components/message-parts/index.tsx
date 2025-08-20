@@ -13,7 +13,7 @@ import { Wave } from '@foobar404/wave';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { RepeatIcon, Copy01Icon, Share03Icon } from '@hugeicons/core-free-icons';
+import { RepeatIcon, Copy01Icon, Share03Icon, CpuIcon } from '@hugeicons/core-free-icons';
 import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
@@ -45,7 +45,8 @@ import {
   Pause,
   Play as PlayIcon,
 } from 'lucide-react';
-import { RedditLogo, XLogo, Clock as PhosphorClock, Memory } from '@phosphor-icons/react';
+import { RedditLogo, XLogo, Clock as PhosphorClock, Memory, ArrowLeft, ArrowRight, Sigma } from '@phosphor-icons/react';
+import { getModelConfig } from '@/ai/providers';
 
 // Lazy load tool components
 const FlightTracker = lazy(() =>
@@ -338,6 +339,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         return <div key={`${messageIndex}-${partIndex}-empty`}></div>;
       }
 
+      // Pre-compute metadata presentation values
+      const meta = message?.metadata;
+      const modelConfig = meta?.model ? getModelConfig(meta.model) : null;
+      const modelLabel = modelConfig?.label ?? meta?.model ?? null;
+      const tokenTotal = (meta?.totalTokens ?? (meta?.inputTokens ?? 0) + (meta?.outputTokens ?? 0)) || null;
+      const inputCount = meta?.inputTokens ?? null;
+      const outputCount = meta?.outputTokens ?? null;
+
       // Detect text sandwiched between step-start and tool-invocation
       const prevPart = parts[partIndex - 1];
       const nextPart = parts[partIndex + 1];
@@ -355,7 +364,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
           {/* Add compact buttons below the text with tooltips */}
           {status === 'ready' && (
-            <div className="flex items-center gap-1 mt-2.5 mb-5 !-ml-1">
+            <div className="flex flex-wrap items-center gap-1 mt-2.5 mb-5 !-ml-1">
               {/* Only show reload for owners OR unauthenticated users on private chats */}
               {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                 <TooltipProvider>
@@ -451,6 +460,91 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <TooltipContent>Copy</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              {/* Message metadata stats (model, time, tokens) */}
+              {meta && (
+                <div className="ml-auto flex items-center gap-1">
+                  {modelLabel && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-900 bg-primary/70 rounded-md px-2 py-0.25">
+                            <HugeiconsIcon
+                              icon={CpuIcon}
+                              size={14}
+                              color="currentColor"
+                              strokeWidth={2}
+                            />
+                            {modelLabel}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>AI model used for this response</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {typeof meta.completionTime === 'number' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-0"
+                          >
+                            <Clock />
+                            {meta.completionTime.toFixed(1)}s
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>Response generation time</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+
+                  {/* Token count badges - minimal and professional */}
+                  {(inputCount != null || outputCount != null) && (
+                    <div className="flex items-center gap-1 ml-1">
+                      {inputCount != null && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" className="text-xs">
+                                <ArrowLeft weight="regular" />
+                                {inputCount.toLocaleString()}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Input tokens consumed</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {outputCount != null && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" className="text-xs">
+                                <ArrowRight weight="regular" />
+                                {outputCount.toLocaleString()}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Output tokens generated</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {tokenTotal != null && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-xs">
+                                <Sigma className="h-3 w-3" weight="regular" />
+                                {tokenTotal.toLocaleString()}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Total tokens used</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1542,7 +1636,6 @@ const ToolPartRenderer = memo(
                       className="w-full h-full object-cover"
                       width={128}
                       height={128}
-                      quality={100}
                       unoptimized
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -1561,7 +1654,6 @@ const ToolPartRenderer = memo(
                           alt=""
                           width={64}
                           height={64}
-                          quality={100}
                           unoptimized
                           onError={(e) => {
                             e.currentTarget.src = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
@@ -1578,7 +1670,6 @@ const ToolPartRenderer = memo(
                           alt=""
                           width={64}
                           height={64}
-                          quality={100}
                           unoptimized
                           onError={(e) => {
                             e.currentTarget.src =

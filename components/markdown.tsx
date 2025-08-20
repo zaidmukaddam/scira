@@ -494,60 +494,120 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
   InlineCode.displayName = 'InlineCode';
 
-  const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
+    const [showActions, setShowActions] = React.useState(false);
+    const hideTimeoutRef = React.useRef<number | null>(null);
 
-    const escapeCsvValue = React.useCallback((value: string) => {
-      const needsQuotes = /[",\n]/.test(value);
-      const escaped = value.replace(/"/g, '""');
-      return needsQuotes ? `"${escaped}"` : escaped;
-    }, []);
+    // Memoized CSV utilities - only recreate when needed
+    const csvUtils = React.useMemo(() => ({
+      escapeCsvValue: (value: string): string => {
+        const needsQuotes = /[",\n]/.test(value);
+        const escaped = value.replace(/"/g, '""');
+        return needsQuotes ? `"${escaped}"` : escaped;
+      },
+      
+      buildCsvFromTable: (table: HTMLTableElement): string => {
+        const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
+        const csvLines: string[] = [];
 
-    const buildCsvFromTable = React.useCallback((table: HTMLTableElement) => {
-      const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
-      const csvLines: string[] = [];
-
-      rows.forEach((row) => {
-        const cells = Array.from(row.querySelectorAll('th,td')) as (HTMLTableCellElement)[];
-        const line = cells
-          .map((cell) => escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
-          .join(',');
-        if (cells.length > 0) {
-          csvLines.push(line);
+        for (const row of rows) {
+          const cells = Array.from(row.querySelectorAll('th,td')) as HTMLTableCellElement[];
+          if (cells.length > 0) {
+            const line = cells
+              .map((cell) => csvUtils.escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
+              .join(',');
+            csvLines.push(line);
+          }
         }
-      });
 
-      return csvLines.join('\n');
-    }, [escapeCsvValue]);
+        return csvLines.join('\n');
+      }
+    }), []);
 
+    // Lazy CSV download handler - only runs when actually clicked
     const handleDownloadCsv = React.useCallback(() => {
       const tableEl = containerRef.current?.querySelector('[data-slot="table"]') as HTMLTableElement | null;
       if (!tableEl) return;
 
-      const csv = buildCsvFromTable(tableEl);
-      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[:T]/g, '-')
-        .replace(/\..+/, '');
-      a.href = url;
-      a.download = `table-${timestamp}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, [buildCsvFromTable]);
+      try {
+        const csv = csvUtils.buildCsvFromTable(tableEl);
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+        a.href = url;
+        a.download = `table-${timestamp}.csv`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Failed to download CSV:', error);
+      }
+    }, [csvUtils]);
+
+    // Optimized mouse event handlers
+    const handleMouseEnter = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShowActions(true);
+    }, []);
+
+    const handleMouseLeave = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+      setShowActions(false);
+    }, []);
+
+    const handleTouchStart = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShowActions(true);
+    }, []);
+
+    const handleTouchEnd = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+      hideTimeoutRef.current = window.setTimeout(() => setShowActions(false), 1500);
+    }, []);
+
+    // Cleanup timeout on unmount
+    React.useEffect(() => {
+      return () => {
+        if (hideTimeoutRef.current) {
+          window.clearTimeout(hideTimeoutRef.current);
+        }
+      };
+    }, []);
 
     return (
-      <div className="relative group">
-        <div className="absolute -top-3 -right-1 z-10">
+      <div
+        className="relative group"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          className={cn(
+            'absolute -top-3 -right-3 z-10 transition-opacity duration-200',
+            showActions ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100',
+          )}
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 size="icon"
-                className="size-7 text-xs shadow-sm"
+                variant="outline"
+                className="size-7 text-xs shadow-sm rounded-sm"
                 onClick={handleDownloadCsv}
                 aria-label="Download CSV"
                 title="Download CSV"
@@ -555,7 +615,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
                 <Download className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="left" sideOffset={6}>
+            <TooltipContent side="right" sideOffset={2}>
               Download CSV
             </TooltipContent>
           </Tooltip>
@@ -565,7 +625,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         </div>
       </div>
     );
-  };
+  });
+
+  MarkdownTableWithActions.displayName = 'MarkdownTableWithActions';
 
   const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
     const domain = new URL(href).hostname;

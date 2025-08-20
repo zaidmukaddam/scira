@@ -8,7 +8,7 @@ import 'katex/dist/katex.min.css';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
 
 // Third-party library imports
-import { useChat, UseChatOptions } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
@@ -228,7 +228,7 @@ const ChatInterface = memo(
           };
         },
       }),
-      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 100,
+      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 50,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
         setDataStream((ds) => {
