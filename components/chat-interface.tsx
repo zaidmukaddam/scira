@@ -84,7 +84,7 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily'>('scira-search-provider', 'parallel');
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>('scira-search-provider', 'parallel');
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(

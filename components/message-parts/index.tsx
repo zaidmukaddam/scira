@@ -364,113 +364,117 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
           {/* Add compact buttons below the text with tooltips */}
           {status === 'ready' && (
-            <div className="flex flex-wrap items-center gap-1 mt-2.5 mb-5 !-ml-1">
-              {/* Only show reload for owners OR unauthenticated users on private chats */}
-              {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={async () => {
-                          try {
-                            const lastUserMessage = messages.findLast((m) => m.role === 'user');
-                            if (!lastUserMessage) return;
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2.5 mb-5 !-ml-1">
+              {/* Action buttons container */}
+              <div className="flex flex-wrap items-center gap-1">
+                {/* Only show reload for owners OR unauthenticated users on private chats */}
+                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async () => {
+                            try {
+                              const lastUserMessage = messages.findLast((m) => m.role === 'user');
+                              if (!lastUserMessage) return;
 
-                            // Step 1: Delete trailing messages if user is authenticated
-                            if (user && lastUserMessage.id) {
-                              await deleteTrailingMessages({
-                                id: lastUserMessage.id,
-                              });
-                            }
-
-                            // Step 2: Update local state to remove assistant messages
-                            const newMessages = [];
-                            // Find the index of the last user message
-                            for (let i = 0; i < messages.length; i++) {
-                              newMessages.push(messages[i]);
-                              if (messages[i].id === lastUserMessage.id) {
-                                break;
+                              // Step 1: Delete trailing messages if user is authenticated
+                              if (user && lastUserMessage.id) {
+                                await deleteTrailingMessages({
+                                  id: lastUserMessage.id,
+                                });
                               }
+
+                              // Step 2: Update local state to remove assistant messages
+                              const newMessages = [];
+                              // Find the index of the last user message
+                              for (let i = 0; i < messages.length; i++) {
+                                newMessages.push(messages[i]);
+                                if (messages[i].id === lastUserMessage.id) {
+                                  break;
+                                }
+                              }
+
+                              // Step 3: Update UI state
+                              setMessages(newMessages);
+                              setSuggestedQuestions([]);
+
+                              // Step 4: Reload
+                              await regenerate();
+                            } catch (error) {
+                              console.error('Error in reload:', error);
                             }
-
-                            // Step 3: Update UI state
-                            setMessages(newMessages);
-                            setSuggestedQuestions([]);
-
-                            // Step 4: Reload
-                            await regenerate();
-                          } catch (error) {
-                            console.error('Error in reload:', error);
-                          }
-                        }}
-                        className="size-8 p-0 rounded-full"
-                      >
-                        <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Rewrite</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {/* Only show share for authenticated owners */}
-              {user && isOwner && selectedVisibilityType === 'private' && chatId && onVisibilityChange && (
+                          }}
+                          className="size-8 p-0 rounded-full"
+                        >
+                          <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Rewrite</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {/* Only show share for authenticated owners */}
+                {user && isOwner && selectedVisibilityType === 'private' && chatId && onVisibilityChange && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async () => {
+                            try {
+                              await onVisibilityChange('public');
+                              const url = `${window.location.origin}/search/${chatId}`;
+                              await navigator.clipboard.writeText(url);
+                              toast.success('Link copied to clipboard');
+                            } catch (error) {
+                              console.error('Error sharing chat:', error);
+                              toast.error('Failed to share chat');
+                            }
+                          }}
+                          className="size-8 p-0 rounded-full"
+                        >
+                          <HugeiconsIcon icon={Share03Icon} size={32} color="currentColor" strokeWidth={2} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Share</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={async () => {
-                          try {
-                            await onVisibilityChange('public');
-                            const url = `${window.location.origin}/search/${chatId}`;
-                            await navigator.clipboard.writeText(url);
-                            toast.success('Link copied to clipboard');
-                          } catch (error) {
-                            console.error('Error sharing chat:', error);
-                            toast.error('Failed to share chat');
-                          }
+                        onClick={() => {
+                          navigator.clipboard.writeText(part.text);
+                          toast.success('Copied to clipboard');
                         }}
                         className="size-8 p-0 rounded-full"
                       >
-                        <HugeiconsIcon icon={Share03Icon} size={32} color="currentColor" strokeWidth={2} />
+                        <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Share</TooltipContent>
+                    <TooltipContent>Copy</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        navigator.clipboard.writeText(part.text);
-                        toast.success('Copied to clipboard');
-                      }}
-                      className="size-8 p-0 rounded-full"
-                    >
-                      <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Copy</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              </div>
 
               {/* Message metadata stats (model, time, tokens) */}
               {meta && (
-                <div className="ml-auto flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
                   {modelLabel && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1 text-xs text-primary-foreground bg-primary rounded-md px-2 py-0.75">
                             <HugeiconsIcon icon={CpuIcon} size={12} color="currentColor" strokeWidth={2} />
-                            {modelLabel}
+                            <span className="hidden xs:inline">{modelLabel}</span>
+                            <span className="xs:hidden">{modelLabel.split('-')[0]}</span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>AI model used for this response</TooltipContent>
@@ -481,7 +485,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="text-xs">
                             <Clock />
                             {meta.completionTime.toFixed(1)}s
                           </Badge>
@@ -493,14 +497,15 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                   {/* Token count badges - minimal and professional */}
                   {(inputCount != null || outputCount != null) && (
-                    <div className="flex items-center gap-1 ml-1">
+                    <div className="flex items-center gap-1">
                       {inputCount != null && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Badge variant="secondary" className="text-xs">
                                 <ArrowLeft weight="regular" />
-                                {inputCount.toLocaleString()}
+                                <span className="hidden xs:inline">{inputCount.toLocaleString()}</span>
+                                <span className="xs:hidden">{inputCount > 999 ? `${Math.floor(inputCount/1000)}k` : inputCount}</span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Input tokens consumed</TooltipContent>
@@ -513,7 +518,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             <TooltipTrigger asChild>
                               <Badge variant="secondary" className="text-xs">
                                 <ArrowRight weight="regular" />
-                                {outputCount.toLocaleString()}
+                                <span className="hidden xs:inline">{outputCount.toLocaleString()}</span>
+                                <span className="xs:hidden">{outputCount > 999 ? `${Math.floor(outputCount/1000)}k` : outputCount}</span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Output tokens generated</TooltipContent>
@@ -526,7 +532,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             <TooltipTrigger asChild>
                               <Badge variant="outline" className="text-xs">
                                 <Sigma className="h-3 w-3" weight="regular" />
-                                {tokenTotal.toLocaleString()}
+                                <span className="hidden xs:inline">{tokenTotal.toLocaleString()}</span>
+                                <span className="xs:hidden">{tokenTotal > 999 ? `${Math.floor(tokenTotal/1000)}k` : tokenTotal}</span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Total tokens used</TooltipContent>

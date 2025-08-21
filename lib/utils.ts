@@ -30,79 +30,101 @@ export type SearchGroupId =
   | 'memory'
   | 'crypto';
 
-export const searchGroups = [
-  {
-    id: 'web' as const,
-    name: 'Web',
-    description: 'Search across the entire internet powered by Exa AI',
-    icon: GlobalSearchIcon,
-    show: true,
-  },
-  {
-    id: 'x' as const,
-    name: 'X',
-    description: 'Search X posts',
-    icon: NewTwitterIcon,
-    show: true,
-  },
-  {
-    id: 'stocks' as const,
-    name: 'Stocks',
-    description: 'Stock and currency information',
-    icon: AppleStocksIcon,
-    show: true,
-  },
-  {
-    id: 'reddit' as const,
-    name: 'Reddit',
-    description: 'Search Reddit posts',
-    icon: RedditIcon,
-    show: true,
-  },
-  {
-    id: 'academic' as const,
-    name: 'Academic',
-    description: 'Search academic papers powered by Exa',
-    icon: MicroscopeIcon,
-    show: true,
-  },
-  {
-    id: 'chat' as const,
-    name: 'Chat',
-    description: 'Talk to the model directly.',
-    icon: ChattingIcon,
-    show: true,
-  },
-  {
-    id: 'memory' as const,
-    name: 'Memory',
-    description: 'Your personal memory companion',
-    icon: Database02Icon,
-    show: true,
-    requireAuth: true,
-  },
-  {
-    id: 'crypto' as const,
-    name: 'Crypto',
-    description: 'Cryptocurrency research powered by CoinGecko',
-    icon: Bitcoin02Icon,
-    show: true,
-  },
-  {
-    id: 'youtube' as const,
-    name: 'YouTube',
-    description: 'Search YouTube videos powered by Exa',
-    icon: YoutubeIcon,
-    show: true,
-  },
-  {
-    id: 'extreme' as const,
-    name: 'Extreme',
-    description: 'Deep research with multiple sources and analysis',
-    icon: AtomicPowerIcon,
-    show: true,
-  },
-] as const;
+// Search provider information for dynamic descriptions
+export const searchProviderInfo = {
+  parallel: 'Parallel AI',
+  exa: 'Exa',
+  tavily: 'Tavily',
+  firecrawl: 'Firecrawl',
+} as const;
+
+export type SearchProvider = keyof typeof searchProviderInfo;
+
+// Function to get dynamic web search description based on selected provider
+export function getWebSearchDescription(provider: SearchProvider = 'parallel'): string {
+  const providerName = searchProviderInfo[provider];
+  return `Search across the entire internet powered by ${providerName}`;
+}
+
+// Function to get search groups with dynamic descriptions
+export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
+  return [
+    {
+      id: 'web' as const,
+      name: 'Web',
+      description: getWebSearchDescription(searchProvider),
+      icon: GlobalSearchIcon,
+      show: true,
+    },
+    {
+      id: 'x' as const,
+      name: 'X',
+      description: 'Search X posts',
+      icon: NewTwitterIcon,
+      show: true,
+    },
+    {
+      id: 'stocks' as const,
+      name: 'Stocks',
+      description: 'Stock and currency information',
+      icon: AppleStocksIcon,
+      show: true,
+    },
+    {
+      id: 'reddit' as const,
+      name: 'Reddit',
+      description: 'Search Reddit posts',
+      icon: RedditIcon,
+      show: true,
+    },
+    {
+      id: 'academic' as const,
+      name: 'Academic',
+      description: 'Search academic papers powered by Exa',
+      icon: MicroscopeIcon,
+      show: true,
+    },
+    {
+      id: 'chat' as const,
+      name: 'Chat',
+      description: 'Talk to the model directly.',
+      icon: ChattingIcon,
+      show: true,
+    },
+    {
+      id: 'memory' as const,
+      name: 'Memory',
+      description: 'Your personal memory companion',
+      icon: Database02Icon,
+      show: true,
+      requireAuth: true,
+    },
+    {
+      id: 'crypto' as const,
+      name: 'Crypto',
+      description: 'Cryptocurrency research powered by CoinGecko',
+      icon: Bitcoin02Icon,
+      show: true,
+    },
+    {
+      id: 'youtube' as const,
+      name: 'YouTube',
+      description: 'Search YouTube videos powered by Exa',
+      icon: YoutubeIcon,
+      show: true,
+    },
+    {
+      id: 'extreme' as const,
+      name: 'Extreme',
+      description: 'Deep research with multiple sources and analysis',
+      icon: AtomicPowerIcon,
+      show: true,
+    },
+  ] as const;
+}
+
+// Keep the static searchGroups for backward compatibility
+export const searchGroups = getSearchGroups();
 
 export type SearchGroup = (typeof searchGroups)[number];
 

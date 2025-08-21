@@ -16,7 +16,7 @@ import {
 } from '@/ai/providers';
 import { X, Check, ChevronsUpDown, Wand2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { cn, SearchGroup, SearchGroupId, searchGroups } from '@/lib/utils';
+import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -43,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ChatMessage } from '@/lib/types';
 import { useLocation } from '@/hooks/use-location';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -980,17 +981,23 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const isExtreme = selectedGroup === 'extreme';
+  
+  // Get search provider from localStorage with reactive updates
+  const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
+
+  // Get dynamic search groups based on the selected search provider
+  const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
 
   // Memoize visible groups calculation
   const visibleGroups = useMemo(
     () =>
-      searchGroups.filter((group) => {
+      dynamicSearchGroups.filter((group) => {
         if (!group.show) return false;
         if ('requireAuth' in group && group.requireAuth && !session) return false;
         if (group.id === 'extreme') return false; // Exclude extreme from dropdown
         return true;
       }),
-    [session],
+    [dynamicSearchGroups, session],
   );
 
   const selectedGroupData = useMemo(
@@ -1001,18 +1008,18 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   const handleToggleExtreme = useCallback(() => {
     if (isExtreme) {
       // Switch back to web mode
-      const webGroup = searchGroups.find((group) => group.id === 'web');
+      const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
       if (webGroup) {
         onGroupSelect(webGroup);
       }
     } else {
       // Switch to extreme mode
-      const extremeGroup = searchGroups.find((group) => group.id === 'extreme');
+      const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
       if (extremeGroup) {
         onGroupSelect(extremeGroup);
       }
     }
-  }, [isExtreme, onGroupSelect]);
+  }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
 
   return (
     <div className="flex items-center">
@@ -1031,7 +1038,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
                   onClick={() => {
                     if (isExtreme) {
                       // Switch back to web mode when clicking groups in extreme mode
-                      const webGroup = searchGroups.find((group) => group.id === 'web');
+                      const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
                       if (webGroup) {
                         onGroupSelect(webGroup);
                       }
