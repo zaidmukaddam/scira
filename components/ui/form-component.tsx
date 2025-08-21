@@ -758,7 +758,7 @@ const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
 
 const MAX_FILES = 4;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const MAX_INPUT_CHARS = 10000;
+const MAX_INPUT_CHARS = 50000;
 
 const fileToDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -1411,7 +1411,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   // Typewriter effect for enhanced text
   const typewriterText = useCallback(
-    (text: string, speed: number = 10) => {
+    (text: string, speed: number = 5) => {
       if (!inputRef.current) return;
 
       setIsTypewriting(true);
@@ -2447,6 +2447,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     'whatsize',
                     'text-center',
                     'cursor-not-allowed',
+                    '!shadow-none',
                   )}
                   style={{
                     WebkitUserSelect: 'text',
@@ -2507,6 +2508,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     '!px-4 !py-4',
                     'touch-manipulation',
                     'whatsize',
+                    '!shadow-none',
                     'transition-all duration-200',
                     (isEnhancing || isTypewriting) && 'text-muted-foreground cursor-wait',
                   )}
@@ -2530,8 +2532,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 className={cn(
                   'flex justify-between items-center rounded-t-none rounded-b-xl',
                   '!bg-muted',
-                  'border-t-0 border-border!',
-                  'p-2 gap-2',
+                  '!border-t-0 !border-border',
+                  'p-2 gap-2 shadow-none',
                   'transition-all duration-200',
                   (isEnhancing || isTypewriting) && 'pointer-events-none',
                   isRecording && '!bg-muted text-muted-foreground',

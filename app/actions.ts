@@ -31,7 +31,7 @@ import {
   getLookoutById,
   updateLookout,
   updateLookoutStatus,
-  deleteLookout,
+  deleteLookout
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
@@ -148,7 +148,7 @@ export async function enhancePrompt(raw: string) {
       return { success: false, error: 'Pro subscription required' };
     }
 
-    const system = `You are an expert prompt engineer.
+    const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
 
 Guidelines (MANDATORY):
 - Preserve the user's original intent and constraints
@@ -157,10 +157,17 @@ Guidelines (MANDATORY):
 - Remove fluff, pronouns, and vague language; use proper nouns when possible
 - Keep it concise (1-2 sentences extra max) but information-dense
 - Do NOT ask follow-up questions
-- Return ONLY the improved prompt text, with no quotes or commentary`;
+- Make sure it gives the best and comprehensive results for the user's query
+- Make sure to maintain the Point of View of the User
+- Your job is to enhance the prompt, not to answer the prompt!!
+- Make sure the prompt is not an answer to the user's query!!
+- Return ONLY the improved prompt text, with no quotes or commentary or answer to the user's query!!
+- Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
     const { text } = await generateText({
-      model: scira.languageModel('scira-grok-3'),
+      model: scira.languageModel('scira-enhance'),
+      temperature: 0.6,
+      topP: 0.95,
       maxOutputTokens: 1024,
       system,
       prompt: raw,
@@ -260,6 +267,7 @@ const groupInstructions = {
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
   - ⚠️ URGENT: Always respond with markdown format!!
+  - ⚠️ IMP: Never run more than 1 tool in a single response cycle!!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -274,15 +282,17 @@ const groupInstructions = {
   - Follow the tool guidelines below for each tool as per the user's request
   - Calling the same tool multiple times with different parameters is allowed
   - Always run the tool first before writing the response to ensure accuracy and relevance
+  - If the user is greeting you, use the 'greeting' tool without overthinking it
   - Folling are the tool specific guidelines:
 
   #### Multi Query Web Search:
-  - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 6 queries are allowed
+  - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 5 queries are allowed
   - Specify the year or "latest" in queries to fetch recent information
   - Use the "news" topic type to get the latest news and updates
-  - Use the "finance" topic type to get the latest financial news and updates
+  - Only use "general" or "news" topic types - no other options are available
   - Always use the "include_domains" parameter to include specific domains in the search results if asked by the user or given a specific reference to a website like reddit, youtube, etc.
-  - Always put the values in array format for the required parameters
+  - Always put the values in array format for the required parameters (queries, maxResults, topics, quality)
+  - Use "default" quality for most searches, only use "best" when high accuracy is critical.
   - Put the latest year in the queries to get the latest information or just "latest".
 
   #### Retrieve Web Page Tool:
@@ -1269,7 +1279,7 @@ export async function getDiscountConfigAction() {
   }
 }
 
-export async function getHistoricalUsage(providedUser?: any) {
+export async function getHistoricalUsage(providedUser?: any, months: number = 6) {
   'use server';
 
   try {
@@ -1278,12 +1288,19 @@ export async function getHistoricalUsage(providedUser?: any) {
       return [];
     }
 
-    const historicalData = await getHistoricalUsageData({ userId: user.id });
+    const historicalData = await getHistoricalUsageData({ userId: user.id, months });
 
-    // Create a complete 90-day dataset with defaults (3 months)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 89);
+    // Calculate days based on months (approximately 30 days per month)
+    const totalDays = months * 30;
+    const futureDays = Math.min(15, Math.floor(totalDays * 0.08)); // ~8% future days, max 15
+    const pastDays = totalDays - futureDays - 1; // -1 for today
+
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + futureDays);
+    
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - pastDays);
 
     // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
@@ -1292,9 +1309,9 @@ export async function getHistoricalUsage(providedUser?: any) {
       dataMap.set(dateKey, record.messageCount || 0);
     });
 
-    // Generate complete dataset for all 90 days
+    // Generate complete dataset for all days
     const completeData = [];
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];

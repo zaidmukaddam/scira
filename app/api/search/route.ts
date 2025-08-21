@@ -96,7 +96,7 @@ export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
-  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled } =
+  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled, searchProvider } =
     await req.json();
   const { latitude, longitude } = geolocation(req);
 
@@ -209,9 +209,9 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.polarSubscription
             ? {
-                hasSubscription: true,
-                subscription: { ...user.polarSubscription, organizationId: null },
-              }
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
             : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
@@ -231,9 +231,9 @@ export async function POST(req: Request) {
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+            hasSubscription: true,
+            subscription: { ...user.polarSubscription, organizationId: null },
+          }
           : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0,
@@ -334,29 +334,29 @@ export async function POST(req: Request) {
         messages: convertToModelMessages(messages),
         ...(model.includes('scira-qwen-32b')
           ? {
-              temperature: 0.6,
-              topP: 0.95,
-              minP: 0,
-            }
+            temperature: 0.6,
+            topP: 0.95,
+            minP: 0,
+          }
           : model.includes('scira-deepseek-v3')
             ? {
-                temperature: 0.6,
-                topP: 1,
-                topK: 40,
-              }
+              temperature: 0.6,
+              topP: 1,
+              topK: 40,
+            }
             : model.includes('scira-qwen-235')
               ? {
-                  temperature: 0.7,
-                  topP: 0.8,
-                  minP: 0,
-                }
+                temperature: 0.7,
+                topP: 0.8,
+                minP: 0,
+              }
               : {}),
         stopWhen: stepCountIs(5),
         maxRetries: 10,
         ...(model.includes('scira-5')
           ? {
-              maxOutputTokens: maxTokens,
-            }
+            maxOutputTokens: maxTokens,
+          }
           : {}),
         activeTools: [...activeTools],
         experimental_transform: markdownJoinerTransform(),
@@ -371,28 +371,28 @@ export async function POST(req: Request) {
           openai: {
             ...(model.includes('scira-5')
               ? {
-                  include: ['reasoning.encrypted_content'],
-                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
-                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-                  parallelToolCalls: false,
-                  strictJsonSchema: false,
-                  serviceTier: 'flex',
-                  textVerbosity: 'medium',
-                }
+                include: ['reasoning.encrypted_content'],
+                reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+                reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+                parallelToolCalls: false,
+                strictJsonSchema: false,
+                serviceTier: 'flex',
+                textVerbosity: 'medium',
+              }
               : {}),
           } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
-                  reasoningEffort: 'low',
-                }
+                reasoningEffort: 'low',
+              }
               : {}),
           } satisfies XaiProviderOptions,
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {
-                  reasoningEffort: 'high',
-                }
+                reasoningEffort: 'high',
+              }
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
@@ -411,7 +411,7 @@ export async function POST(req: Request) {
 
           // Search & Content Tools
           x_search: xSearchTool,
-          web_search: webSearchTool(dataStream),
+          web_search: webSearchTool(dataStream, searchProvider),
           academic_search: academicSearchTool,
           youtube_search: youtubeSearchTool,
           reddit_search: redditSearchTool,
@@ -435,7 +435,7 @@ export async function POST(req: Request) {
           mcp_search: mcpSearchTool,
           memory_manager: memoryManagerTool,
           extreme_search: extremeSearchTool(dataStream),
-          greeting: greetingTool,
+          greeting: greetingTool(timezone),
         },
         experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
@@ -459,9 +459,8 @@ export async function POST(req: Request) {
               `The tool accepts the following schema:`,
               JSON.stringify(inputSchema(toolCall)),
               'Please fix the arguments.',
-              'Do not use print statements stock chart tool.',
-              `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
-              `For the web search make multiple queries to get the best results.`,
+              'For the code interpreter tool do not use print statements.',
+              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use te include and exclude parameters.`,
               `Today's date is ${new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',

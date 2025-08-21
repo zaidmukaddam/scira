@@ -468,13 +468,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-900 bg-primary/70 rounded-md px-2 py-0.25">
-                            <HugeiconsIcon
-                              icon={CpuIcon}
-                              size={14}
-                              color="currentColor"
-                              strokeWidth={2}
-                            />
+                          <div className="flex items-center gap-1 text-xs text-primary-foreground bg-primary rounded-md px-2 py-0.75">
+                            <HugeiconsIcon icon={CpuIcon} size={12} color="currentColor" strokeWidth={2} />
                             {modelLabel}
                           </div>
                         </TooltipTrigger>
@@ -486,10 +481,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge
-                            variant="secondary"
-                            className="bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-0"
-                          >
+                          <Badge variant="secondary">
                             <Clock />
                             {meta.completionTime.toFixed(1)}s
                           </Badge>

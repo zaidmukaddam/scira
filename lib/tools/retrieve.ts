@@ -60,6 +60,7 @@ export const retrieveTool = tool({
             onlyMainContent: true,
             parsePDF: true,
             maxAge: 14400000,
+            proxy: "auto",
           });
 
           if (!scrapeResponse) {

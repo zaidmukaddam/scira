@@ -63,7 +63,6 @@ const ChatInterface = memo(
     const [q] = useQueryState('q', parseAsString.withDefault(''));
     const [input, setInput] = useState<string>('');
 
-    // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
@@ -84,6 +83,8 @@ const ChatInterface = memo(
       'scira-lookout-announcement-shown',
       false,
     );
+
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily'>('scira-search-provider', 'parallel');
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
@@ -202,6 +203,7 @@ const ChatInterface = memo(
     const selectedModelRef = useRef(selectedModel);
     const selectedGroupRef = useRef(selectedGroup);
     const isCustomInstructionsEnabledRef = useRef(isCustomInstructionsEnabled);
+    const searchProviderRef = useRef(searchProvider);
 
     // Update refs whenever state changes - this ensures we always have current values
     selectedModelRef.current = selectedModel;
@@ -222,6 +224,7 @@ const ChatInterface = memo(
               group: selectedGroupRef.current,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
               isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
+              searchProvider: searchProviderRef.current,
               ...(initialChatId ? { chat_id: initialChatId } : {}),
               ...body,
             },

@@ -14,7 +14,6 @@ import {
   customInstructions,
   payment,
   lookout,
-  type Lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db } from './index'; // Use unified database connection
@@ -32,7 +31,7 @@ export async function getUser(email: string): Promise<Array<User>> {
 
 export async function getUserById(id: string): Promise<User | null> {
   try {
-    const [selectedUser] = await db.select().from(user).where(eq(user.id, id));
+    const [selectedUser] = await db.select().from(user).where(eq(user.id, id)).$withCache();
     return selectedUser || null;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user by id');
@@ -95,7 +94,8 @@ export async function getChatsByUserId({
         .from(chat)
         .where(whereCondition ? and(whereCondition, eq(chat.userId, id)) : eq(chat.userId, id))
         .orderBy(desc(chat.createdAt))
-        .limit(extendedLimit);
+        .limit(extendedLimit)
+        .$withCache();
 
     let filteredChats: Array<Chat> = [];
 
@@ -132,7 +132,7 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).$withCache();
     return selectedChat;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
@@ -155,7 +155,8 @@ export async function getChatWithUserById({ id }: { id: string }) {
       })
       .from(chat)
       .innerJoin(user, eq(chat.userId, user.id))
-      .where(eq(chat.id, id));
+      .where(eq(chat.id, id))
+      .$withCache();
     return result;
   } catch (error) {
     console.log('Error getting chat with user by id', error);
@@ -439,12 +440,13 @@ export async function getMessageCount({ userId }: { userId: string }): Promise<n
   }
 }
 
-export async function getHistoricalUsageData({ userId }: { userId: string }) {
+export async function getHistoricalUsageData({ userId, months = 6 }: { userId: string; months?: number }) {
   try {
-    // Get actual message data for the last 90 days from message table (3 months)
+    // Get actual message data for the specified months from message table
+    const totalDays = months * 30; // Approximately 30 days per month
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 89);
+    startDate.setDate(endDate.getDate() - (totalDays - 1)); // totalDays - 1 + today
 
     // Get all user messages from their chats in the date range
     const historicalMessages = await db
@@ -462,7 +464,8 @@ export async function getHistoricalUsageData({ userId }: { userId: string }) {
           lt(message.createdAt, endDate),
         ),
       )
-      .orderBy(asc(message.createdAt));
+      .orderBy(asc(message.createdAt))
+      .$withCache();
 
     // Group messages by date and count them
     const dailyCounts = new Map<string, number>();

@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     temperature: 0,
     experimental_activeTools: activeTools,
     tools: {
-      web_search: webSearchTool(undefined),
+      web_search: webSearchTool(undefined, "exa"),
       x_search: xSearchTool,
     },
   });

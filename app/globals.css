@@ -160,7 +160,7 @@
 
 @layer base {
   * {
-    @apply border-border no-scrollbar;
+    @apply border-border !no-scrollbar;
   }
 
   body {

@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
   getUserMessageCount,
   getSubDetails,
@@ -25,18 +26,21 @@ import {
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
-  Gear,
   MagnifyingGlass,
   Lightning,
-  TrendUp,
   User,
   ChartLineUp,
   Memory,
   Calendar,
   NotePencil,
+  Brain,
+  Trash,
+  FloppyDisk,
+  ArrowClockwise,
+  Globe,
+  Robot,
 } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon } from '@hugeicons/core-free-icons';
+
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
@@ -51,6 +55,28 @@ import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
 import { SciraLogo } from './logos/scira-logo';
+import { Search as SearchIcon, Check, ChevronsUpDown } from 'lucide-react';
+import Image from 'next/image';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Crown02Icon,
+  UserAccountIcon,
+  Analytics01Icon,
+  Settings02Icon,
+  BrainIcon,
+  GlobalSearchIcon,
+} from '@hugeicons/core-free-icons';
+import {
+  ContributionGraph,
+  ContributionGraphCalendar,
+  ContributionGraphBlock,
+  ContributionGraphFooter,
+  ContributionGraphLegend,
+  ContributionGraphTotalCount,
+} from '@/components/ui/kibo-ui/contribution-graph';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -130,90 +156,414 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
   );
 }
 
-// Usage Bar Chart Component
-function UsageBarChart({ data, className }: { data: any[]; className?: string }) {
-  const { resolvedTheme } = useTheme();
+// Icon components for search providers
+const ParallelIcon = ({ className }: { className?: string }) => (
+  <Image
+    src="/parallel-icon.svg"
+    alt="Parallel AI"
+    width={16}
+    height={16}
+    className={cn('bg-white rounded-full p-0.5', className)}
+  />
+);
+
+const ExaIcon = ({ className }: { className?: string }) => (
+  <Image src="/exa-color.svg" alt="Exa" width={16} height={16} className={className} />
+);
+
+const TavilyIcon = ({ className }: { className?: string }) => (
+  <Image src="/tavily-color.svg" alt="Tavily" width={16} height={16} className={className} />
+);
+
+const FirecrawlIcon = ({ className }: { className?: string }) => (
+  <span className={cn('text-base sm:text-lg !mb-3 !pr-1', className)}>🔥</span>
+);
+
+// Search Provider Options
+const searchProviders = [
+  {
+    value: 'parallel',
+    label: 'Parallel AI',
+    description: 'Base and premium web search along with Firecrawl image search support',
+    icon: ParallelIcon,
+    default: true,
+  },
+  {
+    value: 'exa',
+    label: 'Exa',
+    description: 'Enhanced and faster web search with images and advanced filtering',
+    icon: ExaIcon,
+    default: false,
+  },
+  {
+    value: 'tavily',
+    label: 'Tavily',
+    description: 'Wide web search with comprehensive results and analysis',
+    icon: TavilyIcon,
+    default: false,
+  },
+  {
+    value: 'firecrawl',
+    label: 'Firecrawl',
+    description: 'Web, news, and image search with content scraping capabilities',
+    icon: FirecrawlIcon,
+    default: false,
+  },
+] as const;
+
+// Search Provider Selector Component
+function SearchProviderSelector({
+  value,
+  onValueChange,
+  disabled,
+  className,
+}: {
+  value: string;
+  onValueChange: (value: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const chartConfig = {
-    count: {
-      label: 'Messages',
-      color: resolvedTheme === 'dark' ? 'hsl(200 100% 50%)' : 'hsl(220 70% 50%)', // Bright cyan in dark, blue in light
-    },
-  };
-
-  // Process data for the last 30 days to keep chart readable on mobile
-  const processedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-
-    // Take last 30 days for desktop, 14 for mobile - use media query hook instead of window
-    const daysToShow = 14; // Always use 14 days for mobile to avoid resize triggers
-
-    const recentData = data
-      .slice(-daysToShow)
-      .filter((item) => item.count > 0)
-      .map((item) => {
-        const date = new Date(item.date);
-        return {
-          ...item,
-          day: date.getDate(),
-          fullDate: date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-        };
-      });
-
-    return recentData;
-  }, [data]);
-
-  if (!processedData.length) {
-    return null;
-  }
-
-  // Calculate max value and round up to nearest multiple of 5
-  const maxCount = Math.max(...processedData.map((d) => d.count));
-  const yAxisMax = Math.ceil(maxCount / 5) * 5;
-
-  // Dynamic bar color based on theme
-  const barColor = resolvedTheme === 'dark' ? 'hsl(200 100% 50%)' : 'hsl(220 70% 50%)';
+  const currentProvider = searchProviders.find((provider) => provider.value === value);
 
   return (
-    <div className={cn('w-full', className)}>
-      <ChartContainer config={chartConfig} className="w-full h-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={processedData}
-            margin={isMobile ? { top: 10, right: 0, left: 10, bottom: 5 } : { top: 10, right: 5, left: 25, bottom: 10 }}
+    <div className="w-full">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className={cn(
+              'w-full justify-between h-auto',
+              'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+              'transition-all duration-200',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              disabled && 'opacity-50 cursor-not-allowed',
+              isMobile ? 'py-2 px-3 min-h-[44px]' : 'py-2.5 px-3.5 min-h-[48px]',
+              className,
+            )}
           >
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-              interval={isMobile ? 2 : 'preserveStartEnd'}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-              domain={[0, yAxisMax]}
-              ticks={Array.from({ length: Math.min(4, Math.floor(yAxisMax / 5) + 1) }, (_, i) => i * 5)}
-              width={isMobile ? 15 : 20}
-            />
-            <ChartTooltip
-              content={<ChartTooltipContent />}
-              labelFormatter={(value: any, payload: any) => {
-                if (payload && payload[0]) {
-                  return payload[0].payload.fullDate;
-                }
-                return value;
-              }}
-            />
-            <Bar dataKey="count" fill={barColor} radius={[3, 3, 0, 0]} name="Messages" barSize={20} />
-          </BarChart>
-        </ResponsiveContainer>
-      </ChartContainer>
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              {currentProvider && (
+                <>
+                  <currentProvider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
+                      {currentProvider.label}
+                      {currentProvider.default && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0"
+                        >
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                      {currentProvider.description}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <ChevronsUpDown className="opacity-50 size-3.5 flex-shrink-0 ml-2" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="p-0 rounded-xl border shadow-lg bg-popover"
+          align="start"
+          side="bottom"
+          sideOffset={8}
+          style={{ width: 'var(--radix-popover-trigger-width)' }}
+        >
+          <Command className="rounded-xl">
+            <CommandInput placeholder="Search providers..." className="h-9 border-0 focus:ring-0" />
+            <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">No provider found.</CommandEmpty>
+            <CommandList className="max-h-[280px] overflow-y-auto scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/20">
+              <CommandGroup>
+                <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                  Available Search Providers
+                </div>
+                <div className="p-1">
+                  {searchProviders.map((provider) => (
+                    <CommandItem
+                      key={provider.value}
+                      value={provider.value}
+                      onSelect={(currentValue) => {
+                        onValueChange(currentValue as 'exa' | 'parallel' | 'tavily' | 'firecrawl');
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center justify-between rounded-lg p-2.5 mb-1',
+                        'transition-all duration-150 cursor-pointer',
+                        'hover:bg-accent hover:text-accent-foreground',
+                        'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground',
+                        value === provider.value && 'bg-accent/50',
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
+                            {provider.label}
+                            {provider.default && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0"
+                              >
+                                Default
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground leading-tight">{provider.description}</div>
+                        </div>
+                      </div>
+                      <Check
+                        className={cn(
+                          'h-3.5 w-3.5 flex-shrink-0 ml-2 transition-opacity',
+                          value === provider.value ? 'opacity-100 text-primary' : 'opacity-0',
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </div>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+// Component for Combined Preferences (Search + Custom Instructions)
+function PreferencesSection({
+  user,
+  isCustomInstructionsEnabled,
+  setIsCustomInstructionsEnabled,
+}: {
+  user: any;
+  isCustomInstructionsEnabled?: boolean;
+  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+}) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+    'scira-search-provider',
+    'parallel',
+  );
+
+  const [content, setContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const enabled = isCustomInstructionsEnabled ?? true;
+  const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
+
+  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
+    setSearchProvider(newProvider);
+    toast.success(
+      `Search provider changed to ${
+        newProvider === 'exa'
+          ? 'Exa'
+          : newProvider === 'parallel'
+            ? 'Parallel AI'
+            : newProvider === 'tavily'
+              ? 'Tavily'
+              : 'Firecrawl'
+      }`,
+    );
+  };
+
+  // Custom Instructions queries and handlers
+  const {
+    data: customInstructions,
+    isLoading: customInstructionsLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['customInstructions', user?.id],
+    queryFn: () => getCustomInstructions(user),
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (customInstructions?.content) {
+      setContent(customInstructions.content);
+    }
+  }, [customInstructions]);
+
+  const handleSave = async () => {
+    if (!content.trim()) {
+      toast.error('Please enter some instructions');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await saveCustomInstructions(content);
+      if (result.success) {
+        toast.success('Custom instructions saved successfully');
+        refetch();
+      } else {
+        toast.error(result.error || 'Failed to save instructions');
+      }
+    } catch (error) {
+      toast.error('Failed to save instructions');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSaving(true);
+    try {
+      const result = await deleteCustomInstructionsAction();
+      if (result.success) {
+        toast.success('Custom instructions deleted successfully');
+        setContent('');
+        refetch();
+      } else {
+        toast.error(result.error || 'Failed to delete instructions');
+      }
+    } catch (error) {
+      toast.error('Failed to delete instructions');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className={cn('space-y-6', isMobile ? 'space-y-4' : 'space-y-6')}>
+      <div>
+        <h3 className={cn('font-semibold mb-1.5', isMobile ? 'text-sm' : 'text-base')}>Preferences</h3>
+        <p className={cn('text-muted-foreground', isMobile ? 'text-xs leading-relaxed' : 'text-xs')}>
+          Configure your search provider and customize how the AI responds to your questions.
+        </p>
+      </div>
+
+      {/* Search Provider Section */}
+      <div className="space-y-3">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm">Search Provider</h4>
+              <p className="text-xs text-muted-foreground">Choose your preferred search engine</p>
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <SearchProviderSelector value={searchProvider} onValueChange={handleSearchProviderChange} />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Select your preferred search provider for web searches. Changes take effect immediately and will be used
+              for all future searches.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Instructions Section */}
+      <div className="space-y-3">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Robot className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm">Custom Instructions</h4>
+              <p className="text-xs text-muted-foreground">Customize how the AI responds to you</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-start justify-between p-3 rounded-lg border bg-card">
+              <div className="flex-1 mr-3">
+                <Label htmlFor="enable-instructions" className="text-sm font-medium">
+                  Enable Custom Instructions
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Toggle to enable or disable custom instructions</p>
+              </div>
+              <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
+            </div>
+
+            <div className={cn('space-y-3', !enabled && 'opacity-50')}>
+              <div>
+                <Label htmlFor="instructions" className="text-sm font-medium">
+                  Instructions
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">Guide how the AI responds to your questions</p>
+                {customInstructionsLoading ? (
+                  <Skeleton className="h-28 w-full" />
+                ) : (
+                  <Textarea
+                    id="instructions"
+                    placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="min-h-[100px] resize-y text-sm"
+                    style={{ maxHeight: '25dvh' }}
+                    onFocus={(e) => {
+                      // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
+                      try {
+                        e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                      } catch {}
+                    }}
+                    disabled={isSaving || !enabled}
+                  />
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving || !content.trim() || customInstructionsLoading || !enabled}
+                  size="sm"
+                  className="flex-1 h-8"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FloppyDisk className="w-3 h-3 mr-1.5" />
+                      Save Instructions
+                    </>
+                  )}
+                </Button>
+                {customInstructions && (
+                  <Button
+                    variant="outline"
+                    onClick={handleDelete}
+                    disabled={isSaving || customInstructionsLoading || !enabled}
+                    size="sm"
+                    className="h-8 px-2.5"
+                  >
+                    <Trash className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+
+              {customInstructionsLoading ? (
+                <div className="p-2.5 bg-muted/30 rounded-lg">
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : customInstructions ? (
+                <div className="p-2.5 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -253,8 +603,8 @@ function UsageSection({ user }: any) {
     isLoading: historicalLoading,
     refetch: refetchHistoricalData,
   } = useQuery({
-    queryKey: ['historicalUsage', user?.id],
-    queryFn: () => getHistoricalUsage(user),
+    queryKey: ['historicalUsage', user?.id, isMobile ? 6 : 9],
+    queryFn: () => getHistoricalUsage(user, isMobile ? 6 : 9),
     enabled: !!user,
     staleTime: 1000 * 60 * 10,
   });
@@ -274,7 +624,6 @@ function UsageSection({ user }: any) {
     }
   };
 
-  const searchLimit = isProUser ? Infinity : SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
   const usagePercentage = isProUser
     ? 0
     : Math.min(((searchCount?.count || 0) / SEARCH_LIMITS.DAILY_SEARCH_LIMIT) * 100, 100);
@@ -290,7 +639,7 @@ function UsageSection({ user }: any) {
           disabled={isRefreshing}
           className={isMobile ? 'h-7 px-1.5' : 'h-8 px-2'}
         >
-          {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <TrendUp className="h-3.5 w-3.5" />}
+          {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowClockwise className="h-3.5 w-3.5" />}
         </Button>
       </div>
 
@@ -370,17 +719,123 @@ function UsageSection({ user }: any) {
       {!usageLoading && (
         <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Activity (Past 14 days)
+            Activity (Past {isMobile ? '6' : '9'} Months)
           </h4>
-          <div className={cn('bg-muted/50 dark:bg-card rounded-lg overflow-hidden', isMobile ? 'p-2' : 'p-3')}>
+          <div className={cn('bg-muted/50 dark:bg-card rounded-lg', isMobile ? 'p-2' : 'p-3')}>
             {historicalLoading ? (
               <div className="h-24 flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : historicalUsageData && historicalUsageData.length > 0 ? (
-              <div className="h-24 overflow-hidden">
-                <UsageBarChart data={historicalUsageData} className="h-full w-full" />
-              </div>
+              <TooltipProvider>
+                <ContributionGraph
+                  data={historicalUsageData}
+                  blockSize={isMobile ? 10 : 12}
+                  blockMargin={4}
+                  fontSize={isMobile ? 10 : 12}
+                  labels={{
+                    totalCount: '{{count}} total messages in {{year}}',
+                    legend: {
+                      less: 'Less',
+                      more: 'More',
+                    },
+                  }}
+                  className="w-full"
+                >
+                  <ContributionGraphCalendar
+                    hideMonthLabels={isMobile}
+                    className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}
+                  >
+                    {({ activity, dayIndex, weekIndex }) => (
+                      <Tooltip key={`${weekIndex}-${dayIndex}`}>
+                        <TooltipTrigger asChild>
+                          <g className="cursor-help">
+                            <ContributionGraphBlock
+                              activity={activity}
+                              dayIndex={dayIndex}
+                              weekIndex={weekIndex}
+                              className={cn(
+                                'data-[level="0"]:fill-muted',
+                                'data-[level="1"]:fill-primary/20',
+                                'data-[level="2"]:fill-primary/40',
+                                'data-[level="3"]:fill-primary/60',
+                                'data-[level="4"]:fill-primary',
+                              )}
+                            />
+                          </g>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-center">
+                            <p className="font-medium">
+                              {activity.count} {activity.count === 1 ? 'message' : 'messages'}
+                            </p>
+                            <p className="text-xs text-muted">
+                              {new Date(activity.date).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </ContributionGraphCalendar>
+                  <ContributionGraphFooter className={cn('pt-1', isMobile ? 'gap-1' : 'gap-2')}>
+                    <ContributionGraphTotalCount
+                      className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}
+                    />
+                    <ContributionGraphLegend className="text-muted-foreground">
+                      {({ level }) => {
+                        const getTooltipText = (level: number) => {
+                          switch (level) {
+                            case 0:
+                              return 'No messages';
+                            case 1:
+                              return '1-3 messages';
+                            case 2:
+                              return '4-7 messages';
+                            case 3:
+                              return '8-12 messages';
+                            case 4:
+                              return '13+ messages';
+                            default:
+                              return `${level} messages`;
+                          }
+                        };
+
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <svg height={isMobile ? 10 : 12} width={isMobile ? 10 : 12} className="cursor-help">
+                                <rect
+                                  className={cn(
+                                    'stroke-[1px] stroke-border/50',
+                                    'data-[level="0"]:fill-muted',
+                                    'data-[level="1"]:fill-primary/20',
+                                    'data-[level="2"]:fill-primary/40',
+                                    'data-[level="3"]:fill-primary/60',
+                                    'data-[level="4"]:fill-primary',
+                                  )}
+                                  data-level={level}
+                                  height={isMobile ? 10 : 12}
+                                  rx={2}
+                                  ry={2}
+                                  width={isMobile ? 10 : 12}
+                                />
+                              </svg>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{getTooltipText(level)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }}
+                    </ContributionGraphLegend>
+                  </ContributionGraphFooter>
+                </ContributionGraph>
+              </TooltipProvider>
             ) : (
               <div className="h-24 flex items-center justify-center">
                 <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No activity data</p>
@@ -753,165 +1208,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   );
 }
 
-// Component for Custom Instructions
-function CustomInstructionsSection({
-  user,
-  isCustomInstructionsEnabled,
-  setIsCustomInstructionsEnabled,
-}: {
-  user: any;
-  isCustomInstructionsEnabled?: boolean;
-  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
-}) {
-  const [content, setContent] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Use default value if not provided
-  const enabled = isCustomInstructionsEnabled ?? true;
-  const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
-
-  const {
-    data: customInstructions,
-    isLoading: customInstructionsLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ['customInstructions', user?.id],
-    queryFn: () => getCustomInstructions(user),
-    enabled: !!user,
-  });
-
-  useEffect(() => {
-    if (customInstructions?.content) {
-      setContent(customInstructions.content);
-    }
-  }, [customInstructions]);
-
-  const handleSave = async () => {
-    if (!content.trim()) {
-      toast.error('Please enter some instructions');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const result = await saveCustomInstructions(content);
-      if (result.success) {
-        toast.success('Custom instructions saved successfully');
-        refetch();
-      } else {
-        toast.error(result.error || 'Failed to save instructions');
-      }
-    } catch (error) {
-      toast.error('Failed to save instructions');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsSaving(true);
-    try {
-      const result = await deleteCustomInstructionsAction();
-      if (result.success) {
-        toast.success('Custom instructions deleted successfully');
-        setContent('');
-        refetch();
-      } else {
-        toast.error(result.error || 'Failed to delete instructions');
-      }
-    } catch (error) {
-      toast.error('Failed to delete instructions');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <Label htmlFor="enable-instructions" className="text-sm font-medium">
-            Enable Custom Instructions
-          </Label>
-          <p className="text-xs text-muted-foreground mt-1">
-            Toggle to enable or disable custom instructions for your conversations
-          </p>
-        </div>
-        <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
-      </div>
-
-      <div className={cn('space-y-3', !enabled && 'opacity-50')}>
-        <div>
-          <Label htmlFor="instructions" className="text-sm font-medium">
-            Custom Instructions
-          </Label>
-          <p className="text-xs text-muted-foreground mt-1 mb-3">Guide how the AI responds to your questions</p>
-          {customInstructionsLoading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : (
-            <Textarea
-              id="instructions"
-              placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px] resize-y text-sm"
-              style={{ maxHeight: '30dvh' }}
-              onFocus={(e) => {
-                // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
-                try {
-                  e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                } catch {}
-              }}
-              disabled={isSaving || !enabled}
-            />
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !content.trim() || customInstructionsLoading || !enabled}
-            size="sm"
-            className="flex-1 h-9"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save Instructions'
-            )}
-          </Button>
-          {customInstructions && (
-            <Button
-              variant="outline"
-              onClick={handleDelete}
-              disabled={isSaving || customInstructionsLoading || !enabled}
-              size="sm"
-              className="h-9 px-3"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
-
-        {customInstructionsLoading ? (
-          <div className="p-2.5 bg-muted/30 rounded-lg">
-            <Skeleton className="h-3 w-28" />
-          </div>
-        ) : customInstructions ? (
-          <div className="p-2.5 bg-muted/30 rounded-lg">
-            <p className="text-[10px] text-muted-foreground">
-              Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
-            </p>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 // Component for Memories
 function MemoriesSection() {
   const queryClient = useQueryClient();
@@ -1054,14 +1350,14 @@ function MemoriesSection() {
         </p>
       </div>
 
-      <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
         {memoriesLoading && !displayedMemories.length ? (
           <div className="flex justify-center items-center h-32">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         ) : displayedMemories.length === 0 ? (
           <div className="flex flex-col justify-center items-center h-32 border border-dashed rounded-lg bg-muted/20">
-            <Memory className="h-6 w-6 text-muted-foreground mb-2" />
+            <Brain className="h-6 w-6 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">No memories found</p>
           </div>
         ) : (
@@ -1093,7 +1389,7 @@ function MemoriesSection() {
                   {deletingMemoryIds.has(memory.id) ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Trash2 className="h-3 w-3" />
+                    <Trash className="h-3 w-3" />
                   )}
                 </Button>
               </div>
@@ -1170,15 +1466,31 @@ export function SettingsDialog({
   }, [isMobile, open]);
 
   const tabItems = [
-    { value: 'profile', label: 'Account', icon: User },
-    { value: 'usage', label: 'Usage', icon: ChartLineUp },
+    {
+      value: 'profile',
+      label: 'Account',
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={UserAccountIcon} className={className} />,
+    },
+    {
+      value: 'usage',
+      label: 'Usage',
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Analytics01Icon} className={className} />,
+    },
     {
       value: 'subscription',
       label: 'Subscription',
-      icon: () => <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />,
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Crown02Icon} className={className} />,
     },
-    { value: 'instructions', label: 'Customize', icon: NotePencil },
-    { value: 'memories', label: 'Memories', icon: Memory },
+    {
+      value: 'preferences',
+      label: 'Preferences',
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Settings02Icon} className={className} />,
+    },
+    {
+      value: 'memories',
+      label: 'Memories',
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={BrainIcon} className={className} />,
+    },
   ];
 
   const contentSections = (
@@ -1200,8 +1512,11 @@ export function SettingsDialog({
         <SubscriptionSection subscriptionData={subscriptionData} isProUser={isProUser} user={user} />
       </TabsContent>
 
-      <TabsContent value="instructions" className="mt-0">
-        <CustomInstructionsSection
+      <TabsContent
+        value="preferences"
+        className="mt-0 !scrollbar-thin !scrollbar-track-transparent !scrollbar-thumb-muted-foreground/20 hover:!scrollbar-thumb-muted-foreground/30"
+      >
+        <PreferencesSection
           user={user}
           isCustomInstructionsEnabled={isCustomInstructionsEnabled}
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
@@ -1234,14 +1549,25 @@ export function SettingsDialog({
             </DrawerHeader>
 
             {/* Content area with tabs */}
-            <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden">
+            <Tabs
+              value={currentTab}
+              onValueChange={setCurrentTab}
+              className="flex-1 flex flex-col overflow-hidden gap-0"
+            >
               {/* Tab content - takes up most space */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 overscroll-contain">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 !pb-4 overscroll-contain !scrollbar-w-1 !scrollbar-track-transparent !scrollbar-thumb-muted-foreground/20 hover:!scrollbar-thumb-muted-foreground/30">
                 {contentSections}
               </div>
 
               {/* Bottom tab navigation - compact and accessible */}
-              <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-[calc(env(safe-area-inset-bottom)+1rem)] shrink-0">
+              <div
+                className={cn(
+                  'border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0',
+                  currentTab === 'preferences'
+                    ? 'pb-[calc(env(safe-area-inset-bottom)+2.5rem)]'
+                    : 'pb-[calc(env(safe-area-inset-bottom)+1rem)]',
+                )}
+              >
                 <TabsList className="w-full py-1 h-14 bg-transparent rounded-none grid grid-cols-5 gap-1 !mb-2 px-4">
                   {tabItems.map((item) => (
                     <TabsTrigger
@@ -1279,13 +1605,12 @@ export function SettingsDialog({
       <DialogContent className="!max-w-4xl !w-full max-h-[85vh] !p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 !m-0">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
-            <SciraLogo className="size-6" />
+            <SciraLogo className="size-6" color="currentColor" />
             Settings
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Navigation */}
           <div className="w-48 !m-0">
             <div className="p-2 !gap-1 flex flex-col">
               {tabItems.map((item) => (
@@ -1307,9 +1632,8 @@ export function SettingsDialog({
             </div>
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(85vh-120px)]">
+            <ScrollArea className="h-[calc(85vh-120px)] !scrollbar-w-1 !scrollbar-track-transparent !scrollbar-thumb-muted-foreground/20 hover:!scrollbar-thumb-muted-foreground/30">
               <div className="p-6 pb-8">
                 <Tabs value={currentTab} onValueChange={setCurrentTab} orientation="vertical">
                   {contentSections}

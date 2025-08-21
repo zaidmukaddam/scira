@@ -22,6 +22,7 @@ export const scira = customProvider({
     'scira-nano': groq('llama-3.3-70b-versatile'),
     'scira-grok-3': xai('grok-3-fast'),
     'scira-grok-4': xai('grok-4'),
+    'scira-enhance': groq('moonshotai/kimi-k2-instruct'),
     'scira-gpt-oss-120': wrapLanguageModel({
       model: groq('openai/gpt-oss-120b'),
       middleware,
@@ -165,7 +166,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-qwen-coder',
-    label: 'Qwen 3 Coder',
+    label: 'Qwen 3 Coder 480B-A35B',
     description: "Alibaba's advanced coding LLM",
     vision: false,
     reasoning: true,

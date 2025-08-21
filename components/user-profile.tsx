@@ -283,10 +283,10 @@ const UserProfile = memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn('!p-0 focus:!outline-0 focus:!ring-0', signingOut && 'animate-pulse', className)}
+                    className={cn('!p-0 !m-0', signingOut && 'animate-pulse', className)}
                     asChild
                   >
-                    <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700">
+                    <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700 !p-0 !m-0">
                       <AvatarImage
                         src={currentUser?.image ?? ''}
                         alt={currentUser?.name ?? ''}
