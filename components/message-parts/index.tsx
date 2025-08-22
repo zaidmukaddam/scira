@@ -1431,6 +1431,18 @@ const ToolPartRenderer = memo(
               </Suspense>
             );
           case 'output-available':
+            // Handle error cases or missing data
+            if (!part.output.success || !part.output.center) {
+              return (
+                <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
+                  <p className="text-red-700 dark:text-red-300">
+                    {part.output.error ||
+                      'Unable to find nearby places. Please try a different location or search term.'}
+                  </p>
+                </div>
+              );
+            }
+
             return (
               <Suspense fallback={<ComponentLoader />}>
                 <NearbySearchMapView

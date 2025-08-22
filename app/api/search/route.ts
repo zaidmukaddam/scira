@@ -395,7 +395,8 @@ export async function POST(req: Request) {
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
-          } satisfies GroqProviderOptions,
+            service_tier: 'auto',
+          },
           google: {
             structuredOutputs: true,
           } satisfies GoogleGenerativeAIProviderOptions,

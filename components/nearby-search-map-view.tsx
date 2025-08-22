@@ -57,7 +57,7 @@ interface NearbySearchMapViewProps {
   center: {
     lat: number;
     lng: number;
-  };
+  } | null;
   places: Place[];
   type: string;
   query?: string;
@@ -71,6 +71,15 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [mapError, setMapError] = useState<boolean>(false);
+
+    // Early return if center is null
+    if (!center) {
+      return (
+        <div className="p-4 text-center text-neutral-600 dark:text-neutral-400">
+          <p>Unable to display map: Location data unavailable</p>
+        </div>
+      );
+    }
 
     // Memoize center to prevent object recreation
     const memoizedCenter = React.useMemo(
@@ -500,6 +509,19 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
   },
   (prevProps, nextProps) => {
     // Custom comparison function to prevent unnecessary re-renders
+    // Handle null center values
+    if (prevProps.center === null && nextProps.center === null) {
+      return (
+        prevProps.type === nextProps.type &&
+        prevProps.places.length === nextProps.places.length &&
+        prevProps.places.every((place, index) => place.place_id === nextProps.places[index]?.place_id)
+      );
+    }
+
+    if (prevProps.center === null || nextProps.center === null) {
+      return false;
+    }
+
     return (
       prevProps.center.lat === nextProps.center.lat &&
       prevProps.center.lng === nextProps.center.lng &&
