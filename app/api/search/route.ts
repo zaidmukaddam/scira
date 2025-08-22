@@ -209,9 +209,9 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.polarSubscription
             ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+                hasSubscription: true,
+                subscription: { ...user.polarSubscription, organizationId: null },
+              }
             : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
@@ -231,9 +231,9 @@ export async function POST(req: Request) {
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
-            hasSubscription: true,
-            subscription: { ...user.polarSubscription, organizationId: null },
-          }
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
           : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0,
@@ -334,29 +334,23 @@ export async function POST(req: Request) {
         messages: convertToModelMessages(messages),
         ...(model.includes('scira-qwen-32b')
           ? {
-            temperature: 0.6,
-            topP: 0.95,
-            minP: 0,
-          }
-          : model.includes('scira-deepseek-v3')
-            ? {
               temperature: 0.6,
-              topP: 1,
-              topK: 40,
+              topP: 0.95,
+              minP: 0,
             }
-            : model.includes('scira-qwen-235')
-              ? {
+          : model.includes('scira-qwen-235')
+            ? {
                 temperature: 0.7,
                 topP: 0.8,
                 minP: 0,
               }
-              : {}),
+            : {}),
         stopWhen: stepCountIs(5),
         maxRetries: 10,
         ...(model.includes('scira-5')
           ? {
-            maxOutputTokens: maxTokens,
-          }
+              maxOutputTokens: maxTokens,
+            }
           : {}),
         activeTools: [...activeTools],
         experimental_transform: markdownJoinerTransform(),
@@ -371,28 +365,33 @@ export async function POST(req: Request) {
           openai: {
             ...(model.includes('scira-5')
               ? {
-                include: ['reasoning.encrypted_content'],
-                reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
-                reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-                parallelToolCalls: false,
-                strictJsonSchema: false,
-                serviceTier: 'flex',
-                textVerbosity: 'medium',
-              }
+                  include: ['reasoning.encrypted_content'],
+                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+                  parallelToolCalls: false,
+                  strictJsonSchema: false,
+                  serviceTier: 'auto',
+                  textVerbosity: 'medium',
+                }
               : {}),
           } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
-                reasoningEffort: 'low',
-              }
+                  reasoningEffort: 'low',
+                }
               : {}),
           } satisfies XaiProviderOptions,
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {
-                reasoningEffort: 'high',
-              }
+                  reasoningEffort: 'high',
+                }
+              : {}),
+            ...(model === 'scira-qwen-32b'
+              ? {
+                  reasoningEffort: 'none',
+                }
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,

@@ -31,12 +31,13 @@ import {
   getLookoutById,
   updateLookout,
   updateLookoutStatus,
-  deleteLookout
+  deleteLookout,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
-// Removed old subscription imports - now using unified user data approach
+import { experimental_generateSpeech as generateVoice } from 'ai';
+import { elevenlabs } from '@ai-sdk/elevenlabs';
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
 import { getComprehensiveUserData } from '@/lib/user-data-server';
@@ -180,48 +181,15 @@ Guidelines (MANDATORY):
   }
 }
 
-const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
-
 export async function generateSpeech(text: string) {
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
-  const method = 'POST';
-
-  if (!ELEVENLABS_API_KEY) {
-    throw new Error('ELEVENLABS_API_KEY is not defined');
-  }
-
-  const headers = {
-    Accept: 'audio/mpeg',
-    'xi-api-key': ELEVENLABS_API_KEY,
-    'Content-Type': 'application/json',
-  };
-
-  const data = {
+  const result = await generateVoice({
+    model: elevenlabs.speech('eleven_v3'),
     text,
-    model_id: 'eleven_turbo_v2_5',
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.5,
-    },
-  };
-
-  const body = JSON.stringify(data);
-
-  const input = {
-    method,
-    headers,
-    body,
-  };
-
-  const response = await fetch(url, input);
-
-  const arrayBuffer = await response.arrayBuffer();
-
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+    voice: 'TX3LPaxmHKxFdv7VOQHJ',
+  });
 
   return {
-    audio: `data:audio/mp3;base64,${base64Audio}`,
+    audio: `data:audio/mp3;base64,${result.audio.base64}`,
   };
 }
 
@@ -422,7 +390,7 @@ const groupInstructions = {
   - Use the 'trending_movies' and 'trending_tv' tools to get the trending movies and TV shows
   - Don't mix it with the 'movie_or_tv_search' tool
   - Do not include images in responses AT ALL COSTS!!!
-  
+
   2. Response Guidelines:
      - ⚠️ URGENT: ALWAYS run a tool before writing the response!!
      - Responses must be informative, long and very detailed which address the question's answer straight forward
@@ -770,7 +738,7 @@ const groupInstructions = {
   You are a code runner, stock analysis and currency conversion expert.
 
   ### Tool Guidelines:
-  
+
   #### Stock Charts Tool:
   - Use yfinance to get stock data and matplotlib for visualization
   - Support multiple currencies through currency_symbols parameter
@@ -1176,9 +1144,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-      hasSubscription: true,
-      subscription: userData.polarSubscription,
-    }
+        hasSubscription: true,
+        subscription: userData.polarSubscription,
+      }
     : { hasSubscription: false };
 }
 
@@ -1298,7 +1266,7 @@ export async function getHistoricalUsage(providedUser?: any, months: number = 6)
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() + futureDays);
-    
+
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - pastDays);
 

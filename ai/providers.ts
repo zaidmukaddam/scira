@@ -41,7 +41,7 @@ export const scira = customProvider({
     }),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-deepseek-v3': wrapLanguageModel({
-      model: huggingface.chat('deepseek-ai/DeepSeek-V3-0324:together'),
+      model: huggingface.chat('deepseek-ai/DeepSeek-V3.1:fireworks-ai'),
       middleware,
     }),
     'scira-glm': wrapLanguageModel({
@@ -160,7 +160,7 @@ export const models: Model[] = [
     category: 'Mini',
     pdf: false,
     pro: false,
-    requiresAuth: true,
+    requiresAuth: false,
     freeUnlimited: false,
     maxOutputTokens: 40960,
   },
@@ -194,7 +194,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-deepseek-v3',
-    label: 'DeepSeek V3 0324',
+    label: 'DeepSeek V3.1',
     description: "DeepSeek's advanced base LLM",
     vision: false,
     reasoning: false,

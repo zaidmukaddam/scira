@@ -505,7 +505,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               <Badge variant="secondary" className="text-xs">
                                 <ArrowLeft weight="regular" />
                                 <span className="hidden xs:inline">{inputCount.toLocaleString()}</span>
-                                <span className="xs:hidden">{inputCount > 999 ? `${Math.floor(inputCount/1000)}k` : inputCount}</span>
+                                <span className="xs:hidden">
+                                  {inputCount > 999 ? `${Math.floor(inputCount / 1000)}k` : inputCount}
+                                </span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Input tokens consumed</TooltipContent>
@@ -519,7 +521,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               <Badge variant="secondary" className="text-xs">
                                 <ArrowRight weight="regular" />
                                 <span className="hidden xs:inline">{outputCount.toLocaleString()}</span>
-                                <span className="xs:hidden">{outputCount > 999 ? `${Math.floor(outputCount/1000)}k` : outputCount}</span>
+                                <span className="xs:hidden">
+                                  {outputCount > 999 ? `${Math.floor(outputCount / 1000)}k` : outputCount}
+                                </span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Output tokens generated</TooltipContent>
@@ -533,7 +537,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               <Badge variant="outline" className="text-xs">
                                 <Sigma className="h-3 w-3" weight="regular" />
                                 <span className="hidden xs:inline">{tokenTotal.toLocaleString()}</span>
-                                <span className="xs:hidden">{tokenTotal > 999 ? `${Math.floor(tokenTotal/1000)}k` : tokenTotal}</span>
+                                <span className="xs:hidden">
+                                  {tokenTotal > 999 ? `${Math.floor(tokenTotal / 1000)}k` : tokenTotal}
+                                </span>
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Total tokens used</TooltipContent>
@@ -1795,7 +1801,6 @@ const ToolPartRenderer = memo(
           case 'input-streaming':
             return <div className="text-sm text-neutral-500">Preparing translation...</div>;
           case 'input-available':
-            return <SearchLoadingState icon={Globe} text="Translating text..." color="blue" />;
           case 'output-available':
             return <TranslationTool args={part.input} result={part.output} />;
         }
