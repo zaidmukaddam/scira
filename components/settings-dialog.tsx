@@ -243,7 +243,7 @@ function SearchProviderSelector({
               'transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
               disabled && 'opacity-50 cursor-not-allowed',
-              isMobile ? 'py-2 px-3 min-h-[44px]' : 'py-2.5 px-3.5 min-h-[48px]',
+              isMobile ? 'py-2.5 px-3 min-h-[48px]' : 'py-2.5 px-3.5 min-h-[48px]',
               className,
             )}
           >
@@ -279,15 +279,18 @@ function SearchProviderSelector({
           side="bottom"
           sideOffset={8}
           style={{ width: 'var(--radix-popover-trigger-width)' }}
+          avoidCollisions={true}
         >
           <Command className="rounded-xl">
             <CommandInput placeholder="Search providers..." className="h-9 border-0 focus:ring-0" />
             <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">No provider found.</CommandEmpty>
-            <CommandList className="max-h-[280px] overflow-y-auto scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/20">
+            <CommandList
+              className={cn(
+                'overflow-y-auto scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/20',
+                isMobile ? 'max-h-[50vh]' : 'max-h-[280px]',
+              )}
+            >
               <CommandGroup>
-                <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b">
-                  Available Search Providers
-                </div>
                 <div className="p-1">
                   {searchProviders.map((provider) => (
                     <CommandItem
@@ -298,11 +301,11 @@ function SearchProviderSelector({
                         setOpen(false);
                       }}
                       className={cn(
-                        'flex items-center justify-between rounded-lg p-2.5 mb-1',
-                        'transition-all duration-150 cursor-pointer',
+                        'flex items-center justify-between rounded-lg transition-all duration-150 cursor-pointer',
                         'hover:bg-accent hover:text-accent-foreground',
                         'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground',
                         value === provider.value && 'bg-accent/50',
+                        isMobile ? 'p-3 mb-1.5 min-h-[56px]' : 'p-2.5 mb-1',
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
