@@ -57,8 +57,7 @@ import { useIsProUser } from '@/contexts/user-context';
 import { SciraLogo } from './logos/scira-logo';
 import { Search as SearchIcon, Check, ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Crown02Icon,
@@ -223,122 +222,73 @@ function SearchProviderSelector({
   disabled?: boolean;
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-
   const currentProvider = searchProviders.find((provider) => provider.value === value);
 
   return (
     <div className="w-full">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            disabled={disabled}
-            className={cn(
-              'w-full justify-between h-auto',
-              'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-              'transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-              disabled && 'opacity-50 cursor-not-allowed',
-              isMobile ? 'py-2.5 px-3 min-h-[48px]' : 'py-2.5 px-3.5 min-h-[48px]',
-              className,
-            )}
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {currentProvider && (
-                <>
-                  <currentProvider.icon className="text-muted-foreground size-4 flex-shrink-0" />
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
-                      {currentProvider.label}
-                      {currentProvider.default && (
-                        <Badge
-                          variant="secondary"
-                          className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0"
-                        >
-                          Default
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground leading-tight line-clamp-2">
-                      {currentProvider.description}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <ChevronsUpDown className="opacity-50 size-3.5 flex-shrink-0 ml-2" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="p-0 rounded-xl border shadow-lg bg-popover"
-          align="start"
-          side="bottom"
-          sideOffset={8}
-          style={{ width: 'var(--radix-popover-trigger-width)' }}
-          avoidCollisions={true}
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+        <SelectTrigger
+          className={cn(
+            'w-full h-auto min-h-14',
+            'border border-input bg-background',
+            'transition-all duration-200',
+            'focus:outline-none focus:ring-0 focus:ring-offset-0',
+            disabled && 'opacity-50 cursor-not-allowed',
+            isMobile ? 'py-2.5 px-3' : 'py-3',
+            className,
+          )}
         >
-          <Command className="rounded-xl">
-            <CommandInput placeholder="Search providers..." className="h-9 border-0 focus:ring-0" />
-            <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">No provider found.</CommandEmpty>
-            <CommandList
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            {currentProvider && (
+              <>
+                <currentProvider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                <div className="text-left flex-1 min-w-0">
+                  <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
+                    {currentProvider.label}
+                    {currentProvider.default && (
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
+                        Default
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                    {currentProvider.description}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          {searchProviders.map((provider) => (
+            <SelectItem
+              key={provider.value}
+              value={provider.value}
               className={cn(
-                'overflow-y-auto scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/20',
-                isMobile ? 'max-h-[50vh]' : 'max-h-[280px]',
+                'flex items-center gap-2.5 p-2.5 cursor-pointer rounded-lg',
+                'focus:bg-accent focus:text-accent-foreground',
+                isMobile ? 'min-h-[56px] p-3' : 'min-h-[48px] p-2.5',
               )}
             >
-              <CommandGroup>
-                <div className="p-1">
-                  {searchProviders.map((provider) => (
-                    <CommandItem
-                      key={provider.value}
-                      value={provider.value}
-                      onSelect={(currentValue) => {
-                        onValueChange(currentValue as 'exa' | 'parallel' | 'tavily' | 'firecrawl');
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        'flex items-center justify-between rounded-lg transition-all duration-150 cursor-pointer',
-                        'hover:bg-accent hover:text-accent-foreground',
-                        'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground',
-                        value === provider.value && 'bg-accent/50',
-                        isMobile ? 'p-3 mb-1.5 min-h-[56px]' : 'p-2.5 mb-1',
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
-                            {provider.label}
-                            {provider.default && (
-                              <Badge
-                                variant="secondary"
-                                className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0"
-                              >
-                                Default
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground leading-tight">{provider.description}</div>
-                        </div>
-                      </div>
-                      <Check
-                        className={cn(
-                          'h-3.5 w-3.5 flex-shrink-0 ml-2 transition-opacity',
-                          value === provider.value ? 'opacity-100 text-primary' : 'opacity-0',
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
+                    {provider.label}
+                    {provider.default && (
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
+                        Default
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground leading-tight">{provider.description}</div>
                 </div>
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

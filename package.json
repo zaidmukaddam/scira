@@ -133,7 +133,7 @@
     "uuid": "^11.1.0",
     "valyu-js": "^2.0.2",
     "vaul": "^1.1.2",
-    "youtube-caption-extractor": "^1.8.2",
+    "youtube-caption-extractor": "^1.9.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
