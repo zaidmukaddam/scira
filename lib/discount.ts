@@ -29,7 +29,22 @@ export function isStudentEmail(email: string, studentDomains: string[]): boolean
   if (!studentDomains || studentDomains.length === 0) return false;
 
   const lowerEmail = email.toLowerCase();
-  return studentDomains.some((domain) => lowerEmail.toLowerCase().endsWith(domain.toLowerCase()));
+  const emailParts = lowerEmail.split('@');
+  if (emailParts.length !== 2) return false;
+
+  const domain = emailParts[1];
+
+  return studentDomains.some((pattern) => {
+    const lowerPattern = pattern.toLowerCase();
+
+    // Special case for .edu - match both .edu and .edu.xx variants
+    if (lowerPattern === '.edu') {
+      return domain.endsWith('.edu') || /\.edu\.[a-z]{2,3}$/.test(domain);
+    }
+
+    // For other patterns, use exact matching
+    return domain.endsWith(lowerPattern);
+  });
 }
 
 /**
