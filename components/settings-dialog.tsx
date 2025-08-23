@@ -230,12 +230,11 @@ function SearchProviderSelector({
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
           className={cn(
-            'w-full h-auto min-h-14',
+            'w-full h-auto min-h-18 sm:min-h-14 p-4',
             'border border-input bg-background',
             'transition-all duration-200',
             'focus:outline-none focus:ring-0 focus:ring-offset-0',
             disabled && 'opacity-50 cursor-not-allowed',
-            isMobile ? 'py-2.5 px-3' : 'py-3',
             className,
           )}
         >
@@ -260,39 +259,21 @@ function SearchProviderSelector({
             )}
           </div>
         </SelectTrigger>
-        <SelectContent className={cn('rounded-xl', isMobile ? 'max-h-[60vh]' : 'max-h-[280px]')}>
+        <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-32px)]">
           {searchProviders.map((provider) => (
-            <SelectItem
-              key={provider.value}
-              value={provider.value}
-              className={cn(
-                'cursor-pointer rounded-lg',
-                'focus:bg-accent focus:text-accent-foreground',
-                isMobile ? 'min-h-[64px] p-4' : 'min-h-[48px] p-2.5',
-              )}
-            >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <provider.icon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-5' : 'size-4')} />
-                <div className="flex flex-col min-w-0 flex-1">
-                  <div className={cn('font-medium flex items-center gap-2 mb-0.5', isMobile ? 'text-base' : 'text-sm')}>
+            <SelectItem key={provider.value} value={provider.value}>
+              <div className="flex items-center gap-2.5">
+                <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                <div className="flex flex-col">
+                  <div className="font-medium text-sm flex items-center gap-2">
                     {provider.label}
                     {provider.default && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          'bg-primary/10 text-primary border-0',
-                          isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-[9px] px-1 py-0.5',
-                        )}
-                      >
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
                         Default
                       </Badge>
                     )}
                   </div>
-                  <div
-                    className={cn('text-muted-foreground leading-tight line-clamp-2', isMobile ? 'text-sm' : 'text-xs')}
-                  >
-                    {provider.description}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{provider.description}</div>
                 </div>
               </div>
             </SelectItem>
