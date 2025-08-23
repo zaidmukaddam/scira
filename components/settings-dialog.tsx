@@ -252,7 +252,7 @@ function SearchProviderSelector({
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                  <div className="text-xs text-muted-foreground leading-tight line-clamp-2 text-wrap">
                     {currentProvider.description}
                   </div>
                 </div>
@@ -260,29 +260,39 @@ function SearchProviderSelector({
             )}
           </div>
         </SelectTrigger>
-        <SelectContent className="rounded-xl">
+        <SelectContent className={cn('rounded-xl', isMobile ? 'max-h-[60vh]' : 'max-h-[280px]')}>
           {searchProviders.map((provider) => (
             <SelectItem
               key={provider.value}
               value={provider.value}
               className={cn(
-                'flex items-center gap-2.5 p-2.5 cursor-pointer rounded-lg',
+                'cursor-pointer rounded-lg',
                 'focus:bg-accent focus:text-accent-foreground',
-                isMobile ? 'min-h-[56px] p-3' : 'min-h-[48px] p-2.5',
+                isMobile ? 'min-h-[64px] p-4' : 'min-h-[48px] p-2.5',
               )}
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+                <provider.icon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-5' : 'size-4')} />
                 <div className="flex flex-col min-w-0 flex-1">
-                  <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
+                  <div className={cn('font-medium flex items-center gap-2 mb-0.5', isMobile ? 'text-base' : 'text-sm')}>
                     {provider.label}
                     {provider.default && (
-                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'bg-primary/10 text-primary border-0',
+                          isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-[9px] px-1 py-0.5',
+                        )}
+                      >
                         Default
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground leading-tight">{provider.description}</div>
+                  <div
+                    className={cn('text-muted-foreground leading-tight line-clamp-2', isMobile ? 'text-sm' : 'text-xs')}
+                  >
+                    {provider.description}
+                  </div>
                 </div>
               </div>
             </SelectItem>
