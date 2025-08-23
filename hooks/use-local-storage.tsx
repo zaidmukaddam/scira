@@ -69,10 +69,10 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
           } else {
             localStorage.setItem(key, JSON.stringify(nextValue));
           }
-          
+
           // Dispatch custom event for same-tab synchronization
           const customEvent = new CustomEvent('localStorage-change', {
-            detail: { key, value: nextValue }
+            detail: { key, value: nextValue },
           });
           window.dispatchEvent(customEvent);
         }

@@ -28,34 +28,25 @@ import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
   MagnifyingGlass,
   Lightning,
-  User,
-  ChartLineUp,
-  Memory,
   Calendar,
-  NotePencil,
   Brain,
   Trash,
   FloppyDisk,
   ArrowClockwise,
-  Globe,
   Robot,
 } from '@phosphor-icons/react';
 
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
-import { Loader2, Search, Trash2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
 import { SciraLogo } from './logos/scira-logo';
-import { Search as SearchIcon, Check, ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -674,9 +665,9 @@ function UsageSection({ user }: any) {
               <TooltipProvider>
                 <ContributionGraph
                   data={historicalUsageData}
-                  blockSize={isMobile ? 10 : 12}
-                  blockMargin={4}
-                  fontSize={isMobile ? 10 : 12}
+                  blockSize={isMobile ? 8 : 12}
+                  blockMargin={isMobile ? 3 : 4}
+                  fontSize={isMobile ? 9 : 12}
                   labels={{
                     totalCount: '{{count}} total messages in {{year}}',
                     legend: {
@@ -687,8 +678,8 @@ function UsageSection({ user }: any) {
                   className="w-full"
                 >
                   <ContributionGraphCalendar
-                    hideMonthLabels={isMobile}
-                    className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}
+                    hideMonthLabels={false}
+                    className={cn('text-muted-foreground', isMobile ? 'text-[9px]' : 'text-xs')}
                   >
                     {({ activity, dayIndex, weekIndex }) => (
                       <Tooltip key={`${weekIndex}-${dayIndex}`}>
@@ -726,11 +717,13 @@ function UsageSection({ user }: any) {
                       </Tooltip>
                     )}
                   </ContributionGraphCalendar>
-                  <ContributionGraphFooter className={cn('pt-1', isMobile ? 'gap-1' : 'gap-2')}>
+                  <ContributionGraphFooter
+                    className={cn('pt-2 flex-col sm:flex-row', isMobile ? 'gap-1.5 items-start' : 'gap-2 items-center')}
+                  >
                     <ContributionGraphTotalCount
-                      className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}
+                      className={cn('text-muted-foreground', isMobile ? 'text-[9px] mb-1' : 'text-xs')}
                     />
-                    <ContributionGraphLegend className="text-muted-foreground">
+                    <ContributionGraphLegend className={cn('text-muted-foreground', isMobile ? 'flex-shrink-0' : '')}>
                       {({ level }) => {
                         const getTooltipText = (level: number) => {
                           switch (level) {
@@ -752,7 +745,7 @@ function UsageSection({ user }: any) {
                         return (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <svg height={isMobile ? 10 : 12} width={isMobile ? 10 : 12} className="cursor-help">
+                              <svg height={isMobile ? 8 : 12} width={isMobile ? 8 : 12} className="cursor-help">
                                 <rect
                                   className={cn(
                                     'stroke-[1px] stroke-border/50',
@@ -763,10 +756,10 @@ function UsageSection({ user }: any) {
                                     'data-[level="4"]:fill-primary',
                                   )}
                                   data-level={level}
-                                  height={isMobile ? 10 : 12}
+                                  height={isMobile ? 8 : 12}
                                   rx={2}
                                   ry={2}
-                                  width={isMobile ? 10 : 12}
+                                  width={isMobile ? 8 : 12}
                                 />
                               </svg>
                             </TooltipTrigger>
