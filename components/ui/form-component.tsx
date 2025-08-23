@@ -981,7 +981,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGrou
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const isExtreme = selectedGroup === 'extreme';
-  
+
   // Get search provider from localStorage with reactive updates
   const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
 

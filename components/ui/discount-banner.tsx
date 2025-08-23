@@ -185,7 +185,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
                     className="h-5 px-2 text-xs font-medium bg-primary/10 text-primary border-primary/20"
                   >
                     {discountConfig.showPrice && discountConfig.finalPrice ? (
-                      `$${discountConfig.finalPrice}`
+                      `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
                     ) : discountConfig.percentage ? (
                       <>
                         <Percent className="h-3 w-3 mr-1" />
