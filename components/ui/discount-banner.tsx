@@ -15,15 +15,14 @@ import { useLocation } from '@/hooks/use-location';
 interface DiscountBannerProps {
   discountConfig: DiscountConfig;
   onClose?: () => void;
-  onClaim?: (code: string) => void;
   className?: string;
 }
 
-export function DiscountBanner({ discountConfig, onClose, onClaim, className }: DiscountBannerProps) {
+export function DiscountBanner({ discountConfig, onClose, className }: DiscountBannerProps) {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
-  const [isCopied, setIsCopied] = useState(false);
+
   const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number }>(
     {
       days: 0,
@@ -101,14 +100,6 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     onClose?.();
   };
 
-  const handleClaim = () => {
-    if (discountConfig.code) {
-      onClaim?.(discountConfig.code);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    }
-  };
-
   // Calculate pricing if not provided but percentage and originalPrice are available
   const calculatePricing = () => {
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
@@ -137,8 +128,9 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
     }
 
     // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
+    // Don't show INR pricing for student discounts
     let inrPricing = null as { originalPrice: number; finalPrice: number; savings: number } | null;
-    if (location.isIndia) {
+    if (location.isIndia && !discountConfig.isStudentDiscount) {
       if (typeof discountConfig.inrPrice === 'number') {
         inrPricing = {
           originalPrice: defaultINRPrice,
@@ -187,19 +179,29 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
             {/* Left: Message and Discount */}
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                {discountConfig.percentage && (
+                {(discountConfig.percentage || discountConfig.finalPrice || discountConfig.showPrice) && (
                   <Badge
                     variant="secondary"
                     className="h-5 px-2 text-xs font-medium bg-primary/10 text-primary border-primary/20"
                   >
-                    <Percent className="h-3 w-3 mr-1" />
-                    {discountConfig.percentage}% OFF
+                    {discountConfig.showPrice && discountConfig.finalPrice ? (
+                      `$${discountConfig.finalPrice}`
+                    ) : discountConfig.percentage ? (
+                      <>
+                        <Percent className="h-3 w-3 mr-1" />
+                        {discountConfig.percentage}% OFF
+                      </>
+                    ) : (
+                      'DISCOUNT'
+                    )}
                   </Badge>
                 )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground leading-tight">
-                  {discountConfig.message || 'Special Offer Available'}
+                  {discountConfig.isStudentDiscount
+                    ? '🎓 Student discount automatically applied!'
+                    : discountConfig.message || 'Special Offer Available'}
                 </p>
                 {pricing && (
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-0.5">
@@ -222,30 +224,8 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
               </div>
             </div>
 
-            {/* Actions - visible on mobile, hidden on larger screens when countdown exists */}
-            <div className={cn('flex items-center gap-2 sm:hidden', timeLeft && timeLeft !== 'Expired' && 'hidden')}>
-              {discountConfig.code && onClaim && (
-                <Button
-                  onClick={handleClaim}
-                  variant={isCopied ? 'secondary' : 'default'}
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  disabled={isCopied}
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="h-3 w-3 mr-1" />
-                      <span className="hidden xs:inline">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3 mr-1" />
-                      <span className="truncate max-w-[60px]">{discountConfig.code}</span>
-                    </>
-                  )}
-                </Button>
-              )}
-
+            {/* Actions - only close button now */}
+            <div className="flex items-center gap-2 sm:hidden">
               {onClose && (
                 <Button variant="ghost" size="sm" onClick={handleClose} className="h-7 w-7 p-0">
                   <X className="h-3 w-3" />
@@ -257,72 +237,54 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
 
           {/* Bottom row on mobile / Right side on larger screens: Countdown Timer and Actions */}
           <div className="flex items-center justify-between sm:justify-end gap-3">
-            {/* Countdown Timer */}
-            {timeLeft && timeLeft !== 'Expired' && (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  {countdownTime.days > 0 && (
-                    <>
-                      <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
-                        <span className="text-[10px] sm:text-xs font-mono font-medium">
-                          <SlidingNumber value={countdownTime.days} padStart={true} />
-                        </span>
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">d</span>
-                    </>
-                  )}
-                  <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
-                    <span className="text-[10px] sm:text-xs font-mono font-medium">
-                      <SlidingNumber value={countdownTime.hours} padStart={true} />
-                    </span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground">h</span>
-                  <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
-                    <span className="text-[10px] sm:text-xs font-mono font-medium">
-                      <SlidingNumber value={countdownTime.minutes} padStart={true} />
-                    </span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground">m</span>
-                  <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
-                    <span className="text-[10px] sm:text-xs font-mono font-medium">
-                      <SlidingNumber value={countdownTime.seconds} padStart={true} />
-                    </span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground">s</span>
+            {/* Student Discount Info or Countdown Timer */}
+            {discountConfig.isStudentDiscount ? (
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium text-primary">$5/month for a year</span> • Saves you $120 annually
                 </div>
               </div>
+            ) : (
+              timeLeft &&
+              timeLeft !== 'Expired' && (
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <div className="flex items-center gap-0.5 sm:gap-1">
+                    {countdownTime.days > 0 && (
+                      <>
+                        <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
+                          <span className="text-[10px] sm:text-xs font-mono font-medium">
+                            <SlidingNumber value={countdownTime.days} padStart={true} />
+                          </span>
+                        </div>
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">d</span>
+                      </>
+                    )}
+                    <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
+                      <span className="text-[10px] sm:text-xs font-mono font-medium">
+                        <SlidingNumber value={countdownTime.hours} padStart={true} />
+                      </span>
+                    </div>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">h</span>
+                    <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
+                      <span className="text-[10px] sm:text-xs font-mono font-medium">
+                        <SlidingNumber value={countdownTime.minutes} padStart={true} />
+                      </span>
+                    </div>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">m</span>
+                    <div className="bg-muted border rounded px-1 sm:px-1.5 py-0.5 min-w-[20px] sm:min-w-[28px] text-center">
+                      <span className="text-[10px] sm:text-xs font-mono font-medium">
+                        <SlidingNumber value={countdownTime.seconds} padStart={true} />
+                      </span>
+                    </div>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">s</span>
+                  </div>
+                </div>
+              )
             )}
 
-            {/* Actions - hidden on mobile when countdown exists, always visible on larger screens */}
-            <div
-              className={cn(
-                'flex items-center gap-2',
-                timeLeft && timeLeft !== 'Expired' ? 'hidden sm:flex' : 'sm:flex',
-              )}
-            >
-              {discountConfig.code && onClaim && (
-                <Button
-                  onClick={handleClaim}
-                  variant={isCopied ? 'secondary' : 'default'}
-                  size="sm"
-                  className="h-7 px-2 sm:px-3 text-xs"
-                  disabled={isCopied}
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="h-3 w-3 mr-1" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3 mr-1" />
-                      <span className="truncate max-w-[80px] sm:max-w-none">{discountConfig.code}</span>
-                    </>
-                  )}
-                </Button>
-              )}
-
+            {/* Actions - only close button now */}
+            <div className="flex items-center gap-2">
               {onClose && (
                 <Button variant="ghost" size="sm" onClick={handleClose} className="h-7 w-7 p-0">
                   <X className="h-3 w-3" />
@@ -334,7 +296,7 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
         </div>
 
         {/* Expandable Instructions */}
-        {discountConfig.code && (
+        {discountConfig.code && !discountConfig.isStudentDiscount && (
           <Accordion type="single" collapsible className="mt-2">
             <AccordionItem value="instructions" className="border-0">
               <AccordionTrigger className="py-1 px-0 hover:no-underline text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
@@ -344,12 +306,11 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-2 pb-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                   {[
-                    { step: '1', text: 'Click upgrade' },
-                    { step: '2', text: 'Find discount section' },
-                    { step: '3', text: `Enter ${discountConfig.code}` },
-                    { step: '4', text: 'Click apply' },
+                    { step: '1', text: 'Click upgrade to Pro' },
+                    { step: '2', text: 'Discount automatically applied' },
+                    { step: '3', text: 'Complete checkout' },
                   ].map(({ step, text }) => (
                     <div key={step} className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0">
@@ -362,6 +323,15 @@ export function DiscountBanner({ discountConfig, onClose, onClaim, className }: 
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        )}
+
+        {/* Student Discount Auto-Apply Notice */}
+        {discountConfig.isStudentDiscount && (
+          <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded-md">
+            <p className="text-xs text-primary text-center">
+              No code needed - discount automatically applied at checkout
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

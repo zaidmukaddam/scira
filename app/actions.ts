@@ -1238,7 +1238,9 @@ export async function getDiscountConfigAction() {
   'use server';
 
   try {
-    return await getDiscountConfig();
+    const user = await getCurrentUser();
+    const userEmail = user?.email;
+    return await getDiscountConfig(userEmail);
   } catch (error) {
     console.error('Error getting discount configuration:', error);
     return {

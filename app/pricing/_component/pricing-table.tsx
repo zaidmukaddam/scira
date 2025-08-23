@@ -81,6 +81,11 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       return discountConfig.inrPrice;
     }
 
+    // Use final price directly if available (for student discounts)
+    if (!isINR && discountConfig.finalPrice) {
+      return discountConfig.finalPrice;
+    }
+
     // Apply percentage discount
     if (discountConfig.percentage) {
       return Math.round(originalPrice - (originalPrice * discountConfig.percentage) / 100);
@@ -93,11 +98,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
   const shouldShowDiscount = () => {
     const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
     return isDevMode
-      ? discountConfig.code && discountConfig.message && (discountConfig.percentage || discountConfig.inrPrice)
+      ? discountConfig.code &&
+          discountConfig.message &&
+          (discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice)
       : discountConfig.enabled &&
           discountConfig.code &&
           discountConfig.message &&
-          (discountConfig.percentage || discountConfig.inrPrice);
+          (discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice);
   };
 
   const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
@@ -110,9 +117,21 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       if (paymentMethod === 'dodo') {
         router.push('/checkout');
       } else {
+        // Auto-apply discount if available
+        const discountIdToUse = discountConfig.discountId || '';
+
+        // Show special messaging for student discounts
+        if (discountConfig.isStudentDiscount) {
+          toast.success('🎓 Student discount applied automatically!');
+        } else if (discountIdToUse && discountConfig.enabled) {
+          toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
+        }
+
         await authClient.checkout({
           products: [productId],
           slug: slug,
+          allowDiscountCodes: true,
+          discountId: discountIdToUse,
         });
       }
     } catch (error) {
@@ -172,11 +191,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     });
   };
 
-  const handleDiscountClaim = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success(`Discount code "${code}" copied to clipboard!`);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -192,7 +206,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         <div className="text-center mb-16">
           <h1 className="text-4xl font-medium text-foreground mb-4 font-be-vietnam-pro">Pricing</h1>
           <p className="text-xl text-muted-foreground">Choose the plan that works for you</p>
-          {!location.loading && location.isIndia && (
+          {!location.loading && location.isIndia && !discountConfig.isStudentDiscount && (
             <Badge variant="secondary" className="mt-4">
               🇮🇳 Special India pricing available
             </Badge>
@@ -203,7 +217,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       {/* Discount Banner */}
       {shouldShowDiscount() && (
         <div className="max-w-4xl mx-auto px-6 sm:px-16 mb-8">
-          <DiscountBanner discountConfig={discountConfig} onClaim={handleDiscountClaim} className="mx-auto" />
+          <DiscountBanner discountConfig={discountConfig} className="mx-auto" />
         </div>
       )}
 
@@ -244,13 +258,19 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           {/* Pro Plan */}
           <Card className="relative border-2 border-primary">
             {hasProAccess() && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                 <Badge className="bg-primary text-primary-foreground">Current plan</Badge>
               </div>
             )}
             {!hasProAccess() && shouldShowDiscount() && (
-              <div className="absolute -top-3 right-4">
-                <Badge variant="green">{discountConfig.percentage}% OFF</Badge>
+              <div className="absolute -top-3 right-4 z-10">
+                <Badge variant="secondary">
+                  {discountConfig.showPrice && discountConfig.finalPrice
+                    ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
+                    : discountConfig.percentage
+                      ? `${discountConfig.percentage}% OFF`
+                      : 'DISCOUNT'}
+                </Badge>
               </div>
             )}
 
@@ -274,7 +294,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     <span className="text-muted-foreground ml-2">/month</span>
                   </div>
                 )
-              ) : !location.loading && location.isIndia ? (
+              ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     {/* INR Option */}
@@ -373,7 +393,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     </p>
                   )}
                 </div>
-              ) : !location.loading && location.isIndia ? (
+              ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
                 !user ? (
                   <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
                     Sign up for Pro
@@ -397,9 +417,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                       One-time payment vs Monthly subscription
                     </p>
                     {shouldShowDiscount() && discountConfig.discountAvail && (
-                      <p className="text-xs text-green-600 dark:text-green-400 text-center font-medium">
-                        {discountConfig.discountAvail}
-                      </p>
+                      <p className="text-xs text-primary text-center font-medium">{discountConfig.discountAvail}</p>
                     )}
                   </div>
                 )
@@ -420,17 +438,36 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         </div>
 
         {/* Student Discount */}
-        <Card className="max-w-2xl mx-auto mt-16">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <h3 className="font-medium mb-2">Student discount available</h3>
-              <p className="text-sm text-muted-foreground mb-4">Get Pro for $5/month with valid student verification</p>
-              <Button variant="outline" asChild>
-                <a href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request">Apply for discount</a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {!discountConfig.isStudentDiscount && (
+          <Card className="max-w-2xl mx-auto mt-16">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <h3 className="font-medium mb-2">Student discount available</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Get Pro for $5/month with valid student verification
+                </p>
+                <Button variant="outline" asChild>
+                  <a href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request">Apply for discount</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Student Discount Active */}
+        {discountConfig.isStudentDiscount && !hasProAccess() && (
+          <Card className="max-w-2xl mx-auto mt-16 border-primary/20 bg-primary/5">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <h3 className="font-medium mb-2 text-primary">🎓 Student discount active!</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Your student email has been verified. Get Pro for just $5/month.
+                </p>
+                <p className="text-xs text-muted-foreground">Discount automatically applied at checkout</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-16 space-y-4">
