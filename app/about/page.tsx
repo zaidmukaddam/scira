@@ -744,7 +744,7 @@ export default function AboutPage() {
               <ProAccordionTrigger>Is there a student discount?</ProAccordionTrigger>
               <ProAccordionContent>
                 Yes! Students with university email addresses (.edu, .ac.in, .ac.uk, etc.) automatically get Pro for
-                just $5/month - that's $120 in annual savings. No verification required, the discount is applied
+                just $5/month - that&apos;s $120 in annual savings. No verification required, the discount is applied
                 automatically at checkout.
               </ProAccordionContent>
             </ProAccordionItem>
