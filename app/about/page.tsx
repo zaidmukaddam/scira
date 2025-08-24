@@ -701,14 +701,15 @@ export default function AboutPage() {
               <div className="flex-1">
                 <h3 className="font-medium mb-2">Student Pricing</h3>
                 <p className="text-muted-foreground/80 mb-4 text-sm">
-                  Students can access Pro features for $5/month (₹500/month). Contact us with your student verification.
+                  Students with university email addresses get Pro features for just $5/month automatically. No
+                  verification needed!
                 </p>
-                <a
-                  href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request"
+                <button
+                  onClick={() => router.push('/pricing')}
                   className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-border/60 bg-background hover:bg-accent/50 text-sm font-medium transition-colors"
                 >
-                  Apply for Student Pricing
-                </a>
+                  Get Student Pricing
+                </button>
               </div>
             </div>
           </div>
@@ -742,8 +743,9 @@ export default function AboutPage() {
             <ProAccordionItem value="item-3">
               <ProAccordionTrigger>Is there a student discount?</ProAccordionTrigger>
               <ProAccordionContent>
-                Yes, students can get $10 off the Pro plan, bringing it down to $5/month. Email zaid@scira.ai with your
-                student verification and a brief description of how you use Scira.
+                Yes! Students with university email addresses (.edu, .ac.in, .ac.uk, etc.) automatically get Pro for
+                just $5/month - that's $120 in annual savings. No verification required, the discount is applied
+                automatically at checkout.
               </ProAccordionContent>
             </ProAccordionItem>
 

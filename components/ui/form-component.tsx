@@ -570,7 +570,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                     shouldShowDiscount && (
                       <div className="flex items-center gap-2 mb-2">
                         <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
-                          {discountConfig.percentage}% OFF
+                          {discountConfig.showPrice && discountConfig.finalPrice
+                            ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
+                            : discountConfig.percentage
+                              ? `${discountConfig.percentage}% OFF`
+                              : 'DISCOUNT'}
                         </div>
                         {discountConfig.message && (
                           <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>
@@ -2870,7 +2874,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     shouldShowDiscount && (
                       <div className="flex items-center gap-2 mb-2">
                         <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
-                          {discountConfig.percentage}% OFF
+                          {discountConfig.showPrice && discountConfig.finalPrice
+                            ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
+                            : discountConfig.percentage
+                              ? `${discountConfig.percentage}% OFF`
+                              : 'DISCOUNT'}
                         </div>
                         {discountConfig.message && (
                           <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>

@@ -500,30 +500,33 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
     const hideTimeoutRef = React.useRef<number | null>(null);
 
     // Memoized CSV utilities - only recreate when needed
-    const csvUtils = React.useMemo(() => ({
-      escapeCsvValue: (value: string): string => {
-        const needsQuotes = /[",\n]/.test(value);
-        const escaped = value.replace(/"/g, '""');
-        return needsQuotes ? `"${escaped}"` : escaped;
-      },
-      
-      buildCsvFromTable: (table: HTMLTableElement): string => {
-        const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
-        const csvLines: string[] = [];
+    const csvUtils = React.useMemo(
+      () => ({
+        escapeCsvValue: (value: string): string => {
+          const needsQuotes = /[",\n]/.test(value);
+          const escaped = value.replace(/"/g, '""');
+          return needsQuotes ? `"${escaped}"` : escaped;
+        },
 
-        for (const row of rows) {
-          const cells = Array.from(row.querySelectorAll('th,td')) as HTMLTableCellElement[];
-          if (cells.length > 0) {
-            const line = cells
-              .map((cell) => csvUtils.escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
-              .join(',');
-            csvLines.push(line);
+        buildCsvFromTable: (table: HTMLTableElement): string => {
+          const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
+          const csvLines: string[] = [];
+
+          for (const row of rows) {
+            const cells = Array.from(row.querySelectorAll('th,td')) as HTMLTableCellElement[];
+            if (cells.length > 0) {
+              const line = cells
+                .map((cell) => csvUtils.escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
+                .join(',');
+              csvLines.push(line);
+            }
           }
-        }
 
-        return csvLines.join('\n');
-      }
-    }), []);
+          return csvLines.join('\n');
+        },
+      }),
+      [],
+    );
 
     // Lazy CSV download handler - only runs when actually clicked
     const handleDownloadCsv = React.useCallback(() => {
@@ -838,6 +841,16 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       return <InlineCode key={generateKey()} code={codeString} />;
     },
     link(href, text) {
+      // Handle email addresses (mailto links) as plain text
+      if (href.startsWith('mailto:')) {
+        const email = href.replace('mailto:', '');
+        return (
+          <span key={generateKey()} className="break-all">
+            {email}
+          </span>
+        );
+      }
+
       // For user messages, display links as plain text with URL
       if (isUserMessage) {
         const linkText = typeof text === 'string' ? text : href;
