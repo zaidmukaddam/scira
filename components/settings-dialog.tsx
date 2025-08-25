@@ -38,7 +38,7 @@ import {
 
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
@@ -65,6 +65,7 @@ import {
   ContributionGraphFooter,
   ContributionGraphLegend,
   ContributionGraphTotalCount,
+  type Activity,
 } from '@/components/ui/kibo-ui/contribution-graph';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -506,6 +507,7 @@ function PreferencesSection({
 // Component for Usage Information
 function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isProUser = user?.isProUser;
 
@@ -546,6 +548,50 @@ function UsageSection({ user }: any) {
 
   const searchCount = usageData?.searchCount;
   const extremeSearchCount = usageData?.extremeSearchCount;
+
+  // Generate loading stars data that matches real data structure
+  const loadingStars = useMemo(() => {
+    if (!historicalLoading) return [];
+
+    const months = isMobile ? 6 : 9;
+    const totalDays = months * 30;
+    const futureDays = Math.min(15, Math.floor(totalDays * 0.08));
+    const pastDays = totalDays - futureDays - 1;
+
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + futureDays);
+
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - pastDays);
+
+    // Generate complete dataset like real getHistoricalUsage
+    const completeData: Activity[] = [];
+    for (let i = 0; i < totalDays; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      const dateKey = currentDate.toISOString().split('T')[0];
+
+      // Randomly light up some dots for star effect
+      const shouldLight = Math.random() > 0.85; // 15% chance
+      const count = shouldLight ? Math.floor(Math.random() * 10) + 1 : 0;
+
+      let level: 0 | 1 | 2 | 3 | 4;
+      if (count === 0) level = 0;
+      else if (count <= 3) level = 1;
+      else if (count <= 7) level = 2;
+      else if (count <= 12) level = 3;
+      else level = 4;
+
+      completeData.push({
+        date: dateKey,
+        count,
+        level,
+      });
+    }
+
+    return completeData;
+  }, [historicalLoading, isMobile]);
 
   const handleRefreshUsage = async () => {
     try {
@@ -658,9 +704,72 @@ function UsageSection({ user }: any) {
           </h4>
           <div className={cn('bg-muted/50 dark:bg-card rounded-lg', isMobile ? 'p-2' : 'p-3')}>
             {historicalLoading ? (
-              <div className="h-24 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              </div>
+              <TooltipProvider>
+                <ContributionGraph
+                  data={loadingStars}
+                  blockSize={isMobile ? 8 : 12}
+                  blockMargin={isMobile ? 3 : 4}
+                  fontSize={isMobile ? 9 : 12}
+                  labels={{
+                    totalCount: 'Loading activity data...',
+                    legend: {
+                      less: 'Less',
+                      more: 'More',
+                    },
+                  }}
+                  className="w-full opacity-60"
+                >
+                  <ContributionGraphCalendar
+                    hideMonthLabels={false}
+                    className={cn('text-muted-foreground', isMobile ? 'text-[9px]' : 'text-xs')}
+                  >
+                    {({ activity, dayIndex, weekIndex }) => (
+                      <ContributionGraphBlock
+                        key={`${weekIndex}-${dayIndex}-loading`}
+                        activity={activity}
+                        dayIndex={dayIndex}
+                        weekIndex={weekIndex}
+                        className={cn(
+                          'data-[level="0"]:fill-muted/40',
+                          'data-[level="1"]:fill-primary/30',
+                          'data-[level="2"]:fill-primary/50',
+                          'data-[level="3"]:fill-primary/70',
+                          'data-[level="4"]:fill-primary/90',
+                          activity.level > 0 && 'animate-pulse',
+                        )}
+                      />
+                    )}
+                  </ContributionGraphCalendar>
+                  <ContributionGraphFooter
+                    className={cn('pt-2 flex-col sm:flex-row', isMobile ? 'gap-1.5 items-start' : 'gap-2 items-center')}
+                  >
+                    <ContributionGraphTotalCount
+                      className={cn('text-muted-foreground', isMobile ? 'text-[9px] mb-1' : 'text-xs')}
+                    />
+                    <ContributionGraphLegend className={cn('text-muted-foreground', isMobile ? 'flex-shrink-0' : '')}>
+                      {({ level }) => (
+                        <svg height={isMobile ? 8 : 12} width={isMobile ? 8 : 12}>
+                          <rect
+                            className={cn(
+                              'stroke-[1px] stroke-border/50',
+                              'data-[level="0"]:fill-muted/40',
+                              'data-[level="1"]:fill-primary/30',
+                              'data-[level="2"]:fill-primary/50',
+                              'data-[level="3"]:fill-primary/70',
+                              'data-[level="4"]:fill-primary/90',
+                            )}
+                            data-level={level}
+                            height={isMobile ? 8 : 12}
+                            rx={2}
+                            ry={2}
+                            width={isMobile ? 8 : 12}
+                          />
+                        </svg>
+                      )}
+                    </ContributionGraphLegend>
+                  </ContributionGraphFooter>
+                </ContributionGraph>
+              </TooltipProvider>
             ) : historicalUsageData && historicalUsageData.length > 0 ? (
               <TooltipProvider>
                 <ContributionGraph

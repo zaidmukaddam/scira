@@ -229,16 +229,34 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   });
 }
 
-export async function updateChatVisiblityById({
+export async function updateChatVisibilityById({
   chatId,
   visibility,
 }: {
   chatId: string;
   visibility: 'private' | 'public';
 }) {
+  console.log('🔄 updateChatVisibilityById called with:', { chatId, visibility });
+
   try {
-    return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    console.log('📡 Executing database update for chat visibility');
+    const result = await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    console.log('✅ Database update successful, result:', result);
+
+    // Return a consistent, serializable structure
+    return {
+      success: true,
+      rowCount: result.rowCount || 0,
+      chatId,
+      visibility,
+    };
   } catch (error) {
+    console.error('❌ Database error in updateChatVisibilityById:', {
+      chatId,
+      visibility,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw new ChatSDKError('bad_request:database', 'Failed to update chat visibility by id');
   }
 }

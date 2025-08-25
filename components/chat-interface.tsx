@@ -84,7 +84,10 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>('scira-search-provider', 'parallel');
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+      'scira-search-provider',
+      'parallel',
+    );
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
@@ -502,17 +505,57 @@ const ChatInterface = memo(
     // Handle visibility change
     const handleVisibilityChange = useCallback(
       async (visibility: VisibilityType) => {
-        if (!chatId) return;
+        console.log('🔄 handleVisibilityChange called with:', { chatId, visibility });
+
+        if (!chatId) {
+          console.warn('⚠️ handleVisibilityChange: No chatId provided, returning early');
+          return;
+        }
 
         try {
-          await updateChatVisibility(chatId, visibility);
-          dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
-          toast.success(`Chat is now ${visibility}`);
-          // Invalidate cache to refresh the list with updated visibility
-          invalidateChatsCache();
+          console.log('📡 Calling updateChatVisibility with:', { chatId, visibility });
+          const result = await updateChatVisibility(chatId, visibility);
+          console.log('✅ updateChatVisibility response:', result);
+          console.log('🔍 Result structure analysis:', {
+            result,
+            typeof_result: typeof result,
+            has_result: !!result,
+            has_success: result?.success,
+            success_value: result?.success,
+            has_rowCount: result?.rowCount !== undefined,
+            rowCount_value: result?.rowCount,
+            rowCount_type: typeof result?.rowCount,
+            keys: result ? Object.keys(result) : 'no result',
+          });
+
+          // Check if the update was successful - be more forgiving with validation
+          if (result && result.success) {
+            dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
+            console.log('🔄 Dispatched SET_VISIBILITY_TYPE with:', visibility);
+
+            toast.success(`Chat is now ${visibility}`);
+            console.log('🍞 Success toast shown:', `Chat is now ${visibility}`);
+
+            // Invalidate cache to refresh the list with updated visibility
+            invalidateChatsCache();
+            console.log('🗑️ Cache invalidated');
+          } else {
+            console.error('❌ Update failed - unsuccessful result:', {
+              result,
+              success_check: result?.success,
+            });
+            toast.error('Failed to update chat visibility');
+            console.log('🍞 Error toast shown: Failed to update chat visibility');
+          }
         } catch (error) {
-          console.error('Error updating chat visibility:', error);
+          console.error('❌ Error updating chat visibility:', {
+            chatId,
+            visibility,
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
           toast.error('Failed to update chat visibility');
+          console.log('🍞 Error toast shown: Failed to update chat visibility');
         }
       },
       [chatId],

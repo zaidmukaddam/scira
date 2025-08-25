@@ -12,8 +12,9 @@ import { toast } from 'sonner';
 import { Wave } from '@foobar404/wave';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { ShareButton } from '@/components/share';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { RepeatIcon, Copy01Icon, Share03Icon, CpuIcon } from '@hugeicons/core-free-icons';
+import { RepeatIcon, Copy01Icon, CpuIcon } from '@hugeicons/core-free-icons';
 import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
@@ -416,33 +417,20 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {/* Only show share for authenticated owners */}
-                {user && isOwner && selectedVisibilityType === 'private' && chatId && onVisibilityChange && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={async () => {
-                            try {
-                              await onVisibilityChange('public');
-                              const url = `${window.location.origin}/search/${chatId}`;
-                              await navigator.clipboard.writeText(url);
-                              toast.success('Link copied to clipboard');
-                            } catch (error) {
-                              console.error('Error sharing chat:', error);
-                              toast.error('Failed to share chat');
-                            }
-                          }}
-                          className="size-8 p-0 rounded-full"
-                        >
-                          <HugeiconsIcon icon={Share03Icon} size={32} color="currentColor" strokeWidth={2} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Share</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                {/* Share button using unified component */}
+                {onVisibilityChange && (
+                  <ShareButton
+                    chatId={chatId || null}
+                    selectedVisibilityType={selectedVisibilityType || 'private'}
+                    onVisibilityChange={async (visibility) => {
+                      await Promise.resolve(onVisibilityChange(visibility));
+                    }}
+                    isOwner={isOwner}
+                    user={user}
+                    variant="icon"
+                    size="sm"
+                    className="rounded-full"
+                  />
                 )}
                 <TooltipProvider>
                   <Tooltip>

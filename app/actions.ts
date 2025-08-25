@@ -12,7 +12,7 @@ import { scira } from '@/ai/providers';
 import {
   getChatsByUserId,
   deleteChatById,
-  updateChatVisiblityById,
+  updateChatVisibilityById,
   getChatById,
   getMessageById,
   deleteMessagesByChatIdAfterTimestamp,
@@ -1072,13 +1072,33 @@ export async function deleteChat(chatId: string) {
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
   'use server';
 
-  if (!chatId) return null;
+  console.log('🔄 updateChatVisibility called with:', { chatId, visibility });
+
+  if (!chatId) {
+    console.error('❌ updateChatVisibility: No chatId provided');
+    throw new Error('Chat ID is required');
+  }
 
   try {
-    return await updateChatVisiblityById({ chatId, visibility });
+    console.log('📡 Calling updateChatVisibilityById with:', { chatId, visibility });
+    const result = await updateChatVisibilityById({ chatId, visibility });
+    console.log('✅ updateChatVisibilityById successful, result:', result);
+
+    // Return a serializable plain object instead of raw database result
+    return {
+      success: true,
+      chatId,
+      visibility,
+      rowCount: result?.rowCount || 0,
+    };
   } catch (error) {
-    console.error('Error updating chat visibility:', error);
-    return null;
+    console.error('❌ Error in updateChatVisibility:', {
+      chatId,
+      visibility,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
   }
 }
 
