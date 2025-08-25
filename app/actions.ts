@@ -236,6 +236,7 @@ const groupInstructions = {
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
   - ⚠️ URGENT: Always respond with markdown format!!
   - ⚠️ IMP: Never run more than 1 tool in a single response cycle!!
+  - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -853,6 +854,7 @@ const groupInstructions = {
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
   - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
   - DO NOT WRITE A SINGLE WORD before running the tool
   - Run the tool with the exact user query immediately on receiving it
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY

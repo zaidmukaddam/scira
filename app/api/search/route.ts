@@ -346,6 +346,12 @@ export async function POST(req: Request) {
               }
             : {}),
         stopWhen: stepCountIs(5),
+        abortSignal: req.signal,
+        onAbort: ({ steps }) => {
+          // Handle cleanup when stream is aborted
+          console.log('Stream aborted after', steps.length, 'steps');
+          // Persist partial results to database
+        },
         maxRetries: 10,
         ...(model.includes('scira-5')
           ? {
@@ -365,8 +371,7 @@ export async function POST(req: Request) {
           openai: {
             ...(model.includes('scira-5')
               ? {
-                  include: ['reasoning.encrypted_content'],
-                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'low',
+                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'minimal',
                   reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
                   parallelToolCalls: false,
                   strictJsonSchema: false,
@@ -397,9 +402,6 @@ export async function POST(req: Request) {
             structuredOutputs: true,
             serviceTier: 'auto',
           } satisfies GroqProviderOptions,
-          google: {
-            structuredOutputs: true,
-          } satisfies GoogleGenerativeAIProviderOptions,
         },
         tools: {
           // Stock & Financial Tools
