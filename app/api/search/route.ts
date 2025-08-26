@@ -376,7 +376,7 @@ export async function POST(req: Request) {
                   parallelToolCalls: false,
                   strictJsonSchema: false,
                   serviceTier: 'auto',
-                  textVerbosity: 'medium',
+                  textVerbosity: 'high',
                 }
               : {}),
           } satisfies OpenAIResponsesProviderOptions,
