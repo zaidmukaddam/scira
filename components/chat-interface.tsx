@@ -37,6 +37,7 @@ import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
+import { requiresProSubscription } from '@/ai/providers';
 
 // State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
@@ -150,6 +151,23 @@ const ChatInterface = memo(
       usageData &&
       usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
+
+    // Auto-switch away from pro models when user loses pro access
+    useEffect(() => {
+      if (proStatusLoading) return;
+
+      const currentModelRequiresPro = requiresProSubscription(selectedModel);
+
+      // If current model requires pro but user is not pro, switch to default
+      // Also prevent infinite loops by ensuring we're not already on the default model
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
+        setSelectedModel('scira-default');
+
+        // Show a toast notification to inform the user
+        toast.info('Switched to default model - Pro subscription required for premium models');
+      }
+    }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 
     // Timer for sign-in prompt for unauthenticated users
     useEffect(() => {

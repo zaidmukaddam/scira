@@ -14,10 +14,18 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { X, Check, ChevronsUpDown, Wand2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
-import { Upload } from 'lucide-react';
+
+// Pro Badge Component
+const ProBadge = ({ className = '' }: { className?: string }) => (
+  <span
+    className={`font-baumans inline-flex items-center gap-1 rounded-lg shadow-sm !border-none !outline-0 ring-offset-1 !ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 !pb-2 sm:pt-1 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
+  >
+    <span>pro</span>
+  </span>
+);
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
@@ -247,7 +255,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     );
 
     const orderedGroupEntries = useMemo(() => {
-      const groupOrder = ['Mini', 'Pro', 'Experimental'];
+      const groupOrder = ['Free', 'Pro', 'Experimental'];
       return groupOrder
         .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
         .map((category) => [category, groupedModels[category]] as const);
@@ -257,6 +265,24 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       () => availableModels.find((m) => m.value === selectedModel),
       [availableModels, selectedModel],
     );
+
+    // Auto-switch away from pro models when user loses pro access
+    useEffect(() => {
+      if (isSubscriptionLoading) return;
+
+      const currentModelRequiresPro = requiresProSubscription(selectedModel);
+      const currentModelExists = availableModels.find((m) => m.value === selectedModel);
+
+      // If current model requires pro but user is not pro, switch to default
+      // Also prevent infinite loops by ensuring we're not already on the default model
+      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
+        setSelectedModel('scira-default');
+
+        // Show a toast notification to inform the user
+        toast.info('Switched to default model - Pro subscription required for premium models');
+      }
+    }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels]);
 
     const handleModelChange = useCallback(
       (value: string) => {
@@ -467,42 +493,91 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         </Popover>
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogTitle className="sr-only">Upgrade to Scira Pro</DialogTitle>
-
-            {/* Header */}
-            <div className="text-center space-y-2 pb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <HugeiconsIcon
-                  icon={Crown02Icon}
-                  size={24}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary"
-                />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground">
-                {selectedProModel?.label ? `${selectedProModel.label} requires Pro` : 'Unlock Pro Features'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {selectedProModel?.label
-                  ? 'Upgrade to access premium AI models and features'
-                  : 'Get enhanced capabilities and unlimited access'}
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="space-y-3 py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={CpuIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
+          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+            <DialogHeader className="p-2">
+              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
                 </div>
+                <div className="relative z-10 flex flex-col gap-4">
+                  <DialogTitle className="flex items-start gap-3 text-white">
+                    <div className="flex flex-col gap-2 min-w-0 flex-1">
+                      {selectedProModel?.label ? (
+                        <>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-lg sm:text-xl font-bold truncate">{selectedProModel.label}</span>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <span className="text-white/80">requires</span>
+                              <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Scira</span>
+                          <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
+                        </div>
+                      )}
+                    </div>
+                  </DialogTitle>
+                  <DialogDescription className="text-white/90">
+                    {discountConfig &&
+                      (() => {
+                        const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
+                        const shouldShowDiscount = isDevMode
+                          ? discountConfig.code && discountConfig.message && discountConfig.percentage
+                          : discountConfig.enabled &&
+                            discountConfig.code &&
+                            discountConfig.message &&
+                            discountConfig.percentage;
+
+                        if (shouldShowDiscount && discountConfig.showPrice && discountConfig.finalPrice) {
+                          return (
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
+                                {discountConfig.showPrice && discountConfig.finalPrice
+                                  ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
+                                  : discountConfig.percentage
+                                    ? `${discountConfig.percentage}% OFF`
+                                    : 'DISCOUNT'}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    <div className="flex items-center gap-2">
+                      {pricing.usd.hasDiscount ? (
+                        <>
+                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
+                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
+                      )}
+                      <span className="text-sm text-white/80">/month</span>
+                    </div>
+                    <p className="text-sm text-white/80 text-left mt-2">
+                      {selectedProModel?.label
+                        ? 'Upgrade to access premium AI models and features'
+                        : 'Unlock advanced AI models, unlimited searches, and premium features'}
+                    </p>
+                  </DialogDescription>
+                  <Button
+                    onClick={() => {
+                      window.location.href = '/pricing';
+                    }}
+                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
+                  >
+                    Upgrade to Pro
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="px-6 py-6 flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
                   <p className="text-xs text-muted-foreground">
@@ -511,196 +586,134 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={GlobalSearchIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
                   <p className="text-xs text-muted-foreground">No daily limits on your research</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MagicWandIcon size={12} className="text-primary" />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
                   <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={BinocularsIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Scira Lookout</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>
-            </div>
 
-            {/* Pricing Section */}
-            <div className="bg-muted rounded-lg p-4 space-y-2">
-              {discountConfig &&
-                (() => {
-                  const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-                  const shouldShowDiscount = isDevMode
-                    ? discountConfig.code && discountConfig.message && discountConfig.percentage
-                    : discountConfig.enabled &&
-                      discountConfig.code &&
-                      discountConfig.message &&
-                      discountConfig.percentage;
-
-                  return (
-                    shouldShowDiscount && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
-                          {discountConfig.showPrice && discountConfig.finalPrice
-                            ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
-                            : discountConfig.percentage
-                              ? `${discountConfig.percentage}% OFF`
-                              : 'DISCOUNT'}
-                        </div>
-                        {discountConfig.message && (
-                          <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>
-                        )}
-                      </div>
-                    )
-                  );
-                })()}
-              <div className="flex items-baseline gap-1">
-                {pricing.usd.hasDiscount ? (
-                  <>
-                    <span className="text-sm text-muted-foreground line-through">${pricing.usd.originalPrice}</span>
-                    <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice.toFixed(2)}</span>
-                  </>
-                ) : (
-                  <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice}</span>
-                )}
-                <span className="text-sm text-muted-foreground">/month</span>
+              <div className="flex gap-2 w-full items-center mt-4">
+                <div className="flex-1 border-b border-foreground/10" />
+                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
+                <div className="flex-1 border-b border-foreground/10" />
               </div>
-              {pricing.inr && (
-                <div className="flex items-baseline gap-1">
-                  {pricing.inr.hasDiscount ? (
-                    <>
-                      <span className="text-sm text-muted-foreground line-through">₹{pricing.inr.originalPrice}</span>
-                      <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
-                    </>
-                  ) : (
-                    <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
-                  )}
-                  <span className="text-sm text-muted-foreground">/month</span>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">Cancel anytime</p>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-4">
-              <Button
-                onClick={() => {
-                  window.location.href = '/pricing';
-                }}
-                className="w-full"
-              >
-                Upgrade to Pro
-              </Button>
               <Button
                 variant="ghost"
                 onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground"
+                className="w-full text-muted-foreground hover:text-foreground mt-2"
+                size="sm"
               >
                 Not now
               </Button>
             </div>
-
-            {/* Additional info */}
-            <p className="text-xs text-muted-foreground text-center pt-2">Cancel anytime • Secure payment</p>
           </DialogContent>
         </Dialog>
 
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-          <DialogContent className="sm:max-w-[420px] p-0 gap-0">
-            <div className="p-6 space-y-5">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-4 h-4 text-muted-foreground"
-                    >
-                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-medium text-foreground">{selectedAuthModel?.label} requires sign in</h2>
-                    <p className="text-sm text-muted-foreground">Create an account to access this AI model</p>
-                  </div>
+          <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
+            <DialogHeader className="p-2">
+              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+                </div>
+                <div className="relative z-10 flex flex-col gap-4">
+                  <DialogTitle className="flex items-center gap-3 text-white">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4 text-white"
+                      >
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                      <span className="text-lg sm:text-xl font-bold">Sign in required</span>
+                      {selectedAuthModel?.label && (
+                        <span className="text-sm text-white/70 truncate">for {selectedAuthModel.label}</span>
+                      )}
+                    </div>
+                  </DialogTitle>
+                  <DialogDescription className="text-white/90">
+                    <p className="text-sm text-white/80 text-left">
+                      {selectedAuthModel?.label
+                        ? `${selectedAuthModel.label} requires an account to access`
+                        : 'Create an account to access this AI model and unlock additional features'}
+                    </p>
+                  </DialogDescription>
+                  <Button
+                    onClick={() => {
+                      window.location.href = '/sign-in';
+                    }}
+                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
+                  >
+                    Sign in
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="px-6 py-6 flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Access better models</p>
+                  <p className="text-xs text-muted-foreground">GPT-5 Nano and more premium models</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Access better models</p>
-                    <p className="text-xs text-muted-foreground">Gemini 2.5 Flash Lite and GPT-4o Mini</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Save search history</p>
-                    <p className="text-xs text-muted-foreground">Keep track of your conversations</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Free to start</p>
-                    <p className="text-xs text-muted-foreground">No payment required for basic features</p>
-                  </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Save search history</p>
+                  <p className="text-xs text-muted-foreground">Keep track of your conversations</p>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Free to start</p>
+                  <p className="text-xs text-muted-foreground">No payment required for basic features</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 w-full items-center mt-4">
+                <div className="flex-1 border-b border-foreground/10" />
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setShowSignInDialog(false)}
-                  className="flex-1 h-9 text-sm font-normal"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground text-xs px-3"
                 >
-                  Cancel
+                  Maybe later
                 </Button>
-                <Button
-                  onClick={() => {
-                    window.location.href = '/sign-in';
-                  }}
-                  className="flex-1 h-9 text-sm font-normal"
-                >
-                  Sign in
-                </Button>
+                <div className="flex-1 border-b border-foreground/10" />
               </div>
             </div>
           </DialogContent>
@@ -2777,62 +2790,66 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         {/* Pro Upgrade Dialog */}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogTitle className="sr-only">Upgrade to Scira Pro</DialogTitle>
-
-            {/* Header */}
-            <div className="text-center space-y-2 pb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <HugeiconsIcon
-                  icon={Crown02Icon}
-                  size={24}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary"
-                />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground">Unlock Pro Features</h2>
-              <p className="text-sm text-muted-foreground">Get enhanced capabilities including prompt enhancement</p>
-            </div>
-
-            {/* Features */}
-            <div className="space-y-3 py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MagicWandIcon size={12} className="text-primary" />
+          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+            <DialogHeader className="p-2">
+              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
                 </div>
+                <div className="relative z-10 flex flex-col gap-4">
+                  <DialogTitle className="flex items-center gap-3 text-white">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-xl sm:text-2xl font-bold">Unlock</span>
+                      <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight mb-0.5" />
+                    </div>
+                  </DialogTitle>
+                  <DialogDescription className="text-white/90">
+                    <div className="flex items-center gap-2 mb-2">
+                      {pricing.usd.hasDiscount ? (
+                        <>
+                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
+                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
+                      )}
+                      <span className="text-sm text-white/80">/month</span>
+                    </div>
+                    <p className="text-sm text-white/80 text-left">
+                      Get enhanced capabilities including prompt enhancement and unlimited features
+                    </p>
+                  </DialogDescription>
+                  <Button
+                    onClick={() => {
+                      window.location.href = '/pricing';
+                    }}
+                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium mt-3"
+                  >
+                    {discountConfig?.buttonText || 'Upgrade to Pro'}
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="px-6 py-6 flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
                   <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={GlobalSearchIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
                   <p className="text-xs text-muted-foreground">No daily limits on your research</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={CpuIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
                   <p className="text-xs text-muted-foreground">
@@ -2841,100 +2858,29 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HugeiconsIcon
-                    icon={BinocularsIcon}
-                    size={12}
-                    color="currentColor"
-                    strokeWidth={2}
-                    className="text-primary"
-                  />
-                </div>
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Scira Lookout</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>
-            </div>
 
-            {/* Pricing Section */}
-            <div className="bg-muted rounded-lg p-4 space-y-2">
-              {discountConfig &&
-                (() => {
-                  const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-                  const shouldShowDiscount = isDevMode
-                    ? discountConfig.code && discountConfig.message && discountConfig.percentage
-                    : discountConfig.enabled &&
-                      discountConfig.code &&
-                      discountConfig.message &&
-                      discountConfig.percentage;
-
-                  return (
-                    shouldShowDiscount && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
-                          {discountConfig.showPrice && discountConfig.finalPrice
-                            ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
-                            : discountConfig.percentage
-                              ? `${discountConfig.percentage}% OFF`
-                              : 'DISCOUNT'}
-                        </div>
-                        {discountConfig.message && (
-                          <span className="text-xs text-muted-foreground truncate">{discountConfig.message}</span>
-                        )}
-                      </div>
-                    )
-                  );
-                })()}
-              <div className="flex items-baseline gap-1">
-                {pricing.usd.hasDiscount ? (
-                  <>
-                    <span className="text-sm text-muted-foreground line-through">${pricing.usd.originalPrice}</span>
-                    <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice.toFixed(2)}</span>
-                  </>
-                ) : (
-                  <span className="text-xl font-medium text-foreground">${pricing.usd.finalPrice}</span>
-                )}
-                <span className="text-sm text-muted-foreground">/month</span>
+              <div className="flex gap-2 w-full items-center mt-4">
+                <div className="flex-1 border-b border-foreground/10" />
+                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
+                <div className="flex-1 border-b border-foreground/10" />
               </div>
-              {pricing.inr && (
-                <div className="flex items-baseline gap-1">
-                  {pricing.inr.hasDiscount ? (
-                    <>
-                      <span className="text-sm text-muted-foreground line-through">₹{pricing.inr.originalPrice}</span>
-                      <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
-                    </>
-                  ) : (
-                    <span className="text-lg font-medium text-foreground">₹{pricing.inr.finalPrice}</span>
-                  )}
-                  <span className="text-sm text-muted-foreground">/month</span>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">Cancel anytime</p>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-4">
-              <Button
-                onClick={() => {
-                  window.location.href = '/pricing';
-                }}
-                className="w-full"
-              >
-                Upgrade to Pro
-              </Button>
               <Button
                 variant="ghost"
                 onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground"
+                className="w-full text-muted-foreground hover:text-foreground mt-2"
+                size="sm"
               >
                 Not now
               </Button>
             </div>
-
-            {/* Additional info */}
-            <p className="text-xs text-muted-foreground text-center pt-2">Cancel anytime • Secure payment</p>
           </DialogContent>
         </Dialog>
       </TooltipProvider>
