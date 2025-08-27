@@ -1330,7 +1330,7 @@ function MemoriesSection() {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
+      <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {totalMemories} {totalMemories === 1 ? 'memory' : 'memories'} stored
         </p>
@@ -1419,6 +1419,16 @@ function MemoriesSection() {
           </>
         )}
       </div>
+      <div className="flex items-center gap-2 justify-center">
+          <p className="text-xs text-muted-foreground">powered by</p>
+          <Image
+            src="/supermemory.svg"
+            alt="Memories"
+            className='invert dark:invert-0'
+            width={140}
+            height={140}
+          />
+        </div>
     </div>
   );
 }

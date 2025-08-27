@@ -1375,7 +1375,7 @@ const ToolPartRenderer = memo(
             return (
               <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                <div className="px-2 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
@@ -1385,43 +1385,25 @@ const ToolPartRenderer = memo(
                         {count} Memor{count !== 1 ? 'ies' : 'y'} Found
                       </h3>
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] shrink-0">
-                      Search Results
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/supermemory.svg"
+                        alt="Supermemory"
+                        width={100}
+                        height={16}
+                        className="opacity-60 hover:opacity-80 transition-opacity invert dark:invert-0"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Results list */}
-                <div className="divide-y divide-[hsl(var(--border))]">
+                <div className="">
                   {results.map((memory: any, index: number) => (
-                    <div key={memory.id || index} className="px-4 py-3">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
-                          <Memory className="h-4 w-4 text-[hsl(var(--primary))]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          {memory.title && (
-                            <h4 className="text-sm font-medium text-ellipsis overflow-hidden whitespace-nowrap mb-1">
-                              {memory.title}
-                            </h4>
-                          )}
-                          <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">
-                            {memory.summary || memory.content || memory.memory || ''}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            {memory.type && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                                {memory.type}
-                              </span>
-                            )}
-                            {memory.createdAt && (
-                              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                {new Date(memory.createdAt).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                    <div key={memory.id || index} className="px-4 py-2">
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">
+                        • {memory.chunks[0].content || memory.memory || ''}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -1460,20 +1442,29 @@ const ToolPartRenderer = memo(
             return (
               <div className="w-full my-4 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 shadow-sm overflow-hidden">
                 <div className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                      <Memory className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                          Memory Added Successfully
+                        </h3>
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                          Your information has been saved to memory for future reference.
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
-                        Memory Added Successfully
-                      </h3>
-                      <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                        Your information has been saved to memory for future reference.
-                      </p>
-                    </div>
+                    <Image
+                      src="/supermemory.svg"
+                      alt="Supermemory"
+                      width={100}
+                      height={16}
+                      className="opacity-60 hover:opacity-80 transition-opacity shrink-0 invert dark:invert-0"
+                    />
                   </div>
-                  
+
                   {addedMemory && (
                     <div className="mt-3 p-3 bg-white dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                       {addedMemory.title && (
@@ -1484,13 +1475,13 @@ const ToolPartRenderer = memo(
                       <p className="text-xs text-green-700 dark:text-green-300">
                         {addedMemory.summary || addedMemory.content || part.input.memory || 'Memory stored'}
                       </p>
-                        {addedMemory.type && (
-                          <div className="flex items-center gap-2 mt-2">
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
-                                {addedMemory.type}
-                              </span>
-                          </div>
-                        )}
+                      {addedMemory.type && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
+                            {addedMemory.type}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1530,32 +1521,37 @@ const ToolPartRenderer = memo(
               <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                      <Memory className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold truncate">Memory Details</h3>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Retrieved memory: {part.input.memoryId}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold truncate">
-                        Memory Details
-                      </h3>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        Retrieved memory: {part.input.memoryId}
-                      </p>
-                    </div>
+                    <Image
+                      src="/supermemory.svg"
+                      alt="Supermemory"
+                      width={16}
+                      height={16}
+                      className="opacity-60 hover:opacity-80 transition-opacity shrink-0"
+                    />
                   </div>
                 </div>
 
                 {/* Memory content */}
                 <div className="p-4">
                   {fetchedMemory.title && (
-                    <h4 className="text-base font-medium text-[hsl(var(--foreground))] mb-2">
-                      {fetchedMemory.title}
-                    </h4>
+                    <h4 className="text-base font-medium text-[hsl(var(--foreground))] mb-2">{fetchedMemory.title}</h4>
                   )}
                   <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-3">
                     {fetchedMemory.summary || fetchedMemory.content || fetchedMemory.memory || 'No content available'}
                   </p>
-                  
+
                   <div className="flex flex-wrap items-center gap-2">
                     {fetchedMemory.type && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
