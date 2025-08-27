@@ -37,7 +37,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-deepseek-v3': wrapLanguageModel({
-      model: huggingface.chat('deepseek-ai/DeepSeek-V3.1:novita'),
+      model: huggingface.chat('deepseek-ai/DeepSeek-V3.1:fireworks-ai'),
       middleware,
     }),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
