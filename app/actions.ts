@@ -221,9 +221,9 @@ const groupTools = {
   chat: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
-  memory: ['memory_manager', 'datetime'] as const,
+  memory: ['datetime', 'search_memories', 'add_memory', 'fetch_memory'] as const,
   // Add legacy mapping for backward compatibility
-  buddy: ['memory_manager', 'datetime'] as const,
+  buddy: ['datetime', 'search_memories', 'add_memory', 'fetch_memory'] as const,
 } as const;
 
 const groupInstructions = {

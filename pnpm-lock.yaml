@@ -152,6 +152,9 @@ importers:
       '@react-spring/web':
         specifier: ^10.0.1
         version: 10.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@supermemory/ai-sdk':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@3.25.76)
@@ -348,8 +351,8 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       supermemory:
-        specifier: 3.0.0-alpha.23
-        version: 3.0.0-alpha.23
+        specifier: 3.0.0-alpha.26
+        version: 3.0.0-alpha.26
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2444,6 +2447,9 @@ packages:
 
   '@supabase/supabase-js@2.56.0':
     resolution: {integrity: sha512-XqwhHSyVnkjdliPN61CmXsmFGnFHTX2WDdwjG3Ukvdzuu3Trix+dXupYOQ3BueIyYp7B6t0yYpdQtJP2hIInyg==}
+
+  '@supermemory/ai-sdk@1.0.3':
+    resolution: {integrity: sha512-e2okkhvRlpsCP37FhmsVbqjWNapA1PGNiyFr0xTo4H8f7PcT1KweGH5HzsACjxiCjG8efaLu5r2ZHAcrRg8Tyw==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -5865,8 +5871,8 @@ packages:
       babel-plugin-macros:
         optional: true
 
-  supermemory@3.0.0-alpha.23:
-    resolution: {integrity: sha512-bMOfQnEu+m/Me1qDaF9gE9Jr01vZxhS2n9t9kqPYOs2SLQB7vsONG1Iq+dvx2vA+FJubn/KGyl1EkPd2o1b6rw==}
+  supermemory@3.0.0-alpha.26:
+    resolution: {integrity: sha512-gjLAGEMZLgg1Et5rzCxuy8uuIcy1zjRkKZxsGpbMwxi4b4Z4kH6X/CR9J3QzhSpJRrj35+gP5DW6z8WIMgrCIQ==}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -6228,6 +6234,12 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.5(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/gateway@1.0.11(zod@4.0.17)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      zod: 4.0.17
+
   '@ai-sdk/google@2.0.8(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -6258,6 +6270,12 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.5(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/openai@2.0.19(zod@4.0.17)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      zod: 4.0.17
+
   '@ai-sdk/provider-utils@3.0.5(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -6265,6 +6283,14 @@ snapshots:
       eventsource-parser: 3.0.5
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
+
+  '@ai-sdk/provider-utils@3.0.5(zod@4.0.17)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@standard-schema/spec': 1.0.0
+      eventsource-parser: 3.0.5
+      zod: 4.0.17
+      zod-to-json-schema: 3.24.6(zod@4.0.17)
 
   '@ai-sdk/provider@2.0.0':
     dependencies:
@@ -8546,6 +8572,14 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@supermemory/ai-sdk@1.0.3':
+    dependencies:
+      '@ai-sdk/openai': 2.0.19(zod@4.0.17)
+      '@ai-sdk/provider': 2.0.0
+      ai: 5.0.22(zod@4.0.17)
+      supermemory: 3.0.0-alpha.26
+      zod: 4.0.17
+
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
@@ -9064,6 +9098,14 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.5(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
+
+  ai@5.0.22(zod@4.0.17):
+    dependencies:
+      '@ai-sdk/gateway': 1.0.11(zod@4.0.17)
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      '@opentelemetry/api': 1.9.0
+      zod: 4.0.17
 
   ajv@6.12.6:
     dependencies:
@@ -12538,7 +12580,7 @@ snapshots:
       client-only: 0.0.1
       react: 19.1.1
 
-  supermemory@3.0.0-alpha.23: {}
+  supermemory@3.0.0-alpha.26: {}
 
   supports-color@7.2.0:
     dependencies:
@@ -12945,6 +12987,10 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
+
+  zod-to-json-schema@3.24.6(zod@4.0.17):
+    dependencies:
+      zod: 4.0.17
 
   zod@3.25.76: {}
 

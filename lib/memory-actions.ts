@@ -2,25 +2,35 @@
 
 import { getUser } from '@/lib/auth-utils';
 import { serverEnv } from '@/env/server';
-import MemoryClient from 'mem0ai';
+import { Supermemory } from 'supermemory';
 
 // Initialize the memory client with API key
-const memoryClient = new MemoryClient({ apiKey: serverEnv.MEM0_API_KEY || '' });
+const supermemoryClient = new Supermemory({
+  apiKey: serverEnv.SUPERMEMORY_API_KEY
+});
 
 // Define the types based on actual API responses
 export interface MemoryItem {
   id: string;
+  customId: string;
+  connectionId: string | null;
+  containerTags: string[];
+  createdAt: string;
+  updatedAt: string;
+  metadata: Record<string, any>;
+  status: string;
+  summary: string;
+  title: string;
+  type: string;
+  content: string;
+  // Legacy fields for backward compatibility
   name?: string;
   memory?: string;
-  metadata?: {
-    [key: string]: any;
-  };
   user_id?: string;
   owner?: string;
   immutable?: boolean;
   expiration_date?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
   categories?: string[];
 }
 
@@ -28,38 +38,6 @@ export interface MemoryResponse {
   memories: MemoryItem[];
   total: number;
 }
-
-/**
- * Add a memory for the authenticated user
- */
-export async function addMemory(content: string) {
-  const user = await getUser();
-
-  if (!user) {
-    throw new Error('Authentication required');
-  }
-
-  try {
-    const response = await memoryClient.add(
-      [
-        {
-          role: 'user',
-          content: content,
-        },
-      ],
-      {
-        user_id: user.id,
-        org_id: serverEnv.MEM0_ORG_ID,
-        project_id: serverEnv.MEM0_PROJECT_ID,
-      },
-    );
-    return response;
-  } catch (error) {
-    console.error('Error adding memory:', error);
-    throw error;
-  }
-}
-
 /**
  * Search memories for the authenticated user
  * Returns a consistent MemoryResponse format with memories array and total count
@@ -75,62 +53,15 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
     return { memories: [], total: 0 };
   }
 
-  const searchFilters = {
-    AND: [{ user_id: user.id }],
-  };
-
   try {
-    const result = await memoryClient.search(query, {
-      filters: searchFilters,
-      api_version: 'v2',
+    const result = await supermemoryClient.search.memories({
+      q: query,
+      containerTag: user.id,
+      limit: pageSize,
     });
-
-    console.log('[searchMemories] result', result);
-
-    if (!result || !result[0]) {
-      return { memories: [], total: 0 };
-    }
-
-    // Process the results to ensure we return a consistent structure
-    if (Array.isArray(result)) {
-      const memories: MemoryItem[] = result.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        memory: item.memory,
-        metadata: item.metadata,
-        user_id: item.user_id,
-        owner: item.owner,
-        immutable: item.immutable,
-        expiration_date: item.expiration_date,
-        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
-        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
-        categories: item.categories,
-      }));
-      return {
-        memories,
-        total: memories.length,
-      };
-    } else if (result && typeof result === 'object' && 'memories' in result) {
-      const rawMemories = (result as any).memories || [];
-      const memories: MemoryItem[] = rawMemories.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        memory: item.memory,
-        metadata: item.metadata,
-        user_id: item.user_id,
-        owner: item.owner,
-        immutable: item.immutable,
-        expiration_date: item.expiration_date,
-        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
-        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
-        categories: item.categories,
-      }));
-      return {
-        memories,
-        total: (result as any).total || memories.length,
-      };
-    }
-    return { memories: [], total: 0 };
+    
+    
+    return { memories: [], total: result.total || 0 };
   } catch (error) {
     console.error('Error searching memories:', error);
     throw error;
@@ -149,56 +80,19 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
   }
 
   try {
-    const data = await memoryClient.getAll({
-      user_id: user.id,
-      org_id: serverEnv.MEM0_ORG_ID,
-      project_id: serverEnv.MEM0_PROJECT_ID,
+    const result = await supermemoryClient.memories.list({
+      containerTags: [user.id],
+      page: page,
+      limit: pageSize,
+      includeContent: true,
     });
 
-    console.log('[getAllMemories] data', data);
-
-    // Process the result to ensure we return a consistent structure
-    if (Array.isArray(data)) {
-      const memories: MemoryItem[] = data.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        memory: item.memory,
-        metadata: item.metadata,
-        user_id: item.user_id,
-        owner: item.owner,
-        immutable: item.immutable,
-        expiration_date: item.expiration_date,
-        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
-        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
-        categories: item.categories,
-      }));
-      return {
-        memories,
-        total: memories.length,
-      };
-    } else if (data && typeof data === 'object' && 'memories' in data) {
-      const rawMemories = (data as any).memories || [];
-      const memories: MemoryItem[] = rawMemories.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        memory: item.memory,
-        metadata: item.metadata,
-        user_id: item.user_id,
-        owner: item.owner,
-        immutable: item.immutable,
-        expiration_date: item.expiration_date,
-        created_at: item.created_at instanceof Date ? item.created_at.toISOString() : item.created_at,
-        updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : item.updated_at,
-        categories: item.categories,
-      }));
-      return {
-        memories,
-        total: (data as any).total || memories.length,
-      };
-    }
-    return { memories: [], total: 0 };
+    return {
+      memories: result.memories as any,
+      total: result.pagination.totalItems || 0,
+    };
   } catch (error) {
-    console.error('Error getting all memories:', error);
+    console.error('Error fetching memories:', error);
     throw error;
   }
 }
@@ -214,7 +108,7 @@ export async function deleteMemory(memoryId: string) {
   }
 
   try {
-    const data = await memoryClient.delete(memoryId);
+    const data = await supermemoryClient.memories.delete(memoryId);
     return data;
   } catch (error) {
     console.error('Error deleting memory:', error);
