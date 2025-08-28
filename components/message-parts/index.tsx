@@ -206,7 +206,6 @@ const OnChainCryptoComponents = lazy(() =>
 const CryptoTickers = lazy(() =>
   import('@/components/crypto-charts').then((module) => ({ default: module.CryptoTickers })),
 );
-const MemoryManager = lazy(() => import('@/components/memory-manager'));
 const YouTubeSearchResults = lazy(() =>
   import('@/components/youtube-search-results').then((module) => ({ default: module.YouTubeSearchResults })),
 );
@@ -1310,21 +1309,6 @@ const ToolPartRenderer = memo(
         }
         break;
 
-      case 'memory_manager':
-        switch (part.state) {
-          case 'input-streaming':
-            return <div className="text-sm text-neutral-500">Preparing memory operation...</div>;
-          case 'input-available':
-            return <SearchLoadingState icon={Memory} text="Managing memories..." color="violet" />;
-          case 'output-available':
-            return (
-              <Suspense fallback={<ComponentLoader />}>
-                <MemoryManager result={part.output} />
-              </Suspense>
-            );
-        }
-        break;
-
       case 'search_memories':
         switch (part.state) {
           case 'input-streaming':
@@ -1484,96 +1468,6 @@ const ToolPartRenderer = memo(
                       )}
                     </div>
                   )}
-                </div>
-              </div>
-            );
-        }
-        break;
-
-      case 'fetch_memory':
-        switch (part.state) {
-          case 'input-streaming':
-            return <div className="text-sm text-neutral-500">Preparing to fetch memory...</div>;
-          case 'input-available':
-            return <SearchLoadingState icon={Memory} text="Fetching memory..." color="violet" />;
-          case 'output-available':
-            // Handle error responses
-            if (!part.output.success) {
-              return (
-                <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
-                  <div className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                        <Memory className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Memory not found</h3>
-                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            const { memory: fetchedMemory } = part.output;
-            return (
-              <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
-                {/* Header */}
-                <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <Memory className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold truncate">Memory Details</h3>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          Retrieved memory: {part.input.memoryId}
-                        </p>
-                      </div>
-                    </div>
-                    <Image
-                      src="/supermemory.svg"
-                      alt="Supermemory"
-                      width={16}
-                      height={16}
-                      className="opacity-60 hover:opacity-80 transition-opacity shrink-0"
-                    />
-                  </div>
-                </div>
-
-                {/* Memory content */}
-                <div className="p-4">
-                  {fetchedMemory.title && (
-                    <h4 className="text-base font-medium text-[hsl(var(--foreground))] mb-2">{fetchedMemory.title}</h4>
-                  )}
-                  <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-3">
-                    {fetchedMemory.summary || fetchedMemory.content || fetchedMemory.memory || 'No content available'}
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {fetchedMemory.type && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                        {fetchedMemory.type}
-                      </span>
-                    )}
-                    {fetchedMemory.status && fetchedMemory.status !== 'done' && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
-                        {fetchedMemory.status}
-                      </span>
-                    )}
-                    {fetchedMemory.createdAt && (
-                      <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                        Created: {new Date(fetchedMemory.createdAt).toLocaleDateString()}
-                      </span>
-                    )}
-                    {fetchedMemory.updatedAt && (
-                      <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                        Updated: {new Date(fetchedMemory.updatedAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
             );

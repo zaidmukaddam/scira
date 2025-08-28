@@ -20,7 +20,6 @@ import type {
   flightTrackerTool,
   datetimeTool,
   mcpSearchTool,
-  memoryManagerTool,
   extremeSearchTool,
   greetingTool,
   movieTvSearchTool,
@@ -122,7 +121,6 @@ type findPlaceOnMapTool = InferUITool<typeof findPlaceOnMapTool>;
 type nearbyPlacesSearchTool = InferUITool<typeof nearbyPlacesSearchTool>;
 type webSearch = InferUITool<ReturnType<typeof webSearchTool>>;
 type extremeSearch = InferUITool<ReturnType<typeof extremeSearchTool>>;
-type memoryManagerTool = InferUITool<typeof memoryManagerTool>;
 type movieTvSearchTool = InferUITool<typeof movieTvSearchTool>;
 type trendingTvTool = InferUITool<typeof trendingTvTool>;
 type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
@@ -161,7 +159,6 @@ export type ChatTools = {
   track_flight: flightTrackerTool;
   datetime: datetimeTool;
   mcp_search: mcpSearchTool;
-  memory_manager: memoryManagerTool;
   extreme_search: extremeSearch;
   greeting: greetingTool;
 };

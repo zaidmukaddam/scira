@@ -41,19 +41,3 @@ export type AddMemoryTool = Tool<
       memory?: undefined;
     }
 >;
-
-export type FetchMemoryTool = Tool<
-  {
-    memoryId: string;
-  },
-  | {
-      success: boolean;
-      memory: any;
-      error?: undefined;
-    }
-  | {
-      success: boolean;
-      error: string;
-      memory?: undefined;
-    }
->;

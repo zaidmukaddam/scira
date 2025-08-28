@@ -153,8 +153,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@supermemory/ai-sdk':
-        specifier: ^1.0.3
-        version: 1.0.3
+        specifier: ^1.0.7
+        version: 1.0.7
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@3.25.76)
@@ -2448,8 +2448,8 @@ packages:
   '@supabase/supabase-js@2.56.0':
     resolution: {integrity: sha512-XqwhHSyVnkjdliPN61CmXsmFGnFHTX2WDdwjG3Ukvdzuu3Trix+dXupYOQ3BueIyYp7B6t0yYpdQtJP2hIInyg==}
 
-  '@supermemory/ai-sdk@1.0.3':
-    resolution: {integrity: sha512-e2okkhvRlpsCP37FhmsVbqjWNapA1PGNiyFr0xTo4H8f7PcT1KweGH5HzsACjxiCjG8efaLu5r2ZHAcrRg8Tyw==}
+  '@supermemory/ai-sdk@1.0.7':
+    resolution: {integrity: sha512-Vc7WqrRmBeKBUu7KHkmVwMuH9Qi5Z217ORRZJ96MNwXNkXCfV+opd2bclcOn0/5e+i4RZ0pZoNX9rH/cj0NxCA==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -6202,6 +6202,9 @@ packages:
   zod@4.0.17:
     resolution: {integrity: sha512-1PHjlYRevNxxdy2JZ8JcNAw7rX8V9P1AKkP+x/xZfxB0K5FYfuV+Ug6P/6NVSR2jHQ+FzDDoDHS04nYUsOIyLQ==}
 
+  zod@4.1.5:
+    resolution: {integrity: sha512-rcUUZqlLJgBC33IT3PNMgsCq6TzLQEG/Ei/KTCU0PedSWRMAXoOUN+4t/0H+Q8bdnLPdqUYnvboJT0bn/229qg==}
+
   zrender@5.6.1:
     resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
 
@@ -6234,11 +6237,11 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/gateway@1.0.15(zod@4.0.17)':
+  '@ai-sdk/gateway@1.0.15(zod@4.1.5)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
-      zod: 4.0.17
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.1.5)
+      zod: 4.1.5
 
   '@ai-sdk/google@2.0.11(zod@3.25.76)':
     dependencies:
@@ -6270,11 +6273,11 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai@2.0.22(zod@4.0.17)':
+  '@ai-sdk/openai@2.0.22(zod@4.1.5)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
-      zod: 4.0.17
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.1.5)
+      zod: 4.1.5
 
   '@ai-sdk/provider-utils@3.0.7(zod@3.25.76)':
     dependencies:
@@ -6283,12 +6286,12 @@ snapshots:
       eventsource-parser: 3.0.5
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.7(zod@4.0.17)':
+  '@ai-sdk/provider-utils@3.0.7(zod@4.1.5)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
-      zod: 4.0.17
+      zod: 4.1.5
 
   '@ai-sdk/provider@2.0.0':
     dependencies:
@@ -8570,13 +8573,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@supermemory/ai-sdk@1.0.3':
+  '@supermemory/ai-sdk@1.0.7':
     dependencies:
-      '@ai-sdk/openai': 2.0.22(zod@4.0.17)
+      '@ai-sdk/openai': 2.0.22(zod@4.1.5)
       '@ai-sdk/provider': 2.0.0
-      ai: 5.0.26(zod@4.0.17)
+      ai: 5.0.26(zod@4.1.5)
       supermemory: 3.0.0-alpha.26
-      zod: 4.0.17
+      zod: 4.1.5
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -9097,13 +9100,13 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  ai@5.0.26(zod@4.0.17):
+  ai@5.0.26(zod@4.1.5):
     dependencies:
-      '@ai-sdk/gateway': 1.0.15(zod@4.0.17)
+      '@ai-sdk/gateway': 1.0.15(zod@4.1.5)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.1.5)
       '@opentelemetry/api': 1.9.0
-      zod: 4.0.17
+      zod: 4.1.5
 
   ajv@6.12.6:
     dependencies:
@@ -12989,6 +12992,8 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.0.17: {}
+
+  zod@4.1.5: {}
 
   zrender@5.6.1:
     dependencies:

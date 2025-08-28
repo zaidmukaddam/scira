@@ -64,7 +64,7 @@ import { GroqProviderOptions } from '@ai-sdk/groq';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
-import { createMemoryTools, type SearchMemoryTool, type AddMemoryTool, type FetchMemoryTool } from '@/lib/tools/supermemory';
+import { createMemoryTools, type SearchMemoryTool, type AddMemoryTool } from '@/lib/tools/supermemory';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -442,7 +442,6 @@ export async function POST(req: Request) {
             return {
               search_memories: memoryTools.searchMemories as SearchMemoryTool,
               add_memory: memoryTools.addMemory as AddMemoryTool,
-              fetch_memory: memoryTools.fetchMemory as FetchMemoryTool,
             };
           })() : {}),
         },
