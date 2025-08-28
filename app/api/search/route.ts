@@ -378,12 +378,8 @@ export async function POST(req: Request) {
                   serviceTier: 'auto',
                   textVerbosity: 'high',
                 }
-              : model.includes('deepseek-v3')
-                ? {
-                    reasoning_effort: "none"
-                  }
-                : {}),
-          },
+              : {}),
+          } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
