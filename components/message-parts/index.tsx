@@ -1325,6 +1325,261 @@ const ToolPartRenderer = memo(
         }
         break;
 
+      case 'search_memories':
+        switch (part.state) {
+          case 'input-streaming':
+            return <div className="text-sm text-neutral-500">Preparing memory search...</div>;
+          case 'input-available':
+            return <SearchLoadingState icon={Memory} text="Searching memories..." color="blue" />;
+          case 'output-available':
+            // Handle error responses
+            if (!part.output.success) {
+              return (
+                <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Memory search failed</h3>
+                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const { results, count } = part.output;
+            if (!results || results.length === 0) {
+              return (
+                <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">No memories found</h3>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                          No memories match your search query. Try different keywords.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-2 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                        <Memory className="h-4 w-4 text-[hsl(var(--primary))]" />
+                      </div>
+                      <h3 className="text-sm font-semibold">
+                        {count} Memor{count !== 1 ? 'ies' : 'y'} Found
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/supermemory.svg"
+                        alt="Supermemory"
+                        width={100}
+                        height={16}
+                        className="opacity-60 hover:opacity-80 transition-opacity invert dark:invert-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Results list */}
+                <div className="">
+                  {results.map((memory: any, index: number) => (
+                    <div key={memory.id || index} className="px-4 py-2">
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">
+                        • {memory.chunks[0].content || memory.memory || ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+        }
+        break;
+
+      case 'add_memory':
+        switch (part.state) {
+          case 'input-streaming':
+            return <div className="text-sm text-neutral-500">Preparing to add memory...</div>;
+          case 'input-available':
+            return <SearchLoadingState icon={Memory} text="Adding memory..." color="green" />;
+          case 'output-available':
+            // Handle error responses
+            if (!part.output.success) {
+              return (
+                <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Failed to add memory</h3>
+                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const { memory: addedMemory } = part.output;
+            return (
+              <div className="w-full my-4 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 shadow-sm overflow-hidden">
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                          Memory Added Successfully
+                        </h3>
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                          Your information has been saved to memory for future reference.
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src="/supermemory.svg"
+                      alt="Supermemory"
+                      width={100}
+                      height={16}
+                      className="opacity-60 hover:opacity-80 transition-opacity shrink-0 invert dark:invert-0"
+                    />
+                  </div>
+
+                  {addedMemory && (
+                    <div className="mt-3 p-3 bg-white dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                      {addedMemory.title && (
+                        <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                          {addedMemory.title}
+                        </h4>
+                      )}
+                      <p className="text-xs text-green-700 dark:text-green-300">
+                        {addedMemory.summary || addedMemory.content || part.input.memory || 'Memory stored'}
+                      </p>
+                      {addedMemory.type && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
+                            {addedMemory.type}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+        }
+        break;
+
+      case 'fetch_memory':
+        switch (part.state) {
+          case 'input-streaming':
+            return <div className="text-sm text-neutral-500">Preparing to fetch memory...</div>;
+          case 'input-available':
+            return <SearchLoadingState icon={Memory} text="Fetching memory..." color="violet" />;
+          case 'output-available':
+            // Handle error responses
+            if (!part.output.success) {
+              return (
+                <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Memory not found</h3>
+                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const { memory: fetchedMemory } = part.output;
+            return (
+              <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <Memory className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold truncate">Memory Details</h3>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Retrieved memory: {part.input.memoryId}
+                        </p>
+                      </div>
+                    </div>
+                    <Image
+                      src="/supermemory.svg"
+                      alt="Supermemory"
+                      width={16}
+                      height={16}
+                      className="opacity-60 hover:opacity-80 transition-opacity shrink-0"
+                    />
+                  </div>
+                </div>
+
+                {/* Memory content */}
+                <div className="p-4">
+                  {fetchedMemory.title && (
+                    <h4 className="text-base font-medium text-[hsl(var(--foreground))] mb-2">{fetchedMemory.title}</h4>
+                  )}
+                  <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-3">
+                    {fetchedMemory.summary || fetchedMemory.content || fetchedMemory.memory || 'No content available'}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {fetchedMemory.type && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
+                        {fetchedMemory.type}
+                      </span>
+                    )}
+                    {fetchedMemory.status && fetchedMemory.status !== 'done' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
+                        {fetchedMemory.status}
+                      </span>
+                    )}
+                    {fetchedMemory.createdAt && (
+                      <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                        Created: {new Date(fetchedMemory.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    {fetchedMemory.updatedAt && (
+                      <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                        Updated: {new Date(fetchedMemory.updatedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+        }
+        break;
+
       case 'mcp_search':
         switch (part.state) {
           case 'input-streaming':

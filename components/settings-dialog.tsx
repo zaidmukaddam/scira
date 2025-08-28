@@ -1280,19 +1280,6 @@ function MemoriesSection() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const {
-    data: searchResults,
-    isLoading: isSearching,
-    refetch: performSearch,
-  } = useQuery({
-    queryKey: ['memories', 'search', searchQuery],
-    queryFn: async () => {
-      if (!searchQuery.trim()) return { memories: [], total: 0 };
-      return await searchMemories(searchQuery);
-    },
-    enabled: true,
-  });
-
   const deleteMutation = useMutation({
     mutationFn: deleteMemory,
     onSuccess: (_, memoryId) => {
@@ -1314,18 +1301,6 @@ function MemoriesSection() {
     },
   });
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      await performSearch();
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    queryClient.invalidateQueries({ queryKey: ['memories', 'search'] });
-  };
-
   const handleDeleteMemory = (id: string) => {
     setDeletingMemoryIds((prev) => new Set(prev).add(id));
     deleteMutation.mutate(id);
@@ -1342,61 +1317,26 @@ function MemoriesSection() {
   };
 
   const getMemoryContent = (memory: MemoryItem): string => {
+    if (memory.summary) return memory.summary;
+    if (memory.title) return memory.title;
     if (memory.memory) return memory.memory;
     if (memory.name) return memory.name;
     return 'No content available';
   };
 
-  const displayedMemories =
-    searchQuery.trim() && searchResults
-      ? searchResults.memories
-      : memoriesData?.pages.flatMap((page) => page.memories) || [];
+  const displayedMemories = memoriesData?.pages.flatMap((page) => page.memories) || [];
 
-  const totalMemories =
-    searchQuery.trim() && searchResults
-      ? searchResults.total
-      : memoriesData?.pages.reduce((acc, page) => acc + page.memories.length, 0) || 0;
+  const totalMemories = memoriesData?.pages.reduce((acc, page) => acc + page.memories.length, 0) || 0;
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
-        <div className="relative">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search memories..."
-            className="pr-20 h-9 text-sm"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSearch(e);
-              }
-            }}
-          />
-          <div className="absolute right-1 top-1 flex gap-1">
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              variant="ghost"
-              disabled={isSearching || !searchQuery.trim()}
-              className="h-7 w-7 p-0"
-            >
-              {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-            </Button>
-            {searchQuery.trim() && (
-              <Button variant="ghost" size="sm" onClick={handleClearSearch} className="h-7 px-2 text-xs">
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-
+      <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {totalMemories} {totalMemories === 1 ? 'memory' : 'memories'} stored
         </p>
       </div>
 
-      <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
+      <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1 scrollbar-w-1 scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30">
         {memoriesLoading && !displayedMemories.length ? (
           <div className="flex justify-center items-center h-32">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1414,10 +1354,25 @@ function MemoriesSection() {
                 className="group relative p-3 rounded-lg border bg-card/50 hover:bg-card transition-all"
               >
                 <div className="pr-8">
-                  <p className="text-sm leading-relaxed">{getMemoryContent(memory)}</p>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatDate(memory.created_at)}</span>
+                  {memory.title && (
+                    <h4 className="text-sm font-medium mb-1 text-foreground">{memory.title}</h4>
+                  )}
+                  <p className="text-sm leading-relaxed text-muted-foreground">{memory.content || getMemoryContent(memory)}</p>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatDate(memory.createdAt || memory.created_at || '')}</span>
+                    </div>
+                    {memory.type && (
+                      <div className="px-1.5 py-0.5 bg-muted/50 rounded text-[9px] font-medium">
+                        {memory.type}
+                      </div>
+                    )}
+                    {memory.status && memory.status !== 'done' && (
+                      <div className="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-[9px] font-medium">
+                        {memory.status}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -1464,6 +1419,16 @@ function MemoriesSection() {
           </>
         )}
       </div>
+      <div className="flex items-center gap-2 justify-center">
+          <p className="text-xs text-muted-foreground">powered by</p>
+          <Image
+            src="/supermemory.svg"
+            alt="Memories"
+            className='invert dark:invert-0'
+            width={140}
+            height={140}
+          />
+        </div>
     </div>
   );
 }

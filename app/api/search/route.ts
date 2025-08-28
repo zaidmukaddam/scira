@@ -55,7 +55,6 @@ import {
   datetimeTool,
   greetingTool,
   mcpSearchTool,
-  memoryManagerTool,
   redditSearchTool,
   extremeSearchTool,
 } from '@/lib/tools';
@@ -65,6 +64,7 @@ import { GroqProviderOptions } from '@ai-sdk/groq';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
+import { createMemoryTools, type SearchMemoryTool, type AddMemoryTool, type FetchMemoryTool } from '@/lib/tools/supermemory';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -439,9 +439,16 @@ export async function POST(req: Request) {
           track_flight: flightTrackerTool,
           datetime: datetimeTool,
           mcp_search: mcpSearchTool,
-          memory_manager: memoryManagerTool,
           extreme_search: extremeSearchTool(dataStream),
           greeting: greetingTool(timezone),
+          ...(user ? (() => {
+            const memoryTools = createMemoryTools(user.id);
+            return {
+              search_memories: memoryTools.searchMemories as SearchMemoryTool,
+              add_memory: memoryTools.addMemory as AddMemoryTool,
+              fetch_memory: memoryTools.fetchMemory as FetchMemoryTool,
+            };
+          })() : {}),
         },
         experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
@@ -455,6 +462,10 @@ export async function POST(req: Request) {
           console.log('error', error);
 
           const tool = tools[toolCall.toolName as keyof typeof tools];
+          
+          if (!tool) {
+            return null;
+          }
 
           const { object: repairedArgs } = await generateObject({
             model: scira.languageModel('scira-grok-3'),
@@ -518,7 +529,7 @@ export async function POST(req: Request) {
               after(async () => {
                 try {
                   const extremeSearchUsed = event.steps?.some((step) =>
-                    step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
+                    step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
                   );
 
                   if (extremeSearchUsed) {
