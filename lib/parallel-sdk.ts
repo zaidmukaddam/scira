@@ -6,8 +6,8 @@ export interface ParallelSearchOptions {
   max_results?: number;
   max_chars_per_result?: number;
   source_policy?: {
-    include_domains?: string;
-    exclude_domains?: string;
+    include_domains?: string[];
+    exclude_domains?: string[];
   };
 }
 
@@ -80,11 +80,11 @@ export class ParallelAI {
       searchOptions.source_policy = {};
 
       if (options.include_domains?.length) {
-        searchOptions.source_policy.include_domains = options.include_domains.join(',');
+        searchOptions.source_policy.include_domains = options.include_domains;
       }
 
       if (options.exclude_domains?.length) {
-        searchOptions.source_policy.exclude_domains = options.exclude_domains.join(',');
+        searchOptions.source_policy.exclude_domains = options.exclude_domains;
       }
     }
 
@@ -116,11 +116,11 @@ export class ParallelAI {
       searchOptions.source_policy = {};
 
       if (options.include_domains?.length) {
-        searchOptions.source_policy.include_domains = options.include_domains.join(',');
+        searchOptions.source_policy.include_domains = options.include_domains;
       }
 
       if (options.exclude_domains?.length) {
-        searchOptions.source_policy.exclude_domains = options.exclude_domains.join(',');
+        searchOptions.source_policy.exclude_domains = options.exclude_domains;
       }
     }
 

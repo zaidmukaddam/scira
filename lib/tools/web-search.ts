@@ -69,7 +69,16 @@ const isValidImageUrl = async (url: string): Promise<{ valid: boolean; redirecte
 
 export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | undefined, searchProvider: "exa" | "parallel" | "tavily" | "firecrawl" = "parallel") {
   return tool({
-    description: 'Search the web for information with multiple queries, max results, search depth, topics, and quality.',
+    description: `Search the web for information with multiple queries, max results, search depth, topics, and quality.
+    ${searchProvider === 'parallel' ? 'Parallel AI is used for this search.' : ''}
+    ${searchProvider === 'tavily' ? 'Tavily is used for this search.' : ''}
+    ${searchProvider === 'firecrawl' ? 'Firecrawl is used for this search.' : ''}
+    ${searchProvider === 'exa' ? 'Exa is used for this search.' : ''}
+    
+    Very important:
+    - The queries should always be in the same language as the user's message.
+    - And count of the queries should be 3-5.
+    `,
     inputSchema: z.object({
       queries: z.array(
         z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'),

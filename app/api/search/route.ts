@@ -376,10 +376,14 @@ export async function POST(req: Request) {
                   parallelToolCalls: false,
                   strictJsonSchema: false,
                   serviceTier: 'auto',
-                  textVerbosity: 'medium',
+                  textVerbosity: 'high',
                 }
-              : {}),
-          } satisfies OpenAIResponsesProviderOptions,
+              : model.includes('deepseek-v3')
+                ? {
+                    reasoning_effort: "none"
+                  }
+                : {}),
+          },
           xai: {
             ...(model === 'scira-default'
               ? {

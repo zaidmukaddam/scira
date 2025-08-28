@@ -101,7 +101,7 @@ export function ShareButton({
           ...baseProps,
           variant: 'secondary' as const,
           size: 'sm' as const,
-          className: `${className} ${
+          className: `${className} !h-7 !p-4 ${
             selectedVisibilityType === 'public'
               ? 'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800'
               : ''

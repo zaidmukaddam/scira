@@ -7,10 +7,7 @@ const protectedRoutes = ['/lookout'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   console.log('Pathname: ', pathname);
-  if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
-    return NextResponse.next();
-  }
-
+  if (pathname === '/api/search') return NextResponse.next();
   if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
     return NextResponse.next();
   }
@@ -20,11 +17,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/api/raycast')) {
+  // /api/auth/polar/webhooks
+  if (pathname.startsWith('/api/auth/polar/webhooks')) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/polar/webhooks')) {
+  if (pathname.startsWith('/api/auth/dodopayments/webhooks')) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith('/api/raycast')) {
     return NextResponse.next();
   }
 
