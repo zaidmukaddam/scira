@@ -54,13 +54,14 @@ export const retrieveTool = tool({
 
       // Use Firecrawl as fallback
       if (usingFirecrawl) {
+        const urlWithoutHttps = url.replace(/^https?:\/\//, '');
         try {
-          const scrapeResponse = await firecrawl.scrape(url, {
+          const scrapeResponse = await firecrawl.scrape(urlWithoutHttps, {
             formats: ['markdown'],
             onlyMainContent: true,
             parsePDF: true,
             maxAge: 14400000,
-            proxy: "auto",
+            proxy: 'auto',
           });
 
           if (!scrapeResponse) {
