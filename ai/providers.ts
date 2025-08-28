@@ -56,6 +56,7 @@ export const scira = customProvider({
     'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
     'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct'),
     'scira-llama-3': sambanova('Meta-Llama-3.3-70B-Instruct'),
+    'scira-deepseek-r1': sambanova('DeepSeek-R1-0528'),
   },
 });
 
@@ -302,20 +303,6 @@ export const models: Model[] = [
     maxOutputTokens: 128000,
   },
   {
-    value: 'scira-llama-3',
-    label: 'Meta-Llama-3.3-70B-Instruct',
-    description: "Meta's advanced LLM",
-    vision: false,
-    reasoning: false,
-    experimental: false,
-    category: 'Mini',
-    pdf: false,
-    pro: false,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 128000,
-  },
-  {
     value: 'scira-anthropic',
     label: 'Claude 4 Sonnet',
     description: "Anthropic's most advanced LLM",
@@ -370,6 +357,36 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
+  },
+
+  {
+    value: 'scira-llama-3',
+    label: 'Meta-Llama-3.3-70B-Instruct',
+    description: "Meta's advanced LLM",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Free',
+    pdf: false,
+    pro: false,
+    requiresAuth: false,
+    freeUnlimited: false,
+    maxOutputTokens: 128000,
+  },
+
+  {
+    value: 'scira-deepseek-r1',
+    label: 'DeepSeek-R1-0528',
+    description: "Enhanced reasoning, coding, logic",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Free',
+    pdf: false,
+    pro: false,
+    requiresAuth: false,
+    freeUnlimited: false,
+    maxOutputTokens: 128000,
   },
 
   // Experimental Models
