@@ -13,12 +13,14 @@ import React, { useCallback, useMemo, useState, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Check, Copy, WrapText, ArrowLeftRight } from 'lucide-react';
+import { Check, Copy, WrapText, ArrowLeftRight, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface MarkdownRendererProps {
   content: string;
+  isUserMessage?: boolean;
 }
 
 interface CitationLink {
@@ -106,7 +108,7 @@ const preprocessLaTeX = (content: string) => {
   return content;
 };
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMessage = false }) => {
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
     const citations: CitationLink[] = [];
 
@@ -128,21 +130,18 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       });
     });
 
-    // Then, extract and protect monetary amounts
+    // Then, extract and protect monetary amounts BEFORE LaTeX (with strict boundaries to avoid matching math)
     const monetaryBlocks: Array<{ id: string; content: string }> = [];
 
-    // Protect common monetary patterns
-    const monetaryPatterns = [
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B))\b/g,
-      /\$\d+(?:,\d{3})*(?:\.\d+)?\s*(?=\s|$|[.,;!?])/g,
-    ];
+    // Single robust monetary regex with word boundaries around amounts/units
+    // Matches examples: "$10", "$10.99", "$1,200", "$0.0025 per token", "$20/month", "$5 billion"
+    const monetaryRegex =
+      /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
 
-    monetaryPatterns.forEach((pattern) => {
-      modifiedContent = modifiedContent.replace(pattern, (match) => {
-        const id = `MONETARY${monetaryBlocks.length}END`;
-        monetaryBlocks.push({ id, content: match });
-        return id;
-      });
+    modifiedContent = modifiedContent.replace(monetaryRegex, (match, prefix: string) => {
+      const id = `MONETARY${monetaryBlocks.length}END`;
+      monetaryBlocks.push({ id, content: match.slice(prefix.length) });
+      return `${prefix}${id}`;
     });
 
     // Then extract and protect LaTeX blocks
@@ -162,7 +161,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       });
     });
 
-    // Process LaTeX patterns (monetary amounts are already protected)
+    // Process LaTeX patterns
     const inlinePatterns = [
       { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
       { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
@@ -175,8 +174,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
         return id;
       });
     });
-
-    // Now process citations (LaTeX is already protected)
 
     // Process references followed by URLs
     const refWithUrlRegex =
@@ -497,6 +494,144 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
   InlineCode.displayName = 'InlineCode';
 
+  const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
+    const [showActions, setShowActions] = React.useState(false);
+    const hideTimeoutRef = React.useRef<number | null>(null);
+
+    // Memoized CSV utilities - only recreate when needed
+    const csvUtils = React.useMemo(
+      () => ({
+        escapeCsvValue: (value: string): string => {
+          const needsQuotes = /[",\n]/.test(value);
+          const escaped = value.replace(/"/g, '""');
+          return needsQuotes ? `"${escaped}"` : escaped;
+        },
+
+        buildCsvFromTable: (table: HTMLTableElement): string => {
+          const rows = Array.from(table.querySelectorAll('tr')) as HTMLTableRowElement[];
+          const csvLines: string[] = [];
+
+          for (const row of rows) {
+            const cells = Array.from(row.querySelectorAll('th,td')) as HTMLTableCellElement[];
+            if (cells.length > 0) {
+              const line = cells
+                .map((cell) => csvUtils.escapeCsvValue(cell.innerText.replace(/\u00A0/g, ' ').trim()))
+                .join(',');
+              csvLines.push(line);
+            }
+          }
+
+          return csvLines.join('\n');
+        },
+      }),
+      [],
+    );
+
+    // Lazy CSV download handler - only runs when actually clicked
+    const handleDownloadCsv = React.useCallback(() => {
+      const tableEl = containerRef.current?.querySelector('[data-slot="table"]') as HTMLTableElement | null;
+      if (!tableEl) return;
+
+      try {
+        const csv = csvUtils.buildCsvFromTable(tableEl);
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+        a.href = url;
+        a.download = `table-${timestamp}.csv`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Failed to download CSV:', error);
+      }
+    }, [csvUtils]);
+
+    // Optimized mouse event handlers
+    const handleMouseEnter = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShowActions(true);
+    }, []);
+
+    const handleMouseLeave = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+      setShowActions(false);
+    }, []);
+
+    const handleTouchStart = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShowActions(true);
+    }, []);
+
+    const handleTouchEnd = React.useCallback(() => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+      hideTimeoutRef.current = window.setTimeout(() => setShowActions(false), 1500);
+    }, []);
+
+    // Cleanup timeout on unmount
+    React.useEffect(() => {
+      return () => {
+        if (hideTimeoutRef.current) {
+          window.clearTimeout(hideTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    return (
+      <div
+        className="relative group"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          className={cn(
+            'absolute -top-3 -right-3 z-10 transition-opacity duration-200',
+            showActions ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100',
+          )}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                className="size-7 text-xs shadow-sm rounded-sm"
+                onClick={handleDownloadCsv}
+                aria-label="Download CSV"
+                title="Download CSV"
+              >
+                <Download className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={2}>
+              Download CSV
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div ref={containerRef}>
+          <Table className="!border !rounded-lg !m-0">{children}</Table>
+        </div>
+      </div>
+    );
+  });
+
+  MarkdownTableWithActions.displayName = 'MarkdownTableWithActions';
+
   const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
     const domain = new URL(href).hostname;
 
@@ -580,7 +715,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       inlinePattern.lastIndex = 0;
 
       // Process the text to replace placeholders with LaTeX components
-      let processedText = text;
       const components: any[] = [];
       let lastEnd = 0;
 
@@ -656,6 +790,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
 
       return components.length === 1 ? components[0] : <Fragment key={generateKey()}>{components}</Fragment>;
     },
+    hr() {
+      return <div />;
+    },
     paragraph(children) {
       // Check if the paragraph contains only a LaTeX block placeholder
       if (typeof children === 'string') {
@@ -682,7 +819,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       }
 
       return (
-        <p key={generateKey()} className="my-5 leading-relaxed text-foreground">
+        <p
+          key={generateKey()}
+          className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
+        >
           {children}
         </p>
       );
@@ -701,6 +841,35 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       return <InlineCode key={generateKey()} code={codeString} />;
     },
     link(href, text) {
+      // Handle email addresses (mailto links) as plain text
+      if (href.startsWith('mailto:')) {
+        const email = href.replace('mailto:', '');
+        return (
+          <span key={generateKey()} className="break-all">
+            {email}
+          </span>
+        );
+      }
+
+      // For user messages, display links as plain text with URL
+      if (isUserMessage) {
+        const linkText = typeof text === 'string' ? text : href;
+        // If link text and href are different, show both
+        if (linkText !== href && linkText !== '') {
+          return (
+            <span key={generateKey()} className="break-all">
+              {linkText} ({href})
+            </span>
+          );
+        }
+        // Otherwise just show the URL
+        return (
+          <span key={generateKey()} className="break-all">
+            {href}
+          </span>
+        );
+      }
+
       let citationIndex = citationLinks.findIndex((link) => link.link === href);
       if (citationIndex !== -1) {
         // For citations, show the citation text in the hover card
@@ -769,11 +938,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
       );
     },
     table(children) {
-      return (
-        <Table key={generateKey()} className="!border !rounded-lg !m-0">
-          {children}
-        </Table>
-      );
+      return <MarkdownTableWithActions key={generateKey()}>{children}</MarkdownTableWithActions>;
     },
     tableRow(children) {
       return <TableRow key={generateKey()}>{children}</TableRow>;
@@ -818,7 +983,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   };
 
   return (
-    <div className="mt-3 markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
+    <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
       <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );

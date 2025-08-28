@@ -32,12 +32,13 @@ interface GoogleResult {
 export const findPlaceOnMapTool = tool({
   description:
     'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
-  parameters: z.object({
-    query: z.string().nullable().describe('Address or place name to search for (for forward geocoding)'),
-    latitude: z.number().nullable().describe('Latitude for reverse geocoding'),
-    longitude: z.number().nullable().describe('Longitude for reverse geocoding'),
+  inputSchema: z.object({
+    query: z.string().describe('Address or place name to search for (for forward geocoding)'),
+    latitude: z.number().optional().describe('Latitude for reverse geocoding'),
+    longitude: z.number().optional().describe('Longitude for reverse geocoding'),
   }),
   execute: async ({ query, latitude, longitude }) => {
+    console.log('Executing findPlaceOnMapTool...', query, latitude, longitude);
     try {
       const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;
 
@@ -113,17 +114,17 @@ export const findPlaceOnMapTool = tool({
 
 export const nearbyPlacesSearchTool = tool({
   description: 'Search for nearby places using Google Places Nearby Search API.',
-  parameters: z.object({
-    location: z.string().describe('The location name or coordinates to search around'),
-    latitude: z.number().nullable().describe('Latitude of the search center'),
-    longitude: z.number().nullable().describe('Longitude of the search center'),
+  inputSchema: z.object({
+    location: z.string().describe('The user given location name or coordinates to search around'),
+    latitude: z.number().optional().describe('Latitude of the search center'),
+    longitude: z.number().optional().describe('Longitude of the search center'),
     type: z
       .string()
       .describe(
         'Type of place to search for (restaurant, lodging, tourist_attraction, gas_station, bank, hospital, etc.) from the new google places api',
       ),
     radius: z.number().describe('Search radius in meters (max 50000)'),
-    keyword: z.string().nullable().describe('Additional keyword to filter results'),
+    keyword: z.string().optional().describe('Additional keyword to filter results'),
   }),
   execute: async ({
     location,
@@ -134,12 +135,13 @@ export const nearbyPlacesSearchTool = tool({
     keyword,
   }: {
     location: string;
-    latitude: number | null;
-    longitude: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
     type: string;
     radius: number;
-    keyword: string | null;
+    keyword?: string | null;
   }) => {
+    console.log('Executing nearbyPlacesSearchTool', { location, latitude, longitude, type, radius, keyword });
     try {
       const googleApiKey = serverEnv.GOOGLE_MAPS_API_KEY;
 
@@ -156,6 +158,7 @@ export const nearbyPlacesSearchTool = tool({
         )}&key=${googleApiKey}`;
         const geocodeResponse = await fetch(geocodeUrl);
         const geocodeData = await geocodeResponse.json();
+        console.log('Geocode data:', geocodeData);
 
         if (geocodeData.status === 'OK' && geocodeData.results.length > 0) {
           searchLat = geocodeData.results[0].geometry.location.lat;
@@ -235,6 +238,8 @@ export const nearbyPlacesSearchTool = tool({
               }
             };
 
+            console.log('[Place][Details][Reviews]', detailsData.reviews);
+
             return {
               place_id: place.place_id,
               name: place.name,
@@ -259,6 +264,13 @@ export const nearbyPlacesSearchTool = tool({
               website: detailsData.website,
               opening_hours: detailsData.opening_hours?.weekday_text || [],
               reviews_count: detailsData.reviews?.length || 0,
+              reviews:
+                detailsData.reviews?.map((r: any) => ({
+                  author_name: r.author_name,
+                  rating: r.rating,
+                  text: r.text,
+                  time_description: r.relative_time_description,
+                })) || [],
               source: 'google_places',
             };
           } catch (error) {

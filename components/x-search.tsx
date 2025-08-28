@@ -23,6 +23,7 @@ interface Citation {
 interface Source {
   text: string;
   link: string;
+  title?: string;
 }
 
 interface XSearchResponse {
@@ -96,9 +97,17 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         // Handle both string URLs and objects with url property
         const url = typeof citation === 'string' ? citation : citation.url;
         const match = url.match(/\/status\/(\d+)/);
+        let title = typeof citation === 'object' ? citation.title : '';
+
+        // If no title from citation, try to get it from sources with generated titles
+        if (!title && result.sources) {
+          const matchingSource = result.sources.find((source) => source.link === url);
+          title = matchingSource?.title || '';
+        }
+
         return {
           url,
-          title: typeof citation === 'object' ? citation.title : '',
+          title,
           description: typeof citation === 'object' ? citation.description : '',
           tweet_id: match ? match[1] : null,
         };
@@ -178,7 +187,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
               {/* Horizontal Tweets Row */}
               {tweetCitations.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none rounded-lg">
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none">
                     {displayedTweets.map((citation, index) => (
                       <motion.div
                         key={citation.tweet_id}

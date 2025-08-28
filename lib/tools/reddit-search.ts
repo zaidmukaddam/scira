@@ -5,7 +5,7 @@ import { serverEnv } from '@/env/server';
 
 export const redditSearchTool = tool({
   description: 'Search Reddit content using Tavily API.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The exact search query from the user.').max(200),
     maxResults: z.number().describe('Maximum number of results to return. Default is 20.'),
     timeRange: z.enum(['day', 'week', 'month', 'year']).describe('Time range for Reddit search.'),
@@ -28,10 +28,11 @@ export const redditSearchTool = tool({
 
     try {
       const data = await tvly.search(query, {
-        maxResults: maxResults,
+        maxResults: maxResults < 20 ? 20 : maxResults,
         timeRange: timeRange,
         includeRawContent: 'text',
-        searchDepth: 'basic',
+        searchDepth: 'advanced',
+        chunksPerSource: 5,
         topic: 'general',
         includeDomains: ['reddit.com'],
       });

@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { useState, useEffect } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 const testimonials = [
   {
@@ -56,7 +56,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="flex-1 flex flex-col justify-between p-12">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/scira.png" alt="Scira" width={32} height={32} className="invert dark:invert-0" />
+              <SciraLogo className="size-8" />
               <span className="text-lg font-medium">Scira AI</span>
             </Link>
           </div>

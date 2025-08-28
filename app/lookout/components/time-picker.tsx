@@ -12,13 +12,7 @@ interface TimePickerProps {
   filterPastTimes?: boolean;
 }
 
-export function TimePicker({
-  value,
-  onChange,
-  name,
-  selectedDate,
-  filterPastTimes = false,
-}: TimePickerProps) {
+export function TimePicker({ value, onChange, name, selectedDate, filterPastTimes = false }: TimePickerProps) {
   const now = new Date();
   const isToday =
     selectedDate &&

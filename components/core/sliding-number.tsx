@@ -1,12 +1,6 @@
 'use client';
 import { useEffect, useId } from 'react';
-import {
-  MotionValue,
-  motion,
-  useSpring,
-  useTransform,
-  motionValue,
-} from 'motion/react';
+import { MotionValue, motion, useSpring, useTransform, motionValue } from 'motion/react';
 import useMeasure from 'react-use-measure';
 
 const TRANSITION = {
@@ -26,8 +20,8 @@ function Digit({ value, place }: { value: number; place: number }) {
   }, [animatedValue, valueRoundedToPlace]);
 
   return (
-    <div className='relative inline-block w-[1ch] overflow-x-visible overflow-y-clip leading-none tabular-nums'>
-      <div className='invisible'>0</div>
+    <div className="relative inline-block w-[1ch] overflow-x-visible overflow-y-clip leading-none tabular-nums">
+      <div className="invisible">0</div>
       {Array.from({ length: 10 }, (_, i) => (
         <Number key={i} mv={animatedValue} number={i} />
       ))}
@@ -55,7 +49,7 @@ function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
   // don't render the animated number until we know the height
   if (!bounds.height) {
     return (
-      <span ref={ref} className='invisible absolute'>
+      <span ref={ref} className="invisible absolute">
         {number}
       </span>
     );
@@ -65,12 +59,12 @@ function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
     <motion.span
       style={{ y }}
       layoutId={`${uniqueId}-${number}`}
-      className='absolute inset-0 flex items-center justify-center'
+      className="absolute inset-0 flex items-center justify-center"
       transition={{
-        type: "spring",
+        type: 'spring',
         stiffness: TRANSITION.stiffness,
         damping: TRANSITION.damping,
-        mass: TRANSITION.mass
+        mass: TRANSITION.mass,
       }}
       ref={ref}
     >
@@ -85,30 +79,19 @@ type SlidingNumberProps = {
   decimalSeparator?: string;
 };
 
-export function SlidingNumber({
-  value,
-  padStart = false,
-  decimalSeparator = '.',
-}: SlidingNumberProps) {
+export function SlidingNumber({ value, padStart = false, decimalSeparator = '.' }: SlidingNumberProps) {
   const absValue = Math.abs(value);
   const [integerPart, decimalPart] = absValue.toString().split('.');
   const integerValue = parseInt(integerPart, 10);
-  const paddedInteger =
-    padStart && integerValue < 10 ? `0${integerPart}` : integerPart;
+  const paddedInteger = padStart && integerValue < 10 ? `0${integerPart}` : integerPart;
   const integerDigits = paddedInteger.split('');
-  const integerPlaces = integerDigits.map((_, i) =>
-    Math.pow(10, integerDigits.length - i - 1)
-  );
+  const integerPlaces = integerDigits.map((_, i) => Math.pow(10, integerDigits.length - i - 1));
 
   return (
-    <div className='flex items-center'>
+    <div className="flex items-center">
       {value < 0 && '-'}
       {integerDigits.map((_, index) => (
-        <Digit
-          key={`pos-${integerPlaces[index]}`}
-          value={integerValue}
-          place={integerPlaces[index]}
-        />
+        <Digit key={`pos-${integerPlaces[index]}`} value={integerValue} place={integerPlaces[index]} />
       ))}
       {decimalPart && (
         <>

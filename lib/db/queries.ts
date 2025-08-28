@@ -14,7 +14,6 @@ import {
   customInstructions,
   payment,
   lookout,
-  type Lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db } from './index'; // Use unified database connection
@@ -24,7 +23,7 @@ type VisibilityType = 'public' | 'private';
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
-    return await db.select().from(user).where(eq(user.email, email));
+    return await db.select().from(user).where(eq(user.email, email)).$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user by email');
   }
@@ -32,7 +31,7 @@ export async function getUser(email: string): Promise<Array<User>> {
 
 export async function getUserById(id: string): Promise<User | null> {
   try {
-    const [selectedUser] = await db.select().from(user).where(eq(user.id, id));
+    const [selectedUser] = await db.select().from(user).where(eq(user.id, id)).$withCache();
     return selectedUser || null;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user by id');
@@ -95,7 +94,8 @@ export async function getChatsByUserId({
         .from(chat)
         .where(whereCondition ? and(whereCondition, eq(chat.userId, id)) : eq(chat.userId, id))
         .orderBy(desc(chat.createdAt))
-        .limit(extendedLimit);
+        .limit(extendedLimit)
+        .$withCache();
 
     let filteredChats: Array<Chat> = [];
 
@@ -132,11 +132,10 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).$withCache();
     return selectedChat;
   } catch (error) {
-    console.log('Error getting chat by id', error);
-    return null;
+    throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
   }
 }
 
@@ -156,7 +155,8 @@ export async function getChatWithUserById({ id }: { id: string }) {
       })
       .from(chat)
       .innerJoin(user, eq(chat.userId, user.id))
-      .where(eq(chat.id, id));
+      .where(eq(chat.id, id))
+      .$withCache();
     return result;
   } catch (error) {
     console.log('Error getting chat with user by id', error);
@@ -181,8 +181,6 @@ export async function getMessagesByChatId({
   limit?: number;
   offset?: number;
 }) {
-  'use cache';
-
   try {
     return await db
       .select()
@@ -190,7 +188,8 @@ export async function getMessagesByChatId({
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
+      .$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get messages by chat id');
   }
@@ -230,16 +229,34 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   });
 }
 
-export async function updateChatVisiblityById({
+export async function updateChatVisibilityById({
   chatId,
   visibility,
 }: {
   chatId: string;
   visibility: 'private' | 'public';
 }) {
+  console.log('🔄 updateChatVisibilityById called with:', { chatId, visibility });
+
   try {
-    return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    console.log('📡 Executing database update for chat visibility');
+    const result = await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    console.log('✅ Database update successful, result:', result);
+
+    // Return a consistent, serializable structure
+    return {
+      success: true,
+      rowCount: result.rowCount || 0,
+      chatId,
+      visibility,
+    };
   } catch (error) {
+    console.error('❌ Database error in updateChatVisibilityById:', {
+      chatId,
+      visibility,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw new ChatSDKError('bad_request:database', 'Failed to update chat visibility by id');
   }
 }
@@ -257,10 +274,8 @@ export async function updateChatTitleById({ chatId, title }: { chatId: string; t
   }
 }
 
-export async function getMessageCountByUserId({ id, differenceInHours }: { id: string; differenceInHours: number }) {
+export async function getMessageCountByUserId({ id }: { id: string }) {
   try {
-    // Use the new message usage tracking system instead
-    // This is more reliable as it won't be affected by message deletions
     return await getMessageCount({ userId: id });
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get message count by user id');
@@ -443,12 +458,13 @@ export async function getMessageCount({ userId }: { userId: string }): Promise<n
   }
 }
 
-export async function getHistoricalUsageData({ userId }: { userId: string }) {
+export async function getHistoricalUsageData({ userId, months = 6 }: { userId: string; months?: number }) {
   try {
-    // Get actual message data for the last 90 days from message table (3 months)
+    // Get actual message data for the specified months from message table
+    const totalDays = months * 30; // Approximately 30 days per month
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 89);
+    startDate.setDate(endDate.getDate() - (totalDays - 1)); // totalDays - 1 + today
 
     // Get all user messages from their chats in the date range
     const historicalMessages = await db
@@ -466,7 +482,8 @@ export async function getHistoricalUsageData({ userId }: { userId: string }) {
           lt(message.createdAt, endDate),
         ),
       )
-      .orderBy(asc(message.createdAt));
+      .orderBy(asc(message.createdAt))
+      .$withCache();
 
     // Group messages by date and count them
     const dailyCounts = new Map<string, number>();
@@ -496,7 +513,8 @@ export async function getCustomInstructionsByUserId({ userId }: { userId: string
       .select()
       .from(customInstructions)
       .where(eq(customInstructions.userId, userId))
-      .limit(1);
+      .limit(1)
+      .$withCache();
 
     return instructions;
   } catch (error) {
@@ -561,7 +579,12 @@ export async function getPaymentsByUserId({ userId }: { userId: string }) {
     }
 
     // Fetch from database and cache
-    const payments = await db.select().from(payment).where(eq(payment.userId, userId)).orderBy(desc(payment.createdAt));
+    const payments = await db
+      .select()
+      .from(payment)
+      .where(eq(payment.userId, userId))
+      .orderBy(desc(payment.createdAt))
+      .$withCache();
     setDodoPayments(userId, payments);
     return payments;
   } catch (error) {
@@ -584,7 +607,8 @@ export async function getSuccessfulPaymentsByUserId({ userId }: { userId: string
       .select()
       .from(payment)
       .where(and(eq(payment.userId, userId), eq(payment.status, 'succeeded')))
-      .orderBy(desc(payment.createdAt));
+      .orderBy(desc(payment.createdAt))
+      .$withCache();
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get successful payments by user id');
   }
@@ -789,7 +813,13 @@ export async function updateLookout({
   }
 }
 
-export async function updateLookoutStatus({ id, status }: { id: string; status: 'active' | 'paused' | 'archived' | 'running' }) {
+export async function updateLookoutStatus({
+  id,
+  status,
+}: {
+  id: string;
+  status: 'active' | 'paused' | 'archived' | 'running';
+}) {
   try {
     const [updatedLookout] = await db
       .update(lookout)
@@ -832,7 +862,7 @@ export async function updateLookoutLastRun({
     }
 
     const currentHistory = (currentLookout.runHistory as any[]) || [];
-    
+
     // Add new run to history
     const newRun = {
       runAt: lastRunAt.toISOString(),
@@ -847,11 +877,11 @@ export async function updateLookoutLastRun({
     // Keep only last 100 runs to prevent unbounded growth
     const updatedHistory = [...currentHistory, newRun].slice(-100);
 
-    const updateData: any = { 
-      lastRunAt, 
-      lastRunChatId, 
+    const updateData: any = {
+      lastRunAt,
+      lastRunChatId,
       runHistory: updatedHistory,
-      updatedAt: new Date() 
+      updatedAt: new Date(),
     };
     if (nextRunAt) updateData.nextRunAt = nextRunAt;
 
@@ -870,15 +900,14 @@ export async function getLookoutRunStats({ id }: { id: string }) {
     if (!lookout) return null;
 
     const runHistory = (lookout.runHistory as any[]) || [];
-    
+
     return {
       totalRuns: runHistory.length,
-      successfulRuns: runHistory.filter(run => run.status === 'success').length,
-      failedRuns: runHistory.filter(run => run.status === 'error').length,
+      successfulRuns: runHistory.filter((run) => run.status === 'success').length,
+      failedRuns: runHistory.filter((run) => run.status === 'error').length,
       averageDuration: runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) / runHistory.length || 0,
-      lastWeekRuns: runHistory.filter(run => 
-        new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      ).length,
+      lastWeekRuns: runHistory.filter((run) => new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        .length,
     };
   } catch (error) {
     console.error('Error getting lookout run stats:', error);

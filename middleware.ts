@@ -5,19 +5,32 @@ const authRoutes = ['/sign-in', '/sign-up'];
 const protectedRoutes = ['/lookout'];
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
-
   const { pathname } = request.nextUrl;
   console.log('Pathname: ', pathname);
+  if (pathname === '/api/search') return NextResponse.next();
+  if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
+    return NextResponse.next();
+  }
 
   // /api/payments/webhooks is a webhook endpoint that should be accessible without authentication
   if (pathname.startsWith('/api/payments/webhooks')) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/polar/webhooks')) {
+  // /api/auth/polar/webhooks
+  if (pathname.startsWith('/api/auth/polar/webhooks')) {
     return NextResponse.next();
   }
+
+  if (pathname.startsWith('/api/auth/dodopayments/webhooks')) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith('/api/raycast')) {
+    return NextResponse.next();
+  }
+
+  const sessionCookie = getSessionCookie(request);
 
   // If user is authenticated but trying to access auth routes
   if (sessionCookie && authRoutes.some((route) => pathname.startsWith(route))) {

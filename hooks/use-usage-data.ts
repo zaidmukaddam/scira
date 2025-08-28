@@ -7,8 +7,8 @@ export function useUsageData(user: User | null, enabled: boolean = true) {
     queryKey: ['user-usage', user?.id],
     queryFn: () => getUserMessageCount(),
     enabled: enabled && !!user,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 1, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 }

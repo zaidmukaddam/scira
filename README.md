@@ -12,10 +12,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 <div align="center">
 
-| [Vercel AI SDK](https://sdk.vercel.ai/docs) | [Exa AI](https://exa.ai) |
-|:---:|:---:|
+|          [Vercel AI SDK](https://sdk.vercel.ai/docs)          |                [Exa AI](https://exa.ai)                |
+| :-----------------------------------------------------------: | :----------------------------------------------------: |
 | <img src="/public/one.svg" alt="Vercel AI SDK" height="40" /> | <img src="/public/exa.png" alt="Exa AI" height="40" /> |
-| For AI model integration and streaming | For web search and content retrieval |
+|            For AI model integration and streaming             |          For web search and content retrieval          |
 
 </div>
 
@@ -118,29 +118,23 @@ A minimalistic AI-powered search engine that helps you find information on the i
 ## Set Scira as your default search engine
 
 1. **Open the Chrome browser settings**:
-
    - Click on the three vertical dots in the upper right corner of the browser.
    - Select "Settings" from the dropdown menu.
 
 2. **Go to the search engine settings**:
-
    - In the left sidebar, click on "Search engine."
    - Then select "Manage search engines and site search."
 
 3. **Add a new search engine**:
-
    - Click on "Add" next to "Site search."
 
 4. **Set the search engine name**:
-
    - Enter `Scira` in the "Search engine" field.
 
 5. **Set the search engine URL**:
-
    - Enter `https://scira.ai?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
-
    - Enter `sh` in the "Shortcut" field.
 
 7. **Set Default**:

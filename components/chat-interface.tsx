@@ -1,14 +1,14 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 // CSS imports
 import 'katex/dist/katex.min.css';
 
 // React and React-related imports
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState, useReducer } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
 
 // Third-party library imports
-import { useChat, UseChatOptions } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
@@ -30,23 +30,20 @@ import FormComponent from '@/components/ui/form-component';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
-import { useUserData } from '@/hooks/use-user-data';
+import { useUser } from '@/contexts/user-context';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 
 // Utility and type imports
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
+import { requiresProSubscription } from '@/ai/providers';
 
 // State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
-
-interface Attachment {
-  name: string;
-  contentType: string;
-  url: string;
-  size: number;
-}
+import { useDataStream } from './data-stream-provider';
+import { DefaultChatTransport, DataUIPart } from 'ai';
+import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 
 interface ChatInterfaceProps {
   initialChatId?: string;
@@ -65,8 +62,8 @@ const ChatInterface = memo(
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
+    const [input, setInput] = useState<string>('');
 
-    // Use localStorage hook directly for model selection with a default
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
@@ -88,6 +85,11 @@ const ChatInterface = memo(
       false,
     );
 
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+      'scira-search-provider',
+      'parallel',
+    );
+
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
       chatReducer,
@@ -106,7 +108,9 @@ const ChatInterface = memo(
       isLoading: proStatusLoading,
       shouldCheckLimits: shouldCheckUserLimits,
       shouldBypassLimitsForModel,
-    } = useUserData();
+    } = useUser();
+
+    const { setDataStream } = useDataStream();
 
     const initialState = useMemo(
       () => ({
@@ -136,7 +140,7 @@ const ChatInterface = memo(
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Generate a consistent ID for new chats
-    const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
+    const chatId = useMemo(() => initialChatId ?? uuidv4(), []);
 
     // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
@@ -147,6 +151,23 @@ const ChatInterface = memo(
       usageData &&
       usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
     const isLimitBlocked = Boolean(hasExceededLimit);
+
+    // Auto-switch away from pro models when user loses pro access
+    useEffect(() => {
+      if (proStatusLoading) return;
+
+      const currentModelRequiresPro = requiresProSubscription(selectedModel);
+
+      // If current model requires pro but user is not pro, switch to default
+      // Also prevent infinite loops by ensuring we're not already on the default model
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
+        setSelectedModel('scira-default');
+
+        // Show a toast notification to inform the user
+        toast.info('Switched to default model - Pro subscription required for premium models');
+      }
+    }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 
     // Timer for sign-in prompt for unauthenticated users
     useEffect(() => {
@@ -199,116 +220,111 @@ const ChatInterface = memo(
 
     type VisibilityType = 'public' | 'private';
 
-    const chatOptions: UseChatOptions = useMemo(
-      () => ({
-        id: chatId,
+    // Create refs to store current values to avoid closure issues
+    const selectedModelRef = useRef(selectedModel);
+    const selectedGroupRef = useRef(selectedGroup);
+    const isCustomInstructionsEnabledRef = useRef(isCustomInstructionsEnabled);
+    const searchProviderRef = useRef(searchProvider);
+
+    // Update refs whenever state changes - this ensures we always have current values
+    selectedModelRef.current = selectedModel;
+    selectedGroupRef.current = selectedGroup;
+    isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
+
+    const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
+      id: chatId,
+      transport: new DefaultChatTransport({
         api: '/api/search',
-        experimental_throttle: selectedModel === 'scira-anthropic' ? 1000 : 100,
-        sendExtraMessageFields: true,
-        maxSteps: 3,
-        body: {
-          id: chatId,
-          model: selectedModel,
-          group: selectedGroup,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          ...(initialChatId ? { chat_id: initialChatId } : {}),
-          selectedVisibilityType: chatState.selectedVisibilityType,
-          isCustomInstructionsEnabled: isCustomInstructionsEnabled,
+        prepareSendMessagesRequest({ messages, body }) {
+          // Use ref values to get current state
+          return {
+            body: {
+              id: chatId,
+              messages,
+              model: selectedModelRef.current,
+              group: selectedGroupRef.current,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
+              searchProvider: searchProviderRef.current,
+              ...(initialChatId ? { chat_id: initialChatId } : {}),
+              ...body,
+            },
+          };
         },
-        onFinish: async (message, { finishReason }) => {
-          console.log('[finish reason]:', finishReason);
+      }),
+      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 50,
+      onData: (dataPart) => {
+        console.log('onData<Client>', dataPart);
+        setDataStream((ds) => {
+          return [...ds, dataPart as DataUIPart<CustomUIDataTypes>];
+        });
+      },
+      onFinish: async ({ message }) => {
+        console.log('onFinish<Client>', message.parts);
+        // Refresh usage data after message completion for authenticated users
+        if (user) {
+          refetchUsage();
+        }
 
-          // Refresh usage data after message completion for authenticated users
-          if (user) {
-            refetchUsage();
-          }
+        // Check if this is the first message completion and user is not Pro
+        const isFirstMessage = messages.length <= 1;
 
-          // Check if this is the first message completion and user is not Pro
-          const isFirstMessage = messages.length <= 1;
+        console.log('Upgrade dialog check:', {
+          isFirstMessage,
+          isProUser: isUserPro,
+          hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
+          user: !!user,
+          messagesLength: messages.length,
+        });
 
-          console.log('Upgrade dialog check:', {
-            isFirstMessage,
-            isProUser: isUserPro,
-            hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
-            user: !!user,
-            messagesLength: messages.length,
-          });
+        // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
+        if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
+          console.log('Showing upgrade dialog...');
+          setTimeout(() => {
+            dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
+            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
+            setPersitedHasShownUpgradeDialog(true);
+          }, 1000);
+        }
 
-          // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-          if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
-            console.log('Showing upgrade dialog...');
-            setTimeout(() => {
-              dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
-              dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
-              setPersitedHasShownUpgradeDialog(true);
-            }, 1000);
-          }
-
-          // Only generate suggested questions if authenticated user or private chat
-          if (
-            message.content &&
-            (finishReason === 'stop' || finishReason === 'length') &&
-            (user || chatState.selectedVisibilityType === 'private')
-          ) {
-            const newHistory = [
-              { role: 'user', content: lastSubmittedQueryRef.current },
-              { role: 'assistant', content: message.content },
-            ];
-            const { questions } = await suggestQuestions(newHistory);
-            dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
-          }
-        },
-        onError: (error) => {
-          // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
-          if (error instanceof ChatSDKError) {
-            console.log('ChatSDK Error:', error.type, error.surface, error.message);
-            // Only show toast for certain error types that need immediate attention
-            if (error.type === 'offline' || error.surface === 'stream') {
-              toast.error('Connection Error', {
-                description: error.message,
-              });
-            }
-          } else {
-            console.error('Chat error:', error.cause, error.message);
-            toast.error('An error occurred.', {
-              description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
+        // Only generate suggested questions if authenticated user or private chat
+        if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
+          const lastPart = message.parts[message.parts.length - 1];
+          const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
+          const newHistory = [
+            { role: 'user', content: lastSubmittedQueryRef.current },
+            { role: 'assistant', content: lastPartText },
+          ];
+          console.log('newHistory', newHistory);
+          const { questions } = await suggestQuestions(newHistory);
+          dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+        }
+      },
+      onError: (error) => {
+        // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
+        if (error instanceof ChatSDKError) {
+          console.log('ChatSDK Error:', error.type, error.surface, error.message);
+          // Only show toast for certain error types that need immediate attention
+          if (error.type === 'offline' || error.surface === 'stream') {
+            toast.error('Connection Error', {
+              description: error.message,
             });
           }
-        },
-        initialMessages: initialMessages,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }),
-      [
-        selectedModel,
-        selectedGroup,
-        chatId,
-        initialChatId,
-        initialMessages,
-        chatState.selectedVisibilityType,
-        isCustomInstructionsEnabled,
-      ],
-    );
-
-    const {
-      input,
-      messages,
-      setInput,
-      append,
-      handleSubmit,
-      setMessages,
-      reload,
-      stop,
-      data,
-      status,
-      error,
-      experimental_resume,
-    } = useChat(chatOptions);
+        } else {
+          console.error('Chat error:', error.cause, error.message);
+          toast.error('An error occurred.', {
+            description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
+          });
+        }
+      },
+      messages: initialMessages || [],
+    });
 
     // Handle text highlighting and quoting
     const handleHighlight = useCallback(
       (text: string) => {
         const quotedText = `> ${text.replace(/\n/g, '\n> ')}\n\n`;
-        setInput((prev) => prev + quotedText);
+        setInput((prev: string) => prev + quotedText);
 
         // Focus the input after adding the quote
         setTimeout(() => {
@@ -332,11 +348,12 @@ const ChatInterface = memo(
     }
 
     useAutoResume({
-      autoResume: false,
+      autoResume: true,
       initialMessages: initialMessages || [],
-      experimental_resume,
-      data,
-      setMessages,
+      resumeStream,
+      setMessages: (messages) => {
+        setMessages(messages as ChatMessage[]);
+      },
     });
 
     useEffect(() => {
@@ -357,12 +374,12 @@ const ChatInterface = memo(
       if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
         initializedRef.current = true;
         console.log('[initial query]:', initialState.query);
-        append({
-          content: initialState.query,
+        sendMessage({
+          parts: [{ type: 'text', text: initialState.query }],
           role: 'user',
         });
       }
-    }, [initialState.query, append, setInput, messages.length, initialChatId]);
+    }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
 
     // Generate suggested questions when opening a chat directly
     useEffect(() => {
@@ -380,9 +397,26 @@ const ChatInterface = memo(
           const lastAssistantMessage = initialMessages.filter((m) => m.role === 'assistant').pop();
 
           if (lastUserMessage && lastAssistantMessage) {
+            // Extract content from parts similar to onFinish callback
+            const getUserContent = (message: typeof lastUserMessage) => {
+              if (message.parts && message.parts.length > 0) {
+                const lastPart = message.parts[message.parts.length - 1];
+                return lastPart.type === 'text' ? lastPart.text : '';
+              }
+              return message.content || '';
+            };
+
+            const getAssistantContent = (message: typeof lastAssistantMessage) => {
+              if (message.parts && message.parts.length > 0) {
+                const lastPart = message.parts[message.parts.length - 1];
+                return lastPart.type === 'text' ? lastPart.text : '';
+              }
+              return message.content || '';
+            };
+
             const newHistory = [
-              { role: 'user', content: lastUserMessage.content },
-              { role: 'assistant', content: lastAssistantMessage.content },
+              { role: 'user', content: getUserContent(lastUserMessage) },
+              { role: 'assistant', content: getAssistantContent(lastAssistantMessage) },
             ];
             try {
               const { questions } = await suggestQuestions(newHistory);
@@ -489,17 +523,57 @@ const ChatInterface = memo(
     // Handle visibility change
     const handleVisibilityChange = useCallback(
       async (visibility: VisibilityType) => {
-        if (!chatId) return;
+        console.log('🔄 handleVisibilityChange called with:', { chatId, visibility });
+
+        if (!chatId) {
+          console.warn('⚠️ handleVisibilityChange: No chatId provided, returning early');
+          return;
+        }
 
         try {
-          await updateChatVisibility(chatId, visibility);
-          dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
-          toast.success(`Chat is now ${visibility}`);
-          // Invalidate cache to refresh the list with updated visibility
-          invalidateChatsCache();
+          console.log('📡 Calling updateChatVisibility with:', { chatId, visibility });
+          const result = await updateChatVisibility(chatId, visibility);
+          console.log('✅ updateChatVisibility response:', result);
+          console.log('🔍 Result structure analysis:', {
+            result,
+            typeof_result: typeof result,
+            has_result: !!result,
+            has_success: result?.success,
+            success_value: result?.success,
+            has_rowCount: result?.rowCount !== undefined,
+            rowCount_value: result?.rowCount,
+            rowCount_type: typeof result?.rowCount,
+            keys: result ? Object.keys(result) : 'no result',
+          });
+
+          // Check if the update was successful - be more forgiving with validation
+          if (result && result.success) {
+            dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
+            console.log('🔄 Dispatched SET_VISIBILITY_TYPE with:', visibility);
+
+            toast.success(`Chat is now ${visibility}`);
+            console.log('🍞 Success toast shown:', `Chat is now ${visibility}`);
+
+            // Invalidate cache to refresh the list with updated visibility
+            invalidateChatsCache();
+            console.log('🗑️ Cache invalidated');
+          } else {
+            console.error('❌ Update failed - unsuccessful result:', {
+              result,
+              success_check: result?.success,
+            });
+            toast.error('Failed to update chat visibility');
+            console.log('🍞 Error toast shown: Failed to update chat visibility');
+          }
         } catch (error) {
-          console.error('Error updating chat visibility:', error);
+          console.error('❌ Error updating chat visibility:', {
+            chatId,
+            visibility,
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
           toast.error('Failed to update chat visibility');
+          console.log('🍞 Error toast shown: Failed to update chat visibility');
         }
       },
       [chatId],
@@ -562,55 +636,65 @@ const ChatInterface = memo(
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
-                <h1 className="text-3xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                  scira
-                </h1>
+                <div className="inline-flex items-center gap-3">
+                  <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                    scira
+                  </h1>
+                  {isUserPro && (
+                    <h1 className="text-2xl font-baumans! leading-4 inline-block !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                      pro
+                    </h1>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Show initial limit exceeded message */}
             {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-8 p-6 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-xl max-w-lg mx-auto">
-                <div className="text-center space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground dark:text-muted-foreground">
-                    <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Daily limit reached</span>
+              <div className="mt-16 mx-auto max-w-sm">
+                <div className="bg-card backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl overflow-hidden">
+                  {/* Header Section */}
+                  <div className="text-center px-8 pt-8 pb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/30 rounded-full mb-6">
+                      <HugeiconsIcon icon={Crown02Icon} size={28} className="text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">Daily limit reached</h2>
                   </div>
-                  <div>
-                    <p className="text-foreground dark:text-foreground mb-2">
-                      You&apos;ve used all {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches for today.
-                    </p>
-                    <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                      Upgrade to continue with unlimited searches and premium features.
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        refetchUsage();
-                      }}
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Refresh
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        window.location.href = '/pricing';
-                      }}
-                      size="sm"
-                      className="flex-1 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
-                    >
-                      <HugeiconsIcon
-                        icon={Crown02Icon}
-                        size={12}
-                        color="currentColor"
-                        strokeWidth={1.5}
-                        className="mr-1.5"
-                      />
-                      Upgrade
-                    </Button>
+
+                  {/* Content Section */}
+                  <div className="text-center px-8 pb-8">
+                    <div className="space-y-4 mb-8">
+                      <p className="text-base text-foreground leading-relaxed font-medium">
+                        You&apos;ve used all{' '}
+                        <span className="text-primary font-semibold">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT}</span> searches
+                        for today
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                        Upgrade to Pro for unlimited searches, faster responses, and premium features
+                      </p>
+                    </div>
+
+                    {/* Actions Section */}
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => {
+                          window.location.href = '/pricing';
+                        }}
+                        className="w-full h-11 font-semibold text-base"
+                      >
+                        <HugeiconsIcon icon={Crown02Icon} size={18} className="mr-2.5" strokeWidth={1.5} />
+                        Upgrade to Pro
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          refetchUsage();
+                        }}
+                        className="w-full h-10 text-muted-foreground hover:text-foreground font-medium"
+                      >
+                        Try refreshing
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -619,13 +703,15 @@ const ChatInterface = memo(
             {/* Use the Messages component */}
             {messages.length > 0 && (
               <Messages
-                messages={messages}
+                messages={messages as ChatMessage[]}
                 lastUserMessageIndex={lastUserMessageIndex}
                 input={input}
                 setInput={setInput}
-                setMessages={setMessages}
-                append={append}
-                reload={reload}
+                setMessages={(messages) => {
+                  setMessages(messages as ChatMessage[]);
+                }}
+                sendMessage={sendMessage}
+                regenerate={regenerate}
                 suggestedQuestions={chatState.suggestedQuestions}
                 setSuggestedQuestions={(questions) => dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })}
                 status={status}
@@ -648,10 +734,10 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-background',
+                  'transition-all duration-500 bg-[linear-gradient(to_top,theme(colors.background)_96px,transparent_0)]',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative max-w-2xl mx-auto w-full' // Centered position when no messages
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-2 sm:!pb-6 mt-1 mx-2 p-0', // Fixed bottom when messages exist
+                    ? 'relative max-w-2xl mx-auto w-full rounded-xl'
+                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
                 )}
               >
                 <FormComponent
@@ -666,12 +752,11 @@ const ChatInterface = memo(
                       typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
                     dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
                   }}
-                  handleSubmit={handleSubmit}
                   fileInputRef={fileInputRef}
                   inputRef={inputRef}
                   stop={stop}
-                  messages={messages as any}
-                  append={append}
+                  messages={messages as ChatMessage[]}
+                  sendMessage={sendMessage}
                   selectedModel={selectedModel}
                   setSelectedModel={handleModelChange}
                   resetSuggestedQuestions={resetSuggestedQuestions}

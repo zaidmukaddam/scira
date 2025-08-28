@@ -4,7 +4,7 @@ import { serverEnv } from '@/env/server';
 
 export const mcpSearchTool = tool({
   description: 'Search for mcp servers and get the information about them',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The query to search for'),
   }),
   execute: async ({ query }: { query: string }) => {

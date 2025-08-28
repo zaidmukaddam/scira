@@ -4,7 +4,7 @@ import { serverEnv } from '@/env/server';
 
 export const trendingTvTool = tool({
   description: 'Get trending TV shows from TMDB',
-  parameters: z.object({}),
+  inputSchema: z.object({}),
   execute: async () => {
     const TMDB_API_KEY = serverEnv.TMDB_API_KEY;
     const TMDB_BASE_URL = 'https://api.themoviedb.org/3';

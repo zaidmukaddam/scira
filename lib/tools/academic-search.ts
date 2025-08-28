@@ -5,7 +5,7 @@ import { serverEnv } from '@/env/server';
 
 export const academicSearchTool = tool({
   description: 'Search academic papers and research.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The search query'),
   }),
   execute: async ({ query }: { query: string }) => {

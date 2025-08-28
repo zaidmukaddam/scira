@@ -29,8 +29,8 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
           className="h-9 w-full justify-between text-left font-normal"
         >
           {selectedTimezone
-            ? selectedTimezone.label.length > 80
-              ? `${selectedTimezone.label.substring(0, 80)}...`
+            ? selectedTimezone.label.length > 30
+              ? `${selectedTimezone.label.substring(0, 30)}...`
               : selectedTimezone.label
             : 'Select timezone'}
           <HugeiconsIcon
@@ -43,7 +43,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[380px] p-0"
+        className="w-[calc(100vw-2rem)] sm:w-[380px] p-0"
         align="start"
         side="bottom"
         sideOffset={4}

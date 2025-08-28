@@ -1,6 +1,7 @@
-import { pgTable, text, timestamp, boolean, json, varchar, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, json, varchar, integer, uuid, real } from 'drizzle-orm/pg-core';
 import { generateId } from 'ai';
 import { InferSelectModel } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -53,10 +54,7 @@ export const verification = pgTable('verification', {
 });
 
 export const chat = pgTable('chat', {
-  id: text('id')
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => generateId()),
+  id: text('id').primaryKey().notNull().$defaultFn(() => uuidv4()),
   userId: text('userId')
     .notNull()
     .references(() => user.id),
@@ -80,6 +78,11 @@ export const message = pgTable('message', {
   parts: json('parts').notNull(), // Store parts as JSON in the database
   attachments: json('attachments').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  model: text('model'),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  totalTokens: integer('total_tokens'),
+  completionTime: real('completion_time'),
 });
 
 export const stream = pgTable('stream', {
@@ -218,15 +221,19 @@ export const lookout = pgTable('lookout', {
   lastRunAt: timestamp('last_run_at'),
   lastRunChatId: text('last_run_chat_id'),
   // Store all run history as JSON
-  runHistory: json('run_history').$type<Array<{
-    runAt: string; // ISO date string
-    chatId: string;
-    status: 'success' | 'error' | 'timeout';
-    error?: string;
-    duration?: number; // milliseconds
-    tokensUsed?: number;
-    searchesPerformed?: number;
-  }>>().default([]),
+  runHistory: json('run_history')
+    .$type<
+      Array<{
+        runAt: string; // ISO date string
+        chatId: string;
+        status: 'success' | 'error' | 'timeout';
+        error?: string;
+        duration?: number; // milliseconds
+        tokensUsed?: number;
+        searchesPerformed?: number;
+      }>
+    >()
+    .default([]),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

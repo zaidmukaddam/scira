@@ -8,43 +8,30 @@ import {
   getCustomInstructions,
 } from '@/app/actions';
 import {
-  convertToCoreMessages,
+  convertToModelMessages,
   streamText,
   NoSuchToolError,
-  appendResponseMessages,
-  CoreToolMessage,
-  CoreAssistantMessage,
-  createDataStream,
+  createUIMessageStream,
   generateObject,
+  stepCountIs,
+  JsonToSseTransformStream,
 } from 'ai';
-import {
-  scira,
-  getMaxOutputTokens,
-  requiresAuthentication,
-  requiresProSubscription,
-  shouldBypassRateLimits,
-} from '@/ai/providers';
+import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits, models } from '@/ai/providers';
 import {
   createStreamId,
   getChatById,
-  getMessagesByChatId,
-  getStreamIdsByChatId,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
-  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
-import { differenceInSeconds } from 'date-fns';
-import { Chat, CustomInstructions } from '@/lib/db/schema';
-import { auth } from '@/lib/auth';
+import { CustomInstructions } from '@/lib/db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
-// Import all tools from the organized tool files
 import {
   stockChartTool,
   currencyConverterTool,
@@ -68,29 +55,25 @@ import {
   datetimeTool,
   greetingTool,
   mcpSearchTool,
-  memoryManagerTool,
   redditSearchTool,
   extremeSearchTool,
 } from '@/lib/tools';
-
-type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
-type ResponseMessage = ResponseMessageWithoutId & { id: string };
-
-function getTrailingMessageId({ messages }: { messages: Array<ResponseMessage> }): string | null {
-  const trailingMessage = messages.at(-1);
-
-  if (!trailingMessage) return null;
-
-  return trailingMessage.id;
-}
+import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
+import { XaiProviderOptions } from '@ai-sdk/xai';
+import { GroqProviderOptions } from '@ai-sdk/groq';
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { markdownJoinerTransform } from '@/lib/parser';
+import { ChatMessage } from '@/lib/types';
+import { createMemoryTools, type SearchMemoryTool, type AddMemoryTool, type FetchMemoryTool } from '@/lib/tools/supermemory';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-function getStreamContext() {
+export function getStreamContext() {
   if (!globalStreamContext) {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
+        keyPrefix: 'scira-ai:resumable-stream',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
@@ -104,11 +87,17 @@ function getStreamContext() {
   return globalStreamContext;
 }
 
+const getMaxOutputTokens = (model: string) => {
+  const modelConfig = models.find((m) => m.value === model);
+  return modelConfig?.maxOutputTokens ?? 4000;
+};
+
 export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
-  const { messages, model, group, timezone, id, selectedVisibilityType } = await req.json();
+  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled, searchProvider } =
+    await req.json();
   const { latitude, longitude } = geolocation(req);
 
   console.log('--------------------------------');
@@ -118,6 +107,10 @@ export async function POST(req: Request) {
   console.log('--------------------------------');
   console.log('Messages: ', messages);
   console.log('--------------------------------');
+
+  console.log('Running with model: ', model.trim());
+  console.log('Group: ', group);
+  console.log('Timezone: ', timezone);
 
   const userCheckTime = Date.now();
   const user = await getCurrentUser();
@@ -129,8 +122,12 @@ export async function POST(req: Request) {
   }
   let customInstructions: CustomInstructions | null = null;
 
+  console.log('--------------------------------');
+  console.log('Custom Instructions Enabled:', isCustomInstructionsEnabled);
+  console.log('--------------------------------');
+
   // Check if model requires authentication (fast check)
-  const authRequiredModels = ['scira-anthropic', 'scira-google'];
+  const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
   if (authRequiredModels.includes(model) && !user) {
     return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
   }
@@ -142,17 +139,46 @@ export async function POST(req: Request) {
     isProUser?: boolean;
   }> = Promise.resolve({ canProceed: true });
 
-  if (user) {
-    customInstructions = await getCustomInstructions(user);
+  // Get custom instructions in parallel with other operations (declare outside user block for scope)
+  const customInstructionsPromise = user ? getCustomInstructions(user) : Promise.resolve(null);
 
+  if (user) {
     const isProUser = user.isProUser;
+
+    try {
+      const existingChat = await getChatById({ id });
+      if (!existingChat) {
+        const title = await generateTitleFromUserMessage({
+          message: messages[messages.length - 1],
+        });
+        console.log('--------------------------------');
+        console.log('Generated title: ', title);
+        console.log('--------------------------------');
+        await saveChat({
+          id,
+          userId: user.id,
+          title: title,
+          visibility: selectedVisibilityType,
+        });
+        console.log('✅ Early chat creation completed for authenticated user');
+      } else {
+        if (existingChat.userId !== user.id) {
+          throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+        }
+      }
+      // Create stream record as early as possible for resumable streaming
+      await createStreamId({ streamId, chatId: id });
+      console.log('✅ Early stream creation completed');
+    } catch (earlyChatError) {
+      console.error('Early chat creation failed:', earlyChatError);
+      return new ChatSDKError('bad_request:database', 'Failed to initialize chat').toResponse();
+    }
 
     // Check if model requires Pro subscription
     if (requiresProSubscription(model) && !isProUser) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
 
-    // For non-pro users, check usage limits upfront
     if (!isProUser) {
       const criticalChecksStartTime = Date.now();
 
@@ -168,11 +194,10 @@ export async function POST(req: Request) {
           return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
         }
 
-        // Check if user should bypass limits for free unlimited models
         const shouldBypassLimits = shouldBypassRateLimits(model, user);
 
         if (!shouldBypassLimits && messageCountResult.count !== undefined) {
-          const dailyLimit = 100; // Non-pro users have a daily limit
+          const dailyLimit = 100;
           if (messageCountResult.count >= dailyLimit) {
             return new ChatSDKError('rate_limit:chat', 'Daily search limit reached').toResponse();
           }
@@ -196,14 +221,13 @@ export async function POST(req: Request) {
         return new ChatSDKError('bad_request:api', 'Failed to verify user access').toResponse();
       }
     } else {
-      // Pro users skip all usage limit checks
       const criticalChecksStartTime = Date.now();
       console.log(
         `⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s (Pro user - skipped usage checks)`,
       );
       criticalChecksPromise = Promise.resolve({
         canProceed: true,
-        messageCount: 0, // Not relevant for pro users
+        messageCount: 0,
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
@@ -212,11 +236,10 @@ export async function POST(req: Request) {
             }
           : { hasSubscription: false },
         shouldBypassLimits: true,
-        extremeSearchUsage: 0, // Not relevant for pro users
+        extremeSearchUsage: 0,
       });
     }
   } else {
-    // For anonymous users, check if model requires authentication
     if (requiresAuthentication(model)) {
       return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
     }
@@ -231,7 +254,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // Get configuration in parallel with critical checks
   const configStartTime = Date.now();
   const configPromise = getGroupConfig(group).then((config) => {
     console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
@@ -239,9 +261,8 @@ export async function POST(req: Request) {
   });
 
   // Start streaming immediately while background operations continue
-  const stream = createDataStream({
-    execute: async (dataStream) => {
-      // Wait for critical checks to complete
+  const stream = createUIMessageStream<ChatMessage>({
+    execute: async ({ writer: dataStream }) => {
       const criticalWaitStartTime = Date.now();
       const criticalResult = await criticalChecksPromise;
       console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
@@ -250,52 +271,39 @@ export async function POST(req: Request) {
         throw criticalResult.error;
       }
 
-      // Get configuration
       const configWaitStartTime = Date.now();
-      const { tools: activeTools, instructions } = await configPromise;
-      console.log(`⏱️  Config wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+      const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
+        configPromise,
+        customInstructionsPromise,
+      ]);
+      customInstructions = customInstructionsResult;
+      console.log(
+        `⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`,
+      );
+      console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
+      console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
-      // Critical: Ensure chat exists before streaming starts
       if (user) {
-        const chatCheckStartTime = Date.now();
-        const chat = await getChatById({ id });
-        console.log(`⏱️  Chat check took: ${((Date.now() - chatCheckStartTime) / 1000).toFixed(2)}s`);
-
-        if (!chat) {
-          // Create chat without title first - title will be generated in onFinish
-          const chatCreateStartTime = Date.now();
-          await saveChat({
-            id,
-            userId: user.id,
-            title: 'New conversation', // Temporary title that will be updated in onFinish
-            visibility: selectedVisibilityType,
-          });
-          console.log(`⏱️  Chat creation took: ${((Date.now() - chatCreateStartTime) / 1000).toFixed(2)}s`);
-        } else {
-          if (chat.userId !== user.id) {
-            throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
-          }
-        }
-
-        // Save user message and create stream ID in background (non-blocking)
         const backgroundOperations = (async () => {
           try {
             const backgroundStartTime = Date.now();
-            await Promise.all([
-              saveMessages({
-                messages: [
-                  {
-                    chatId: id,
-                    id: messages[messages.length - 1].id,
-                    role: 'user',
-                    parts: messages[messages.length - 1].parts,
-                    attachments: messages[messages.length - 1].experimental_attachments ?? [],
-                    createdAt: new Date(),
-                  },
-                ],
-              }),
-              createStreamId({ streamId, chatId: id }),
-            ]);
+            await saveMessages({
+              messages: [
+                {
+                  chatId: id,
+                  id: messages[messages.length - 1].id,
+                  role: 'user',
+                  parts: messages[messages.length - 1].parts,
+                  attachments: messages[messages.length - 1].experimental_attachments ?? [],
+                  createdAt: new Date(),
+                  model: model,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  totalTokens: 0,
+                  completionTime: 0,
+                },
+              ],
+            });
             console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
 
             console.log('--------------------------------');
@@ -303,89 +311,97 @@ export async function POST(req: Request) {
             console.log('--------------------------------');
           } catch (error) {
             console.error('Error in background message operations:', error);
-            // These are non-critical errors that shouldn't stop the stream
           }
         })();
 
-        // Start background operations but don't wait for them
         backgroundOperations.catch((error) => {
           console.error('Background operations failed:', error);
         });
       }
 
-      console.log('--------------------------------');
-      console.log('Messages: ', messages);
-      console.log('--------------------------------');
-      console.log('Running with model: ', model.trim());
-      console.log('Group: ', group);
-      console.log('Timezone: ', timezone);
-
-      // Calculate time to reach streamText
       const preStreamTime = Date.now();
       const setupTime = (preStreamTime - requestStartTime) / 1000;
       console.log('--------------------------------');
       console.log(`Time to reach streamText: ${setupTime.toFixed(2)} seconds`);
       console.log('--------------------------------');
 
+      const maxTokens = getMaxOutputTokens(model);
+
+      const streamStartTime = Date.now();
+
       const result = streamText({
         model: scira.languageModel(model),
-        messages: convertToCoreMessages(messages),
+        messages: convertToModelMessages(messages),
         ...(model.includes('scira-qwen-32b')
           ? {
               temperature: 0.6,
               topP: 0.95,
-              topK: 20,
               minP: 0,
             }
-          : model.includes('scira-deepseek-v3') || model.includes('scira-qwen-30b')
+          : model.includes('scira-qwen-235')
             ? {
-                temperature: 0.6,
-                topP: 1,
-                topK: 40,
+                temperature: 0.7,
+                topP: 0.8,
+                minP: 0,
               }
-            : model.includes('scira-qwen-235b')
-              ? {
-                  temperature: 0.7,
-                  topP: 0.8,
-                  minP: 0,
-                  presencePenalty: 0.5,
-                }
-              : {
-                  temperature: 0,
-                }),
-        maxSteps: 3,
+            : {}),
+        stopWhen: stepCountIs(5),
+        abortSignal: req.signal,
+        onAbort: ({ steps }) => {
+          // Handle cleanup when stream is aborted
+          console.log('Stream aborted after', steps.length, 'steps');
+          // Persist partial results to database
+        },
         maxRetries: 10,
-        experimental_activeTools: [...activeTools],
+        ...(model.includes('scira-5')
+          ? {
+              maxOutputTokens: maxTokens,
+            }
+          : {}),
+        activeTools: [...activeTools],
+        experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
-          (customInstructions
+          (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
           (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model === 'scira-o4-mini' || model === 'scira-o3'
+            ...(model.includes('scira-5')
               ? {
-                  strictSchemas: true,
-                  reasoningSummary: 'detailed',
-                  serviceTier: 'flex',
-                }
-              : {}),
-            ...(model === 'scira-4.1-mini'
-              ? {
+                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'minimal',
+                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
                   parallelToolCalls: false,
-                  strictSchemas: true,
+                  strictJsonSchema: false,
+                  serviceTier: 'auto',
+                  textVerbosity: 'high',
                 }
               : {}),
-          },
+          } satisfies OpenAIResponsesProviderOptions,
           xai: {
             ...(model === 'scira-default'
               ? {
                   reasoningEffort: 'low',
                 }
               : {}),
-          },
+          } satisfies XaiProviderOptions,
+          groq: {
+            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+              ? {
+                  reasoningEffort: 'high',
+                }
+              : {}),
+            ...(model === 'scira-qwen-32b'
+              ? {
+                  reasoningEffort: 'none',
+                }
+              : {}),
+            parallelToolCalls: false,
+            structuredOutputs: true,
+            serviceTier: 'auto',
+          } satisfies GroqProviderOptions,
         },
         tools: {
           // Stock & Financial Tools
@@ -397,7 +413,7 @@ export async function POST(req: Request) {
 
           // Search & Content Tools
           x_search: xSearchTool,
-          web_search: webSearchTool(dataStream),
+          web_search: webSearchTool(dataStream, searchProvider),
           academic_search: academicSearchTool,
           youtube_search: youtubeSearchTool,
           reddit_search: redditSearchTool,
@@ -419,11 +435,18 @@ export async function POST(req: Request) {
           track_flight: flightTrackerTool,
           datetime: datetimeTool,
           mcp_search: mcpSearchTool,
-          memory_manager: memoryManagerTool,
           extreme_search: extremeSearchTool(dataStream),
-          greeting: greetingTool,
+          greeting: greetingTool(timezone),
+          ...(user ? (() => {
+            const memoryTools = createMemoryTools(user.id);
+            return {
+              search_memories: memoryTools.searchMemories as SearchMemoryTool,
+              add_memory: memoryTools.addMemory as AddMemoryTool,
+              fetch_memory: memoryTools.fetchMemory as FetchMemoryTool,
+            };
+          })() : {}),
         },
-        experimental_repairToolCall: async ({ toolCall, tools, parameterSchema, error }) => {
+        experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
             return null; // do not attempt to fix invalid tool names
           }
@@ -431,23 +454,26 @@ export async function POST(req: Request) {
           console.log('Fixing tool call================================');
           console.log('toolCall', toolCall);
           console.log('tools', tools);
-          console.log('parameterSchema', parameterSchema);
+          console.log('parameterSchema', inputSchema);
           console.log('error', error);
 
           const tool = tools[toolCall.toolName as keyof typeof tools];
+          
+          if (!tool) {
+            return null;
+          }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-4o-mini'),
-            schema: tool.parameters,
+            model: scira.languageModel('scira-grok-3'),
+            schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
-              JSON.stringify(toolCall.args),
+              JSON.stringify(toolCall.input),
               `The tool accepts the following schema:`,
-              JSON.stringify(parameterSchema(toolCall)),
+              JSON.stringify(inputSchema(toolCall)),
               'Please fix the arguments.',
-              'Do not use print statements stock chart tool.',
-              `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
-              `For the web search make multiple queries to get the best results.`,
+              'For the code interpreter tool do not use print statements.',
+              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use te include and exclude parameters.`,
               `Today's date is ${new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -472,98 +498,47 @@ export async function POST(req: Request) {
         },
         onFinish: async (event) => {
           console.log('Fin reason: ', event.finishReason);
-          console.log('Reasoning: ', event.reasoning);
-          console.log('reasoning details: ', event.reasoningDetails);
+          console.log('Reasoning: ', event.reasoningText);
+          console.log('reasoning details: ', event.reasoning);
           console.log('Steps: ', event.steps);
           console.log('Messages: ', event.response.messages);
-          console.log('Response Body: ', event.response.body);
+          console.log('Message content: ', event.response.messages[event.response.messages.length - 1].content);
+          console.log('Response: ', event.response);
           console.log('Provider metadata: ', event.providerMetadata);
           console.log('Sources: ', event.sources);
           console.log('Usage: ', event.usage);
+          console.log('Total Usage: ', event.totalUsage);
 
           // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {
-            // FIRST: Generate and update title for new conversations (highest priority)
-            try {
-              const chat = await getChatById({ id });
-              if (chat && chat.title === 'New conversation') {
-                console.log('Generating title for new conversation...');
-                const title = await generateTitleFromUserMessage({
-                  message: messages[messages.length - 1],
-                });
-
-                console.log('--------------------------------');
-                console.log('Generated title: ', title);
-                console.log('--------------------------------');
-
-                // Update the chat with the generated title
-                await updateChatTitleById({ chatId: id, title });
-              }
-            } catch (titleError) {
-              console.error('Failed to generate or update title:', titleError);
-              // Title generation failure shouldn't break the conversation
-            }
-
-            // Track message usage for rate limiting (deletion-proof)
-            // Only track usage for models that are not free unlimited
-            try {
-              if (!shouldBypassRateLimits(model, user)) {
-                await incrementMessageUsage({ userId: user.id });
-              }
-            } catch (error) {
-              console.error('Failed to track message usage:', error);
-            }
-
-            // Track extreme search usage if it was used successfully
-            if (group === 'extreme') {
+            after(async () => {
               try {
-                // Check if extreme_search tool was actually called
-                const extremeSearchUsed = event.steps?.some((step) =>
-                  step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
-                );
-
-                if (extremeSearchUsed) {
-                  console.log('Extreme search was used successfully, incrementing count');
-                  await incrementExtremeSearchUsage({ userId: user.id });
+                if (!shouldBypassRateLimits(model, user)) {
+                  await incrementMessageUsage({ userId: user.id });
                 }
               } catch (error) {
-                console.error('Failed to track extreme search usage:', error);
+                console.error('Failed to track message usage:', error);
               }
-            }
+            });
 
-            // LAST: Save assistant message (after title is generated)
-            try {
-              const assistantId = getTrailingMessageId({
-                messages: event.response.messages.filter((message: any) => message.role === 'assistant'),
+            if (group === 'extreme') {
+              after(async () => {
+                try {
+                  const extremeSearchUsed = event.steps?.some((step) =>
+                    step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
+                  );
+
+                  if (extremeSearchUsed) {
+                    console.log('Extreme search was used successfully, incrementing count');
+                    await incrementExtremeSearchUsage({ userId: user.id });
+                  }
+                } catch (error) {
+                  console.error('Failed to track extreme search usage:', error);
+                }
               });
-
-              if (!assistantId) {
-                throw new Error('No assistant message found!');
-              }
-
-              const [, assistantMessage] = appendResponseMessages({
-                messages: [messages[messages.length - 1]],
-                responseMessages: event.response.messages,
-              });
-
-              await saveMessages({
-                messages: [
-                  {
-                    id: assistantId,
-                    chatId: id,
-                    role: assistantMessage.role,
-                    parts: assistantMessage.parts,
-                    attachments: assistantMessage.experimental_attachments ?? [],
-                    createdAt: new Date(),
-                  },
-                ],
-              });
-            } catch (error) {
-              console.error('Failed to save assistant message:', error);
             }
           }
 
-          // Calculate and log overall request processing time
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');
@@ -572,7 +547,6 @@ export async function POST(req: Request) {
         },
         onError(event) {
           console.log('Error: ', event.error);
-          // Calculate and log processing time even on error
           const requestEndTime = Date.now();
           const processingTime = (requestEndTime - requestStartTime) / 1000;
           console.log('--------------------------------');
@@ -583,9 +557,25 @@ export async function POST(req: Request) {
 
       result.consumeStream();
 
-      result.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
-      });
+      dataStream.merge(
+        result.toUIMessageStream({
+          sendReasoning: true,
+          messageMetadata: ({ part }) => {
+            if (part.type === 'finish') {
+              console.log('Finish part: ', part);
+              const processingTime = (Date.now() - streamStartTime) / 1000;
+              return {
+                model: model as string,
+                completionTime: processingTime,
+                createdAt: new Date().toISOString(),
+                totalTokens: part.totalUsage?.totalTokens ?? null,
+                inputTokens: part.totalUsage?.inputTokens ?? null,
+                outputTokens: part.totalUsage?.outputTokens ?? null,
+              };
+            }
+          },
+        }),
+      );
     },
     onError(error) {
       console.log('Error: ', error);
@@ -594,104 +584,36 @@ export async function POST(req: Request) {
       }
       return 'Oops, an error occurred!';
     },
+    onFinish: async ({ messages }) => {
+      console.log('onFinish', messages);
+      if (user) {
+        console.log('Saving messages');
+        await saveMessages({
+          messages: messages.map((message) => ({
+            id: message.id,
+            role: message.role,
+            parts: message.parts,
+            createdAt: new Date(),
+            attachments: [],
+            chatId: id,
+            model: model,
+            completionTime: message.metadata?.completionTime ?? 0,
+            inputTokens: message.metadata?.inputTokens ?? 0,
+            outputTokens: message.metadata?.outputTokens ?? 0,
+            totalTokens: message.metadata?.totalTokens ?? 0,
+          })),
+        });
+        console.log('Messages saved');
+      }
+    },
   });
   const streamContext = getStreamContext();
 
   if (streamContext) {
-    return new Response(await streamContext.resumableStream(streamId, () => stream));
+    return new Response(
+      await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+    );
   } else {
-    return new Response(stream);
+    return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   }
-}
-
-export async function GET(request: Request) {
-  const streamContext = getStreamContext();
-  const resumeRequestedAt = new Date();
-
-  if (!streamContext) {
-    return new Response(null, { status: 204 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const chatId = searchParams.get('chatId');
-
-  if (!chatId) {
-    return new ChatSDKError('bad_request:api', 'Chat ID is required').toResponse();
-  }
-
-  const session = await auth.api.getSession(request);
-
-  if (!session?.user) {
-    return new ChatSDKError('unauthorized:auth', 'Authentication required to resume chat stream').toResponse();
-  }
-
-  let chat: Chat | null;
-
-  try {
-    chat = await getChatById({ id: chatId });
-  } catch {
-    return new ChatSDKError('not_found:chat').toResponse();
-  }
-
-  if (!chat) {
-    return new ChatSDKError('not_found:chat').toResponse();
-  }
-
-  if (chat.visibility === 'private' && chat.userId !== session.user.id) {
-    return new ChatSDKError('forbidden:chat', 'Access denied to private chat').toResponse();
-  }
-
-  const streamIds = await getStreamIdsByChatId({ chatId });
-
-  if (!streamIds.length) {
-    return new ChatSDKError('not_found:stream').toResponse();
-  }
-
-  const recentStreamId = streamIds.at(-1);
-
-  if (!recentStreamId) {
-    return new ChatSDKError('not_found:stream').toResponse();
-  }
-
-  const emptyDataStream = createDataStream({
-    execute: () => {},
-  });
-
-  const stream = await streamContext.resumableStream(recentStreamId, () => emptyDataStream);
-
-  /*
-   * For when the generation is streaming during SSR
-   * but the resumable stream has concluded at this point.
-   */
-  if (!stream) {
-    const messages = await getMessagesByChatId({ id: chatId });
-    const mostRecentMessage = messages.at(-1);
-
-    if (!mostRecentMessage) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    if (mostRecentMessage.role !== 'assistant') {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
-
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const restoredStream = createDataStream({
-      execute: (buffer) => {
-        buffer.writeData({
-          type: 'append-message',
-          message: JSON.stringify(mostRecentMessage),
-        });
-      },
-    });
-
-    return new Response(restoredStream, { status: 200 });
-  }
-
-  return new Response(stream, { status: 200 });
 }

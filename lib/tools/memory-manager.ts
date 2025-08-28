@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/app/actions';
 
 export const memoryManagerTool = tool({
   description: 'Manage personal memories with add and search operations.',
-  parameters: z.object({
+  inputSchema: z.object({
     action: z.enum(['add', 'search']).describe('The memory operation to perform'),
     content: z.string().describe('The memory content for add operation'),
     query: z.string().describe('The search query for search operations'),

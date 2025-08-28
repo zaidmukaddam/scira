@@ -1,8 +1,9 @@
-import { clientEnv } from '@/env/client';
+'use client';
+
 import { cn } from '@/lib/utils';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import type * as Leaflet from 'leaflet';
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { useTheme } from 'next-themes';
 
 interface Location {
   lat: number;
@@ -44,11 +45,6 @@ interface Place {
   timezone?: string;
 }
 
-// Set Mapbox token with fallback
-if (clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN) {
-  mapboxgl.accessToken = clientEnv.NEXT_PUBLIC_MAPBOX_TOKEN;
-}
-
 interface InteractiveMapProps {
   center: Location;
   places: Place[];
@@ -56,373 +52,362 @@ interface InteractiveMapProps {
   onPlaceSelect: (place: Place | null) => void;
   className?: string;
   viewMode?: 'map' | 'list';
+  tileStyle?: 'osm' | 'carto' | 'carto-voyager' | 'esri-imagery' | 'opentopo';
 }
 
 const InteractiveMapComponent = memo<InteractiveMapProps>(
-  ({ center, places, selectedPlace, onPlaceSelect, className, viewMode = 'map' }) => {
+  ({ center, places, selectedPlace, onPlaceSelect, className, viewMode = 'map', tileStyle = 'carto' }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapRef = useRef<mapboxgl.Map | null>(null);
+    const mapRef = useRef<Leaflet.Map | null>(null);
     const [mapError, setMapError] = useState<string | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
-    const popupRef = useRef<mapboxgl.Popup | null>(null);
+    const popupRef = useRef<Leaflet.Popup | null>(null);
+    const markersGroupRef = useRef<Leaflet.LayerGroup | null>(null);
+    const tileLayerRef = useRef<Leaflet.TileLayer | null>(null);
+    const leafletRef = useRef<typeof Leaflet | null>(null);
     const [isMounted, setIsMounted] = useState(false);
+    const { resolvedTheme } = useTheme();
+    const [isLeafletReady, setIsLeafletReady] = useState(false);
 
     // Ensure component only renders on client
     useEffect(() => {
       setIsMounted(true);
     }, []);
 
-    // Memoize the addMapLayers function
-    const addMapLayers = useCallback(
-      (map: mapboxgl.Map) => {
-        // Add source for places with clustering enabled
-        map.addSource('places', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: [],
-          },
-          cluster: true,
-          clusterMaxZoom: 14, // Max zoom to cluster points on
-          clusterRadius: 50, // Radius of each cluster when clustering points
-        });
-
-        // Add cluster circles
-        map.addLayer({
-          id: 'clusters',
-          type: 'circle',
-          source: 'places',
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-color': [
-              'step',
-              ['get', 'point_count'],
-              '#51bbd6', // Blue for small clusters
-              10,
-              '#f1c40f', // Yellow for medium clusters
-              30,
-              '#e74c3c', // Red for large clusters
-            ],
-            'circle-radius': [
-              'step',
-              ['get', 'point_count'],
-              20, // Small clusters
-              10,
-              25, // Medium clusters
-              30,
-              30, // Large clusters
-            ],
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-            'circle-opacity': 0.9,
-          },
-        });
-
-        // Add cluster count labels
-        map.addLayer({
-          id: 'cluster-count',
-          type: 'symbol',
-          source: 'places',
-          filter: ['has', 'point_count'],
-          layout: {
-            'text-field': ['get', 'point_count_abbreviated'],
-            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
-            'text-anchor': 'center',
-            'text-allow-overlap': true,
-            'text-ignore-placement': true,
-          },
-          paint: {
-            'text-color': '#ffffff',
-          },
-        });
-
-        // Add unclustered points (individual markers)
-        map.addLayer({
-          id: 'unclustered-point',
-          type: 'circle',
-          source: 'places',
-          filter: ['!', ['has', 'point_count']],
-          paint: {
-            'circle-radius': ['case', ['boolean', ['feature-state', 'selected'], false], 20, 16],
-            'circle-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#000000', '#ffffff'],
-            'circle-stroke-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#000000', '#d1d5db'],
-            'circle-stroke-width': 2,
-            'circle-opacity': 1,
-            'circle-stroke-opacity': 1,
-          },
-        });
-
-        // Add labels for unclustered points
-        map.addLayer({
-          id: 'unclustered-point-labels',
-          type: 'symbol',
-          source: 'places',
-          filter: ['!', ['has', 'point_count']],
-          layout: {
-            'text-field': ['get', 'index'],
-            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
-            'text-anchor': 'center',
-            'text-allow-overlap': true,
-            'text-ignore-placement': true,
-          },
-          paint: {
-            'text-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#ffffff', '#000000'],
-          },
-        });
-
-        // Handle cluster clicks - zoom into cluster
-        map.on('click', 'clusters', (e) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ['clusters'],
-          });
-
-          if (!features.length) return;
-
-          const clusterId = features[0].properties!.cluster_id;
-          const source = map.getSource('places') as mapboxgl.GeoJSONSource;
-
-          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err || zoom == null) return;
-
-            map.easeTo({
-              center: (features[0].geometry as any).coordinates,
-              zoom: zoom + 1,
+    // Helper to create a tile layer based on style and theme
+    const createTileLayer = useCallback(
+      (style: InteractiveMapProps['tileStyle'], theme: string | undefined): Leaflet.TileLayer => {
+        const L = leafletRef.current!;
+        const isDark = theme === 'dark';
+        switch (style) {
+          case 'carto':
+            return L.tileLayer(
+              isDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+              {
+                attribution: '&copy; OpenStreetMap, &copy; CARTO',
+                maxZoom: 20,
+              },
+            );
+          case 'carto-voyager':
+            return L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+              attribution: '&copy; OpenStreetMap, &copy; CARTO',
+              maxZoom: 20,
             });
-          });
-        });
-
-        // Handle individual point clicks
-        map.on('click', 'unclustered-point', (e) => {
-          if (!e.features || e.features.length === 0) return;
-
-          const feature = e.features[0];
-          const placeId = feature.properties?.place_id;
-          const place = places.find((p) => p.place_id === placeId);
-
-          if (place) {
-            onPlaceSelect(place);
-          }
-        });
-
-        // Change cursor on hover for clusters
-        map.on('mouseenter', 'clusters', () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-
-        map.on('mouseleave', 'clusters', () => {
-          map.getCanvas().style.cursor = '';
-        });
-
-        // Change cursor on hover for individual points
-        map.on('mouseenter', 'unclustered-point', () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-
-        map.on('mouseleave', 'unclustered-point', () => {
-          map.getCanvas().style.cursor = '';
-        });
-
-        // Handle map click to deselect
-        map.on('click', (e) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ['unclustered-point', 'clusters'],
-          });
-          if (features.length === 0) {
-            onPlaceSelect(null);
-          }
-        });
+          case 'esri-imagery':
+            return L.tileLayer(
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19,
+              },
+            );
+          case 'opentopo':
+            return L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+              attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap',
+              maxZoom: 17,
+            });
+          case 'osm':
+          default:
+            return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors',
+              maxZoom: 20,
+            });
+        }
       },
-      [places, onPlaceSelect],
+      [],
     );
 
     // Initialize map
     useEffect(() => {
       if (!mapContainerRef.current || !isMounted) return;
 
-      // Check if Mapbox token is available
-      if (!mapboxgl.accessToken) {
-        setMapError('Map configuration error. Please check your settings.');
-        return;
-      }
-
       try {
-        mapRef.current = new mapboxgl.Map({
-          container: mapContainerRef.current,
-          style: 'mapbox://styles/mapbox/light-v11',
-          center: [center.lng, center.lat],
-          zoom: 14,
-          attributionControl: false,
-        });
-
-        const map = mapRef.current;
-
-        // Add error handling
-        map.on('error', (e) => {
-          console.error('Mapbox error:', e);
-          setMapError('Failed to load map. Please try again later.');
-        });
-
-        // Map loaded successfully
-        map.on('load', () => {
-          setIsMapLoaded(true);
-          setMapError(null);
-
-          // Add sources and layers for markers
-          addMapLayers(map);
-        });
-
-        // Add minimal controls
-        map.addControl(new mapboxgl.NavigationControl({ showCompass: false, showZoom: true }), 'bottom-right');
-
-        // Compact attribution
-        map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
-
-        return () => {
-          if (popupRef.current) {
-            popupRef.current.remove();
+        const init = async () => {
+          // Load Leaflet only on client
+          if (!leafletRef.current) {
+            const mod = await import('leaflet');
+            leafletRef.current = mod;
+            setIsLeafletReady(true);
           }
-          map.remove();
-          mapRef.current = null;
-          setIsMapLoaded(false);
+          const L = leafletRef.current!;
+
+          mapRef.current = L.map(mapContainerRef.current!, {
+            center: [center.lat, center.lng],
+            zoom: 14,
+            zoomControl: false,
+            attributionControl: false,
+          });
+
+          const map = mapRef.current;
+
+          // Add tiles and mark as loaded on first tile load
+          const tiles = createTileLayer(tileStyle, resolvedTheme);
+          tiles.addTo(map);
+          tileLayerRef.current = tiles;
+          tiles.once('load', () => {
+            setIsMapLoaded(true);
+            setMapError(null);
+          });
+          // Fallback: ensure map marks as loaded
+          setTimeout(() => {
+            map.invalidateSize();
+            setIsMapLoaded(true);
+          }, 0);
+
+          // Custom zoom control
+          class ZoomControl extends L.Control {
+            public onAdd(mapInstance: Leaflet.Map): HTMLElement {
+              const container = L.DomUtil.create('div', 'custom-zoom-control leaflet-bar');
+
+              const zoomInBtn = L.DomUtil.create('button', 'zoom-btn zoom-in', container);
+              zoomInBtn.type = 'button';
+              zoomInBtn.setAttribute('aria-label', 'Zoom in');
+              zoomInBtn.innerHTML = '+';
+
+              const divider = L.DomUtil.create('div', 'divider', container);
+              divider.setAttribute('aria-hidden', 'true');
+
+              const zoomOutBtn = L.DomUtil.create('button', 'zoom-btn zoom-out', container);
+              zoomOutBtn.type = 'button';
+              zoomOutBtn.setAttribute('aria-label', 'Zoom out');
+              zoomOutBtn.innerHTML = '&minus;';
+
+              L.DomEvent.disableClickPropagation(container);
+              L.DomEvent.disableScrollPropagation(container);
+
+              const handleZoomIn = () => mapInstance.zoomIn();
+              const handleZoomOut = () => mapInstance.zoomOut();
+              zoomInBtn.addEventListener('click', handleZoomIn);
+              zoomOutBtn.addEventListener('click', handleZoomOut);
+
+              const updateDisabled = () => {
+                const z = mapInstance.getZoom();
+                const min = mapInstance.getMinZoom();
+                const max = mapInstance.getMaxZoom();
+                zoomInBtn.disabled = z >= max;
+                zoomOutBtn.disabled = z <= min;
+              };
+              mapInstance.on('zoomend zoomlevelschange', updateDisabled);
+              setTimeout(updateDisabled, 0);
+
+              // Cleanup when control is removed
+              (this as unknown as { onRemove?: () => void }).onRemove = () => {
+                zoomInBtn.removeEventListener('click', handleZoomIn);
+                zoomOutBtn.removeEventListener('click', handleZoomOut);
+                mapInstance.off('zoomend zoomlevelschange', updateDisabled);
+              };
+
+              return container;
+            }
+          }
+
+          new ZoomControl({ position: 'bottomright' }).addTo(map);
+          // Dedicated layer group to hold markers
+          markersGroupRef.current = L.layerGroup().addTo(map);
+
+          return () => {
+            if (popupRef.current) {
+              popupRef.current.removeFrom(map);
+            }
+            map.remove();
+            mapRef.current = null;
+            setIsMapLoaded(false);
+          };
         };
+        void init();
       } catch (error) {
         console.error('Failed to initialize map:', error);
         setMapError('Failed to initialize map. Please check your connection.');
       }
-    }, [center.lat, center.lng, addMapLayers, isMounted]);
+    }, [center.lat, center.lng, createTileLayer, isMounted, tileStyle, resolvedTheme]);
+
+    // Swap tile layer when style or theme changes
+    useEffect(() => {
+      if (!mapRef.current) return;
+      const map = mapRef.current;
+      const next = createTileLayer(tileStyle, resolvedTheme);
+      next.addTo(map);
+      if (tileLayerRef.current) {
+        map.removeLayer(tileLayerRef.current);
+      }
+      tileLayerRef.current = next;
+    }, [tileStyle, resolvedTheme, createTileLayer]);
 
     // Update places data
     useEffect(() => {
-      if (!mapRef.current || !isMapLoaded) return;
+      if (!mapRef.current || !isMapLoaded || !leafletRef.current) return;
+      const L = leafletRef.current!;
 
       const map = mapRef.current;
-      const source = map.getSource('places') as mapboxgl.GeoJSONSource;
 
-      if (!source) return;
-
-      // Convert places to GeoJSON features
-      const features = places.map((place, index) => ({
-        type: 'Feature' as const,
-        id: place.place_id,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [place.location.lng, place.location.lat],
-        },
-        properties: {
-          place_id: place.place_id,
-          name: place.name,
-          index: String(index + 1),
-        },
-      }));
-
-      // Update source data
-      source.setData({
-        type: 'FeatureCollection',
-        features,
+      // Maintain a dedicated markers group via ref
+      if (!markersGroupRef.current) {
+        markersGroupRef.current = L.layerGroup().addTo(map);
+      }
+      // Remove any stray root-level markers (from previous versions) to avoid duplicates
+      const strayLayers: L.Layer[] = [];
+      map.eachLayer((layer: L.Layer) => {
+        if (layer instanceof L.Marker) {
+          strayLayers.push(layer);
+        }
       });
+      strayLayers.forEach((l) => map.removeLayer(l));
+      if (markersGroupRef.current) {
+        markersGroupRef.current.clearLayers();
+      }
 
-      // Update selected state for unclustered points only
-      // Wait for the clustering to complete before setting feature states
-      setTimeout(() => {
-        features.forEach((feature) => {
-          const isSelected = selectedPlace?.place_id === feature.id;
-          try {
-            map.setFeatureState({ source: 'places', id: feature.id }, { selected: isSelected });
-          } catch (error) {
-            // Feature might be clustered, ignore the error
-            console.debug('Feature state update skipped (likely clustered):', error);
-          }
+      // Add compact, polished markers (responsive size)
+      places.forEach((place, index) => {
+        const isSelected = selectedPlace?.place_id === place.place_id;
+        const isMobile = map.getSize().x < 640;
+        const markerPx = isMobile ? 28 : 32;
+        // Use shadcn theme tokens via Tailwind to adapt to theme
+        const bg = isSelected ? 'bg-primary' : 'bg-background';
+        const text = isSelected ? 'text-primary-foreground' : 'text-foreground';
+        const border = isSelected ? 'border-[hsl(var(--primary))]' : 'border-[hsl(var(--border))]';
+        const html = `
+          <div class="group relative">
+            <div style="width:${markerPx}px;height:${markerPx}px"
+                 class="${bg} ${text} rounded-full border-2 ${border} shadow-sm flex items-center justify-center transition-transform group-hover:scale-105">
+              <span class="text-[11px] sm:text-[12px] font-semibold">${index + 1}</span>
+            </div>
+          </div>`;
+        const icon = L.divIcon({
+          html,
+          className: 'cluster-marker rounded-full',
+          iconSize: [markerPx, markerPx],
+          iconAnchor: [markerPx / 2, markerPx / 2],
         });
-      }, 100);
+        const marker = L.marker([place.location.lat, place.location.lng], { icon });
+        if (markersGroupRef.current) {
+          markersGroupRef.current.addLayer(marker);
+        } else {
+          marker.addTo(map);
+        }
+        marker.on('click', () => onPlaceSelect(place));
+      });
     }, [places, selectedPlace, isMapLoaded]);
 
-    // Fly to selected place
+    // Fly to selected place; when overlay is visible (map view with selectedPlace), bias center upward
     useEffect(() => {
-      if (!mapRef.current || !selectedPlace || !isMapLoaded) return;
+      if (!mapRef.current || !selectedPlace || !isMapLoaded || !leafletRef.current) return;
+      const L = leafletRef.current!;
 
       const map = mapRef.current;
-      const coordinates: [number, number] = [selectedPlace.location.lng, selectedPlace.location.lat];
-
-      // Get current bounds and zoom
+      let latlng = L.latLng(selectedPlace.location.lat, selectedPlace.location.lng);
       const bounds = map.getBounds();
       const currentZoom = map.getZoom();
-      const point = new mapboxgl.LngLat(coordinates[0], coordinates[1]);
 
-      if (!bounds) return;
-
-      // Calculate the center and margins of the current view
-      const mapContainer = map.getContainer();
-      const { width, height } = mapContainer.getBoundingClientRect();
-
-      // Convert the selected point to screen coordinates
-      const pixelPoint = map.project(point);
-
-      // Define comfort margins (don't move unless marker is very close to edges)
-      const marginX = width * 0.25; // 25% margin on each side
-      const marginY = height * 0.25; // 25% margin on top/bottom
-
-      // Check if point is comfortably within the visible area
+      // Calculate comfort margins using pixel coordinates
+      const container = map.getContainer();
+      const { width, height } = container.getBoundingClientRect();
+      const point = map.latLngToContainerPoint(latlng);
+      const marginX = width * 0.25;
+      const marginY = height * 0.25;
       const isComfortablyVisible =
-        pixelPoint.x > marginX &&
-        pixelPoint.x < width - marginX &&
-        pixelPoint.y > marginY &&
-        pixelPoint.y < height - marginY;
+        point.x > marginX && point.x < width - marginX && point.y > marginY && point.y < height - marginY;
 
-      // Only move the map if:
-      // 1. Point is not in bounds at all, OR
-      // 2. Point is too close to edges (not comfortably visible), OR
-      // 3. Zoom is too low for proper detail
-      const shouldMove = !bounds.contains(point) || !isComfortablyVisible || currentZoom < 12;
+      const shouldMove = !bounds.contains(latlng) || !isComfortablyVisible || currentZoom < 12;
 
       if (shouldMove) {
-        // Only zoom in if current zoom is quite low
         const targetZoom = currentZoom < 12 ? 14 : Math.max(currentZoom, 13);
-
-        map.flyTo({
-          center: coordinates,
-          zoom: targetZoom,
-          duration: 600,
-          essential: true,
-        });
+        // Offset center upward by converting to container point and shifting when overlay likely covers bottom
+        const container = map.getContainer();
+        const isOverlay = !!selectedPlace; // in this context true
+        let targetPoint = map.latLngToContainerPoint(latlng);
+        if (isOverlay) {
+          targetPoint = L.point(targetPoint.x, targetPoint.y + Math.min(container.clientHeight * 0.15, 160));
+          latlng = map.containerPointToLatLng(targetPoint);
+        }
+        map.flyTo(latlng, targetZoom, { duration: 0.6 });
       }
       // If marker is already comfortably visible and zoom is adequate, do nothing!
     }, [selectedPlace, isMapLoaded]);
 
-    // Fit bounds to show all markers
+    // Fit bounds to show all markers. When list view is active, add top padding so markers remain visible above list.
     useEffect(() => {
-      if (!mapRef.current || !isMapLoaded || places.length === 0) return;
+      if (!mapRef.current || !isMapLoaded || places.length === 0 || !leafletRef.current) return;
+      const L = leafletRef.current!;
 
       // Small delay to ensure data is loaded
       const timeout = setTimeout(() => {
-        const bounds = new mapboxgl.LngLatBounds();
-        places.forEach((place) => {
-          bounds.extend([place.location.lng, place.location.lat]);
-        });
+        const bounds = L.latLngBounds(places.map((p) => [p.location.lat, p.location.lng]) as [number, number][]);
+        // Detect if parent has list-view class to apply asymmetric padding
+        const container = mapRef.current!.getContainer();
+        const isListView = container.closest('.nearby-search-map')?.classList.contains('list-view');
+        const isMobile = container.clientWidth < 640;
 
-        mapRef.current!.fitBounds(bounds, {
-          padding: 80,
-          maxZoom: 16,
-          duration: 800,
-        });
+        // Handle single-point bounds separately to allow precise vertical offset
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const isSinglePoint = ne.equals(sw);
+
+        if (isSinglePoint) {
+          // Center to single marker, with vertical bias when list view is active (especially on mobile)
+          let target = L.latLng(ne.lat, ne.lng);
+          if (isListView) {
+            const px = mapRef.current!.latLngToContainerPoint(target);
+            const dy = isMobile ? Math.round(container.clientHeight * 0.25) : 100;
+            const shifted = mapRef.current!.containerPointToLatLng(L.point(px.x, px.y + dy));
+            mapRef.current!.setView(shifted, Math.max(mapRef.current!.getZoom(), 14), { animate: true });
+          } else {
+            mapRef.current!.setView(target, Math.max(mapRef.current!.getZoom(), 14), { animate: true });
+          }
+          return;
+        }
+
+        if (isListView) {
+          const topPad = isMobile ? Math.round(container.clientHeight * 0.45) : 140;
+          const bottomPad = isMobile ? 16 : 40;
+          mapRef.current!.fitBounds(bounds, { paddingTopLeft: [80, topPad], paddingBottomRight: [80, bottomPad] });
+        } else {
+          mapRef.current!.fitBounds(bounds, { padding: [80, 80] });
+        }
       }, 100);
 
       return () => clearTimeout(timeout);
     }, [places, isMapLoaded]);
 
-    // Handle resize when viewMode changes
+    // Handle resize when viewMode changes (align with 500ms CSS transition)
     useEffect(() => {
       if (!mapRef.current || !isMapLoaded) return;
 
-      // Small delay to allow CSS transition to start
       const timeout = setTimeout(() => {
-        // Trigger resize to recalculate map dimensions
-        mapRef.current?.resize();
-      }, 50);
+        mapRef.current?.invalidateSize();
+      }, 550);
 
       return () => clearTimeout(timeout);
     }, [viewMode, isMapLoaded]);
+
+    // Observe container size changes and invalidate Leaflet map size responsively
+    useEffect(() => {
+      if (!mapRef.current || !mapContainerRef.current || !isMapLoaded) return;
+
+      let rafId: number | null = null;
+      let trailingTimeout: number | null = null;
+
+      const handleResize = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          mapRef.current?.invalidateSize();
+          if (trailingTimeout) window.clearTimeout(trailingTimeout);
+          trailingTimeout = window.setTimeout(() => {
+            mapRef.current?.invalidateSize();
+          }, 300);
+        });
+      };
+
+      const ro = new ResizeObserver(handleResize);
+      ro.observe(mapContainerRef.current);
+
+      return () => {
+        ro.disconnect();
+        if (rafId) cancelAnimationFrame(rafId);
+        if (trailingTimeout) window.clearTimeout(trailingTimeout);
+      };
+    }, [isMapLoaded]);
 
     // Don't render anything on server
     if (!isMounted) {
@@ -433,7 +418,10 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
     if (mapError) {
       return (
         <div
-          className={cn('w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-900', className)}
+          className={cn(
+            'w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 z-0',
+            className,
+          )}
         >
           <div className="text-center p-4">
             <p className="text-neutral-500 dark:text-neutral-400 mb-2">{mapError}</p>
@@ -449,7 +437,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
     }
 
     return (
-      <div className={cn('w-full h-full relative', className)}>
+      <div className={cn('w-full h-full relative z-0', className)}>
         <div ref={mapContainerRef} className="w-full h-full" />
       </div>
     );

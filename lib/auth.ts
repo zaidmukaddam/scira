@@ -53,6 +53,10 @@ export const dodoPayments = new DodoPayments({
 });
 
 export const auth = betterAuth({
+  rateLimit: {
+    max: 50,
+    window: 60,
+  },
   cookieCache: {
     enabled: true,
     maxAge: 5 * 60,

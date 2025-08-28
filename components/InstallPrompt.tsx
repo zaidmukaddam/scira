@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Share } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import Image from 'next/image';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -41,14 +41,7 @@ export function InstallPrompt() {
         >
           <div className="flex items-start justify-between gap-3">
             {/* App Icon */}
-            <Image
-              src="/apple-icon.png"
-              alt="App Icon"
-              width={40}
-              height={40}
-              className="rounded-md flex-shrink-0 mt-0.5"
-            />
-
+            <SciraLogo className="size-9" />
             <div className="flex-grow">
               <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">

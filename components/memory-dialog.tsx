@@ -75,7 +75,8 @@ export function MemoryDialog() {
   };
 
   // Format date in a more readable way
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Unknown date';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -166,7 +167,7 @@ export function MemoryDialog() {
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <CalendarIcon className="h-3 w-3" />
-                        <span>{formatDate(memory.created_at)}</span>
+                        <span>{formatDate(memory.createdAt)}</span>
                       </div>
                       <Button
                         variant="ghost"

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,24 +41,14 @@ export default function PrivacyPage() {
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <NextImage
-                    src="/scira.png"
-                    alt="Scira Logo"
-                    className="h-8 w-8 opacity-90 invert dark:invert-0"
-                    width={32}
-                    height={32}
-                    unoptimized
-                    quality={100}
-                  />
+                  <SciraLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
 
             <motion.div variants={item} className="text-center">
               <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
-              <p className="text-muted-foreground mt-3">
-                Last updated: July 24, 2025
-              </p>
+              <p className="text-muted-foreground mt-3">Last updated: July 24, 2025</p>
             </motion.div>
           </motion.div>
         </div>
@@ -89,7 +80,8 @@ export default function PrivacyPage() {
               <strong>Account Information:</strong> Email address and profile information when you create an account.
             </li>
             <li>
-              <strong>Subscription Data:</strong> Information about your subscription status and payment history (but not payment details).
+              <strong>Subscription Data:</strong> Information about your subscription status and payment history (but
+              not payment details).
             </li>
             <li>
               <strong>Cookies and Similar Technologies:</strong> We use cookies and similar tracking technologies to
@@ -97,9 +89,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment 
-            card details, bank information, UPI details, or other sensitive payment data. All payment information is 
-            handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective 
+            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
+            card details, bank information, UPI details, or other sensitive payment data. All payment information is
+            handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective
             privacy policies and security standards.
           </p>
 
@@ -129,8 +121,9 @@ export default function PrivacyPage() {
                 xAI, and others to process search queries and provide results
               </li>
               <li>
-                <strong>Payment Processors:</strong> We use Polar and DodoPayments to process payments and manage subscriptions. 
-                These providers handle all payment data directly and have their own privacy policies governing payment information.
+                <strong>Payment Processors:</strong> We use Polar and DodoPayments to process payments and manage
+                subscriptions. These providers handle all payment data directly and have their own privacy policies
+                governing payment information.
               </li>
             </ul>
             <li>
@@ -142,9 +135,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly 
-            to our payment processors (Polar for subscriptions, DodoPayments for one-time payments) and is not stored 
-            on our servers. We only receive confirmation of successful payments and subscription status updates.
+            <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly to
+            our payment processors (Polar for subscriptions, DodoPayments for one-time payments) and is not stored on
+            our servers. We only receive confirmation of successful payments and subscription status updates.
           </p>
 
           <h2>Data Security</h2>
@@ -204,15 +197,7 @@ export default function PrivacyPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <NextImage
-                  src="/scira.png"
-                  alt="Scira Logo"
-                  className="h-4 w-4 opacity-80 invert dark:invert-0"
-                  width={16}
-                  height={16}
-                  unoptimized
-                  quality={100}
-                />
+                <SciraLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Scira AI by Zaid Mukaddam

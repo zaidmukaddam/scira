@@ -4,7 +4,7 @@ import { serverEnv } from '@/env/server';
 
 export const movieTvSearchTool = tool({
   description: 'Search for a movie or TV show using TMDB API',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The search query for movies/TV shows'),
   }),
   execute: async ({ query }: { query: string }) => {

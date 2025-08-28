@@ -82,11 +82,26 @@ export function LookoutForm({
         />
       </div>
 
-      {/* Frequency Selection */}
-      <div className="flex items-start gap-4">
-        <Label className="text-sm font-medium pt-2 w-20 flex-shrink-0">Frequency</Label>
+      {/* Instructions */}
+      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+        <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">Instructions</Label>
         <div className="flex-1">
-          <div className="grid grid-cols-4 gap-1">
+          <Textarea
+            name="prompt"
+            placeholder="Enter detailed instructions for what you want the lookout to search for and analyze..."
+            rows={6}
+            className="resize-none text-sm h-40"
+            defaultValue={editingLookout?.prompt || selectedExample?.prompt || ''}
+            required
+          />
+        </div>
+      </div>
+
+      {/* Frequency Selection */}
+      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+        <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">Frequency</Label>
+        <div className="flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
             {frequencyOptions.map((option) => (
               <div key={option.value} className="relative">
                 <input
@@ -113,12 +128,12 @@ export function LookoutForm({
       {/* Scheduling Section */}
       <div className="space-y-4">
         {/* On/Time/Date row */}
-        <div className="flex items-start gap-4">
-          <Label className="text-sm font-medium pt-2 w-20 flex-shrink-0">On</Label>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+          <Label className="text-sm font-medium sm:pt-2 sm:w-20 sm:flex-shrink-0">On</Label>
           <div className="flex-1">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               {/* Time Picker */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <TimePicker
                   name="time"
                   value={selectedTime}
@@ -130,7 +145,7 @@ export function LookoutForm({
 
               {/* Date selection for 'once' frequency */}
               {selectedFrequency === 'once' && (
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <input type="hidden" name="date" value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''} />
                   <Popover>
                     <PopoverTrigger asChild>
@@ -165,7 +180,7 @@ export function LookoutForm({
 
               {/* Day selection for 'weekly' frequency */}
               {selectedFrequency === 'weekly' && (
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <input type="hidden" name="dayOfWeek" value={selectedDayOfWeek} />
                   <Select value={selectedDayOfWeek} onValueChange={setSelectedDayOfWeek}>
                     <SelectTrigger className="h-9">
@@ -186,8 +201,8 @@ export function LookoutForm({
         </div>
 
         {/* Timezone row */}
-        <div className="flex items-center gap-4">
-          <Label className="text-sm font-medium w-20 flex-shrink-0">Timezone</Label>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <Label className="text-sm font-medium sm:w-20 sm:flex-shrink-0">Timezone</Label>
           <div className="flex-1">
             <TimezoneSelector value={selectedTimezone} onChange={setSelectedTimezone} />
           </div>
@@ -197,29 +212,14 @@ export function LookoutForm({
         <input type="hidden" name="timezone" value={selectedTimezone} />
       </div>
 
-      {/* Instructions */}
-      <div className="flex items-start gap-4">
-        <Label className="text-sm font-medium pt-2 w-20 flex-shrink-0">Instructions</Label>
-        <div className="flex-1">
-          <Textarea
-            name="prompt"
-            placeholder="Enter detailed instructions for what you want the lookout to search for and analyze..."
-            rows={6}
-            className="resize-none text-sm h-40"
-            defaultValue={editingLookout?.prompt || selectedExample?.prompt || ''}
-            required
-          />
-        </div>
-      </div>
-
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 rounded-md p-2">
         <HugeiconsIcon icon={AlarmClockIcon} size={12} color="currentColor" strokeWidth={1.5} />
         <span>Email notifications enabled</span>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
+        <div className="flex items-center gap-3 justify-center sm:justify-start">
           {!editingLookout && activeDailyLookouts !== undefined && totalLookouts !== undefined && (
             <div className="flex items-center gap-2">
               {selectedFrequency === 'daily' ? (
@@ -262,7 +262,7 @@ export function LookoutForm({
           )}
         </div>
 
-        <Button type="submit" size="sm" disabled={isSubmitDisabled}>
+        <Button type="submit" size="sm" disabled={isSubmitDisabled} className="w-full sm:w-auto">
           {editingLookout
             ? isMutating
               ? 'Updating...'

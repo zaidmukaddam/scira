@@ -22,6 +22,8 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import PlaceholderImage from '@/components/placeholder-image';
+import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
+import type { DataUIPart } from 'ai';
 
 // Types
 type SearchImage = {
@@ -54,18 +56,6 @@ type MultiSearchArgs = {
   searchDepth: ('basic' | 'advanced')[];
 };
 
-type QueryCompletion = {
-  type: 'query_completion';
-  data: {
-    query: string;
-    index: number;
-    total: number;
-    status: 'started' | 'completed' | 'error';
-    resultsCount: number;
-    imagesCount: number;
-  };
-};
-
 // Constants
 const PREVIEW_IMAGE_COUNT = 5;
 
@@ -91,7 +81,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         'group relative bg-white dark:bg-neutral-900',
         'border border-neutral-200 dark:border-neutral-800',
         'rounded-xl p-4 transition-all duration-200',
-        'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+        'hover:border-neutral-300 dark:hover:border-neutral-700',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
@@ -303,7 +293,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
               <img
                 src={image.url}
                 alt={image.description || ''}
-                className="object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
                 onError={() => handleImageError(image.url)}
               />
             )}
@@ -351,7 +341,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                   <img
                     src={currentImage.url}
                     alt={currentImage.description || ''}
-                    className="object-contain rounded-lg"
+                    className="w-full h-full object-contain rounded-lg"
                     onError={() => handleImageError(currentImage.url)}
                   />
                 )}
@@ -396,7 +386,7 @@ ImageGallery.displayName = 'ImageGallery';
 // Loading State Component
 const LoadingState: React.FC<{
   queries: string[];
-  annotations: QueryCompletion[];
+  annotations: DataUIPart<CustomUIDataTypes>[];
 }> = ({ queries, annotations }) => {
   const completedCount = annotations.length;
   const totalResults = annotations.reduce((sum, a) => sum + a.data.resultsCount, 0);
@@ -574,7 +564,7 @@ const MultiSearch = ({
 }: {
   result: MultiSearchResponse | null;
   args: MultiSearchArgs;
-  annotations?: QueryCompletion[];
+  annotations?: DataQueryCompletionPart[];
 }) => {
   const [isClient, setIsClient] = React.useState(false);
   const [sourcesOpen, setSourcesOpen] = React.useState(false);

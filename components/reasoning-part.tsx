@@ -3,15 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Minimize2, Maximize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Marked from 'marked-react';
-
-export interface ReasoningPart {
-  type: 'reasoning';
-  reasoning: string;
-  details: Array<{ type: 'text'; text: string }>;
-}
+import { ReasoningUIPart } from 'ai';
 
 interface ReasoningPartViewProps {
-  part: ReasoningPart;
+  part: ReasoningUIPart;
   sectionKey: string;
   isComplete: boolean;
   duration: string | null;
@@ -46,34 +41,47 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
   const renderer = {
     code(code: string, language?: string) {
       return (
-        <pre key={Math.random()} className="bg-muted p-1.5 rounded text-xs overflow-x-auto my-2">
-          <code className="text-muted-foreground">{code}</code>
+        <pre
+          key={Math.random()}
+          className="bg-muted/70 dark:bg-muted/50 border border-border/60 rounded px-2 py-1.5 text-xs overflow-x-auto my-2"
+        >
+          <code className="text-foreground/90">{code}</code>
         </pre>
       );
     },
     codespan(code: string) {
       return (
-        <code key={Math.random()} className="bg-muted px-1 py-0.5 rounded text-xs">
+        <code
+          key={Math.random()}
+          className="bg-muted/70 dark:bg-muted/50 text-foreground px-1 py-0.5 rounded border border-border/50 text-[11px]"
+        >
           {code}
         </code>
       );
     },
     paragraph(text: ReactNode) {
       return (
-        <p key={Math.random()} className="mb-2 last:mb-0">
+        <p key={Math.random()} className="mb-2 last:mb-0 text-muted-foreground">
           {text}
         </p>
+      );
+    },
+    strong(text: ReactNode) {
+      return (
+        <strong key={Math.random()} className="text-foreground font-semibold">
+          {text}
+        </strong>
       );
     },
     heading(text: ReactNode, level: number) {
       const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const classes = {
-        h1: 'text-sm font-semibold mb-2 mt-3',
-        h2: 'text-xs font-semibold mb-1.5 mt-2.5',
-        h3: 'text-xs font-medium mb-1.5 mt-2',
-        h4: 'text-xs font-medium mb-1 mt-1.5',
-        h5: 'text-xs font-normal mb-1 mt-1.5',
-        h6: 'text-xs font-normal mb-1 mt-1.5',
+        h1: 'text-sm font-semibold mb-2 mt-3 text-foreground',
+        h2: 'text-xs font-semibold mb-1.5 mt-2.5 text-foreground',
+        h3: 'text-xs font-medium mb-1.5 mt-2 text-foreground',
+        h4: 'text-xs font-medium mb-1 mt-1.5 text-foreground',
+        h5: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
+        h6: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
       };
 
       const className = classes[`h${level}` as keyof typeof classes] || '';
@@ -90,7 +98,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:underline"
+          className="text-primary hover:text-primary underline-offset-2 hover:underline"
         >
           {text}
         </a>
@@ -99,14 +107,17 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     list(body: ReactNode, ordered: boolean) {
       const Type = ordered ? 'ol' : 'ul';
       return (
-        <Type key={Math.random()} className={`${ordered ? 'list-decimal' : 'list-disc'} pl-4 mb-2 last:mb-1`}>
+        <Type
+          key={Math.random()}
+          className={`${ordered ? 'list-decimal' : 'list-disc'} pl-4 mb-2 last:mb-1 marker:text-muted-foreground/60 text-muted-foreground`}
+        >
           {body}
         </Type>
       );
     },
     listItem(text: ReactNode) {
       return (
-        <li key={Math.random()} className="mb-0.5">
+        <li key={Math.random()} className="mb-0.5 text-muted-foreground">
           {text}
         </li>
       );
@@ -115,7 +126,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       return (
         <blockquote
           key={Math.random()}
-          className="border-l-2 border-border pl-2 py-0.5 my-2 italic text-muted-foreground"
+          className="border-l-2 border-border pl-2 py-1 my-2 italic bg-muted/30 text-muted-foreground rounded"
         >
           {text}
         </blockquote>
@@ -127,7 +138,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     table(children: ReactNode[]) {
       return (
         <div key={Math.random()} className="overflow-x-auto mb-2">
-          <table className="min-w-full border-collapse text-xs">{children}</table>
+          <table className="min-w-full border border-border/60 rounded text-xs">{children}</table>
         </div>
       );
     },
@@ -142,11 +153,14 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       const align = flags.align ? `text-${flags.align}` : '';
 
       return flags.header ? (
-        <th key={Math.random()} className={`px-1.5 py-0.5 font-medium bg-muted/50 ${align}`}>
+        <th
+          key={Math.random()}
+          className={`px-1.5 py-1 font-medium bg-muted/60 text-foreground border border-border/60 ${align}`}
+        >
           {children}
         </th>
       ) : (
-        <td key={Math.random()} className={`px-1.5 py-0.5 ${align}`}>
+        <td key={Math.random()} className={`px-1.5 py-1 text-muted-foreground border border-border/60 ${align}`}>
           {children}
         </td>
       );
@@ -167,17 +181,7 @@ const isEmptyContent = (content: string): boolean => {
 };
 
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
-  ({
-    part,
-    sectionKey,
-    isComplete,
-    duration,
-    parallelTool,
-    isExpanded,
-    isFullscreen,
-    setIsFullscreen,
-    setIsExpanded,
-  }) => {
+  ({ part, sectionKey, isComplete, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new content is added during reasoning
@@ -185,26 +189,23 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
       if (!isComplete && scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [isComplete, part.details]);
+    }, [isComplete, part.text]);
 
     // Also scroll when details change, even if isComplete doesn't change
     useEffect(() => {
-      if (!isComplete && scrollRef.current && part.details && part.details.length > 0) {
+      if (!isComplete && scrollRef.current && part.text && part.text.length > 0) {
         setTimeout(() => {
           if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
           }
         }, 10);
       }
-    }, [part.details, isComplete]);
+    }, [part.text, isComplete]);
 
-    // Check if all content is empty (just newlines or whitespace)
-    const hasNonEmptyDetails =
-      part.details && part.details.some((detail) => detail.type === 'text' && !isEmptyContent(detail.text));
-    const hasNonEmptyReasoning = part.reasoning && !isEmptyContent(part.reasoning);
+    const hasNonEmptyReasoning = part.text && !isEmptyContent(part.text);
 
     // If all content is empty, don't render the reasoning section
-    if (!hasNonEmptyDetails && !hasNonEmptyReasoning) {
+    if (!hasNonEmptyReasoning) {
       return null;
     }
 
@@ -298,39 +299,11 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                       },
                     )}
                   >
-                    {part.details && part.details.length > 0 ? (
-                      part.details
-                        .filter((detail) => detail.type === 'text' && !isEmptyContent(detail.text))
-                        .map((detail, detailIndex) =>
-                          detail.type === 'text' ? (
-                            <div
-                              key={detailIndex}
-                              className={cn(
-                                'px-2.5 py-2 text-xs leading-relaxed',
-                                detailIndex !==
-                                  part.details.filter((d) => d.type === 'text' && !isEmptyContent(d.text)).length - 1 &&
-                                  'border-b border-border/80',
-                              )}
-                            >
-                              <div className="text-muted-foreground prose prose-sm max-w-none">
-                                <MarkdownRenderer content={detail.text} />
-                              </div>
-                            </div>
-                          ) : (
-                            '<redacted>'
-                          ),
-                        )
-                    ) : part.reasoning && !isEmptyContent(part.reasoning) ? (
-                      <div className="px-2.5 py-2 text-xs leading-relaxed">
-                        <div className="text-muted-foreground prose prose-sm max-w-none">
-                          <MarkdownRenderer content={part.reasoning} />
-                        </div>
+                    <div className="px-2.5 py-2 text-xs leading-relaxed">
+                      <div className="text-muted-foreground prose prose-sm max-w-none">
+                        <MarkdownRenderer content={part.text} />
                       </div>
-                    ) : (
-                      <div className="px-2.5 py-2 text-xs">
-                        <div className="text-muted-foreground/70 italic">Waiting for reasoning...</div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

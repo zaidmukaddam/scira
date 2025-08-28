@@ -5,13 +5,14 @@ import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
 import { generateObject, UIMessage, generateText } from 'ai';
+import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
 import {
   getChatsByUserId,
   deleteChatById,
-  updateChatVisiblityById,
+  updateChatVisibilityById,
   getChatById,
   getMessageById,
   deleteMessagesByChatIdAfterTimestamp,
@@ -35,16 +36,16 @@ import {
 import { getDiscountConfig } from '@/lib/discount';
 import { groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
-// Removed old subscription imports - now using unified user data approach
+import { experimental_generateSpeech as generateVoice } from 'ai';
+import { elevenlabs } from '@ai-sdk/elevenlabs';
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
+import { getComprehensiveUserData } from '@/lib/user-data-server';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
   'use server';
 
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
   return await getComprehensiveUserData();
 }
 
@@ -54,9 +55,9 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-nano'),
+    model: scira.languageModel('scira-grok-3'),
     temperature: 0,
-    maxTokens: 512,
+    maxOutputTokens: 512,
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
 
 ### Question Generation Guidelines:
@@ -103,18 +104,20 @@ export async function suggestQuestions(history: any[]) {
   };
 }
 
-export async function checkImageModeration(images: any) {
+export async function checkImageModeration(images: string[]) {
+  const messages: ModelMessage[] = images.map((image) => ({
+    role: 'user',
+    content: [{ type: 'image', image: image }],
+  }));
+
   const { text } = await generateText({
     model: groq('meta-llama/llama-guard-4-12b'),
-    messages: [
-      {
-        role: 'user',
-        content: images.map((image: any) => ({
-          type: 'image',
-          image: image,
-        })),
+    messages,
+    providerOptions: {
+      groq: {
+        service_tier: 'flex',
       },
-    ],
+    },
   });
   return text;
 }
@@ -129,72 +132,65 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - the title should creative and unique
     - do not use quotes or colons`,
     prompt: JSON.stringify(message),
+    providerOptions: {
+      groq: {
+        service_tier: 'flex',
+      },
+    },
   });
 
   return title;
 }
 
-const ELEVENLABS_API_KEY = serverEnv.ELEVENLABS_API_KEY;
+export async function enhancePrompt(raw: string) {
+  try {
+    const user = await getComprehensiveUserData();
+    if (!user || !user.isProUser) {
+      return { success: false, error: 'Pro subscription required' };
+    }
 
-export async function generateSpeech(text: string) {
-  const VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // This is the ID for the "George" voice. Replace with your preferred voice ID.
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
-  const method = 'POST';
+    const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
 
-  if (!ELEVENLABS_API_KEY) {
-    throw new Error('ELEVENLABS_API_KEY is not defined');
+Guidelines (MANDATORY):
+- Preserve the user's original intent and constraints
+- Make the prompt specific, unambiguous, and actionable
+- Add missing context: entities, timeframe, location, format/constraints if implied
+- Remove fluff, pronouns, and vague language; use proper nouns when possible
+- Keep it concise (1-2 sentences extra max) but information-dense
+- Do NOT ask follow-up questions
+- Make sure it gives the best and comprehensive results for the user's query
+- Make sure to maintain the Point of View of the User
+- Your job is to enhance the prompt, not to answer the prompt!!
+- Make sure the prompt is not an answer to the user's query!!
+- Return ONLY the improved prompt text, with no quotes or commentary or answer to the user's query!!
+- Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
+
+    const { text } = await generateText({
+      model: scira.languageModel('scira-enhance'),
+      temperature: 0.6,
+      topP: 0.95,
+      maxOutputTokens: 1024,
+      system,
+      prompt: raw,
+    });
+
+    return { success: true, enhanced: text.trim() };
+  } catch (error) {
+    console.error('Error enhancing prompt:', error);
+    return { success: false, error: 'Failed to enhance prompt' };
   }
-
-  const headers = {
-    Accept: 'audio/mpeg',
-    'xi-api-key': ELEVENLABS_API_KEY,
-    'Content-Type': 'application/json',
-  };
-
-  const data = {
-    text,
-    model_id: 'eleven_turbo_v2_5',
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.5,
-    },
-  };
-
-  const body = JSON.stringify(data);
-
-  const input = {
-    method,
-    headers,
-    body,
-  };
-
-  const response = await fetch(url, input);
-
-  const arrayBuffer = await response.arrayBuffer();
-
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-
-  return {
-    audio: `data:audio/mp3;base64,${base64Audio}`,
-  };
 }
 
-export async function fetchMetadata(url: string) {
-  try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
-    const html = await response.text();
+export async function generateSpeech(text: string) {
+  const result = await generateVoice({
+    model: elevenlabs.speech('eleven_v3'),
+    text,
+    voice: 'TX3LPaxmHKxFdv7VOQHJ',
+  });
 
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
-
-    const title = titleMatch ? titleMatch[1] : '';
-    const description = descMatch ? descMatch[1] : '';
-
-    return { title, description };
-  } catch (error) {
-    console.error('Error fetching metadata:', error);
-    return null;
-  }
+  return {
+    audio: `data:audio/mp3;base64,${result.audio.base64}`,
+  };
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility
@@ -204,6 +200,7 @@ const groupTools = {
   web: [
     'web_search',
     'greeting',
+    'code_interpreter',
     'get_weather_data',
     'retrieve',
     'text_translate',
@@ -219,14 +216,14 @@ const groupTools = {
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
   reddit: ['reddit_search', 'datetime'] as const,
-  analysis: ['code_interpreter', 'stock_chart', 'currency_converter', 'datetime'] as const,
+  stocks: ['stock_chart', 'currency_converter', 'datetime'] as const,
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
-  memory: ['memory_manager', 'datetime'] as const,
+  memory: ['datetime', 'search_memories', 'add_memory', 'fetch_memory'] as const,
   // Add legacy mapping for backward compatibility
-  buddy: ['memory_manager', 'datetime'] as const,
+  buddy: ['datetime', 'search_memories', 'add_memory', 'fetch_memory'] as const,
 } as const;
 
 const groupInstructions = {
@@ -238,6 +235,8 @@ const groupInstructions = {
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE APPROPRIATE TOOL INSTANTLY when user sends ANY message - NO EXCEPTIONS
   - ⚠️ URGENT: Always respond with markdown format!!
+  - ⚠️ IMP: Never run more than 1 tool in a single response cycle!!
+  - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -247,24 +246,101 @@ const groupInstructions = {
   - NEVER preface your answer with your interpretation of the user's query
   - GO STRAIGHT TO ANSWERING the question after running the tool
 
-  ### Tool-Specific Guidelines:
+  1. Tool-Specific Guidelines:
   - A tool should only be called once per response cycle
   - Follow the tool guidelines below for each tool as per the user's request
   - Calling the same tool multiple times with different parameters is allowed
-  - Always mandatory to run the tool first before writing the response to ensure accuracy and relevance
+  - Always run the tool first before writing the response to ensure accuracy and relevance
+  - If the user is greeting you, use the 'greeting' tool without overthinking it
+  - Folling are the tool specific guidelines:
 
   #### Multi Query Web Search:
-  - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 6 queries are allowed
+  - Always try to make more than 3 queries to get the best results. Minimum 3 queries are required and maximum 5 queries are allowed
   - Specify the year or "latest" in queries to fetch recent information
   - Use the "news" topic type to get the latest news and updates
-  - Use the "finance" topic type to get the latest financial news and updates
+  - Only use "general" or "news" topic types - no other options are available
   - Always use the "include_domains" parameter to include specific domains in the search results if asked by the user or given a specific reference to a website like reddit, youtube, etc.
-  - Always put the values in array format for the required parameters
+  - Always put the values in array format for the required parameters (queries, maxResults, topics, quality)
+  - Use "default" quality for most searches, only use "best" when high accuracy is critical.
   - Put the latest year in the queries to get the latest information or just "latest".
 
-  #### Retrieve Tool:
+  #### Retrieve Web Page Tool:
   - Use this for extracting information from specific URLs provided
   - Do not use this tool for general web searches
+  - If the retrive tool fails, use the web_search tool with the domnain included in the query
+  - DO NOT use this tool after running the web_search tool!! THIS IS MANDATORY!!!
+
+  #### Code Interpreter Tool:
+  - NEVER write any text, analysis or thoughts before running the tool
+  - Use this Python-only sandbox for calculations, data analysis, or visualizations
+  - matplotlib, pandas, numpy, sympy, and yfinance are available
+  - Include necessary imports for libraries you use
+  - Include library installations (!pip install <library_name>) where required
+  - Keep code simple and concise unless complexity is absolutely necessary
+  - ⚠️ NEVER use unnecessary intermediate variables or assignments
+  - More rules are below:
+
+    ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
+    - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
+    - NEVER leave variables hanging without print() at the end
+    - NEVER use bare variable names as final statements (e.g., result alone)
+    - ALWAYS wrap final outputs in print() function: print(final_result)
+    - For multiple outputs, use separate print() statements for each
+    - For calculations: Always end with print(calculation_result)
+    - For data analysis: Always end with print(analysis_summary)
+    - For string operations: Always end with print(string_result)
+    - For mathematical computations: Always end with print(math_result)
+    - Even for simple operations: Always end with print(simple_result)
+    - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
+    - Use only essential code - avoid boilerplate, comments, or explanatory code
+
+    ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
+    \`\`\`python
+    # Simple calculation
+    result = 2 + 2
+    print(result)  # MANDATORY
+
+    # String operation
+    word = "strawberry"
+    count_r = word.count('r')
+    print(count_r)  # MANDATORY
+
+    # Data analysis
+    import pandas as pd
+    data = pd.Series([1, 2, 3, 4, 5])
+    mean_value = data.mean()
+    print(mean_value)  # MANDATORY
+
+    # Multiple outputs
+    x = 10
+    y = 20
+    sum_val = x + y
+    product = x * y
+    print(f"Sum: {sum_val}")  # MANDATORY
+    print(f"Product: {product}")  # MANDATORY
+    \`\`\`
+
+    ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
+    \`\`\`python
+    # BAD - No print statement
+    word = "strawberry"
+    count_r = word.count('r')
+    count_r  # WRONG - bare variable
+
+    # BAD - No print for calculation
+    result = 2 + 2
+    result  # WRONG - bare variable
+
+    # BAD - Missing print for final output
+    data.mean()  # WRONG - no print wrapper
+    \`\`\`
+
+    ### ENFORCEMENT RULES:
+    - If you write code without print() at the end, it is AUTOMATICALLY WRONG
+    - Every code block MUST end with at least one print() statement
+    - No bare variables, expressions, or function calls as final statements
+    - This rule applies to ALL code regardless of complexity or purpose
+    - Always use the print() function for final output!!! This is very important!!!
 
   #### MCP Server Search:
   - Use the 'mcp_search' tool to search for Model Context Protocol servers in the Smithery registry
@@ -317,6 +393,7 @@ const groupInstructions = {
   - Do not include images in responses AT ALL COSTS!!!
 
   2. Response Guidelines:
+     - ⚠️ URGENT: ALWAYS run a tool before writing the response!!
      - Responses must be informative, long and very detailed which address the question's answer straight forward
      - Maintain the language of the user's message and do not change it
      - Use structured answers with markdown format and tables too
@@ -348,7 +425,7 @@ const groupInstructions = {
      BAD LINK USAGE (DO NOT DO THIS):
      LLMs are powerful language models. You can learn more about them here [Link]. For detailed information about training, check out this article [Link]. See this guide for architecture details [Link].
 
-     ⚠️ ABSOLUTELY FORBIDDEN (NEVER DO THIS):
+     ⚠️ ABSOLUTELY FORBIDDEN (NEVER WRITE IN THIS FORMAT):
      ## Further Reading and Official Documentation
      - [xAI Docs: Overview](https://docs.x.ai/docs/overview)
      - [Grok 3 Beta — The Age of Reasoning Agents](https://x.ai/news/grok-3)
@@ -384,7 +461,7 @@ const groupInstructions = {
      - Also leave a blank space before and after the equation
      - THESE INSTRUCTIONS ARE MANDATORY AND MUST BE FOLLOWED AT ALL COSTS
 
-  ### Prohibited Actions:
+  4. Prohibited Actions:
   - Do not run tools multiple times, this includes the same tool with different parameters
   - Never ever write your thoughts before running a tool
   - Avoid running the same tool twice with same parameters
@@ -426,7 +503,7 @@ const groupInstructions = {
   - Always save the memory user asks you to save`,
 
   x: `
-  You are a X content expert that transforms search results into comprehensive tutorial-style guides.
+  You are a X content expert that transforms search results into comprehensive answers with mix of lists, paragraphs and tables as required.
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
@@ -564,7 +641,7 @@ const groupInstructions = {
   - Tables for data comparison only when necessary`,
 
   youtube: `
-  You are a YouTube content expert that transforms search results into comprehensive tutorial-style guides.
+  You are a YouTube content expert that transforms search results into comprehensive answers with mix of lists, paragraphs and tables as required.
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
@@ -581,7 +658,7 @@ const groupInstructions = {
 
   ### Core Responsibilities:
   - Create in-depth, educational content that thoroughly explains concepts from the videos
-  - Structure responses like professional tutorials or educational blog posts
+  - Structure responses with content that includes mix of lists, paragraphs and tables as required.
 
   ### Content Structure (REQUIRED):
   - Begin with a concise introduction that frames the topic and its importance
@@ -606,7 +683,7 @@ const groupInstructions = {
   - Place citations immediately after the relevant information, not at paragraph ends
   - Use meaningful timestamps that point to the exact moment the information is discussed
   - When citing creator opinions, clearly mark as: [Creator's View](URL?t=seconds)
-  - For technical demonstrations, use: [Tutorial Demo](URL?t=seconds)
+  - For technical demonstrations, use: [Video Title/Content](URL?t=seconds)
   - When multiple creators discuss same topic, compare with: [Creator 1](URL1?t=sec1) vs [Creator 2](URL2?t=sec2)
 
   ### Formatting Rules:
@@ -622,7 +699,7 @@ const groupInstructions = {
   - Do NOT use heading level 1 (h1) in your markdown formatting
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
   reddit: `
-  You are a Reddit content expert that transforms search results into comprehensive tutorial-style guides.
+  You are a Reddit content expert that will search for the most relevant content on Reddit and return it to the user.
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
@@ -633,18 +710,24 @@ const groupInstructions = {
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
   - When searching Reddit, always set maxResults to at least 10 to get a good sample of content
   - Set timeRange to appropriate value based on query (day, week, month, year)
+  - ⚠️ Do not put the affirmation that you ran the tool or gathered the information in the response!
 
   #### datetime tool:
   - When you get the datetime data, mention the date and time in the user's timezone only if explicitly requested
   - Do not include datetime information unless specifically asked
 
   ### Core Responsibilities:
+  - Write your response in the user's desired format, otherwise use the format below
+  - Do not say hey there or anything like that in the response
+  - ⚠️ Be straight to the point and concise!
   - Create comprehensive summaries of Reddit discussions and content
   - Include links to the most relevant threads and comments
   - Mention the subreddits where information was found
   - Structure responses with proper headings and organization
 
   ### Content Structure (REQUIRED):
+  - Write your response in the user's desired format, otherwise use the format below
+  - Do not use h1 heading in the response
   - Begin with a concise introduction summarizing the Reddit landscape on the topic
   - Maintain the language of the user's message and do not change it
   - Include all relevant results in your response, not just the first one
@@ -652,82 +735,10 @@ const groupInstructions = {
   - All citations must be inline, placed immediately after the relevant information
   - Format citations as: [Post Title - r/subreddit](URL)
   `,
-  analysis: `
+  stocks: `
   You are a code runner, stock analysis and currency conversion expert.
 
   ### Tool Guidelines:
-  #### Code Interpreter Tool:
-  - ⚠️ URGENT: Run code_interpreter tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
-  - NEVER write any text, analysis or thoughts before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Use this Python-only sandbox for calculations, data analysis, or visualizations
-  - matplotlib, pandas, numpy, sympy, and yfinance are available
-  - Include necessary imports for libraries you use
-  - Include library installations (!pip install <library_name>) where required
-  - Keep code simple and concise unless complexity is absolutely necessary
-  - ⚠️ NEVER use unnecessary intermediate variables or assignments
-
-  ### CRITICAL PRINT STATEMENT REQUIREMENTS (MANDATORY):
-  - EVERY SINGLE OUTPUT MUST END WITH print() - NO EXCEPTIONS WHATSOEVER
-  - NEVER leave variables hanging without print() at the end
-  - NEVER use bare variable names as final statements (e.g., result alone)
-  - ALWAYS wrap final outputs in print() function: print(final_result)
-  - For multiple outputs, use separate print() statements for each
-  - For calculations: Always end with print(calculation_result)
-  - For data analysis: Always end with print(analysis_summary)
-  - For string operations: Always end with print(string_result)
-  - For mathematical computations: Always end with print(math_result)
-  - Even for simple operations: Always end with print(simple_result)
-  - For visualizations: use plt.show() for plots, and mention generated URLs for outputs
-  - Use only essential code - avoid boilerplate, comments, or explanatory code
-
-  ### CORRECT CODE PATTERNS (ALWAYS FOLLOW):
-  \`\`\`python
-  # Simple calculation
-  result = 2 + 2
-  print(result)  # MANDATORY
-
-  # String operation
-  word = "strawberry"
-  count_r = word.count('r')
-  print(count_r)  # MANDATORY
-
-  # Data analysis
-  import pandas as pd
-  data = pd.Series([1, 2, 3, 4, 5])
-  mean_value = data.mean()
-  print(mean_value)  # MANDATORY
-
-  # Multiple outputs
-  x = 10
-  y = 20
-  sum_val = x + y
-  product = x * y
-  print(f"Sum: {sum_val}")  # MANDATORY
-  print(f"Product: {product}")  # MANDATORY
-  \`\`\`
-
-  ### FORBIDDEN CODE PATTERNS (NEVER DO THIS):
-  \`\`\`python
-  # BAD - No print statement
-  word = "strawberry"
-  count_r = word.count('r')
-  count_r  # WRONG - bare variable
-
-  # BAD - No print for calculation
-  result = 2 + 2
-  result  # WRONG - bare variable
-
-  # BAD - Missing print for final output
-  data.mean()  # WRONG - no print wrapper
-  \`\`\`
-
-  ### ENFORCEMENT RULES:
-  - If you write code without print() at the end, it is AUTOMATICALLY WRONG
-  - Every code block MUST end with at least one print() statement
-  - No bare variables, expressions, or function calls as final statements
-  - This rule applies to ALL code regardless of complexity or purpose
-  - Always use the print() function for final output!!! This is very important!!!
 
   #### Stock Charts Tool:
   - Use yfinance to get stock data and matplotlib for visualization
@@ -843,6 +854,7 @@ const groupInstructions = {
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
   - ⚠️ URGENT: Run extreme_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
   - DO NOT WRITE A SINGLE WORD before running the tool
   - Run the tool with the exact user query immediately on receiving it
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
@@ -1062,13 +1074,33 @@ export async function deleteChat(chatId: string) {
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
   'use server';
 
-  if (!chatId) return null;
+  console.log('🔄 updateChatVisibility called with:', { chatId, visibility });
+
+  if (!chatId) {
+    console.error('❌ updateChatVisibility: No chatId provided');
+    throw new Error('Chat ID is required');
+  }
 
   try {
-    return await updateChatVisiblityById({ chatId, visibility });
+    console.log('📡 Calling updateChatVisibilityById with:', { chatId, visibility });
+    const result = await updateChatVisibilityById({ chatId, visibility });
+    console.log('✅ updateChatVisibilityById successful, result:', result);
+
+    // Return a serializable plain object instead of raw database result
+    return {
+      success: true,
+      chatId,
+      visibility,
+      rowCount: result?.rowCount || 0,
+    };
   } catch (error) {
-    console.error('Error updating chat visibility:', error);
-    return null;
+    console.error('❌ Error in updateChatVisibility:', {
+      chatId,
+      visibility,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
   }
 }
 
@@ -1228,7 +1260,9 @@ export async function getDiscountConfigAction() {
   'use server';
 
   try {
-    return await getDiscountConfig();
+    const user = await getCurrentUser();
+    const userEmail = user?.email;
+    return await getDiscountConfig(userEmail);
   } catch (error) {
     console.error('Error getting discount configuration:', error);
     return {
@@ -1237,7 +1271,7 @@ export async function getDiscountConfigAction() {
   }
 }
 
-export async function getHistoricalUsage(providedUser?: any) {
+export async function getHistoricalUsage(providedUser?: any, months: number = 6) {
   'use server';
 
   try {
@@ -1246,12 +1280,19 @@ export async function getHistoricalUsage(providedUser?: any) {
       return [];
     }
 
-    const historicalData = await getHistoricalUsageData({ userId: user.id });
+    const historicalData = await getHistoricalUsageData({ userId: user.id, months });
 
-    // Create a complete 90-day dataset with defaults (3 months)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 89);
+    // Calculate days based on months (approximately 30 days per month)
+    const totalDays = months * 30;
+    const futureDays = Math.min(15, Math.floor(totalDays * 0.08)); // ~8% future days, max 15
+    const pastDays = totalDays - futureDays - 1; // -1 for today
+
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + futureDays);
+
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - pastDays);
 
     // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
@@ -1260,9 +1301,9 @@ export async function getHistoricalUsage(providedUser?: any) {
       dataMap.set(dateKey, record.messageCount || 0);
     });
 
-    // Generate complete dataset for all 90 days
+    // Generate complete dataset for all days
     const completeData = [];
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
@@ -1590,7 +1631,11 @@ export async function createScheduledLookout({
 
           if (delay > 0) {
             await qstash.publish({
-              url: `https://scira.ai/api/lookout`,
+              // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+              url:
+                process.env.NODE_ENV === 'development'
+                  ? process.env.NGROK_URL + '/api/lookout'
+                  : `https://scira.ai/api/lookout`,
               body: JSON.stringify({
                 lookoutId: lookout.id,
                 prompt,
@@ -1620,7 +1665,11 @@ export async function createScheduledLookout({
           console.log('📅 Cron schedule with timezone:', cronSchedule);
 
           const scheduleResponse = await qstash.schedules.create({
-            destination: `https://scira.ai/api/lookout`,
+            // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+            destination:
+              process.env.NODE_ENV === 'development'
+                ? process.env.NGROK_URL + '/api/lookout'
+                : `https://scira.ai/api/lookout`,
             method: 'POST',
             cron: cronSchedule,
             body: JSON.stringify({
@@ -1816,7 +1865,11 @@ export async function updateLookoutAction({
 
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({
-          destination: `https://scira.ai/api/lookout`,
+          // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+          destination:
+            process.env.NODE_ENV === 'development'
+              ? process.env.NGROK_URL + '/api/lookout'
+              : `https://scira.ai/api/lookout`,
           method: 'POST',
           cron: cronSchedule,
           body: JSON.stringify({
@@ -1917,17 +1970,20 @@ export async function testLookoutAction({ id }: { id: string }) {
     }
 
     // Make a POST request to the lookout API endpoint to trigger the run
-    const response = await fetch('https://scira.ai/api/lookout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lookoutId: lookout.id,
+          prompt: lookout.prompt,
+          userId: user.id,
+        }),
       },
-      body: JSON.stringify({
-        lookoutId: lookout.id,
-        prompt: lookout.prompt,
-        userId: user.id,
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to trigger lookout test: ${response.statusText}`);

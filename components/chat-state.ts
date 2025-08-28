@@ -19,7 +19,8 @@ export interface ChatState {
 
 interface Attachment {
   name: string;
-  contentType: string;
+  contentType?: string;
+  mediaType?: string;
   url: string;
   size: number;
 }

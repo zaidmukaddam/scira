@@ -6,12 +6,12 @@ import { SNAPSHOT_NAME } from '@/lib/constants';
 
 export const codeInterpreterTool = tool({
   description: 'Write and execute Python code.',
-  parameters: z.object({
+  inputSchema: z.object({
     title: z.string().describe('The title of the code snippet.'),
     code: z
       .string()
       .describe(
-        'The Python code to execute. put the variables in the end of the code to print them. do not use the print function.',
+        'The Python code to execute. put the variables in the end of the code to print them. do use the print function in the code to print the variables.',
       ),
     icon: z.enum(['stock', 'date', 'calculation', 'default']).describe('The icon to display for the code snippet.'),
   }),

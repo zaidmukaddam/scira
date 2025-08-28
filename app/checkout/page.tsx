@@ -16,7 +16,7 @@ import { betterauthClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/use-location';
 import { useSession } from '@/lib/auth-client';
-import { useIsProUser } from '@/hooks/use-user-data';
+import { useIsProUser } from '@/contexts/user-context';
 import { PRICING } from '@/lib/constants';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';

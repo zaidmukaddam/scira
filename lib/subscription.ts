@@ -52,7 +52,7 @@ async function checkDodoPaymentsProStatus(userId: string): Promise<boolean> {
     // Check cache for payments to avoid DB hit
     let userPayments = getDodoPayments(userId);
     if (!userPayments) {
-      userPayments = await db.select().from(payment).where(eq(payment.userId, userId));
+      userPayments = await db.select().from(payment).where(eq(payment.userId, userId)).$withCache();
       setDodoPayments(userId, userPayments);
     }
 
@@ -99,7 +99,7 @@ async function getComprehensiveProStatus(
 ): Promise<{ isProUser: boolean; source: 'polar' | 'dodo' | 'none' }> {
   try {
     // Check Polar subscriptions first
-    const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
+    const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId)).$withCache();
     const activeSubscription = userSubscriptions.find((sub) => sub.status === 'active');
 
     if (activeSubscription) {
@@ -144,7 +144,11 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       return cached;
     }
 
-    const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, session.user.id));
+    const userSubscriptions = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, session.user.id))
+      .$withCache();
 
     if (!userSubscriptions.length) {
       // Even if no Polar subscriptions, check DodoPayments before returning
@@ -358,7 +362,7 @@ export async function getDodoPaymentsExpirationDate(): Promise<Date | null> {
     // Check cache for payments to avoid DB hit
     let userPayments = getDodoPayments(session.user.id);
     if (!userPayments) {
-      userPayments = await db.select().from(payment).where(eq(payment.userId, session.user.id));
+      userPayments = await db.select().from(payment).where(eq(payment.userId, session.user.id)).$withCache();
       setDodoPayments(session.user.id, userPayments);
     }
 

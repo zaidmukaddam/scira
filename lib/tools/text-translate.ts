@@ -5,7 +5,7 @@ import { scira } from '@/ai/providers';
 
 export const textTranslateTool = tool({
   description: 'Translate text from one language to another.',
-  parameters: z.object({
+  inputSchema: z.object({
     text: z.string().describe('The text to translate.'),
     to: z.string().describe('The language to translate to (e.g., French).'),
   }),
