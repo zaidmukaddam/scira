@@ -6234,13 +6234,11 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-
-  '@ai-sdk/gateway@1.0.11(zod@4.0.17)':
+  '@ai-sdk/gateway@1.0.15(zod@4.0.17)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
       zod: 4.0.17
-
 
   '@ai-sdk/google@2.0.11(zod@3.25.76)':
     dependencies:
@@ -6272,29 +6270,25 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
       zod: 3.25.76
 
-
-  '@ai-sdk/openai@2.0.19(zod@4.0.17)':
+  '@ai-sdk/openai@2.0.22(zod@4.0.17)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
       zod: 4.0.17
 
-
   '@ai-sdk/provider-utils@3.0.7(zod@3.25.76)':
-
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.5(zod@4.0.17)':
+  '@ai-sdk/provider-utils@3.0.7(zod@4.0.17)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.5
       zod: 4.0.17
-      zod-to-json-schema: 3.24.6(zod@4.0.17)
 
   '@ai-sdk/provider@2.0.0':
     dependencies:
@@ -8578,9 +8572,9 @@ snapshots:
 
   '@supermemory/ai-sdk@1.0.3':
     dependencies:
-      '@ai-sdk/openai': 2.0.19(zod@4.0.17)
+      '@ai-sdk/openai': 2.0.22(zod@4.0.17)
       '@ai-sdk/provider': 2.0.0
-      ai: 5.0.22(zod@4.0.17)
+      ai: 5.0.26(zod@4.0.17)
       supermemory: 3.0.0-alpha.26
       zod: 4.0.17
 
@@ -9103,11 +9097,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  ai@5.0.22(zod@4.0.17):
+  ai@5.0.26(zod@4.0.17):
     dependencies:
-      '@ai-sdk/gateway': 1.0.11(zod@4.0.17)
+      '@ai-sdk/gateway': 1.0.15(zod@4.0.17)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.5(zod@4.0.17)
+      '@ai-sdk/provider-utils': 3.0.7(zod@4.0.17)
       '@opentelemetry/api': 1.9.0
       zod: 4.0.17
 
@@ -12991,10 +12985,6 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.24.6(zod@4.0.17):
-    dependencies:
-      zod: 4.0.17
 
   zod@3.25.76: {}
 
