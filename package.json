@@ -11,6 +11,7 @@
     "knip": "knip"
   },
   "dependencies": {
+    "sambanova-ai-provider": "^1.2.0",
     "@ai-sdk/anthropic": "2.0.8",
     "@ai-sdk/cohere": "2.0.7",
     "@ai-sdk/elevenlabs": "1.0.8",
@@ -137,6 +138,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "sambanova-ai-provider": "^1.2.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/canvas-confetti": "^1.9.0",
     "@types/google.maps": "^3.58.1",

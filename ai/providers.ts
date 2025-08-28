@@ -6,6 +6,7 @@ import { groq } from '@ai-sdk/groq';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { mistral } from '@ai-sdk/mistral';
+import { sambanova } from 'sambanova-ai-provider';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -54,6 +55,7 @@ export const scira = customProvider({
     'scira-google-pro': google('gemini-2.5-pro'),
     'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
     'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct'),
+    'scira-llama-3': sambanova('Meta-Llama-3.3-70B-Instruct'),
   },
 });
 
@@ -295,6 +297,20 @@ export const models: Model[] = [
     category: 'Pro',
     pdf: true,
     pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 128000,
+  },
+  {
+    value: 'scira-llama-3',
+    label: 'Meta-Llama-3.3-70B-Instruct',
+    description: "Meta's advanced LLM",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Mini',
+    pdf: false,
+    pro: false,
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 128000,
