@@ -570,8 +570,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
     );
   });
 
+  LinkPreview.displayName = 'LinkPreview';
+
   const renderHoverCard = (href: string, text: React.ReactNode, isCitation: boolean = false, citationText?: string) => {
-    const title = React.useMemo(() => citationText || (typeof text === 'string' ? text : ''), [citationText, text]);
+    const title = citationText || (typeof text === 'string' ? text : '');
 
     return (
       <HoverCard openDelay={10}>
