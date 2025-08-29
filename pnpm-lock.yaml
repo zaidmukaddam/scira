@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: 2.0.8
-        version: 2.0.8(zod@3.25.76)
+        specifier: 2.0.9
+        version: 2.0.9(zod@3.25.76)
       '@ai-sdk/cohere':
         specifier: 2.0.7
         version: 2.0.7(zod@3.25.76)
@@ -30,8 +30,8 @@ importers:
         specifier: 2.0.22
         version: 2.0.22(zod@3.25.76)
       '@ai-sdk/react':
-        specifier: 2.0.26
-        version: 2.0.26(react@19.1.1)(zod@3.25.76)
+        specifier: 2.0.27
+        version: 2.0.27(react@19.1.1)(zod@3.25.76)
       '@ai-sdk/xai':
         specifier: 2.0.13
         version: 2.0.13(zod@3.25.76)
@@ -48,11 +48,11 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2
       '@daytonaio/sdk':
-        specifier: ^0.25.5
-        version: 0.25.5
+        specifier: ^0.25.6
+        version: 0.25.6
       '@dodopayments/better-auth':
         specifier: ^1.1.1
-        version: 1.1.1(dodopayments@1.50.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)
+        version: 1.1.1(dodopayments@1.51.2(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)
       '@dodopayments/core':
         specifier: ^0.1.15
         version: 0.1.15(encoding@0.1.13)(zod@3.25.76)
@@ -82,10 +82,10 @@ importers:
         version: 2.1.10(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@polar-sh/better-auth':
         specifier: ^1.1.0
-        version: 1.1.0(@polar-sh/sdk@0.34.13)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+        version: 1.1.0(@polar-sh/sdk@0.34.14)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@polar-sh/sdk':
-        specifier: ^0.34.13
-        version: 0.34.13
+        specifier: ^0.34.14
+        version: 0.34.14
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.12(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -189,8 +189,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(next@15.5.2(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       ai:
-        specifier: 5.0.26
-        version: 5.0.26(zod@3.25.76)
+        specifier: 5.0.27
+        version: 5.0.27(zod@3.25.76)
       axios:
         specifier: ^1.10.0
         version: 1.11.0
@@ -216,14 +216,14 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       dodopayments:
-        specifier: 1.50.0
-        version: 1.50.0(encoding@0.1.13)
+        specifier: 1.51.2
+        version: 1.51.2(encoding@0.1.13)
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
       drizzle-orm:
-        specifier: ^0.44.4
-        version: 0.44.4(@cloudflare/workers-types@4.20250822.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(kysely@0.28.5)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7)
+        specifier: ^0.44.5
+        version: 0.44.5(@cloudflare/workers-types@4.20250822.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(kysely@0.28.5)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7)
       echarts:
         specifier: ^5.6.0
         version: 5.6.0
@@ -447,8 +447,8 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@2.0.8':
-    resolution: {integrity: sha512-UdkAHRJDOnRNwhr+ZUTDiHQ37VF2Et4CclWvvG2vVo0ZppLB5aE1T+NjN34XCZGaRyNp23cOTCqZvOBMpSY+6w==}
+  '@ai-sdk/anthropic@2.0.9':
+    resolution: {integrity: sha512-1kQgL2A3PeqfEcHHmqy4NxRc8rbgLS71bHBuvDFfDz3VAAyndkilPMCLNDSP2mJVGAej2EMWJ1sShRAxzn70jA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -511,8 +511,8 @@ packages:
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@2.0.26':
-    resolution: {integrity: sha512-l1lUnEmB26j/LtBkxVNpPxVTnwyPee0b7xTxiuyyF68D8QyAsoz5DJYK7I2LRhwdgqII7Grw7/WJs6tBiF8SPw==}
+  '@ai-sdk/react@2.0.27':
+    resolution: {integrity: sha512-CGqE6/4NMJ8dzTYoBaqwcgucdhr6ihZzaKwbGjqWc7skmCPWkdPOHCP4tNyuaM7h+dZxG2bRbHif/8B5s41Yyg==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -721,11 +721,11 @@ packages:
   '@date-fns/tz@1.4.1':
     resolution: {integrity: sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA==}
 
-  '@daytonaio/api-client@0.25.5':
-    resolution: {integrity: sha512-xOYhio9F/OBs5YlU8qQjTH5gEXUxMn/hIWxXbt165YO2WNp6dU2wEwQH3r+GVXKvB6h3YM+YNN/S/zKMmlT2iw==}
+  '@daytonaio/api-client@0.25.6':
+    resolution: {integrity: sha512-F3OfDxpXX8YoxCfipr3BfJUicDR4Yws7JipX3VIVy1ChkbBUFv3KG7lkAhKuN7PJG5e8S0SP7n2u24TdWiWa9A==}
 
-  '@daytonaio/sdk@0.25.5':
-    resolution: {integrity: sha512-gCku90S/PeoAULGMpDszhhd1FE9Ojq8xhFLG2pb8+fEu30PYgddh/bG2NqBLwTC439ZZ6VYgnsl14uMWHQEneg==}
+  '@daytonaio/sdk@0.25.6':
+    resolution: {integrity: sha512-FCsX3hM7gWWKyv1VxTrALdlN/CqhN/9qsT8Bxv3HMsaU/azjmVv4iDrHluxTWmSNCSnv6qRkKS69C57uBK5k0A==}
 
   '@dodopayments/better-auth@1.1.1':
     resolution: {integrity: sha512-lEaIIGZoMCdPfBbZAU5QCuWyij4I38tcI8WdQdQONY7WFEL+neZYow2PnpnPMlj7EyZHnyzejeqmFcmvAvKawg==}
@@ -1458,8 +1458,8 @@ packages:
       '@polar-sh/sdk': ^0.34.8
       better-auth: ^1.2.7
 
-  '@polar-sh/sdk@0.34.13':
-    resolution: {integrity: sha512-Y7bqlnK9WkGil2GXEzDJlTycJBXnHcQB53ttGfwuwvHC917w7Q3IP7sgrAsga2gf5yrtLUiOAnhkV2+FJZXPoQ==}
+  '@polar-sh/sdk@0.34.14':
+    resolution: {integrity: sha512-Hm25NDxjoc4MwXtmeDZVgHmdo7ESkUtaKyvr9CWcs2+/4GEOeP1PlgbMzRAM2kixbZk2gXongOlpoPQiFw7J9g==}
     hasBin: true
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
@@ -3031,8 +3031,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.26:
-    resolution: {integrity: sha512-bGNtG+nYQ2U+5mzuLbxIg9WxGQJ2u5jv2gYgP8C+CJ1YI4qqIjvjOgGEZWzvNet8jiOGIlqstsht9aQefKzmBw==}
+  ai@5.0.27:
+    resolution: {integrity: sha512-V7I9Rvrap5+3ozAjOrETA5Mv9Z1LmQobyY13U88IkFRahFp0xrEwjvYTwjQa4q5lPgLxwKgbIZRLnZSbUQwnUg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -3525,8 +3525,8 @@ packages:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
 
-  dodopayments@1.50.0:
-    resolution: {integrity: sha512-7UUVPoqpPBgdklCQHY8HYfnILaqHWkqRah/DLA4k9vGh31B2vXA69w5lVRxyqswNMxBBTg770wLTtCmJ7VhW2w==}
+  dodopayments@1.51.2:
+    resolution: {integrity: sha512-oeIaAvVzJfmIS87r29WlCc2if0tG+nYylcFSH4RPaHpZsrBDUEdTeaZzdCV/CMnuEYemZt2TSvgyttKbCl519g==}
 
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
@@ -3560,8 +3560,8 @@ packages:
     resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
 
-  drizzle-orm@0.44.4:
-    resolution: {integrity: sha512-ZyzKFpTC/Ut3fIqc2c0dPZ6nhchQXriTsqTNs4ayRgl6sZcFlMs9QZKPSHXK4bdOf41GHGWf+FrpcDDYwW+W6Q==}
+  drizzle-orm@0.44.5:
+    resolution: {integrity: sha512-jBe37K7d8ZSKptdKfakQFdeljtu3P2Cbo7tJoJSVZADzIKOBo9IAJPOmMsH2bZl90bZgh8FQlD8BjxXA/zuBkQ==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -6213,7 +6213,7 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@2.0.8(zod@3.25.76)':
+  '@ai-sdk/anthropic@2.0.9(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
@@ -6297,10 +6297,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.26(react@19.1.1)(zod@3.25.76)':
+  '@ai-sdk/react@2.0.27(react@19.1.1)(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider-utils': 3.0.7(zod@3.25.76)
-      ai: 5.0.26(zod@3.25.76)
+      ai: 5.0.27(zod@3.25.76)
       react: 19.1.1
       swr: 2.3.6(react@19.1.1)
       throttleit: 2.1.0
@@ -6830,17 +6830,17 @@ snapshots:
 
   '@date-fns/tz@1.4.1': {}
 
-  '@daytonaio/api-client@0.25.5':
+  '@daytonaio/api-client@0.25.6':
     dependencies:
       axios: 1.11.0
     transitivePeerDependencies:
       - debug
 
-  '@daytonaio/sdk@0.25.5':
+  '@daytonaio/sdk@0.25.6':
     dependencies:
       '@aws-sdk/client-s3': 3.873.0
       '@aws-sdk/lib-storage': 3.873.0(@aws-sdk/client-s3@3.873.0)
-      '@daytonaio/api-client': 0.25.5
+      '@daytonaio/api-client': 0.25.6
       '@iarna/toml': 2.2.5
       axios: 1.11.0
       dotenv: 17.2.1
@@ -6854,17 +6854,17 @@ snapshots:
       - aws-crt
       - debug
 
-  '@dodopayments/better-auth@1.1.1(dodopayments@1.50.0(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)':
+  '@dodopayments/better-auth@1.1.1(dodopayments@1.51.2(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)':
     dependencies:
       '@dodopayments/core': 0.1.15(encoding@0.1.13)(zod@3.25.76)
-      dodopayments: 1.50.0(encoding@0.1.13)
+      dodopayments: 1.51.2(encoding@0.1.13)
       zod: 3.25.76
     transitivePeerDependencies:
       - encoding
 
   '@dodopayments/core@0.1.15(encoding@0.1.13)(zod@3.25.76)':
     dependencies:
-      dodopayments: 1.50.0(encoding@0.1.13)
+      dodopayments: 1.51.2(encoding@0.1.13)
       standardwebhooks: 1.0.0
       zod: 3.25.76
     transitivePeerDependencies:
@@ -7427,13 +7427,13 @@ snapshots:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
 
-  '@polar-sh/better-auth@1.1.0(@polar-sh/sdk@0.34.13)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
+  '@polar-sh/better-auth@1.1.0(@polar-sh/sdk@0.34.14)(better-auth@https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
     dependencies:
-      '@polar-sh/sdk': 0.34.13
+      '@polar-sh/sdk': 0.34.14
       better-auth: https://pkg.pr.new/better-auth/better-auth@8e825ad(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       zod: 3.25.76
 
-  '@polar-sh/sdk@0.34.13':
+  '@polar-sh/sdk@0.34.14':
     dependencies:
       standardwebhooks: 1.0.0
       zod: 3.25.76
@@ -8577,7 +8577,7 @@ snapshots:
     dependencies:
       '@ai-sdk/openai': 2.0.22(zod@4.1.5)
       '@ai-sdk/provider': 2.0.0
-      ai: 5.0.26(zod@4.1.5)
+      ai: 5.0.27(zod@4.1.5)
       supermemory: 3.0.0-alpha.26
       zod: 4.1.5
 
@@ -9092,7 +9092,7 @@ snapshots:
       indent-string: 4.0.0
     optional: true
 
-  ai@5.0.26(zod@3.25.76):
+  ai@5.0.27(zod@3.25.76):
     dependencies:
       '@ai-sdk/gateway': 1.0.15(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
@@ -9100,7 +9100,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  ai@5.0.26(zod@4.1.5):
+  ai@5.0.27(zod@4.1.5):
     dependencies:
       '@ai-sdk/gateway': 1.0.15(zod@4.1.5)
       '@ai-sdk/provider': 2.0.0
@@ -9638,7 +9638,7 @@ snapshots:
     dependencies:
       esutils: 2.0.3
 
-  dodopayments@1.50.0(encoding@0.1.13):
+  dodopayments@1.51.2(encoding@0.1.13):
     dependencies:
       '@types/node': 18.19.123
       '@types/node-fetch': 2.6.13
@@ -9688,7 +9688,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250822.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(kysely@0.28.5)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7):
+  drizzle-orm@0.44.5(@cloudflare/workers-types@4.20250822.0)(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(kysely@0.28.5)(pg@8.11.3)(postgres@3.4.7)(sqlite3@5.1.7):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250822.0
       '@neondatabase/serverless': 1.0.1

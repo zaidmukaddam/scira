@@ -168,7 +168,7 @@ const getContents = async (links: string[]) => {
             title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
             url: url,
             content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
-            publishedDate: scrapeResponse.metadata?.publishedDate as string || '',
+            publishedDate: (scrapeResponse.metadata?.publishedDate as string) || '',
             favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
           });
         } else {
@@ -203,7 +203,7 @@ async function extremeSearch(
   }
 
   // plan out the research
-  const { object: plan } = await generateObject({
+  const { object: result } = await generateObject({
     model: scira.languageModel('scira-grok-4'),
     schema: z.object({
       plan: z
@@ -237,10 +237,12 @@ Plan Guidelines:
 - Make the plan technical and specific to the topic`,
   });
 
-  console.log(plan.plan);
+  console.log(result.plan);
+
+  const plan = result.plan;
 
   // calculate the total number of todos
-  const totalTodos = plan.plan.reduce((acc, curr) => acc + curr.todos.length, 0);
+  const totalTodos = plan.reduce((acc, curr) => acc + curr.todos.length, 0);
   console.log(`Total todos: ${totalTodos}`);
 
   if (dataStream) {
@@ -249,7 +251,7 @@ Plan Guidelines:
       data: {
         kind: 'plan',
         status: { title: 'Research plan ready, starting up research agent' },
-        plan: plan.plan,
+        plan,
       },
     });
   }
@@ -258,7 +260,7 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-default'),
+    model: scira.languageModel('scira-code'),
     stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
@@ -329,7 +331,7 @@ For research:
 - Plan is limited to ${totalTodos} actions with 2 extra actions in case of errors, do not exceed this limit but use to the fullest to get the most information!
 
 Research Plan:
-${JSON.stringify(plan.plan)}
+${JSON.stringify(plan)}
 `,
     prompt,
     temperature: 0,
