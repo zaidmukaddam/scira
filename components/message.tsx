@@ -25,7 +25,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { TextUIPart, UIMessagePart } from 'ai';
-import { MarkdownRenderer, preprocessLaTeX } from '@/components/markdown';
+import { MarkdownRenderer } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
@@ -653,7 +653,7 @@ export const Message: React.FC<MessageProps> = ({
                                 onHighlight={onHighlight}
                                 removeHighlightOnClick={true}
                               >
-                                <MarkdownRenderer content={preprocessLaTeX(part.text)} isUserMessage={true} />
+                                <MarkdownRenderer content={part.text} isUserMessage={true} />
                               </ChatTextHighlighter>
                             </div>
                           </div>
@@ -702,12 +702,12 @@ export const Message: React.FC<MessageProps> = ({
                         <div className="min-w-0">
                           <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
                             <MarkdownRenderer
-                              content={preprocessLaTeX(
+                              content={
                                 message.parts
                                   ?.map((part) => (part.type === 'text' ? part.text : ''))
                                   .join('')
-                                  .trim() || '',
-                              )}
+                                  .trim() || ''
+                              }
                               isUserMessage={true}
                             />
                           </ChatTextHighlighter>
@@ -831,12 +831,12 @@ export const Message: React.FC<MessageProps> = ({
                     )}
                     <div className="min-w-0">
                       <MarkdownRenderer
-                        content={preprocessLaTeX(
+                        content={
                           message.parts
                             ?.map((part) => (part.type === 'text' ? part.text : ''))
                             .join('')
-                            .trim() || '',
-                        )}
+                            .trim() || ''
+                        }
                         isUserMessage={true}
                       />
                     </div>

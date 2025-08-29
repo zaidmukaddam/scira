@@ -1,14 +1,13 @@
 import 'katex/dist/katex.min.css';
 
 import { Geist_Mono } from 'next/font/google';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { highlight } from 'sugar-high';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
 import Latex from 'react-latex-next';
 import Marked, { ReactRenderer } from 'marked-react';
-import React, { useCallback, useMemo, useState, Fragment } from 'react';
+import React, { useCallback, useMemo, useState, Fragment, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -107,6 +106,108 @@ const preprocessLaTeX = (content: string) => {
   // The new LaTeX processing is integrated directly into the MarkdownRenderer
   return content;
 };
+
+interface CodeBlockProps {
+  language: string | undefined;
+  children: string;
+}
+
+const CodeBlock: React.FC<CodeBlockProps> = React.memo(({ language, children }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const [isWrapped, setIsWrapped] = useState(false);
+
+  const { resolvedTheme } = useTheme();
+
+  // Memoize expensive computations
+  const lineCount = React.useMemo(() => children.split('\n').length, [children]);
+
+  // Stable callbacks that don't depend on state
+  const handleCopy = React.useCallback(async () => {
+    try {
+      if (!navigator.clipboard) {
+        // Fallback for browsers without clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = children;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } else {
+        await navigator.clipboard.writeText(children);
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+      toast.success('Code copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy code:', error);
+      toast.error('Failed to copy code');
+    }
+  }, [children]);
+
+  const toggleWrap = React.useCallback(() => {
+    setIsWrapped((prev) => {
+      const newState = !prev;
+      toast.success(newState ? 'Code wrap enabled' : 'Code wrap disabled');
+      return newState;
+    });
+  }, []);
+
+  return (
+    <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
+      {/* Header with language and controls */}
+      <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
+        <div className="flex items-center gap-2">
+          {language && (
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
+          )}
+          <span className="text-xs text-muted-foreground">{lineCount} lines</span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex gap-1">
+          <button
+            onClick={toggleWrap}
+            className={cn(
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
+          >
+            {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={cn(
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isCopied ? 'Copied!' : 'Copy code'}
+          >
+            {isCopied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="relative">
+        <div
+          className={cn(
+            'font-mono text-sm leading-relaxed p-2',
+            isWrapped && 'whitespace-pre-wrap break-words',
+            !isWrapped && 'whitespace-pre overflow-x-auto',
+          )}
+          style={{
+            fontFamily: geistMono.style.fontFamily,
+          }}
+          dangerouslySetInnerHTML={{
+            __html: highlight(children),
+          }}
+        />
+      </div>
+    </div>
+  );
+});
+
+CodeBlock.displayName = 'CodeBlock';
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMessage = false }) => {
   const [processedContent, extractedCitations, latexBlocks] = useMemo(() => {
@@ -256,194 +357,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
   const citationLinks = extractedCitations;
 
-  interface CodeBlockProps {
-    language: string | undefined;
-    children: string;
-  }
-
-  const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
-    const [isCopied, setIsCopied] = useState(false);
-    const [isWrapped, setIsWrapped] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const { resolvedTheme } = useTheme();
-
-    // Auto-expand for shorter code blocks
-    const shouldShowExpandButton = children.split('\n').length > 20;
-
-    const handleCopy = useCallback(async () => {
-      try {
-        if (!navigator.clipboard) {
-          // Fallback for browsers without clipboard API
-          const textArea = document.createElement('textarea');
-          textArea.value = children;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-        } else {
-          await navigator.clipboard.writeText(children);
-        }
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-        toast.success('Code copied to clipboard');
-      } catch (error) {
-        console.error('Failed to copy code:', error);
-        toast.error('Failed to copy code');
-      }
-    }, [children]);
-
-    const toggleWrap = useCallback(() => {
-      setIsWrapped((prev) => !prev);
-      toast.success(isWrapped ? 'Code wrap disabled' : 'Code wrap enabled');
-    }, [isWrapped]);
-
-    const toggleExpand = useCallback(() => {
-      setIsExpanded((prev) => !prev);
-    }, []);
-
-    // Create custom themes without background to prevent override
-    const customDarkTheme = {
-      ...oneDark,
-      'pre[class*="language-"]': {
-        ...oneDark['pre[class*="language-"]'],
-        background: 'transparent',
-        backgroundColor: 'transparent',
-      },
-      'code[class*="language-"]': {
-        ...oneDark['code[class*="language-"]'],
-        background: 'transparent',
-        backgroundColor: 'transparent',
-      },
-    };
-
-    const customLightTheme = {
-      ...oneLight,
-      'pre[class*="language-"]': {
-        ...oneLight['pre[class*="language-"]'],
-        background: 'transparent',
-        backgroundColor: 'transparent',
-      },
-      'code[class*="language-"]': {
-        ...oneLight['code[class*="language-"]'],
-        background: 'transparent',
-        backgroundColor: 'transparent',
-      },
-    };
-
-    return (
-      <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
-        {/* Header with language and controls */}
-        <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
-          <div className="flex items-center gap-2">
-            {language && (
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
-            )}
-            <span className="text-xs text-muted-foreground">{children.split('\n').length} lines</span>
-          </div>
-
-          {/* Controls */}
-          <div className="flex gap-1">
-            <button
-              onClick={toggleWrap}
-              className={cn(
-                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-                isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
-            >
-              {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
-            </button>
-            <button
-              onClick={handleCopy}
-              className={cn(
-                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-                isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={isCopied ? 'Copied!' : 'Copy code'}
-            >
-              {isCopied ? <Check size={12} /> : <Copy size={12} />}
-            </button>
-          </div>
-        </div>
-
-        <div className={cn('relative', shouldShowExpandButton && !isExpanded && 'max-h-96 overflow-hidden')}>
-          <SyntaxHighlighter
-            language={language || 'text'}
-            style={resolvedTheme === 'dark' ? customDarkTheme : customLightTheme}
-            customStyle={{
-              margin: 0,
-              padding: isWrapped ? '1rem' : '1rem 1rem 1rem 0',
-              paddingLeft: isWrapped ? '1rem' : '0',
-              backgroundColor: 'transparent !important',
-              fontSize: '0.875rem',
-              lineHeight: '1.6',
-              fontFamily: geistMono.style.fontFamily,
-            }}
-            showLineNumbers={!isWrapped}
-            lineNumberStyle={{
-              color: 'hsl(var(--muted-foreground))',
-              paddingRight: '1rem',
-              minWidth: '2.5rem',
-              textAlign: 'right',
-              userSelect: 'none',
-              fontFamily: geistMono.style.fontFamily,
-              fontSize: '0.75rem',
-            }}
-            codeTagProps={{
-              style: {
-                fontFamily: geistMono.style.fontFamily,
-                whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
-                wordBreak: isWrapped ? 'break-word' : 'normal',
-                overflowWrap: isWrapped ? 'break-word' : 'normal',
-                overflowX: isWrapped ? 'visible' : 'auto',
-              },
-            }}
-            wrapLongLines={isWrapped}
-          >
-            {children}
-          </SyntaxHighlighter>
-
-          {/* Fade overlay for collapsed long code blocks */}
-          {shouldShowExpandButton && !isExpanded && (
-            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-muted to-transparent pointer-events-none">
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-                <button
-                  onClick={toggleExpand}
-                  className={cn(
-                    'px-4 py-2 rounded-lg bg-background/90 backdrop-blur-sm border border-border/50 transition-all text-xs font-medium',
-                    'text-muted-foreground hover:text-foreground hover:bg-accent/80 hover:border-border',
-                  )}
-                  title="Expand code block"
-                >
-                  Expand
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Collapse button for expanded long code blocks */}
-          {shouldShowExpandButton && isExpanded && (
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-              <button
-                onClick={toggleExpand}
-                className={cn(
-                  'px-4 py-2 rounded-lg bg-background/90 backdrop-blur-sm border border-border/50 transition-all text-xs font-medium',
-                  'text-muted-foreground hover:text-foreground hover:bg-accent/80 hover:border-border',
-                )}
-                title="Collapse code block"
-              >
-                Collapse
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  CodeBlock.displayName = 'CodeBlock';
-
-  const InlineCode: React.FC<{ code: string }> = ({ code }) => {
+  const InlineCode: React.FC<{ code: string }> = React.memo(({ code }) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = useCallback(async () => {
@@ -490,7 +404,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         {code}
       </code>
     );
-  };
+  });
 
   InlineCode.displayName = 'InlineCode';
 
@@ -632,8 +546,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
   MarkdownTableWithActions.displayName = 'MarkdownTableWithActions';
 
-  const LinkPreview = ({ href, title }: { href: string; title?: string }) => {
-    const domain = new URL(href).hostname;
+  const LinkPreview = React.memo(({ href, title }: { href: string; title?: string }) => {
+    const domain = React.useMemo(() => new URL(href).hostname, [href]);
 
     return (
       <div className="flex flex-col bg-accent text-xs m-0">
@@ -654,10 +568,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         )}
       </div>
     );
-  };
+  });
 
   const renderHoverCard = (href: string, text: React.ReactNode, isCitation: boolean = false, citationText?: string) => {
-    const title = citationText || (typeof text === 'string' ? text : '');
+    const title = React.useMemo(() => citationText || (typeof text === 'string' ? text : ''), [citationText, text]);
 
     return (
       <HoverCard openDelay={10}>
@@ -687,123 +601,72 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
     );
   };
 
-  const generateKey = () => {
+  const generateKey = React.useCallback(() => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  };
+  }, []);
 
-  const renderCitation = (index: number, citationText: string, href: string) => {
+  const renderCitation = React.useCallback((index: number, citationText: string, href: string) => {
     return (
       <span className="inline-flex items-baseline relative whitespace-normal" key={generateKey()}>
         {renderHoverCard(href, index + 1, true, citationText)}
       </span>
     );
-  };
+  }, []);
 
-  const renderer: Partial<ReactRenderer> = {
-    text(text: string) {
-      // Check if this text contains any LaTeX placeholders
-      const blockPattern = /LATEXBLOCK(\d+)END/g;
-      const inlinePattern = /LATEXINLINE(\d+)END/g;
+  const renderer: Partial<ReactRenderer> = React.useMemo(
+    () => ({
+      text(text: string) {
+        // Check if this text contains any LaTeX placeholders
+        const blockPattern = /LATEXBLOCK(\d+)END/g;
+        const inlinePattern = /LATEXINLINE(\d+)END/g;
 
-      // If no LaTeX placeholders, return text as-is
-      if (!blockPattern.test(text) && !inlinePattern.test(text)) {
-        return text;
-      }
-
-      // Reset regex state
-      blockPattern.lastIndex = 0;
-      inlinePattern.lastIndex = 0;
-
-      // Process the text to replace placeholders with LaTeX components
-      const components: any[] = [];
-      let lastEnd = 0;
-
-      // Collect all matches (both block and inline)
-      const allMatches: Array<{ match: RegExpExecArray; isBlock: boolean }> = [];
-
-      let match;
-      while ((match = blockPattern.exec(text)) !== null) {
-        allMatches.push({ match, isBlock: true });
-      }
-
-      while ((match = inlinePattern.exec(text)) !== null) {
-        allMatches.push({ match, isBlock: false });
-      }
-
-      // Sort matches by position
-      allMatches.sort((a, b) => a.match.index - b.match.index);
-
-      // Process matches in order
-      allMatches.forEach(({ match, isBlock }) => {
-        const fullMatch = match[0];
-        const start = match.index;
-
-        // Add text before this match
-        if (start > lastEnd) {
-          const textContent = text.slice(lastEnd, start);
-          components.push(<span key={`text-${components.length}-${generateKey()}`}>{textContent}</span>);
+        // If no LaTeX placeholders, return text as-is
+        if (!blockPattern.test(text) && !inlinePattern.test(text)) {
+          return text;
         }
 
-        // Find the corresponding LaTeX block
-        const latexBlock = latexBlocks.find((block) => block.id === fullMatch);
-        if (latexBlock) {
-          if (isBlock) {
-            // Don't wrap block equations in div here - let paragraph handler do it
-            components.push(
-              <Latex
-                key={`latex-${components.length}-${generateKey()}`}
-                delimiters={[
-                  { left: '$$', right: '$$', display: true },
-                  { left: '\\[', right: '\\]', display: true },
-                ]}
-                strict={false}
-              >
-                {latexBlock.content}
-              </Latex>,
-            );
-          } else {
-            components.push(
-              <Latex
-                key={`latex-${components.length}-${generateKey()}`}
-                delimiters={[
-                  { left: '$', right: '$', display: false },
-                  { left: '\\(', right: '\\)', display: false },
-                ]}
-                strict={false}
-              >
-                {latexBlock.content}
-              </Latex>,
-            );
+        // Reset regex state
+        blockPattern.lastIndex = 0;
+        inlinePattern.lastIndex = 0;
+
+        // Process the text to replace placeholders with LaTeX components
+        const components: any[] = [];
+        let lastEnd = 0;
+
+        // Collect all matches (both block and inline)
+        const allMatches: Array<{ match: RegExpExecArray; isBlock: boolean }> = [];
+
+        let match;
+        while ((match = blockPattern.exec(text)) !== null) {
+          allMatches.push({ match, isBlock: true });
+        }
+
+        while ((match = inlinePattern.exec(text)) !== null) {
+          allMatches.push({ match, isBlock: false });
+        }
+
+        // Sort matches by position
+        allMatches.sort((a, b) => a.match.index - b.match.index);
+
+        // Process matches in order
+        allMatches.forEach(({ match, isBlock }) => {
+          const fullMatch = match[0];
+          const start = match.index;
+
+          // Add text before this match
+          if (start > lastEnd) {
+            const textContent = text.slice(lastEnd, start);
+            components.push(<span key={`text-${components.length}-${generateKey()}`}>{textContent}</span>);
           }
-        } else {
-          components.push(<span key={`fallback-${components.length}-${generateKey()}`}>{fullMatch}</span>); // fallback
-        }
 
-        lastEnd = start + fullMatch.length;
-      });
-
-      // Add any remaining text
-      if (lastEnd < text.length) {
-        const textContent = text.slice(lastEnd);
-        components.push(<span key={`text-final-${components.length}-${generateKey()}`}>{textContent}</span>);
-      }
-
-      return components.length === 1 ? components[0] : <Fragment key={generateKey()}>{components}</Fragment>;
-    },
-    hr() {
-      return <div />;
-    },
-    paragraph(children) {
-      // Check if the paragraph contains only a LaTeX block placeholder
-      if (typeof children === 'string') {
-        const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
-        if (blockMatch) {
-          const latexBlock = latexBlocks.find((block) => block.id === children);
-          if (latexBlock && latexBlock.isBlock) {
-            // Render block equations outside of paragraph tags
-            return (
-              <div className="my-6 text-center" key={generateKey()}>
+          // Find the corresponding LaTeX block
+          const latexBlock = latexBlocks.find((block) => block.id === fullMatch);
+          if (latexBlock) {
+            if (isBlock) {
+              // Don't wrap block equations in div here - let paragraph handler do it
+              components.push(
                 <Latex
+                  key={`latex-${components.length}-${generateKey()}`}
                   delimiters={[
                     { left: '$$', right: '$$', display: true },
                     { left: '\\[', right: '\\]', display: true },
@@ -811,176 +674,230 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
                   strict={false}
                 >
                   {latexBlock.content}
-                </Latex>
-              </div>
-            );
+                </Latex>,
+              );
+            } else {
+              components.push(
+                <Latex
+                  key={`latex-${components.length}-${generateKey()}`}
+                  delimiters={[
+                    { left: '$', right: '$', display: false },
+                    { left: '\\(', right: '\\)', display: false },
+                  ]}
+                  strict={false}
+                >
+                  {latexBlock.content}
+                </Latex>,
+              );
+            }
+          } else {
+            components.push(<span key={`fallback-${components.length}-${generateKey()}`}>{fullMatch}</span>); // fallback
+          }
+
+          lastEnd = start + fullMatch.length;
+        });
+
+        // Add any remaining text
+        if (lastEnd < text.length) {
+          const textContent = text.slice(lastEnd);
+          components.push(<span key={`text-final-${components.length}-${generateKey()}`}>{textContent}</span>);
+        }
+
+        return components.length === 1 ? components[0] : <Fragment key={generateKey()}>{components}</Fragment>;
+      },
+      hr() {
+        return <div />;
+      },
+      paragraph(children) {
+        // Check if the paragraph contains only a LaTeX block placeholder
+        if (typeof children === 'string') {
+          const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
+          if (blockMatch) {
+            const latexBlock = latexBlocks.find((block) => block.id === children);
+            if (latexBlock && latexBlock.isBlock) {
+              // Render block equations outside of paragraph tags
+              return (
+                <div className="my-6 text-center" key={generateKey()}>
+                  <Latex
+                    delimiters={[
+                      { left: '$$', right: '$$', display: true },
+                      { left: '\\[', right: '\\]', display: true },
+                    ]}
+                    strict={false}
+                  >
+                    {latexBlock.content}
+                  </Latex>
+                </div>
+              );
+            }
           }
         }
-      }
 
-      return (
-        <p
-          key={generateKey()}
-          className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
-        >
-          {children}
-        </p>
-      );
-    },
-    code(children, language) {
-      // This handles fenced code blocks (```)
-      return (
-        <CodeBlock language={language} key={generateKey()}>
-          {String(children)}
-        </CodeBlock>
-      );
-    },
-    codespan(code) {
-      // This handles inline code (`code`)
-      const codeString = typeof code === 'string' ? code : String(code || '');
-      return <InlineCode key={generateKey()} code={codeString} />;
-    },
-    link(href, text) {
-      // Handle email addresses (mailto links) as plain text
-      if (href.startsWith('mailto:')) {
-        const email = href.replace('mailto:', '');
         return (
-          <span key={generateKey()} className="break-all">
-            {email}
-          </span>
+          <p
+            key={generateKey()}
+            className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
+          >
+            {children}
+          </p>
         );
-      }
-
-      // For user messages, display links as plain text with URL
-      if (isUserMessage) {
-        const linkText = typeof text === 'string' ? text : href;
-        // If link text and href are different, show both
-        if (linkText !== href && linkText !== '') {
+      },
+      code(children, language) {
+        // This handles fenced code blocks (```)
+        return (
+          <CodeBlock language={language} key={generateKey()}>
+            {String(children)}
+          </CodeBlock>
+        );
+      },
+      codespan(code) {
+        // This handles inline code (`code`)
+        const codeString = typeof code === 'string' ? code : String(code || '');
+        return <InlineCode key={generateKey()} code={codeString} />;
+      },
+      link(href, text) {
+        // Handle email addresses (mailto links) as plain text
+        if (href.startsWith('mailto:')) {
+          const email = href.replace('mailto:', '');
           return (
             <span key={generateKey()} className="break-all">
-              {linkText} ({href})
+              {email}
             </span>
           );
         }
-        // Otherwise just show the URL
+
+        // For user messages, display links as plain text with URL
+        if (isUserMessage) {
+          const linkText = typeof text === 'string' ? text : href;
+          // If link text and href are different, show both
+          if (linkText !== href && linkText !== '') {
+            return (
+              <span key={generateKey()} className="break-all">
+                {linkText} ({href})
+              </span>
+            );
+          }
+          // Otherwise just show the URL
+          return (
+            <span key={generateKey()} className="break-all">
+              {href}
+            </span>
+          );
+        }
+
+        let citationIndex = citationLinks.findIndex((link) => link.link === href);
+        if (citationIndex !== -1) {
+          // For citations, show the citation text in the hover card
+          const citationText = citationLinks[citationIndex].text;
+          return renderCitation(citationIndex, citationText, href);
+        }
+
+        if (isValidUrl(href)) {
+          // Add this link to citations if it's not already there
+          citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
+          citationIndex = citationLinks.length - 1;
+          const citationText = citationLinks[citationIndex].text;
+          return renderCitation(citationIndex, citationText, href);
+        } else {
+          // For non-valid URLs, still use the same citation UI
+          citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
+          citationIndex = citationLinks.length - 1;
+          const citationText = citationLinks[citationIndex].text;
+          return renderCitation(citationIndex, citationText, href);
+        }
+      },
+      heading(children, level) {
+        const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
+        const sizeClasses =
+          {
+            1: 'text-2xl md:text-3xl font-extrabold mt-4 mb-4',
+            2: 'text-xl md:text-2xl font-bold mt-4 mb-3',
+            3: 'text-lg md:text-xl font-semibold mt-4 mb-3',
+            4: 'text-base md:text-lg font-medium mt-4 mb-2',
+            5: 'text-sm md:text-base font-medium mt-4 mb-2',
+            6: 'text-xs md:text-sm font-medium mt-4 mb-2',
+          }[level] || '';
+
         return (
-          <span key={generateKey()} className="break-all">
-            {href}
-          </span>
+          <HeadingTag key={generateKey()} className={`${sizeClasses} text-foreground tracking-tight`}>
+            {children}
+          </HeadingTag>
         );
-      }
+      },
+      list(children, ordered) {
+        const ListTag = ordered ? 'ol' : 'ul';
+        return (
+          <ListTag
+            key={generateKey()}
+            className={`my-5 pl-6 space-y-2 text-foreground ${ordered ? 'list-decimal' : 'list-disc'}`}
+          >
+            {children}
+          </ListTag>
+        );
+      },
+      listItem(children) {
+        return (
+          <li key={generateKey()} className="pl-1 leading-relaxed">
+            {children}
+          </li>
+        );
+      },
+      blockquote(children) {
+        return (
+          <blockquote
+            key={generateKey()}
+            className="my-6 border-l-4 border-primary/30 pl-4 py-1 text-foreground italic bg-muted/50 rounded-r-md"
+          >
+            {children}
+          </blockquote>
+        );
+      },
+      table(children) {
+        return <MarkdownTableWithActions key={generateKey()}>{children}</MarkdownTableWithActions>;
+      },
+      tableRow(children) {
+        return <TableRow key={generateKey()}>{children}</TableRow>;
+      },
+      tableCell(children, flags) {
+        const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
+        const isHeader = flags.header;
 
-      let citationIndex = citationLinks.findIndex((link) => link.link === href);
-      if (citationIndex !== -1) {
-        // For citations, show the citation text in the hover card
-        const citationText = citationLinks[citationIndex].text;
-        return renderCitation(citationIndex, citationText, href);
-      }
-
-      if (isValidUrl(href)) {
-        // Add this link to citations if it's not already there
-        citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
-        citationIndex = citationLinks.length - 1;
-        const citationText = citationLinks[citationIndex].text;
-        return renderCitation(citationIndex, citationText, href);
-      } else {
-        // For non-valid URLs, still use the same citation UI
-        citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
-        citationIndex = citationLinks.length - 1;
-        const citationText = citationLinks[citationIndex].text;
-        return renderCitation(citationIndex, citationText, href);
-      }
-    },
-    heading(children, level) {
-      const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
-      const sizeClasses =
-        {
-          1: 'text-2xl md:text-3xl font-extrabold mt-4 mb-4',
-          2: 'text-xl md:text-2xl font-bold mt-4 mb-3',
-          3: 'text-lg md:text-xl font-semibold mt-4 mb-3',
-          4: 'text-base md:text-lg font-medium mt-4 mb-2',
-          5: 'text-sm md:text-base font-medium mt-4 mb-2',
-          6: 'text-xs md:text-sm font-medium mt-4 mb-2',
-        }[level] || '';
-
-      return (
-        <HeadingTag key={generateKey()} className={`${sizeClasses} text-foreground tracking-tight`}>
-          {children}
-        </HeadingTag>
-      );
-    },
-    list(children, ordered) {
-      const ListTag = ordered ? 'ol' : 'ul';
-      return (
-        <ListTag
-          key={generateKey()}
-          className={`my-5 pl-6 space-y-2 text-foreground ${ordered ? 'list-decimal' : 'list-disc'}`}
-        >
-          {children}
-        </ListTag>
-      );
-    },
-    listItem(children) {
-      return (
-        <li key={generateKey()} className="pl-1 leading-relaxed">
-          {children}
-        </li>
-      );
-    },
-    blockquote(children) {
-      return (
-        <blockquote
-          key={generateKey()}
-          className="my-6 border-l-4 border-primary/30 pl-4 py-1 text-foreground italic bg-muted/50 rounded-r-md"
-        >
-          {children}
-        </blockquote>
-      );
-    },
-    table(children) {
-      return <MarkdownTableWithActions key={generateKey()}>{children}</MarkdownTableWithActions>;
-    },
-    tableRow(children) {
-      return <TableRow key={generateKey()}>{children}</TableRow>;
-    },
-    tableCell(children, flags) {
-      const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
-      const isHeader = flags.header;
-
-      return isHeader ? (
-        <TableHead
-          key={generateKey()}
-          className={cn(
-            alignClass,
-            'border-r border-border last:border-r-0 bg-muted/50 font-semibold !p-2 !m-1 !text-wrap',
-          )}
-        >
-          {children}
-        </TableHead>
-      ) : (
-        <TableCell
-          key={generateKey()}
-          className={cn(alignClass, 'border-r border-border last:border-r-0 !p-2 !m-1 !text-wrap')}
-        >
-          {children}
-        </TableCell>
-      );
-    },
-    tableHeader(children) {
-      return (
-        <TableHeader key={generateKey()} className="!p-1 !m-1">
-          {children}
-        </TableHeader>
-      );
-    },
-    tableBody(children) {
-      return (
-        <TableBody key={generateKey()} className="!text-wrap !m-1">
-          {children}
-        </TableBody>
-      );
-    },
-  };
+        return isHeader ? (
+          <TableHead
+            key={generateKey()}
+            className={cn(
+              alignClass,
+              'border-r border-border last:border-r-0 bg-muted/50 font-semibold !p-2 !m-1 !text-wrap',
+            )}
+          >
+            {children}
+          </TableHead>
+        ) : (
+          <TableCell
+            key={generateKey()}
+            className={cn(alignClass, 'border-r border-border last:border-r-0 !p-2 !m-1 !text-wrap')}
+          >
+            {children}
+          </TableCell>
+        );
+      },
+      tableHeader(children) {
+        return (
+          <TableHeader key={generateKey()} className="!p-1 !m-1">
+            {children}
+          </TableHeader>
+        );
+      },
+      tableBody(children) {
+        return (
+          <TableBody key={generateKey()} className="!text-wrap !m-1">
+            {children}
+          </TableBody>
+        );
+      },
+    }),
+    [latexBlocks, isUserMessage],
+  );
 
   return (
     <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
@@ -989,27 +906,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
   );
 };
 
-export const CopyButton = ({ text }: { text: string }) => {
+export const CopyButton = React.memo(({ text }: { text: string }) => {
   const [isCopied, setIsCopied] = useState(false);
 
+  const handleCopy = React.useCallback(async () => {
+    if (!navigator.clipboard) {
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+    toast.success('Copied to clipboard');
+  }, [text]);
+
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={async () => {
-        if (!navigator.clipboard) {
-          return;
-        }
-        await navigator.clipboard.writeText(text);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-        toast.success('Copied to clipboard');
-      }}
-      className="h-8 px-2 text-xs rounded-full"
-    >
+    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2 text-xs rounded-full">
       {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
     </Button>
   );
-};
+});
+
+CopyButton.displayName = 'CopyButton';
 
 export { MarkdownRenderer, preprocessLaTeX };

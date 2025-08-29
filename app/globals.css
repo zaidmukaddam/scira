@@ -196,6 +196,30 @@
 }
 
 :root {
+  --sh-class: #1976d2;
+  --sh-identifier: #24292e;
+  --sh-sign: #586069;
+  --sh-property: #005cc5;
+  --sh-entity: #6f42c1;
+  --sh-jsxliterals: #e36209;
+  --sh-string: #032f62;
+  --sh-keyword: #d73a49;
+  --sh-comment: #6a737d;
+}
+
+.dark {
+  --sh-class: #79c0ff;
+  --sh-identifier: #c9d1d9;
+  --sh-sign: #8b949e;
+  --sh-property: #a5d6ff;
+  --sh-entity: #d2a8ff;
+  --sh-jsxliterals: #ffab70;
+  --sh-string: #a5d6ff;
+  --sh-keyword: #ff7b72;
+  --sh-comment: #8b949e;
+}
+
+:root {
   --font-be-vietnam-pro: 'Be Vietnam Pro';
   --background: oklch(0.9821 0 0);
   --foreground: oklch(0.2435 0 0);
