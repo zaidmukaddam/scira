@@ -196,27 +196,27 @@
 }
 
 :root {
-  --sh-class: #1976d2;
-  --sh-identifier: #24292e;
-  --sh-sign: #586069;
-  --sh-property: #005cc5;
-  --sh-entity: #6f42c1;
-  --sh-jsxliterals: #e36209;
-  --sh-string: #032f62;
-  --sh-keyword: #d73a49;
-  --sh-comment: #6a737d;
+  --sh-class: #2563eb;
+  --sh-identifier: #1f2937;
+  --sh-sign: #6b7280;
+  --sh-property: #3b82f6;
+  --sh-entity: #8b5cf6;
+  --sh-jsxliterals: #f59e0b;
+  --sh-string: #059669;
+  --sh-keyword: #dc2626;
+  --sh-comment: #9ca3af;
 }
 
 .dark {
-  --sh-class: #79c0ff;
-  --sh-identifier: #c9d1d9;
-  --sh-sign: #8b949e;
-  --sh-property: #a5d6ff;
-  --sh-entity: #d2a8ff;
-  --sh-jsxliterals: #ffab70;
-  --sh-string: #a5d6ff;
-  --sh-keyword: #ff7b72;
-  --sh-comment: #8b949e;
+  --sh-class: #60a5fa;
+  --sh-identifier: #e5e7eb;
+  --sh-sign: #9ca3af;
+  --sh-property: #93c5fd;
+  --sh-entity: #a78bfa;
+  --sh-jsxliterals: #fbbf24;
+  --sh-string: #34d399;
+  --sh-keyword: #f87171;
+  --sh-comment: #6b7280;
 }
 
 :root {
