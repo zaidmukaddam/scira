@@ -25,6 +25,7 @@ import { eq } from 'drizzle-orm';
 
 // Import extreme search tool
 import { extremeSearchTool } from '@/lib/tools';
+import { ChatMessage } from '@/lib/types';
 
 // Helper function to check if a user is pro by userId
 async function checkUserIsProById(userId: string): Promise<boolean> {
@@ -186,7 +187,7 @@ export async function POST(req: Request) {
     });
 
     // Create data stream with execute function
-    const stream = createUIMessageStream({
+    const stream = createUIMessageStream<ChatMessage>({
       execute: async ({ writer: dataStream }) => {
         const streamStartTime = Date.now();
 
@@ -465,16 +466,17 @@ export async function POST(req: Request) {
         dataStream.merge(
           result.toUIMessageStream({
             sendReasoning: true,
-            messageMetadata({ part }) {
+            messageMetadata: ({ part }) => {
               if (part.type === 'finish') {
                 console.log('Finish part: ', part);
                 const processingTime = (Date.now() - streamStartTime) / 1000;
                 return {
                   model: 'scira-grok-4',
                   completionTime: processingTime,
-                  inputTokens: part.totalUsage.inputTokens,
-                  outputTokens: part.totalUsage.outputTokens,
-                  totalTokens: part.totalUsage.totalTokens,
+                  createdAt: new Date().toISOString(),
+                  totalTokens: part.totalUsage?.totalTokens ?? null,
+                  inputTokens: part.totalUsage?.inputTokens ?? null,
+                  outputTokens: part.totalUsage?.outputTokens ?? null,
                 };
               }
             },
@@ -501,10 +503,10 @@ export async function POST(req: Request) {
                 attachments: [],
                 chatId: chatId,
                 model: 'scira-grok-4',
-                completionTime: null,
-                inputTokens: null,
-                outputTokens: null,
-                totalTokens: null,
+                completionTime: message.metadata?.completionTime ?? 0,
+                inputTokens: message.metadata?.inputTokens ?? 0,
+                outputTokens: message.metadata?.outputTokens ?? 0,
+                totalTokens: message.metadata?.totalTokens ?? 0,
               })),
             });
           } else {
