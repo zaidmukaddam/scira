@@ -318,7 +318,6 @@ const ChatInterface = memo(
         }
       },
       messages: initialMessages || [],
-      resume: true,
     });
 
     // Handle text highlighting and quoting
