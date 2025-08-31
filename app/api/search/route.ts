@@ -471,6 +471,8 @@ export async function POST(req: Request) {
                 ? {
                     temperature: 0.6,
                     topP: 0.95,
+                    topK: 20,
+                    minP: 0,
                   }
                 : model.includes('scira-qwen-30-think')
                   ? {
