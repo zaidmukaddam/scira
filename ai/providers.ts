@@ -243,7 +243,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-qwen-30',
-    label: 'Qwen 3 30B A3B Instruct 2507',
+    label: 'Qwen 3 30B A3B Instruct',
     description: "Qwen's advanced instruct LLM",
     vision: false,
     reasoning: true,
@@ -257,7 +257,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-qwen-30-think',
-    label: 'Qwen 3 30B A3B Thinking 2507',
+    label: 'Qwen 3 30B A3B Thinking',
     description: "Qwen's advanced thinking LLM",
     vision: false,
     reasoning: true,
