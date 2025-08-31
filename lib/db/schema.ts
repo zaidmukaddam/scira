@@ -54,7 +54,10 @@ export const verification = pgTable('verification', {
 });
 
 export const chat = pgTable('chat', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => uuidv4()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => uuidv4()),
   userId: text('userId')
     .notNull()
     .references(() => user.id),

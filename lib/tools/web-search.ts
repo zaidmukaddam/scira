@@ -67,14 +67,17 @@ const isValidImageUrl = async (url: string): Promise<{ valid: boolean; redirecte
   }
 };
 
-export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | undefined, searchProvider: "exa" | "parallel" | "tavily" | "firecrawl" = "parallel") {
+export function webSearchTool(
+  dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
+  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'parallel',
+) {
   return tool({
     description: `Search the web for information with multiple queries, max results, search depth, topics, and quality.
     ${searchProvider === 'parallel' ? 'Parallel AI is used for this search.' : ''}
     ${searchProvider === 'tavily' ? 'Tavily is used for this search.' : ''}
     ${searchProvider === 'firecrawl' ? 'Firecrawl is used for this search.' : ''}
     ${searchProvider === 'exa' ? 'Exa is used for this search.' : ''}
-    
+
     Very important:
     - The queries should always be in the same language as the user's message.
     - And count of the queries should be 3-5.
@@ -84,7 +87,11 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
         z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'),
       ),
       maxResults: z.array(
-        z.number().describe('Array of maximum number of results to return per query. Default is 10. Minimum is 8. Maximum is 15.'),
+        z
+          .number()
+          .describe(
+            'Array of maximum number of results to return per query. Default is 10. Minimum is 8. Maximum is 15.',
+          ),
       ),
       topics: z.array(
         z
@@ -94,9 +101,11 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
           ),
       ),
       quality: z.array(
-        z.enum(['default', 'best']).describe(
-          'Array of quality levels for the search. Default is default. Other option is best. DO NOT use best unless necessary.',
-        ),
+        z
+          .enum(['default', 'best'])
+          .describe(
+            'Array of quality levels for the search. Default is default. Other option is best. DO NOT use best unless necessary.',
+          ),
       ),
       include_domains: z
         .array(z.string())
@@ -191,7 +200,9 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
           const searchResults = queries.map((query, index) => {
             // For batch response, results are combined - we'll split them evenly
             const startIdx = Math.floor((index / queries.length) * batchResponse.query_results[0]?.results.length || 0);
-            const endIdx = Math.floor(((index + 1) / queries.length) * batchResponse.query_results[0]?.results.length || 0);
+            const endIdx = Math.floor(
+              ((index + 1) / queries.length) * batchResponse.query_results[0]?.results.length || 0,
+            );
             const queryResults = batchResponse.query_results[0]?.results.slice(startIdx, endIdx) || [];
 
             const results = queryResults.map((result) => ({
@@ -244,11 +255,11 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
           });
 
           return {
-            searches: queries.map(query => ({
+            searches: queries.map((query) => ({
               query,
               results: [],
               images: [],
-            }))
+            })),
           };
         }
       }
@@ -304,9 +315,9 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
                   const imageValidation = await isValidImageUrl(sanitizedUrl);
                   return imageValidation.valid
                     ? {
-                      url: imageValidation.redirectedUrl || sanitizedUrl,
-                      description: description || '',
-                    }
+                        url: imageValidation.redirectedUrl || sanitizedUrl,
+                        description: description || '',
+                      }
                     : null;
                 },
               ),
@@ -461,7 +472,6 @@ export function webSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage> | 
             results: [],
             images: [],
           };
-
         }
       });
 

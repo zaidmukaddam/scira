@@ -132,10 +132,27 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
+    console.log('🔍 [DB-DETAIL] getChatById: Starting cached query...');
+    const cacheQueryStart = Date.now();
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).$withCache();
+    const cacheQueryTime = (Date.now() - cacheQueryStart) / 1000;
+    console.log(`⏱️  [DB-DETAIL] getChatById: Cached query took ${cacheQueryTime.toFixed(2)}s`);
     return selectedChat;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
+  }
+}
+
+export async function getChatByIdNoCaching({ id }: { id: string }) {
+  try {
+    console.log('🔍 [DB-DETAIL] getChatByIdNoCaching: Starting direct query...');
+    const directQueryStart = Date.now();
+    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const directQueryTime = (Date.now() - directQueryStart) / 1000;
+    console.log(`⏱️  [DB-DETAIL] getChatByIdNoCaching: Direct query took ${directQueryTime.toFixed(2)}s`);
+    return selectedChat;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get chat by id (no cache)');
   }
 }
 

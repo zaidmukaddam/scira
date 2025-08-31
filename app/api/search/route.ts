@@ -21,10 +21,12 @@ import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRat
 import {
   createStreamId,
   getChatById,
+  getChatByIdNoCaching,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
+  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
@@ -67,6 +69,47 @@ import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
 
 let globalStreamContext: ResumableStreamContext | null = null;
+
+// Database operations tracking
+const dbOperationTimings: { operation: string; time: number }[] = [];
+
+// Simple in-memory cache for custom instructions
+const customInstructionsCache = new Map<
+  string,
+  {
+    instructions: any;
+    timestamp: number;
+    ttl: number;
+  }
+>();
+
+const CUSTOM_INSTRUCTIONS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getCachedCustomInstructions(user: any) {
+  const cacheKey = user.id;
+  const cached = customInstructionsCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    console.log('📦 Using cached custom instructions');
+    return cached.instructions;
+  }
+
+  console.log('🔍 [DB] Fetching fresh custom instructions...');
+  const customInstructionsDbStartTime = Date.now();
+  const instructions = await getCustomInstructions(user);
+  const customInstructionsTime = (Date.now() - customInstructionsDbStartTime) / 1000;
+  dbOperationTimings.push({ operation: 'getCustomInstructions', time: customInstructionsTime });
+  console.log(`⏱️  [DB] getCustomInstructions() took: ${customInstructionsTime.toFixed(2)}s`);
+
+  // Cache the result
+  customInstructionsCache.set(cacheKey, {
+    instructions,
+    timestamp: Date.now(),
+    ttl: CUSTOM_INSTRUCTIONS_CACHE_TTL,
+  });
+
+  return instructions;
+}
 
 export function getStreamContext() {
   if (!globalStreamContext) {
@@ -113,9 +156,12 @@ export async function POST(req: Request) {
   console.log('Timezone: ', timezone);
 
   const userCheckTime = Date.now();
+  console.log('🔍 [DB] Starting getCurrentUser()...');
   const user = await getCurrentUser();
   const streamId = 'stream-' + uuidv4();
-  console.log(`⏱️  User check took: ${((Date.now() - userCheckTime) / 1000).toFixed(2)}s`);
+  const userCheckTime2 = (Date.now() - userCheckTime) / 1000;
+  dbOperationTimings.push({ operation: 'getCurrentUser', time: userCheckTime2 });
+  console.log(`⏱️  [DB] getCurrentUser() took: ${userCheckTime2.toFixed(2)}s`);
 
   if (!user) {
     console.log('User not found');
@@ -139,27 +185,53 @@ export async function POST(req: Request) {
     isProUser?: boolean;
   }> = Promise.resolve({ canProceed: true });
 
-  // Get custom instructions in parallel with other operations (declare outside user block for scope)
-  const customInstructionsPromise = user ? getCustomInstructions(user) : Promise.resolve(null);
+  // Get custom instructions as early as possible for authenticated users (with caching)
+  const customInstructionsPromise = user ? getCachedCustomInstructions(user) : Promise.resolve(null);
 
   if (user) {
     const isProUser = user.isProUser;
 
     try {
+      const getChatStartTime = Date.now();
+      console.log('🔍 [DB] Starting getChatById() for testing...');
       const existingChat = await getChatById({ id });
+      const getChatTime = (Date.now() - getChatStartTime) / 1000;
+      dbOperationTimings.push({ operation: 'getChatById', time: getChatTime });
+      console.log(`⏱️  [DB] getChatById() took: ${getChatTime.toFixed(2)}s`);
       if (!existingChat) {
-        const title = await generateTitleFromUserMessage({
-          message: messages[messages.length - 1],
-        });
-        console.log('--------------------------------');
-        console.log('Generated title: ', title);
-        console.log('--------------------------------');
+        // Create chat immediately with a temporary title to avoid blocking the request
+        const saveChatStartTime = Date.now();
+        console.log('🔍 [DB] Starting saveChat()...');
         await saveChat({
           id,
           userId: user.id,
-          title: title,
+          title: 'New Chat', // Temporary title
           visibility: selectedVisibilityType,
         });
+        const saveChatTime = (Date.now() - saveChatStartTime) / 1000;
+        dbOperationTimings.push({ operation: 'saveChat', time: saveChatTime });
+        console.log(`⏱️  [DB] saveChat() took: ${saveChatTime.toFixed(2)}s`);
+
+        // Generate title in background and update the chat
+        after(async () => {
+          try {
+            const title = await generateTitleFromUserMessage({
+              message: messages[messages.length - 1],
+            });
+            console.log('--------------------------------');
+            console.log('Generated title: ', title);
+            console.log('--------------------------------');
+            // Update the chat with the generated title
+            await updateChatTitleById({
+              chatId: id,
+              title: title,
+            });
+            console.log('✅ Background title generation completed');
+          } catch (titleError) {
+            console.error('Background title generation failed:', titleError);
+          }
+        });
+
         console.log('✅ Early chat creation completed for authenticated user');
       } else {
         if (existingChat.userId !== user.id) {
@@ -167,7 +239,12 @@ export async function POST(req: Request) {
         }
       }
       // Create stream record as early as possible for resumable streaming
+      const createStreamStartTime = Date.now();
+      console.log('🔍 [DB] Starting createStreamId()...');
       await createStreamId({ streamId, chatId: id });
+      const createStreamTime = (Date.now() - createStreamStartTime) / 1000;
+      dbOperationTimings.push({ operation: 'createStreamId', time: createStreamTime });
+      console.log(`⏱️  [DB] createStreamId() took: ${createStreamTime.toFixed(2)}s`);
       console.log('✅ Early stream creation completed');
     } catch (earlyChatError) {
       console.error('Early chat creation failed:', earlyChatError);
@@ -183,11 +260,19 @@ export async function POST(req: Request) {
       const criticalChecksStartTime = Date.now();
 
       try {
+        console.log('🔍 [DB] Starting getUserMessageCount() and getExtremeSearchUsageCount()...');
         const [messageCountResult, extremeSearchUsage] = await Promise.all([
           getUserMessageCount(user),
           getExtremeSearchUsageCount(user),
         ]);
-        console.log(`⏱️  Critical checks took: ${((Date.now() - criticalChecksStartTime) / 1000).toFixed(2)}s`);
+        const criticalChecksTime = (Date.now() - criticalChecksStartTime) / 1000;
+        dbOperationTimings.push({
+          operation: 'getUserMessageCount + getExtremeSearchUsageCount',
+          time: criticalChecksTime,
+        });
+        console.log(
+          `⏱️  [DB] getUserMessageCount() + getExtremeSearchUsageCount() took: ${criticalChecksTime.toFixed(2)}s`,
+        );
 
         if (messageCountResult.error) {
           console.error('Error getting message count:', messageCountResult.error);
@@ -255,10 +340,16 @@ export async function POST(req: Request) {
   }
 
   const configStartTime = Date.now();
+  console.log('🔍 [DB] Starting getGroupConfig()...');
   const configPromise = getGroupConfig(group).then((config) => {
-    console.log(`⏱️  Config loading took: ${((Date.now() - configStartTime) / 1000).toFixed(2)}s`);
+    const configTime = (Date.now() - configStartTime) / 1000;
+    dbOperationTimings.push({ operation: 'getGroupConfig', time: configTime });
+    console.log(`⏱️  [DB] getGroupConfig() took: ${configTime.toFixed(2)}s`);
     return config;
   });
+
+  // If we don't have custom instructions promise yet (unauthenticated user), create it now
+  const finalCustomInstructionsPromise = customInstructionsPromise || Promise.resolve(null);
 
   // Start streaming immediately while background operations continue
   const stream = createUIMessageStream<ChatMessage>({
@@ -271,15 +362,29 @@ export async function POST(req: Request) {
         throw criticalResult.error;
       }
 
+      // Add individual timing for each operation
       const configWaitStartTime = Date.now();
+      const customInstructionsWaitStartTime = Date.now();
+
+      const configWithTiming = configPromise.then((result) => {
+        console.log(`⏱️  [DB] Config promise wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
+        return result;
+      });
+
+      const customInstructionsWithTiming = finalCustomInstructionsPromise.then((result) => {
+        console.log(
+          `⏱️  [DB] Custom instructions promise wait took: ${((Date.now() - customInstructionsWaitStartTime) / 1000).toFixed(2)}s`,
+        );
+        return result;
+      });
+
+      const combinedWaitStartTime = Date.now();
       const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
-        configPromise,
-        customInstructionsPromise,
+        configWithTiming,
+        customInstructionsWithTiming,
       ]);
       customInstructions = customInstructionsResult;
-      console.log(
-        `⏱️  Config and custom instructions wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`,
-      );
+      console.log(`⏱️  Combined wait took: ${((Date.now() - combinedWaitStartTime) / 1000).toFixed(2)}s`);
       console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
       console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
 
@@ -287,6 +392,7 @@ export async function POST(req: Request) {
         const backgroundOperations = (async () => {
           try {
             const backgroundStartTime = Date.now();
+            console.log('🔍 [DB] Starting background saveMessages()...');
             await saveMessages({
               messages: [
                 {
@@ -304,7 +410,9 @@ export async function POST(req: Request) {
                 },
               ],
             });
-            console.log(`⏱️  Background operations took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`);
+            console.log(
+              `⏱️  [DB] Background saveMessages() took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`,
+            );
 
             console.log('--------------------------------');
             console.log('Messages saved: ', messages);
@@ -321,9 +429,18 @@ export async function POST(req: Request) {
 
       const preStreamTime = Date.now();
       const setupTime = (preStreamTime - requestStartTime) / 1000;
-      console.log('--------------------------------');
-      console.log(`Time to reach streamText: ${setupTime.toFixed(2)} seconds`);
-      console.log('--------------------------------');
+      const totalDbTime = dbOperationTimings.reduce((sum, op) => sum + op.time, 0);
+
+      console.log('================================');
+      console.log(`🚀 TOTAL TIME TO REACH STREAMTEXT: ${setupTime.toFixed(2)} seconds`);
+      console.log(
+        `📊 TOTAL DATABASE TIME: ${totalDbTime.toFixed(2)} seconds (${((totalDbTime / setupTime) * 100).toFixed(1)}% of total)`,
+      );
+      console.log('📋 DB OPERATIONS BREAKDOWN:');
+      dbOperationTimings.forEach((op) => {
+        console.log(`   • ${op.operation}: ${op.time.toFixed(2)}s`);
+      });
+      console.log('================================');
 
       const maxTokens = getMaxOutputTokens(model);
 
@@ -593,7 +710,8 @@ export async function POST(req: Request) {
     onFinish: async ({ messages }) => {
       console.log('onFinish', messages);
       if (user) {
-        console.log('Saving messages');
+        const finalSaveStartTime = Date.now();
+        console.log('🔍 [DB] Starting final saveMessages()...');
         await saveMessages({
           messages: messages.map((message) => ({
             id: message.id,
@@ -609,7 +727,9 @@ export async function POST(req: Request) {
             totalTokens: message.metadata?.totalTokens ?? 0,
           })),
         });
-        console.log('Messages saved');
+        const finalSaveTime = (Date.now() - finalSaveStartTime) / 1000;
+        console.log(`⏱️  [DB] Final saveMessages() took: ${finalSaveTime.toFixed(2)}s`);
+        console.log('✅ Messages saved');
       }
     },
   });

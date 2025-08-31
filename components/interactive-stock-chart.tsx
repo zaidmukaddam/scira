@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import {
   ArrowUpRight,
   ArrowDownRight,
-  ExternalLink,
   Newspaper,
   TrendingUp,
   TrendingDown,
@@ -18,14 +17,10 @@ import {
   List,
   FileText,
   Building2,
-  DollarSign,
   Activity,
   Wallet,
   Banknote,
   UserCheck,
-  TrendingUp as TrendingUpIcon,
-  Percent,
-  LineChart,
 } from 'lucide-react';
 import { ChartBar } from '@phosphor-icons/react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';

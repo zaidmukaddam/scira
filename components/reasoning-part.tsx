@@ -76,12 +76,12 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     heading(text: ReactNode, level: number) {
       const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
       const classes = {
-        h1: 'text-sm font-semibold mb-2 mt-3 text-foreground',
-        h2: 'text-xs font-semibold mb-1.5 mt-2.5 text-foreground',
-        h3: 'text-xs font-medium mb-1.5 mt-2 text-foreground',
-        h4: 'text-xs font-medium mb-1 mt-1.5 text-foreground',
-        h5: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
-        h6: 'text-xs font-normal mb-1 mt-1.5 text-foreground',
+        h1: 'text-lg font-semibold mb-2 mt-3 text-foreground',
+        h2: 'text-base font-semibold mb-1.5 mt-2.5 text-foreground',
+        h3: 'text-base font-medium mb-1.5 mt-2 text-foreground',
+        h4: 'text-base font-medium mb-1 mt-1.5 text-foreground',
+        h5: 'text-base font-normal mb-1 mt-1.5 text-foreground',
+        h6: 'text-base font-normal mb-1 mt-1.5 text-foreground',
       };
 
       const className = classes[`h${level}` as keyof typeof classes] || '';
