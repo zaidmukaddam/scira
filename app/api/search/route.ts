@@ -461,7 +461,24 @@ export async function POST(req: Request) {
                 topP: 0.8,
                 minP: 0,
               }
-            : {}),
+            : model.includes('scira-qwen-30')
+              ? {
+                  temperature: 0.7,
+                  topP: 0.8,
+                  minP: 0,
+                }
+              : model.includes('scira-qwen-235-think')
+                ? {
+                    temperature: 0.6,
+                    topP: 0.95,
+                  }
+                : model.includes('scira-qwen-30-think')
+                  ? {
+                      temperature: 0.6,
+                      topP: 0.95,
+                      minP: 0,
+                    }
+                  : {}),
         stopWhen: stepCountIs(5),
         abortSignal: req.signal,
         onAbort: ({ steps }) => {

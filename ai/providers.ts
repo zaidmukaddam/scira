@@ -1,4 +1,4 @@
-import { wrapLanguageModel, customProvider, extractReasoningMiddleware } from 'ai';
+import { wrapLanguageModel, customProvider, extractReasoningMiddleware, simulateStreamingMiddleware } from 'ai';
 
 import { openai, createOpenAI } from '@ai-sdk/openai';
 import { xai } from '@ai-sdk/xai';
@@ -10,6 +10,8 @@ import { mistral } from '@ai-sdk/mistral';
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
 });
+
+const simmiddleware = simulateStreamingMiddleware();
 
 const huggingface = createOpenAI({
   baseURL: 'https://router.huggingface.co/v1',
@@ -49,8 +51,8 @@ export const scira = customProvider({
     }),
     'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:together'),
     'scira-qwen-235-think': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-235B-A22B-Thinking-2507:fireworks-ai'),
-      middleware,
+      model: huggingface.chat('Qwen/Qwen3-235B-A22B-Thinking-2507:novita'),
+      middleware: [middleware],
     }),
     'scira-glm-air': huggingface.chat('zai-org/GLM-4.5-Air:fireworks-ai'),
     'scira-glm': wrapLanguageModel({

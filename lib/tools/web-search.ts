@@ -111,13 +111,13 @@ export function webSearchTool(
         .array(z.string())
         .optional()
         .describe(
-          'An array of domains to include only and only if asked by the user. Default is an empty list like []. DO NOT use unless instructed by the user.',
+          'An array of domains to include only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
         ),
       exclude_domains: z
         .array(z.string())
         .optional()
         .describe(
-          'An array of domains to exclude only and only if asked by the user. Default is an empty list like []. DO NOT use unless instructed by the user.',
+          'An array of domains to exclude only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
         ),
     }),
     execute: async ({
