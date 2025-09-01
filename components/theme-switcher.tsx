@@ -62,7 +62,6 @@ const THEME_OPTIONS = [
 
 function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
-
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -70,28 +69,22 @@ function ThemeSwitcher() {
   }, []);
 
   if (!isMounted) {
-    return <div className="flex h-7 w-24" />;
+    return <div className="flex h-7 w-7" />;
   }
 
+  // Simple toggle between light and dark
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <motion.div
-      key={String(isMounted)}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="inline-flex items-center overflow-hidden rounded-full bg-white ring-1 ring-zinc-200 ring-inset dark:bg-zinc-950 dark:ring-zinc-700"
-      role="radiogroup"
+    <button
+      onClick={toggleTheme}
+      className="flex size-7 cursor-pointer items-center justify-center rounded-full transition-all hover:bg-accent hover:text-accent-foreground [&_svg]:size-4"
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
     >
-      {THEME_OPTIONS.map((option) => (
-        <ThemeOption
-          key={option.value}
-          icon={option.icon}
-          value={option.value}
-          isActive={theme === option.value}
-          onClick={setTheme}
-        />
-      ))}
-    </motion.div>
+      {theme === 'dark' ? <SunIcon /> : <MoonStarIcon />}
+    </button>
   );
 }
 

@@ -24,7 +24,7 @@ import {
   deleteCustomInstructionsAction,
 } from '@/app/actions';
 import { SEARCH_LIMITS } from '@/lib/constants';
-import { authClient, betterauthClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 import {
   MagnifyingGlass,
   Lightning,
@@ -961,7 +961,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
           dodoProStatus: user?.dodoProStatus,
           isProUser: user?.isProUser,
         });
-        await betterauthClient.dodopayments.customer.portal();
+        // TODO: Implement Famasi payment portal integration
+        console.log('Payment portal not yet implemented with Famasi API');
       } else {
         // Use Polar portal for Polar subscribers
         console.log('Opening Polar portal');

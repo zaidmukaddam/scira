@@ -2490,8 +2490,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       : isTypewriting
                         ? '✨ Writing enhanced prompt...'
                         : hasInteracted
-                          ? 'Ask Remi about medications, symptoms, or health...'
-                          : 'Ask Remi about your health, medications, or symptoms...'
+                          ? 'Find, Order & refill medications across 1000+ pharmacies'
+                          : 'Find, Order & refill medications across 1000+ pharmacies'
                   }
                   value={input}
                   onChange={handleInput}
@@ -2884,6 +2884,77 @@ const FormComponent: React.FC<FormComponentProps> = ({
           </DialogContent>
         </Dialog>
       </TooltipProvider>
+      
+      {/* Medication suggestion carousel - only show when no messages */}
+      {status === 'ready' && messages.length === 0 && (
+        <div className="mt-4 mb-2">
+          <div 
+            className="overflow-x-auto scrollbar-hide overscroll-x-contain"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div className="flex gap-3 px-4 pb-2 min-w-max">
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInput('How much is Atorvastatin?');
+                  handleSubmit(undefined, { target: { value: 'How much is Atorvastatin?' } } as any);
+                }}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                How much is Atorvastatin?
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInput('Which pharmacy has Atorvastatin?');
+                  handleSubmit(undefined, { target: { value: 'Which pharmacy has Atorvastatin?' } } as any);
+                }}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                Which pharmacy has Atorvastatin?
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInput('Find me cheaper alternatives to Xalatan?');
+                  handleSubmit(undefined, { target: { value: 'Find me cheaper alternatives to Xalatan?' } } as any);
+                }}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                Find me cheaper alternatives to Xalatan?
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInput('What are the side effects of Metformin?');
+                  handleSubmit(undefined, { target: { value: 'What are the side effects of Metformin?' } } as any);
+                }}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                What are the side effects of Metformin?
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInput('Find pharmacies near me');
+                  handleSubmit(undefined, { target: { value: 'Find pharmacies near me' } } as any);
+                }}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                Find pharmacies near me
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      
     </div>
   );
 };

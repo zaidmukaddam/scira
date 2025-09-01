@@ -48,7 +48,6 @@ import {
   youtubeSearchTool,
   retrieveTool,
   weatherTool,
-  codeInterpreterTool,
   findPlaceOnMapTool,
   nearbyPlacesSearchTool,
   flightTrackerTool,
@@ -568,7 +567,6 @@ export async function POST(req: Request) {
 
             // Utility Tools
             text_translate: textTranslateTool,
-            code_interpreter: codeInterpreterTool,
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
             mcp_search: mcpSearchTool,

@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { Plus, GlobeHemisphereWest } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
-import { UserProfile, NavigationMenu } from '@/components/user-profile';
+import { UserProfile } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 import { ShareButton } from '@/components/share';
 import { cn } from '@/lib/utils';
@@ -62,7 +63,7 @@ const Navbar = memo(
       <>
         <div
           className={cn(
-            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center p-3 transition-colors duration-200',
+            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center px-4 sm:px-3 py-3 transition-colors duration-200',
             isDialogOpen
               ? 'bg-transparent pointer-events-none'
               : status === 'streaming' || status === 'ready'
@@ -71,17 +72,15 @@ const Navbar = memo(
           )}
         >
           <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>
-            <Link href="/new">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
-              >
-                <Plus size={16} className="group-hover:rotate-90 transition-all" />
-                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
-              </Button>
+            {/* Atlas by Famasi logo at top left */}
+            <Link href="/" className="pointer-events-auto">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold text-foreground">
+                  Atlas <span className="text-muted-foreground font-normal">by Famasi</span>
+                </h1>
+              </div>
             </Link>
+
 
             {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
             {user && !hasActiveSubscription && !showProLoading && (
@@ -117,7 +116,7 @@ const Navbar = memo(
               </div>
             </div>
           )}
-          <div className={cn('flex items-center gap-1', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>
             {/* Share functionality using unified component */}
             {chatId && (
               <>
@@ -191,10 +190,24 @@ const Navbar = memo(
               </>
             )}
 
+            {/* Theme toggle moved to top right */}
+            <ThemeSwitcher />
+
+            {/* New Chat Button moved to top right */}
+            <Link href="/new">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+              >
+                <Plus size={16} className="group-hover:rotate-90 transition-all" />
+                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+              </Button>
+            </Link>
+            
             {/* Chat History Button */}
             {user && <ChatHistoryButton onClickAction={onHistoryClick} />}
-            {/* Navigation Menu - settings icon for general navigation */}
-            <NavigationMenu />
             {/* User Profile - focused on authentication and account management */}
             <UserProfile
               user={user}

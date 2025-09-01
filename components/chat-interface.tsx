@@ -636,23 +636,9 @@ const ChatInterface = memo(
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-6">
-                <div className="inline-flex items-center gap-3 mb-4">
-                  <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                    remi
-                  </h1>
-                  {isUserPro && (
-                    <h1 className="text-2xl font-baumans! leading-4 inline-block !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                      pro
-                    </h1>
-                  )}
-                </div>
-                <p className="text-lg text-muted-foreground mb-2">
-                  Your AI healthcare assistant powered by Famasi Africa
-                </p>
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200 max-w-md mx-auto">
-                  <p className="font-medium mb-1">⚠️ Medical Disclaimer</p>
-                  <p>This AI provides general health information only. Always consult healthcare professionals for medical advice, diagnosis, or treatment.</p>
-                </div>
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-foreground mb-6 font-semibold leading-tight">
+                  What medication are you looking for today?
+                </h1>
               </div>
             )}
 

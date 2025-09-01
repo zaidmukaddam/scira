@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type {
   academicSearchTool,
-  codeInterpreterTool,
   coinDataByContractTool,
   coinDataTool,
   coinOhlcTool,
@@ -105,7 +104,6 @@ export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 
 type weatherTool = InferUITool<typeof weatherTool>;
 type academicSearchTool = InferUITool<typeof academicSearchTool>;
-type codeInterpreterTool = InferUITool<typeof codeInterpreterTool>;
 type coinDataTool = InferUITool<typeof coinDataTool>;
 type coinOhlcTool = InferUITool<typeof coinOhlcTool>;
 type currencyConverterTool = InferUITool<typeof currencyConverterTool>;
@@ -155,7 +153,6 @@ export type ChatTools = {
 
   // Utility Tools
   text_translate: textTranslateTool;
-  code_interpreter: codeInterpreterTool;
   track_flight: flightTrackerTool;
   datetime: datetimeTool;
   mcp_search: mcpSearchTool;

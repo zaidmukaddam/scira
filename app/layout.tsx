@@ -11,6 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Databuddy } from '@databuddy/sdk';
 
 import { Providers } from './providers';
+import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://remi.famasi.africa'),
@@ -106,6 +107,7 @@ export default function RootLayout({
           <Providers>
             <Toaster position="top-center" />
             {children}
+            <Footer />
           </Providers>
         </NuqsAdapter>
         <Databuddy clientId={process.env.DATABUDDY_CLIENT_ID!} enableBatching={true} trackSessions={true} />

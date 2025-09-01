@@ -248,6 +248,9 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      iconsax-react:
+        specifier: ^0.0.8
+        version: 0.0.8(react@19.1.1)
       katex:
         specifier: ^0.16.22
         version: 0.16.22
@@ -3986,6 +3989,11 @@ packages:
 
   humanize-ms@1.2.1:
     resolution: {integrity: sha512-Fl70vYtsAFb/C06PTS9dZBo7ihau+Tu/DNCk/OyHhea07S+aeMWpFFkUaXRa8fI+ScZbEI8dfSxwY7gxZ9SAVQ==}
+
+  iconsax-react@0.0.8:
+    resolution: {integrity: sha512-l3dVk4zGtkkJHgvNYqAf0wDKqnKxXykee5/DoESGo2JvSYwaxajJUHSX2YrPRXSov8Hd8ClGFwJxCEaEjrFD1Q==}
+    peerDependencies:
+      react: '*'
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -9789,6 +9797,11 @@ snapshots:
   humanize-ms@1.2.1:
     dependencies:
       ms: 2.1.3
+
+  iconsax-react@0.0.8(react@19.1.1):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.1.1
 
   iconv-lite@0.6.3:
     dependencies:
