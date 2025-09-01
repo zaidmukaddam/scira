@@ -1,8 +1,5 @@
-import type { NextConfig } from 'next';
-import './env/server';
-import './env/client';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   compiler: {
     // if NODE_ENV is production, remove console.log
     removeConsole:
@@ -30,7 +27,7 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
-  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki'],
+  transpilePackages: ['geist', 'shiki'],
   output: 'standalone',
   devIndicators: false,
   async headers() {

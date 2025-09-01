@@ -47,9 +47,6 @@ importers:
       '@databuddy/sdk':
         specifier: ^1.4.2
         version: 1.4.2
-      '@daytonaio/sdk':
-        specifier: ^0.25.6
-        version: 0.25.6
       '@dodopayments/better-auth':
         specifier: ^1.1.1
         version: 1.1.1(dodopayments@1.51.2(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)
@@ -704,12 +701,6 @@ packages:
   '@date-fns/tz@1.4.1':
     resolution: {integrity: sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA==}
 
-  '@daytonaio/api-client@0.25.6':
-    resolution: {integrity: sha512-F3OfDxpXX8YoxCfipr3BfJUicDR4Yws7JipX3VIVy1ChkbBUFv3KG7lkAhKuN7PJG5e8S0SP7n2u24TdWiWa9A==}
-
-  '@daytonaio/sdk@0.25.6':
-    resolution: {integrity: sha512-FCsX3hM7gWWKyv1VxTrALdlN/CqhN/9qsT8Bxv3HMsaU/azjmVv4iDrHluxTWmSNCSnv6qRkKS69C57uBK5k0A==}
-
   '@dodopayments/better-auth@1.1.1':
     resolution: {integrity: sha512-lEaIIGZoMCdPfBbZAU5QCuWyij4I38tcI8WdQdQONY7WFEL+neZYow2PnpnPMlj7EyZHnyzejeqmFcmvAvKawg==}
     engines: {node: '>=16.0.0'}
@@ -1132,9 +1123,6 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
-
-  '@iarna/toml@2.2.5':
-    resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
 
   '@img/sharp-darwin-arm64@0.34.3':
     resolution: {integrity: sha512-ryFMfvxxpQRsgZJqBd4wsttYQbCxsJksrv9Lw/v798JcQ8+w84mBWuXwl+TT0WJ/WrYOLaYpwQXi3sA9nTIaIg==}
@@ -3366,10 +3354,6 @@ packages:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
-  dotenv@17.2.1:
-    resolution: {integrity: sha512-kQhDYKZecqnM0fCnzI5eIv5L4cAe/iRI+HqMbO/hbRdTAeXDG+M9FjipUxNfbARuEg4iHIbhnhs78BCHNbSxEQ==}
-    engines: {node: '>=12'}
-
   drizzle-kit@0.31.4:
     resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
@@ -3724,10 +3708,6 @@ packages:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
 
-  expand-tilde@2.0.2:
-    resolution: {integrity: sha512-A5EmesHW6rfnZ9ysHQjPdJRni0SRar0tjtG5MNtm9n5TUvsYU8oozprtRD4AqHxcZWWlVuAmQo2nWKfN9oyjTw==}
-    engines: {node: '>=0.10.0'}
-
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
@@ -3978,10 +3958,6 @@ packages:
   highlight.js@11.11.1:
     resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
     engines: {node: '>=12.0.0'}
-
-  homedir-polyfill@1.0.3:
-    resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
-    engines: {node: '>=0.10.0'}
 
   html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
@@ -4847,10 +4823,6 @@ packages:
   parse-entities@4.0.2:
     resolution: {integrity: sha512-GG2AQYWoLgL877gQIKeRPGO1xF9+eG1ujIb5soS5gPvLQ1y2o8FL90w2QWNdf9I361Mpp7726c+lj3U0qK1uGw==}
 
-  parse-passwd@1.0.0:
-    resolution: {integrity: sha512-1Y1A//QUXEZK7YKz+rD9WydcE1+EuPr6ZBgKecAB8tmoW6UFv0NREVJe1p+jRxtThkcbbKkfwIbWJe/IeE6m2Q==}
-    engines: {node: '>=0.10.0'}
-
   parse5@7.3.0:
     resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
 
@@ -4871,9 +4843,6 @@ packages:
 
   path-parse@1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
-
-  pathe@2.0.3:
-    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
   peberminta@0.9.0:
     resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
@@ -5290,10 +5259,6 @@ packages:
   shebang-regex@3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
-
-  shell-quote@1.8.3:
-    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
-    engines: {node: '>= 0.4'}
 
   side-channel-list@1.0.0:
     resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
@@ -6382,30 +6347,6 @@ snapshots:
 
   '@date-fns/tz@1.4.1': {}
 
-  '@daytonaio/api-client@0.25.6':
-    dependencies:
-      axios: 1.11.0
-    transitivePeerDependencies:
-      - debug
-
-  '@daytonaio/sdk@0.25.6':
-    dependencies:
-      '@aws-sdk/client-s3': 3.873.0
-      '@aws-sdk/lib-storage': 3.873.0(@aws-sdk/client-s3@3.873.0)
-      '@daytonaio/api-client': 0.25.6
-      '@iarna/toml': 2.2.5
-      axios: 1.11.0
-      dotenv: 17.2.1
-      expand-tilde: 2.0.2
-      fast-glob: 3.3.3
-      form-data: 4.0.4
-      pathe: 2.0.3
-      shell-quote: 1.8.3
-      tar: 6.2.1
-    transitivePeerDependencies:
-      - aws-crt
-      - debug
-
   '@dodopayments/better-auth@1.1.1(dodopayments@1.51.2(encoding@0.1.13))(encoding@0.1.13)(zod@3.25.76)':
     dependencies:
       '@dodopayments/core': 0.1.15(encoding@0.1.13)(zod@3.25.76)
@@ -6692,8 +6633,6 @@ snapshots:
   '@humanwhocodes/retry@0.3.1': {}
 
   '@humanwhocodes/retry@0.4.3': {}
-
-  '@iarna/toml@2.2.5': {}
 
   '@img/sharp-darwin-arm64@0.34.3':
     optionalDependencies:
@@ -8781,7 +8720,8 @@ snapshots:
   chownr@1.1.4:
     optional: true
 
-  chownr@2.0.0: {}
+  chownr@2.0.0:
+    optional: true
 
   chownr@3.0.0: {}
 
@@ -9025,8 +8965,6 @@ snapshots:
   dotenv@16.4.7: {}
 
   dotenv@16.6.1: {}
-
-  dotenv@17.2.1: {}
 
   drizzle-kit@0.31.4:
     dependencies:
@@ -9500,10 +9438,6 @@ snapshots:
   expand-template@2.0.3:
     optional: true
 
-  expand-tilde@2.0.2:
-    dependencies:
-      homedir-polyfill: 1.0.3
-
   extend@3.0.2: {}
 
   fast-deep-equal@2.0.1: {}
@@ -9605,6 +9539,7 @@ snapshots:
   fs-minipass@2.1.0:
     dependencies:
       minipass: 3.3.6
+    optional: true
 
   fs.realpath@1.0.0:
     optional: true
@@ -9806,10 +9741,6 @@ snapshots:
   he@1.2.0: {}
 
   highlight.js@11.11.1: {}
-
-  homedir-polyfill@1.0.3:
-    dependencies:
-      parse-passwd: 1.0.0
 
   html-to-text@9.0.5:
     dependencies:
@@ -10663,8 +10594,10 @@ snapshots:
   minipass@3.3.6:
     dependencies:
       yallist: 4.0.0
+    optional: true
 
-  minipass@5.0.0: {}
+  minipass@5.0.0:
+    optional: true
 
   minipass@7.1.2: {}
 
@@ -10672,6 +10605,7 @@ snapshots:
     dependencies:
       minipass: 3.3.6
       yallist: 4.0.0
+    optional: true
 
   minizlib@3.0.2:
     dependencies:
@@ -10682,7 +10616,8 @@ snapshots:
   mkdirp-classic@0.5.3:
     optional: true
 
-  mkdirp@1.0.4: {}
+  mkdirp@1.0.4:
+    optional: true
 
   mkdirp@3.0.1: {}
 
@@ -10897,8 +10832,6 @@ snapshots:
       is-decimal: 2.0.1
       is-hexadecimal: 2.0.1
 
-  parse-passwd@1.0.0: {}
-
   parse5@7.3.0:
     dependencies:
       entities: 6.0.1
@@ -10916,8 +10849,6 @@ snapshots:
   path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
-
-  pathe@2.0.3: {}
 
   peberminta@0.9.0: {}
 
@@ -11427,8 +11358,6 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.3: {}
-
   side-channel-list@1.0.0:
     dependencies:
       es-errors: 1.3.0
@@ -11698,6 +11627,7 @@ snapshots:
       minizlib: 2.1.2
       mkdirp: 1.0.4
       yallist: 4.0.0
+    optional: true
 
   tar@7.4.3:
     dependencies:
@@ -12031,7 +11961,8 @@ snapshots:
 
   xtend@4.0.2: {}
 
-  yallist@4.0.0: {}
+  yallist@4.0.0:
+    optional: true
 
   yallist@5.0.0: {}
 

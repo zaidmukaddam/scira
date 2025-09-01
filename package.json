@@ -1,5 +1,5 @@
 {
-  "name": "scira",
+  "name": "atlas",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,7 +24,6 @@
     "@aws-sdk/lib-storage": "^3.842.0",
     "@babel/runtime": ">=7.27.0",
     "@databuddy/sdk": "^1.4.2",
-    "@daytonaio/sdk": "^0.25.6",
     "@dodopayments/better-auth": "^1.1.1",
     "@dodopayments/core": "^0.1.15",
     "@eslint/plugin-kit": "0.3.4",

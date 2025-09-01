@@ -4,14 +4,12 @@ import { twMerge } from 'tailwind-merge';
 import {
   GlobalSearchIcon,
   Database02Icon,
-  AtomicPowerIcon,
-  Bitcoin02Icon,
   MicroscopeIcon,
-  NewTwitterIcon,
-  RedditIcon,
-  YoutubeIcon,
   ChattingIcon,
-  AppleStocksIcon,
+  Medicine02Icon,
+  HospitalIcon,
+  StethoscopeIcon,
+  HeartCheckIcon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -19,16 +17,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export type SearchGroupId =
-  | 'web'
-  | 'x'
-  | 'academic'
-  | 'youtube'
-  | 'reddit'
-  | 'stocks'
+  | 'medications'
+  | 'pharmacies'
+  | 'symptoms'
+  | 'conditions'
   | 'chat'
-  | 'extreme'
-  | 'memory'
-  | 'crypto';
+  | 'web'
+  | 'academic'
+  | 'memory';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -50,6 +46,41 @@ export function getWebSearchDescription(provider: SearchProvider = 'parallel'): 
 export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
   return [
     {
+      id: 'medications' as const,
+      name: 'Medications',
+      description: 'Search for medications, dosages, and drug information',
+      icon: Medicine02Icon,
+      show: true,
+    },
+    {
+      id: 'pharmacies' as const,
+      name: 'Pharmacies',
+      description: 'Find nearby pharmacies and check medication availability',
+      icon: HospitalIcon,
+      show: true,
+    },
+    {
+      id: 'symptoms' as const,
+      name: 'Symptoms',
+      description: 'Analyze symptoms and get health guidance',
+      icon: StethoscopeIcon,
+      show: true,
+    },
+    {
+      id: 'conditions' as const,
+      name: 'Conditions',
+      description: 'Learn about medical conditions and treatments',
+      icon: HeartCheckIcon,
+      show: true,
+    },
+    {
+      id: 'chat' as const,
+      name: 'Chat',
+      description: 'Talk to Remi AI directly for personalized healthcare guidance',
+      icon: ChattingIcon,
+      show: true,
+    },
+    {
       id: 'web' as const,
       name: 'Web',
       description: getWebSearchDescription(searchProvider),
@@ -57,68 +88,19 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       show: true,
     },
     {
-      id: 'x' as const,
-      name: 'X',
-      description: 'Search X posts',
-      icon: NewTwitterIcon,
-      show: true,
-    },
-    {
-      id: 'stocks' as const,
-      name: 'Stocks',
-      description: 'Stock and currency information',
-      icon: AppleStocksIcon,
-      show: true,
-    },
-    {
-      id: 'reddit' as const,
-      name: 'Reddit',
-      description: 'Search Reddit posts',
-      icon: RedditIcon,
-      show: true,
-    },
-    {
       id: 'academic' as const,
       name: 'Academic',
-      description: 'Search academic papers powered by Exa',
+      description: 'Search medical research and academic papers',
       icon: MicroscopeIcon,
-      show: true,
-    },
-    {
-      id: 'chat' as const,
-      name: 'Chat',
-      description: 'Talk to the model directly.',
-      icon: ChattingIcon,
       show: true,
     },
     {
       id: 'memory' as const,
       name: 'Memory',
-      description: 'Your personal memory companion',
+      description: 'Your personal health records and medication history',
       icon: Database02Icon,
       show: true,
       requireAuth: true,
-    },
-    {
-      id: 'crypto' as const,
-      name: 'Crypto',
-      description: 'Cryptocurrency research powered by CoinGecko',
-      icon: Bitcoin02Icon,
-      show: true,
-    },
-    {
-      id: 'youtube' as const,
-      name: 'YouTube',
-      description: 'Search YouTube videos powered by Exa',
-      icon: YoutubeIcon,
-      show: true,
-    },
-    {
-      id: 'extreme' as const,
-      name: 'Extreme',
-      description: 'Deep research with multiple sources and analysis',
-      icon: AtomicPowerIcon,
-      show: true,
     },
   ] as const;
 }

@@ -2490,8 +2490,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       : isTypewriting
                         ? '✨ Writing enhanced prompt...'
                         : hasInteracted
-                          ? 'Ask a new question...'
-                          : 'Ask a question...'
+                          ? 'Ask Remi about medications, symptoms, or health...'
+                          : 'Ask Remi about your health, medications, or symptoms...'
                   }
                   value={input}
                   onChange={handleInput}
