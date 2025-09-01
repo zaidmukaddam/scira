@@ -30,6 +30,7 @@ import {
 import DodoPayments from 'dodopayments';
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from './performance-cache';
+import { clearUserDataCache } from './user-data-server';
 
 config({
   path: '.env.local',
@@ -225,6 +226,7 @@ export const auth = betterAuth({
                 // Invalidate user caches when payment status changes
                 if (validUserId) {
                   invalidateUserCaches(validUserId);
+                  clearUserDataCache(validUserId);
                   console.log('🗑️ Invalidated caches for user:', validUserId);
                 }
               } catch (error) {
@@ -406,6 +408,7 @@ export const auth = betterAuth({
                 // Invalidate user caches when subscription changes
                 if (validUserId) {
                   invalidateUserCaches(validUserId);
+                  clearUserDataCache(validUserId);
                   console.log('🗑️ Invalidated caches for user:', validUserId);
                 }
               } catch (error) {

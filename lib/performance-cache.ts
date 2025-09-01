@@ -190,10 +190,6 @@ export function invalidateUserCaches(userId: string) {
 
   // Invalidate the db cache
   db.$cache.invalidate({ tables: [user, subscription, payment] });
-
-  // Invalidate the new unified user data cache
-  const { clearUserDataCache } = require('@/lib/user-data-server');
-  clearUserDataCache(userId);
 }
 
 export function invalidateAllCaches() {
