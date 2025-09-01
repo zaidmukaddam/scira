@@ -14,6 +14,7 @@ import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { useLocation } from '@/hooks/use-location';
+import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 type SubscriptionDetails = {
   id: string;
@@ -38,12 +39,27 @@ type SubscriptionDetailsResult = {
 
 interface PricingTableProps {
   subscriptionDetails: SubscriptionDetailsResult;
-  user: any;
+  user: ComprehensiveUserData | null;
 }
 
 export default function PricingTable({ subscriptionDetails, user }: PricingTableProps) {
   const router = useRouter();
   const location = useLocation();
+
+  // Debug logging (can be removed in production)
+  console.log('PricingTable Debug:', {
+    subscriptionDetails,
+    userProStatus: user
+      ? {
+          id: user.id,
+          isProUser: user.isProUser,
+          proSource: user.proSource,
+          hasPolarSubscription: !!user.polarSubscription,
+          polarSubStatus: user.polarSubscription?.status,
+          polarSubProductId: user.polarSubscription?.productId,
+        }
+      : null,
+  });
 
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
 
@@ -158,28 +174,35 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
   const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
 
   if (!STARTER_TIER || !STARTER_SLUG) {
+    console.error('Missing required environment variables');
     throw new Error('Missing required environment variables for Starter tier');
   }
 
-  const isCurrentPlan = (tierProductId: string) => {
+  // Check if user has active Polar subscription
+  const hasPolarSubscription = () => {
     return (
       subscriptionDetails.hasSubscription &&
-      subscriptionDetails.subscription?.productId === tierProductId &&
+      subscriptionDetails.subscription?.productId === STARTER_TIER &&
       subscriptionDetails.subscription?.status === 'active'
     );
   };
 
+  // Check if user has active Dodo payments subscription
+  const hasDodoSubscription = () => {
+    return user?.isProUser === true && user?.proSource === 'dodo';
+  };
+
   // Check if user has any Pro status (Polar or DodoPayments)
   const hasProAccess = () => {
-    const hasPolarSub = isCurrentPlan(STARTER_TIER);
-    const hasDodoProAccess = user?.isProUser && user?.proSource === 'dodo';
-    return hasPolarSub || hasDodoProAccess;
+    const polarAccess = hasPolarSubscription();
+    const dodoAccess = hasDodoSubscription();
+    return polarAccess || dodoAccess;
   };
 
   // Get the source of Pro access for display
   const getProAccessSource = () => {
-    if (isCurrentPlan(STARTER_TIER)) return 'polar';
-    if (user?.proSource === 'dodo') return 'dodo';
+    if (hasPolarSubscription()) return 'polar';
+    if (hasDodoSubscription()) return 'dodo';
     return null;
   };
 
@@ -387,9 +410,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                     </p>
                   )}
-                  {getProAccessSource() === 'dodo' && user?.expiresAt && (
+                  {getProAccessSource() === 'dodo' && user?.dodoPayments?.expiresAt && (
                     <p className="text-sm text-muted-foreground text-center">
-                      Access expires {formatDate(new Date(user.expiresAt))}
+                      Access expires {formatDate(new Date(user.dodoPayments.expiresAt))}
                     </p>
                   )}
                 </div>

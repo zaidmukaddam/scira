@@ -540,8 +540,8 @@ function UsageSection({ user }: any) {
     isLoading: historicalLoading,
     refetch: refetchHistoricalData,
   } = useQuery({
-    queryKey: ['historicalUsage', user?.id, isMobile ? 6 : 9],
-    queryFn: () => getHistoricalUsage(user, isMobile ? 6 : 9),
+    queryKey: ['historicalUsage', user?.id, 9],
+    queryFn: () => getHistoricalUsage(user, 9),
     enabled: !!user,
     staleTime: 1000 * 60 * 10,
   });
@@ -553,7 +553,7 @@ function UsageSection({ user }: any) {
   const loadingStars = useMemo(() => {
     if (!historicalLoading) return [];
 
-    const months = isMobile ? 6 : 9;
+    const months = 9;
     const totalDays = months * 30;
     const futureDays = Math.min(15, Math.floor(totalDays * 0.08));
     const pastDays = totalDays - futureDays - 1;
@@ -591,7 +591,7 @@ function UsageSection({ user }: any) {
     }
 
     return completeData;
-  }, [historicalLoading, isMobile]);
+  }, [historicalLoading]);
 
   const handleRefreshUsage = async () => {
     try {
@@ -700,9 +700,9 @@ function UsageSection({ user }: any) {
       {!usageLoading && (
         <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Activity (Past {isMobile ? '6' : '9'} Months)
+            Activity (Past 9 Months)
           </h4>
-          <div className={cn('bg-muted/50 dark:bg-card rounded-lg', isMobile ? 'p-2' : 'p-3')}>
+          <div className={cn('bg-muted/50 dark:bg-card rounded-lg p-3')}>
             {historicalLoading ? (
               <TooltipProvider>
                 <ContributionGraph
@@ -1354,19 +1354,17 @@ function MemoriesSection() {
                 className="group relative p-3 rounded-lg border bg-card/50 hover:bg-card transition-all"
               >
                 <div className="pr-8">
-                  {memory.title && (
-                    <h4 className="text-sm font-medium mb-1 text-foreground">{memory.title}</h4>
-                  )}
-                  <p className="text-sm leading-relaxed text-muted-foreground">{memory.content || getMemoryContent(memory)}</p>
+                  {memory.title && <h4 className="text-sm font-medium mb-1 text-foreground">{memory.title}</h4>}
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {memory.content || getMemoryContent(memory)}
+                  </p>
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>{formatDate(memory.createdAt || memory.created_at || '')}</span>
                     </div>
                     {memory.type && (
-                      <div className="px-1.5 py-0.5 bg-muted/50 rounded text-[9px] font-medium">
-                        {memory.type}
-                      </div>
+                      <div className="px-1.5 py-0.5 bg-muted/50 rounded text-[9px] font-medium">{memory.type}</div>
                     )}
                     {memory.status && memory.status !== 'done' && (
                       <div className="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-[9px] font-medium">
@@ -1420,15 +1418,9 @@ function MemoriesSection() {
         )}
       </div>
       <div className="flex items-center gap-2 justify-center">
-          <p className="text-xs text-muted-foreground">powered by</p>
-          <Image
-            src="/supermemory.svg"
-            alt="Memories"
-            className='invert dark:invert-0'
-            width={140}
-            height={140}
-          />
-        </div>
+        <p className="text-xs text-muted-foreground">powered by</p>
+        <Image src="/supermemory.svg" alt="Memories" className="invert dark:invert-0" width={140} height={140} />
+      </div>
     </div>
   );
 }

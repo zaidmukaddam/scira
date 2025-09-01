@@ -1273,7 +1273,7 @@ export async function getDiscountConfigAction() {
   }
 }
 
-export async function getHistoricalUsage(providedUser?: any, months: number = 6) {
+export async function getHistoricalUsage(providedUser?: any, months: number = 9) {
   'use server';
 
   try {
