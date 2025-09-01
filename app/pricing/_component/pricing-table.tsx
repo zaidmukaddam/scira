@@ -147,7 +147,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           products: [productId],
           slug: slug,
           allowDiscountCodes: true,
-          discountId: discountIdToUse,
+          ...(discountIdToUse !== '' &&
+            discountConfig.enabled && {
+              discountId: discountIdToUse,
+            }),
         });
       }
     } catch (error) {
