@@ -43,6 +43,7 @@ import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { cn } from '@/lib/utils';
+import { useDataStream } from './data-stream-provider';
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -1031,6 +1032,8 @@ export const EditableAttachmentsBadge = ({
       att.mediaType === 'application/pdf',
   );
 
+  useDataStream();
+
   if (fileAttachments.length === 0) return null;
 
   const isPdf = (attachment: Attachment) =>
@@ -1339,7 +1342,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 pb-4">
+      <div className="flex flex-wrap gap-2 py-4">
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;

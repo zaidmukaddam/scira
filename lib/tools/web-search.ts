@@ -8,7 +8,8 @@ import ParallelAI from '@/lib/parallel-sdk';
 import FirecrawlClient from '@/lib/firecrawl-sdk';
 import { tavily } from '@tavily/core';
 
-const extractDomain = (url: string): string => {
+const extractDomain = (url: string | null | undefined): string => {
+  if (!url || typeof url !== 'string') return '';
   const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
   return url.match(urlPattern)?.[1] || url;
 };
@@ -40,11 +41,11 @@ const deduplicateByDomainAndUrl = <T extends { url: string }>(items: T[]): T[] =
   });
 };
 
-const processDomains = (domains?: string[]): string[] | undefined => {
+const processDomains = (domains?: (string | null)[]): string[] | undefined => {
   if (!domains || domains.length === 0) return undefined;
 
-  const processedDomains = domains.map((domain) => extractDomain(domain));
-  return processedDomains.every((domain) => domain.trim() === '') ? undefined : processedDomains;
+  const processedDomains = domains.map((domain) => extractDomain(domain)).filter((domain) => domain.trim() !== '');
+  return processedDomains.length === 0 ? undefined : processedDomains;
 };
 
 // Helper functions for Tavily image processing
@@ -72,15 +73,11 @@ export function webSearchTool(
   searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'parallel',
 ) {
   return tool({
-    description: `Search the web for information with multiple queries, max results, search depth, topics, and quality.
-    ${searchProvider === 'parallel' ? 'Parallel AI is used for this search.' : ''}
-    ${searchProvider === 'tavily' ? 'Tavily is used for this search.' : ''}
-    ${searchProvider === 'firecrawl' ? 'Firecrawl is used for this search.' : ''}
-    ${searchProvider === 'exa' ? 'Exa is used for this search.' : ''}
-
-    Very important:
+    description: `This is the default tool of the app to be used to search the web for information with multiple queries, max results, search depth, topics, and quality.
+    Very important Rules:
     - The queries should always be in the same language as the user's message.
     - And count of the queries should be 3-5.
+    - Do not use the best quality unless absolutly required since it is time expensive.
     `,
     inputSchema: z.object({
       queries: z.array(
@@ -111,13 +108,13 @@ export function webSearchTool(
         .array(z.string())
         .optional()
         .describe(
-          'An array of domains to include only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
+          'An list of domains to include only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
         ),
       exclude_domains: z
         .array(z.string())
         .optional()
         .describe(
-          'An array of domains to exclude only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
+          'An list of domains to exclude only and only if asked by the user. Default is undefined. DO NOT use unless instructed by the user.',
         ),
     }),
     execute: async ({
@@ -287,6 +284,9 @@ export function webSearchTool(
 
           if (searchProvider === 'tavily') {
             // Use Tavily
+            const processedIncludeDomains = processDomains(include_domains);
+            const processedExcludeDomains = processDomains(exclude_domains);
+
             const tavilyData = await tvly.search(query, {
               topic: currentTopic || 'general',
               days: currentTopic === 'news' ? 7 : undefined,
@@ -295,8 +295,8 @@ export function webSearchTool(
               includeAnswer: true,
               includeImages: true,
               includeImageDescriptions: true,
-              excludeDomains: exclude_domains || undefined,
-              includeDomains: include_domains || undefined,
+              excludeDomains: processedExcludeDomains,
+              includeDomains: processedIncludeDomains,
             });
 
             results = deduplicateByDomainAndUrl(tavilyData.results).map((obj: any) => ({

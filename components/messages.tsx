@@ -11,6 +11,7 @@ import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { useDataStream } from './data-stream-provider';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -65,6 +66,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
     const reasoningScrollRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+
+    useDataStream();
 
     // Scroll to bottom immediately (without animation) when opening existing chat
     useEffect(() => {

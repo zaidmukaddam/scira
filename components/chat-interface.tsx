@@ -255,9 +255,7 @@ const ChatInterface = memo(
       experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 50,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
-        setDataStream((ds) => {
-          return [...ds, dataPart as DataUIPart<CustomUIDataTypes>];
-        });
+        setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       },
       onFinish: async ({ message }) => {
         console.log('onFinish<Client>', message.parts);
@@ -351,9 +349,7 @@ const ChatInterface = memo(
       autoResume: true,
       initialMessages: initialMessages || [],
       resumeStream,
-      setMessages: (messages) => {
-        setMessages(messages as ChatMessage[]);
-      },
+      setMessages,
     });
 
     useEffect(() => {
@@ -580,7 +576,7 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center min-h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
+      <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
         <Navbar
           isDialogOpen={chatState.anyDialogOpen}
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
@@ -629,7 +625,7 @@ const ChatInterface = memo(
         <div
           className={`w-full p-2 sm:p-4 ${
             status === 'ready' && messages.length === 0
-              ? 'min-h-screen! flex! flex-col! items-center! justify-center!' // Center everything when no messages
+              ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
               : 'mt-20! sm:mt-16! flex flex-col!' // Add top margin when showing messages
           }`}
         >
@@ -734,7 +730,7 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-[linear-gradient(to_top,theme(colors.background)_96px,transparent_0)]',
+                  'transition-all duration-500 bg-background',
                   messages.length === 0 && !chatState.hasSubmitted
                     ? 'relative max-w-2xl mx-auto w-full rounded-xl'
                     : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',

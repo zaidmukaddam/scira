@@ -453,7 +453,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
               {/* Message metadata stats (model, time, tokens) */}
               {meta && (
-                <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
+                <div className="flex flex-wrap items-center gap-1 ml-1 sm:ml-auto">
                   {modelLabel && (
                     <TooltipProvider>
                       <Tooltip>

@@ -54,6 +54,7 @@ type MultiSearchArgs = {
   maxResults: number[];
   topics: ('general' | 'news' | 'finance')[];
   searchDepth: ('basic' | 'advanced')[];
+  quality: ('default' | 'best')[];
 };
 
 // Constants
@@ -387,7 +388,8 @@ ImageGallery.displayName = 'ImageGallery';
 const LoadingState: React.FC<{
   queries: string[];
   annotations: DataUIPart<CustomUIDataTypes>[];
-}> = ({ queries, annotations }) => {
+  args: MultiSearchArgs;
+}> = ({ queries, annotations, args }) => {
   const completedCount = annotations.length;
   const totalResults = annotations.reduce((sum, a) => sum + a.data.resultsCount, 0);
   const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
@@ -485,12 +487,13 @@ const LoadingState: React.FC<{
               >
                 {queries.map((query, i) => {
                   const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
+                  const currentQuality = args.quality?.[i] || 'default';
                   return (
                     <Badge
                       key={i}
                       variant="outline"
                       className={cn(
-                        'rounded-full text-xs px-3 py-1 shrink-0 transition-all',
+                        'rounded-full text-xs px-3 py-1 shrink-0 transition-all flex items-center gap-1.5',
                         isCompleted
                           ? 'bg-neutral-100 dark:bg-neutral-800'
                           : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-400',
@@ -501,7 +504,12 @@ const LoadingState: React.FC<{
                       ) : (
                         <div className="w-3 h-3 mr-1.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                       )}
-                      {query}
+                      <span>{query}</span>
+                      {currentQuality === 'best' && (
+                        <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+                          PRO
+                        </span>
+                      )}
                     </Badge>
                   );
                 })}
@@ -612,7 +620,7 @@ const MultiSearch = ({
   };
 
   if (!result) {
-    return <LoadingState queries={args.queries} annotations={annotations} />;
+    return <LoadingState queries={args.queries} annotations={annotations} args={args} />;
   }
 
   const allImages = result.searches.flatMap((search) => search.images);
@@ -686,12 +694,24 @@ const MultiSearch = ({
             >
               {/* Query tags */}
               <div ref={queryTagsRef} className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
-                {result.searches.map((search, i) => (
-                  <Badge key={i} variant="outline" className="rounded-full text-xs px-3 py-1 shrink-0">
-                    <Search className="w-3 h-3 mr-1.5" />
-                    {search.query}
-                  </Badge>
-                ))}
+                {result.searches.map((search, i) => {
+                  const currentQuality = args.quality?.[i] || 'default';
+                  return (
+                    <Badge
+                      key={i}
+                      variant="outline"
+                      className="rounded-full text-xs px-3 py-1 shrink-0 flex items-center gap-1.5"
+                    >
+                      <Search className="w-3 h-3" />
+                      <span>{search.query}</span>
+                      {currentQuality === 'best' && (
+                        <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+                          PRO
+                        </span>
+                      )}
+                    </Badge>
+                  );
+                })}
               </div>
 
               {/* Preview results */}

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
-  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki'],
+  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki', 'resumable-stream'],
   output: 'standalone',
   devIndicators: false,
   async headers() {

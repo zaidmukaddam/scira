@@ -64,7 +64,6 @@ import {
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
-import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
 
@@ -116,7 +115,7 @@ export function getStreamContext() {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
-        keyPrefix: 'scira-ai:resumable-stream',
+        keyPrefix: 'scira-ai',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
@@ -482,7 +481,6 @@ export async function POST(req: Request) {
                     }
                   : {}),
         stopWhen: stepCountIs(5),
-        abortSignal: req.signal,
         onAbort: ({ steps }) => {
           // Handle cleanup when stream is aborted
           console.log('Stream aborted after', steps.length, 'steps');

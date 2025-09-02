@@ -132,7 +132,7 @@ const Navbar = memo(
                     isOwner={isOwner}
                     user={user}
                     variant="navbar"
-                    className='mr-1'
+                    className="mr-1"
                     disabled={false}
                   />
                 ) : (

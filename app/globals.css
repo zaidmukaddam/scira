@@ -372,6 +372,67 @@
   }
 }
 
+/* Prevent iOS scroll bounce issues with fixed positioned elements */
+body {
+  /* Prevent iOS from shrinking viewport height when scrolling */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Mobile viewport height fixes */
+@media screen and (max-width: 1024px) {
+  /* Fix for iOS viewport height issues */
+  .h-screen {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for better mobile support */
+  }
+
+  /* Ensure fixed elements work properly with viewport changes */
+  .fixed {
+    /* Force hardware acceleration */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Better height handling for mobile containers */
+  body {
+    /* Use dynamic viewport height on mobile */
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Ensure fixed elements maintain position during scroll */
+@media screen and (max-width: 1024px) {
+  /* Prevent viewport height changes from affecting fixed elements */
+  .fixed {
+    /* Force hardware acceleration for smoother rendering */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Prevent iOS bounce from affecting positioning */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Ensure safe area calculations are consistent */
+  .fixed.bottom-0 {
+    /* Use padding instead of margin for more reliable positioning */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Hide Leaflet attribution globally */
 .leaflet-control-attribution {
   display: none !important;
