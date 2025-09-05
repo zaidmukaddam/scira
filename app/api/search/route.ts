@@ -9,13 +9,13 @@ import {
 } from '@/app/actions';
 import {
   convertToModelMessages,
-  streamText,
   NoSuchToolError,
   createUIMessageStream,
-  generateObject,
   stepCountIs,
   JsonToSseTransformStream,
 } from 'ai';
+import { paidStreamText, paidGenerateObject } from '@paid-ai/paid-node';
+import { getClient } from '../../../lib/client';
 import { createMemoryTools } from '@/lib/tools/supermemory';
 import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits, models } from '@/ai/providers';
 import {
@@ -445,254 +445,263 @@ export async function POST(req: Request) {
 
       const streamStartTime = Date.now();
 
-      const result = streamText({
-        model: scira.languageModel(model),
-        messages: convertToModelMessages(messages),
-        ...(model.includes('scira-qwen-32b')
-          ? {
-              temperature: 0.6,
-              topP: 0.95,
-              minP: 0,
-            }
-          : model.includes('scira-qwen-235')
+      const client = await getClient();
+
+      const result = await client.trace('blah', async () => {
+        return paidStreamText({
+          model: scira.languageModel(model),
+          messages: convertToModelMessages(messages),
+          ...(model.includes('scira-qwen-32b')
             ? {
-                temperature: 0.7,
-                topP: 0.8,
+                temperature: 0.6,
+                topP: 0.95,
                 minP: 0,
               }
-            : model.includes('scira-qwen-30')
+            : model.includes('scira-qwen-235')
               ? {
                   temperature: 0.7,
                   topP: 0.8,
                   minP: 0,
                 }
-              : model.includes('scira-qwen-235-think')
+              : model.includes('scira-qwen-30')
                 ? {
-                    temperature: 0.6,
-                    topP: 0.95,
-                    topK: 20,
+                    temperature: 0.7,
+                    topP: 0.8,
                     minP: 0,
                   }
-                : model.includes('scira-qwen-30-think')
+                : model.includes('scira-qwen-235-think')
                   ? {
                       temperature: 0.6,
                       topP: 0.95,
+                      topK: 20,
                       minP: 0,
                     }
-                  : {}),
-        stopWhen: stepCountIs(5),
-        onAbort: ({ steps }) => {
-          // Handle cleanup when stream is aborted
-          console.log('Stream aborted after', steps.length, 'steps');
-          // Persist partial results to database
-        },
-        maxRetries: 10,
-        ...(model.includes('scira-5')
-          ? {
-              maxOutputTokens: maxTokens,
-            }
-          : {}),
-        activeTools: [...activeTools],
-        experimental_transform: markdownJoinerTransform(),
-        system:
-          instructions +
-          (customInstructions && (isCustomInstructionsEnabled ?? true)
-            ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
-            : '\n') +
-          (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
-        toolChoice: 'auto',
-        providerOptions: {
-          openai: {
-            ...(model.includes('scira-5')
-              ? {
-                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'minimal',
-                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-                  parallelToolCalls: false,
-                  strictJsonSchema: false,
-                  serviceTier: 'auto',
-                  textVerbosity: 'high',
-                }
-              : {}),
-          } satisfies OpenAIResponsesProviderOptions,
-          xai: {
-            ...(model === 'scira-default'
-              ? {
-                  reasoningEffort: 'low',
-                }
-              : {}),
-          } satisfies XaiProviderOptions,
-          groq: {
-            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
-              ? {
-                  reasoningEffort: 'high',
-                }
-              : {}),
-            ...(model === 'scira-qwen-32b'
-              ? {
-                  reasoningEffort: 'none',
-                }
-              : {}),
-            parallelToolCalls: false,
-            structuredOutputs: true,
-            serviceTier: 'auto',
-          } satisfies GroqProviderOptions,
-        },
-        tools: (() => {
-          const baseTools = {
-            // Stock & Financial Tools
-            stock_chart: stockChartTool,
-            currency_converter: currencyConverterTool,
-            coin_data: coinDataTool,
-            coin_data_by_contract: coinDataByContractTool,
-            coin_ohlc: coinOhlcTool,
-
-            // Search & Content Tools
-            x_search: xSearchTool,
-            web_search: webSearchTool(dataStream, searchProvider),
-            academic_search: academicSearchTool,
-            youtube_search: youtubeSearchTool,
-            reddit_search: redditSearchTool,
-            retrieve: retrieveTool,
-
-            // Media & Entertainment
-            movie_or_tv_search: movieTvSearchTool,
-            trending_movies: trendingMoviesTool,
-            trending_tv: trendingTvTool,
-
-            // Location & Maps
-            find_place_on_map: findPlaceOnMapTool,
-            nearby_places_search: nearbyPlacesSearchTool,
-            get_weather_data: weatherTool,
-
-            // Utility Tools
-            text_translate: textTranslateTool,
-            code_interpreter: codeInterpreterTool,
-            track_flight: flightTrackerTool,
-            datetime: datetimeTool,
-            mcp_search: mcpSearchTool,
-            extreme_search: extremeSearchTool(dataStream),
-            greeting: greetingTool(timezone),
-          };
-
-          if (!user) {
-            return baseTools;
-          }
-
-          // Add memory tools for authenticated users
-          const memoryTools = createMemoryTools(user.id);
-          return {
-            ...baseTools,
-            search_memories: memoryTools.searchMemories as any,
-            add_memory: memoryTools.addMemory as any,
-          } as any;
-        })(),
-        experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
-          if (NoSuchToolError.isInstance(error)) {
-            return null; // do not attempt to fix invalid tool names
-          }
-
-          console.log('Fixing tool call================================');
-          console.log('toolCall', toolCall);
-          console.log('tools', tools);
-          console.log('parameterSchema', inputSchema);
-          console.log('error', error);
-
-          const tool = tools[toolCall.toolName as keyof typeof tools];
-
-          if (!tool) {
-            return null;
-          }
-
-          const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-3'),
-            schema: tool.inputSchema,
-            prompt: [
-              `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
-              JSON.stringify(toolCall.input),
-              `The tool accepts the following schema:`,
-              JSON.stringify(inputSchema(toolCall)),
-              'Please fix the arguments.',
-              'For the code interpreter tool do not use print statements.',
-              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use te include and exclude parameters.`,
-              `Today's date is ${new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}`,
-            ].join('\n'),
-          });
-
-          console.log('repairedArgs', repairedArgs);
-
-          return { ...toolCall, args: JSON.stringify(repairedArgs) };
-        },
-        onChunk(event) {
-          if (event.chunk.type === 'tool-call') {
-            console.log('Called Tool: ', event.chunk.toolName);
-          }
-        },
-        onStepFinish(event) {
-          if (event.warnings) {
-            console.log('Warnings: ', event.warnings);
-          }
-        },
-        onFinish: async (event) => {
-          console.log('Fin reason: ', event.finishReason);
-          console.log('Reasoning: ', event.reasoningText);
-          console.log('reasoning details: ', event.reasoning);
-          console.log('Steps: ', event.steps);
-          console.log('Messages: ', event.response.messages);
-          console.log('Message content: ', event.response.messages[event.response.messages.length - 1].content);
-          console.log('Response: ', event.response);
-          console.log('Provider metadata: ', event.providerMetadata);
-          console.log('Sources: ', event.sources);
-          console.log('Usage: ', event.usage);
-          console.log('Total Usage: ', event.totalUsage);
-
-          // Only proceed if user is authenticated
-          if (user?.id && event.finishReason === 'stop') {
-            after(async () => {
-              try {
-                if (!shouldBypassRateLimits(model, user)) {
-                  await incrementMessageUsage({ userId: user.id });
-                }
-              } catch (error) {
-                console.error('Failed to track message usage:', error);
+                  : model.includes('scira-qwen-30-think')
+                    ? {
+                        temperature: 0.6,
+                        topP: 0.95,
+                        minP: 0,
+                      }
+                    : {}),
+          stopWhen: stepCountIs(5),
+          onAbort: ({ steps }) => {
+            // Handle cleanup when stream is aborted
+            console.log('Stream aborted after', steps.length, 'steps');
+            // Persist partial results to database
+          },
+          maxRetries: 10,
+          ...(model.includes('scira-5')
+            ? {
+                maxOutputTokens: maxTokens,
               }
+            : {}),
+          activeTools: [...activeTools],
+          experimental_transform: markdownJoinerTransform(),
+          system:
+            instructions +
+            (customInstructions && (isCustomInstructionsEnabled ?? true)
+              ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
+              : '\n') +
+            (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
+          toolChoice: 'auto',
+          providerOptions: {
+            openai: {
+              ...(model.includes('scira-5')
+                ? {
+                    reasoningEffort: model === 'scira-5-high' ? 'high' : 'minimal',
+                    reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
+                    parallelToolCalls: false,
+                    strictJsonSchema: false,
+                    serviceTier: 'auto',
+                    textVerbosity: 'high',
+                  }
+                : {}),
+            } satisfies OpenAIResponsesProviderOptions,
+            xai: {
+              ...(model === 'scira-default'
+                ? {
+                    reasoningEffort: 'low',
+                  }
+                : {}),
+            } satisfies XaiProviderOptions,
+            groq: {
+              ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+                ? {
+                    reasoningEffort: 'high',
+                  }
+                : {}),
+              ...(model === 'scira-qwen-32b'
+                ? {
+                    reasoningEffort: 'none',
+                  }
+                : {}),
+              parallelToolCalls: false,
+              structuredOutputs: true,
+              serviceTier: 'auto',
+            } satisfies GroqProviderOptions,
+          },
+          tools: (() => {
+            const baseTools = {
+              // Stock & Financial Tools
+              stock_chart: stockChartTool,
+              currency_converter: currencyConverterTool,
+              coin_data: coinDataTool,
+              coin_data_by_contract: coinDataByContractTool,
+              coin_ohlc: coinOhlcTool,
+
+              // Search & Content Tools
+              x_search: xSearchTool,
+              web_search: webSearchTool(dataStream, searchProvider),
+              academic_search: academicSearchTool,
+              youtube_search: youtubeSearchTool,
+              reddit_search: redditSearchTool,
+              retrieve: retrieveTool,
+
+              // Media & Entertainment
+              movie_or_tv_search: movieTvSearchTool,
+              trending_movies: trendingMoviesTool,
+              trending_tv: trendingTvTool,
+
+              // Location & Maps
+              find_place_on_map: findPlaceOnMapTool,
+              nearby_places_search: nearbyPlacesSearchTool,
+              get_weather_data: weatherTool,
+
+              // Utility Tools
+              text_translate: textTranslateTool,
+              code_interpreter: codeInterpreterTool,
+              track_flight: flightTrackerTool,
+              datetime: datetimeTool,
+              mcp_search: mcpSearchTool,
+              extreme_search: extremeSearchTool(dataStream),
+              greeting: greetingTool(timezone),
+            };
+
+            if (!user) {
+              return baseTools;
+            }
+
+            // Add memory tools for authenticated users
+            const memoryTools = createMemoryTools(user.id);
+            return {
+              ...baseTools,
+              search_memories: memoryTools.searchMemories as any,
+              add_memory: memoryTools.addMemory as any,
+            } as any;
+          })(),
+          experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
+            if (NoSuchToolError.isInstance(error)) {
+              return null; // do not attempt to fix invalid tool names
+            }
+
+            console.log('Fixing tool call================================');
+            console.log('toolCall', toolCall);
+            console.log('tools', tools);
+            console.log('parameterSchema', inputSchema);
+            console.log('error', error);
+
+            const tool = tools[toolCall.toolName as keyof typeof tools];
+
+            if (!tool) {
+              return null;
+            }
+
+            const { object: repairedArgs } = await client.trace('blah', async () => {
+              return await paidGenerateObject({
+                model: scira.languageModel('scira-grok-3'),
+                schema: tool.inputSchema,
+                prompt: [
+                  `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
+                  JSON.stringify(toolCall.input),
+                  `The tool accepts the following schema:`,
+                  JSON.stringify(inputSchema(toolCall)),
+                  'Please fix the arguments.',
+                  'For the code interpreter tool do not use print statements.',
+                  `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use te include and exclude parameters.`,
+                  `Today's date is ${new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}`,
+                ].join('\n'),
+              });
             });
 
-            if (group === 'extreme') {
+            console.log('repairedArgs', repairedArgs);
+
+            return { ...toolCall, args: JSON.stringify(repairedArgs) };
+          },
+          onChunk(event) {
+            if (event.chunk.type === 'tool-call') {
+              console.log('Called Tool: ', event.chunk.toolName);
+            }
+          },
+          onStepFinish(event) {
+            if (event.warnings) {
+              console.log('Warnings: ', event.warnings);
+            }
+          },
+          onFinish: async (event) => {
+            console.log('Fin reason: ', event.finishReason);
+            console.log('Reasoning: ', event.reasoningText);
+            console.log('reasoning details: ', event.reasoning);
+            console.log('Steps: ', event.steps);
+            console.log('Messages: ', event.response.messages);
+            console.log(
+              'Message content: ',
+              event.response.messages[event.response.messages.length - 1].content,
+            );
+            console.log('Response: ', event.response);
+            console.log('Provider metadata: ', event.providerMetadata);
+            console.log('Sources: ', event.sources);
+            console.log('Usage: ', event.usage);
+            console.log('Total Usage: ', event.totalUsage);
+
+            // Only proceed if user is authenticated
+            if (user?.id && event.finishReason === 'stop') {
               after(async () => {
                 try {
-                  const extremeSearchUsed = event.steps?.some((step) =>
-                    step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
-                  );
-
-                  if (extremeSearchUsed) {
-                    console.log('Extreme search was used successfully, incrementing count');
-                    await incrementExtremeSearchUsage({ userId: user.id });
+                  if (!shouldBypassRateLimits(model, user)) {
+                    await incrementMessageUsage({ userId: user.id });
                   }
                 } catch (error) {
-                  console.error('Failed to track extreme search usage:', error);
+                  console.error('Failed to track message usage:', error);
                 }
               });
-            }
-          }
 
-          const requestEndTime = Date.now();
-          const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
-        },
-        onError(event) {
-          console.log('Error: ', event.error);
-          const requestEndTime = Date.now();
-          const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
-        },
+              if (group === 'extreme') {
+                after(async () => {
+                  try {
+                    const extremeSearchUsed = event.steps?.some((step) =>
+                      step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
+                    );
+
+                    if (extremeSearchUsed) {
+                      console.log('Extreme search was used successfully, incrementing count');
+                      await incrementExtremeSearchUsage({ userId: user.id });
+                    }
+                  } catch (error) {
+                    console.error('Failed to track extreme search usage:', error);
+                  }
+                });
+              }
+            }
+
+            const requestEndTime = Date.now();
+            const processingTime = (requestEndTime - requestStartTime) / 1000;
+            console.log('--------------------------------');
+            console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
+            console.log('--------------------------------');
+          },
+          onError(event) {
+            console.log('Error: ', event.error);
+            const requestEndTime = Date.now();
+            const processingTime = (requestEndTime - requestStartTime) / 1000;
+            console.log('--------------------------------');
+            console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
+            console.log('--------------------------------');
+          },
+        });
       });
 
       result.consumeStream();

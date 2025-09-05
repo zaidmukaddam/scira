@@ -2,7 +2,9 @@ import { webSearchTool } from '@/lib/tools';
 import { xSearchTool } from '@/lib/tools/x-search';
 import { groq } from '@ai-sdk/groq';
 import { xai } from '@ai-sdk/xai';
-import { convertToModelMessages, customProvider, generateText, stepCountIs } from 'ai';
+import { convertToModelMessages, customProvider, stepCountIs } from 'ai';
+import { paidGenerateText } from '@paid-ai/paid-node';
+import { getClient } from '../../../lib/client';
 
 const scira = customProvider({
   languageModels: {
@@ -82,17 +84,21 @@ export async function POST(req: Request) {
         ? ['web_search' as const]
         : ['web_search' as const, 'x_search' as const];
 
-  const { text, steps } = await generateText({
-    model: scira.languageModel(model),
-    system: systemPrompt,
-    stopWhen: stepCountIs(2),
-    messages: convertToModelMessages(messages),
-    temperature: 0,
-    experimental_activeTools: activeTools,
-    tools: {
-      web_search: webSearchTool(undefined, "exa"),
-      x_search: xSearchTool,
-    },
+  const client = await getClient();
+
+  const { text, steps } = await client.trace('blah', async () => {
+    return await paidGenerateText({
+      model: scira.languageModel(model),
+      system: systemPrompt,
+      stopWhen: stepCountIs(2),
+      messages: convertToModelMessages(messages),
+      temperature: 0,
+      experimental_activeTools: activeTools,
+      tools: {
+        web_search: webSearchTool(undefined, "exa"),
+        x_search: xSearchTool,
+      },
+    });
   });
 
   console.log('Text: ', text);
