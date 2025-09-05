@@ -4,7 +4,7 @@
 import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { generateObject, UIMessage, generateText } from 'ai';
+import { UIMessage } from 'ai';
 import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
@@ -41,6 +41,8 @@ import { elevenlabs } from '@ai-sdk/elevenlabs';
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
 import { getComprehensiveUserData } from '@/lib/user-data-server';
+import { paidGenerateObject, paidGenerateText } from '@paid-ai/paid-node';
+import { getClient } from '../lib/client';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
@@ -54,7 +56,9 @@ export async function suggestQuestions(history: any[]) {
 
   console.log(history);
 
-  const { object } = await generateObject({
+  const client = await getClient();
+
+  const { object } = await client.trace('blah', async () => await paidGenerateObject({
     model: scira.languageModel('scira-grok-3'),
     temperature: 0,
     maxOutputTokens: 512,
@@ -97,7 +101,7 @@ export async function suggestQuestions(history: any[]) {
     schema: z.object({
       questions: z.array(z.string()).describe('The generated questions based on the message history.'),
     }),
-  });
+  }));
 
   return {
     questions: object.questions,
@@ -110,7 +114,8 @@ export async function checkImageModeration(images: string[]) {
     content: [{ type: 'image', image: image }],
   }));
 
-  const { text } = await generateText({
+  const client = await getClient();
+  const { text } = await client.trace('blah', async () => await paidGenerateText({
     model: groq('meta-llama/llama-guard-4-12b'),
     messages,
     providerOptions: {
@@ -118,12 +123,13 @@ export async function checkImageModeration(images: string[]) {
         service_tier: 'flex',
       },
     },
-  });
+  }));
   return text;
 }
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
-  const { text: title } = await generateText({
+  const client = await getClient();
+  const { text: title } = await client.trace('blah', async () => await paidGenerateText({
     model: scira.languageModel('scira-name'),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
@@ -139,7 +145,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
         service_tier: 'flex',
       },
     },
-  });
+  }));
 
   return title;
 }
@@ -167,14 +173,15 @@ Guidelines (MANDATORY):
 - Return ONLY the improved prompt text, with no quotes or commentary or answer to the user's query!!
 - Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
-    const { text } = await generateText({
+    const client = await getClient();
+    const { text } = await client.trace('blah', async () => await paidGenerateText({
       model: scira.languageModel('scira-enhance'),
       temperature: 0.6,
       topP: 0.95,
       maxOutputTokens: 1024,
       system,
       prompt: raw,
-    });
+    }));
 
     return { success: true, enhanced: text.trim() };
   } catch (error) {
@@ -616,7 +623,7 @@ const groupInstructions = {
   - Citations MUST be placed immediately after the sentence containing the information
   - NEVER group citations at the end of paragraphs or sections
   - Format: [Author et al. (Year) Title](URL)
-  - Multiple citations needed for complex claims (format: [Source 1](URL1) [Source 2](URL2))
+  - Multiple citations needed for complex claims (format: [Source 1](URL1) [Source 2](URL2)
   - Cite methodology and key findings separately
   - Always cite primary sources when available
   - For direct quotes, use format: [Author (Year), p.X](URL)
