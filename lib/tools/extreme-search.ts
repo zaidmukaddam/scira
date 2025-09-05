@@ -7,7 +7,7 @@
 
 import Exa from 'exa-js';
 import { Daytona } from '@daytonaio/sdk';
-import { generateObject, generateText, stepCountIs, tool } from 'ai';
+import { stepCountIs, tool } from 'ai';
 import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
@@ -17,6 +17,8 @@ import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
+import { paidGenerateObject, paidGenerateText } from '@paid-ai/paid-node';
+import { getClient } from '../client';
 
 const pythonLibsAvailable = [
   'pandas',
@@ -203,20 +205,22 @@ async function extremeSearch(
   }
 
   // plan out the research
-  const { object: result } = await generateObject({
-    model: scira.languageModel('scira-grok-4'),
-    schema: z.object({
-      plan: z
-        .array(
-          z.object({
-            title: z.string().min(10).max(70).describe('A title for the research topic'),
-            todos: z.array(z.string()).min(3).max(5).describe('A list of what to research for the given title'),
-          }),
-        )
-        .min(1)
-        .max(5),
-    }),
-    prompt: `
+  const client = await getClient();
+  const { object: result } = await client.trace('blah', async () => {
+    return await paidGenerateObject({
+      model: scira.languageModel('scira-grok-4'),
+      schema: z.object({
+        plan: z
+          .array(
+            z.object({
+              title: z.string().min(10).max(70).describe('A title for the research topic'),
+              todos: z.array(z.string()).min(3).max(5).describe('A list of what to research for the given title'),
+            }),
+          )
+          .min(1)
+          .max(5),
+      }),
+      prompt: `
 Plan out the research for the following topic: ${prompt}.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
@@ -235,6 +239,7 @@ Plan Guidelines:
 - Mention if the topic needs to use the xSearch tool
 - Mention any need for visualizations in the plan
 - Make the plan technical and specific to the topic`,
+    });
   });
 
   console.log(result.plan);
@@ -259,10 +264,11 @@ Plan Guidelines:
   let toolResults: any[] = [];
 
   // Create the autonomous research agent with tools
-  const { text } = await generateText({
-    model: scira.languageModel('scira-code'),
-    stopWhen: stepCountIs(totalTodos),
-    system: `
+  const { text } = await client.trace('blah', async () => {
+    return await paidGenerateText({
+      model: scira.languageModel('scira-code'),
+      stopWhen: stepCountIs(totalTodos),
+      system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
@@ -333,328 +339,224 @@ For research:
 Research Plan:
 ${JSON.stringify(plan)}
 `,
-    prompt,
-    temperature: 0,
-    providerOptions: {
-      xai: {
-        parallel_function_calling: 'false',
-      },
-    },
-    tools: {
-      codeRunner: {
-        description: 'Run Python code in a sandbox',
-        inputSchema: z.object({
-          title: z.string().describe('The title of what you are running the code for'),
-          code: z.string().describe('The Python code to run with proper syntax and imports'),
-        }),
-        execute: async ({ title, code }) => {
-          console.log('Running code:', code);
-          // check if the code has any imports other than the pythonLibsAvailable
-          // and then install the missing libraries
-          const imports = code.match(/import\s+([\w\s,]+)/);
-          const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
-          const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'code',
-                codeId: `code-${Date.now()}`,
-                title: title,
-                code: code,
-                status: 'running',
-              },
-            });
-          }
-          const response = await runCode(code, missingLibs);
-
-          // Extract chart data if present, and if so then map and remove the png with chart.png
-          const charts =
-            response.artifacts?.charts?.map((chart) => {
-              if (chart.png) {
-                const { png, ...chartWithoutPng } = chart;
-                return chartWithoutPng;
-              }
-              return chart;
-            }) || [];
-
-          console.log('Charts:', response.artifacts?.charts);
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'code',
-                codeId: `code-${Date.now()}`,
-                title: title,
-                code: code,
-                status: 'completed',
-                result: response.result,
-                charts: charts,
-              },
-            });
-          }
-
-          return {
-            result: response.result,
-            charts: charts,
-          };
+      prompt,
+      temperature: 0,
+      providerOptions: {
+        xai: {
+          parallel_function_calling: 'false',
         },
       },
-      webSearch: {
-        description: 'Search the web for information on a topic',
-        inputSchema: z.object({
-          query: z.string().describe('The search query to achieve the todo').max(150),
-          category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
-        }),
-        execute: async ({ query, category }, { toolCallId }) => {
-          console.log('Web search query:', query);
-          console.log('Category:', category);
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'query',
-                queryId: toolCallId,
-                query: query,
-                status: 'started',
-              },
-            });
-          }
-          // Query annotation already sent above
-          let results = await searchWeb(query, category);
-          console.log(`Found ${results.length} results for query "${query}"`);
-
-          // Add these sources to our total collection
-          allSources.push(...results);
-
-          if (dataStream) {
-            results.forEach(async (source) => {
-              dataStream.write({
-                type: 'data-extreme_search',
-                data: {
-                  kind: 'source',
-                  queryId: toolCallId,
-                  source: {
-                    title: source.title,
-                    url: source.url,
-                    favicon: source.favicon,
-                  },
-                },
-              });
-            });
-          }
-          // Get full content for the top results
-          if (results.length > 0) {
-            try {
-              if (dataStream) {
-                dataStream.write({
-                  type: 'data-extreme_search',
-                  data: {
-                    kind: 'query',
-                    queryId: toolCallId,
-                    query: query,
-                    status: 'reading_content',
-                  },
-                });
-              }
-
-              // Get the URLs from the results
-              const urls = results.map((r) => r.url);
-
-              // Get the full content using getContents
-              const contentsResults = await getContents(urls);
-
-              // Only update results if we actually got content results
-              if (contentsResults && contentsResults.length > 0) {
-                // For each content result, add a content annotation
-                if (dataStream) {
-                  contentsResults.forEach((content) => {
-                    dataStream.write({
-                      type: 'data-extreme_search',
-                      data: {
-                        kind: 'content',
-                        queryId: toolCallId,
-                        content: {
-                          title: content.title || '',
-                          url: content.url,
-                          text: (content.content || '').slice(0, 500) + '...', // Truncate for annotation
-                          favicon: content.favicon || '',
-                        },
-                      },
-                    });
-                  });
-                }
-                // Update results with full content, but keep original results as fallback
-                results = contentsResults.map((content) => {
-                  const originalResult = results.find((r) => r.url === content.url);
-                  return {
-                    title: content.title || originalResult?.title || '',
-                    url: content.url,
-                    content: content.content || originalResult?.content || '',
-                    publishedDate: content.publishedDate || originalResult?.publishedDate || '',
-                    favicon: content.favicon || originalResult?.favicon || '',
-                  };
-                }) as SearchResult[];
-              } else {
-                console.log('getContents returned no results, using original search results');
-              }
-            } catch (error) {
-              console.error('Error fetching content:', error);
-              console.log('Using original search results due to error');
-            }
-          }
-
-          // Mark query as completed
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'query',
-                queryId: toolCallId,
-                query: query,
-                status: 'completed',
-              },
-            });
-          }
-
-          return results.map((r) => ({
-            title: r.title,
-            url: r.url,
-            content: r.content,
-            publishedDate: r.publishedDate,
-          }));
-        },
-      },
-      xSearch: {
-        description: 'Search X (formerly Twitter) posts for recent information and discussions',
-        inputSchema: z.object({
-          query: z.string().describe('The search query for X posts').max(150),
-          startDate: z
-            .string()
-            .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)')
-            .optional(),
-          endDate: z
-            .string()
-            .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)')
-            .optional(),
-          xHandles: z
-            .array(z.string())
-            .optional()
-            .describe(
-              'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles',
-            ),
-          maxResults: z.number().optional().describe('Maximum number of search results to return (default 15)'),
-        }),
-        execute: async ({ query, startDate, endDate, xHandles, maxResults = 15 }, { toolCallId }) => {
-          console.log('X search query:', query);
-          console.log('X search parameters:', { startDate, endDate, xHandles, maxResults });
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'x_search',
-                xSearchId: toolCallId,
-                query: query,
-                startDate: startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                endDate: endDate || new Date().toISOString().split('T')[0],
-                handles: xHandles || [],
-                status: 'started',
-              },
-            });
-          }
-
-          try {
-            // Set default dates if not provided
-            const searchStartDate =
-              startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const searchEndDate = endDate || new Date().toISOString().split('T')[0];
-
-            const { text, sources } = await generateText({
-              model: xai('grok-3-latest'),
-              system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-              messages: [{ role: 'user', content: query }],
-              providerOptions: {
-                xai: {
-                  searchParameters: {
-                    mode: 'on',
-                    fromDate: searchStartDate,
-                    toDate: searchEndDate,
-                    maxSearchResults: maxResults < 15 ? 15 : maxResults,
-                    returnCitations: true,
-                    sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
-                  },
-                } satisfies XaiProviderOptions,
-              },
-            });
-
-            const citations = sources || [];
-            const allSources = [];
-
-            if (citations.length > 0) {
-              const tweetFetchPromises = citations
-                .filter((link) => link.sourceType === 'url')
-                .map(async (link) => {
-                  try {
-                    const tweetUrl = link.sourceType === 'url' ? link.url : '';
-                    const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
-
-                    const tweetData = await getTweet(tweetId);
-                    if (!tweetData) return null;
-
-                    const text = tweetData.text;
-                    if (!text) return null;
-
-                    // Generate a better title with user handle and text preview
-                    const userHandle = tweetData.user?.screen_name || tweetData.user?.name || 'unknown';
-                    const textPreview = text.slice(0, 20) + (text.length > 20 ? '...' : '');
-                    const generatedTitle = `Post from @${userHandle}: ${textPreview}`;
-
-                    return {
-                      text: text,
-                      link: tweetUrl,
-                      title: generatedTitle,
-                    };
-                  } catch (error) {
-                    console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
-                    return null;
-                  }
-                });
-
-              const tweetResults = await Promise.all(tweetFetchPromises);
-              allSources.push(...tweetResults.filter((result) => result !== null));
-            }
-
-            const result = {
-              content: text,
-              citations: citations,
-              sources: allSources,
-              dateRange: `${searchStartDate} to ${searchEndDate}`,
-              handles: xHandles || [],
-            };
+      tools: {
+        codeRunner: {
+          description: 'Run Python code in a sandbox',
+          inputSchema: z.object({
+            title: z.string().describe('The title of what you are running the code for'),
+            code: z.string().describe('The Python code to run with proper syntax and imports'),
+          }),
+          execute: async ({ title, code }) => {
+            console.log('Running code:', code);
+            // check if the code has any imports other than the pythonLibsAvailable
+            // and then install the missing libraries
+            const imports = code.match(/import\s+([\w\s,]+)/);
+            const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
+            const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
 
             if (dataStream) {
               dataStream.write({
                 type: 'data-extreme_search',
                 data: {
-                  kind: 'x_search',
-                  xSearchId: toolCallId,
-                  query: query,
-                  startDate: searchStartDate,
-                  endDate: searchEndDate,
-                  handles: xHandles || [],
+                  kind: 'code',
+                  codeId: `code-${Date.now()}`,
+                  title: title,
+                  code: code,
+                  status: 'running',
+                },
+              });
+            }
+            const response = await runCode(code, missingLibs);
+
+            // Extract chart data if present, and if so then map and remove the png with chart.png
+            const charts =
+              response.artifacts?.charts?.map((chart) => {
+                if (chart.png) {
+                  const { png, ...chartWithoutPng } = chart;
+                  return chartWithoutPng;
+                }
+                return chart;
+              }) || [];
+
+            console.log('Charts:', response.artifacts?.charts);
+
+            if (dataStream) {
+              dataStream.write({
+                type: 'data-extreme_search',
+                data: {
+                  kind: 'code',
+                  codeId: `code-${Date.now()}`,
+                  title: title,
+                  code: code,
                   status: 'completed',
-                  result: result,
+                  result: response.result,
+                  charts: charts,
                 },
               });
             }
 
-            return result;
-          } catch (error) {
-            console.error('X search error:', error);
+            return {
+              result: response.result,
+              charts: charts,
+            };
+          },
+        },
+        webSearch: {
+          description: 'Search the web for information on a topic',
+          inputSchema: z.object({
+            query: z.string().describe('The search query to achieve the todo').max(150),
+            category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
+          }),
+          execute: async ({ query, category }, { toolCallId }) => {
+            console.log('Web search query:', query);
+            console.log('Category:', category);
+
+            if (dataStream) {
+              dataStream.write({
+                type: 'data-extreme_search',
+                data: {
+                  kind: 'query',
+                  queryId: toolCallId,
+                  query: query,
+                  status: 'started',
+                },
+              });
+            }
+            // Query annotation already sent above
+            let results = await searchWeb(query, category);
+            console.log(`Found ${results.length} results for query "${query}"`);
+
+            // Add these sources to our total collection
+            allSources.push(...results);
+
+            if (dataStream) {
+              results.forEach(async (source) => {
+                dataStream.write({
+                  type: 'data-extreme_search',
+                  data: {
+                    kind: 'source',
+                    queryId: toolCallId,
+                    source: {
+                      title: source.title,
+                      url: source.url,
+                      favicon: source.favicon,
+                    },
+                  },
+                });
+              });
+            }
+            // Get full content for the top results
+            if (results.length > 0) {
+              try {
+                if (dataStream) {
+                  dataStream.write({
+                    type: 'data-extreme_search',
+                    data: {
+                      kind: 'query',
+                      queryId: toolCallId,
+                      query: query,
+                      status: 'reading_content',
+                    },
+                  });
+                }
+
+                // Get the URLs from the results
+                const urls = results.map((r) => r.url);
+
+                // Get the full content using getContents
+                const contentsResults = await getContents(urls);
+
+                // Only update results if we actually got content results
+                if (contentsResults && contentsResults.length > 0) {
+                  // For each content result, add a content annotation
+                  if (dataStream) {
+                    contentsResults.forEach((content) => {
+                      dataStream.write({
+                        type: 'data-extreme_search',
+                        data: {
+                          kind: 'content',
+                          queryId: toolCallId,
+                          content: {
+                            title: content.title || '',
+                            url: content.url,
+                            text: (content.content || '').slice(0, 500) + '...', // Truncate for annotation
+                            favicon: content.favicon || '',
+                          },
+                        },
+                      });
+                    });
+                  }
+                  // Update results with full content, but keep original results as fallback
+                  results = contentsResults.map((content) => {
+                    const originalResult = results.find((r) => r.url === content.url);
+                    return {
+                      title: content.title || originalResult?.title || '',
+                      url: content.url,
+                      content: content.content || originalResult?.content || '',
+                      publishedDate: content.publishedDate || originalResult?.publishedDate || '',
+                      favicon: content.favicon || originalResult?.favicon || '',
+                    };
+                  }) as SearchResult[];
+                } else {
+                  console.log('getContents returned no results, using original search results');
+                }
+              } catch (error) {
+                console.error('Error fetching content:', error);
+                console.log('Using original search results due to error');
+              }
+            }
+
+            // Mark query as completed
+            if (dataStream) {
+              dataStream.write({
+                type: 'data-extreme_search',
+                data: {
+                  kind: 'query',
+                  queryId: toolCallId,
+                  query: query,
+                  status: 'completed',
+                },
+              });
+            }
+
+            return results.map((r) => ({
+              title: r.title,
+              url: r.url,
+              content: r.content,
+              publishedDate: r.publishedDate,
+            }));
+          },
+        },
+        xSearch: {
+          description: 'Search X (formerly Twitter) posts for recent information and discussions',
+          inputSchema: z.object({
+            query: z.string().describe('The search query for X posts').max(150),
+            startDate: z
+              .string()
+              .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)')
+              .optional(),
+            endDate: z
+              .string()
+              .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)')
+              .optional(),
+            xHandles: z
+              .array(z.string())
+              .optional()
+              .describe(
+                'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles',
+              ),
+            maxResults: z.number().optional().describe('Maximum number of search results to return (default 15)'),
+          }),
+          execute: async ({ query, startDate, endDate, xHandles, maxResults = 15 }, { toolCallId }) => {
+            console.log('X search query:', query);
+            console.log('X search parameters:', { startDate, endDate, xHandles, maxResults });
 
             if (dataStream) {
               dataStream.write({
@@ -666,24 +568,131 @@ ${JSON.stringify(plan)}
                   startDate: startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                   endDate: endDate || new Date().toISOString().split('T')[0],
                   handles: xHandles || [],
-                  status: 'error',
+                  status: 'started',
                 },
               });
             }
 
-            throw error;
-          }
+            try {
+              // Set default dates if not provided
+              const searchStartDate =
+                startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+              const searchEndDate = endDate || new Date().toISOString().split('T')[0];
+
+              const { text, sources } = await client.trace('blah', async () => {
+                return await paidGenerateText({
+                  model: xai('grok-3-latest'),
+                  system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
+                  messages: [{ role: 'user', content: query }],
+                  providerOptions: {
+                    xai: {
+                      searchParameters: {
+                        mode: 'on',
+                        fromDate: searchStartDate,
+                        toDate: searchEndDate,
+                        maxSearchResults: maxResults < 15 ? 15 : maxResults,
+                        returnCitations: true,
+                        sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
+                      },
+                    } satisfies XaiProviderOptions,
+                  },
+                });
+              });
+
+              const citations = sources || [];
+              const allSources = [];
+
+              if (citations.length > 0) {
+                const tweetFetchPromises = citations
+                  .filter((link) => link.sourceType === 'url')
+                  .map(async (link) => {
+                    try {
+                      const tweetUrl = link.sourceType === 'url' ? link.url : '';
+                      const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
+
+                      const tweetData = await getTweet(tweetId);
+                      if (!tweetData) return null;
+
+                      const text = tweetData.text;
+                      if (!text) return null;
+
+                      // Generate a better title with user handle and text preview
+                      const userHandle = tweetData.user?.screen_name || tweetData.user?.name || 'unknown';
+                      const textPreview = text.slice(0, 20) + (text.length > 20 ? '...' : '');
+                      const generatedTitle = `Post from @${userHandle}: ${textPreview}`;
+
+                      return {
+                        text: text,
+                        link: tweetUrl,
+                        title: generatedTitle,
+                      };
+                    } catch (error) {
+                      console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
+                      return null;
+                    }
+                  });
+
+                const tweetResults = await Promise.all(tweetFetchPromises);
+                allSources.push(...tweetResults.filter((result) => result !== null));
+              }
+
+              const result = {
+                content: text,
+                citations: citations,
+                sources: allSources,
+                dateRange: `${searchStartDate} to ${searchEndDate}`,
+                handles: xHandles || [],
+              };
+
+              if (dataStream) {
+                dataStream.write({
+                  type: 'data-extreme_search',
+                  data: {
+                    kind: 'x_search',
+                    xSearchId: toolCallId,
+                    query: query,
+                    startDate: searchStartDate,
+                    endDate: searchEndDate,
+                    handles: xHandles || [],
+                    status: 'completed',
+                    result: result,
+                  },
+                });
+              }
+
+              return result;
+            } catch (error) {
+              console.error('X search error:', error);
+
+              if (dataStream) {
+                dataStream.write({
+                  type: 'data-extreme_search',
+                  data: {
+                    kind: 'x_search',
+                    xSearchId: toolCallId,
+                    query: query,
+                    startDate: startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    endDate: endDate || new Date().toISOString().split('T')[0],
+                    handles: xHandles || [],
+                    status: 'error',
+                  },
+                });
+              }
+
+              throw error;
+            }
+          },
         },
       },
-    },
-    onStepFinish: (step) => {
-      console.log('Step finished:', step.finishReason);
-      console.log('Step:', step);
-      if (step.toolResults) {
-        console.log('Tool results:', step.toolResults);
-        toolResults.push(...step.toolResults);
-      }
-    },
+      onStepFinish: (step) => {
+        console.log('Step finished:', step.finishReason);
+        console.log('Step:', step);
+        if (step.toolResults) {
+          console.log('Tool results:', step.toolResults);
+          toolResults.push(...step.toolResults);
+        }
+      },
+    });
   });
 
   if (dataStream) {
