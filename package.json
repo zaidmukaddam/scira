@@ -34,6 +34,7 @@
     "@hugeicons/react": "^1.0.5",
     "@mendable/firecrawl-js": "^3.3.0",
     "@neondatabase/serverless": "^1.0.1",
+    "@paid-ai/paid-node": "0.0.8-alpha4",
     "@phosphor-icons/react": "^2.1.10",
     "@polar-sh/better-auth": "^1.1.0",
     "@polar-sh/sdk": "^0.34.14",
