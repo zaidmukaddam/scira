@@ -1,7 +1,9 @@
-import { generateText, tool } from 'ai';
+import { tool } from 'ai';
 import { z } from 'zod';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
+import { paidGenerateText } from '@paid-ai/paid-node';
+import { getClient } from '../client';
 
 export const xSearchTool = tool({
   description:
@@ -66,25 +68,29 @@ export const xSearchTool = tool({
       console.log('[X search parameters]: ', searchParameters);
       console.log('[X search handles]: ', xHandles);
 
-      const { text, sources } = await generateText({
-        model: xai('grok-3-latest'),
-        system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-        messages: [{ role: 'user', content: `${query}` }],
-        providerOptions: {
-          xai: {
-            searchParameters: {
-              mode: 'on',
-              ...(startDate && { fromDate: startDate }),
-              ...(endDate && { toDate: endDate }),
-              maxSearchResults: maxResults ? (maxResults < 15 ? 15 : maxResults) : 15,
-              returnCitations: true,
-              sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
+      const client = await getClient();
+
+      const { text, sources } = await client.trace('blah', async () => {
+        return await paidGenerateText({
+          model: xai('grok-3-latest'),
+          system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
+          messages: [{ role: 'user', content: `${query}` }],
+          providerOptions: {
+            xai: {
+              searchParameters: {
+                mode: 'on',
+                ...(startDate && { fromDate: startDate }),
+                ...(endDate && { toDate: endDate }),
+                maxSearchResults: maxResults ? (maxResults < 15 ? 15 : maxResults) : 15,
+                returnCitations: true,
+                sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
+              },
             },
           } satisfies XaiProviderOptions,
-        },
-        onStepFinish: (step) => {
-          console.log('[X search step]: ', step);
-        },
+          onStepFinish: (step) => {
+            console.log('[X search step]: ', step);
+          },
+        });
       });
 
       console.log('[X search data]: ', text);
