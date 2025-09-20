@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GlobeHemisphereWest, Copy } from '@phosphor-icons/react';
+import { GlobeHemisphereWestIcon, CopyIcon } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Share03Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
@@ -49,9 +49,9 @@ export function ShareButton({
         if (selectedVisibilityType === 'public') {
           return (
             <>
-              <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
+              <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
-              <Copy size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
+              <CopyIcon size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
             </>
           );
         } else {

@@ -14,19 +14,21 @@ import { useSession, signOut } from '@/lib/auth-client';
 import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  SignOut,
-  SignIn,
-  Eye,
-  EyeSlash,
-  Info,
-  FileText,
-  Shield,
-  GithubLogo,
-  Bug,
-  Sun,
-  Gear,
-  Code,
-  Book,
+  SignOutIcon,
+  SignInIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  InfoIcon,
+  FileTextIcon,
+  ShieldIcon,
+  GithubLogoIcon,
+  BugIcon,
+  SunIcon,
+  GearIcon,
+  CodeIcon,
+  BookIcon,
+  XLogoIcon,
+  InstagramLogoIcon,
 } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BinocularsIcon } from '@hugeicons/core-free-icons';
@@ -34,7 +36,6 @@ import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { XLogo, InstagramLogoIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
@@ -91,21 +92,23 @@ const NavigationMenu = memo(() => {
         )}
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href={'https://api.scira.ai/'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-2"
-          >
-            <Code size={16} />
+          <a href={'https://api.scira.ai/'} target="_blank" className="w-full flex items-center gap-2">
+            <CodeIcon size={16} />
             <span>API</span>
           </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/xql" className="w-full flex items-center gap-2">
+            <XLogoIcon size={16} />
+            <span>XQL</span>
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
           <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
-              <Sun size={16} />
+              <SunIcon size={16} />
               <span className="text-sm">Theme</span>
             </div>
             <ThemeSwitcher />
@@ -116,27 +119,27 @@ const NavigationMenu = memo(() => {
         {/* About and Information */}
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/about" className="w-full flex items-center gap-2">
-            <Info size={16} />
+            <InfoIcon size={16} />
             <span>About</span>
           </Link>
         </DropdownMenuItem>
         {/* Blog */}
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/blog" className="w-full flex items-center gap-2">
-            <Book size={16} />
+            <BookIcon size={16} />
             <span>Blog</span>
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/terms" className="w-full flex items-center gap-2">
-            <FileText size={16} />
+            <FileTextIcon size={16} />
             <span>Terms</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/privacy-policy" className="w-full flex items-center gap-2">
-            <Shield size={16} />
+            <ShieldIcon size={16} />
             <span>Privacy</span>
           </Link>
         </DropdownMenuItem>
@@ -144,34 +147,19 @@ const NavigationMenu = memo(() => {
 
         {/* Social and External Links */}
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href={'https://git.new/scira'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-2"
-          >
-            <GithubLogo size={16} />
+          <a href={'https://git.new/scira'} target="_blank" className="w-full flex items-center gap-2">
+            <GithubLogoIcon size={16} />
             <span>Github</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href={'https://x.com/sciraai'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-2"
-          >
-            <XLogo size={16} />
+          <a href={'https://x.com/sciraai'} target="_blank" className="w-full flex items-center gap-2">
+            <XLogoIcon size={16} />
             <span>X.com</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href={'https://www.instagram.com/scira.ai'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-2"
-          >
+          <a href={'https://www.instagram.com/scira.ai'} target="_blank" className="w-full flex items-center gap-2">
             <InstagramLogoIcon size={16} />
             <span>Instagram</span>
           </a>
@@ -180,7 +168,6 @@ const NavigationMenu = memo(() => {
           <a
             href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
             target="_blank"
-            rel="noopener noreferrer"
             className="w-full flex items-center gap-2"
           >
             <VercelIcon size={14} />
@@ -188,13 +175,8 @@ const NavigationMenu = memo(() => {
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href={'https://scira.userjot.com'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-2"
-          >
-            <Bug className="size-4" />
+          <a href={'https://scira.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
+            <BugIcon className="size-4" />
             <span>Feature/Bug Request</span>
           </a>
         </DropdownMenuItem>
@@ -215,6 +197,9 @@ const UserProfile = memo(
     isProStatusLoading,
     isCustomInstructionsEnabled,
     setIsCustomInstructionsEnabled,
+    settingsOpen,
+    setSettingsOpen,
+    settingsInitialTab,
   }: {
     className?: string;
     user?: User | null;
@@ -223,11 +208,13 @@ const UserProfile = memo(
     isProStatusLoading?: boolean;
     isCustomInstructionsEnabled?: boolean;
     setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+    settingsOpen?: boolean;
+    setSettingsOpen?: (open: boolean) => void;
+    settingsInitialTab?: string;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
-    const [settingsOpen, setSettingsOpen] = useState(false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
@@ -334,7 +321,7 @@ const UserProfile = memo(
                         }}
                         className="size-6 text-muted-foreground hover:text-foreground"
                       >
-                        {showEmail ? <EyeSlash size={12} /> : <Eye size={12} />}
+                        {showEmail ? <EyeSlashIcon size={12} /> : <EyeIcon size={12} />}
                         <span className="sr-only">{showEmail ? 'Hide email' : 'Show email'}</span>
                       </Button>
                     </div>
@@ -342,9 +329,9 @@ const UserProfile = memo(
                 </div>
               </div>
 
-              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
                 <div className="w-full flex items-center gap-2">
-                  <Gear size={16} />
+                  <GearIcon size={16} />
                   <span>Settings</span>
                 </div>
               </DropdownMenuItem>
@@ -382,7 +369,7 @@ const UserProfile = memo(
                 }
               >
                 <span>Sign Out</span>
-                <SignOut className="size-4" />
+                <SignOutIcon className="size-4" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -399,7 +386,7 @@ const UserProfile = memo(
                   redirect('/sign-in');
                 }}
               >
-                <SignIn className="size-4 mr-1.5" />
+                <SignInIcon className="size-4 mr-1.5" />
                 Sign In
               </Button>
             </TooltipTrigger>
@@ -410,16 +397,19 @@ const UserProfile = memo(
         )}
 
         {/* Settings Dialog */}
-        <SettingsDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          user={settingsUser}
-          subscriptionData={subscriptionData}
-          isProUser={isProUser}
-          isProStatusLoading={isProStatusLoading}
-          isCustomInstructionsEnabled={isCustomInstructionsEnabled}
-          setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-        />
+        {settingsOpen !== undefined && setSettingsOpen && (
+          <SettingsDialog
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+            user={settingsUser}
+            subscriptionData={subscriptionData}
+            isProUser={isProUser}
+            isProStatusLoading={isProStatusLoading}
+            isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+            setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+            initialTab={settingsInitialTab}
+          />
+        )}
       </>
     );
   },

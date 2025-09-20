@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Crown02Icon, AlarmClockIcon, Clock01Icon } from '@hugeicons/core-free-icons';
-import { Lightning } from '@phosphor-icons/react';
+import { LightningIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Navbar } from './navbar';
@@ -65,7 +65,7 @@ export function ProUpgradeScreen({ user, isProUser, isProStatusLoading }: ProUpg
                   <span>Custom frequency and timezone</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <Lightning className="h-4 w-4 text-primary" />
+                  <LightningIcon className="h-4 w-4 text-primary" />
                   <span>Up to 10 active lookouts</span>
                 </div>
               </div>

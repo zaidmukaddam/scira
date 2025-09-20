@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import isEqual from 'fast-deep-equal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,7 +30,7 @@ import { MarkdownRenderer } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
-import { User } from '@phosphor-icons/react';
+import { UserIcon } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Copy01Icon,
@@ -103,7 +104,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   const getIconComponent = () => {
     switch (errorIcon) {
       case 'auth':
-        return <User className="h-4 w-4 text-blue-500 dark:text-blue-300" weight="fill" />;
+        return <UserIcon className="h-4 w-4 text-blue-500 dark:text-blue-300" weight="fill" />;
       case 'upgrade':
         return (
           <HugeiconsIcon
@@ -539,6 +540,7 @@ export const Message: React.FC<MessageProps> = ({
   // Mode state for editing
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
+
   // Determine if user message should top-align avatar based on combined text length
   const combinedUserText: string = React.useMemo(() => {
     return (
@@ -549,7 +551,7 @@ export const Message: React.FC<MessageProps> = ({
     );
   }, [message.parts]);
 
-  const shouldTopAlignUser: boolean = combinedUserText.length > 50;
+  const shouldTopAlignUser: boolean = React.useMemo(() => combinedUserText.length > 50, [combinedUserText]);
 
   // Check if message content exceeds max height
   React.useEffect(() => {
@@ -560,7 +562,7 @@ export const Message: React.FC<MessageProps> = ({
   }, [message.parts?.map((part) => (part.type === 'text' ? part.text : '')).join('')]);
 
   // Dynamic font size based on content length with mobile responsiveness
-  const getDynamicFontSize = (content: string) => {
+  const getDynamicFontSize = useCallback((content: string) => {
     const length = content.trim().length;
     const lines = content.split('\n').length;
 
@@ -580,7 +582,7 @@ export const Message: React.FC<MessageProps> = ({
     else {
       return '[&>*]:!text-sm sm:[&>*]:!text-base'; // Even smaller on mobile
     }
-  };
+  }, []);
 
   const handleSuggestedQuestionClick = useCallback(
     async (question: string) => {
@@ -936,8 +938,6 @@ export const Message: React.FC<MessageProps> = ({
         {isMissingAssistantResponse && (
           <div className="flex items-start">
             <div className="w-full">
-              <SciraLogoHeader />
-
               <div className="flex flex-col gap-4 bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4">
                 <div className=" mb-4 max-w-2xl">
                   <div className="flex items-start gap-3">
@@ -1014,6 +1014,9 @@ export const Message: React.FC<MessageProps> = ({
   return null;
 };
 
+// Add display name for better debugging
+Message.displayName = 'Message';
+
 // Editable attachments badge component for edit mode
 export const EditableAttachmentsBadge = ({
   attachments,
@@ -1031,8 +1034,6 @@ export const EditableAttachmentsBadge = ({
       att.contentType === 'application/pdf' ||
       att.mediaType === 'application/pdf',
   );
-
-  useDataStream();
 
   if (fileAttachments.length === 0) return null;
 
@@ -1141,7 +1142,6 @@ export const EditableAttachmentsBadge = ({
                   href={fileAttachments[selectedIndex].url}
                   download={fileAttachments[selectedIndex].name}
                   target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                   title="Download"
                 >
@@ -1152,7 +1152,6 @@ export const EditableAttachmentsBadge = ({
                   <a
                     href={fileAttachments[selectedIndex].url}
                     target="_blank"
-                    rel="noopener noreferrer"
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                     title="Open in new tab"
                   >
@@ -1188,7 +1187,6 @@ export const EditableAttachmentsBadge = ({
                         <a
                           href={fileAttachments[selectedIndex].url}
                           target="_blank"
-                          rel="noopener noreferrer"
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                           title="Open fullscreen"
                         >
@@ -1211,7 +1209,6 @@ export const EditableAttachmentsBadge = ({
                             <a
                               href={fileAttachments[selectedIndex].url}
                               target="_blank"
-                              rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
                             >
                               Open PDF
@@ -1432,7 +1429,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                   href={fileAttachments[selectedIndex].url}
                   download={fileAttachments[selectedIndex].name}
                   target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                   title="Download"
                 >
@@ -1443,7 +1439,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                   <a
                     href={fileAttachments[selectedIndex].url}
                     target="_blank"
-                    rel="noopener noreferrer"
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
                     title="Open in new tab"
                   >
@@ -1479,7 +1474,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                         <a
                           href={fileAttachments[selectedIndex].url}
                           target="_blank"
-                          rel="noopener noreferrer"
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
                           title="Open fullscreen"
                         >
@@ -1502,7 +1496,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                             <a
                               href={fileAttachments[selectedIndex].url}
                               target="_blank"
-                              rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
                             >
                               Open PDF

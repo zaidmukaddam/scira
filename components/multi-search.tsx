@@ -49,11 +49,19 @@ type MultiSearchResponse = {
   searches: SearchQueryResult[];
 };
 
+type Topic = 'general' | 'news';
+
 type MultiSearchArgs = {
+  queries?: (string | undefined)[] | null;
+  maxResults?: (number | undefined)[] | null;
+  topics?: (Topic | undefined)[] | null;
+  quality?: (('default' | 'best') | undefined)[] | null;
+};
+
+type NormalizedMultiSearchArgs = {
   queries: string[];
   maxResults: number[];
-  topics: ('general' | 'news' | 'finance')[];
-  searchDepth: ('basic' | 'advanced')[];
+  topics: Topic[];
   quality: ('default' | 'best')[];
 };
 
@@ -173,13 +181,7 @@ const SourcesSheet: React.FC<{
 
                   <div className="space-y-3">
                     {search.results.map((result, resultIndex) => (
-                      <a
-                        key={resultIndex}
-                        href={result.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
-                      >
+                      <a key={resultIndex} href={result.url} target="_blank" className="block">
                         <SourceCard result={result} />
                       </a>
                     ))}
@@ -487,7 +489,7 @@ const LoadingState: React.FC<{
               >
                 {queries.map((query, i) => {
                   const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
-                  const currentQuality = args.quality?.[i] || 'default';
+                  const currentQuality = (args.quality ?? ['default'])[i] || 'default';
                   return (
                     <Badge
                       key={i}
@@ -619,8 +621,21 @@ const MultiSearch = ({
     // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
   };
 
+  // Normalize args to ensure required arrays for UI rendering
+  const normalizedArgs = React.useMemo<NormalizedMultiSearchArgs>(
+    () => ({
+      queries: (args.queries ?? ['']).filter((q): q is string => typeof q === 'string' && q.length > 0),
+      maxResults: (args.maxResults ?? [10]).filter((n): n is number => typeof n === 'number'),
+      topics: (args.topics ?? ['general']).filter(
+        (t): t is Topic => t === 'general' || t === 'news' || t === 'finance',
+      ),
+      quality: (args.quality ?? ['default']).filter((q): q is 'default' | 'best' => q === 'default' || q === 'best'),
+    }),
+    [args],
+  );
+
   if (!result) {
-    return <LoadingState queries={args.queries} annotations={annotations} args={args} />;
+    return <LoadingState queries={normalizedArgs.queries} annotations={annotations} args={normalizedArgs} />;
   }
 
   const allImages = result.searches.flatMap((search) => search.images);
@@ -695,7 +710,7 @@ const MultiSearch = ({
               {/* Query tags */}
               <div ref={queryTagsRef} className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
                 {result.searches.map((search, i) => {
-                  const currentQuality = args.quality?.[i] || 'default';
+                  const currentQuality = normalizedArgs.quality[i] || 'default';
                   return (
                     <Badge
                       key={i}
@@ -721,13 +736,7 @@ const MultiSearch = ({
                 onWheel={handleWheelScroll}
               >
                 {previewResults.map((result, i) => (
-                  <a
-                    key={i}
-                    href={result.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block flex-shrink-0 w-[320px]"
-                  >
+                  <a key={i} href={result.url} target="_blank" className="block flex-shrink-0 w-[320px]">
                     <SourceCard result={result} />
                   </a>
                 ))}

@@ -57,11 +57,9 @@ export const retrieveTool = tool({
         const urlWithoutHttps = url.replace(/^https?:\/\//, '');
         try {
           const scrapeResponse = await firecrawl.scrape(urlWithoutHttps, {
-            formats: ['markdown'],
-            onlyMainContent: true,
-            parsePDF: true,
-            maxAge: 14400000,
+            parsers: ['pdf'],
             proxy: 'auto',
+            storeInCache: true,
           });
 
           if (!scrapeResponse) {

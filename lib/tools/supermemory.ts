@@ -1,4 +1,4 @@
-import { supermemoryTools } from '@supermemory/ai-sdk';
+import { supermemoryTools } from '@supermemory/tools/ai-sdk';
 import { Tool } from 'ai';
 import { serverEnv } from '@/env/server';
 

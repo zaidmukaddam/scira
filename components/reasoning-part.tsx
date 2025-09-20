@@ -97,7 +97,6 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
           key={Math.random()}
           href={href}
           target="_blank"
-          rel="noopener noreferrer"
           className="text-primary hover:text-primary underline-offset-2 hover:underline"
         >
           {text}

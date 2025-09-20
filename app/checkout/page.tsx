@@ -414,7 +414,6 @@ export default function CheckoutPage() {
               <Link
                 href="https://dodopayments.com"
                 target="_blank"
-                rel="noopener noreferrer"
                 className="underline hover:text-foreground transition-colors"
               >
                 DodoPayments

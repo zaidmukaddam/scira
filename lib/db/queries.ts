@@ -16,7 +16,7 @@ import {
   lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index'; // Use unified database connection
+import { db } from './index';
 import { getDodoPayments, setDodoPayments, getDodoProStatus, setDodoProStatus } from '../performance-cache';
 
 type VisibilityType = 'public' | 'private';
@@ -140,19 +140,6 @@ export async function getChatById({ id }: { id: string }) {
     return selectedChat;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
-  }
-}
-
-export async function getChatByIdNoCaching({ id }: { id: string }) {
-  try {
-    console.log('🔍 [DB-DETAIL] getChatByIdNoCaching: Starting direct query...');
-    const directQueryStart = Date.now();
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
-    const directQueryTime = (Date.now() - directQueryStart) / 1000;
-    console.log(`⏱️  [DB-DETAIL] getChatByIdNoCaching: Direct query took ${directQueryTime.toFixed(2)}s`);
-    return selectedChat;
-  } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to get chat by id (no cache)');
   }
 }
 

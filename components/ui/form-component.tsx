@@ -14,9 +14,41 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon } from 'lucide-react';
+import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
+
+import { track } from '@vercel/analytics';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ComprehensiveUserData } from '@/hooks/use-user-data';
+import { useSession } from '@/lib/auth-client';
+import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
+import { DiscountConfig } from '@/lib/discount';
+import { PRICING } from '@/lib/constants';
+import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  CpuIcon,
+  GlobalSearchIcon,
+  AtomicPowerIcon,
+  Crown02Icon,
+  DocumentAttachmentIcon,
+  ConnectIcon,
+} from '@hugeicons/core-free-icons';
+import { AudioLinesIcon } from '@/components/ui/audio-lines';
+import { GripIcon } from '@/components/ui/grip';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Switch } from '@/components/ui/switch';
+import { UseChatHelpers } from '@ai-sdk/react';
+import { ChatMessage } from '@/lib/types';
+import { useLocation } from '@/hooks/use-location';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
+import { useQuery } from '@tanstack/react-query';
+import { listUserConnectorsAction } from '@/app/actions';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -26,32 +58,6 @@ const ProBadge = ({ className = '' }: { className?: string }) => (
     <span>pro</span>
   </span>
 );
-import { track } from '@vercel/analytics';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ComprehensiveUserData } from '@/hooks/use-user-data';
-import { useSession } from '@/lib/auth-client';
-import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
-import { DiscountConfig } from '@/lib/discount';
-import { PRICING } from '@/lib/constants';
-import { LockIcon, MagicWandIcon } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  CpuIcon,
-  GlobalSearchIcon,
-  AiMicIcon,
-  AtomicPowerIcon,
-  Crown02Icon,
-  DocumentAttachmentIcon,
-  BinocularsIcon,
-} from '@hugeicons/core-free-icons';
-import { AudioLinesIcon } from '@/components/ui/audio-lines';
-import { GripIcon } from '@/components/ui/grip';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { UseChatHelpers } from '@ai-sdk/react';
-import { ChatMessage } from '@/lib/types';
-import { useLocation } from '@/hooks/use-location';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -95,6 +101,125 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
 
     const location = useLocation();
+    const isMobile = useIsMobile();
+
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const normalizeText = useCallback((input: string): string => {
+      return input
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }, []);
+
+    const tokenize = useCallback(
+      (input: string): string[] => {
+        const normalized = normalizeText(input);
+        if (!normalized) return [];
+        const tokens = normalized.split(/\s+/).filter(Boolean);
+        return Array.from(new Set(tokens));
+      },
+      [normalizeText],
+    );
+
+    type SearchIndexEntry = {
+      normalized: string;
+      labelNorm: string;
+      normalizedNoSpace: string;
+      labelNoSpace: string;
+    };
+
+    const searchIndex = useMemo<Record<string, SearchIndexEntry>>(() => {
+      const index: Record<string, SearchIndexEntry> = {};
+      for (const m of availableModels) {
+        const aggregate = [
+          m.label,
+          m.description,
+          m.category,
+          m.vision ? 'vision' : '',
+          m.reasoning ? 'reasoning' : '',
+          m.pdf ? 'pdf' : '',
+          m.experimental ? 'experimental' : '',
+          m.pro ? 'pro' : '',
+          m.requiresAuth ? 'auth' : '',
+        ].join(' ');
+        const normalized = normalizeText(aggregate);
+        const labelNorm = normalizeText(m.label);
+        index[m.value] = {
+          normalized,
+          labelNorm,
+          normalizedNoSpace: normalized.replace(/\s+/g, ''),
+          labelNoSpace: labelNorm.replace(/\s+/g, ''),
+        };
+      }
+      return index;
+    }, [availableModels, normalizeText]);
+
+    const computeScore = useCallback(
+      (modelValue: string, query: string): number => {
+        const entry = searchIndex[modelValue];
+        if (!entry) return 0;
+        const tokens = tokenize(query);
+        if (tokens.length === 0) return 1;
+        const filteredTokens = tokens.filter((t) => t.length >= 2 || /^\d$/.test(t));
+        let matchedCount = 0;
+        let score = 0;
+
+        for (const token of filteredTokens) {
+          if (!token) continue;
+
+          const inLabel = entry.labelNorm.includes(token);
+          const inAll = entry.normalized.includes(token);
+
+          if (inAll) {
+            matchedCount += 1;
+            score += inLabel ? 3 : 1;
+
+            if (new RegExp(`\\b${token}`).test(entry.labelNorm)) score += 2;
+            else if (new RegExp(`\\b${token}`).test(entry.normalized)) score += 1;
+          }
+        }
+
+        const phraseNoSpace = normalizeText(query).replace(/\s+/g, '');
+        if (phraseNoSpace.length >= 2) {
+          if (entry.normalizedNoSpace.includes(phraseNoSpace)) score += 2;
+          if (entry.labelNoSpace.includes(phraseNoSpace)) score += 3;
+          if (entry.labelNoSpace.startsWith(phraseNoSpace)) score += 2;
+        }
+
+        if (matchedCount === 0 && phraseNoSpace.length < 2) return 0;
+        if (matchedCount === filteredTokens.length && filteredTokens.length > 0) score += 2;
+
+        return score;
+      },
+      [searchIndex, tokenize, normalizeText],
+    );
+
+    const escapeHtml = useCallback((input: string): string => {
+      return input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }, []);
+
+    const escapeRegExp = useCallback((input: string): string => {
+      return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }, []);
+
+    const buildHighlightHtml = useCallback(
+      (text: string): string => {
+        const q = searchQuery.trim();
+        if (!q) return escapeHtml(text);
+        const safeText = escapeHtml(text);
+        const pattern = new RegExp(`(${escapeRegExp(q)})`, 'gi');
+        return safeText.replace(pattern, '<mark class="bg-primary/80 text-primary-foreground">$1</mark>');
+      },
+      [searchQuery, escapeHtml, escapeRegExp],
+    );
 
     // Fetch discount config when needed
     const fetchDiscountConfig = useCallback(async () => {
@@ -236,6 +361,30 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       return availableModels.filter((model) => model.pdf);
     }, [availableModels, hasImageAttachments, hasPdfAttachments]);
 
+    const rankedModels = useMemo(() => {
+      const query = searchQuery.trim();
+      if (!query) return null;
+      const scored = filteredModels
+        .map((m) => ({ model: m, score: computeScore(m.value, query) }))
+        .filter((x) => x.score > 0);
+
+      const normQuery = normalizeText(query);
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const aLabel = normalizeText(a.model.label);
+        const bLabel = normalizeText(b.model.label);
+        const aExact = aLabel === normQuery ? 1 : 0;
+        const bExact = bLabel === normQuery ? 1 : 0;
+        if (bExact !== aExact) return bExact - aExact;
+        const aStarts = aLabel.startsWith(normQuery) ? 1 : 0;
+        const bStarts = bLabel.startsWith(normQuery) ? 1 : 0;
+        if (bStarts !== aStarts) return bStarts - aStarts;
+        return a.model.label.localeCompare(b.model.label);
+      });
+
+      return scored.map((s) => s.model);
+    }, [filteredModels, searchQuery, computeScore, normalizeText]);
+
     const sortedModels = useMemo(() => filteredModels, [filteredModels]);
 
     const groupedModels = useMemo(
@@ -255,11 +404,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     );
 
     const orderedGroupEntries = useMemo(() => {
-      const groupOrder = ['Free', 'Pro', 'Experimental'];
+      const groupOrder = isProUser ? ['Pro', 'Experimental', 'Free'] : ['Free', 'Experimental', 'Pro'];
       return groupOrder
         .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
         .map((category) => [category, groupedModels[category]] as const);
-    }, [groupedModels]);
+    }, [groupedModels, isProUser]);
 
     const currentModel = useMemo(
       () => availableModels.find((m) => m.value === selectedModel),
@@ -319,178 +468,577 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect],
     );
 
-    return (
-      <>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              size="sm"
-              className={cn(
-                'flex items-center gap-2 px-3 h-7.5 rounded-lg',
-                'border border-border',
-                'bg-background text-foreground',
-                'hover:bg-accent transition-colors',
-                'focus:!outline-none focus:!ring-0',
-                'shadow-none',
-                className,
-              )}
-            >
-              <HugeiconsIcon icon={CpuIcon} size={24} color="currentColor" strokeWidth={2} />
-              <span className="text-xs font-medium sm:block hidden">{currentModel?.label || 'Select Model'}</span>
-              <ChevronsUpDown className="h-4 w-4 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
-            align="start"
-            side="bottom"
-            sideOffset={4}
-            avoidCollisions={true}
-            collisionPadding={8}
-          >
-            <Command
-              className="rounded-lg"
-              filter={(value, search) => {
-                const model = availableModels.find((m) => m.value === value);
-                if (!model || !search) return 1;
+    // Shared command content renderer (not a component) to preserve focus
+    const renderModelCommandContent = () => (
+      <Command
+        className={cn(isMobile ? 'flex-1 h-full border-0 bg-transparent rounded-lg' : 'rounded-lg')}
+        filter={() => 1}
+        shouldFilter={false}
+      >
+        {!isMobile && (
+          <CommandInput
+            placeholder="Search models..."
+            className="h-9"
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+        )}
+        <CommandEmpty>No model found.</CommandEmpty>
+        <CommandList className={isMobile ? 'flex-1 !max-h-full p-2' : 'max-h-[15em]'}>
+          {rankedModels && searchQuery.trim() ? (
+            rankedModels.length > 0 ? (
+              <CommandGroup key="best-matches">
+                <div
+                  className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
+                >
+                  Best matches
+                </div>
+                {rankedModels.map((model) => {
+                  const requiresAuth = requiresAuthentication(model.value) && !user;
+                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                  const isLocked = requiresAuth || requiresPro;
 
-                const searchTerm = search.toLowerCase();
-                const searchableFields = [
-                  model.label,
-                  model.description,
-                  model.category,
-                  model.vision ? 'vision' : '',
-                  model.reasoning ? 'reasoning' : '',
-                  model.pdf ? 'pdf' : '',
-                  model.experimental ? 'experimental' : '',
-                  model.pro ? 'pro' : '',
-                  model.requiresAuth ? 'auth' : '',
-                ]
-                  .join(' ')
-                  .toLowerCase();
+                  if (isLocked) {
+                    return (
+                      <div
+                        key={model.value}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                          'transition-all duration-200',
+                          'opacity-50 hover:opacity-70 hover:bg-accent',
+                        )}
+                        onClick={() => {
+                          if (isSubscriptionLoading) {
+                            return;
+                          }
 
-                return searchableFields.includes(searchTerm) ? 1 : 0;
-              }}
-            >
-              <CommandInput placeholder="Search models..." className="h-9" />
-              <CommandEmpty>No model found.</CommandEmpty>
-              <CommandList className="max-h-[15em]">
-                {orderedGroupEntries.map(([category, categoryModels], categoryIndex) => (
-                  <CommandGroup key={category}>
-                    {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
-                    <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">{category} Models</div>
-                    {categoryModels.map((model) => {
-                      const requiresAuth = requiresAuthentication(model.value) && !user;
-                      const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                      const isLocked = requiresAuth || requiresPro;
-
-                      if (isLocked) {
-                        return (
+                          if (requiresAuth) {
+                            setSelectedAuthModel(model);
+                            setShowSignInDialog(true);
+                          } else if (requiresPro && !isProUser) {
+                            setSelectedProModel(model);
+                            fetchDiscountConfig();
+                            setShowUpgradeDialog(true);
+                          }
+                          setOpen(false);
+                        }}
+                      >
+                        <div className="flex flex-col min-w-0 flex-1">
                           <div
-                            key={model.value}
                             className={cn(
-                              'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
-                              'transition-all duration-200',
-                              'opacity-50 hover:opacity-70 hover:bg-accent',
+                              'font-medium truncate flex items-center gap-1',
+                              isMobile ? 'text-sm' : 'text-[11px]',
                             )}
-                            onClick={() => {
-                              if (isSubscriptionLoading) {
-                                return;
-                              }
-
-                              if (requiresAuth) {
-                                setSelectedAuthModel(model);
-                                setShowSignInDialog(true);
-                              } else if (requiresPro && !isProUser) {
-                                setSelectedProModel(model);
-                                fetchDiscountConfig();
-                                setShowUpgradeDialog(true);
-                              }
-                            }}
                           >
-                            <div className="flex flex-col min-w-0 flex-1">
-                              <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                                {model.label}
-                                {requiresAuth ? (
-                                  <LockIcon className="size-3 text-muted-foreground" />
-                                ) : (
-                                  <HugeiconsIcon
-                                    icon={Crown02Icon}
-                                    size={12}
-                                    color="currentColor"
-                                    strokeWidth={1.5}
-                                    className="text-muted-foreground"
-                                  />
+                            {!isMobile && searchQuery ? (
+                              <span
+                                className="inline"
+                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                              />
+                            ) : (
+                              <span className="inline">{model.label}</span>
+                            )}
+                            {requiresAuth ? (
+                              <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-3.5' : 'size-3')} />
+                            ) : (
+                              <HugeiconsIcon
+                                icon={Crown02Icon}
+                                size={isMobile ? 14 : 12}
+                                color="currentColor"
+                                strokeWidth={1.5}
+                                className="text-muted-foreground"
+                              />
+                            )}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
                                 )}
+                              >
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
                               </div>
-                              <div className="text-[9px] text-muted-foreground truncate leading-tight">
-                                {model.description}
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
                               </div>
-                            </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              </div>
+                            )}
                           </div>
-                        );
-                      }
+                          <div
+                            className={cn(
+                              'text-muted-foreground truncate leading-tight',
+                              isMobile ? 'text-xs' : 'text-[9px]',
+                            )}
+                          >
+                            {!isMobile && searchQuery ? (
+                              <span
+                                className="inline"
+                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
+                              />
+                            ) : (
+                              <span className="inline">{model.description}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
 
-                      return (
-                        <CommandItem
-                          key={model.value}
-                          value={model.value}
-                          onSelect={(currentValue) => {
-                            handleModelChange(currentValue);
-                            setOpen(false);
-                          }}
+                  return (
+                    <CommandItem
+                      key={model.value}
+                      value={model.value}
+                      onSelect={(currentValue) => {
+                        handleModelChange(currentValue);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                        'transition-all duration-200',
+                        'hover:bg-accent',
+                        'data-[selected=true]:bg-accent',
+                      )}
+                    >
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div
                           className={cn(
-                            'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                            'transition-all duration-200',
-                            'hover:bg-accent',
-                            'data-[selected=true]:bg-accent',
+                            'font-medium truncate flex items-center gap-1',
+                            isMobile ? 'text-sm' : 'text-[11px]',
                           )}
                         >
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <div className="font-medium truncate text-[11px] flex items-center gap-1">
-                              {model.label}
-                              {(() => {
-                                const requiresAuth = requiresAuthentication(model.value) && !user;
-                                const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                          {!isMobile && searchQuery ? (
+                            <span
+                              className="inline"
+                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                            />
+                          ) : (
+                            <span className="inline">{model.label}</span>
+                          )}
+                          {model.isNew && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {model.fast && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {(() => {
+                            const requiresAuth = requiresAuthentication(model.value) && !user;
+                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
 
-                                if (requiresAuth) {
-                                  return <LockIcon className="size-3 text-muted-foreground" />;
-                                } else if (requiresPro) {
-                                  return (
-                                    <HugeiconsIcon
-                                      icon={Crown02Icon}
-                                      size={12}
-                                      color="currentColor"
-                                      strokeWidth={1.5}
-                                      className="text-muted-foreground"
-                                    />
-                                  );
-                                }
-                                return null;
-                              })()}
+                            if (requiresAuth) {
+                              return (
+                                <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
+                              );
+                            } else if (requiresPro) {
+                              return (
+                                <HugeiconsIcon
+                                  icon={Crown02Icon}
+                                  size={isMobile ? 14 : 12}
+                                  color="currentColor"
+                                  strokeWidth={1.5}
+                                  className="text-muted-foreground"
+                                />
+                              );
+                            }
+                            return null;
+                          })()}
+                          {model.vision && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
                             </div>
-                            <div className="text-[9px] text-muted-foreground truncate leading-tight">
-                              {model.description}
+                          )}
+                          {model.reasoning && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
                             </div>
-                          </div>
-                          <Check
+                          )}
+                          {model.pdf && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                        </div>
+                        <div
+                          className={cn(
+                            'text-muted-foreground truncate leading-tight',
+                            isMobile ? 'text-xs' : 'text-[9px]',
+                          )}
+                        >
+                          {!isMobile && searchQuery ? (
+                            <span
+                              className="inline"
+                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
+                            />
+                          ) : (
+                            <span className="inline">{model.description}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Check
+                        className={cn('ml-auto h-4 w-4', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                      />
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            ) : (
+              <div className="px-3 py-6 text-xs text-muted-foreground">No model found.</div>
+            )
+          ) : (
+            orderedGroupEntries.map(([category, categoryModels], categoryIndex) => (
+              <CommandGroup key={category}>
+                {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
+                <div
+                  className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
+                >
+                  {category} Models
+                </div>
+                {categoryModels.map((model) => {
+                  const requiresAuth = requiresAuthentication(model.value) && !user;
+                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                  const isLocked = requiresAuth || requiresPro;
+
+                  if (isLocked) {
+                    return (
+                      <div
+                        key={model.value}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                          'transition-all duration-200',
+                          'opacity-50 hover:opacity-70 hover:bg-accent',
+                        )}
+                        onClick={() => {
+                          if (isSubscriptionLoading) {
+                            return;
+                          }
+
+                          if (requiresAuth) {
+                            setSelectedAuthModel(model);
+                            setShowSignInDialog(true);
+                          } else if (requiresPro && !isProUser) {
+                            setSelectedProModel(model);
+                            fetchDiscountConfig();
+                            setShowUpgradeDialog(true);
+                          }
+                          setOpen(false);
+                        }}
+                      >
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div
                             className={cn(
-                              'ml-auto h-4 w-4',
-                              selectedModel === model.value ? 'opacity-100' : 'opacity-0',
+                              'font-medium truncate flex items-center gap-1',
+                              isMobile ? 'text-sm' : 'text-[11px]',
                             )}
-                          />
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                ))}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                          >
+                            {!isMobile && searchQuery ? (
+                              <span
+                                className="inline"
+                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                              />
+                            ) : (
+                              <span className="inline">{model.label}</span>
+                            )}
+                            {requiresAuth ? (
+                              <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-3.5' : 'size-3')} />
+                            ) : (
+                              <HugeiconsIcon
+                                icon={Crown02Icon}
+                                size={isMobile ? 14 : 12}
+                                color="currentColor"
+                                strokeWidth={1.5}
+                                className="text-muted-foreground"
+                              />
+                            )}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              </div>
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            className={cn(
+                              'text-muted-foreground truncate leading-tight',
+                              isMobile ? 'text-xs' : 'text-[9px]',
+                            )}
+                          >
+                            {!isMobile && searchQuery ? (
+                              <span
+                                className="inline"
+                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
+                              />
+                            ) : (
+                              <span className="inline">{model.description}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <CommandItem
+                      key={model.value}
+                      value={model.value}
+                      onSelect={(currentValue) => {
+                        handleModelChange(currentValue);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                        'transition-all duration-200',
+                        'hover:bg-accent',
+                        'data-[selected=true]:bg-accent',
+                      )}
+                    >
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            'font-medium truncate flex items-center gap-1',
+                            isMobile ? 'text-sm' : 'text-[11px]',
+                          )}
+                        >
+                          {!isMobile && searchQuery ? (
+                            <span
+                              className="inline"
+                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                            />
+                          ) : (
+                            <span className="inline">{model.label}</span>
+                          )}
+                          {model.isNew && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {model.fast && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {(() => {
+                            const requiresAuth = requiresAuthentication(model.value) && !user;
+                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
+
+                            if (requiresAuth) {
+                              return (
+                                <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
+                              );
+                            } else if (requiresPro) {
+                              return (
+                                <HugeiconsIcon
+                                  icon={Crown02Icon}
+                                  size={isMobile ? 14 : 12}
+                                  color="currentColor"
+                                  strokeWidth={1.5}
+                                  className="text-muted-foreground"
+                                />
+                              );
+                            }
+                            return null;
+                          })()}
+                          {model.vision && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {model.reasoning && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                          {model.pdf && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                            </div>
+                          )}
+                        </div>
+                        <div
+                          className={cn(
+                            'text-muted-foreground truncate leading-tight',
+                            isMobile ? 'text-xs' : 'text-[9px]',
+                          )}
+                        >
+                          {!isMobile && searchQuery ? (
+                            <span
+                              className="inline"
+                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
+                            />
+                          ) : (
+                            <span className="inline">{model.description}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Check
+                        className={cn('ml-auto h-4 w-4', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                      />
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            ))
+          )}
+        </CommandList>
+      </Command>
+    );
+
+    // Common trigger button component
+    const TriggerButton = React.forwardRef<
+      React.ElementRef<typeof Button>,
+      React.ComponentPropsWithoutRef<typeof Button>
+    >((props, ref) => (
+      <Button
+        ref={ref}
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        size="sm"
+        className={cn(
+          'flex items-center gap-2 px-3 h-7.5 rounded-lg',
+          'border border-border',
+          'bg-background text-foreground',
+          'hover:bg-accent transition-colors',
+          'focus:!outline-none focus:!ring-0',
+          'shadow-none',
+          className,
+        )}
+        {...props}
+      >
+        <HugeiconsIcon icon={CpuIcon} size={24} color="currentColor" strokeWidth={2} />
+        <span className="text-xs font-medium sm:block hidden">{currentModel?.label}</span>
+        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+      </Button>
+    ));
+
+    TriggerButton.displayName = 'TriggerButton';
+
+    return (
+      <>
+        {isMobile ? (
+          <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>
+              <TriggerButton />
+            </DrawerTrigger>
+            <DrawerContent className="min-h-[60vh] max-h-[80vh] flex flex-col">
+              <DrawerHeader className="pb-4 flex-shrink-0">
+                <DrawerTitle className="text-left flex items-center gap-2 font-medium font-be-vietnam-pro text-lg">
+                  <HugeiconsIcon icon={CpuIcon} size={22} color="currentColor" strokeWidth={2} />
+                  Select Model
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="flex-1 flex flex-col min-h-0">{renderModelCommandContent()}</div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <TriggerButton />
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
+              align="start"
+              side="bottom"
+              sideOffset={4}
+              avoidCollisions={true}
+              collisionPadding={8}
+            >
+              {renderModelCommandContent()}
+            </PopoverContent>
+          </Popover>
+        )}
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
@@ -754,26 +1302,6 @@ const StopIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
-const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
-  return (
-    <svg
-      height={size}
-      strokeLinejoin="round"
-      viewBox="0 0 16 16"
-      width={size}
-      style={{ color: 'currentcolor' }}
-      className="-rotate-45"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M10.8591 1.70735C10.3257 1.70735 9.81417 1.91925 9.437 2.29643L3.19455 8.53886C2.56246 9.17095 2.20735 10.0282 2.20735 10.9222C2.20735 11.8161 2.56246 12.6734 3.19455 13.3055C3.82665 13.9376 4.68395 14.2927 5.57786 14.2927C6.47178 14.2927 7.32908 13.9376 7.96117 13.3055L14.2036 7.06304L14.7038 6.56287L15.7041 7.56321L15.204 8.06337L8.96151 14.3058C8.06411 15.2032 6.84698 15.7074 5.57786 15.7074C4.30875 15.7074 3.09162 15.2032 2.19422 14.3058C1.29682 13.4084 0.792664 12.1913 0.792664 10.9222C0.792664 9.65305 1.29682 8.43592 2.19422 7.53852L8.43666 1.29609C9.07914 0.653606 9.95054 0.292664 10.8591 0.292664C11.7678 0.292664 12.6392 0.653606 13.2816 1.29609C13.9241 1.93857 14.2851 2.80997 14.2851 3.71857C14.2851 4.62718 13.9241 5.49858 13.2816 6.14106L13.2814 6.14133L7.0324 12.3835C7.03231 12.3836 7.03222 12.3837 7.03213 12.3838C6.64459 12.7712 6.11905 12.9888 5.57107 12.9888C5.02297 12.9888 4.49731 12.7711 4.10974 12.3835C3.72217 11.9959 3.50444 11.4703 3.50444 10.9222C3.50444 10.3741 3.72217 9.8484 4.10974 9.46084L4.11004 9.46054L9.877 3.70039L10.3775 3.20051L11.3772 4.20144L10.8767 4.70131L5.11008 10.4612C5.11005 10.4612 5.11003 10.4612 5.11 10.4613C4.98779 10.5835 4.91913 10.7493 4.91913 10.9222C4.91913 11.0951 4.98782 11.2609 5.11008 11.3832C5.23234 11.5054 5.39817 11.5741 5.57107 11.5741C5.74398 11.5741 5.9098 11.5054 6.03206 11.3832L6.03233 11.3829L12.2813 5.14072C12.2814 5.14063 12.2815 5.14054 12.2816 5.14045C12.6586 4.7633 12.8704 4.25185 12.8704 3.71857C12.8704 3.18516 12.6585 2.6736 12.2813 2.29643C11.9041 1.91925 11.3926 1.70735 10.8591 1.70735Z"
-        fill="currentColor"
-      ></path>
-    </svg>
-  );
-};
-
 const MAX_FILES = 4;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_INPUT_CHARS = 50000;
@@ -986,197 +1514,498 @@ interface FormComponentProps {
   status: UseChatHelpers<ChatMessage>['status'];
   setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
   isLimitBlocked?: boolean;
+  onOpenSettings?: (tab?: string) => void;
+  selectedConnectors?: ConnectorProvider[];
+  setSelectedConnectors?: React.Dispatch<React.SetStateAction<ConnectorProvider[]>>;
 }
 
 interface GroupSelectorProps {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
   status: UseChatHelpers<ChatMessage>['status'];
+  onOpenSettings?: (tab?: string) => void;
+  isProUser?: boolean;
 }
 
-const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(({ selectedGroup, onGroupSelect, status }) => {
-  const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
-  const isExtreme = selectedGroup === 'extreme';
+interface ConnectorSelectorProps {
+  selectedConnectors: ConnectorProvider[];
+  onConnectorToggle: (provider: ConnectorProvider) => void;
+  user: ComprehensiveUserData | null;
+  isProUser?: boolean;
+}
 
-  // Get search provider from localStorage with reactive updates
-  const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
+// Connector Selector Component
+const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
+  ({ selectedConnectors, onConnectorToggle, user, isProUser }) => {
+    const [open, setOpen] = useState(false);
+    const isMobile = useIsMobile();
 
-  // Get dynamic search groups based on the selected search provider
-  const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+    // Get user's connected connectors
+    const { data: connectorsData, isLoading: connectorsLoading } = useQuery({
+      queryKey: ['connectors', user?.id],
+      queryFn: listUserConnectorsAction,
+      enabled: !!user && isProUser,
+      staleTime: 1000 * 60 * 2,
+    });
 
-  // Memoize visible groups calculation
-  const visibleGroups = useMemo(
-    () =>
-      dynamicSearchGroups.filter((group) => {
-        if (!group.show) return false;
-        if ('requireAuth' in group && group.requireAuth && !session) return false;
-        if (group.id === 'extreme') return false; // Exclude extreme from dropdown
-        return true;
-      }),
-    [dynamicSearchGroups, session],
-  );
+    const connectedProviders = connectorsData?.connections?.map((conn) => conn.provider) || [];
+    const availableConnectors = Object.entries(CONNECTOR_CONFIGS).filter(([provider]) =>
+      connectedProviders.includes(provider as ConnectorProvider),
+    );
 
-  const selectedGroupData = useMemo(
-    () => visibleGroups.find((group) => group.id === selectedGroup),
-    [visibleGroups, selectedGroup],
-  );
+    const selectedCount = selectedConnectors.length;
+    const isAllSelected = selectedConnectors.length === availableConnectors.length;
+    const isSingleConnector = availableConnectors.length === 1;
 
-  const handleToggleExtreme = useCallback(() => {
-    if (isExtreme) {
-      // Switch back to web mode
-      const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
-      if (webGroup) {
-        onGroupSelect(webGroup);
+    // Auto-select all connectors if none selected (must be before early return to maintain hook order)
+    React.useEffect(() => {
+      if (isProUser && selectedCount === 0 && availableConnectors.length > 0) {
+        availableConnectors.forEach(([provider]) => {
+          onConnectorToggle(provider as ConnectorProvider);
+        });
       }
-    } else {
-      // Switch to extreme mode
-      const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
-      if (extremeGroup) {
-        onGroupSelect(extremeGroup);
-      }
+    }, [isProUser, selectedCount, availableConnectors, onConnectorToggle]);
+
+    if (!isProUser || availableConnectors.length === 0) {
+      return null;
     }
-  }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
 
-  return (
-    <div className="flex items-center">
-      {/* Toggle Switch Container */}
-      <div className="flex items-center bg-background border border-border rounded-lg !gap-1 !py-1 !px-0.75 h-8">
-        {/* Group Selector Side */}
-        <Popover open={open && !isExtreme} onOpenChange={(newOpen) => !isExtreme && setOpen(newOpen)}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  role="combobox"
-                  aria-expanded={open && !isExtreme}
-                  size="sm"
-                  onClick={() => {
-                    if (isExtreme) {
-                      // Switch back to web mode when clicking groups in extreme mode
-                      const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
-                      if (webGroup) {
-                        onGroupSelect(webGroup);
-                      }
-                    } else {
-                      setOpen(!open);
-                    }
-                  }}
-                  className={cn(
-                    'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
-                    !isExtreme
-                      ? 'bg-accent text-foreground hover:bg-accent/80'
-                      : 'text-muted-foreground hover:bg-accent',
-                  )}
-                >
-                  {selectedGroupData && !isExtreme && (
-                    <>
-                      <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
-                      <ChevronsUpDown className="size-4.5 opacity-50" />
-                    </>
-                  )}
-                  {isExtreme && (
-                    <>
-                      <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
-                    </>
-                  )}
-                </Button>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
-            </TooltipContent>
-          </Tooltip>
-          <PopoverContent
-            className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-popover z-50 border !shadow-none"
-            align="start"
-            side="bottom"
-            sideOffset={4}
-            avoidCollisions={true}
-            collisionPadding={8}
-          >
-            <Command
-              className="rounded-lg"
-              filter={(value, search) => {
-                const group = visibleGroups.find((g) => g.id === value);
-                if (!group || !search) return 1;
+    const handleSelectAll = () => {
+      // Don't allow deselecting all if only one connector
+      if (isSingleConnector) return;
 
-                const searchTerm = search.toLowerCase();
-                const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
+      if (isAllSelected) {
+        // Deselect all
+        availableConnectors.forEach(([provider]) => {
+          if (selectedConnectors.includes(provider as ConnectorProvider)) {
+            onConnectorToggle(provider as ConnectorProvider);
+          }
+        });
+      } else {
+        // Select all
+        availableConnectors.forEach(([provider]) => {
+          if (!selectedConnectors.includes(provider as ConnectorProvider)) {
+            onConnectorToggle(provider as ConnectorProvider);
+          }
+        });
+      }
+    };
 
-                return searchableFields.includes(searchTerm) ? 1 : 0;
-              }}
-            >
-              <CommandInput placeholder="Search modes..." className="h-9" />
-              <CommandEmpty>No search mode found.</CommandEmpty>
-              <CommandList className="max-h-[240px]">
-                <CommandGroup>
-                  <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
-                  {visibleGroups.map((group) => {
-                    const Icon = group.icon;
-                    return (
-                      <CommandItem
+    const handleClearAll = () => {
+      if (isSingleConnector) return;
+
+      selectedConnectors.forEach((provider) => {
+        if (availableConnectors.some(([p]) => p === provider)) {
+          onConnectorToggle(provider as ConnectorProvider);
+        }
+      });
+    };
+
+    const handleConnectorToggle = (provider: ConnectorProvider) => {
+      // Don't allow deselecting if only one connector
+      if (isSingleConnector && selectedConnectors.includes(provider)) {
+        return;
+      }
+      onConnectorToggle(provider);
+    };
+
+    if (isMobile) {
+      return (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <Button variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => setOpen(true)}>
+            <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
+            <span className="ml-1">{selectedCount > 0 ? `${selectedCount} active` : 'Select'}</span>
+          </Button>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader className="pb-1">
+              <DialogTitle className="text-sm">Select Connectors</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-auto space-y-2">
+              {availableConnectors.map(([provider, config]) => (
+                <div key={provider} className="flex items-center justify-between p-2 border rounded-md">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-4 h-4">
+                      {(() => {
+                        const IconComponent = CONNECTOR_ICONS[config.icon];
+                        return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                      })()}
+                    </div>
+                    <span className="font-medium text-sm">{config.name}</span>
+                  </div>
+                  <Switch
+                    checked={selectedConnectors.includes(provider as ConnectorProvider)}
+                    onCheckedChange={() => handleConnectorToggle(provider as ConnectorProvider)}
+                    disabled={isSingleConnector && selectedConnectors.includes(provider as ConnectorProvider)}
+                  />
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+            <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
+            <span className="ml-1">{selectedCount > 0 ? `${selectedCount} active` : 'Select'}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-60 p-2" align="start">
+          <div className="space-y-1 max-h-64 overflow-auto">
+            {availableConnectors.map(([provider, config]) => (
+              <div key={provider} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-4 h-4">
+                    {(() => {
+                      const IconComponent = CONNECTOR_ICONS[config.icon];
+                      return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                    })()}
+                  </div>
+                  <span className="font-medium text-sm">{config.name}</span>
+                </div>
+                <Switch
+                  checked={selectedConnectors.includes(provider as ConnectorProvider)}
+                  onCheckedChange={() => handleConnectorToggle(provider as ConnectorProvider)}
+                  disabled={isSingleConnector && selectedConnectors.includes(provider as ConnectorProvider)}
+                />
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  },
+);
+
+ConnectorSelector.displayName = 'ConnectorSelector';
+
+const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
+  ({ selectedGroup, onGroupSelect, status, onOpenSettings, isProUser }) => {
+    const { data: session } = useSession();
+    const [open, setOpen] = useState(false);
+    const isMobile = useIsMobile();
+    const isExtreme = selectedGroup === 'extreme';
+
+    // Get search provider from localStorage with reactive updates
+    const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'firecrawl');
+
+    // Get dynamic search groups based on the selected search provider
+    const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+
+    // Memoize visible groups calculation
+    const visibleGroups = useMemo(
+      () =>
+        dynamicSearchGroups.filter((group) => {
+          if (!group.show) return false;
+          if ('requireAuth' in group && group.requireAuth && !session) return false;
+          // Don't filter out Pro-only groups, show them with Pro indicator
+          if (group.id === 'extreme') return false; // Exclude extreme from dropdown
+          return true;
+        }),
+      [dynamicSearchGroups, session],
+    );
+
+    const selectedGroupData = useMemo(
+      () => visibleGroups.find((group) => group.id === selectedGroup),
+      [visibleGroups, selectedGroup],
+    );
+
+    const handleToggleExtreme = useCallback(() => {
+      if (isExtreme) {
+        // Switch back to web mode
+        const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+        if (webGroup) {
+          onGroupSelect(webGroup);
+        }
+      } else {
+        // Switch to extreme mode
+        const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
+        if (extremeGroup) {
+          onGroupSelect(extremeGroup);
+        }
+      }
+    }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
+
+    // Shared handler for group selection
+    const handleGroupSelect = useCallback(
+      async (currentValue: string) => {
+        const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
+
+        if (selectedGroup) {
+          // Check if this is a Pro-only group and user is not Pro
+          if ('requirePro' in selectedGroup && selectedGroup.requirePro && !isProUser && onOpenSettings) {
+            // Open settings to upgrade
+            onOpenSettings('subscription');
+            setOpen(false);
+            return;
+          }
+
+          // Check if connectors group is selected but no connectors are connected
+          if (selectedGroup.id === 'connectors' && session && onOpenSettings && isProUser) {
+            try {
+              const { listUserConnectorsAction } = await import('@/app/actions');
+              const result = await listUserConnectorsAction();
+              if (result.success && result.connections.length === 0) {
+                // No connectors connected, open settings dialog to connectors tab
+                onOpenSettings('connectors');
+                setOpen(false);
+                return;
+              }
+            } catch (error) {
+              console.error('Error checking connectors:', error);
+              // If there's an error, still allow group selection
+            }
+          }
+
+          onGroupSelect(selectedGroup);
+          setOpen(false);
+        }
+      },
+      [visibleGroups, isProUser, onOpenSettings, session, onGroupSelect],
+    );
+
+    // Handle opening the dropdown/drawer
+    const handleOpenChange = useCallback(
+      (newOpen: boolean) => {
+        if (newOpen && isExtreme) {
+          // If trying to open in extreme mode, switch back to web mode instead
+          const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+          if (webGroup) {
+            onGroupSelect(webGroup);
+          }
+          return;
+        }
+        setOpen(newOpen);
+      },
+      [isExtreme, onGroupSelect, dynamicSearchGroups],
+    );
+
+    // Handle group selector button click (mobile only)
+    const handleGroupSelectorClick = useCallback(() => {
+      if (isExtreme) {
+        // Switch back to web mode when clicking groups in extreme mode
+        const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+        if (webGroup) {
+          onGroupSelect(webGroup);
+        }
+      } else {
+        setOpen(true);
+      }
+    }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
+
+    // Shared content component
+    const GroupSelectionContent = () => (
+      <Command
+        className="rounded-lg"
+        filter={(value, search) => {
+          const group = visibleGroups.find((g) => g.id === value);
+          if (!group || !search) return 1;
+
+          const searchTerm = search.toLowerCase();
+          const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
+
+          return searchableFields.includes(searchTerm) ? 1 : 0;
+        }}
+      >
+        <CommandInput placeholder="Search modes..." className="h-9" />
+        <CommandEmpty>No search mode found.</CommandEmpty>
+        <CommandList className="max-h-[240px]">
+          <CommandGroup>
+            <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
+            {visibleGroups.map((group) => (
+              <CommandItem
+                key={group.id}
+                value={group.id}
+                onSelect={(value) => handleGroupSelect(value)}
+                className={cn(
+                  'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
+                  'transition-all duration-200',
+                  'hover:bg-accent',
+                  'data-[selected=true]:bg-accent',
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
+                  <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium truncate text-[11px] text-foreground">{group.name}</span>
+                      {'requirePro' in group && group.requirePro && !isProUser && (
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium bg-primary/10 text-primary border border-primary/20">
+                          PRO
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
+                      {group.description}
+                    </div>
+                  </div>
+                </div>
+                <Check className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')} />
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+
+    return (
+      <div className="flex items-center">
+        {/* Toggle Switch Container */}
+        <div className="flex items-center bg-background border border-border rounded-lg !gap-1 !py-1 !px-0.75 h-8">
+          {/* Group Selector Side - Conditional Rendering for Mobile/Desktop */}
+          {isMobile ? (
+            <Drawer open={open} onOpenChange={handleOpenChange}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DrawerTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      role="combobox"
+                      aria-expanded={open}
+                      size="sm"
+                      onClick={handleGroupSelectorClick}
+                      className={cn(
+                        'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
+                        !isExtreme
+                          ? 'bg-accent text-foreground hover:bg-accent/80'
+                          : 'text-muted-foreground hover:bg-accent',
+                      )}
+                    >
+                      {selectedGroupData && !isExtreme && (
+                        <>
+                          <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
+                          <ChevronsUpDown className="size-4.5 opacity-50" />
+                        </>
+                      )}
+                      {isExtreme && (
+                        <>
+                          <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
+                        </>
+                      )}
+                    </Button>
+                  </DrawerTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
+                </TooltipContent>
+              </Tooltip>
+              <DrawerContent className="max-h-[80vh]">
+                <DrawerHeader className="text-left pb-4">
+                  <DrawerTitle>Choose Search Mode</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-6 max-h-[calc(80vh-100px)] overflow-y-auto">
+                  <div className="space-y-2">
+                    {visibleGroups.map((group) => (
+                      <button
                         key={group.id}
-                        value={group.id}
-                        onSelect={(currentValue) => {
-                          const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
-                          if (selectedGroup) {
-                            onGroupSelect(selectedGroup);
-                            setOpen(false);
-                          }
-                        }}
+                        onClick={() => handleGroupSelect(group.id)}
                         className={cn(
-                          'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
-                          'transition-all duration-200',
-                          'hover:bg-accent',
-                          'data-[selected=true]:bg-accent',
+                          'w-full flex items-center justify-between p-4 rounded-lg text-left transition-all',
+                          'border border-border hover:bg-accent',
+                          selectedGroup === group.id ? 'bg-accent border-primary/20' : 'bg-background',
                         )}
                       >
-                        <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                          <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <HugeiconsIcon icon={group.icon} size={24} color="currentColor" strokeWidth={2} />
                           <div className="flex flex-col min-w-0 flex-1">
-                            <div className="font-medium truncate text-[11px] text-foreground">{group.name}</div>
-                            <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
-                              {group.description}
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-foreground">{group.name}</span>
+                              {'requirePro' in group && group.requirePro && !isProUser && (
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                  PRO
+                                </span>
+                              )}
                             </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{group.description}</div>
                           </div>
                         </div>
                         <Check
-                          className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')}
+                          className={cn(
+                            'ml-3 h-5 w-5 shrink-0',
+                            selectedGroup === group.id ? 'opacity-100' : 'opacity-0',
+                          )}
                         />
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          ) : (
+            <Popover open={open} onOpenChange={handleOpenChange}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      role="combobox"
+                      aria-expanded={open}
+                      size="sm"
+                      className={cn(
+                        'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
+                        !isExtreme
+                          ? 'bg-accent text-foreground hover:bg-accent/80'
+                          : 'text-muted-foreground hover:bg-accent',
+                      )}
+                    >
+                      {selectedGroupData && !isExtreme && (
+                        <>
+                          <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
+                          <ChevronsUpDown className="size-4.5 opacity-50" />
+                        </>
+                      )}
+                      {isExtreme && (
+                        <>
+                          <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
+                        </>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent
+                className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-popover z-50 border !shadow-none"
+                align="start"
+                side="bottom"
+                sideOffset={4}
+                avoidCollisions={true}
+                collisionPadding={8}
+              >
+                <GroupSelectionContent />
+              </PopoverContent>
+            </Popover>
+          )}
 
-        {/* Extreme Mode Side */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleExtreme}
-              className={cn(
-                'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
-                isExtreme ? 'bg-accent text-foreground hover:bg-accent/80' : 'text-muted-foreground hover:bg-accent',
-              )}
-            >
-              <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{isExtreme ? 'Extreme Search mode on' : 'Switch to Extreme Search mode'}</p>
-          </TooltipContent>
-        </Tooltip>
+          {/* Extreme Mode Side */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToggleExtreme}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
+                  isExtreme ? 'bg-accent text-foreground hover:bg-accent/80' : 'text-muted-foreground hover:bg-accent',
+                )}
+              >
+                <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{isExtreme ? 'Extreme Search mode on' : 'Switch to Extreme Search mode'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 GroupModeToggle.displayName = 'GroupModeToggle';
 
@@ -1202,6 +2031,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
   status,
   setHasSubmitted,
   isLimitBlocked = false,
+  onOpenSettings,
+  selectedConnectors = [],
+  setSelectedConnectors,
 }) => {
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const isMounted = useRef(true);
@@ -1222,6 +2054,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const gripIconRef = useRef<any>(null);
 
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const isProUser = useMemo(
     () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
@@ -1656,6 +2489,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
     },
     [setSelectedGroup, inputRef, isEnhancing, isTypewriting],
+  );
+
+  const handleConnectorToggle = useCallback(
+    (provider: ConnectorProvider) => {
+      if (!setSelectedConnectors) return;
+
+      setSelectedConnectors((prev) => {
+        if (prev.includes(provider)) {
+          return prev.filter((p) => p !== provider);
+        } else {
+          return [...prev, provider];
+        }
+      });
+    },
+    [setSelectedConnectors],
   );
 
   const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
@@ -2283,12 +3131,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
     ],
   );
 
-  const submitForm = useCallback(() => {
-    onSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>);
-    resetSuggestedQuestions();
+  const submitForm = useCallback(
+    debounce(() => {
+      onSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>);
+      resetSuggestedQuestions();
 
-    inputRef.current?.focus();
-  }, [onSubmit, resetSuggestedQuestions, inputRef]);
+      // Handle iOS keyboard behavior differently
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        inputRef.current?.blur();
+      } else {
+        inputRef.current?.focus();
+      }
+    }, 500),
+    [onSubmit, resetSuggestedQuestions, inputRef],
+  );
 
   const triggerFileInput = useCallback(() => {
     if (attachments.length >= MAX_FILES) {
@@ -2363,7 +3220,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
             'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
             hasInteracted ? 'z-50' : 'z-10',
             isDragging && 'ring-1 ring-border',
-            attachments.length > 0 || uploadQueue.length > 0 ? 'bg-muted/50 p-1' : 'bg-transparent',
+            attachments.length > 0 || uploadQueue.length > 0
+              ? 'bg-muted/40 !backdrop-blur-md p-1 shadow-sm shadow-black/5 dark:shadow-black/10'
+              : 'bg-transparent',
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -2375,7 +3234,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 backdrop-blur-[2px] bg-background/80 rounded-lg border border-dashed border-border flex items-center justify-center z-50 m-2"
+                className="absolute inset-0 backdrop-blur-md bg-background/90 rounded-lg border border-dashed border-border/60 flex items-center justify-center z-50 m-2 shadow-xl shadow-black/10 dark:shadow-black/25"
               >
                 <div className="flex items-center gap-4 px-6 py-8">
                   <div className="p-3 rounded-full bg-muted !shadow-none">
@@ -2447,9 +3306,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           {/* Form container */}
           <div className="relative">
+            {/* Shadow-like background blur effect */}
+            <div className="absolute -inset-1 rounded-2xl bg-primary/5 dark:bg-primary/2 !blur-sm pointer-events-none z-9999" />
             <div
               className={cn(
-                'rounded-xl !bg-muted border border-border focus-within:border-ring transition-all duration-200',
+                'relative rounded-xl !bg-muted border border-border/60 focus-within:border-ring/50 transition-all duration-200',
+                'border-0',
                 (isEnhancing || isTypewriting) && '!bg-muted',
               )}
             >
@@ -2556,7 +3418,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 className={cn(
                   'flex justify-between items-center rounded-t-none rounded-b-xl',
                   '!bg-muted',
-                  '!border-t-0 !border-border',
+                  '!border-0',
                   'p-2 gap-2 shadow-none',
                   'transition-all duration-200',
                   (isEnhancing || isTypewriting) && 'pointer-events-none',
@@ -2564,7 +3426,22 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 )}
               >
                 <div className={cn('flex items-center gap-2')}>
-                  <GroupModeToggle selectedGroup={selectedGroup} onGroupSelect={handleGroupSelect} status={status} />
+                  <GroupModeToggle
+                    selectedGroup={selectedGroup}
+                    onGroupSelect={handleGroupSelect}
+                    status={status}
+                    onOpenSettings={onOpenSettings}
+                    isProUser={isProUser}
+                  />
+
+                  {selectedGroup === 'connectors' && setSelectedConnectors && (
+                    <ConnectorSelector
+                      selectedConnectors={selectedConnectors}
+                      onConnectorToggle={handleConnectorToggle}
+                      user={user}
+                      isProUser={isProUser}
+                    />
+                  )}
 
                   <ModelSwitcher
                     selectedModel={selectedModel}
@@ -2577,6 +3454,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       const isVisionModel = hasVisionSupport(model.value);
                       toast.message(`Switched to ${model.label}`, {
                         description: isVisionModel ? 'You can now upload images to the model.' : undefined,
+                        icon: <HugeiconsIcon icon={CpuIcon} size={16} color="currentColor" strokeWidth={2} />,
                       });
                     }}
                     subscriptionData={subscriptionData}

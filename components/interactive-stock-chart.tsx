@@ -22,7 +22,7 @@ import {
   Banknote,
   UserCheck,
 } from 'lucide-react';
-import { ChartBar } from '@phosphor-icons/react';
+import { ChartBarIcon } from '@phosphor-icons/react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Chart03Icon } from '@hugeicons/core-free-icons';
@@ -2143,7 +2143,6 @@ export const InteractiveStockChart = React.memo(
                                 key={`${groupIndex}-${newsIndex}`}
                                 href={news.url}
                                 target="_blank"
-                                rel="noopener noreferrer"
                                 className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
                               >
                                 <div className="flex items-start gap-1.5">
@@ -2212,7 +2211,7 @@ export const InteractiveStockChart = React.memo(
                     <div className="mt-5 pt-4 border-t border-border/30">
                       <div className="flex items-center justify-between mb-2.5">
                         <div className="flex items-center gap-1.5">
-                          <ChartBar className="size-3.5 text-primary/80" />
+                          <ChartBarIcon className="size-3.5 text-primary/80" />
                           <h3 className="text-xs font-medium text-foreground/90">Financial Reports</h3>
                         </div>
                       </div>
@@ -2226,7 +2225,6 @@ export const InteractiveStockChart = React.memo(
                                 key={`financial-${groupIndex}-${newsIndex}`}
                                 href={news.url}
                                 target="_blank"
-                                rel="noopener noreferrer"
                                 className="min-w-64 max-w-72 w-[calc(100vw-2.5rem)] sm:w-64 shrink-0 p-2 rounded-md bg-card/40 border border-border/30 hover:bg-card/70 transition-colors snap-start"
                               >
                                 <div className="flex items-start gap-1.5">

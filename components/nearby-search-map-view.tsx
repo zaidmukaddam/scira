@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import InteractiveMap from './interactive-maps';
 import PlaceCard from './place-card';
 import { Badge } from './ui/badge';
-import { WarningCircle } from '@phosphor-icons/react';
+import { WarningCircleIcon } from '@phosphor-icons/react';
 
 interface Location {
   lat: number;
@@ -375,7 +375,7 @@ const NearbySearchMapView = memo<NearbySearchMapViewProps>(
             {mapError ? (
               <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
                 <div className="text-center p-6">
-                  <WarningCircle size={32} className="text-red-500 mx-auto mb-3" weight="duotone" />
+                  <WarningCircleIcon size={32} className="text-red-500 mx-auto mb-3" weight="duotone" />
                   <p className="text-neutral-600 dark:text-neutral-400 mb-3">Failed to load map</p>
                   <button onClick={handleRetry} className="text-sm text-blue-500 hover:text-blue-600 underline">
                     Try again

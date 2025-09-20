@@ -15,6 +15,8 @@ import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { useLocation } from '@/hooks/use-location';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { StudentDomainRequestButton } from '@/components/student-domain-request-button';
+import { SupportedDomainsList } from '@/components/supported-domains-list';
 
 type SubscriptionDetails = {
   id: string;
@@ -468,13 +470,19 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           <Card className="max-w-2xl mx-auto mt-16">
             <CardContent className="p-6">
               <div className="text-center">
-                <h3 className="font-medium mb-2">Student discount available</h3>
+                <h3 className="font-medium mb-2">🎓 Student discount available</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Get Pro for $5/month with valid student verification
+                  Get Pro for just $5/month! Simply sign up with your university email address and the discount will be
+                  applied automatically.
                 </p>
-                <Button variant="outline" asChild>
-                  <a href="mailto:zaid@scira.ai?subject=Student%20Discount%20Request">Apply for discount</a>
-                </Button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+                  <SupportedDomainsList />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <StudentDomainRequestButton />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Check if your university is already supported, or request to add a new domain.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -487,7 +495,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               <div className="text-center">
                 <h3 className="font-medium mb-2 text-primary">🎓 Student discount active!</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Your student email has been verified. Get Pro for just $5/month.
+                  Your university email domain has been automatically recognized. Get Pro for just $5/month.
                 </p>
                 <p className="text-xs text-muted-foreground">Discount automatically applied at checkout</p>
               </div>

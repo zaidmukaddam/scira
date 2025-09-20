@@ -1,22 +1,37 @@
 'use client';
 
-import { Brain, Search, FileText, ShieldCheck, ArrowUpRight, Bot, X, GraduationCap, Eye } from 'lucide-react';
+import {
+  Brain,
+  Search,
+  ArrowUpRight,
+  Bot,
+  GraduationCap,
+  Eye,
+  Zap,
+  Image as ImageIcon,
+  FileText,
+  Sparkles,
+  Filter,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+// } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+// import { Checkbox } from '@/components/ui/checkbox';
+// import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
-import { GithubLogo, XLogo } from '@phosphor-icons/react';
+import { GithubLogoIcon, XLogoIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import {
   ProAccordion,
@@ -31,25 +46,26 @@ import { VercelLogo } from '@/components/logos/vercel-logo';
 import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
 import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
-import { PRICING } from '@/lib/constants';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { SciraLogo } from '@/components/logos/scira-logo';
 
 export default function AboutPage() {
   const router = useRouter();
+  /*
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCryptoAlert, setShowCryptoAlert] = useState(true);
+  */
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>([]);
+  const [openCategory, setOpenCategory] = useState(false);
+  const [openCapabilities, setOpenCapabilities] = useState(false);
+  const [showAllModels, setShowAllModels] = useState(false);
   const { data: githubStars, isLoading: isLoadingStars } = useGitHubStars();
 
+  /*
   useEffect(() => {
     const hasAcceptedTerms = localStorage.getItem('hasAcceptedTerms');
     if (!hasAcceptedTerms) {
@@ -61,18 +77,23 @@ export default function AboutPage() {
       setShowCryptoAlert(false);
     }
   }, []);
+  */
 
+  /*
   const handleAcceptTerms = () => {
     if (acceptedTerms) {
       setShowTermsDialog(false);
       localStorage.setItem('hasAcceptedTerms', 'true');
     }
   };
+  */
 
+  /*
   const handleDismissCryptoAlert = () => {
     setShowCryptoAlert(false);
     localStorage.setItem('hasDismissedCryptoAlert', 'true');
   };
+  */
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,7 +106,8 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Crypto Disclaimer Alert */}
+      {/* Crypto Disclaimer Alert - commented out */}
+      {/**
       {showCryptoAlert && (
         <div className="sticky top-0 z-50 border-b border-border bg-amber-50 dark:bg-amber-950/20">
           <Alert className="border-0 rounded-none bg-transparent">
@@ -107,7 +129,9 @@ export default function AboutPage() {
           </Alert>
         </div>
       )}
-      {/* Terms Dialog */}
+      */}
+      {/* Terms Dialog - commented out */}
+      {/**
       <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
         <DialogContent className="sm:max-w-[500px] p-0 bg-background border border-border">
           <div className="p-6 border-b border-border">
@@ -173,6 +197,7 @@ export default function AboutPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      */}
       {/* Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
         <div className="container max-w-7xl mx-auto px-4">
@@ -186,30 +211,34 @@ export default function AboutPage() {
             </Link>
 
             {/* Desktop Navigation */}
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link href="/" passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Search</NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link href="/pricing" passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Pricing</NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link href="/terms" passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Terms</NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link href="/privacy-policy" passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Privacy</NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <nav className="hidden md:flex items-center">
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                >
+                  Search
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/terms"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                >
+                  Terms
+                </Link>
+                <Link
+                  href="/privacy-policy"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                >
+                  Privacy
+                </Link>
+              </div>
+            </nav>
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-4">
@@ -217,9 +246,8 @@ export default function AboutPage() {
                 href="https://git.new/scira"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 target="_blank"
-                rel="noopener noreferrer"
               >
-                <GithubLogo className="h-4 w-4" />
+                <GithubLogoIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">
                   {!isLoadingStars && githubStars && (
                     <Badge variant="secondary" className="ml-1 text-xs">
@@ -291,9 +319,8 @@ export default function AboutPage() {
               href="https://git.new/scira"
               className="inline-flex h-11 items-center gap-2 px-6 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors"
               target="_blank"
-              rel="noopener noreferrer"
             >
-              <GithubLogo className="h-4 w-4" />
+              <GithubLogoIcon className="h-4 w-4" />
               <span className="font-medium">View Source</span>
               {!isLoadingStars && githubStars && (
                 <Badge variant="secondary" className="ml-2">
@@ -333,6 +360,17 @@ export default function AboutPage() {
               </div>
               <p className="text-muted-foreground">GitHub Stars</p>
             </div>
+          </div>
+        </div>
+
+        {/* Elegant CTA */}
+        <div className="mt-20 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-muted/50 border border-border/50 hover:border-border transition-colors">
+            <span className="text-sm text-muted-foreground">Ready to explore?</span>
+            <Button onClick={() => router.push('/')} size="sm" className="h-8 px-4 text-xs font-medium">
+              Start Searching
+              <ArrowUpRight className="ml-1 h-3 w-3" />
+            </Button>
           </div>
         </div>
       </section>
@@ -378,7 +416,6 @@ export default function AboutPage() {
             <a
               href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
               target="_blank"
-              rel="noopener noreferrer"
               className="inline-block"
             >
               <Image
@@ -389,6 +426,22 @@ export default function AboutPage() {
                 className="mx-auto"
               />
             </a>
+          </div>
+
+          {/* Subtle CTA */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Try our award-winning search</span>
+              <Button
+                onClick={() => router.push('/')}
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-sm font-normal text-primary hover:text-primary/80"
+              >
+                Get started
+                <ArrowUpRight className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -443,6 +496,28 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
+
+          {/* Feature CTA */}
+          <div className="mt-16 text-center">
+            <div className="max-w-md mx-auto p-4 sm:p-6 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
+              <p className="text-sm text-muted-foreground mb-4">Experience all features in action</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => router.push('/')} size="sm" className="px-4 py-2 text-sm w-full sm:w-auto">
+                  Try Now
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                </Button>
+                <Button
+                  onClick={() => router.push('/lookout')}
+                  variant="outline"
+                  size="sm"
+                  className="px-4 py-2 text-sm w-full sm:w-auto"
+                >
+                  Try Lookout
+                  <Eye className="ml-1 h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       {/* Technology Stack */}
@@ -480,6 +555,19 @@ export default function AboutPage() {
               <p className="text-muted-foreground text-sm">Natural voice synthesis with human-like quality</p>
             </div>
           </div>
+
+          {/* Tech Stack CTA */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/30">
+              <span className="text-sm text-muted-foreground">Powered by the best</span>
+              <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:text-primary/80">
+                <Link href="https://git.new/scira" target="_blank">
+                  View source
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
       {/* Featured on Vercel Section */}
@@ -496,7 +584,6 @@ export default function AboutPage() {
                 href="https://vercel.com/blog/ai-sdk-4-1"
                 className="inline-flex items-center gap-2 font-medium text-primary hover:text-primary/80 transition-colors"
                 target="_blank"
-                rel="noopener noreferrer"
               >
                 Read the Feature
                 <ArrowUpRight className="h-4 w-4" />
@@ -506,71 +593,368 @@ export default function AboutPage() {
               <Image src="/vercel-featured.png" alt="Featured on Vercel Blog" fill className="object-cover" />
             </div>
           </div>
+
+          {/* Vercel CTA */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-3 px-4 sm:px-5 py-3 rounded-lg bg-gradient-to-r from-background to-muted/20 border border-border/50 max-w-xs sm:max-w-none mx-auto">
+              <span className="text-sm text-muted-foreground text-center">Featured technology</span>
+              <Button onClick={() => router.push('/')} size="sm" className="h-7 px-3 text-xs w-full sm:w-auto">
+                Try it now
+                <Sparkles className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
       {/* Models Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-24 px-4">
         <div className="container max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-semibold mb-4">Available AI Models</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Choose from a variety of models, each optimized for different tasks
+          <div className="mb-20">
+            <h2 className="text-3xl font-medium tracking-tight mb-4">AI Models</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              Production-ready models from leading AI providers, each optimized for specific use cases.
             </p>
           </div>
 
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-border">
-                    <TableHead className="font-semibold">Model</TableHead>
-                    <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
-                    <TableHead className="font-semibold">Capabilities</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {models.map((model: any) => (
-                    <TableRow key={model.value} className="border-b border-border/50">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{model.label}</span>
-                          {model.pro && (
-                            <Badge variant="secondary" className="text-xs">
-                              Pro
-                            </Badge>
+          {/* Magical Filter Interface */}
+          <div className="mb-12">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Filter models</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Category Filter */}
+                <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openCategory}
+                      className="justify-between w-full sm:w-auto sm:min-w-[140px]"
+                    >
+                      {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
+                      <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search categories..." className="h-10" />
+                      <CommandList>
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup>
+                          {[
+                            { value: 'all', label: 'All Categories' },
+                            { value: 'Free', label: 'Free' },
+                            { value: 'Pro', label: 'Pro' },
+                            { value: 'Experimental', label: 'Experimental' },
+                          ].map((category) => (
+                            <CommandItem
+                              key={category.value}
+                              value={category.value}
+                              onSelect={(currentValue) => {
+                                setSelectedCategory(currentValue);
+                                setOpenCategory(false);
+                              }}
+                              className="h-10 px-3"
+                            >
+                              {category.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Capabilities Filter */}
+                <Popover open={openCapabilities} onOpenChange={setOpenCapabilities}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openCapabilities}
+                      className="justify-between w-full sm:w-auto sm:min-w-[160px]"
+                    >
+                      {selectedCapabilities.length === 0
+                        ? 'All Capabilities'
+                        : selectedCapabilities.length === 1
+                          ? selectedCapabilities[0]
+                          : `${selectedCapabilities.length} selected`}
+                      <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search capabilities..." className="h-10" />
+                      <CommandList>
+                        <CommandEmpty>No capability found.</CommandEmpty>
+                        <CommandGroup>
+                          {[
+                            { value: 'vision', label: 'Vision' },
+                            { value: 'reasoning', label: 'Reasoning' },
+                            { value: 'pdf', label: 'PDF' },
+                          ].map((capability) => (
+                            <CommandItem
+                              key={capability.value}
+                              value={capability.value}
+                              onSelect={(currentValue) => {
+                                setSelectedCapabilities((prev) =>
+                                  prev.includes(currentValue)
+                                    ? prev.filter((item) => item !== currentValue)
+                                    : [...prev, currentValue],
+                                );
+                              }}
+                              className="h-10 px-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-2.5 h-2.5 rounded-full ${
+                                    selectedCapabilities.includes(capability.value) ? 'bg-primary' : 'bg-muted'
+                                  }`}
+                                />
+                                {capability.label}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Clear Filters */}
+                {(selectedCategory !== 'all' || selectedCapabilities.length > 0) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setSelectedCapabilities([]);
+                    }}
+                    className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Active Filters Display */}
+            {(selectedCategory !== 'all' || selectedCapabilities.length > 0) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {selectedCategory !== 'all' && (
+                  <Badge variant="secondary" className="gap-1">
+                    {selectedCategory}
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {selectedCapabilities.map((capability) => (
+                  <Badge key={capability} variant="secondary" className="gap-1">
+                    {capability}
+                    <button
+                      onClick={() => setSelectedCapabilities((prev) => prev.filter((item) => item !== capability))}
+                      className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Models List */}
+          <div className="space-y-px bg-border/40 rounded-lg overflow-hidden border border-border/40">
+            {(() => {
+              // Filter models based on selected filters
+              let filteredModels = models.filter((model) => {
+                // Category filter
+                const categoryMatch = selectedCategory === 'all' || model.category === selectedCategory;
+
+                // Capabilities filter
+                const capabilityMatch =
+                  selectedCapabilities.length === 0 ||
+                  selectedCapabilities.some((capability) => {
+                    if (capability === 'vision') return model.vision;
+                    if (capability === 'reasoning') return model.reasoning;
+                    if (capability === 'pdf') return model.pdf;
+                    return false;
+                  });
+
+                return categoryMatch && capabilityMatch;
+              });
+
+              // Group filtered models by category
+              const groupedModels = filteredModels.reduce(
+                (acc, model) => {
+                  const category = model.category;
+                  if (!acc[category]) {
+                    acc[category] = [];
+                  }
+                  acc[category].push(model);
+                  return acc;
+                },
+                {} as Record<string, typeof models>,
+              );
+
+              // Define order based on user type (assuming non-pro for about page)
+              const groupOrder = ['Free', 'Experimental', 'Pro'];
+              const orderedGroupEntries = groupOrder
+                .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
+                .map((category) => [category, groupedModels[category]] as const);
+
+              // Flatten the ordered groups back to a single array
+              const sortedModels = orderedGroupEntries.flatMap(([_, categoryModels]) => categoryModels);
+
+              if (sortedModels.length === 0) {
+                return (
+                  <div className="py-12 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                      <Filter className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-medium text-foreground mb-2">No models found</h3>
+                    <p className="text-muted-foreground mb-4">Try adjusting your filters to see more models</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedCategory('all');
+                        setSelectedCapabilities([]);
+                      }}
+                    >
+                      Clear all filters
+                    </Button>
+                  </div>
+                );
+              }
+
+              const modelsToShow = showAllModels ? sortedModels : sortedModels.slice(0, 8);
+
+              return (
+                <>
+                  {modelsToShow.map((model: any, index: number) => (
+                    <div
+                      key={model.value}
+                      className="group bg-background hover:bg-muted/30 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                    >
+                      <div className="py-4 px-4 sm:py-6 sm:px-8">
+                        {/* Desktop Layout */}
+                        <div className="hidden sm:flex items-center justify-between">
+                          {/* Left Side - Model Info */}
+                          <div className="flex items-center gap-6 flex-1">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="w-2 h-2 rounded-full bg-muted-foreground group-hover:bg-foreground transition-colors" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h3 className="font-medium text-foreground truncate">{model.label}</h3>
+                                </div>
+                                <p className="text-sm text-muted-foreground truncate">{model.description}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Side - Capabilities & Category */}
+                          <div className="flex items-center gap-8 text-sm">
+                            <div className="flex items-center gap-3">
+                              {model.vision && <span className="text-muted-foreground font-mono text-xs">Vision</span>}
+                              {model.reasoning && (
+                                <span className="text-muted-foreground font-mono text-xs">Reasoning</span>
+                              )}
+                              {model.pdf && <span className="text-muted-foreground font-mono text-xs">PDF</span>}
+                              {model.fast && <span className="text-muted-foreground font-mono text-xs">Fast</span>}
+                              {model.isNew && <span className="text-muted-foreground font-mono text-xs">New</span>}
+                            </div>
+                            <div className="text-muted-foreground font-mono text-xs min-w-[60px] text-right">
+                              {model.category}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Mobile Layout */}
+                        <div className="sm:hidden">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="w-2 h-2 rounded-full bg-muted-foreground group-hover:bg-foreground transition-colors mt-1.5 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-medium text-foreground truncate">{model.label}</h3>
+                                  {model.pro && (
+                                    <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider flex-shrink-0">
+                                      Pro
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{model.description}</p>
+                              </div>
+                            </div>
+                            <div className="text-muted-foreground font-mono text-xs ml-2 flex-shrink-0">
+                              {model.category}
+                            </div>
+                          </div>
+
+                          {/* Mobile Capabilities - Only show if any exist */}
+                          {(model.vision || model.reasoning || model.pdf || model.fast || model.isNew) && (
+                            <div className="flex items-center gap-3 ml-5 pt-1">
+                              {model.vision && <span className="text-muted-foreground font-mono text-xs">Vision</span>}
+                              {model.reasoning && (
+                                <span className="text-muted-foreground font-mono text-xs">Reasoning</span>
+                              )}
+                              {model.pdf && <span className="text-muted-foreground font-mono text-xs">PDF</span>}
+                              {model.fast && <span className="text-muted-foreground font-mono text-xs">Fast</span>}
+                              {model.isNew && <span className="text-muted-foreground font-mono text-xs">New</span>}
+                            </div>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{model.description}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {model.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {model.vision && (
-                            <Badge variant="outline" className="text-xs">
-                              Vision
-                            </Badge>
-                          )}
-                          {model.reasoningText && (
-                            <Badge variant="outline" className="text-xs">
-                              Reasoning
-                            </Badge>
-                          )}
-                          {model.pdf && (
-                            <Badge variant="outline" className="text-xs">
-                              PDF
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+
+                  {/* Show More/Less Button */}
+                  {sortedModels.length > 8 && (
+                    <div className="my-6 flex justify-center">
+                      <Button variant="outline" onClick={() => setShowAllModels(!showAllModels)} className="px-6 py-2">
+                        {showAllModels ? (
+                          <>
+                            Show Less
+                            <ArrowUpRight className="ml-2 h-4 w-4 rotate-180" />
+                          </>
+                        ) : (
+                          <>
+                            Show More ({sortedModels.length - 8} more)
+                            <ArrowUpRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-border/60">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {models.length} models available across multiple providers
+                </p>
+                <p className="text-xs text-muted-foreground/60">Start with any model, switch anytime</p>
+              </div>
+              <Button
+                onClick={() => router.push('/')}
+                className="bg-foreground text-background hover:bg-foreground/90 font-medium px-6 py-2.5 w-full sm:w-auto"
+              >
+                Start Searching
+                <ArrowUpRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </div>
         </div>
@@ -604,11 +988,7 @@ export default function AboutPage() {
               <ul className="space-y-3 flex-1 mb-8">
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">10 searches per day</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">5 extreme searches per month</span>
+                  <span className="text-muted-foreground">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
@@ -617,10 +997,6 @@ export default function AboutPage() {
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
                   <span className="text-muted-foreground">Search history</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">No Lookout access</span>
                 </li>
               </ul>
 
@@ -668,7 +1044,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">PDF document analysis</span>
+                  <span className="text-muted-foreground">PDF analysis</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
@@ -676,13 +1052,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">
-                    Scira Lookout ({LOOKOUT_LIMITS.TOTAL_LOOKOUTS} automated searches)
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Up to {LOOKOUT_LIMITS.DAILY_LOOKOUTS} daily lookouts</span>
+                  <span className="text-muted-foreground">Scira Lookout</span>
                 </li>
               </ul>
 
@@ -694,23 +1064,18 @@ export default function AboutPage() {
 
           {/* Student Discount */}
           <div className="max-w-2xl mx-auto bg-muted/20 border border-border/40 rounded-xl p-6 mt-8">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <GraduationCap className="h-5 w-5 text-primary/70" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-medium mb-2">Student Pricing</h3>
-                <p className="text-muted-foreground/80 mb-4 text-sm">
-                  Students with university email addresses get Pro features for just $5/month automatically. No
-                  verification needed!
-                </p>
-                <button
-                  onClick={() => router.push('/pricing')}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-border/60 bg-background hover:bg-accent/50 text-sm font-medium transition-colors"
-                >
-                  Get Student Pricing
-                </button>
-              </div>
+              <h3 className="font-medium mb-2">🎓 Student discount available</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Get Pro for just $5/month! Simply sign up with your university email address and the discount will be
+                applied automatically.
+              </p>
+              <Button onClick={() => router.push('/pricing')} variant="outline" size="sm" className="px-4 py-2">
+                Get Student Pricing
+              </Button>
             </div>
           </div>
         </div>
@@ -774,13 +1139,35 @@ export default function AboutPage() {
             </ProAccordionItem>
           </ProAccordion>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 space-y-6">
             <p className="text-muted-foreground">
               Have more questions?{' '}
               <a href="mailto:zaid@scira.ai" className="text-primary hover:text-primary/80 transition-colors">
                 Contact us
               </a>
             </p>
+
+            {/* FAQ CTA */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-4 sm:px-6 py-4 rounded-xl bg-muted/40 border border-border/40 max-w-lg mx-auto">
+              <div className="text-center sm:text-left flex-1">
+                <p className="text-sm font-medium text-foreground">Ready to get started?</p>
+                <p className="text-xs text-muted-foreground">Join thousands using Scira</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button onClick={() => router.push('/')} size="sm" className="px-4 py-2 text-sm w-full sm:w-auto">
+                  Start now
+                  <Search className="ml-1 h-3 w-3" />
+                </Button>
+                <Button
+                  onClick={() => router.push('/pricing')}
+                  variant="outline"
+                  size="sm"
+                  className="px-4 py-2 text-sm w-full sm:w-auto"
+                >
+                  View pricing
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -808,17 +1195,15 @@ export default function AboutPage() {
                   href="https://x.com/sciraai"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
-                  rel="noopener noreferrer"
                 >
-                  <XLogo className="h-4 w-4" />
+                  <XLogoIcon className="h-4 w-4" />
                 </Link>
                 <Link
                   href="https://git.new/scira"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
-                  rel="noopener noreferrer"
                 >
-                  <GithubLogo className="h-4 w-4" />
+                  <GithubLogoIcon className="h-4 w-4" />
                 </Link>
               </div>
             </div>

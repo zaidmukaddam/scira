@@ -370,7 +370,7 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
           </div>
           {url && (
             <Button variant="ghost" size="sm" asChild className="h-7 px-2 text-xs flex-shrink-0">
-              <Link href={url} target="_blank" rel="noopener noreferrer">
+              <Link href={url} target="_blank">
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -789,7 +789,7 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                   )}
                   {url && (
                     <Button variant="ghost" size="sm" asChild className="h-6 px-2 flex-shrink-0">
-                      <Link href={url} target="_blank" rel="noopener noreferrer">
+                      <Link href={url} target="_blank">
                         <ArrowUpRight className="h-3 w-3" />
                       </Link>
                     </Button>
@@ -856,7 +856,7 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
               </h3>
               {!coinData && url && (
                 <Button variant="ghost" size="sm" asChild className="h-6 px-2 flex-shrink-0">
-                  <Link href={url} target="_blank" rel="noopener noreferrer">
+                  <Link href={url} target="_blank">
                     <ArrowUpRight className="h-3 w-3" />
                   </Link>
                 </Button>

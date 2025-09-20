@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const mcpSearchTool = tool({
-  description: 'Search for mcp servers and get the information about them',
+  description: `Search for mcp servers and get the information about them. VERY IMPORTANT: DO NOT USE THIS TOOL FOR GENERAL WEB SEARCHES, ONLY USE IT FOR MCP SERVER SEARCHES.`,
   inputSchema: z.object({
     query: z.string().describe('The query to search for'),
   }),

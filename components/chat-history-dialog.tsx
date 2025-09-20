@@ -15,7 +15,6 @@ import {
 import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { SearchList02Icon } from '@hugeicons/core-free-icons';
-import { ListMagnifyingGlass } from '@phosphor-icons/react';
 import {
   isToday,
   isYesterday,

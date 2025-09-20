@@ -34,6 +34,7 @@ import {
   deleteLookout,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
+import { get } from '@vercel/edge-config';
 import { groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
 import { experimental_generateSpeech as generateVoice } from 'ai';
@@ -41,6 +42,14 @@ import { elevenlabs } from '@ai-sdk/elevenlabs';
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
 import { getComprehensiveUserData } from '@/lib/user-data-server';
+import {
+  createConnection,
+  listUserConnections,
+  deleteConnection,
+  manualSync,
+  getSyncStatus,
+  type ConnectorProvider
+} from '@/lib/connectors';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
@@ -56,9 +65,7 @@ export async function suggestQuestions(history: any[]) {
 
   const { object } = await generateObject({
     model: scira.languageModel('scira-grok-3'),
-    temperature: 0,
-    maxOutputTokens: 512,
-    system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the message history.
+    system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the conversation history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -95,7 +102,7 @@ export async function suggestQuestions(history: any[]) {
 - Do not include instructions or meta-commentary in the questions`,
     messages: history,
     schema: z.object({
-      questions: z.array(z.string()).describe('The generated questions based on the message history.'),
+      questions: z.array(z.string().max(150)).describe('The generated questions based on the message history.').max(3),
     }),
   });
 
@@ -152,6 +159,8 @@ export async function enhancePrompt(raw: string) {
     }
 
     const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
+
+Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
 Guidelines (MANDATORY):
 - Preserve the user's original intent and constraints
@@ -213,7 +222,7 @@ const groupTools = {
     'find_place_on_map',
     'trending_tv',
     'datetime',
-    'mcp_search',
+    // 'mcp_search',
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
@@ -224,6 +233,7 @@ const groupTools = {
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
   memory: ['datetime', 'search_memories', 'add_memory'] as const,
+  connectors: ['connectors_search', 'datetime'] as const,
   // Add legacy mapping for backward compatibility
   buddy: ['datetime', 'search_memories', 'add_memory'] as const,
 } as const;
@@ -239,6 +249,7 @@ const groupInstructions = {
   - ⚠️ URGENT: Always respond with markdown format!!
   - ⚠️ IMP: Never run more than 1 tool in a single response cycle!!
   - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
+  - ⚠️ IMP: Always give citations for the information you provide!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -344,15 +355,6 @@ const groupInstructions = {
     - This rule applies to ALL code regardless of complexity or purpose
     - Always use the print() function for final output!!! This is very important!!!
 
-  #### MCP Server Search:
-  - Use the 'mcp_search' tool to search for Model Context Protocol servers in the Smithery registry
-  - Provide the query parameter with relevant search terms for MCP servers
-  - For MCP server related queries, don't use web_search - use mcp_search directly
-  - Present MCP search results in a well-formatted table with columns for Name, Display Name, Description, Created At, and Use Count
-  - For each MCP server, include a homepage link if available
-  - When displaying results, keep descriptions concise and include key capabilities
-  - For each MCP server, write a brief summary of its usage and typical use cases
-  - Mention any other names or aliases the MCP server is known by, if available
 
   #### Weather Data:
   - Run the tool with the location and date parameters directly no need to plan in the thinking canvas
@@ -850,8 +852,8 @@ const groupInstructions = {
   - Mathematical expressions must always be properly delimited`,
 
   extreme: `
-  You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a research paper format.
-  You objective is to always run the tool first and then write the response with citations!
+  You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3 page long research paper format.
+  You objective is to always run the tool first and then write the response with citations with 3 pages of content!
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### CRITICAL INSTRUCTION: (MUST FOLLOW AT ALL COSTS!!!)
@@ -978,17 +980,73 @@ const groupInstructions = {
   - No repetitive tool calls
   - You can only use one tool per response
   - Some verbose explanations`,
+
+  connectors: `
+  You are a connectors search assistant that helps users find information from their connected Google Drive and other documents.
+  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+
+  ### CRITICAL INSTRUCTION:
+  - ⚠️ URGENT: RUN THE CONNECTORS_SEARCH TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
+  - DO NOT WRITE A SINGLE WORD before running the tool
+  - Run the tool with the exact user query immediately on receiving it
+  - Citations are a MUST, do not skip them!
+  - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
+  - Never ask for clarification before running the tool - run first, clarify later if needed
+
+  ### Tool Guidelines:
+  #### Connectors Search Tool:
+  - Use this tool to search through the user's Google Drive and connected documents
+  - The tool searches through documents that have been synchronized with Supermemory
+  - Run the tool with the user's query exactly as they provided it
+  - The tool will return relevant document chunks and metadata
+  - The tool will return the URL of the document, so you should always use those URLs for the citations
+
+  ### Response Guidelines:
+  - Write comprehensive, well-structured responses using the search results
+  - Include document titles, relevant content, and context from the results
+  - Use markdown formatting for better readability
+  - All citations must be inline, placed immediately after the relevant information
+  - Never group citations at the end of paragraphs or sections
+  - Maintain the language of the user's message and do not change it
+
+  ### Citation Requirements:
+  - ⚠️ MANDATORY: Every claim from the documents must have a citation
+  - Citations MUST be placed immediately after the sentence containing the information
+  - The tool will return the URL of the document, so you should always use those URLs for the citations
+  - Use format: [Document Title](URL) when available
+  - Include relevant metadata like creation date when helpful
+
+  ### Response Structure:
+  - Begin with a summary of what was found in the connected documents
+  - Organize information logically with clear headings
+  - Quote or paraphrase relevant content from the documents
+  - Provide context about where the information comes from
+  - If no results found, explain that no relevant documents were found in their connected sources
+  - Do not talk about other metadata of the documents, only the content and the URL
+
+  ### Content Guidelines:
+  - Focus on the most relevant and recent information
+  - Synthesize information from multiple documents when applicable
+  - Highlight key insights and important details
+  - Maintain accuracy to the source documents
+  - Use the document content to provide comprehensive answers`,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   'use server';
 
-  // Check if the user is authenticated for memory or buddy group
-  if (groupId === 'memory' || groupId === 'buddy') {
-    const user = await getUser();
+  // Check if the user is authenticated for memory, buddy, or connectors group
+  if (groupId === 'memory' || groupId === 'buddy' || groupId === 'connectors') {
+    const user = await getCurrentUser();
     if (!user) {
       // Redirect to web group if user is not authenticated
       groupId = 'web';
+    } else if (groupId === 'connectors') {
+      // Check if user has Pro access for connectors
+      if (!user.isProUser) {
+        // Redirect to web group if user is not Pro
+        groupId = 'web';
+      }
     } else if (groupId === 'buddy') {
       // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
       // The tools are the same, just different instructions
@@ -1168,9 +1226,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-        hasSubscription: true,
-        subscription: userData.polarSubscription,
-      }
+      hasSubscription: true,
+      subscription: userData.polarSubscription,
+    }
     : { hasSubscription: false };
 }
 
@@ -2030,6 +2088,144 @@ export async function getUserLocation() {
       region: '',
       isIndia: false,
       loading: false,
+    };
+  }
+}
+
+// Connector management actions
+export async function createConnectorAction(provider: ConnectorProvider) {
+  'use server';
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const authLink = await createConnection(provider, user.id);
+    return { success: true, authLink };
+  } catch (error) {
+    console.error('Error creating connector:', error);
+    return { success: false, error: 'Failed to create connector' };
+  }
+}
+
+export async function listUserConnectorsAction() {
+  'use server';
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'Authentication required', connections: [] };
+    }
+
+    const connections = await listUserConnections(user.id);
+    return { success: true, connections };
+  } catch (error) {
+    console.error('Error listing connectors:', error);
+    return { success: false, error: 'Failed to list connectors', connections: [] };
+  }
+}
+
+export async function deleteConnectorAction(connectionId: string) {
+  'use server';
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const result = await deleteConnection(connectionId);
+    if (result) {
+      return { success: true };
+    } else {
+      return { success: false, error: 'Failed to delete connector' };
+    }
+  } catch (error) {
+    console.error('Error deleting connector:', error);
+    return { success: false, error: 'Failed to delete connector' };
+  }
+}
+
+export async function manualSyncConnectorAction(provider: ConnectorProvider) {
+  'use server';
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const result = await manualSync(provider, user.id);
+    if (result) {
+      return { success: true };
+    } else {
+      return { success: false, error: 'Failed to start sync' };
+    }
+  } catch (error) {
+    console.error('Error syncing connector:', error);
+    return { success: false, error: 'Failed to start sync' };
+  }
+}
+
+export async function getConnectorSyncStatusAction(provider: ConnectorProvider) {
+  'use server';
+
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'Authentication required', status: null };
+    }
+
+    const status = await getSyncStatus(provider, user.id);
+    return { success: true, status };
+  } catch (error) {
+    console.error('Error getting sync status:', error);
+    return { success: false, error: 'Failed to get sync status', status: null };
+  }
+}
+
+// Server action to get supported student domains from Edge Config
+export async function getStudentDomainsAction() {
+  'use server';
+
+  try {
+    const studentDomainsConfig = await get('student_domains');
+    if (studentDomainsConfig && typeof studentDomainsConfig === 'string') {
+      // Parse CSV string to array, trim whitespace, and sort alphabetically
+      const domains = studentDomainsConfig
+        .split(',')
+        .map((domain) => domain.trim())
+        .filter((domain) => domain.length > 0)
+        .sort();
+
+      return {
+        success: true,
+        domains,
+        count: domains.length,
+      };
+    }
+
+    // Fallback to hardcoded domains if Edge Config fails
+    const fallbackDomains = ['.edu', '.ac.in'].sort();
+    return {
+      success: true,
+      domains: fallbackDomains,
+      count: fallbackDomains.length,
+      fallback: true,
+    };
+  } catch (error) {
+    console.error('Failed to fetch student domains from Edge Config:', error);
+
+    // Return fallback domains on error
+    const fallbackDomains = ['.edu', '.ac.in'].sort();
+    return {
+      success: false,
+      domains: fallbackDomains,
+      count: fallbackDomains.length,
+      fallback: true,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
 import { SciraLogo } from '@/components/logos/scira-logo';
 

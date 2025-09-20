@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { Research } from '@/lib/tools/extreme-search';
-import type { ToolUIPart } from 'ai';
+import type { extremeSearchTool, Research } from '@/lib/tools/extreme-search';
+import type { ToolUIPart, UIToolInvocation } from 'ai';
 import React, { useEffect, useState, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, ArrowUpRight, Globe, Search, ExternalLink, Target, Zap, Brain } from 'lucide-react';
@@ -919,7 +919,7 @@ const ExtremeSourcesSheet: React.FC<{
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {sources.map((source, index) => (
-                <a key={index} href={source.url} target="_blank" rel="noopener noreferrer" className="block">
+                <a key={index} href={source.url} target="_blank" className="block">
                   <ExtremeSourceCard source={source} />
                 </a>
               ))}
@@ -968,7 +968,7 @@ const ExtremeSearchComponent = ({
   toolInvocation,
   annotations,
 }: {
-  toolInvocation: ToolUIPart;
+  toolInvocation: UIToolInvocation<ReturnType<typeof extremeSearchTool>>;
   annotations?: DataExtremeSearchPart[];
 }) => {
   const { state } = toolInvocation;
@@ -979,24 +979,11 @@ const ExtremeSearchComponent = ({
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
   const [visualizationsOpen, setVisualizationsOpen] = useState(true);
 
-  // Debug what we're actually receiving
-  useEffect(() => {
-    console.log('[ExtremeSearch] ===================');
-    console.log('[ExtremeSearch] Tool Invocation:', JSON.stringify(toolInvocation, null, 2));
-    console.log('[ExtremeSearch] Annotations:', JSON.stringify(annotations, null, 2));
-    console.log('[ExtremeSearch] Tool State:', state);
-    console.log('[ExtremeSearch] Has output:', 'output' in toolInvocation);
-    if ('output' in toolInvocation) {
-      console.log('[ExtremeSearch] Output:', JSON.stringify(toolInvocation.output, null, 2));
-    }
-    console.log('[ExtremeSearch] ===================');
-  }, [toolInvocation, annotations, state]);
 
   // Check if we're in final result state
   const isCompleted = useMemo(() => {
     // First check if tool has output
     if ('output' in toolInvocation) {
-      console.log('[ExtremeSearch] ✅ Completed via toolInvocation.output');
       return true;
     }
 
@@ -1010,12 +997,10 @@ const ExtremeSearchComponent = ({
         latestPlan?.data?.kind === 'plan' && latestPlan.data.status?.title === 'Research completed';
 
       if (isResearchCompleted) {
-        console.log('[ExtremeSearch] ✅ Completed via annotations - Research completed status');
         return true;
       }
     }
 
-    console.log('[ExtremeSearch] ❌ Not completed - no output and no completion annotation');
     return false;
   }, [toolInvocation, annotations]);
 
@@ -1040,19 +1025,22 @@ const ExtremeSearchComponent = ({
     const latestPlan = planAnnotations[planAnnotations.length - 1];
     const plan = latestPlan?.data.kind === 'plan' && 'plan' in latestPlan.data ? latestPlan.data.plan : null;
 
-    // Derive dynamic status from current query states
-    const queryAnnotations = annotations.filter(
-      (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'query',
+    // Derive dynamic status from current tool states (query, x_search, code)
+    const toolAnnotations = annotations.filter(
+      (ann) => ann.type === 'data-extreme_search' && 
+      (ann.data.kind === 'query' || ann.data.kind === 'x_search' || ann.data.kind === 'code'),
     );
 
     let dynamicStatus = 'Processing research...';
 
-    if (queryAnnotations.length > 0) {
-      // Get the latest query status
-      const latestQuery = queryAnnotations[queryAnnotations.length - 1];
-      if (latestQuery.data.kind === 'query') {
-        const queryStatus = latestQuery.data.status;
-        const queryText = latestQuery.data.query;
+    if (toolAnnotations.length > 0) {
+      // Get the latest tool annotation
+      const latestTool = toolAnnotations[toolAnnotations.length - 1];
+      const data = latestTool.data;
+
+      if (data.kind === 'query') {
+        const queryStatus = data.status;
+        const queryText = data.query;
 
         switch (queryStatus) {
           case 'started':
@@ -1067,14 +1055,46 @@ const ExtremeSearchComponent = ({
           default:
             dynamicStatus = 'Processing research...';
         }
+      } else if (data.kind === 'x_search') {
+        const xSearchStatus = data.status;
+        const queryText = data.query;
+
+        switch (xSearchStatus) {
+          case 'started':
+            dynamicStatus = `Searching X posts: "${queryText}"`;
+            break;
+          case 'completed':
+            dynamicStatus = 'Analyzing X search results...';
+            break;
+          case 'error':
+            dynamicStatus = 'X search encountered an error';
+            break;
+          default:
+            dynamicStatus = 'Processing X search...';
+        }
+      } else if (data.kind === 'code') {
+        const codeStatus = data.status;
+        const title = data.title;
+
+        switch (codeStatus) {
+          case 'running':
+            dynamicStatus = `Executing: "${title}"`;
+            break;
+          case 'completed':
+            dynamicStatus = 'Code execution completed';
+            break;
+          case 'error':
+            dynamicStatus = 'Code execution encountered an error';
+            break;
+          default:
+            dynamicStatus = 'Processing code execution...';
+        }
       }
     } else {
-      // Fallback to plan status if no queries yet
+      // Fallback to plan status if no tool annotations yet
       const planStatus = latestPlan?.data?.kind === 'plan' && latestPlan.data.status?.title;
       dynamicStatus = planStatus || 'Processing research...';
     }
-
-    console.log('[ExtremeSearch] Dynamic status:', dynamicStatus);
 
     return {
       currentStatus: dynamicStatus,
@@ -1084,7 +1104,6 @@ const ExtremeSearchComponent = ({
 
   // Extract search queries from the ACTUAL tool invocation structure
   const searchQueries = useMemo(() => {
-    console.log('[ExtremeSearch] Extracting queries from toolInvocation:', toolInvocation);
 
     // Check if we have results in the completed tool
     if ('output' in toolInvocation) {
@@ -1094,17 +1113,8 @@ const ExtremeSearchComponent = ({
       if (researchData?.research?.toolResults) {
         const webSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'webSearch');
 
-        console.log('[ExtremeSearch] Found webSearch results:', webSearchResults);
-
         return webSearchResults.map((result, index) => {
           const query = result.args?.query || result.input?.query || `Query ${index + 1}`;
-          console.log('[ExtremeSearch] Processing webSearch result:', {
-            toolCallId: result.toolCallId,
-            query,
-            args: result.args,
-            input: result.input,
-            resultCount: result.result?.length || 0,
-          });
 
           const sources = (result.result || result.output || []).map((source: any) => ({
             title: source.title || '',
@@ -1191,17 +1201,6 @@ const ExtremeSearchComponent = ({
         });
       });
 
-      console.log(
-        '[ExtremeSearch] Annotation-based queries:',
-        queries.map((q) => ({
-          id: q.id,
-          query: q.query,
-          status: q.status,
-          sourcesCount: q.sources.length,
-          contentCount: q.content.length,
-          sourcesWithContent: q.sources.filter((s) => s.content && s.content.length > 0).length,
-        })),
-      );
       return queries;
     }
 
@@ -1218,23 +1217,12 @@ const ExtremeSearchComponent = ({
       if (researchData?.research?.toolResults) {
         const xSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'xSearch');
 
-        console.log('[ExtremeSearch] Found xSearch results:', xSearchResults);
-
         return xSearchResults.map((result, index) => {
           const query = result.args?.query || result.input?.query || `X Search ${index + 1}`;
           const startDate = result.args?.startDate || result.input?.startDate || '';
           const endDate = result.args?.endDate || result.input?.endDate || '';
           const handles = result.args?.xHandles || result.input?.xHandles || [];
           const resultData = result.result || result.output || null;
-
-          console.log('[ExtremeSearch] Processing xSearch result:', {
-            toolCallId: result.toolCallId,
-            query,
-            startDate,
-            endDate,
-            handles,
-            resultData,
-          });
 
           return {
             id: result.toolCallId || `x-search-${index}`,
@@ -1284,19 +1272,10 @@ const ExtremeSearchComponent = ({
       if (researchData?.research?.toolResults) {
         const codeResults = researchData.research.toolResults.filter((result) => result.toolName === 'codeRunner');
 
-        console.log('[ExtremeSearch] Found codeRunner results:', codeResults);
-
         return codeResults.map((result, index) => {
           const title = result.args?.title || result.input?.title || `Code Execution ${index + 1}`;
           const code = result.args?.code || result.input?.code || '';
           const resultData = result.result || result.output || {};
-
-          console.log('[ExtremeSearch] Processing codeRunner result:', {
-            toolCallId: result.toolCallId,
-            title,
-            codeLength: code.length,
-            resultData,
-          });
 
           return {
             id: result.toolCallId || `code-${index}`,
@@ -1442,35 +1421,23 @@ const ExtremeSearchComponent = ({
 
   // Get all sources for final result view
   const allSources = useMemo(() => {
-    console.log('[ExtremeSearch] === EXTRACTING SOURCES ===');
-    console.log('[ExtremeSearch] isCompleted:', isCompleted);
-
     if (isCompleted && 'output' in toolInvocation) {
       // Completed with tool output
       const { output } = toolInvocation;
-      console.log('[ExtremeSearch] Tool output:', JSON.stringify(output, null, 2));
-
       const researchData = output as { research?: Research } | null;
       const research = researchData?.research;
 
-      console.log('[ExtremeSearch] Research object:', research);
-      console.log('[ExtremeSearch] Research sources array:', research?.sources);
-      console.log('[ExtremeSearch] Research sources length:', research?.sources?.length);
-
       if (research?.sources?.length) {
-        const mappedSources = research.sources.map((s) => ({
+        return research.sources.map((s) => ({
           ...s,
           favicon:
             s.favicon ||
             `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(s.url).hostname)}`,
         }));
-        console.log('[ExtremeSearch] ✅ Using research.sources:', mappedSources.length);
-        return mappedSources;
       }
 
-      console.log('[ExtremeSearch] ⚠️ No research.sources, checking toolResults...');
       if (research?.toolResults) {
-        const webSearchSources = research.toolResults
+        return research.toolResults
           .filter((result) => result.toolName === 'webSearch')
           .flatMap((result) =>
             (result.result || result.output || []).map((source: any) => ({
@@ -1483,29 +1450,14 @@ const ExtremeSearchComponent = ({
                 `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
             })),
           );
-        console.log('[ExtremeSearch] ✅ Using toolResults sources:', webSearchSources.length);
-        return webSearchSources;
       }
     }
 
     // Use sources from search queries (whether completed or not)
     const querySources = searchQueries.flatMap((q) => q.sources);
-    console.log('[ExtremeSearch] 🔄 Using sources from queries:', querySources.length);
-    console.log(
-      '[ExtremeSearch] Query sources with content:',
-      querySources.filter((s) => s.content && s.content.length > 0).length,
-    );
-    console.log('[ExtremeSearch] Sample query source:', querySources[0]);
-
+    
     // Remove duplicates by URL
-    const uniqueSources = Array.from(new Map(querySources.map((s) => [s.url, s])).values());
-    console.log('[ExtremeSearch] ✅ Final unique sources:', uniqueSources.length);
-    console.log(
-      '[ExtremeSearch] Final sources with content:',
-      uniqueSources.filter((s) => s.content && s.content.length > 0).length,
-    );
-
-    return uniqueSources;
+    return Array.from(new Map(querySources.map((s) => [s.url, s])).values());
   }, [isCompleted, toolInvocation, searchQueries]);
 
   // Get all charts for final result view
@@ -1516,24 +1468,16 @@ const ExtremeSearchComponent = ({
       const research = researchData?.research;
 
       if (research?.charts?.length) {
-        console.log('[ExtremeSearch] ✅ Using research.charts:', research.charts.length);
         return research.charts;
       }
     }
 
     // Use charts from code executions (whether completed or not)
-    const codeCharts = codeExecutions.flatMap((c) => c.charts || []);
-    console.log('[ExtremeSearch] 🔄 Using charts from code executions:', codeCharts.length);
-    return codeCharts;
+    return codeExecutions.flatMap((c) => c.charts || []);
   }, [isCompleted, toolInvocation, codeExecutions]);
 
   const toggleItemExpansion = (itemId: string) => {
-    console.log('[ExtremeSearch] 👆 User toggling item:', itemId, 'isCompleted:', isCompleted);
-    setExpandedItems((prev) => {
-      const newExpanded = !prev[itemId];
-      console.log('[ExtremeSearch] 👆 Setting expanded:', itemId, newExpanded, 'previous state:', prev[itemId]);
-      return { ...prev, [itemId]: newExpanded };
-    });
+    setExpandedItems((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
     // Track that user manually interacted with this item
     setUserExpandedItems((prev) => ({ ...prev, [itemId]: true }));
   };
@@ -1556,14 +1500,12 @@ const ExtremeSearchComponent = ({
 
         // Auto-expand active items (unless user manually controlled)
         if (isActive && !prevExpanded[query.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-expanding active query:', query.id);
           newExpanded[query.id] = true;
           shouldUpdate = true;
         }
 
         // Auto-collapse completed items that were auto-expanded (not user-controlled)
         if (query.status === 'completed' && prevExpanded[query.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-collapsing completed query:', query.id);
           newExpanded[query.id] = false;
           shouldUpdate = true;
         }
@@ -1575,14 +1517,12 @@ const ExtremeSearchComponent = ({
 
         // Auto-expand active code executions (unless user manually controlled)
         if (isActive && !prevExpanded[code.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-expanding active code:', code.id);
           newExpanded[code.id] = true;
           shouldUpdate = true;
         }
 
         // Auto-collapse completed code that was auto-expanded (not user-controlled)
         if (code.status === 'completed' && prevExpanded[code.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-collapsing completed code:', code.id);
           newExpanded[code.id] = false;
           shouldUpdate = true;
         }
@@ -1594,14 +1534,12 @@ const ExtremeSearchComponent = ({
 
         // Auto-expand active X search executions (unless user manually controlled)
         if (isActive && !prevExpanded[xSearch.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-expanding active X search:', xSearch.id);
           newExpanded[xSearch.id] = true;
           shouldUpdate = true;
         }
 
         // Auto-collapse completed X search that was auto-expanded (not user-controlled)
         if (xSearch.status === 'completed' && prevExpanded[xSearch.id] && !wasUserControlled) {
-          console.log('[ExtremeSearch] 🤖 Auto-collapsing completed X search:', xSearch.id);
           newExpanded[xSearch.id] = false;
           shouldUpdate = true;
         }
@@ -1722,7 +1660,6 @@ const ExtremeSearchComponent = ({
                                 key={index}
                                 href={source.url}
                                 target="_blank"
-                                rel="noopener noreferrer"
                                 className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -1902,7 +1839,6 @@ const ExtremeSearchComponent = ({
                                   key={index}
                                   href={url}
                                   target="_blank"
-                                  rel="noopener noreferrer"
                                   className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
@@ -2155,13 +2091,7 @@ const ExtremeSearchComponent = ({
                 {sources.length > 0 ? (
                   <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                     {sources.map((source, index) => (
-                      <a
-                        key={index}
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block flex-shrink-0 w-[320px]"
-                      >
+                      <a key={index} href={source.url} target="_blank" className="block flex-shrink-0 w-[320px]">
                         <ExtremeSourceCard source={source} />
                       </a>
                     ))}
@@ -2292,12 +2222,11 @@ const ExtremeSearchComponent = ({
         })()}
 
         {/* Sources */}
-        {(() => {
-          console.log('[ExtremeSearch] About to render sources:', allSources.length);
-          return renderSources(allSources);
-        })()}
+        {allSources.length > 0 && renderSources(allSources)}
 
-        <ExtremeSourcesSheet sources={allSources} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
+        {allSources.length > 0 && (
+          <ExtremeSourcesSheet sources={allSources} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
+        )}
       </div>
     );
   }
@@ -2317,7 +2246,7 @@ const ExtremeSearchComponent = ({
 
       <CardContent className="p-4">
         {/* Show plan if available and no timeline items yet */}
-        {planData && searchQueries.length === 0 && codeExecutions.length === 0 && (
+        {planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
             <div className="flex items-center gap-1.5 mb-2">
               <Target className="w-3.5 h-3.5 text-primary" />
@@ -2390,7 +2319,7 @@ const ExtremeSearchComponent = ({
         )}
 
         {/* Show loading skeletons when no plan and no items */}
-        {!planData && searchQueries.length === 0 && codeExecutions.length === 0 && (
+        {!planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-1.5 mb-2">
               <Target className="w-3.5 h-3.5 text-primary/50" />
@@ -2458,7 +2387,7 @@ const ExtremeSearchComponent = ({
         )}
 
         {/* Show timeline when items are available */}
-        {(searchQueries.length > 0 || codeExecutions.length > 0) && (
+        {(searchQueries.length > 0 || codeExecutions.length > 0 || xSearchExecutions.length > 0) && (
           <div className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
             {renderTimeline()}
           </div>

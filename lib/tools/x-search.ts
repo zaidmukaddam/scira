@@ -5,80 +5,89 @@ import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
 export const xSearchTool = tool({
   description:
-    'Search X (formerly Twitter) posts using xAI Live Search for the past 7 days by default otherwise user can specify a date range.',
+    'Search X (formerly Twitter) posts using xAI Live Search for the past 15 days by default otherwise user can specify a date range.',
   inputSchema: z.object({
-    query: z.string().describe('The search query for X posts').optional(),
+    query: z.string().describe('The search query for X posts'),
     startDate: z
       .string()
+      .optional()
       .describe(
-        'The start date of the search in the format YYYY-MM-DD (always default to 7 days ago if not specified)',
+        'The start date of the search in the format YYYY-MM-DD (always default to 15 days ago if not specified)',
       ),
     endDate: z
       .string()
-      .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
-    xHandles: z
-      .array(z.string())
       .optional()
-      .describe(
-        'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles like "@elonmusk" or "@openai"',
-      ),
-    maxResults: z.number().optional().describe('Maximum number of search results to return (default 15)'),
+      .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)'),
+    includeXHandles: z
+      .array(z.string())
+      .max(10)
+      .optional()
+      .describe('The X handles to include in the search (max 10). Cannot be used with excludeXHandles.'),
+    excludeXHandles: z
+      .array(z.string())
+      .max(10)
+      .optional()
+      .describe('The X handles to exclude in the search (max 10). Cannot be used with includeXHandles.'),
+    postFavoritesCount: z.number().min(0).optional().describe('Minimum number of favorites (likes) the post must have'),
+    postViewCount: z.number().min(0).optional().describe('Minimum number of views the post must have'),
+    maxResults: z.number().min(1).max(100).optional().describe('Maximum number of search results to return (default 15)'),
+  }).refine(data => {
+    // Ensure includeXHandles and excludeXHandles are not both specified
+    return !(data.includeXHandles && data.excludeXHandles);
+  }, {
+    message: "Cannot specify both includeXHandles and excludeXHandles - use one or the other",
+    path: ["includeXHandles", "excludeXHandles"]
   }),
   execute: async ({
     query,
     startDate,
     endDate,
-    xHandles,
+    includeXHandles,
+    excludeXHandles,
+    postFavoritesCount,
+    postViewCount,
     maxResults = 15,
-  }: {
-    query?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-    xHandles?: string[] | null;
-    maxResults?: number | null;
   }) => {
     try {
-      const searchParameters: any = {
-        mode: 'on',
-        ...(startDate && { from_date: startDate }),
-        ...(endDate && { to_date: endDate }),
-        ...(maxResults && { max_search_results: maxResults < 15 ? 15 : maxResults }),
-        return_citations: true,
-        sources: [
-          xHandles && xHandles.length > 0
-            ? { type: 'x', x_handles: xHandles, safe_search: false }
-            : { type: 'x', safe_search: false },
-        ],
-      };
+      const sanitizeHandle = (handle: string) => handle.replace(/^@+/, '').trim();
 
-      // if startDate is not provided, set it to 7 days ago
-      if (!startDate) {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        startDate = sevenDaysAgo.toISOString().split('T')[0];
-      }
+      const normalizedInclude = Array.isArray(includeXHandles)
+        ? includeXHandles.map(sanitizeHandle).filter(Boolean)
+        : undefined;
+      const normalizedExclude = Array.isArray(excludeXHandles)
+        ? excludeXHandles.map(sanitizeHandle).filter(Boolean)
+        : undefined;
 
-      // if endDate is not provided, set it to today
-      if (!endDate) {
-        endDate = new Date().toISOString().split('T')[0];
-      }
+      const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+      const today = new Date();
+      const daysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+      const effectiveStart = startDate && startDate.trim().length > 0 ? startDate : toYMD(daysAgo);
+      const effectiveEnd = endDate && endDate.trim().length > 0 ? endDate : toYMD(today);
 
-      console.log('[X search parameters]: ', searchParameters);
-      console.log('[X search handles]: ', xHandles);
+      console.log('[X search - includeHandles]:', normalizedInclude, '[excludeHandles]:', normalizedExclude);
 
       const { text, sources } = await generateText({
-        model: xai('grok-3-latest'),
-        system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
+        model: xai('grok-4-fast-non-reasoning'),
+        system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
         messages: [{ role: 'user', content: `${query}` }],
+        maxOutputTokens: 10,
         providerOptions: {
           xai: {
             searchParameters: {
               mode: 'on',
-              ...(startDate && { fromDate: startDate }),
-              ...(endDate && { toDate: endDate }),
-              maxSearchResults: maxResults ? (maxResults < 15 ? 15 : maxResults) : 15,
+              fromDate: effectiveStart,
+              toDate: effectiveEnd,
+              maxSearchResults: maxResults && maxResults < 15 ? 15 : maxResults ?? 15,
               returnCitations: true,
-              sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
+              sources: [
+                {
+                  type: 'x',
+                  ...(normalizedInclude?.length ? { includedXHandles: normalizedInclude } : {}),
+                  ...(normalizedExclude?.length ? { excludedXHandles: normalizedExclude } : {}),
+                  ...(typeof postFavoritesCount === 'number' ? { postFavoriteCount: postFavoritesCount } : {}),
+                  ...(typeof postViewCount === 'number' ? { postViewCount: postViewCount } : {}),
+                },
+              ],
             },
           } satisfies XaiProviderOptions,
         },
@@ -126,8 +135,8 @@ export const xSearchTool = tool({
         citations: citations,
         sources: allSources,
         query,
-        dateRange: `${startDate} to ${endDate}`,
-        handles: xHandles || [],
+        dateRange: `${effectiveStart} to ${effectiveEnd}`,
+        handles: normalizedInclude || normalizedExclude || [],
       };
     } catch (error) {
       console.error('X search error:', error);

@@ -7,12 +7,12 @@ import {
   MapPin,
   Star,
   MapTrifold,
-  NavigationArrow,
-  Globe,
-  Phone,
-  CaretDown,
-  CaretUp,
-  Clock,
+  NavigationArrowIcon,
+  GlobeIcon,
+  PhoneIcon,
+  CaretDownIcon,
+  CaretUpIcon,
+  ClockIcon,
 } from '@phosphor-icons/react';
 
 interface Location {
@@ -89,15 +89,15 @@ const HoursSection: React.FC<{ hours: string[]; timezone?: string }> = ({ hours,
         className="w-full flex items-center justify-between text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-1 px-1 py-1 rounded transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Clock size={12} className="text-neutral-400 dark:text-neutral-500" />
+          <ClockIcon size={12} className="text-neutral-400 dark:text-neutral-500" />
           <span className="text-xs text-neutral-600 dark:text-neutral-400">
             Today: <span className="font-medium text-neutral-900 dark:text-neutral-100">{todayHours}</span>
           </span>
         </div>
         {isOpen ? (
-          <CaretUp size={12} className="text-neutral-400 dark:text-neutral-500" />
+          <CaretUpIcon size={12} className="text-neutral-400 dark:text-neutral-500" />
         ) : (
-          <CaretDown size={12} className="text-neutral-400 dark:text-neutral-500" />
+          <CaretDownIcon size={12} className="text-neutral-400 dark:text-neutral-500" />
         )}
       </button>
 
@@ -327,7 +327,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
             }}
             className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
           >
-            <NavigationArrow size={12} />
+            <NavigationArrowIcon size={12} />
             Directions
           </button>
 
@@ -339,7 +339,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
               }}
               className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <Phone size={12} />
+              <PhoneIcon size={12} />
               Call
             </button>
           )}
@@ -352,7 +352,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
               }}
               className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 transition-colors"
             >
-              <Globe size={12} />
+              <GlobeIcon size={12} />
               Website
             </button>
           )}

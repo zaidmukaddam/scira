@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, memo } from 'react';
 import L from 'leaflet';
-import { WarningCircle } from '@phosphor-icons/react';
+import { WarningCircleIcon } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 
 interface Location {
@@ -273,7 +273,7 @@ const MapComponent = memo(
           className={`w-full ${height} flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 rounded-lg ${className}`}
         >
           <div className="text-center p-6">
-            <WarningCircle size={32} className="text-red-500 mx-auto mb-3" weight="duotone" />
+            <WarningCircleIcon size={32} className="text-red-500 mx-auto mb-3" weight="duotone" />
             <p className="text-neutral-600 dark:text-neutral-400 mb-3 text-sm">{mapError}</p>
             <button
               onClick={() => window.location.reload()}

@@ -121,7 +121,7 @@ const AcademicPapersSheet: React.FC<{
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {papers.map((paper, index) => (
-                <a key={index} href={paper.url} target="_blank" rel="noopener noreferrer" className="block">
+                <a key={index} href={paper.url} target="_blank" className="block">
                   <AcademicSourceCard paper={paper} />
                 </a>
               ))}
@@ -227,13 +227,7 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
               {/* Preview results */}
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                 {previewPapers.map((paper, index) => (
-                  <a
-                    key={index}
-                    href={paper.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block flex-shrink-0 w-[320px]"
-                  >
+                  <a key={index} href={paper.url} target="_blank" className="block flex-shrink-0 w-[320px]">
                     <AcademicSourceCard paper={paper} />
                   </a>
                 ))}

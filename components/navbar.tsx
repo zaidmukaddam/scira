@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { memo, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, GlobeHemisphereWest } from '@phosphor-icons/react';
+import { PlusIcon, GlobeHemisphereWestIcon } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { UserProfile, NavigationMenu } from '@/components/user-profile';
@@ -32,6 +32,9 @@ interface NavbarProps {
   isProStatusLoading?: boolean;
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+  settingsOpen?: boolean;
+  setSettingsOpen?: (open: boolean) => void;
+  settingsInitialTab?: string;
 }
 
 const Navbar = memo(
@@ -49,6 +52,9 @@ const Navbar = memo(
     isProStatusLoading,
     isCustomInstructionsEnabled,
     setIsCustomInstructionsEnabled,
+    settingsOpen,
+    setSettingsOpen,
+    settingsInitialTab,
   }: NavbarProps) => {
     const router = useRouter();
     const pathname = usePathname();
@@ -78,7 +84,7 @@ const Navbar = memo(
                 size="sm"
                 className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
               >
-                <Plus size={16} className="group-hover:rotate-90 transition-all" />
+                <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
                 <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
               </Button>
             </Link>
@@ -146,7 +152,7 @@ const Navbar = memo(
                           className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
                           disabled
                         >
-                          <GlobeHemisphereWest size={16} className="text-blue-600 dark:text-blue-400" />
+                          <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
                           <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
                         </Button>
                       </TooltipTrigger>
@@ -203,6 +209,9 @@ const Navbar = memo(
               isProStatusLoading={isProStatusLoading}
               isCustomInstructionsEnabled={isCustomInstructionsEnabled}
               setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+              settingsOpen={settingsOpen}
+              setSettingsOpen={setSettingsOpen}
+              settingsInitialTab={settingsInitialTab}
             />
           </div>
         </div>

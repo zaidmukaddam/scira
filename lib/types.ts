@@ -19,11 +19,15 @@ import type {
   nearbyPlacesSearchTool,
   flightTrackerTool,
   datetimeTool,
-  mcpSearchTool,
+  // mcpSearchTool,
   extremeSearchTool,
   greetingTool,
   movieTvSearchTool,
   trendingTvTool,
+  createConnectorsSearchTool,
+  createMemoryTools,
+  SearchMemoryTool,
+  AddMemoryTool,
 } from '@/lib/tools';
 
 import type { InferUITool, UIMessage } from 'ai';
@@ -126,7 +130,10 @@ type trendingTvTool = InferUITool<typeof trendingTvTool>;
 type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
 type coinDataByContractTool = InferUITool<typeof coinDataByContractTool>;
 type datetimeTool = InferUITool<typeof datetimeTool>;
-type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
+type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectorsSearchTool>>;
+type createMemoryTools = InferUITool<SearchMemoryTool>;
+type addMemoryTools = InferUITool<AddMemoryTool>;
+// type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
 export type ChatTools = {
   stock_chart: stockChartTool;
@@ -158,9 +165,13 @@ export type ChatTools = {
   code_interpreter: codeInterpreterTool;
   track_flight: flightTrackerTool;
   datetime: datetimeTool;
-  mcp_search: mcpSearchTool;
+  // mcp_search: mcpSearchTool;
   extreme_search: extremeSearch;
   greeting: greetingTool;
+  
+  connectors_search: createConnectorsSearchTool;
+  search_memories: createMemoryTools;
+  add_memory: addMemoryTools;
 };
 
 export type CustomUIDataTypes = {

@@ -1,9 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Message } from '@/components/message';
-import { DataUIPart } from 'ai';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { DataUIPart, isToolUIPart } from 'ai';
 import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
@@ -12,6 +9,7 @@ import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { useDataStream } from './data-stream-provider';
+import isEqual from 'fast-deep-equal';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -41,7 +39,7 @@ interface MessagesProps {
   onHighlight?: (text: string) => void; // Add highlight handler
 }
 
-const Messages: React.FC<MessagesProps> = React.memo(
+const Messages: React.FC<MessagesProps> = (
   ({
     messages,
     lastUserMessageIndex,
@@ -66,8 +64,6 @@ const Messages: React.FC<MessagesProps> = React.memo(
     const reasoningScrollRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
-
-    useDataStream();
 
     // Scroll to bottom immediately (without animation) when opening existing chat
     useEffect(() => {
@@ -124,7 +120,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
 
       // Only consider tools as "active" if we're currently streaming AND the last message is assistant with tools
       if (status === 'streaming' && lastMessage?.role === 'assistant') {
-        const hasTools = lastMessage.parts?.some((part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'));
+        const hasTools = lastMessage.parts?.some((part: ChatMessage['parts'][number]) => isToolUIPart(part));
         console.log('hasActiveToolInvocations - hasTools:', hasTools);
         return hasTools;
       }
@@ -148,7 +144,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         const hasVisibleText = parts.some(
           (part: ChatMessage['parts'][number]) => part.type === 'text' && part.text && part.text.trim() !== '',
         );
-        const hasToolInvocations = parts.some((part: ChatMessage['parts'][number]) => part.type.startsWith('tool-'));
+        const hasToolInvocations = parts.some((part: ChatMessage['parts'][number]) => isToolUIPart(part));
         const hasVisibleContent = hasVisibleText || hasToolInvocations;
 
         // If there is no visible content at all, consider the response missing
@@ -222,7 +218,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
             setReasoningVisibilityMap={setReasoningVisibilityMap}
             setReasoningFullscreenMap={setReasoningFullscreenMap}
             messages={messages}
-            user={user}
+            user={user ?? undefined}
             isOwner={isOwner}
             selectedVisibilityType={selectedVisibilityType}
             chatId={chatId}
@@ -249,6 +245,8 @@ const Messages: React.FC<MessagesProps> = React.memo(
         regenerate,
         reasoningVisibilityMap,
         reasoningFullscreenMap,
+        setReasoningVisibilityMap,
+        setReasoningFullscreenMap,
         onHighlight,
       ],
     );
@@ -361,7 +359,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
     console.log('✅ Proceeding to render', memoizedMessages.length, 'messages');
 
     return (
-      <div className="space-y-0 mb-32 flex flex-col">
+      <div className="space-y-0 mb-30 sm:mb-36 flex flex-col">
         <div className="flex-grow">
           {memoizedMessages.map((message, index) => {
             console.log(`=== RENDERING MESSAGE ${index} ===`);
@@ -406,7 +404,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
                   regenerate={regenerate}
                   setSuggestedQuestions={setSuggestedQuestions}
                   suggestedQuestions={index === memoizedMessages.length - 1 ? suggestedQuestions : []}
-                  user={user}
+                  user={user ?? undefined}
                   selectedVisibilityType={selectedVisibilityType}
                   isLastMessage={isLastMessage}
                   error={error}
@@ -464,7 +462,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
           <EnhancedErrorDisplay
             error={error}
-            user={user}
+            user={user ?? undefined}
             selectedVisibilityType={selectedVisibilityType}
             handleRetry={handleRetry}
           />
@@ -473,18 +471,7 @@ const Messages: React.FC<MessagesProps> = React.memo(
         <div ref={messagesEndRef} />
       </div>
     );
-  },
-  (prevProps, nextProps) => {
-    // Custom comparison function to prevent unnecessary re-renders
-    return (
-      prevProps.messages === nextProps.messages &&
-      prevProps.status === nextProps.status &&
-      prevProps.suggestedQuestions === nextProps.suggestedQuestions &&
-      prevProps.error === nextProps.error &&
-      prevProps.user?.id === nextProps.user?.id &&
-      prevProps.selectedVisibilityType === nextProps.selectedVisibilityType
-    );
-  },
+  }
 );
 
 // Add a display name for better debugging

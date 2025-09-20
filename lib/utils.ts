@@ -12,6 +12,7 @@ import {
   YoutubeIcon,
   ChattingIcon,
   AppleStocksIcon,
+  ConnectIcon
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -28,7 +29,8 @@ export type SearchGroupId =
   | 'chat'
   | 'extreme'
   | 'memory'
-  | 'crypto';
+  | 'crypto'
+  | 'connectors';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -71,11 +73,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       show: true,
     },
     {
-      id: 'reddit' as const,
-      name: 'Reddit',
-      description: 'Search Reddit posts',
-      icon: RedditIcon,
+      id: 'connectors' as const,
+      name: 'Connectors',
+      description: 'Search Google Drive, Notion and OneDrive documents',
+      icon: ConnectIcon,
       show: true,
+      requireAuth: true,
+      requirePro: true,
     },
     {
       id: 'academic' as const,
@@ -92,12 +96,26 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       show: true,
     },
     {
+      id: 'extreme' as const,
+      name: 'Extreme',
+      description: 'Deep research with multiple sources and analysis',
+      icon: AtomicPowerIcon,
+      show: true,
+    },
+    {
       id: 'memory' as const,
       name: 'Memory',
       description: 'Your personal memory companion',
       icon: Database02Icon,
       show: true,
       requireAuth: true,
+    },
+    {
+      id: 'reddit' as const,
+      name: 'Reddit',
+      description: 'Search Reddit posts',
+      icon: RedditIcon,
+      show: true,
     },
     {
       id: 'crypto' as const,
@@ -111,13 +129,6 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'YouTube',
       description: 'Search YouTube videos powered by Exa',
       icon: YoutubeIcon,
-      show: true,
-    },
-    {
-      id: 'extreme' as const,
-      name: 'Extreme',
-      description: 'Deep research with multiple sources and analysis',
-      icon: AtomicPowerIcon,
       show: true,
     },
   ] as const;

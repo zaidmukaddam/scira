@@ -5,6 +5,15 @@
 @plugin 'tailwind-scrollbar';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
+@source "../node_modules/streamdown/dist/index.js";
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
 @keyframes spinner-fade {
   0% {
@@ -538,4 +547,51 @@ body {
 }
 .nearby-search-map::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Sugar-high syntax highlighting styles */
+.sh__token--keyword {
+  color: #c792ea;
+}
+.sh__token--string {
+  color: #c3e88d;
+}
+.sh__token--comment {
+  color: #546e7a;
+  font-style: italic;
+}
+.sh__token--identifier {
+  color: #82b1ff;
+}
+.sh__token--number {
+  color: #f78c6c;
+}
+.sh__token--operator {
+  color: #89ddff;
+}
+.sh__token--punctuation {
+  color: #89ddff;
+}
+
+/* Dark mode adjustments for sugar-high */
+.dark .sh__token--keyword {
+  color: #bb86fc;
+}
+.dark .sh__token--string {
+  color: #4caf50;
+}
+.dark .sh__token--comment {
+  color: #6a737d;
+}
+.dark .sh__token--identifier {
+  color: #64b5f6;
+}
+.dark .sh__token--number {
+  color: #ff9800;
+}
+.dark .sh__token--operator {
+  color: #03dac6;
+}
+.dark .sh__token--punctuation {
+  color: #03dac6;
 }

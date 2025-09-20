@@ -10,7 +10,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { RedditLogo } from '@phosphor-icons/react';
+import { RedditLogoIcon } from '@phosphor-icons/react';
 import Image from 'next/image';
 
 type RedditResult = {
@@ -142,7 +142,7 @@ const RedditSourcesSheet: React.FC<{
           <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-2 mb-1">
               <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                <RedditLogo className="h-4 w-4 text-orange-500" />
+                <RedditLogoIcon className="h-4 w-4 text-orange-500" />
               </div>
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Reddit Results</h2>
             </div>
@@ -153,7 +153,7 @@ const RedditSourcesSheet: React.FC<{
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-3">
               {results.map((result, index) => (
-                <a key={index} href={result.url} target="_blank" rel="noopener noreferrer" className="block">
+                <a key={index} href={result.url} target="_blank" className="block">
                   <RedditSourceCard result={result} />
                 </a>
               ))}
@@ -182,7 +182,7 @@ const SearchLoadingState = () => {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                  <RedditLogo className="h-3.5 w-3.5 text-orange-500" />
+                  <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
                 </div>
                 <h2 className="font-medium text-sm">Reddit Results</h2>
               </div>
@@ -227,7 +227,7 @@ const SearchLoadingState = () => {
                   >
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 animate-pulse flex items-center justify-center">
-                        <RedditLogo className="h-5 w-5 text-orange-500/30" />
+                        <RedditLogoIcon className="h-5 w-5 text-orange-500/30" />
                       </div>
                       <div className="flex-1 space-y-2">
                         <div className="h-4 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-3/4" />
@@ -321,7 +321,7 @@ const RedditSearch: React.FC<{
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                  <RedditLogo className="h-3.5 w-3.5 text-orange-500" />
+                  <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
                 </div>
                 <h2 className="font-medium text-sm">Reddit Results</h2>
               </div>
@@ -376,13 +376,7 @@ const RedditSearch: React.FC<{
               {/* Preview results */}
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
                 {previewResults.map((post, index) => (
-                  <a
-                    key={index}
-                    href={post.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block flex-shrink-0 w-[320px]"
-                  >
+                  <a key={index} href={post.url} target="_blank" className="block flex-shrink-0 w-[320px]">
                     <RedditSourceCard result={post} />
                   </a>
                 ))}

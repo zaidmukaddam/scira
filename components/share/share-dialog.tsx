@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, X, Lock, LinkedinLogo, XLogo, RedditLogo } from '@phosphor-icons/react';
+import {
+  CopyIcon,
+  CheckIcon,
+  LockIcon,
+  LinkedinLogoIcon,
+  XLogoIcon,
+  RedditLogoIcon,
+} from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Share03Icon } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
@@ -42,7 +49,7 @@ export function ShareDialog({
   }, [isOpen]);
 
   // Handle copy to clipboard
-  const handleCopyLink = async () => {
+  const handleCopyIconLink = async () => {
     console.log('📋 Attempting to copy URL to clipboard:', shareUrl);
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -59,7 +66,7 @@ export function ShareDialog({
   };
 
   // Handle visibility change to public and copy link
-  const handleShareAndCopy = async () => {
+  const handleShareAndCopyIcon = async () => {
     console.log('🔗 Share and copy initiated, chatId:', chatId);
     setIsChangingVisibility(true);
 
@@ -71,7 +78,7 @@ export function ShareDialog({
       }
 
       // Copy the link
-      await handleCopyLink();
+      await handleCopyIconLink();
     } catch (error) {
       console.error('❌ Error in share and copy:', {
         chatId,
@@ -146,7 +153,7 @@ export function ShareDialog({
     } catch (error) {
       console.error('❌ Native share failed:', error);
       // Fallback to copy
-      await handleCopyLink();
+      await handleCopyIconLink();
     }
   };
 
@@ -170,7 +177,7 @@ export function ShareDialog({
         </DialogHeader>
 
         <div className="space-y-4 p-1">
-          {/* Share URL Display and Copy */}
+          {/* Share URL Display and CopyIcon */}
           {selectedVisibilityType === 'public' && (
             <div className="space-y-4">
               {/* Make Private Option */}
@@ -183,7 +190,7 @@ export function ShareDialog({
                   onClick={handleMakePrivate}
                   disabled={isChangingVisibility}
                 >
-                  <Lock size={12} className="mr-1" />
+                  <LockIcon size={12} className="mr-1" />
                   {isChangingVisibility ? 'Making Private...' : 'Make Private'}
                 </Button>
               </div>
@@ -196,10 +203,10 @@ export function ShareDialog({
                   size="icon"
                   variant="ghost"
                   className="size-8 flex-shrink-0"
-                  onClick={handleCopyLink}
+                  onClick={handleCopyIconLink}
                   title="Copy to clipboard"
                 >
-                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                  {copied ? <CheckIcon size={16} className="text-green-500" /> : <CopyIcon size={16} />}
                 </Button>
               </div>
 
@@ -230,7 +237,7 @@ export function ShareDialog({
                     onClick={handleShareLinkedIn}
                     title="Share on LinkedIn"
                   >
-                    <LinkedinLogo size={14} />
+                    <LinkedinLogoIcon size={14} />
                   </Button>
                   <Button
                     variant="outline"
@@ -239,7 +246,7 @@ export function ShareDialog({
                     onClick={handleShareTwitter}
                     title="Share on X (Twitter)"
                   >
-                    <XLogo size={14} />
+                    <XLogoIcon size={14} />
                   </Button>
                   <Button
                     variant="outline"
@@ -248,7 +255,7 @@ export function ShareDialog({
                     onClick={handleShareReddit}
                     title="Share on Reddit"
                   >
-                    <RedditLogo size={14} />
+                    <RedditLogoIcon size={14} />
                   </Button>
                 </div>
 
@@ -257,8 +264,8 @@ export function ShareDialog({
                   <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[36px] text-sm">
                     Cancel
                   </Button>
-                  <Button onClick={handleCopyLink} className="min-h-[36px] text-sm">
-                    <Copy size={14} className="mr-1.5" />
+                  <Button onClick={handleCopyIconLink} className="min-h-[36px] text-sm">
+                    <CopyIcon size={14} className="mr-1.5" />
                     Copy
                   </Button>
                 </div>
@@ -273,7 +280,7 @@ export function ShareDialog({
                 Cancel
               </Button>
               <Button
-                onClick={handleShareAndCopy}
+                onClick={handleShareAndCopyIcon}
                 disabled={isChangingVisibility}
                 className="order-1 sm:order-2 min-h-[40px]"
               >

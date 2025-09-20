@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Latex from 'react-latex-next';
 import Marked, { ReactRenderer } from 'marked-react';
-import React, { useCallback, useMemo, useState, Fragment, useEffect, useRef } from 'react';
+import React, { useCallback, useMemo, useState, Fragment, useRef, lazy, Suspense } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -27,70 +27,12 @@ interface CitationLink {
   link: string;
 }
 
-// Citation source configuration
-interface CitationSourceConfig {
-  name: string;
-  pattern: RegExp;
-  urlGenerator: (title: string, source: string) => string | null;
-}
-
 const geistMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   preload: true,
   display: 'swap',
 });
-
-const citationSources: CitationSourceConfig[] = [
-  {
-    name: 'Wikipedia',
-    pattern: /Wikipedia/i,
-    urlGenerator: (title: string, source: string) => {
-      const searchTerm = `${title} ${source.replace(/\s+[-–—]\s+Wikipedia/i, '')}`.trim();
-      return `https://en.wikipedia.org/wiki/${encodeURIComponent(searchTerm.replace(/\s+/g, '_'))}`;
-    },
-  },
-  {
-    name: 'arXiv',
-    pattern: /arXiv:(\d+\.\d+)/i,
-    urlGenerator: (title: string, source: string) => {
-      const match = source.match(/arXiv:(\d+\.\d+)/i);
-      return match ? `https://arxiv.org/abs/${match[1]}` : null;
-    },
-  },
-  {
-    name: 'GitHub',
-    pattern: /github\.com\/[^\/]+\/[^\/\s]+/i,
-    urlGenerator: (title: string, source: string) => {
-      const match = source.match(/(https?:\/\/github\.com\/[^\/]+\/[^\/\s]+)/i);
-      return match ? match[1] : null;
-    },
-  },
-  {
-    name: 'DOI',
-    pattern: /doi:(\S+)/i,
-    urlGenerator: (title: string, source: string) => {
-      const match = source.match(/doi:(\S+)/i);
-      return match ? `https://doi.org/${match[1]}` : null;
-    },
-  },
-];
-
-// Helper function to process citations
-const processCitation = (title: string, source: string): { text: string; url: string } | null => {
-  for (const citationSource of citationSources) {
-    if (citationSource.pattern.test(source)) {
-      const url = citationSource.urlGenerator(title, source);
-      if (url) {
-        return {
-          text: `${title} - ${source}`,
-          url,
-        };
-      }
-    }
-  }
-  return null;
-};
 
 const isValidUrl = (str: string) => {
   try {
@@ -101,18 +43,6 @@ const isValidUrl = (str: string) => {
   }
 };
 
-// Stable key generator based on content hash
-const generateStableKey = (content: string, index: number): string => {
-  // Use a simple hash function for stability
-  let hash = 0;
-  const str = `${content.slice(0, 50)}-${index}`;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  return `key-${Math.abs(hash)}-${index}`;
-};
 
 interface CodeBlockProps {
   language: string | undefined;
@@ -120,108 +50,214 @@ interface CodeBlockProps {
   elementKey: string;
 }
 
-// Memoized CodeBlock with lazy syntax highlighting
-const CodeBlock: React.FC<CodeBlockProps> = React.memo(
-  ({ language, children, elementKey }) => {
-    const [isCopied, setIsCopied] = useState(false);
-    const [isWrapped, setIsWrapped] = useState(false);
-    const [highlightedCode, setHighlightedCode] = useState<string>(() => {
-      return highlight(children);
+// Lazy-loaded CodeBlock component for large blocks
+const LazyCodeBlockComponent: React.FC<CodeBlockProps> = ({ children, language, elementKey }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const [isWrapped, setIsWrapped] = useState(false);
+  const lineCount = useMemo(() => children.split('\n').length, [children]);
+
+  // Synchronous highlighting for better performance
+  const highlightedCode = useMemo(() => {
+    try {
+      return children.length < 10000 ? highlight(children) : children;
+    } catch (error) {
+      console.warn('Syntax highlighting failed, using plain text:', error);
+      return children;
+    }
+  }, [children]);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(children);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+      toast.success('Code copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy code:', error);
+      toast.error('Failed to copy code');
+    }
+  }, [children]);
+
+  const toggleWrap = useCallback(() => {
+    setIsWrapped((prev) => {
+      const newState = !prev;
+      toast.success(newState ? 'Code wrap enabled' : 'Code wrap disabled');
+      return newState;
     });
+  }, []);
 
-    const lineCount = useMemo(() => children.split('\n').length, [children]);
-
-    useEffect(() => {
-      let cancelled = false;
-
-      const performHighlight = async () => {
-        if (children.length >= 5000) {
-          await new Promise((resolve) => setTimeout(resolve, 0));
-        }
-
-        if (!cancelled) {
-          setHighlightedCode(highlight(children));
-        }
-      };
-
-      performHighlight();
-
-      return () => {
-        cancelled = true;
-      };
-    }, [children]);
-
-    const handleCopy = useCallback(async () => {
-      try {
-        await navigator.clipboard.writeText(children);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-        toast.success('Code copied to clipboard');
-      } catch (error) {
-        console.error('Failed to copy code:', error);
-        toast.error('Failed to copy code');
-      }
-    }, [children]);
-
-    const toggleWrap = useCallback(() => {
-      setIsWrapped((prev) => {
-        const newState = !prev;
-        toast.success(newState ? 'Code wrap enabled' : 'Code wrap disabled');
-        return newState;
-      });
-    }, []);
-
-    return (
-      <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
-          <div className="flex items-center gap-2">
-            {language && (
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
-            )}
-            <span className="text-xs text-muted-foreground">{lineCount} lines</span>
-          </div>
-
-          <div className="flex gap-1">
-            <button
-              onClick={toggleWrap}
-              className={cn(
-                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-                isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
-            >
-              {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
-            </button>
-            <button
-              onClick={handleCopy}
-              className={cn(
-                'p-1 rounded border border-border bg-background shadow-sm transition-colors',
-                isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={isCopied ? 'Copied!' : 'Copy code'}
-            >
-              {isCopied ? <Check size={12} /> : <Copy size={12} />}
-            </button>
-          </div>
+  return (
+    <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
+        <div className="flex items-center gap-2">
+          {language && (
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
+          )}
+          <span className="text-xs text-muted-foreground">{lineCount} lines</span>
         </div>
 
-        <div className="relative">
-          <div
+        <div className="flex gap-1">
+          <button
+            onClick={toggleWrap}
             className={cn(
-              'font-mono text-sm leading-relaxed p-2',
-              isWrapped && 'whitespace-pre-wrap break-words',
-              !isWrapped && 'whitespace-pre overflow-x-auto',
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
             )}
-            style={{
-              fontFamily: geistMono.style.fontFamily,
-            }}
-            dangerouslySetInnerHTML={{
-              __html: highlightedCode,
-            }}
-          />
+            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
+          >
+            {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={cn(
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isCopied ? 'Copied!' : 'Copy code'}
+          >
+            {isCopied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
         </div>
       </div>
-    );
+
+      <div className="relative">
+        <div
+          className={cn(
+            'font-mono text-sm leading-relaxed p-2',
+            isWrapped && 'whitespace-pre-wrap break-words',
+            !isWrapped && 'whitespace-pre overflow-x-auto',
+          )}
+          style={{
+            fontFamily: geistMono.style.fontFamily,
+          }}
+          dangerouslySetInnerHTML={{
+            __html: highlightedCode,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const LazyCodeBlock = lazy(() => Promise.resolve({ default: LazyCodeBlockComponent }));
+
+// Synchronous CodeBlock component for smaller blocks
+const SyncCodeBlock: React.FC<CodeBlockProps> = ({ language, children, elementKey }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const [isWrapped, setIsWrapped] = useState(false);
+  const lineCount = useMemo(() => children.split('\n').length, [children]);
+
+  const highlightedCode = useMemo(() => {
+    try {
+      return highlight(children);
+    } catch (error) {
+      console.warn('Syntax highlighting failed, using plain text:', error);
+      return children;
+    }
+  }, [children]);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(children);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+      toast.success('Code copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy code:', error);
+      toast.error('Failed to copy code');
+    }
+  }, [children]);
+
+  const toggleWrap = useCallback(() => {
+    setIsWrapped((prev) => {
+      const newState = !prev;
+      toast.success(newState ? 'Code wrap enabled' : 'Code wrap disabled');
+      return newState;
+    });
+  }, []);
+
+  return (
+    <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
+        <div className="flex items-center gap-2">
+          {language && (
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
+          )}
+          <span className="text-xs text-muted-foreground">{lineCount} lines</span>
+        </div>
+
+        <div className="flex gap-1">
+          <button
+            onClick={toggleWrap}
+            className={cn(
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isWrapped ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isWrapped ? 'Disable wrap' : 'Enable wrap'}
+          >
+            {isWrapped ? <ArrowLeftRight size={12} /> : <WrapText size={12} />}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={cn(
+              'p-1 rounded border border-border bg-background shadow-sm transition-colors',
+              isCopied ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isCopied ? 'Copied!' : 'Copy code'}
+          >
+            {isCopied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="relative">
+        <div
+          className={cn(
+            'font-mono text-sm leading-relaxed p-2',
+            isWrapped && 'whitespace-pre-wrap break-words',
+            !isWrapped && 'whitespace-pre overflow-x-auto',
+          )}
+          style={{
+            fontFamily: geistMono.style.fontFamily,
+          }}
+          dangerouslySetInnerHTML={{
+            __html: highlightedCode,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const CodeBlock: React.FC<CodeBlockProps> = React.memo(
+  ({ language, children, elementKey }) => {
+    // Use lazy loading for large code blocks
+    if (children.length > 5000) {
+      return (
+        <Suspense fallback={
+          <div className="group relative my-5 rounded-md border border-border bg-accent overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 bg-accent border-b border-border">
+              <div className="flex items-center gap-2">
+                {language && (
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{language}</span>
+                )}
+                <span className="text-xs text-muted-foreground">{children.split('\n').length} lines</span>
+              </div>
+            </div>
+            <div className="font-mono text-sm leading-relaxed p-2 text-muted-foreground">
+              <div className="animate-pulse">Loading code block...</div>
+            </div>
+          </div>
+        }>
+          <LazyCodeBlock language={language} elementKey={elementKey}>
+            {children}
+          </LazyCodeBlock>
+        </Suspense>
+      );
+    }
+
+    // Use synchronous rendering for smaller blocks
+    return <SyncCodeBlock language={language} elementKey={elementKey}>{children}</SyncCodeBlock>;
   },
   (prevProps, nextProps) => {
     return (
@@ -234,137 +270,142 @@ const CodeBlock: React.FC<CodeBlockProps> = React.memo(
 
 CodeBlock.displayName = 'CodeBlock';
 
-// Optimized content processor with chunking
-const useProcessedContent = (content: string, maxProcessingTime = 50) => {
-  const [result, setResult] = useState<{
-    processedContent: string;
-    citations: CitationLink[];
-    latexBlocks: Array<{ id: string; content: string; isBlock: boolean }>;
-    isProcessing: boolean;
-  }>({
-    processedContent: content,
-    citations: [],
-    latexBlocks: [],
-    isProcessing: true,
-  });
+// Optimized synchronous content processor using useMemo
+const useProcessedContent = (content: string) => {
+  return useMemo(() => {
+    // For very small content, return immediately
+    if (content.length <= 1000) {
+      return {
+        processedContent: content,
+        citations: [],
+        latexBlocks: [],
+        isProcessing: false,
+      };
+    }
 
-  useEffect(() => {
-    let cancelled = false;
+    const citations: CitationLink[] = [];
+    const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
+    let modifiedContent = content;
 
-    const processContent = async () => {
-      const startTime = performance.now();
-      const citations: CitationLink[] = [];
-      const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
-      let modifiedContent = content;
+    try {
+      // Extract and protect code blocks
+      const codeBlocks: Array<{ id: string; content: string }> = [];
+      const codeBlockPatterns = [/```[\s\S]*?```/g, /`[^`\n]+`/g];
 
-      // Process in chunks if content is large
-      const shouldChunk = content.length > 10000;
+      for (const pattern of codeBlockPatterns) {
+        const matches = [...modifiedContent.matchAll(pattern)];
+        let lastIndex = 0;
+        let newContent = '';
 
-      try {
-        // Extract and protect code blocks
-        const codeBlocks: Array<{ id: string; content: string }> = [];
-        const codeBlockPatterns = [/```[\s\S]*?```/g, /`[^`\n]+`/g];
+        for (let i = 0; i < matches.length; i++) {
+          const match = matches[i];
+          const id = `CODEBLOCK${codeBlocks.length}END`;
+          codeBlocks.push({ id, content: match[0] });
 
-        for (const pattern of codeBlockPatterns) {
-          modifiedContent = modifiedContent.replace(pattern, (match) => {
-            const id = `CODEBLOCK${codeBlocks.length}END`;
-            codeBlocks.push({ id, content: match });
-            return id;
-          });
+          newContent += modifiedContent.slice(lastIndex, match.index) + id;
+          lastIndex = match.index! + match[0].length;
+        }
 
-          if (shouldChunk && performance.now() - startTime > maxProcessingTime) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
+        newContent += modifiedContent.slice(lastIndex);
+        modifiedContent = newContent;
+      }
+
+      // Extract monetary amounts
+      const monetaryBlocks: Array<{ id: string; content: string }> = [];
+      const monetaryRegex =
+        /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
+
+      let monetaryProcessed = '';
+      let lastMonetaryIndex = 0;
+      const monetaryMatches = [...modifiedContent.matchAll(monetaryRegex)];
+
+      for (let i = 0; i < monetaryMatches.length; i++) {
+        const match = monetaryMatches[i];
+        const prefix = match[1];
+        const id = `MONETARY${monetaryBlocks.length}END`;
+        monetaryBlocks.push({ id, content: match[0].slice(prefix.length) });
+
+        monetaryProcessed += modifiedContent.slice(lastMonetaryIndex, match.index) + prefix + id;
+        lastMonetaryIndex = match.index! + match[0].length;
+      }
+
+      monetaryProcessed += modifiedContent.slice(lastMonetaryIndex);
+      modifiedContent = monetaryProcessed;
+
+      // Extract LaTeX blocks
+      const allLatexPatterns = [
+        { patterns: [/\\\[([\s\S]*?)\\\]/g, /\$\$([\s\S]*?)\$\$/g], isBlock: true, prefix: 'LATEXBLOCK' },
+        { patterns: [/\\\(([\s\S]*?)\\\)/g, /\$(?![{#\d])[^\$\n]*[a-zA-Z_\\][^\$\n]*\$/g], isBlock: false, prefix: 'LATEXINLINE' },
+      ];
+
+      for (const { patterns, isBlock, prefix } of allLatexPatterns) {
+        for (const pattern of patterns) {
+          const matches = [...modifiedContent.matchAll(pattern)];
+          let lastIndex = 0;
+          let newContent = '';
+
+          for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const id = `${prefix}${latexBlocks.length}END`;
+            latexBlocks.push({ id, content: match[0], isBlock });
+
+            newContent += modifiedContent.slice(lastIndex, match.index) + id;
+            lastIndex = match.index! + match[0].length;
           }
-        }
 
-        // Extract monetary amounts
-        const monetaryBlocks: Array<{ id: string; content: string }> = [];
-        const monetaryRegex =
-          /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
-
-        modifiedContent = modifiedContent.replace(monetaryRegex, (match, prefix: string) => {
-          const id = `MONETARY${monetaryBlocks.length}END`;
-          monetaryBlocks.push({ id, content: match.slice(prefix.length) });
-          return `${prefix}${id}`;
-        });
-
-        // Extract LaTeX blocks
-        const blockPatterns = [
-          { pattern: /\\\[([\s\S]*?)\\\]/g, isBlock: true },
-          { pattern: /\$\$([\s\S]*?)\$\$/g, isBlock: true },
-        ];
-
-        for (const { pattern, isBlock } of blockPatterns) {
-          modifiedContent = modifiedContent.replace(pattern, (match) => {
-            const id = `LATEXBLOCK${latexBlocks.length}END`;
-            latexBlocks.push({ id, content: match, isBlock });
-            return id;
-          });
-        }
-
-        const inlinePatterns = [
-          { pattern: /\\\(([\s\S]*?)\\\)/g, isBlock: false },
-          { pattern: /\$(?![{#])[^\$\n]+?\$/g, isBlock: false },
-        ];
-
-        for (const { pattern, isBlock } of inlinePatterns) {
-          modifiedContent = modifiedContent.replace(pattern, (match) => {
-            const id = `LATEXINLINE${latexBlocks.length}END`;
-            latexBlocks.push({ id, content: match, isBlock });
-            return id;
-          });
-        }
-
-        // Process citations (simplified for performance)
-        const refWithUrlRegex =
-          /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
-
-        modifiedContent = modifiedContent.replace(refWithUrlRegex, (match, docType, bracketText, plainText, url) => {
-          const text = bracketText || plainText;
-          const fullText = (docType ? `[${docType}] ` : '') + text;
-          const cleanUrl = url.replace(/[.,;:]+$/, '');
-          citations.push({ text: fullText.trim(), link: cleanUrl });
-          return `[${fullText.trim()}](${cleanUrl})`;
-        });
-
-        // Restore protected blocks
-        monetaryBlocks.forEach(({ id, content }) => {
-          modifiedContent = modifiedContent.replace(id, content);
-        });
-
-        codeBlocks.forEach(({ id, content }) => {
-          modifiedContent = modifiedContent.replace(id, content);
-        });
-
-        if (!cancelled) {
-          setResult({
-            processedContent: modifiedContent,
-            citations,
-            latexBlocks,
-            isProcessing: false,
-          });
-        }
-      } catch (error) {
-        console.error('Error processing content:', error);
-        if (!cancelled) {
-          setResult({
-            processedContent: content,
-            citations: [],
-            latexBlocks: [],
-            isProcessing: false,
-          });
+          newContent += modifiedContent.slice(lastIndex);
+          modifiedContent = newContent;
         }
       }
-    };
 
-    processContent();
+      // Process citations (simplified for performance)
+      const refWithUrlRegex =
+        /(?:\[(?:(?:\[?(PDF|DOC|HTML)\]?\s+)?([^\]]+))\]|\b([^.!?\n]+?(?:\s+[-–—]\s+\w+|\s+\([^)]+\)))\b)(?:\s*(?:\(|\[\s*|\s+))(https?:\/\/[^\s)]+)(?:\s*[)\]]|\s|$)/g;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [content, maxProcessingTime]);
+      let citationProcessed = '';
+      let lastCitationIndex = 0;
+      const citationMatches = [...modifiedContent.matchAll(refWithUrlRegex)];
 
-  return result;
+      for (let i = 0; i < citationMatches.length; i++) {
+        const match = citationMatches[i];
+        const [fullMatch, docType, bracketText, plainText, url] = match;
+        const text = bracketText || plainText;
+        const fullText = (docType ? `[${docType}] ` : '') + text;
+        const cleanUrl = url.replace(/[.,;:]+$/, '');
+        citations.push({ text: fullText.trim(), link: cleanUrl });
+
+        citationProcessed += modifiedContent.slice(lastCitationIndex, match.index) + `[${fullText.trim()}](${cleanUrl})`;
+        lastCitationIndex = match.index! + fullMatch.length;
+      }
+
+      citationProcessed += modifiedContent.slice(lastCitationIndex);
+      modifiedContent = citationProcessed;
+
+      // Restore protected blocks
+      monetaryBlocks.forEach(({ id, content }) => {
+        modifiedContent = modifiedContent.replace(id, content);
+      });
+
+      codeBlocks.forEach(({ id, content }) => {
+        modifiedContent = modifiedContent.replace(id, content);
+      });
+
+      return {
+        processedContent: modifiedContent,
+        citations,
+        latexBlocks,
+        isProcessing: false,
+      };
+    } catch (error) {
+      console.error('Error processing content:', error);
+      return {
+        processedContent: content,
+        citations: [],
+        latexBlocks: [],
+        isProcessing: false,
+      };
+    }
+  }, [content]);
 };
 
 const InlineCode: React.FC<{ code: string; elementKey: string }> = React.memo(({ code }) => {
@@ -531,29 +572,26 @@ const LinkPreview = React.memo(({ href, title }: { href: string; title?: string 
 
 LinkPreview.displayName = 'LinkPreview';
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMessage = false }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, isUserMessage = false }) => {
   const { processedContent, citations: extractedCitations, latexBlocks, isProcessing } = useProcessedContent(content);
   const citationLinks = extractedCitations;
 
-  // Track element indices for stable keys
-  const elementIndices = useRef({
-    paragraph: 0,
-    code: 0,
-    heading: 0,
-    list: 0,
-    listItem: 0,
-    blockquote: 0,
-    table: 0,
-    tableRow: 0,
-    tableCell: 0,
-    link: 0,
-    text: 0,
-    hr: 0,
-  });
+  // Optimized element key generation using content hash instead of indices
+  const contentHash = useMemo(() => {
+    // Simple hash for stable keys
+    let hash = 0;
+    const str = content.slice(0, 200); // Use first 200 chars for hash
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36);
+  }, [content]);
 
-  // Reset indices when content changes
-  useEffect(() => {
-    elementIndices.current = {
+  // Use closures to maintain counters without re-creating on each render
+  const getElementKey = useMemo(() => {
+    const counters = {
       paragraph: 0,
       code: 0,
       heading: 0,
@@ -567,7 +605,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       text: 0,
       hr: 0,
     };
-  }, [content]);
+
+    return (type: keyof typeof counters, content?: string) => {
+      const count = counters[type]++;
+      const contentPrefix = content ? content.slice(0, 20) : '';
+      return `${contentHash}-${type}-${count}-${contentPrefix}`.replace(/[^a-zA-Z0-9-]/g, '');
+    };
+  }, [contentHash]);
 
   const renderHoverCard = useCallback(
     (href: string, text: React.ReactNode, isCitation: boolean = false, citationText?: string) => {
@@ -579,7 +623,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
             <Link
               href={href}
               target="_blank"
-              rel="noopener noreferrer"
               className={
                 isCitation
                   ? 'cursor-pointer text-xs no-underline text-primary py-0.5 px-1.25 m-0! bg-primary/10 rounded-sm font-medium inline-flex items-center -translate-y-[1px] leading-none hover:bg-primary/20 focus:outline-none focus:ring-1 focus:ring-primary align-baseline'
@@ -641,19 +684,19 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
         allMatches.sort((a, b) => a.match.index - b.match.index);
 
-        allMatches.forEach(({ match, isBlock }, idx) => {
+        allMatches.forEach(({ match, isBlock }) => {
           const fullMatch = match[0];
           const start = match.index;
 
           if (start > lastEnd) {
             const textContent = text.slice(lastEnd, start);
-            const key = generateStableKey(textContent, elementIndices.current.text++);
+            const key = getElementKey('text', textContent);
             components.push(<span key={key}>{textContent}</span>);
           }
 
           const latexBlock = latexBlocks.find((block) => block.id === fullMatch);
           if (latexBlock) {
-            const key = generateStableKey(latexBlock.content, elementIndices.current.text++);
+            const key = getElementKey('text', latexBlock.content);
             if (isBlock) {
               components.push(
                 <Latex
@@ -688,18 +731,17 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
 
         if (lastEnd < text.length) {
           const textContent = text.slice(lastEnd);
-          const key = generateStableKey(textContent, elementIndices.current.text++);
+          const key = getElementKey('text', textContent);
           components.push(<span key={key}>{textContent}</span>);
         }
 
         return components.length === 1 ? components[0] : <Fragment>{components}</Fragment>;
       },
       hr() {
-        const key = generateStableKey('hr', elementIndices.current.hr++);
-        return <hr key={key} className="my-6 border-border" />;
+        return <></>;
       },
       paragraph(children) {
-        const key = generateStableKey(String(children).slice(0, 50), elementIndices.current.paragraph++);
+        const key = getElementKey('paragraph', String(children));
 
         if (typeof children === 'string') {
           const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
@@ -733,7 +775,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       code(children, language) {
-        const key = generateStableKey(String(children).slice(0, 50), elementIndices.current.code++);
+        const key = getElementKey('code', String(children));
         return (
           <CodeBlock language={language} elementKey={key} key={key}>
             {String(children)}
@@ -742,11 +784,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       },
       codespan(code) {
         const codeString = typeof code === 'string' ? code : String(code || '');
-        const key = generateStableKey(codeString, elementIndices.current.code++);
+        const key = getElementKey('code', codeString);
         return <InlineCode key={key} elementKey={key} code={codeString} />;
       },
       link(href, text) {
-        const key = generateStableKey(href, elementIndices.current.link++);
+        const key = getElementKey('link', href);
 
         if (href.startsWith('mailto:')) {
           const email = href.replace('mailto:', '');
@@ -792,7 +834,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         }
       },
       heading(children, level) {
-        const key = generateStableKey(String(children).slice(0, 50), elementIndices.current.heading++);
+        const key = getElementKey('heading', String(children));
         const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
         const sizeClasses =
           {
@@ -811,7 +853,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       list(children, ordered) {
-        const key = generateStableKey('list', elementIndices.current.list++);
+        const key = getElementKey('list');
         const ListTag = ordered ? 'ol' : 'ul';
         return (
           <ListTag
@@ -823,7 +865,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       listItem(children) {
-        const key = generateStableKey('listitem', elementIndices.current.listItem++);
+        const key = getElementKey('listItem');
         return (
           <li key={key} className="pl-1 leading-relaxed">
             {children}
@@ -831,7 +873,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       blockquote(children) {
-        const key = generateStableKey('blockquote', elementIndices.current.blockquote++);
+        const key = getElementKey('blockquote');
         return (
           <blockquote
             key={key}
@@ -842,15 +884,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       table(children) {
-        const key = generateStableKey('table', elementIndices.current.table++);
+        const key = getElementKey('table');
         return <MarkdownTableWithActions key={key}>{children}</MarkdownTableWithActions>;
       },
       tableRow(children) {
-        const key = generateStableKey('tablerow', elementIndices.current.tableRow++);
+        const key = getElementKey('tableRow');
         return <TableRow key={key}>{children}</TableRow>;
       },
       tableCell(children, flags) {
-        const key = generateStableKey('tablecell', elementIndices.current.tableCell++);
+        const key = getElementKey('tableCell');
         const alignClass = flags.align ? `text-${flags.align}` : 'text-left';
         const isHeader = flags.header;
 
@@ -874,7 +916,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       tableHeader(children) {
-        const key = generateStableKey('tableheader', elementIndices.current.table++);
+        const key = getElementKey('table');
         return (
           <TableHeader key={key} className="!p-1 !m-1">
             {children}
@@ -882,7 +924,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
       tableBody(children) {
-        const key = generateStableKey('tablebody', elementIndices.current.table++);
+        const key = getElementKey('table');
         return (
           <TableBody key={key} className="!text-wrap !m-1">
             {children}
@@ -890,17 +932,25 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
         );
       },
     }),
-    [latexBlocks, isUserMessage, renderCitation, renderHoverCard],
+    [latexBlocks, isUserMessage, renderCitation, renderHoverCard, getElementKey, citationLinks],
   );
 
-  // Show a loading state for very large content
-  if (isProcessing && content.length > 50000) {
+  // Show a progressive loading state for large content
+  if (isProcessing && content.length > 15000) {
     return (
       <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans">
-        <div className="animate-pulse">
-          <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-muted rounded w-full mb-4"></div>
-          <div className="h-4 bg-muted rounded w-5/6 mb-4"></div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+            Processing content ({Math.round(content.length / 1024)}KB)...
+          </div>
+          <div className="animate-pulse space-y-2">
+            <div className="h-3 bg-muted rounded w-3/4"></div>
+            <div className="h-3 bg-muted rounded w-full"></div>
+            <div className="h-3 bg-muted rounded w-5/6"></div>
+            <div className="h-8 bg-muted rounded w-2/3"></div>
+            <div className="h-3 bg-muted rounded w-4/5"></div>
+          </div>
         </div>
       </div>
     );
@@ -911,7 +961,72 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUserMess
       <Marked renderer={renderer}>{processedContent}</Marked>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.content === nextProps.content &&
+    prevProps.isUserMessage === nextProps.isUserMessage
+  );
+});
+
+MarkdownRenderer.displayName = 'MarkdownRenderer';
+
+// Virtual scrolling component for very large content
+const VirtualMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, isUserMessage = false }) => {
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Split content into chunks for virtual scrolling
+  const contentChunks = useMemo(() => {
+    const lines = content.split('\n');
+    const chunkSize = 20; // Lines per chunk
+    const chunks = [];
+    
+    for (let i = 0; i < lines.length; i += chunkSize) {
+      chunks.push(lines.slice(i, i + chunkSize).join('\n'));
+    }
+    
+    return chunks;
+  }, [content]);
+
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    const { scrollTop, clientHeight } = containerRef.current;
+    const lineHeight = 24; // Approximate line height
+    const start = Math.floor(scrollTop / lineHeight);
+    const end = Math.min(start + Math.ceil(clientHeight / lineHeight) + 10, contentChunks.length);
+    
+    setVisibleRange({ start: Math.max(0, start - 5), end });
+  }, [contentChunks.length]);
+
+  // Only use virtual scrolling for very large content
+  if (content.length < 50000) {
+    return <MarkdownRenderer content={content} isUserMessage={isUserMessage} />;
+  }
+
+  return (
+    <div 
+      ref={containerRef}
+      className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans max-h-96 overflow-y-auto"
+      onScroll={handleScroll}
+    >
+      {contentChunks.slice(visibleRange.start, visibleRange.end).map((chunk, index) => (
+        <MarkdownRenderer 
+          key={`chunk-${visibleRange.start + index}`}
+          content={chunk} 
+          isUserMessage={isUserMessage} 
+        />
+      ))}
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.content === nextProps.content &&
+    prevProps.isUserMessage === nextProps.isUserMessage
+  );
+});
+
+VirtualMarkdownRenderer.displayName = 'VirtualMarkdownRenderer';
 
 export const CopyButton = React.memo(({ text }: { text: string }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -935,4 +1050,39 @@ export const CopyButton = React.memo(({ text }: { text: string }) => {
 
 CopyButton.displayName = 'CopyButton';
 
-export { MarkdownRenderer };
+// Performance monitoring hook
+const usePerformanceMonitor = (content: string) => {
+  const renderStartTime = useRef<number>(0);
+  
+  useMemo(() => {
+    renderStartTime.current = performance.now();
+  }, [content]);
+  
+  useMemo(() => {
+    const renderTime = performance.now() - renderStartTime.current;
+    if (renderTime > 100) {
+      console.warn(`Markdown render took ${renderTime.toFixed(2)}ms for ${content.length} characters`);
+    }
+  }, []);
+};
+
+// Main optimized markdown component with automatic optimization selection
+const OptimizedMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, isUserMessage = false }) => {
+  usePerformanceMonitor(content);
+  
+  // Automatically choose the best rendering strategy based on content size
+  if (content.length > 100000) {
+    return <VirtualMarkdownRenderer content={content} isUserMessage={isUserMessage} />;
+  }
+  
+  return <MarkdownRenderer content={content} isUserMessage={isUserMessage} />;
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.content === nextProps.content &&
+    prevProps.isUserMessage === nextProps.isUserMessage
+  );
+});
+
+OptimizedMarkdownRenderer.displayName = 'OptimizedMarkdownRenderer';
+
+export { MarkdownRenderer, VirtualMarkdownRenderer, OptimizedMarkdownRenderer as default };

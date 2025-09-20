@@ -156,7 +156,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
       <Link
         href={video.url}
         target="_blank"
-        rel="noopener noreferrer"
         className="relative aspect-video block bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
         aria-label={`Watch ${video.details?.title || 'YouTube video'}`}
       >
@@ -189,7 +188,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
           <Link
             href={video.url}
             target="_blank"
-            rel="noopener noreferrer"
             className="text-sm font-medium line-clamp-2 hover:text-red-500 transition-colors dark:text-neutral-100"
           >
             {video.details?.title || 'YouTube Video'}
@@ -200,7 +198,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             <Link
               href={video.details.author_url || video.url}
               target="_blank"
-              rel="noopener noreferrer"
               className="flex items-center gap-2 group mt-2 w-fit"
               aria-label={`Channel: ${video.details.author_name}`}
             >
@@ -318,7 +315,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                                 key={i}
                                 href={`${video.url}&t=${seconds}`}
                                 target="_blank"
-                                rel="noopener noreferrer"
                                 className="group flex items-start gap-4 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
                               >
                                 <div className="flex items-center justify-center min-w-[60px] h-8 bg-neutral-100 dark:bg-neutral-800 rounded font-mono text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">

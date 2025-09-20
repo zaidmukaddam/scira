@@ -17,11 +17,10 @@ import {
   JsonToSseTransformStream,
 } from 'ai';
 import { createMemoryTools } from '@/lib/tools/supermemory';
-import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits, models } from '@/ai/providers';
+import { scira, requiresAuthentication, requiresProSubscription, shouldBypassRateLimits, models, getModelParameters } from '@/ai/providers';
 import {
   createStreamId,
   getChatById,
-  getChatByIdNoCaching,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
@@ -57,11 +56,11 @@ import {
   coinOhlcTool,
   datetimeTool,
   greetingTool,
-  mcpSearchTool,
+  // mcpSearchTool,
   redditSearchTool,
   extremeSearchTool,
+  createConnectorsSearchTool,
 } from '@/lib/tools';
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { XaiProviderOptions } from '@ai-sdk/xai';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { markdownJoinerTransform } from '@/lib/parser';
@@ -138,7 +137,7 @@ export async function POST(req: Request) {
   console.log('🔍 Search API endpoint hit');
 
   const requestStartTime = Date.now();
-  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled, searchProvider } =
+  const { messages, model, group, timezone, id, selectedVisibilityType, isCustomInstructionsEnabled, searchProvider, selectedConnectors } =
     await req.json();
   const { latitude, longitude } = geolocation(req);
 
@@ -293,9 +292,9 @@ export async function POST(req: Request) {
           isProUser: false,
           subscriptionData: user.polarSubscription
             ? {
-                hasSubscription: true,
-                subscription: { ...user.polarSubscription, organizationId: null },
-              }
+              hasSubscription: true,
+              subscription: { ...user.polarSubscription, organizationId: null },
+            }
             : { hasSubscription: false },
           shouldBypassLimits,
           extremeSearchUsage: extremeSearchUsage.count,
@@ -315,9 +314,9 @@ export async function POST(req: Request) {
         isProUser: true,
         subscriptionData: user.polarSubscription
           ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+            hasSubscription: true,
+            subscription: { ...user.polarSubscription, organizationId: null },
+          }
           : { hasSubscription: false },
         shouldBypassLimits: true,
         extremeSearchUsage: 0,
@@ -441,57 +440,18 @@ export async function POST(req: Request) {
       });
       console.log('================================');
 
-      const maxTokens = getMaxOutputTokens(model);
-
       const streamStartTime = Date.now();
 
       const result = streamText({
         model: scira.languageModel(model),
         messages: convertToModelMessages(messages),
-        ...(model.includes('scira-qwen-32b')
-          ? {
-              temperature: 0.6,
-              topP: 0.95,
-              minP: 0,
-            }
-          : model.includes('scira-qwen-235')
-            ? {
-                temperature: 0.7,
-                topP: 0.8,
-                minP: 0,
-              }
-            : model.includes('scira-qwen-30')
-              ? {
-                  temperature: 0.7,
-                  topP: 0.8,
-                  minP: 0,
-                }
-              : model.includes('scira-qwen-235-think')
-                ? {
-                    temperature: 0.6,
-                    topP: 0.95,
-                    topK: 20,
-                    minP: 0,
-                  }
-                : model.includes('scira-qwen-30-think')
-                  ? {
-                      temperature: 0.6,
-                      topP: 0.95,
-                      minP: 0,
-                    }
-                  : {}),
+        ...getModelParameters(model),
         stopWhen: stepCountIs(5),
         onAbort: ({ steps }) => {
-          // Handle cleanup when stream is aborted
           console.log('Stream aborted after', steps.length, 'steps');
-          // Persist partial results to database
+
         },
         maxRetries: 10,
-        ...(model.includes('scira-5')
-          ? {
-              maxOutputTokens: maxTokens,
-            }
-          : {}),
         activeTools: [...activeTools],
         experimental_transform: markdownJoinerTransform(),
         system:
@@ -503,34 +463,23 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           openai: {
-            ...(model.includes('scira-5')
+            ...model !== "scira-qwen-coder"
               ? {
-                  reasoningEffort: model === 'scira-5-high' ? 'high' : 'minimal',
-                  reasoningSummary: model === 'scira-5-high' ? 'detailed' : 'auto',
-                  parallelToolCalls: false,
-                  strictJsonSchema: false,
-                  serviceTier: 'auto',
-                  textVerbosity: 'high',
-                }
-              : {}),
-          } satisfies OpenAIResponsesProviderOptions,
-          xai: {
-            ...(model === 'scira-default'
-              ? {
-                  reasoningEffort: 'low',
-                }
-              : {}),
-          } satisfies XaiProviderOptions,
+                parallelToolCalls: false,
+              }
+              : {}
+          },
           groq: {
             ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
               ? {
-                  reasoningEffort: 'high',
-                }
+                reasoningEffort: 'medium',
+                reasoningFormat: "hidden",
+              }
               : {}),
             ...(model === 'scira-qwen-32b'
               ? {
-                  reasoningEffort: 'none',
-                }
+                reasoningEffort: 'none',
+              }
               : {}),
             parallelToolCalls: false,
             structuredOutputs: true,
@@ -539,14 +488,12 @@ export async function POST(req: Request) {
         },
         tools: (() => {
           const baseTools = {
-            // Stock & Financial Tools
             stock_chart: stockChartTool,
             currency_converter: currencyConverterTool,
             coin_data: coinDataTool,
             coin_data_by_contract: coinDataByContractTool,
             coin_ohlc: coinOhlcTool,
 
-            // Search & Content Tools
             x_search: xSearchTool,
             web_search: webSearchTool(dataStream, searchProvider),
             academic_search: academicSearchTool,
@@ -554,22 +501,18 @@ export async function POST(req: Request) {
             reddit_search: redditSearchTool,
             retrieve: retrieveTool,
 
-            // Media & Entertainment
             movie_or_tv_search: movieTvSearchTool,
             trending_movies: trendingMoviesTool,
             trending_tv: trendingTvTool,
 
-            // Location & Maps
             find_place_on_map: findPlaceOnMapTool,
             nearby_places_search: nearbyPlacesSearchTool,
             get_weather_data: weatherTool,
 
-            // Utility Tools
             text_translate: textTranslateTool,
             code_interpreter: codeInterpreterTool,
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
-            mcp_search: mcpSearchTool,
             extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),
           };
@@ -578,17 +521,17 @@ export async function POST(req: Request) {
             return baseTools;
           }
 
-          // Add memory tools for authenticated users
           const memoryTools = createMemoryTools(user.id);
           return {
             ...baseTools,
             search_memories: memoryTools.searchMemories as any,
             add_memory: memoryTools.addMemory as any,
+            connectors_search: createConnectorsSearchTool(user.id, selectedConnectors),
           } as any;
         })(),
         experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
-            return null; // do not attempt to fix invalid tool names
+            return null;
           }
 
           console.log('Fixing tool call================================');
@@ -604,7 +547,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-3'),
+            model: scira.languageModel('scira-grok-4-fast'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -649,7 +592,6 @@ export async function POST(req: Request) {
           console.log('Usage: ', event.usage);
           console.log('Total Usage: ', event.totalUsage);
 
-          // Only proceed if user is authenticated
           if (user?.id && event.finishReason === 'stop') {
             after(async () => {
               try {

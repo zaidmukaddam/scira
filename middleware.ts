@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
 const authRoutes = ['/sign-in', '/sign-up'];
-const protectedRoutes = ['/lookout'];
+const protectedRoutes = ['/lookout', '/xql'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,6 +31,14 @@ export async function middleware(request: NextRequest) {
   }
 
   const sessionCookie = getSessionCookie(request);
+
+  // Redirect /settings to /#settings to open settings dialog (only if authenticated)
+  if (pathname === '/settings') {
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
+    return NextResponse.redirect(new URL('/#settings', request.url));
+  }
 
   // If user is authenticated but trying to access auth routes
   if (sessionCookie && authRoutes.some((route) => pathname.startsWith(route))) {

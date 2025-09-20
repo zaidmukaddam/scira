@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, Question, Clock, Percent } from '@phosphor-icons/react';
+import { XIcon, CopyIcon, CheckIcon, QuestionIcon, ClockIcon, PercentIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardAction } from '@/components/ui/card';
@@ -39,7 +39,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
     const updateTimeLeft = () => {
       const now = new Date().getTime();
 
-      // Check if discount hasn't started yet
+      // CheckIcon if discount hasn't started yet
       if (discountConfig.startsAt) {
         const startTime = discountConfig.startsAt.getTime();
         if (now < startTime) {
@@ -62,7 +62,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
         }
       }
 
-      // Check if discount has expired
+      // CheckIcon if discount has expired
       if (discountConfig.expiresAt) {
         const expiry = discountConfig.expiresAt.getTime();
         const difference = expiry - now;
@@ -188,7 +188,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
                       `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
                     ) : discountConfig.percentage ? (
                       <>
-                        <Percent className="h-3 w-3 mr-1" />
+                        <PercentIcon className="h-3 w-3 mr-1" />
                         {discountConfig.percentage}% OFF
                       </>
                     ) : (
@@ -200,7 +200,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground leading-tight">
                   {discountConfig.isStudentDiscount
-                    ? '🎓 Student discount automatically applied!'
+                    ? '🎓 Student discount automatically detected!'
                     : discountConfig.message || 'Special Offer Available'}
                 </p>
                 {pricing && (
@@ -228,7 +228,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
             <div className="flex items-center gap-2 sm:hidden">
               {onClose && (
                 <Button variant="ghost" size="sm" onClick={handleClose} className="h-7 w-7 p-0">
-                  <X className="h-3 w-3" />
+                  <XIcon className="h-3 w-3" />
                   <span className="sr-only">Close</span>
                 </Button>
               )}
@@ -248,7 +248,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
               timeLeft &&
               timeLeft !== 'Expired' && (
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <ClockIcon className="h-3 w-3 text-muted-foreground" />
                   <div className="flex items-center gap-0.5 sm:gap-1">
                     {countdownTime.days > 0 && (
                       <>
@@ -287,7 +287,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
             <div className="flex items-center gap-2">
               {onClose && (
                 <Button variant="ghost" size="sm" onClick={handleClose} className="h-7 w-7 p-0">
-                  <X className="h-3 w-3" />
+                  <XIcon className="h-3 w-3" />
                   <span className="sr-only">Close</span>
                 </Button>
               )}
@@ -301,7 +301,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
             <AccordionItem value="instructions" className="border-0">
               <AccordionTrigger className="py-1 px-0 hover:no-underline text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
                 <div className="flex items-center gap-1.5">
-                  <Question className="h-3 w-3" />
+                  <QuestionIcon className="h-3 w-3" />
                   <span>How to redeem?</span>
                 </div>
               </AccordionTrigger>
@@ -329,7 +329,7 @@ export function DiscountBanner({ discountConfig, onClose, className }: DiscountB
         {discountConfig.isStudentDiscount && (
           <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded-md">
             <p className="text-xs text-primary text-center">
-              No code needed - discount automatically applied at checkout
+              Your university email was automatically recognized - discount applied at checkout
             </p>
           </div>
         )}

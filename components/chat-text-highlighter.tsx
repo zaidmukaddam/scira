@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import { TextHighlighter, TextSelection } from 'lisere';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ChatTextHighlighterProps {
@@ -11,20 +10,44 @@ interface ChatTextHighlighterProps {
   removeHighlightOnClick?: boolean;
 }
 
+interface PopupPosition {
+  x: number;
+  y: number;
+  text: string;
+}
+
 export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   children,
   onHighlight,
   className,
-  removeHighlightOnClick = false,
 }) => {
-  const handleTextHighlighted = useCallback((selection: TextSelection) => {
-    // This is called when text is initially highlighted
-    console.log('Highlighted:', selection.text);
-  }, []);
+  const [popup, setPopup] = useState<PopupPosition | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
-  const handleHighlightRemoved = useCallback((selection: TextSelection) => {
-    // This is called when a highlight is removed
-    console.log('Removed:', selection.text);
+  const handleCopy = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('Text copied:', text);
+    } catch (err) {
+      console.error('Copy failed:', err);
+      // Fallback method
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        console.log('Fallback copy succeeded');
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
   }, []);
 
   const handleQuote = useCallback(
@@ -36,52 +59,117 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
     [onHighlight],
   );
 
+  const handlePointerUp = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      setPopup(null);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const text = selection.toString().trim();
+
+    if (!text || text.length < 2) {
+      setPopup(null);
+      return;
+    }
+
+    if (containerRef.current && !containerRef.current.contains(range.commonAncestorContainer)) {
+      setPopup(null);
+      return;
+    }
+
+    const rect = range.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect();
+
+    if (containerRect) {
+      setPopup({
+        x: rect.left + rect.width / 2 - containerRect.left,
+        y: rect.top - containerRect.top - 8,
+        text,
+      });
+    }
+  }, []);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const target = event.target as Node;
+    if (popupRef.current && popupRef.current.contains(target)) {
+      return;
+    }
+    setPopup(null);
+  }, []);
+
+  const closePopup = useCallback(() => {
+    setPopup(null);
+    window.getSelection()?.removeAllRanges();
+  }, []);
+
+  useEffect(() => {
+    const handleScrollOrResize = () => setPopup(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPopup(null);
+    };
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
-    <div className={cn('relative', className)}>
-      <TextHighlighter
-        className={className}
-        highlightStyle={{
-          className:
-            'bg-foreground text-background rounded px-1 py-0.5 border border-accent-foreground cursor-pointer shadow-sm font-medium transition-all',
-        }}
-        onTextHighlighted={handleTextHighlighted}
-        onHighlightRemoved={handleHighlightRemoved}
-        removeHighlightOnClick={removeHighlightOnClick}
-        selectionBoundary="word"
-        renderSelectionUI={({ selection, modifyHighlight, onClose }) => (
-          <div className="selection-popup absolute z-50 bg-background border border-border rounded-lg shadow-lg p-3 min-w-[320px] -translate-y-[calc(65%+12px)] before:absolute before:content-[''] before:bottom-[-8px] before:left-[24px] before:w-4 before:h-4 before:bg-background before:border-r before:border-b before:border-border before:rotate-45 before:transform">
-            <span className="text-sm text-foreground block mb-3">
-              Quote &ldquo;{selection.text.length > 50 ? selection.text.substring(0, 50) + '...' : selection.text}
-              &rdquo;?
-            </span>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  handleQuote(selection.text);
-                  modifyHighlight?.(selection, false);
-                  onClose?.();
-                }}
-                className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Quote
-              </button>
-
-              <button
-                onClick={() => {
-                  modifyHighlight?.(selection, true);
-                  onClose?.();
-                }}
-                className="px-3 py-1.5 text-xs font-medium bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+    <div 
+      ref={containerRef}
+      className={cn('relative', className)} 
+      onPointerUp={handlePointerUp}
+      onPointerDown={handlePointerDown}
+    >
+      {children}
+      
+      {popup && (
+        <div 
+          ref={popupRef}
+          className="selection-popup absolute z-50 bg-background border border-border rounded-md shadow-lg p-1.5 pointer-events-auto"
+          style={{
+            left: popup.x,
+            top: popup.y,
+            transform: 'translateX(-50%) translateY(-100%)'
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-1">
+            <button
+              onClick={async () => {
+                await handleCopy(popup.text);
+                closePopup();
+              }}
+              className="px-2 py-1 text-xs font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
+              Copy
+            </button>
+            
+            <button
+              onClick={() => {
+                handleQuote(popup.text);
+                closePopup();
+              }}
+              className="px-2 py-1 text-xs font-medium bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 transition-colors"
+            >
+              Quote
+            </button>
+            
+            <button
+              onClick={closePopup}
+              className="px-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ✕
+            </button>
           </div>
-        )}
-      >
-        {children}
-      </TextHighlighter>
+        </div>
+      )}
     </div>
   );
 };

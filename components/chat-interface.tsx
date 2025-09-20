@@ -38,12 +38,13 @@ import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
 import { requiresProSubscription } from '@/ai/providers';
+import { ConnectorProvider } from '@/lib/connectors';
 
 // State management imports
 import { chatReducer, createInitialState } from '@/components/chat-state';
 import { useDataStream } from './data-stream-provider';
-import { DefaultChatTransport, DataUIPart } from 'ai';
-import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
+import { DefaultChatTransport } from 'ai';
+import { ChatMessage } from '@/lib/types';
 
 interface ChatInterfaceProps {
   initialChatId?: string;
@@ -66,10 +67,57 @@ const ChatInterface = memo(
 
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
+    const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
       'scira-custom-instructions-enabled',
       true,
     );
+
+    // Settings dialog state management with URL hash support
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsInitialTab, setSettingsInitialTab] = useState<string>('profile');
+
+    // Function to open settings with a specific tab
+    const handleOpenSettings = useCallback((tab: string = 'profile') => {
+      setSettingsInitialTab(tab);
+      setSettingsOpen(true);
+    }, []);
+
+    // URL hash detection for settings dialog
+    useEffect(() => {
+      const handleHashChange = () => {
+        const hash = window.location.hash;
+        if (hash === '#settings') {
+          setSettingsOpen(true);
+        }
+      };
+
+      // Check initial hash
+      handleHashChange();
+
+      // Listen for hash changes
+      window.addEventListener('hashchange', handleHashChange);
+
+      return () => {
+        window.removeEventListener('hashchange', handleHashChange);
+      };
+    }, []);
+
+    // Update URL hash when settings dialog opens/closes
+    useEffect(() => {
+      if (settingsOpen) {
+        // Only update hash if it's not already #settings to prevent infinite loops
+        if (window.location.hash !== '#settings') {
+          window.history.pushState(null, '', '#settings');
+        }
+      } else {
+        // Remove hash if settings is closed and hash is #settings
+        if (window.location.hash === '#settings') {
+          // Use replaceState to avoid adding to browser history
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+    }, [settingsOpen]);
 
     // Get persisted values for dialog states
     const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
@@ -87,7 +135,7 @@ const ChatInterface = memo(
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
       'scira-search-provider',
-      'parallel',
+      'firecrawl',
     );
 
     // Use reducer for complex state management
@@ -225,11 +273,13 @@ const ChatInterface = memo(
     const selectedGroupRef = useRef(selectedGroup);
     const isCustomInstructionsEnabledRef = useRef(isCustomInstructionsEnabled);
     const searchProviderRef = useRef(searchProvider);
+    const selectedConnectorsRef = useRef(selectedConnectors);
 
     // Update refs whenever state changes - this ensures we always have current values
     selectedModelRef.current = selectedModel;
     selectedGroupRef.current = selectedGroup;
     isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
+    selectedConnectorsRef.current = selectedConnectors;
 
     const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
       id: chatId,
@@ -246,13 +296,14 @@ const ChatInterface = memo(
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
               isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
               searchProvider: searchProviderRef.current,
+              selectedConnectors: selectedConnectorsRef.current,
               ...(initialChatId ? { chat_id: initialChatId } : {}),
               ...body,
             },
           };
         },
       }),
-      experimental_throttle: selectedModelRef.current === 'scira-anthropic' ? 500 : 50,
+      experimental_throttle: 100,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
         setDataStream((ds) => (ds ? [...ds, dataPart] : []));
@@ -591,6 +642,9 @@ const ChatInterface = memo(
           isProStatusLoading={proStatusLoading}
           isCustomInstructionsEnabled={isCustomInstructionsEnabled}
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+          settingsOpen={settingsOpen}
+          setSettingsOpen={setSettingsOpen}
+          settingsInitialTab={settingsInitialTab}
         />
 
         {/* Chat Dialogs Component */}
@@ -623,12 +677,19 @@ const ChatInterface = memo(
         />
 
         <div
-          className={`w-full p-2 sm:p-4 ${
+          className={`w-full p-2 sm:p-4 relative ${
             status === 'ready' && messages.length === 0
-              ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
-              : 'mt-20! sm:mt-16! flex flex-col!' // Add top margin when showing messages
+              ? 'flex-1 !flex !flex-col !items-center !justify-center' // Center everything when no messages
+              : '!mt-20 sm:!mt-16 flex !flex-col' // Add top margin when showing messages
           }`}
         >
+          {/* Static background gradient around center area for no messages state */}
+          {/* {status === 'ready' && messages.length === 0 && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] pointer-events-none dark:hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-tl from-accent/20 via-transparent to-secondary/25 rounded-full blur-2xl" />
+            </div>
+          )} */}
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (
               <div className="text-center m-0 mb-2">
@@ -730,9 +791,9 @@ const ChatInterface = memo(
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500 bg-background',
+                  'transition-all duration-500',
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative max-w-2xl mx-auto w-full rounded-xl'
+                    ? 'relative w-full max-w-2xl mx-auto'
                     : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
                 )}
               >
@@ -767,8 +828,24 @@ const ChatInterface = memo(
                     dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
                   }}
                   isLimitBlocked={isLimitBlocked}
+                  onOpenSettings={handleOpenSettings}
+                  selectedConnectors={selectedConnectors}
+                  setSelectedConnectors={setSelectedConnectors}
                 />
               </div>
+            )}
+
+          {/* Form backdrop overlay - hides content below form when in submitted mode */}
+          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+            !isLimitBlocked &&
+            (messages.length > 0 || chatState.hasSubmitted) && (
+              <div
+                className="fixed left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-sm pointer-events-none"
+                style={{
+                  bottom: 0,
+                  height: '120px', // Adjust height as needed
+                }}
+              />
             )}
 
           {/* Show limit exceeded message */}

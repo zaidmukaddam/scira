@@ -6,10 +6,10 @@ import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/c
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
+import { deleteMemory, getAllMemories, MemoryItem, searchMemories } from '@/lib/memory-actions';
 import { Loader2, Search, Trash2, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Memory } from '@phosphor-icons/react';
+import { MemoryIcon } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 export function MemoryDialog() {
@@ -50,7 +50,7 @@ export function MemoryDialog() {
     mutationFn: deleteMemory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      toast.success('Memory successfully deleted');
+      toast.success('MemoryIcon successfully deleted');
     },
     onError: (error) => {
       console.error('Delete memory error:', error);
@@ -65,7 +65,7 @@ export function MemoryDialog() {
     }
   };
 
-  const handleClearSearch = () => {
+const handleClearSearch = () => {
     setSearchQuery('');
     queryClient.invalidateQueries({ queryKey: ['memories', 'search'] });
   };
@@ -108,7 +108,7 @@ export function MemoryDialog() {
     <DialogContent className="sm:max-w-[650px] max-h-[85vh] flex flex-col p-6">
       <DialogHeader className="pb-4">
         <DialogTitle className="flex items-center gap-2 text-xl">
-          <Memory className="h-5 w-5" />
+          <MemoryIcon className="h-5 w-5" />
           Your Memories
         </DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
@@ -148,7 +148,7 @@ export function MemoryDialog() {
             </div>
           ) : displayedMemories.length === 0 ? (
             <div className="flex flex-col justify-center items-center h-[350px] py-12 px-4 border border-dashed rounded-lg bg-muted/50 m-1">
-              <Memory className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <MemoryIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="font-medium">No memories found</p>
               {searchQuery && <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>}
               {!searchQuery && (

@@ -3,7 +3,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
@@ -22,18 +22,23 @@ import {
   getCustomInstructions,
   saveCustomInstructions,
   deleteCustomInstructionsAction,
+  createConnectorAction,
+  listUserConnectorsAction,
+  deleteConnectorAction,
+  manualSyncConnectorAction,
+  getConnectorSyncStatusAction,
 } from '@/app/actions';
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
-  MagnifyingGlass,
-  Lightning,
-  Calendar,
-  Brain,
-  Trash,
-  FloppyDisk,
-  ArrowClockwise,
-  Robot,
+  MagnifyingGlassIcon,
+  LightningIcon,
+  CalendarIcon,
+  TrashIcon,
+  FloppyDiskIcon,
+  BrainIcon,
+  ArrowClockwiseIcon,
+  RobotIcon,
 } from '@phosphor-icons/react';
 
 import { ExternalLink } from 'lucide-react';
@@ -55,8 +60,10 @@ import {
   UserAccountIcon,
   Analytics01Icon,
   Settings02Icon,
-  BrainIcon,
+  Brain02Icon,
   GlobalSearchIcon,
+  ConnectIcon,
+  InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
 import {
   ContributionGraph,
@@ -68,6 +75,7 @@ import {
   type Activity,
 } from '@/components/ui/kibo-ui/contribution-graph';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -78,6 +86,7 @@ interface SettingsDialogProps {
   isProStatusLoading?: boolean;
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+  initialTab?: string;
 }
 
 // Component for Profile Information
@@ -173,10 +182,10 @@ const FirecrawlIcon = ({ className }: { className?: string }) => (
 // Search Provider Options
 const searchProviders = [
   {
-    value: 'parallel',
-    label: 'Parallel AI',
-    description: 'Base and premium web search along with Firecrawl image search support',
-    icon: ParallelIcon,
+    value: 'firecrawl',
+    label: 'Firecrawl',
+    description: 'Web, news, and image search with content scraping capabilities',
+    icon: FirecrawlIcon,
     default: true,
   },
   {
@@ -187,17 +196,17 @@ const searchProviders = [
     default: false,
   },
   {
+    value: 'parallel',
+    label: 'Parallel AI',
+    description: 'Base and premium web search along with Firecrawl image search support',
+    icon: ParallelIcon,
+    default: false,
+  },
+  {
     value: 'tavily',
     label: 'Tavily',
     description: 'Wide web search with comprehensive results and analysis',
     icon: TavilyIcon,
-    default: false,
-  },
-  {
-    value: 'firecrawl',
-    label: 'Firecrawl',
-    description: 'Web, news, and image search with content scraping capabilities',
-    icon: FirecrawlIcon,
     default: false,
   },
 ] as const;
@@ -289,7 +298,7 @@ function PreferencesSection({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
     'scira-search-provider',
-    'parallel',
+    'firecrawl',
   );
 
   const [content, setContent] = useState('');
@@ -407,7 +416,7 @@ function PreferencesSection({
         <div className="space-y-2.5">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-lg bg-primary/10">
-              <Robot className="h-3.5 w-3.5 text-primary" />
+              <RobotIcon className="h-3.5 w-3.5 text-primary" />
             </div>
             <div>
               <h4 className="font-semibold text-sm">Custom Instructions</h4>
@@ -467,7 +476,7 @@ function PreferencesSection({
                     </>
                   ) : (
                     <>
-                      <FloppyDisk className="w-3 h-3 mr-1.5" />
+                      <FloppyDiskIcon className="w-3 h-3 mr-1.5" />
                       Save Instructions
                     </>
                   )}
@@ -480,7 +489,7 @@ function PreferencesSection({
                     size="sm"
                     className="h-8 px-2.5"
                   >
-                    <Trash className="w-3 h-3" />
+                    <TrashIcon className="w-3 h-3" />
                   </Button>
                 )}
               </div>
@@ -620,7 +629,11 @@ function UsageSection({ user }: any) {
           disabled={isRefreshing}
           className={isMobile ? 'h-7 px-1.5' : 'h-8 px-2'}
         >
-          {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowClockwise className="h-3.5 w-3.5" />}
+          {isRefreshing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <ArrowClockwiseIcon className="h-3.5 w-3.5" />
+          )}
         </Button>
       </div>
 
@@ -628,7 +641,7 @@ function UsageSection({ user }: any) {
         <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
           <div className="flex items-center justify-between">
             <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Today</span>
-            <MagnifyingGlass className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            <MagnifyingGlassIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
             <Skeleton className={cn('font-semibold', isMobile ? 'text-base h-4' : 'text-lg h-5')} />
@@ -641,7 +654,7 @@ function UsageSection({ user }: any) {
         <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
           <div className="flex items-center justify-between">
             <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Extreme</span>
-            <Lightning className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            <LightningIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
             <Skeleton className={cn('font-semibold', isMobile ? 'text-base h-4' : 'text-lg h-5')} />
@@ -1343,7 +1356,7 @@ function MemoriesSection() {
           </div>
         ) : displayedMemories.length === 0 ? (
           <div className="flex flex-col justify-center items-center h-32 border border-dashed rounded-lg bg-muted/20">
-            <Brain className="h-6 w-6 text-muted-foreground mb-2" />
+            <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">No memories found</p>
           </div>
         ) : (
@@ -1360,7 +1373,7 @@ function MemoriesSection() {
                   </p>
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <CalendarIcon className="h-3 w-3" />
                       <span>{formatDate(memory.createdAt || memory.created_at || '')}</span>
                     </div>
                     {memory.type && (
@@ -1388,7 +1401,7 @@ function MemoriesSection() {
                   {deletingMemoryIds.has(memory.id) ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Trash className="h-3 w-3" />
+                    <TrashIcon className="h-3 w-3" />
                   )}
                 </Button>
               </div>
@@ -1425,6 +1438,364 @@ function MemoriesSection() {
   );
 }
 
+// Component for Connectors
+function ConnectorsSection({ user }: { user: any }) {
+  const isProUser = user?.isProUser || false;
+  const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);
+  const [syncingProvider, setSyncingProvider] = useState<ConnectorProvider | null>(null);
+  const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
+
+  const {
+    data: connectorsData,
+    isLoading: connectorsLoading,
+    refetch: refetchConnectors,
+  } = useQuery({
+    queryKey: ['connectors', user?.id],
+    queryFn: listUserConnectorsAction,
+    enabled: !!user && isProUser,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  // Query actual connection status for each provider using Supermemory API
+  const connectionStatusQueries = useQuery({
+    queryKey: ['connectorsStatus', user?.id],
+    queryFn: async () => {
+      if (!user?.id || !isProUser) return {};
+
+      const statusPromises = Object.keys(CONNECTOR_CONFIGS).map(async (provider) => {
+        try {
+          const result = await getConnectorSyncStatusAction(provider as ConnectorProvider);
+          return { provider, status: result };
+        } catch (error) {
+          console.error(`Failed to get status for ${provider}:`, error);
+          return { provider, status: null };
+        }
+      });
+
+      const statuses = await Promise.all(statusPromises);
+      return statuses.reduce(
+        (acc, { provider, status }) => {
+          acc[provider] = status;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    },
+    enabled: !!user?.id && isProUser,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const handleConnect = async (provider: ConnectorProvider) => {
+    setConnectingProvider(provider);
+    try {
+      const result = await createConnectorAction(provider);
+      if (result.success && result.authLink) {
+        window.location.href = result.authLink;
+      } else {
+        toast.error(result.error || 'Failed to connect');
+      }
+    } catch (error) {
+      toast.error('Failed to connect');
+    } finally {
+      setConnectingProvider(null);
+    }
+  };
+
+  const handleSync = async (provider: ConnectorProvider) => {
+    setSyncingProvider(provider);
+    try {
+      const result = await manualSyncConnectorAction(provider);
+      if (result.success) {
+        toast.success(`${CONNECTOR_CONFIGS[provider].name} sync started`);
+        refetchConnectors();
+        // Refetch connection status after a delay to show updated counts
+        setTimeout(() => {
+          connectionStatusQueries.refetch();
+        }, 2000);
+      } else {
+        toast.error(result.error || 'Failed to sync');
+      }
+    } catch (error) {
+      toast.error('Failed to sync');
+    } finally {
+      setSyncingProvider(null);
+    }
+  };
+
+  const handleDelete = async (connectionId: string, providerName: string) => {
+    setDeletingConnectionId(connectionId);
+    try {
+      const result = await deleteConnectorAction(connectionId);
+      if (result.success) {
+        toast.success(`${providerName} disconnected`);
+        refetchConnectors();
+        // Also refetch connection statuses immediately to update the UI
+        connectionStatusQueries.refetch();
+      } else {
+        toast.error(result.error || 'Failed to disconnect');
+      }
+    } catch (error) {
+      toast.error('Failed to disconnect');
+    } finally {
+      setDeletingConnectionId(null);
+    }
+  };
+
+  const connections = connectorsData?.connections || [];
+  const connectionStatuses = connectionStatusQueries.data || {};
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-base mb-1">Connected Services</h3>
+        <p className="text-muted-foreground text-xs">
+          Connect your cloud services to search across all your documents in one place
+        </p>
+      </div>
+
+      {/* Beta Announcement Alert */}
+      <Alert className="border-primary/20 bg-primary/5">
+        <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 text-primary" />
+        <AlertTitle className="text-foreground">Connectors Available in Beta</AlertTitle>
+        <AlertDescription className="text-muted-foreground">
+          Connectors are now available for Pro users! Please note that this feature is in beta and there may be breaking
+          changes as we continue to improve the experience.
+        </AlertDescription>
+      </Alert>
+
+      {!isProUser && (
+        <>
+          {/* Beta Announcement Alert for Non-Pro Users */}
+          <Alert className="border-primary/20 bg-primary/5">
+            <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-foreground">Connectors Available in Beta</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
+              Connectors are now available for Pro users! Please note that this feature is in beta and there may be
+              breaking changes as we continue to improve the experience.
+            </AlertDescription>
+          </Alert>
+
+          <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-primary/5">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <HugeiconsIcon
+                  icon={Crown02Icon}
+                  size={32}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className="text-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-lg">Pro Feature</h4>
+                <p className="text-muted-foreground text-sm max-w-md">
+                  Connectors are available for Pro users only. Upgrade to connect your Google Drive, Notion, and
+                  OneDrive accounts.
+                </p>
+              </div>
+              <Button asChild className="mt-4">
+                <Link href="/pricing">
+                  <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} className="mr-2" />
+                  Upgrade to Pro
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {isProUser && (
+        <div className="space-y-3">
+          {Object.entries(CONNECTOR_CONFIGS).map(([provider, config]) => {
+            const connectionStatus = connectionStatuses[provider]?.status;
+            const connection = connections.find((c) => c.provider === provider);
+            // A connector is connected if we have a connection record OR if status check confirms it
+            const isConnected = !!connection || (connectionStatus?.isConnected && connectionStatus !== null);
+            const isConnecting = connectingProvider === provider;
+            const isSyncing = syncingProvider === provider;
+            const isDeleting = connection && deletingConnectionId === connection.id;
+            const isStatusLoading = connectionStatusQueries.isLoading;
+            const isComingSoon = provider === 'onedrive';
+
+            return (
+              <div key={provider} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex items-center justify-center w-6 h-6 mt-0.5">
+                      <div className="text-xl">
+                        {(() => {
+                          const IconComponent = CONNECTOR_ICONS[config.icon];
+                          return IconComponent ? <IconComponent /> : null;
+                        })()}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">{config.name}</h4>
+                      <p className="text-xs text-muted-foreground">{config.description}</p>
+                      {isComingSoon ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-xs text-blue-600 dark:text-blue-400">Coming Soon</span>
+                        </div>
+                      ) : isStatusLoading && !connection ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 bg-muted animate-pulse rounded-full"></div>
+                          <span className="text-xs text-muted-foreground">Checking connection...</span>
+                        </div>
+                      ) : isConnected ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-xs text-green-600 dark:text-green-400">Connected</span>
+                          {(connectionStatus?.email || connection?.email) && (
+                            <span className="text-xs text-muted-foreground">
+                              • {connectionStatus?.email || connection?.email}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 bg-muted-foreground/30 rounded-full"></div>
+                          <span className="text-xs text-muted-foreground">Not connected</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {isComingSoon ? (
+                      <Button
+                        size="sm"
+                        disabled
+                        variant="outline"
+                        className="h-8 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                      >
+                        Coming Soon
+                      </Button>
+                    ) : isConnected ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSync(provider as ConnectorProvider)}
+                          disabled={isSyncing || isDeleting || isStatusLoading}
+                          className="h-8"
+                        >
+                          {isSyncing ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                              Syncing...
+                            </>
+                          ) : (
+                            'Sync'
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => connection && handleDelete(connection.id, config.name)}
+                          disabled={isDeleting || isSyncing || isStatusLoading}
+                          className="h-8 text-destructive hover:text-destructive"
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                              Disconnecting...
+                            </>
+                          ) : (
+                            'Disconnect'
+                          )}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleConnect(provider as ConnectorProvider)}
+                        disabled={isConnecting || isStatusLoading}
+                        className="h-8"
+                      >
+                        {isConnecting ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                            Connecting...
+                          </>
+                        ) : (
+                          'Connect'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {isConnected && !isComingSoon && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="grid grid-cols-3 gap-4 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Document Chunk:</span>
+                        <div className="font-medium">
+                          {isStatusLoading ? (
+                            <span className="text-muted-foreground">Loading...</span>
+                          ) : connectionStatus?.documentCount !== undefined ? (
+                            connectionStatus.documentCount === 0 ? (
+                              <span
+                                className="text-amber-600 dark:text-amber-400"
+                                title="Documents are being synced from your account"
+                              >
+                                Syncing...
+                              </span>
+                            ) : (
+                              connectionStatus.documentCount.toLocaleString()
+                            )
+                          ) : connection?.metadata?.pageToken ? (
+                            connection.metadata.pageToken === 0 ? (
+                              <span
+                                className="text-amber-600 dark:text-amber-400"
+                                title="Documents are being synced from your account"
+                              >
+                                Syncing...
+                              </span>
+                            ) : (
+                              connection.metadata.pageToken.toLocaleString()
+                            )
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Last Sync:</span>
+                        <div className="font-medium">
+                          {isStatusLoading ? (
+                            <span className="text-muted-foreground">Loading...</span>
+                          ) : connectionStatus?.lastSync || connection?.createdAt ? (
+                            new Date(connectionStatus?.lastSync || connection?.createdAt).toLocaleDateString()
+                          ) : (
+                            <span className="text-muted-foreground">Never</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Limit:</span>
+                        <div className="font-medium">{config.documentLimit.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="text-center pt-2">
+        <div className="flex items-center gap-2 justify-center">
+          <p className="text-xs text-muted-foreground">powered by</p>
+          <Image src="/supermemory.svg" alt="Connectors" className="invert dark:invert-0" width={120} height={120} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsDialog({
   open,
   onOpenChange,
@@ -1434,9 +1805,17 @@ export function SettingsDialog({
   isProStatusLoading,
   isCustomInstructionsEnabled,
   setIsCustomInstructionsEnabled,
+  initialTab = 'profile',
 }: SettingsDialogProps) {
-  const [currentTab, setCurrentTab] = useState('profile');
+  const [currentTab, setCurrentTab] = useState(initialTab);
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Reset tab when initialTab changes or when dialog opens
+  useEffect(() => {
+    if (open) {
+      setCurrentTab(initialTab);
+    }
+  }, [open, initialTab]);
   // Dynamically stabilize drawer height on mobile when the virtual keyboard opens (PWA/iOS)
   const [mobileDrawerPxHeight, setMobileDrawerPxHeight] = useState<number | null>(null);
 
@@ -1490,9 +1869,14 @@ export function SettingsDialog({
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Settings02Icon} className={className} />,
     },
     {
+      value: 'connectors',
+      label: 'Connectors',
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={ConnectIcon} className={className} />,
+    },
+    {
       value: 'memories',
       label: 'Memories',
-      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={BrainIcon} className={className} />,
+      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Brain02Icon} className={className} />,
     },
   ];
 
@@ -1524,6 +1908,10 @@ export function SettingsDialog({
           isCustomInstructionsEnabled={isCustomInstructionsEnabled}
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
         />
+      </TabsContent>
+
+      <TabsContent value="connectors" className="mt-0">
+        <ConnectorsSection user={user} />
       </TabsContent>
 
       <TabsContent value="memories" className="mt-0">
@@ -1571,7 +1959,7 @@ export function SettingsDialog({
                     : 'pb-[calc(env(safe-area-inset-bottom)+1rem)]',
                 )}
               >
-                <TabsList className="w-full py-1 h-14 bg-transparent rounded-none grid grid-cols-5 gap-1 !mb-2 px-4">
+                <TabsList className="w-full py-1 h-14 bg-transparent rounded-none grid grid-cols-6 gap-1 !mb-2 px-4">
                   {tabItems.map((item) => (
                     <TabsTrigger
                       key={item.value}

@@ -87,12 +87,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 <CarouselContent>
                   {testimonials.map((testimonial, index) => (
                     <CarouselItem key={index}>
-                      <Link
-                        href={testimonial.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block group h-full"
-                      >
+                      <Link href={testimonial.link} target="_blank" className="block group h-full">
                         <blockquote className="relative h-full flex flex-col bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 transition-all duration-200 hover:bg-background/70">
                           <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1 text-balance">
                             {testimonial.content}
@@ -128,12 +123,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
           <div className="space-y-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <a
-                href="https://git.new/scira"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
-              >
+              <a href="https://git.new/scira" target="_blank" className="hover:text-foreground transition-colors">
                 Open Source
               </a>
               <span>•</span>
@@ -146,7 +136,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <a
                 href="https://vercel.com/blog/ai-sdk-4-1"
                 target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-foreground transition-colors"
               >
                 Vercel
@@ -155,7 +144,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <a
                 href="https://peerlist.io/zaidmukaddam/project/scira-ai-20"
                 target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-foreground transition-colors"
               >
                 #1 Product of the Week on Peerlist

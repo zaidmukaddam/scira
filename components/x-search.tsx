@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { XLogo, XLogoIcon } from '@phosphor-icons/react';
+import { XLogoIcon } from '@phosphor-icons/react';
 import { Tweet } from 'react-tweet';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -39,7 +39,10 @@ interface XSearchArgs {
   query: string;
   startDate: string;
   endDate: string;
-  xHandles?: string[];
+  includeXHandles?: string[];
+  excludeXHandles?: string[];
+  postFavoritesCount?: number;
+  postViewCount?: number;
   maxResults?: number;
 }
 
@@ -158,7 +161,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
             <div className="flex items-center justify-between flex-1 min-w-0">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="p-1.5 rounded-md bg-black dark:bg-white flex-shrink-0">
-                  <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
+                  <XLogoIcon className="h-3.5 w-3.5 text-white dark:text-black" />
                 </div>
                 <div className="text-left min-w-0 flex-1">
                   <h3 className="font-medium text-sm">X Search Results</h3>
@@ -168,10 +171,10 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                 </div>
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                {result.handles.length > 0 && (
+                {(args.includeXHandles || args.excludeXHandles || result.handles.length > 0) && (
                   <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs hidden sm:flex">
                     <Users className="h-2.5 w-2.5 mr-1" />
-                    {result.handles.length}
+                    {args.includeXHandles?.length || args.excludeXHandles?.length || result.handles.length}
                   </Badge>
                 )}
                 <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
@@ -230,7 +233,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                             <SheetHeader className="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
                               <SheetTitle className="flex items-center gap-2.5">
                                 <div className="p-1.5 rounded-md bg-black dark:bg-white">
-                                  <XLogo className="h-3.5 w-3.5 text-white dark:text-black" />
+                                  <XLogoIcon className="h-3.5 w-3.5 text-white dark:text-black" />
                                 </div>
                                 <span>All Posts ({tweetCitations.length})</span>
                               </SheetTitle>
@@ -299,7 +302,6 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                             key={index}
                             href={url}
                             target="_blank"
-                            rel="noopener noreferrer"
                             className="flex items-center gap-2 p-1.5 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group"
                           >
                             <div className="flex-1 min-w-0">

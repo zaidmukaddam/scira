@@ -260,7 +260,11 @@ export const auth = betterAuth({
             console.log(`🔄 Updating user ID from ${newUser.id} to ${existingCustomer.externalId}`);
 
             // Update the user's ID in database to match the existing external ID
-            await db.update(user).set({ id: existingCustomer.externalId }).where(eq(user.id, newUser.id));
+            if (!newUser.id) {
+              console.error('Missing newUser.id; skipping user ID update to existing external ID');
+            } else {
+              await db.update(user).set({ id: existingCustomer.externalId }).where(eq(user.id, newUser.id));
+            }
 
             console.log(`✅ Updated user ID to match existing external ID: ${existingCustomer.externalId}`);
           }
