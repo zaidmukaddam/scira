@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PRICING } from '@/lib/constants';
+import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
@@ -265,7 +265,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               <ul className="space-y-3">
                 <li className="flex items-center text-muted-foreground">
                   <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 flex-shrink-0"></div>
-                  20 searches per day
+                  {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day
                 </li>
                 <li className="flex items-center text-muted-foreground">
                   <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 flex-shrink-0"></div>

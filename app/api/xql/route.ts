@@ -31,7 +31,7 @@ const xqlTool = tool({
         excludeXHandles: z.array(z.string()).max(10).optional().describe('The X handles to exclude in the search (max 10). Cannot be used with includeXHandles. Note: "grok" handle is excluded by default.'),
         postFavoritesCount: z.number().min(0).optional().describe('Minimum number of favorites (likes) the post must have'),
         postViewCount: z.number().min(0).optional().describe('Minimum number of views the post must have'),
-        maxResults: z.number().min(1).max(100).optional().describe('The maximum number of search results to return (default 15)'),
+        maxResults: z.number().min(1).max(100).optional().describe('The maximum number of search results to return (default 15) but you can go up to 30'),
     }).refine(data => {
         // Ensure includeXHandles and excludeXHandles are not both specified
         return !(data.includeXHandles && data.excludeXHandles);

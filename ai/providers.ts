@@ -283,7 +283,7 @@ export const models: Model[] = [
   {
     value: 'scira-mistral-medium',
     label: 'Mistral Medium',
-    description: "Mistral's medium LLM",
+    description: "Mistral's medium multi-modal LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -297,7 +297,7 @@ export const models: Model[] = [
   {
     value: 'scira-magistral-small',
     label: 'Magistral Small',
-    description: "Mistral's small LLM",
+    description: "Mistral's small reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -311,7 +311,7 @@ export const models: Model[] = [
   {
     value: 'scira-magistral-medium',
     label: 'Magistral Medium',
-    description: "Mistral's medium LLM",
+    description: "Mistral's medium reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -512,36 +512,6 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
-  },
-
-  // Experimental Models
-  {
-    value: 'scira-sonoma-sky',
-    label: 'Sonoma Sky',
-    description: "A Stealth LLM from Vercel AI Gateway",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Experimental',
-    pdf: false,
-    pro: false,
-    requiresAuth: false,
-    freeUnlimited: false,
-    maxOutputTokens: 16000,
-  },
-  {
-    value: 'scira-sonoma-dusk',
-    label: 'Sonoma Dusk',
-    description: "A Stealth LLM from Vercel AI Gateway",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: 'Experimental',
-    pdf: false,
-    pro: false,
-    requiresAuth: false,
-    freeUnlimited: false,
-    maxOutputTokens: 16000,
   },
 ];
 

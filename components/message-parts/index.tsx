@@ -380,7 +380,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
           {/* Add compact buttons below the text with tooltips */}
           {status === 'ready' && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2.5 mb-5 !-ml-1">
+            <div className="flex flex-row items-center justify-between gap-2 mt-2.5 mb-5 !-ml-1 flex-wrap">
               {/* Left side - Action buttons container */}
               <div className="flex flex-wrap items-center gap-1">
                 {/* Only show reload for owners OR unauthenticated users on private chats */}

@@ -1854,7 +1854,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     return (
       <div className="flex items-center">
         {/* Toggle Switch Container */}
-        <div className="flex items-center bg-background border border-border rounded-lg !gap-1 !py-1 !px-0.75 h-8">
+        <div className="flex items-center bg-background border border-accent/50 rounded-lg !gap-1 !py-1 !px-0.75 h-8">
           {/* Group Selector Side - Conditional Rendering for Mobile/Desktop */}
           {isMobile ? (
             <Drawer open={open} onOpenChange={handleOpenChange}>

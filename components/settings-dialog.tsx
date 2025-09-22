@@ -36,7 +36,6 @@ import {
   CalendarIcon,
   TrashIcon,
   FloppyDiskIcon,
-  BrainIcon,
   ArrowClockwiseIcon,
   RobotIcon,
 } from '@phosphor-icons/react';
@@ -1441,6 +1440,7 @@ function MemoriesSection() {
 // Component for Connectors
 function ConnectorsSection({ user }: { user: any }) {
   const isProUser = user?.isProUser || false;
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);
   const [syncingProvider, setSyncingProvider] = useState<ConnectorProvider | null>(null);
   const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
@@ -1545,10 +1545,10 @@ function ConnectorsSection({ user }: { user: any }) {
   const connectionStatuses = connectionStatusQueries.data || {};
 
   return (
-    <div className="space-y-4">
+    <div className={cn('space-y-4', isMobile ? 'space-y-3' : 'space-y-4')}>
       <div>
-        <h3 className="font-semibold text-base mb-1">Connected Services</h3>
-        <p className="text-muted-foreground text-xs">
+        <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>Connected Services</h3>
+        <p className={cn('text-muted-foreground', isMobile ? 'text-[11px] leading-relaxed' : 'text-xs')}>
           Connect your cloud services to search across all your documents in one place
         </p>
       </div>
@@ -1618,8 +1618,8 @@ function ConnectorsSection({ user }: { user: any }) {
             const isComingSoon = provider === 'onedrive';
 
             return (
-              <div key={provider} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
+              <div key={provider} className={cn('border rounded-lg', isMobile ? 'p-3' : 'p-4')}>
+                <div className={cn('flex items-center', isMobile ? 'gap-2' : 'justify-between')}>
                   <div className="flex items-start gap-3">
                     <div className="flex items-center justify-center w-6 h-6 mt-0.5">
                       <div className="text-xl">
@@ -1629,45 +1629,45 @@ function ConnectorsSection({ user }: { user: any }) {
                         })()}
                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-sm">{config.name}</h4>
-                      <p className="text-xs text-muted-foreground">{config.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={cn('font-medium', isMobile ? 'text-[13px]' : 'text-sm')}>{config.name}</h4>
+                      <p className={cn('text-muted-foreground', isMobile ? 'text-[10px] leading-tight' : 'text-xs')}>{config.description}</p>
                       {isComingSoon ? (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="text-xs text-blue-600 dark:text-blue-400">Coming Soon</span>
+                          <span className={cn('text-blue-600 dark:text-blue-400', isMobile ? 'text-[10px]' : 'text-xs')}>Coming Soon</span>
                         </div>
                       ) : isStatusLoading && !connection ? (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted animate-pulse rounded-full"></div>
-                          <span className="text-xs text-muted-foreground">Checking connection...</span>
+                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>Checking connection...</span>
                         </div>
                       ) : isConnected ? (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-xs text-green-600 dark:text-green-400">Connected</span>
+                          <span className={cn('text-green-600 dark:text-green-400', isMobile ? 'text-[10px]' : 'text-xs')}>Connected</span>
                           {(connectionStatus?.email || connection?.email) && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
                               • {connectionStatus?.email || connection?.email}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted-foreground/30 rounded-full"></div>
-                          <span className="text-xs text-muted-foreground">Not connected</span>
+                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>Not connected</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className={cn('flex items-center', isMobile ? 'gap-1' : 'gap-2')}>
                     {isComingSoon ? (
                       <Button
                         size="sm"
                         disabled
                         variant="outline"
-                        className="h-8 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                        className={cn('text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800', isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
                       >
                         Coming Soon
                       </Button>
@@ -1678,11 +1678,11 @@ function ConnectorsSection({ user }: { user: any }) {
                           size="sm"
                           onClick={() => handleSync(provider as ConnectorProvider)}
                           disabled={isSyncing || isDeleting || isStatusLoading}
-                          className="h-8"
+                          className={cn(isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
                         >
                           {isSyncing ? (
                             <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                              <Loader2 className={cn(isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3', 'animate-spin mr-1')} />
                               Syncing...
                             </>
                           ) : (
@@ -1694,11 +1694,11 @@ function ConnectorsSection({ user }: { user: any }) {
                           size="sm"
                           onClick={() => connection && handleDelete(connection.id, config.name)}
                           disabled={isDeleting || isSyncing || isStatusLoading}
-                          className="h-8 text-destructive hover:text-destructive"
+                          className={cn('text-destructive hover:text-destructive', isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
                         >
                           {isDeleting ? (
                             <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                              <Loader2 className={cn(isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3', 'animate-spin mr-1')} />
                               Disconnecting...
                             </>
                           ) : (
@@ -1711,11 +1711,11 @@ function ConnectorsSection({ user }: { user: any }) {
                         size="sm"
                         onClick={() => handleConnect(provider as ConnectorProvider)}
                         disabled={isConnecting || isStatusLoading}
-                        className="h-8"
+                        className={cn(isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
                       >
                         {isConnecting ? (
                           <>
-                            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                            <Loader2 className={cn(isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3', 'animate-spin mr-1')} />
                             Connecting...
                           </>
                         ) : (
@@ -1727,8 +1727,8 @@ function ConnectorsSection({ user }: { user: any }) {
                 </div>
 
                 {isConnected && !isComingSoon && (
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <div className="grid grid-cols-3 gap-4 text-xs">
+                  <div className={cn('border-t border-border', isMobile ? 'mt-2 pt-2' : 'mt-3 pt-3')}>
+                    <div className={cn('text-xs', isMobile ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-3 gap-4')}>
                       <div>
                         <span className="text-muted-foreground">Document Chunk:</span>
                         <div className="font-medium">
@@ -1786,10 +1786,16 @@ function ConnectorsSection({ user }: { user: any }) {
         </div>
       )}
 
-      <div className="text-center pt-2">
+      <div className={cn('text-center', isMobile ? 'pt-1' : 'pt-2')}>
         <div className="flex items-center gap-2 justify-center">
-          <p className="text-xs text-muted-foreground">powered by</p>
-          <Image src="/supermemory.svg" alt="Connectors" className="invert dark:invert-0" width={120} height={120} />
+          <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>powered by</p>
+          <Image
+            src="/supermemory.svg"
+            alt="Connectors"
+            className="invert dark:invert-0"
+            width={isMobile ? 100 : 120}
+            height={isMobile ? 100 : 120}
+          />
         </div>
       </div>
     </div>
@@ -1954,7 +1960,7 @@ export function SettingsDialog({
               <div
                 className={cn(
                   'border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0',
-                  currentTab === 'preferences'
+                  currentTab === 'preferences' || currentTab === 'connectors'
                     ? 'pb-[calc(env(safe-area-inset-bottom)+2.5rem)]'
                     : 'pb-[calc(env(safe-area-inset-bottom)+1rem)]',
                 )}

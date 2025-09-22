@@ -77,21 +77,21 @@ export const CONNECTOR_ICONS: Record<string, (props: SVGProps<SVGSVGElement>) =>
 export const CONNECTOR_CONFIGS: Record<ConnectorProvider, ConnectorConfig> = {
   'google-drive': {
     name: 'Google Drive',
-    description: 'Sync documents, spreadsheets, and presentations from Google Drive',
+    description: 'Search through documents, spreadsheets, and presentations from Google Drive',
     icon: 'google-drive',
     documentLimit: 3000,
     syncTag: 'gdrive-sync',
   },
   notion: {
     name: 'Notion',
-    description: 'Sync pages and databases from your Notion workspace',
+    description: 'Search through pages and databases from your Notion workspace',
     icon: 'notion',
     documentLimit: 2000,
     syncTag: 'notion-workspace',
   },
   onedrive: {
     name: 'OneDrive',
-    description: 'Sync documents and files from Microsoft OneDrive (Coming Soon)',
+    description: 'Search through documents and files from Microsoft OneDrive (Coming Soon)',
     icon: 'onedrive',
     documentLimit: 3000,
     syncTag: 'onedrive-sync',
