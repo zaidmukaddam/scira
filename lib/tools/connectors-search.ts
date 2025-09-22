@@ -95,8 +95,36 @@ export function createConnectorsSearchTool(userId: string, selectedConnectors?: 
                     }
                 };
 
+                // Helper function to check if a document has meaningful content
+                const hasValidContent = (doc: any): boolean => {
+                    // Check if document has valid chunks with non-empty content
+                    if (doc.chunks && Array.isArray(doc.chunks)) {
+                        const hasValidChunks = doc.chunks.some((chunk: any) => 
+                            chunk.content && 
+                            chunk.content.trim() !== '' && 
+                            chunk.content !== 'Empty Chunk'
+                        );
+                        if (hasValidChunks) return true;
+                    }
+                    
+                    // Check if document has valid summary
+                    if (doc.summary && doc.summary.trim() !== '' && doc.summary !== 'Empty Chunk') {
+                        return true;
+                    }
+                    
+                    // Check if document has valid content
+                    if (doc.content && doc.content.trim() !== '' && doc.content !== 'Empty Chunk') {
+                        return true;
+                    }
+                    
+                    return false;
+                };
+
+                // Filter out documents with empty or invalid content
+                const validResults = allResults.filter(hasValidContent);
+
                 // Add provider information and URLs to results
-                const enhancedResults = allResults.map(doc => {
+                const enhancedResults = validResults.map(doc => {
                     // Try to determine provider from metadata or document type
                     let detectedProvider: ConnectorProvider | null = null;
 
@@ -135,10 +163,13 @@ export function createConnectorsSearchTool(userId: string, selectedConnectors?: 
                     };
                 });
 
+                // Sort results by score (accuracy) in descending order
+                enhancedResults.sort((a, b) => (b.score || 0) - (a.score || 0));
+
                 return {
                     success: true,
                     results: enhancedResults,
-                    count: totalCount,
+                    count: enhancedResults.length,
                     query,
                     provider: provider === 'all' ? 'all connected services' : CONNECTOR_CONFIGS[provider as ConnectorProvider]?.name || provider,
                 };
