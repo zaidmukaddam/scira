@@ -56,6 +56,11 @@ export async function getDiscountConfig(userEmail?: string): Promise<DiscountCon
     enabled: false,
   };
 
+  // Allow complete disable via environment variable
+  if (process.env.DISABLE_DISCOUNTS === 'true') {
+    return defaultConfig;
+  }
+
   // Fetch student domains from Edge Config
   let studentDomains: string[] = [];
   try {
@@ -124,7 +129,9 @@ export async function getDiscountConfig(userEmail?: string): Promise<DiscountCon
       const now = new Date();
 
       // In dev mode or development environment, bypass timing checks
-      if (!config.dev && process.env.NODE_ENV !== 'development') {
+      const isDevMode = config.dev || process.env.NODE_ENV === 'development';
+
+      if (!isDevMode) {
         // Check if discount has not started yet
         if (config.startsAt && config.startsAt > now) {
           return defaultConfig;
@@ -137,8 +144,13 @@ export async function getDiscountConfig(userEmail?: string): Promise<DiscountCon
       }
 
       // In dev mode, ignore enabled flag; otherwise check if enabled and has required fields
-      const isDevMode = config.dev || process.env.NODE_ENV === 'development';
-      const shouldShow = isDevMode ? config.code && config.message : config.enabled && config.code && config.message;
+      // Allow force disable with a special flag
+      const forceDisabled = config.enabled === false && !isDevMode;
+      const shouldShow = forceDisabled
+        ? false
+        : isDevMode
+          ? config.code && config.message
+          : config.enabled && config.code && config.message;
 
       if (shouldShow) {
         return {

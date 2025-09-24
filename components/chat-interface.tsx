@@ -174,12 +174,18 @@ const ChatInterface = memo(
     const initializedRef = useRef(false);
 
     // Use optimized scroll hook
-    const { isAtBottom, hasManuallyScrolled, scrollToElement, resetManualScroll } = useOptimizedScroll(bottomRef, {
-      enabled: true,
-      threshold: 100,
-      behavior: 'smooth',
-      debounceMs: 100,
-    });
+    const { scrollToBottom, markManualScroll, resetManualScroll } = useOptimizedScroll(bottomRef);
+
+    // Listen for manual scroll (wheel and touch)
+    useEffect(() => {
+      const handleManualScroll = () => markManualScroll();
+      window.addEventListener('wheel', handleManualScroll);
+      window.addEventListener('touchmove', handleManualScroll);
+      return () => {
+        window.removeEventListener('wheel', handleManualScroll);
+        window.removeEventListener('touchmove', handleManualScroll);
+      };
+    }, [markManualScroll]);
 
     // Use clean React Query hooks for all data fetching
     const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
@@ -499,31 +505,16 @@ const ChatInterface = memo(
       // Reset manual scroll when streaming starts
       if (status === 'streaming') {
         resetManualScroll();
-        // Initial scroll to bottom when streaming starts
-        scrollToElement();
+        scrollToBottom();
       }
-    }, [status, resetManualScroll, scrollToElement]);
+    }, [status, resetManualScroll, scrollToBottom]);
 
-    // Auto-scroll on new content if user is at bottom or hasn't manually scrolled away
+    // Auto-scroll during streaming when messages change
     useEffect(() => {
-      if (status === 'streaming' && (isAtBottom || !hasManuallyScrolled)) {
-        scrollToElement();
-      } else if (
-        messages.length > 0 &&
-        chatState.suggestedQuestions.length > 0 &&
-        (isAtBottom || !hasManuallyScrolled)
-      ) {
-        // Scroll when suggested questions appear
-        scrollToElement();
+      if (status === 'streaming') {
+        scrollToBottom();
       }
-    }, [
-      messages.length,
-      chatState.suggestedQuestions.length,
-      status,
-      isAtBottom,
-      hasManuallyScrolled,
-      scrollToElement,
-    ]);
+    }, [messages, status, scrollToBottom]);
 
     // Dialog management state - track command dialog state in chat state
     useEffect(() => {

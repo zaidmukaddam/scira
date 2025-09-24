@@ -14,7 +14,7 @@ interface SignInPromptDialogProps {
 }
 
 interface SignInButtonProps {
-  provider: 'github' | 'google' | 'twitter';
+  provider: 'github' | 'google' | 'twitter' | 'microsoft';
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
@@ -23,6 +23,7 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
   const isGithub = provider === 'github';
   const isGoogle = provider === 'google';
   const isTwitter = provider === 'twitter';
+  const isMicrosoft = provider === 'microsoft';
 
   return (
     <Button
@@ -82,7 +83,17 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             )}
-            <span>Continue with {isGithub ? 'GitHub' : isGoogle ? 'Google' : 'X (Twitter)'}</span>
+            {isMicrosoft && (
+              <svg viewBox="0 0 256 256" preserveAspectRatio="xMidYMid">
+                <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z" />
+                <path fill="#80CC28" d="M256 121.666H134.335V0H256z" />
+                <path fill="#00ADEF" d="M121.663 256.002H0V134.336h121.663z" />
+                <path fill="#FBBC09" d="M256 256.002H134.335V134.336H256z" />
+              </svg>
+            )}
+            <span>
+              Continue with {isGithub ? 'GitHub' : isGoogle ? 'Google' : isTwitter ? 'X (Twitter)' : 'Microsoft'}
+            </span>
           </>
         )}
       </div>
@@ -94,6 +105,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
+  const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -109,6 +121,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
           <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
           <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
           <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
+          <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
         </div>
 
         {/* Divider */}

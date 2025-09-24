@@ -48,7 +48,7 @@ import {
   deleteConnection,
   manualSync,
   getSyncStatus,
-  type ConnectorProvider
+  type ConnectorProvider,
 } from '@/lib/connectors';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
@@ -250,6 +250,7 @@ const groupInstructions = {
   - ⚠️ IMP: Never run more than 1 tool in a single response cycle!!
   - ⚠️ IMP: As soon as you have the tool results, respond with the results in markdown format!
   - ⚠️ IMP: Always give citations for the information you provide!
+  - ⚠️ IMP:Total Assistant function-call turns limit: at most 1!!
   - Read and think about the response guidelines before writing the response
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
   - NEVER ask for clarification before running the tool - run first, clarify later if needed
@@ -272,10 +273,9 @@ const groupInstructions = {
   - Specify the year or "latest" in queries to fetch recent information
   - Use the "news" topic type to get the latest news and updates
   - Only use "general" or "news" topic types - no other options are available
-  - Always use the "include_domains" parameter to include specific domains in the search results if asked by the user or given a specific reference to a website like reddit, youtube, etc.
-  - Always put the values in array format for the required parameters (queries, maxResults, topics, quality)
+  - It is mandtory to put the values in array format for the required parameters (queries, maxResults, topics, quality)
   - Use "default" quality for most searches, only use "best" when high accuracy is critical.
-  - Put the latest year in the queries to get the latest information or just "latest".
+  - Put the latest year as mentioned above in the queries to get the latest information or just "latest".
 
   #### Retrieve Web Page Tool:
   - Use this for extracting information from specific URLs provided
@@ -1226,9 +1226,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-      hasSubscription: true,
-      subscription: userData.polarSubscription,
-    }
+        hasSubscription: true,
+        subscription: userData.polarSubscription,
+      }
     : { hasSubscription: false };
 }
 

@@ -7,11 +7,23 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 import type { extremeSearchTool, Research } from '@/lib/tools/extreme-search';
-import type { ToolUIPart, UIToolInvocation } from 'ai';
-import React, { useEffect, useState, memo, useMemo } from 'react';
+import type { UIToolInvocation } from 'ai';
+import React, { useEffect, useState, memo, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, ArrowUpRight, Globe, Search, ExternalLink, Target, Zap, Brain } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  ArrowUpRight,
+  Globe,
+  Search,
+  ExternalLink,
+  Target,
+  Zap,
+  Brain,
+  FlaskConical,
+} from 'lucide-react';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactECharts, { EChartsOption } from 'echarts-for-react';
@@ -979,6 +991,9 @@ const ExtremeSearchComponent = ({
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
   const [visualizationsOpen, setVisualizationsOpen] = useState(true);
 
+  // Timeline container ref for auto-scroll
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const { scrollToBottom, markManualScroll, resetManualScroll } = useOptimizedScroll(timelineRef);
 
   // Check if we're in final result state
   const isCompleted = useMemo(() => {
@@ -1027,8 +1042,9 @@ const ExtremeSearchComponent = ({
 
     // Derive dynamic status from current tool states (query, x_search, code)
     const toolAnnotations = annotations.filter(
-      (ann) => ann.type === 'data-extreme_search' && 
-      (ann.data.kind === 'query' || ann.data.kind === 'x_search' || ann.data.kind === 'code'),
+      (ann) =>
+        ann.type === 'data-extreme_search' &&
+        (ann.data.kind === 'query' || ann.data.kind === 'x_search' || ann.data.kind === 'code'),
     );
 
     let dynamicStatus = 'Processing research...';
@@ -1104,7 +1120,6 @@ const ExtremeSearchComponent = ({
 
   // Extract search queries from the ACTUAL tool invocation structure
   const searchQueries = useMemo(() => {
-
     // Check if we have results in the completed tool
     if ('output' in toolInvocation) {
       const { output } = toolInvocation;
@@ -1419,6 +1434,21 @@ const ExtremeSearchComponent = ({
     ];
   }, [isCompleted, toolInvocation, annotations, searchQueries, xSearchExecutions, codeExecutions]);
 
+  // Auto-scroll effects
+  useEffect(() => {
+    // Reset manual scroll when new search starts
+    if (state === 'input-streaming' || state === 'input-available') {
+      resetManualScroll();
+    }
+  }, [state, resetManualScroll]);
+
+  useEffect(() => {
+    // Auto-scroll when new timeline items are added during streaming
+    if (combinedTimelineItems.length > 0 && (state === 'input-streaming' || state === 'input-available')) {
+      scrollToBottom();
+    }
+  }, [combinedTimelineItems.length, state, scrollToBottom]);
+
   // Get all sources for final result view
   const allSources = useMemo(() => {
     if (isCompleted && 'output' in toolInvocation) {
@@ -1455,7 +1485,7 @@ const ExtremeSearchComponent = ({
 
     // Use sources from search queries (whether completed or not)
     const querySources = searchQueries.flatMap((q) => q.sources);
-    
+
     // Remove duplicates by URL
     return Array.from(new Map(querySources.map((s) => [s.url, s])).values());
   }, [isCompleted, toolInvocation, searchQueries]);
@@ -2032,7 +2062,7 @@ const ExtremeSearchComponent = ({
         <div
           className={cn(
             'py-3 px-4 hover:no-underline group',
-            'bg-background',
+            'bg-white dark:bg-neutral-900',
             'border border-neutral-200 dark:border-neutral-800',
             'data-[state=open]:rounded-b-none cursor-pointer',
             sourcesAccordionOpen ? 'rounded-t-lg' : 'rounded-lg',
@@ -2082,7 +2112,7 @@ const ExtremeSearchComponent = ({
               exit={{ height: 0, opacity: 0 }}
               className={cn(
                 'overflow-hidden',
-                'bg-background',
+                'bg-white dark:bg-neutral-900',
                 'border-x border-b border-neutral-200 dark:border-neutral-800',
                 'rounded-b-lg',
               )}
@@ -2118,10 +2148,16 @@ const ExtremeSearchComponent = ({
         {/* Research Process */}
         <Card className="!p-0 !gap-0 rounded-lg shadow-none">
           <div
-            className="flex items-center justify-between p-3 cursor-pointer"
+            className="flex items-center justify-between p-3 cursor-pointer gap-2"
             onClick={() => setResearchProcessOpen(!researchProcessOpen)}
           >
-            <h3 className="font-medium">Research Process</h3>
+            {/* icon */}
+            <div className="rounded-md flex items-center gap-2">
+              <FlaskConical className="h-3.5 w-3.5 text-neutral-500" />
+              <h3 className="font-medium">Research Process</h3>
+            </div>
+            {/* title */}
+
             {researchProcessOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </div>
           <AnimatePresence>
@@ -2388,7 +2424,11 @@ const ExtremeSearchComponent = ({
 
         {/* Show timeline when items are available */}
         {(searchQueries.length > 0 || codeExecutions.length > 0 || xSearchExecutions.length > 0) && (
-          <div className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
+          <div
+            ref={timelineRef}
+            className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent"
+            onScroll={markManualScroll}
+          >
             {renderTimeline()}
           </div>
         )}

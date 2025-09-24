@@ -100,9 +100,7 @@ export const CONNECTOR_CONFIGS: Record<ConnectorProvider, ConnectorConfig> = {
 
 function getBaseUrl() {
   if (process.env.NODE_ENV === 'development') {
-    return process.env.NGROK_URL || process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000';
-  } else if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_VERCEL_URL !== 'https://scira.ai') {
-    return process.env.NEXT_PUBLIC_VERCEL_URL;
+    return process.env.NGROK_URL || 'http://localhost:3000';
   }
   return 'https://scira.ai';
 }

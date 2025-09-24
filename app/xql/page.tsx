@@ -442,9 +442,12 @@ export default function XQLPage() {
                         <div className="px-3 sm:px-4 pb-3 sm:pb-4">
                           {citations.length > 0 ? (
                             <div className="flex flex-col items-center gap-2">
-                              {citations.map((url: string, i: number) => {
+                              {citations.map((url: string | null, i: number) => {
+                                if (!url) {
+                                  return null;
+                                }
                                 // Extract tweet ID from URL
-                                const tweetIdMatch = url.match(/\/status\/(\d+)/);
+                                const tweetIdMatch = url?.match(/\/status\/(\d+)/);
                                 const tweetId = tweetIdMatch ? tweetIdMatch[1] : null;
 
                                 if (tweetId) {

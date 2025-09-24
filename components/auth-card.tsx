@@ -6,7 +6,7 @@ import { signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-type AuthProvider = 'github' | 'google' | 'twitter';
+type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
 
@@ -23,11 +23,23 @@ const AuthIcons = {
     </svg>
   ),
   Google: (props: AuthIconProps) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" {...props}>
+    <svg viewBox="0 0 256 262" preserveAspectRatio="xMidYMid" {...props}>
       <path
-        fill="currentColor"
-        d="M 25.996094 48 C 13.3125 48 2.992188 37.683594 2.992188 25 C 2.992188 12.316406 13.3125 2 25.996094 2 C 31.742188 2 37.242188 4.128906 41.488281 7.996094 L 42.261719 8.703125 L 34.675781 16.289063 L 33.972656 15.6875 C 31.746094 13.78125 28.914063 12.730469 25.996094 12.730469 C 19.230469 12.730469 13.722656 18.234375 13.722656 25 C 13.722656 31.765625 19.230469 37.269531 25.996094 37.269531 C 30.875 37.269531 34.730469 34.777344 36.546875 30.53125 L 24.996094 30.53125 L 24.996094 20.175781 L 47.546875 20.207031 L 47.714844 21 C 48.890625 26.582031 47.949219 34.792969 43.183594 40.667969 C 39.238281 45.53125 33.457031 48 25.996094 48 Z"
-      ></path>
+        d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
+        fill="#4285F4"
+      />
+      <path
+        d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
+        fill="#34A853"
+      />
+      <path
+        d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"
+        fill="#FBBC05"
+      />
+      <path
+        d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
+        fill="#EB4335"
+      />
     </svg>
   ),
   Twitter: (props: AuthIconProps) => (
@@ -36,6 +48,14 @@ const AuthIcons = {
         fill="currentColor"
         d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
       ></path>
+    </svg>
+  ),
+  Microsoft: (props: AuthIconProps) => (
+    <svg viewBox="0 0 256 256" preserveAspectRatio="xMidYMid" {...props}>
+      <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z" />
+      <path fill="#80CC28" d="M256 121.666H134.335V0H256z" />
+      <path fill="#00ADEF" d="M121.663 256.002H0V134.336h121.663z" />
+      <path fill="#FBBC09" d="M256 256.002H134.335V134.336H256z" />
     </svg>
   ),
 };
@@ -90,6 +110,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
+  const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
   return (
     <div className="w-full max-w-[380px] mx-auto">
@@ -123,6 +144,14 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
             setLoading={setTwitterLoading}
             callbackURL="/"
             icon={<AuthIcons.Twitter className="w-4 h-4" />}
+          />
+          <SignInButton
+            title="Microsoft"
+            provider="microsoft"
+            loading={microsoftLoading}
+            setLoading={setMicrosoftLoading}
+            callbackURL="/"
+            icon={<AuthIcons.Microsoft className="w-4 h-4" />}
           />
         </div>
 

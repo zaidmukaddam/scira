@@ -1565,16 +1565,6 @@ function ConnectorsSection({ user }: { user: any }) {
 
       {!isProUser && (
         <>
-          {/* Beta Announcement Alert for Non-Pro Users */}
-          <Alert className="border-primary/20 bg-primary/5">
-            <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-foreground">Connectors Available in Beta</AlertTitle>
-            <AlertDescription className="text-muted-foreground">
-              Connectors are now available for Pro users! Please note that this feature is in beta and there may be
-              breaking changes as we continue to improve the experience.
-            </AlertDescription>
-          </Alert>
-
           <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-primary/5">
             <div className="flex flex-col items-center space-y-4">
               <div className="p-3 rounded-full bg-primary/10">
@@ -1631,21 +1621,33 @@ function ConnectorsSection({ user }: { user: any }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className={cn('font-medium', isMobile ? 'text-[13px]' : 'text-sm')}>{config.name}</h4>
-                      <p className={cn('text-muted-foreground', isMobile ? 'text-[10px] leading-tight' : 'text-xs')}>{config.description}</p>
+                      <p className={cn('text-muted-foreground', isMobile ? 'text-[10px] leading-tight' : 'text-xs')}>
+                        {config.description}
+                      </p>
                       {isComingSoon ? (
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className={cn('text-blue-600 dark:text-blue-400', isMobile ? 'text-[10px]' : 'text-xs')}>Coming Soon</span>
+                          <span
+                            className={cn('text-blue-600 dark:text-blue-400', isMobile ? 'text-[10px]' : 'text-xs')}
+                          >
+                            Coming Soon
+                          </span>
                         </div>
                       ) : isStatusLoading && !connection ? (
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted animate-pulse rounded-full"></div>
-                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>Checking connection...</span>
+                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
+                            Checking connection...
+                          </span>
                         </div>
                       ) : isConnected ? (
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className={cn('text-green-600 dark:text-green-400', isMobile ? 'text-[10px]' : 'text-xs')}>Connected</span>
+                          <span
+                            className={cn('text-green-600 dark:text-green-400', isMobile ? 'text-[10px]' : 'text-xs')}
+                          >
+                            Connected
+                          </span>
                           {(connectionStatus?.email || connection?.email) && (
                             <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
                               • {connectionStatus?.email || connection?.email}
@@ -1655,7 +1657,9 @@ function ConnectorsSection({ user }: { user: any }) {
                       ) : (
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted-foreground/30 rounded-full"></div>
-                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>Not connected</span>
+                          <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
+                            Not connected
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1667,7 +1671,10 @@ function ConnectorsSection({ user }: { user: any }) {
                         size="sm"
                         disabled
                         variant="outline"
-                        className={cn('text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800', isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
+                        className={cn(
+                          'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+                          isMobile ? 'h-7 text-[10px] px-2' : 'h-8',
+                        )}
                       >
                         Coming Soon
                       </Button>
@@ -1694,7 +1701,10 @@ function ConnectorsSection({ user }: { user: any }) {
                           size="sm"
                           onClick={() => connection && handleDelete(connection.id, config.name)}
                           disabled={isDeleting || isSyncing || isStatusLoading}
-                          className={cn('text-destructive hover:text-destructive', isMobile ? 'h-7 text-[10px] px-2' : 'h-8')}
+                          className={cn(
+                            'text-destructive hover:text-destructive',
+                            isMobile ? 'h-7 text-[10px] px-2' : 'h-8',
+                          )}
                         >
                           {isDeleting ? (
                             <>

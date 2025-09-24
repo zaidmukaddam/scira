@@ -154,7 +154,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         type="single"
         collapsible
         defaultValue="x_search"
-        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 shadow-sm"
+        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900"
       >
         <AccordionItem value="x_search">
           <AccordionTrigger className="px-3 py-2.75 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-neutral-200 [&[data-state=open]]:dark:border-neutral-800 w-full [&>svg]:flex [&>svg]:items-center [&>svg]:justify-center [&>svg]:self-center">
@@ -185,12 +185,12 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="px-2 sm:px-3 pt-3 mb-0 pb-0">
+          <AccordionContent className="pt-3 mb-0 pb-0">
             <div className="space-y-3">
               {/* Horizontal Tweets Row */}
               {tweetCitations.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none">
+                <div className="space-y-3 px-3">
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none rounded-[8px]">
                     {displayedTweets.map((citation, index) => (
                       <motion.div
                         key={citation.tweet_id}

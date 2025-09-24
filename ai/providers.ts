@@ -6,7 +6,6 @@ import { groq } from '@ai-sdk/groq';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { mistral } from '@ai-sdk/mistral';
 import { google } from '@ai-sdk/google';
-import { serverEnv } from '@/env/server';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -150,7 +149,7 @@ export const models: Model[] = [
   {
     value: 'scira-default',
     label: 'Grok 4 Fast',
-    description: "xAI's fastest intelligent vision LLM",
+    description: "xAI's fastest multimodel LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -165,7 +164,7 @@ export const models: Model[] = [
   {
     value: 'scira-grok-4-fast-think',
     label: 'Grok 4 Fast Thinking',
-    description: "xAI's fastest intelligent vision LLM",
+    description: "xAI's fastest multimodel reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,

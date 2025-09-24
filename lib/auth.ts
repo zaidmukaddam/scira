@@ -93,6 +93,14 @@ export const auth = betterAuth({
       clientId: serverEnv.TWITTER_CLIENT_ID,
       clientSecret: serverEnv.TWITTER_CLIENT_SECRET,
     },
+    microsoft: {
+      clientId: process.env.MICROSOFT_CLIENT_ID as string,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
+      // Optional
+      tenantId: 'common',
+      authority: 'https://login.microsoftonline.com', // Authentication authority URL
+      prompt: 'select_account', // Forces account selection
+    },
   },
   pluginRoutes: {
     autoNamespace: true,
@@ -426,6 +434,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['https://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
 });

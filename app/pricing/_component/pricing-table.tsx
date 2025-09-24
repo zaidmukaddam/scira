@@ -71,6 +71,16 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         const config = await getDiscountConfigAction();
         const isDevMode = config.dev || process.env.NODE_ENV === 'development';
 
+        console.log('Discount Config Debug:', {
+          config,
+          isDevMode,
+          nodeEnv: process.env.NODE_ENV,
+          hasCode: !!config.code,
+          hasMessage: !!config.message,
+          enabled: config.enabled,
+          dev: config.dev
+        });
+
         if ((config.enabled || isDevMode) && !config.originalPrice) {
           config.originalPrice = PRICING.PRO_MONTHLY;
         }
@@ -85,6 +95,11 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   // Helper function to calculate discounted price
   const getDiscountedPrice = (originalPrice: number, isINR: boolean = false) => {
+    // TEMPORARY: Force disable all discounts
+    if (process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true') {
+      return originalPrice;
+    }
+    
     const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
     const shouldApplyDiscount = isDevMode
       ? discountConfig.code && discountConfig.message
@@ -114,15 +129,34 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   // Check if discount should be shown
   const shouldShowDiscount = () => {
+    // TEMPORARY: Force disable all discounts
+    if (process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true') {
+      console.log('Discounts disabled via NEXT_PUBLIC_DISABLE_DISCOUNTS');
+      return false;
+    }
+    
     const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-    return isDevMode
-      ? discountConfig.code &&
-          discountConfig.message &&
-          (discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice)
-      : discountConfig.enabled &&
-          discountConfig.code &&
-          discountConfig.message &&
-          (discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice);
+    const hasRequiredFields = discountConfig.code && discountConfig.message;
+    const hasDiscountValue = discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice;
+    
+    const result = isDevMode
+      ? hasRequiredFields && hasDiscountValue
+      : discountConfig.enabled && hasRequiredFields && hasDiscountValue;
+    
+    console.log('shouldShowDiscount Debug:', {
+      isDevMode,
+      hasCode: !!discountConfig.code,
+      hasMessage: !!discountConfig.message,
+      hasPercentage: !!discountConfig.percentage,
+      hasInrPrice: !!discountConfig.inrPrice,
+      hasFinalPrice: !!discountConfig.finalPrice,
+      enabled: discountConfig.enabled,
+      hasRequiredFields,
+      hasDiscountValue,
+      result
+    });
+    
+    return result;
   };
 
   const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
@@ -138,10 +172,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         // Auto-apply discount if available
         const discountIdToUse = discountConfig.discountId || '';
 
+        // TEMPORARY: Force disable all discounts
+        const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
+        
         // Show special messaging for student discounts
-        if (discountConfig.isStudentDiscount) {
+        if (!discountsDisabled && discountConfig.isStudentDiscount) {
           toast.success('🎓 Student discount applied automatically!');
-        } else if (discountIdToUse && discountConfig.enabled) {
+        } else if (!discountsDisabled && discountIdToUse && (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development'))) {
           toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
         }
 
@@ -150,7 +187,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           slug: slug,
           allowDiscountCodes: true,
           ...(discountIdToUse !== '' &&
-            discountConfig.enabled && {
+            !discountsDisabled &&
+            (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
               discountId: discountIdToUse,
             }),
         });
