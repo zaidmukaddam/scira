@@ -78,7 +78,7 @@ const searchWeb = async (query: string, category?: SearchCategory, include_domai
   console.log(`searchWeb called with query: "${query}", category: ${category}`);
   try {
     const { results } = await exa.searchAndContents(query, {
-      numResults: 5,
+      numResults: 8,
       type: 'auto',
       ...(category
         ? {
@@ -161,7 +161,7 @@ const getContents = async (links: string[]) => {
           formats: ['markdown'],
           proxy: 'auto',
           storeInCache: true,
-          parsers: ['pdf']
+          parsers: ['pdf'],
         });
 
         if (scrapeResponse.markdown) {
@@ -272,13 +272,16 @@ Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month:
 
 ### PRIMARY FOCUS: SEARCH-DRIVEN RESEARCH (95% of your work)
 Your main job is to SEARCH extensively and gather comprehensive information. Search should be your go-to approach for almost everything.
-Make sure to be mindfull of today's date and time and use it to your advantage when searching for information.
+Make sure to be mindful of today's date and time and use it to your advantage when searching for information.
+
+⚠️ IMP: Total Assistant function-call turns limit: at most ${totalTodos}! You must reach this limit strictly!
 
 For searching:
 - PRIORITIZE SEARCH OVER CODE - Search first, search often, search comprehensively
 - Do not run all the queries at once, run them one by one, wait for the results before running the next query
 - Make 3-5 targeted searches per research topic to get different angles and perspectives
 - Search queries should be specific and focused, 5-15 words maximum
+- You can use include domains to filter results by specific websites or sources
 - Vary your search approaches: broad overview → specific details → recent developments → expert opinions
 - Use different categories strategically: news, research papers, company info, financial reports, github
 - Use X search for real-time discussions, public opinion, breaking news, and social media trends
@@ -340,7 +343,7 @@ ${JSON.stringify(plan)}
     temperature: 0,
     providerOptions: {
       xai: {
-        parallel_function_calling: 'false',
+        parallel_tool_calls: 'false',
       },
     },
     tools: {
@@ -410,8 +413,9 @@ ${JSON.stringify(plan)}
         inputSchema: z.object({
           query: z.string().describe('The search query to achieve the todo').max(150),
           category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
+          includeDomains: z.array(z.string()).optional().describe('The domains to include in the search for results'),
         }),
-        execute: async ({ query, category }, { toolCallId }) => {
+        execute: async ({ query, category, includeDomains }, { toolCallId }) => {
           console.log('Web search query:', query);
           console.log('Category:', category);
 
@@ -427,7 +431,7 @@ ${JSON.stringify(plan)}
             });
           }
           // Query annotation already sent above
-          let results = await searchWeb(query, category);
+          let results = await searchWeb(query, category, includeDomains);
           console.log(`Found ${results.length} results for query "${query}"`);
 
           // Add these sources to our total collection

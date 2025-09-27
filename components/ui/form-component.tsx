@@ -216,7 +216,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         if (!q) return escapeHtml(text);
         const safeText = escapeHtml(text);
         const pattern = new RegExp(`(${escapeRegExp(q)})`, 'gi');
-        return safeText.replace(pattern, '<mark class="bg-primary/80 text-primary-foreground">$1</mark>');
+        return safeText.replace(pattern, '<mark class="bg-primary/80 text-primary-foreground rounded px-px">$1</mark>');
       },
       [searchQuery, escapeHtml, escapeRegExp],
     );
@@ -556,7 +556,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                             {model.reasoning && (
@@ -566,7 +566,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                             {model.pdf && (
@@ -576,7 +576,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                           </div>
@@ -637,7 +637,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.fast && (
@@ -647,7 +647,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {(() => {
@@ -678,7 +678,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.reasoning && (
@@ -688,7 +688,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.pdf && (
@@ -698,7 +698,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                         </div>
@@ -800,7 +800,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                             {model.reasoning && (
@@ -810,7 +810,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                             {model.pdf && (
@@ -820,7 +820,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                   isMobile ? 'p-1' : 'p-0.5',
                                 )}
                               >
-                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                               </div>
                             )}
                           </div>
@@ -881,7 +881,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.fast && (
@@ -891,7 +891,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {(() => {
@@ -922,7 +922,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.reasoning && (
@@ -932,7 +932,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                           {model.pdf && (
@@ -942,7 +942,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-2.5' : 'size-2')} />
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
                             </div>
                           )}
                         </div>
@@ -3162,7 +3162,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && !event.shiftKey && !isCompositionActive.current) {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !isCompositionActive.current) {
         event.preventDefault();
         if (isProcessing) {
           toast.error('Please wait for the response to complete!');
@@ -3656,7 +3656,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         sideOffset={6}
                         className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
-                        <span className="font-medium text-[11px]">Send Message</span>
+                        <div className="text-center">
+                          <div className="font-medium text-[11px] mb-1">Send Message</div>
+                          <div className="text-[10px] text-accent space-y-0.5">
+                            <div>⌘/Ctrl + Enter to send</div>
+                            <div>Enter for new line</div>
+                          </div>
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   )}

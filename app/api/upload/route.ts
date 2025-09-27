@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   // Validate file
   const validatedFile = FileSchema.safeParse({ file });
   if (!validatedFile.success) {
-    const errorMessage = validatedFile.error.errors.map((error) => error.message).join(', ');
+    const errorMessage = validatedFile.error.cause as string;
 
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }

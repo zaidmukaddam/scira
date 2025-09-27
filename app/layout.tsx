@@ -15,11 +15,11 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   metadataBase: new URL('https://scira.ai'),
   title: {
-    default: 'Scira AI',
+    default: 'Scira AI – Faster intelligent search, a Perplexity alternative',
     template: '%s | Scira AI',
-    absolute: 'Scira AI',
   },
-  description: 'Scira AI is a minimalistic AI-powered search engine that helps you find information on the internet.',
+  description:
+    'AI search with real-time results and Grok 4, Claude, DeepSeek, Qwen from $15/month—fast answers; a smart Perplexity alternative.',
   openGraph: {
     url: 'https://scira.ai',
     siteName: 'Scira AI',
@@ -61,6 +61,14 @@ export const metadata: Metadata = {
     'AI',
     'perplexity',
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export const viewport: Viewport = {

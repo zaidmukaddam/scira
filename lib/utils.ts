@@ -12,7 +12,8 @@ import {
   YoutubeIcon,
   ChattingIcon,
   AppleStocksIcon,
-  ConnectIcon
+  ConnectIcon,
+  CodeCircleIcon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -30,6 +31,7 @@ export type SearchGroupId =
   | 'extreme'
   | 'memory'
   | 'crypto'
+  | 'code'
   | 'connectors';
 
 // Search provider information for dynamic descriptions
@@ -80,6 +82,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       show: true,
       requireAuth: true,
       requirePro: true,
+    },
+    {
+      id: 'code' as const,
+      name: 'Code',
+      description: 'Get context about languages and frameworks',
+      icon: CodeCircleIcon,
+      show: true,
     },
     {
       id: 'academic' as const,

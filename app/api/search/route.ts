@@ -67,6 +67,7 @@ import {
   redditSearchTool,
   extremeSearchTool,
   createConnectorsSearchTool,
+  codeContextTool,
 } from '@/lib/tools';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { markdownJoinerTransform } from '@/lib/parser';
@@ -494,6 +495,9 @@ export async function POST(req: Request) {
             structuredOutputs: true,
             serviceTier: 'auto',
           } satisfies GroqProviderOptions,
+          xai: {
+            parallel_tool_calls: false,
+          },
         },
         tools: (() => {
           const baseTools = {
@@ -524,6 +528,7 @@ export async function POST(req: Request) {
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),
+            code_context: codeContextTool,
           };
 
           if (!user) {
@@ -589,18 +594,6 @@ export async function POST(req: Request) {
           }
         },
         onFinish: async (event) => {
-          console.log('Fin reason: ', event.finishReason);
-          console.log('Reasoning: ', event.reasoningText);
-          console.log('reasoning details: ', event.reasoning);
-          console.log('Steps: ', event.steps);
-          console.log('Messages: ', event.response.messages);
-          console.log('Message content: ', event.response.messages[event.response.messages.length - 1].content);
-          console.log('Response: ', event.response);
-          console.log('Provider metadata: ', event.providerMetadata);
-          console.log('Sources: ', event.sources);
-          console.log('Usage: ', event.usage);
-          console.log('Total Usage: ', event.totalUsage);
-
           if (user?.id && event.finishReason === 'stop') {
             after(async () => {
               try {

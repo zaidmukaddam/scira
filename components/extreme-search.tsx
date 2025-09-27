@@ -1443,11 +1443,11 @@ const ExtremeSearchComponent = ({
   }, [state, resetManualScroll]);
 
   useEffect(() => {
-    // Auto-scroll when new timeline items are added during streaming
+    // Auto-scroll when timeline content changes during streaming
     if (combinedTimelineItems.length > 0 && (state === 'input-streaming' || state === 'input-available')) {
       scrollToBottom();
     }
-  }, [combinedTimelineItems.length, state, scrollToBottom]);
+  }, [combinedTimelineItems, state, scrollToBottom, annotations]);
 
   // Get all sources for final result view
   const allSources = useMemo(() => {

@@ -132,19 +132,20 @@ export const auth = betterAuth({
         dodowebhooks({
           webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
           onPayload: async (payload) => {
-            console.log('🔔 Received Dodo Payments webhook:', payload.type);
-            console.log('📦 Payload data:', JSON.stringify(payload.data, null, 2));
+            const webhookPayload = payload as any;
+            console.log('🔔 Received Dodo Payments webhook:', webhookPayload.type);
+            console.log('📦 Payload data:', JSON.stringify(webhookPayload.data, null, 2));
 
             if (
-              payload.type === 'payment.succeeded' ||
-              payload.type === 'payment.failed' ||
-              payload.type === 'payment.cancelled' ||
-              payload.type === 'payment.processing'
+              webhookPayload.type === 'payment.succeeded' ||
+              webhookPayload.type === 'payment.failed' ||
+              webhookPayload.type === 'payment.cancelled' ||
+              webhookPayload.type === 'payment.processing'
             ) {
-              console.log('🎯 Processing payment webhook:', payload.type);
+              console.log('🎯 Processing payment webhook:', webhookPayload.type);
 
               try {
-                const data = payload.data;
+                const data = webhookPayload.data;
 
                 // Extract user ID from customer data if available
                 let validUserId = null;

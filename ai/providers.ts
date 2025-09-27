@@ -80,8 +80,8 @@ export const scira = customProvider({
     'scira-mistral-medium': mistral('mistral-medium-2508'),
     'scira-magistral-small': mistral('magistral-small-2509'),
     'scira-magistral-medium': mistral('magistral-medium-2509'),
-    'scira-google-lite': google('gemini-2.5-flash-lite'),
-    'scira-google': google('gemini-2.5-flash'),
+    'scira-google-lite': google('gemini-flash-lite-latest'),
+    'scira-google': google('gemini-flash-latest'),
     'scira-google-pro': google('gemini-2.5-pro'),
     'scira-anthropic-3': anthropic('claude-3-7-sonnet-20250219'),
     'scira-anthropic': anthropic('claude-sonnet-4-20250514'),
@@ -160,6 +160,7 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 16000,
     fast: true,
+    isNew: true,
   },
   {
     value: 'scira-grok-4-fast-think',
@@ -175,6 +176,7 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 16000,
     fast: true,
+    isNew: true,
   },
   {
     value: 'scira-qwen-32b',
@@ -264,6 +266,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
+    isNew: true,
   },
   {
     value: 'scira-code',
@@ -293,6 +296,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    isNew: true,
   },
   {
     value: 'scira-magistral-small',
@@ -307,6 +311,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    isNew: true,
   },
   {
     value: 'scira-magistral-medium',
@@ -321,6 +326,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    isNew: true,
   },
   {
     value: 'scira-gpt-oss-120',
@@ -350,6 +356,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    isNew: true,
   },
   {
     value: 'scira-qwen-coder',
@@ -408,7 +415,6 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 100000,
     fast: true,
-    isNew: true,
     parameters: {
       temperature: 0.7,
       topP: 0.8,
@@ -512,6 +518,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
+    isNew: true,
   },
   {
     value: 'scira-google-pro',

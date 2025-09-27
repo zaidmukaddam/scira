@@ -540,7 +540,6 @@ export const Message: React.FC<MessageProps> = ({
   // Mode state for editing
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
-
   // Determine if user message should top-align avatar based on combined text length
   const combinedUserText: string = React.useMemo(() => {
     return (
@@ -936,7 +935,7 @@ export const Message: React.FC<MessageProps> = ({
 
         {/* Missing assistant response UI moved inside assistant message */}
         {isMissingAssistantResponse && (
-          <div className="flex items-start">
+          <div className="flex items-start mt-4">
             <div className="w-full">
               <div className="flex flex-col gap-4 bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4">
                 <div className=" mb-4 max-w-2xl">

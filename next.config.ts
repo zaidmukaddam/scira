@@ -1,12 +1,11 @@
 import type { NextConfig } from 'next';
-import { fileURLToPath } from "node:url";
-import { createJiti } from "jiti";
+import { fileURLToPath } from 'node:url';
+import { createJiti } from 'jiti';
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
 jiti.import('./env/server.ts');
 jiti.import('./env/client.ts');
-
 
 const nextConfig: NextConfig = {
   compiler: {
@@ -14,11 +13,12 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
-          exclude: ['error'],
-        }
+            exclude: ['error'],
+          }
         : false,
   },
   experimental: {
+    turbopackPersistentCaching: true,
     useCache: true,
     optimizePackageImports: [
       '@phosphor-icons/react',
@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
-  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki', 'resumable-stream', "@t3-oss/env-nextjs", "@t3-oss/env-core"],
+  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki', 'resumable-stream', '@t3-oss/env-nextjs', '@t3-oss/env-core'],
   output: 'standalone',
   devIndicators: false,
   async headers() {

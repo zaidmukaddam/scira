@@ -21,3 +21,4 @@ export { extremeSearchTool } from './extreme-search';
 export { greetingTool } from './greeting';
 export { createConnectorsSearchTool } from './connectors-search';
 export { createMemoryTools, type SearchMemoryTool, type AddMemoryTool } from './supermemory';
+export { codeContextTool } from './code-context';

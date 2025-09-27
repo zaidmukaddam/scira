@@ -97,20 +97,26 @@ interface SearchStrategy {
       topics: ('general' | 'news')[];
       quality: ('default' | 'best')[];
       dataStream?: UIMessageStreamWriter<ChatMessage>;
-    }
+    },
   ): Promise<{ searches: Array<{ query: string; results: any[]; images: any[] }> }>;
 }
 
 // Parallel AI search strategy
 class ParallelSearchStrategy implements SearchStrategy {
-  constructor(private parallel: Parallel, private firecrawl: FirecrawlApp) { }
+  constructor(
+    private parallel: Parallel,
+    private firecrawl: FirecrawlApp,
+  ) {}
 
-  async search(queries: string[], options: {
-    maxResults: number[];
-    topics: ('general' | 'news')[];
-    quality: ('default' | 'best')[];
-    dataStream?: UIMessageStreamWriter<ChatMessage>;
-  }) {
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
     // Limit queries to first 5 for Parallel AI
     const limitedQueries = queries.slice(0, 5);
     console.log('Using Parallel AI batch processing for queries:', limitedQueries);
@@ -169,9 +175,7 @@ class ParallelSearchStrategy implements SearchStrategy {
       const searchResults = limitedQueries.map((query, index) => {
         // For batch response, results are combined - we'll split them evenly
         const startIdx = Math.floor((index / limitedQueries.length) * batchResponse.results.length || 0);
-        const endIdx = Math.floor(
-          ((index + 1) / limitedQueries.length) * batchResponse.results.length || 0,
-        );
+        const endIdx = Math.floor(((index + 1) / limitedQueries.length) * batchResponse.results.length || 0);
         const queryResults = batchResponse.results.slice(startIdx, endIdx) || [];
 
         const results = queryResults.map((result) => ({
@@ -236,14 +240,17 @@ class ParallelSearchStrategy implements SearchStrategy {
 
 // Tavily search strategy
 class TavilySearchStrategy implements SearchStrategy {
-  constructor(private tvly: TavilyClient) { }
+  constructor(private tvly: TavilyClient) {}
 
-  async search(queries: string[], options: {
-    maxResults: number[];
-    topics: ('general' | 'news')[];
-    quality: ('default' | 'best')[];
-    dataStream?: UIMessageStreamWriter<ChatMessage>;
-  }) {
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
       const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
@@ -288,9 +295,9 @@ class TavilySearchStrategy implements SearchStrategy {
               const imageValidation = await isValidImageUrl(sanitizedUrl);
               return imageValidation.valid
                 ? {
-                  url: imageValidation.redirectedUrl || sanitizedUrl,
-                  description: description || '',
-                }
+                    url: imageValidation.redirectedUrl || sanitizedUrl,
+                    description: description || '',
+                  }
                 : null;
             },
           ),
@@ -351,14 +358,17 @@ class TavilySearchStrategy implements SearchStrategy {
 
 // Firecrawl search strategy
 class FirecrawlSearchStrategy implements SearchStrategy {
-  constructor(private firecrawl: FirecrawlApp) { }
+  constructor(private firecrawl: FirecrawlApp) {}
 
-  async search(queries: string[], options: {
-    maxResults: number[];
-    topics: ('general' | 'news')[];
-    quality: ('default' | 'best')[];
-    dataStream?: UIMessageStreamWriter<ChatMessage>;
-  }) {
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
       const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
@@ -480,16 +490,19 @@ class FirecrawlSearchStrategy implements SearchStrategy {
 
 // Exa search strategy
 class ExaSearchStrategy implements SearchStrategy {
-  constructor(private exa: Exa) { }
+  constructor(private exa: Exa) {}
 
-  async search(queries: string[], options: {
-    maxResults: number[];
-    topics: ('general' | 'news')[];
-    quality: ('default' | 'best')[];
-    include_domains?: string[];
-    exclude_domains?: string[];
-    dataStream?: UIMessageStreamWriter<ChatMessage>;
-  }) {
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      include_domains?: string[];
+      exclude_domains?: string[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
       const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
@@ -597,7 +610,7 @@ const createSearchStrategy = (
     parallel: Parallel;
     firecrawl: FirecrawlApp;
     tvly: TavilyClient;
-  }
+  },
 ): SearchStrategy => {
   const strategies = {
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),

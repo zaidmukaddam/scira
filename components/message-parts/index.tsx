@@ -48,6 +48,8 @@ import {
   Pause,
   Play as PlayIcon,
   Info,
+  Code,
+  Copy,
 } from 'lucide-react';
 import {
   RedditLogoIcon,
@@ -1174,6 +1176,30 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
+          case 'tool-code_context':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing code context...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <SearchLoadingState
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    icon={Code}
+                    text="Getting code context..."
+                    color="blue"
+                  />
+                );
+              case 'output-available':
+                return (
+                  <CodeContextTool key={`${messageIndex}-${partIndex}-tool`} args={part.input} result={part.output} />
+                );
+            }
+            break;
+
           case 'tool-trending_movies':
             switch (part.state) {
               case 'input-streaming':
@@ -2191,6 +2217,138 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     return areEqual;
   },
 );
+
+// Code Context tool component
+const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!result) {
+    return (
+      <div className="group my-2 p-3 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-neutral-50/30 dark:bg-neutral-900/30">
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center opacity-80">
+            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          </div>
+          <div className="flex-1">
+            <div className="h-2.5 w-20 bg-neutral-300 dark:bg-neutral-600 rounded-sm animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const responseText = result?.response || result;
+  const shouldShowAccordion = responseText && responseText.length > 500;
+  const previewText = shouldShowAccordion ? responseText.slice(0, 400) + '...' : responseText;
+
+  return (
+    <div className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200">
+      <div className="p-3">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center">
+            <Code className="w-2.5 h-2.5 text-white" />
+          </div>
+
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-medium text-neutral-900 dark:text-neutral-100">Code Context</span>
+                <span className="text-neutral-400">•</span>
+                <span className="text-neutral-500 dark:text-neutral-400 truncate max-w-[200px]">
+                  {args ? args.query : ''}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Copy button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(responseText);
+                    toast.success('Code context copied to clipboard');
+                  }}
+                  className="h-6 w-6 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  <HugeiconsIcon
+                    icon={Copy01Icon}
+                    size={12}
+                    color="currentColor"
+                    strokeWidth={2}
+                    className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  />
+                </Button>
+
+                {/* Metadata badges */}
+                {result?.resultsCount !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 text-xs px-2 py-0.5"
+                    >
+                      {result.resultsCount} results
+                    </Badge>
+                    {result.outputTokens && (
+                      <Badge
+                        variant="secondary"
+                        className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 text-xs px-2 py-0.5"
+                      >
+                        {result.outputTokens} tokens
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-2">
+              {shouldShowAccordion ? (
+                <Accordion
+                  type="single"
+                  collapsible
+                  value={isExpanded ? 'context' : ''}
+                  onValueChange={(value) => setIsExpanded(!!value)}
+                >
+                  <AccordionItem value="context" className="border-0">
+                    <div className="space-y-2">
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
+                        {!isExpanded && previewText}
+                      </div>
+                      <AccordionTrigger className="py-2 hover:no-underline text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                        {isExpanded ? 'Show less' : 'Show full context'}
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-0">
+                        <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
+                          {responseText}
+                        </div>
+                      </AccordionContent>
+                    </div>
+                  </AccordionItem>
+                </Accordion>
+              ) : (
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
+                  {responseText}
+                </div>
+              )}
+
+              {/* Footer metadata */}
+              {result?.searchTime && (
+                <div className="flex items-center gap-2 pt-2 border-t border-neutral-200/30 dark:border-neutral-700/30">
+                  <Clock className="w-3 h-3 text-neutral-400" />
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Search completed in {(result.searchTime / 1000).toFixed(2)}s
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Translation tool component with audio features
 const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result }) => {
