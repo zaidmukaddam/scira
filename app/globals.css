@@ -5,7 +5,6 @@
 @plugin 'tailwind-scrollbar';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
-@source "../node_modules/streamdown/dist/index.js";
 
 /* Line clamp utilities */
 .line-clamp-2 {

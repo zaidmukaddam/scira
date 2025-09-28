@@ -3162,7 +3162,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !isCompositionActive.current) {
+      if (
+        event.key === 'Enter' &&
+        !isCompositionActive.current &&
+        ((isMobile && (event.ctrlKey || event.metaKey)) || (!isMobile && !event.ctrlKey && !event.metaKey))
+      ) {
         event.preventDefault();
         if (isProcessing) {
           toast.error('Please wait for the response to complete!');
@@ -3182,7 +3186,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }
     },
-    [isProcessing, isRecording, selectedModel, user, isLimitBlocked, submitForm, inputRef],
+    [isProcessing, isRecording, selectedModel, user, isLimitBlocked, submitForm, inputRef, isMobile],
   );
 
   const resizeTextarea = useCallback(() => {

@@ -351,7 +351,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   };
 
   return (
-    <div className="group relative">
+    <div className="group relative mt-2">
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -421,87 +421,99 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         }}
         className="w-full"
       >
-        <div className="relative border rounded-md mb-3! bg-foreground/10">
-          <Textarea
-            ref={textareaRef}
-            value={draftContent}
-            onChange={handleInput}
-            autoFocus
-            className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden
-            [&>*]:font-be-vietnam-pro! font-normal max-w-none text-base sm:text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden
-            relative w-full resize-none
-            border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-2 outline-none leading-relaxed font-be-vietnam-pro min-h-[auto]
-            transition-colors rounded-sm"
-            placeholder="Edit your message..."
-            style={{
-              lineHeight: '1.625',
-            }}
-          />
+        <div className="flex items-start gap-2">
+          {user ? (
+            <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
+              <AvatarImage src={user.image ?? ''} alt={user.name ?? ''} className="rounded-md !p-0 !m-0 size-7" />
+              <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
+                {(user.name || user.email || '?').charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
+          )}
+          <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2 relative">
+            <Textarea
+              ref={textareaRef}
+              value={draftContent}
+              onChange={handleInput}
+              autoFocus
+              className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden
+              font-sans font-normal max-w-none !text-base sm:!text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden
+              relative w-full resize-none
+              border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed min-h-[auto]
+              transition-colors bg-transparent"
+              placeholder="Edit your message..."
+              style={{
+                lineHeight: '1.625',
+              }}
+            />
 
-          <div className="absolute -right-2 top-1 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm">
-            <Button
-              type="submit"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-              disabled={
-                isSubmitting ||
-                draftContent.trim() ===
-                  message.parts
-                    ?.map((part) => (part.type === 'text' ? part.text : ''))
-                    .join('')
-                    .trim()
-              }
-            >
-              {isSubmitting ? (
-                <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <ArrowRight className="h-3.5 w-3.5" />
-              )}
-            </Button>
-            <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setMode('view')}
-              className="h-7 w-7 rounded-r-md rounded-l-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-              disabled={isSubmitting}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
+            {/* Show editable attachments inside bubble */}
+            {message.parts && message.parts.filter((part) => part.type === 'file').length > 0 && (
+              <div className="mt-2">
+                <EditableAttachmentsBadge
+                  attachments={message.parts.filter((part) => part.type === 'file') as unknown as Attachment[]}
+                  onRemoveAttachment={(index) => {
+                    // Handle attachment removal
+                    const updatedAttachments = message.parts.filter(
+                      (_: ChatMessage['parts'][number], i: number) => i !== index,
+                    );
+                    // Update the message with new attachments
+                    setMessages((messages) => {
+                      const messageIndex = messages.findIndex((m) => m.id === message.id);
+                      if (messageIndex !== -1) {
+                        const updatedMessage = {
+                          ...message,
+                          parts: updatedAttachments,
+                        };
+                        const updatedMessages = [...messages];
+                        updatedMessages[messageIndex] = updatedMessage;
+                        return updatedMessages;
+                      }
+                      return messages;
+                    });
+                  }}
+                />
+              </div>
+            )}
+
+            <div className="absolute -right-2 -bottom-4 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm">
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
+                disabled={
+                  isSubmitting ||
+                  draftContent.trim() ===
+                    message.parts
+                      ?.map((part) => (part.type === 'text' ? part.text : ''))
+                      .join('')
+                      .trim()
+                }
+              >
+                {isSubmitting ? (
+                  <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setMode('view')}
+                className="h-7 w-7 rounded-r-md rounded-l-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
+                disabled={isSubmitting}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
       </form>
-
-      {/* Show editable attachments */}
-      {message.parts && message.parts.length > 0 && (
-        <div className="mt-1.5">
-          <EditableAttachmentsBadge
-            attachments={message.parts.filter((part) => part.type === 'file') as unknown as Attachment[]}
-            onRemoveAttachment={(index) => {
-              // Handle attachment removal
-              const updatedAttachments = message.parts.filter(
-                (_: ChatMessage['parts'][number], i: number) => i !== index,
-              );
-              // Update the message with new attachments
-              setMessages((messages) => {
-                const messageIndex = messages.findIndex((m) => m.id === message.id);
-                if (messageIndex !== -1) {
-                  const updatedMessage = {
-                    ...message,
-                    parts: updatedAttachments,
-                  };
-                  const updatedMessages = [...messages];
-                  updatedMessages[messageIndex] = updatedMessage;
-                  return updatedMessages;
-                }
-                return messages;
-              });
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -624,7 +636,7 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${
+                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${
                             !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                           }`}
                         >
@@ -657,6 +669,16 @@ export const Message: React.FC<MessageProps> = ({
                               >
                                 <MarkdownRenderer content={part.text} isUserMessage={true} />
                               </ChatTextHighlighter>
+                              {message.parts?.filter((part) => part.type === 'file') &&
+                                message.parts?.filter((part) => part.type === 'file').length > 0 && (
+                                  <div className="mt-2">
+                                    <AttachmentsBadge
+                                      attachments={
+                                        message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
+                                      }
+                                    />
+                                  </div>
+                                )}
                             </div>
                           </div>
 
@@ -670,39 +692,46 @@ export const Message: React.FC<MessageProps> = ({
                   })}
 
                   {/* If no parts have text, fall back to the content property */}
-                  {(!message.parts || !message.parts.some((part: any) => part.type === 'text' && part.text)) && (
+                  {(!message.parts || !message.parts.some((part) => part.type === 'text' && part.text)) && (
                     <div
                       ref={messageContentRef}
-                      className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(
+                      className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(
                         message.parts
                           ?.map((part) => (part.type === 'text' ? part.text : ''))
                           .join('')
                           .trim() || '',
-                      )} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                      )} text-foreground dark:text-foreground overflow-hidden relative ${
                         !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                       }`}
                     >
-                      <div className="flex items-start gap-1">
+                      <div
+                        className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
+                      >
                         {user ? (
-                          <Avatar className="flex-shrink-0 self-start pl-1 size-6 rounded-md">
+                          <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
                             <AvatarImage
                               src={user.image ?? ''}
                               alt={user.name ?? ''}
-                              className="rounded-md p-0 m-0 size-6"
+                              className="rounded-md !p-0 !m-0 size-7"
                             />
-                            <AvatarFallback className="rounded-md text-xs p-0 m-0 size-6">
+                            <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
                               {(user.name || user.email || '?').charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                         ) : (
-                          <HugeiconsIcon
-                            icon={UserCircleIcon}
-                            size={24}
-                            className="flex-shrink-0 self-start pl-1 size-6"
-                          />
+                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
                         )}
-                        <div className="min-w-0">
-                          <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
+                        <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
+                          <ChatTextHighlighter
+                            className={`${getDynamicFontSize(
+                              message.parts
+                                ?.map((part) => (part.type === 'text' ? part.text : ''))
+                                .join('')
+                                .trim() || '',
+                            )}`}
+                            onHighlight={onHighlight}
+                            removeHighlightOnClick={true}
+                          >
                             <MarkdownRenderer
                               content={
                                 message.parts
@@ -713,6 +742,16 @@ export const Message: React.FC<MessageProps> = ({
                               isUserMessage={true}
                             />
                           </ChatTextHighlighter>
+                          {message.parts?.filter((part) => part.type === 'file') &&
+                            message.parts?.filter((part) => part.type === 'file').length > 0 && (
+                              <div className="mt-2">
+                                <AttachmentsBadge
+                                  attachments={
+                                    message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
+                                  }
+                                />
+                              </div>
+                            )}
                         </div>
                       </div>
 
@@ -775,12 +814,6 @@ export const Message: React.FC<MessageProps> = ({
                     </Button>
                   </div>
                 </div>
-                {message.parts?.filter((part) => part.type === 'file') &&
-                  message.parts?.filter((part) => part.type === 'file').length > 0 && (
-                    <AttachmentsBadge
-                      attachments={message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]}
-                    />
-                  )}
               </div>
             )}
           </div>
@@ -807,40 +840,61 @@ export const Message: React.FC<MessageProps> = ({
               <div className="relative">
                 <div
                   ref={messageContentRef}
-                  className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(
+                  className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(
                     message.parts
                       ?.map((part) => (part.type === 'text' ? part.text : ''))
                       .join('')
                       .trim() || '',
-                  )} text-foreground dark:text-foreground pr-12 sm:pr-14 overflow-hidden relative ${
+                  )} text-foreground dark:text-foreground overflow-hidden relative ${
                     !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-1">
+                  <div className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}>
                     {user ? (
-                      <Avatar className="flex-shrink-0 self-start pl-1 size-6 rounded-md">
+                      <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
                         <AvatarImage
                           src={user.image ?? ''}
                           alt={user.name ?? ''}
-                          className="rounded-md p-0 m-0 size-6"
+                          className="rounded-md !p-0 !m-0 size-7"
                         />
-                        <AvatarFallback className="rounded-md text-xs p-0 m-0 size-6">
+                        <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
                           {(user.name || user.email || '?').charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                     ) : (
-                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="flex-shrink-0 self-start pl-1 size-6" />
+                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
                     )}
-                    <div className="min-w-0">
-                      <MarkdownRenderer
-                        content={
+                    <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
+                      <ChatTextHighlighter
+                        className={`${getDynamicFontSize(
                           message.parts
                             ?.map((part) => (part.type === 'text' ? part.text : ''))
                             .join('')
-                            .trim() || ''
-                        }
-                        isUserMessage={true}
-                      />
+                            .trim() || '',
+                        )}`}
+                        onHighlight={onHighlight}
+                        removeHighlightOnClick={true}
+                      >
+                        <MarkdownRenderer
+                          content={
+                            message.parts
+                              ?.map((part) => (part.type === 'text' ? part.text : ''))
+                              .join('')
+                              .trim() || ''
+                          }
+                          isUserMessage={true}
+                        />
+                      </ChatTextHighlighter>
+                      {message.parts?.filter((part) => part.type === 'file') &&
+                        message.parts?.filter((part) => part.type === 'file').length > 0 && (
+                          <div className="mt-2">
+                            <AttachmentsBadge
+                              attachments={
+                                message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
+                              }
+                            />
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -863,7 +917,7 @@ export const Message: React.FC<MessageProps> = ({
                   </div>
                 )}
 
-                <div className="absolute right-1 sm:-right-2 top-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
+                <div className="absolute right-0 -bottom-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                   {/* Only show edit button for owners OR unauthenticated users on private chats */}
                   {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                     <>
@@ -907,12 +961,6 @@ export const Message: React.FC<MessageProps> = ({
                   </Button>
                 </div>
               </div>
-              {message.parts?.filter((part) => part.type === 'file') &&
-                message.parts?.filter((part) => part.type === 'file').length > 0 && (
-                  <AttachmentsBadge
-                    attachments={message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]}
-                  />
-                )}
             </div>
           )}
         </div>
@@ -1338,7 +1386,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 py-4">
+      <div className="flex flex-wrap gap-2">
         {fileAttachments.map((attachment, i) => {
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;

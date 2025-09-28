@@ -32,7 +32,7 @@ export default function NotFound() {
         </p>
 
         <div className="flex justify-center">
-          <Link href="/">
+          <Link href="/new">
             <Button variant="default" className="flex items-center gap-2 px-4 py-2 rounded-full">
               <ArrowLeft size={18} />
               <span>Return to home</span>
