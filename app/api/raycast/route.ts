@@ -6,7 +6,7 @@ import { convertToModelMessages, customProvider, generateText, stepCountIs } fro
 
 const scira = customProvider({
   languageModels: {
-    'scira-default': groq('openai/gpt-oss-20b'),
+    'scira-default': xai('grok-4-fast-reasoning'),
   },
 });
 
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(2),
     messages: convertToModelMessages(messages),
     temperature: 0,
+    toolChoice: 'auto',
     experimental_activeTools: activeTools,
     tools: {
       web_search: webSearchTool(undefined, "exa"),

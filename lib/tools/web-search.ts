@@ -106,7 +106,7 @@ class ParallelSearchStrategy implements SearchStrategy {
   constructor(
     private parallel: Parallel,
     private firecrawl: FirecrawlApp,
-  ) {}
+  ) { }
 
   async search(
     queries: string[],
@@ -240,7 +240,7 @@ class ParallelSearchStrategy implements SearchStrategy {
 
 // Tavily search strategy
 class TavilySearchStrategy implements SearchStrategy {
-  constructor(private tvly: TavilyClient) {}
+  constructor(private tvly: TavilyClient) { }
 
   async search(
     queries: string[],
@@ -295,9 +295,9 @@ class TavilySearchStrategy implements SearchStrategy {
               const imageValidation = await isValidImageUrl(sanitizedUrl);
               return imageValidation.valid
                 ? {
-                    url: imageValidation.redirectedUrl || sanitizedUrl,
-                    description: description || '',
-                  }
+                  url: imageValidation.redirectedUrl || sanitizedUrl,
+                  description: description || '',
+                }
                 : null;
             },
           ),
@@ -358,7 +358,7 @@ class TavilySearchStrategy implements SearchStrategy {
 
 // Firecrawl search strategy
 class FirecrawlSearchStrategy implements SearchStrategy {
-  constructor(private firecrawl: FirecrawlApp) {}
+  constructor(private firecrawl: FirecrawlApp) { }
 
   async search(
     queries: string[],
@@ -490,7 +490,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
 
 // Exa search strategy
 class ExaSearchStrategy implements SearchStrategy {
-  constructor(private exa: Exa) {}
+  constructor(private exa: Exa) { }
 
   async search(
     queries: string[],
@@ -629,6 +629,7 @@ export function webSearchTool(
   return tool({
     description: `This is the default tool of the app to be used to search the web for information with multiple queries, max results, search depth, topics, and quality.
     Very important Rules:
+    ...${searchProvider === "parallel" ? "The First Query should be the objective and the rest of the queries should be related to the objective" : ""}...
     - The queries should always be in the same language as the user's message.
     - And count of the queries should be 3-5.
     - Do not use the best quality unless absolutly required since it is time expensive.
