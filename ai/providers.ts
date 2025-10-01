@@ -102,7 +102,7 @@ export const scira = customProvider({
       model: huggingface.chat('zai-org/GLM-4.6:zai-org'),
       middleware,
     }),
-    'scira-kimi-k2-v2': gateway('moonshotai/kimi-k2-0905'),
+    'scira-kimi-k2-v2': gateway('moonshotai/kimi-k2-turbo'),
     'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
     'scira-mistral-medium': mistral('mistral-medium-2508'),
     'scira-magistral-small': mistral('magistral-small-2509'),
@@ -452,7 +452,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-deepseek-chat',
-    label: 'DeepSeek Chat',
+    label: 'DeepSeek 3.2 Exp',
     description: "DeepSeek's advanced chat LLM",
     vision: false,
     reasoning: false,
@@ -467,7 +467,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-deepseek-chat-think',
-    label: 'DeepSeek Chat Thinking',
+    label: 'DeepSeek 3.2 Exp Thinking',
     description: "DeepSeek's advanced chat LLM with thinking",
     vision: false,
     reasoning: true,
