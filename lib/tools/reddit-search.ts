@@ -30,7 +30,7 @@ export const redditSearchTool = tool({
       const data = await tvly.search(query, {
         maxResults: maxResults < 20 ? 20 : maxResults,
         timeRange: timeRange,
-        includeRawContent: 'text',
+        includeRawContent: 'markdown',
         searchDepth: 'advanced',
         chunksPerSource: 5,
         topic: 'general',

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: '%s | Scira AI',
   },
   description:
-    'AI search with real-time results and Grok 4, Claude, DeepSeek, Qwen from $15/month—fast answers; a smart Perplexity alternative.',
+    'AI search with real-time results and Grok 4, Claude, DeepSeek, Qwen from $15/month—fast answers; open source Perplexity alternative.',
   openGraph: {
     url: 'https://scira.ai',
     siteName: 'Scira AI',

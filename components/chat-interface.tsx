@@ -132,10 +132,14 @@ const ChatInterface = memo(
       'scira-lookout-announcement-shown',
       false,
     );
+    const [isDismissedUpdateToast, setIsDismissedUpdateToast] = useLocalStorage(
+      'scira-3-0-update-toast-dismissed',
+      false,
+    );
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
       'scira-search-provider',
-      'firecrawl',
+      'parallel',
     );
 
     // Use reducer for complex state management
@@ -285,6 +289,7 @@ const ChatInterface = memo(
     selectedModelRef.current = selectedModel;
     selectedGroupRef.current = selectedGroup;
     isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
+    searchProviderRef.current = searchProvider;
     selectedConnectorsRef.current = selectedConnectors;
 
     const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
@@ -666,6 +671,35 @@ const ChatInterface = memo(
           user={user}
           setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
         />
+
+        {/* Scira AI 3.0 Update Toast */}
+        {!isDismissedUpdateToast && (
+          <div className="fixed top-4 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="relative group">
+              <button
+                onClick={() => setIsDismissedUpdateToast(true)}
+                className="absolute -top-2 -right-2 z-10 w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center hover:bg-accent transition-colors shadow-lg"
+                aria-label="Dismiss update notification"
+              >
+                <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <a
+                href="https://peerlist.io/zaidmukaddam/project/scira-ai-30"
+                target="_blank"
+                className="block hover:scale-105 transition-transform duration-200"
+              >
+                <img
+                  src="https://peerlist.io/api/v1/projects/embed/PRJHP6L9LNDKJ6K7E1QGPQ6OAQPMPJ?showUpvote=true&theme=dark"
+                  alt="Scira AI 3.0"
+                  className="rounded-md shadow-lg"
+                  style={{ width: 'auto', height: '60px' }}
+                />
+              </a>
+            </div>
+          </div>
+        )}
 
         <div
           className={`w-full p-2 sm:p-4 relative ${

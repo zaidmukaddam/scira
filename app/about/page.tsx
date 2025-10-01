@@ -200,14 +200,12 @@ export default function AboutPage() {
       */}
       {/* Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
-        <div className="container max-w-7xl mx-auto px-4">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-1">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative">
-                <SciraLogo className="size-8 transition-transform group-hover:scale-110" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Scira</span>
+            <Link href="/" className="flex justify-items-end gap-1.5 group">
+              <SciraLogo className="size-7 transition-transform group-hover:scale-110" />
+              <span className="text-2xl font-normal tracking-tighter font-be-vietnam-pro">Scira</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -278,9 +276,9 @@ export default function AboutPage() {
       <section className="py-24 px-4">
         <div className="container max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-6">
-            <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex items-end justify-center gap-1 mb-8">
               <SciraLogo className="size-12" />
-              <h1 className="text-4xl font-bold">Scira</h1>
+              <h1 className="text-4xl font-normal font-be-vietnam-pro tracking-tighter">Scira</h1>
             </div>
 
             <h2 className="text-2xl md:text-3xl font-semibold text-foreground max-w-3xl mx-auto">
@@ -946,7 +944,7 @@ export default function AboutPage() {
                 <p className="text-sm text-muted-foreground">
                   {models.length} models available across multiple providers
                 </p>
-                <p className="text-xs text-muted-foreground/60">Start with any model, switch anytime</p>
+                <p className="text-xs text-muted-foreground/60">Search with any model, switch anytime</p>
               </div>
               <Button
                 onClick={() => router.push('/')}

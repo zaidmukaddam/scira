@@ -185,7 +185,7 @@ const searchProviders = [
     label: 'Firecrawl',
     description: 'Web, news, and image search with content scraping capabilities',
     icon: FirecrawlIcon,
-    default: true,
+    default: false,
   },
   {
     value: 'exa',
@@ -199,7 +199,7 @@ const searchProviders = [
     label: 'Parallel AI',
     description: 'Base and premium web search along with Firecrawl image search support',
     icon: ParallelIcon,
-    default: false,
+    default: true,
   },
   {
     value: 'tavily',
@@ -297,7 +297,7 @@ function PreferencesSection({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
     'scira-search-provider',
-    'firecrawl',
+    'parallel',
   );
 
   const [content, setContent] = useState('');

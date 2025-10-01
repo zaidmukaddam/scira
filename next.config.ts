@@ -18,7 +18,6 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
-    turbopackPersistentCaching: true,
     useCache: true,
     optimizePackageImports: [
       '@phosphor-icons/react',
@@ -28,7 +27,7 @@ const nextConfig: NextConfig = {
       'date-fns',
     ],
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '20mb',
     },
     staleTimes: {
       dynamic: 10,
@@ -74,7 +73,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-20',
+        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-30',
         permanent: true,
       },
       {
