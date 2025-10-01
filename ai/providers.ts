@@ -5,7 +5,7 @@ import { xai } from '@ai-sdk/xai';
 import { groq } from '@ai-sdk/groq';
 import { mistral } from '@ai-sdk/mistral';
 import { google } from '@ai-sdk/google';
-import { createGatewayProvider } from '@ai-sdk/gateway';
+import { createAnthropic } from '@ai-sdk/anthropic';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -16,7 +16,7 @@ const middlewareWithStartWithReasoning = extractReasoningMiddleware({
   startWithReasoning: true,
 });
 
-const anthropic = createGatewayProvider({
+const anthropic = createAnthropic({
   headers: {
     'anthropic-beta': 'context-1m-2025-08-07',
   },
@@ -41,7 +41,7 @@ export const scira = customProvider({
   languageModels: {
     'scira-default': xai('grok-4-fast-non-reasoning'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': huggingface.chat('meta-llama/Llama-3.3-70B-Instruct:cerebras'),
+    'scira-name': anannas.chat('meta-llama/llama-3.3-70b-instruct'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
     'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
@@ -57,7 +57,7 @@ export const scira = customProvider({
     'scira-gpt5-mini': gateway('openai/gpt-5-mini'),
     'scira-gpt5-nano': gateway('openai/gpt-5-nano'),
     'scira-gpt5-codex': gateway('openai/gpt-5-codex'),
-    'scira-o3': gateway('openai/o3'),
+    'scira-o3': anannas.chat('openai/o3'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
@@ -70,7 +70,7 @@ export const scira = customProvider({
       model: groq('openai/gpt-oss-120b'),
       middleware,
     }),
-    'scira-deepseek-chat':  gateway('deepseek/deepseek-v3.2-exp'),
+    'scira-deepseek-chat': gateway('deepseek/deepseek-v3.2-exp'),
     'scira-deepseek-chat-think': wrapLanguageModel({
       model: gateway('deepseek/deepseek-v3.2-exp-thinking'),
       middleware,
@@ -79,7 +79,7 @@ export const scira = customProvider({
       model: anannas.chat('deepseek/deepseek-r1'),
       middleware,
     }),
-    'scira-qwen-coder-small': huggingface.chat('Qwen/Qwen3-Coder-30B-A3B-Instruct:fireworks-ai'),
+    'scira-qwen-coder-small': huggingface.chat('Qwen/Qwen3-Coder-30B-A3B-Instruct:nebius'),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-qwen-30': huggingface.chat('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
     'scira-qwen-30-think': wrapLanguageModel({
@@ -87,6 +87,11 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-qwen-3-next': huggingface.chat('Qwen/Qwen3-Next-80B-A3B-Instruct:hyperbolic'),
+    'scira-qwen-3-next-think': wrapLanguageModel({
+      model: huggingface.chat('Qwen/Qwen3-Next-80B-A3B-Thinking:hyperbolic'),
+      middleware: [middlewareWithStartWithReasoning],
+    }),
+    'scira-qwen-3-max': gateway('alibaba/qwen3-max'),
     'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
     'scira-qwen-235-think': wrapLanguageModel({
       model: huggingface.chat('Qwen/Qwen3-235B-A22B-Thinking-2507:fireworks-ai'),
@@ -109,9 +114,9 @@ export const scira = customProvider({
     'scira-google-lite': google('gemini-flash-lite-latest'),
     'scira-google': google('gemini-flash-latest'),
     'scira-google-pro': google('gemini-2.5-pro'),
-    'scira-anthropic-3': anthropic('anthropic/claude-3.7-sonnet'),
-    'scira-anthropic': anthropic('anthropic/claude-sonnet-4.5'),
-    'scira-anthropic-think': anthropic('anthropic/claude-sonnet-4.5'),
+    'scira-anthropic-3': anthropic('claude-3-7-sonnet-latest'),
+    'scira-anthropic': anthropic('claude-sonnet-4-5-20250929'),
+    'scira-anthropic-think': anthropic('claude-sonnet-4-5-20250929'),
     'scira-llama-4': groq('meta-llama/llama-4-maverick-17b-128e-instruct'),
   },
 });
@@ -570,6 +575,39 @@ export const models: Model[] = [
       topP: 0.8,
       minP: 0,
     },
+  },
+  {
+    value: 'scira-qwen-3-next-think',
+    label: 'Qwen 3 Next 80B A3B Thinking',
+    description: "Qwen's advanced thinking LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 100000,
+    parameters: {
+      temperature: 0.6,
+      topP: 0.95,
+      minP: 0,
+    },
+  },
+  {
+    value: 'scira-qwen-3-max',
+    label: 'Qwen 3 Max',
+    description: "Qwen's advanced instruct LLM",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 100000,
   },
   {
     value: 'scira-qwen-235',

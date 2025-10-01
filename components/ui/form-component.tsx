@@ -3186,7 +3186,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
               }, 100);
             }
           }
-        } else if (event.ctrlKey || event.metaKey) {
+        } else {
+          if (event.shiftKey) {
+            return;
+          }
           event.preventDefault();
           if (isProcessing) {
             toast.error('Please wait for the response to complete!');
