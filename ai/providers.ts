@@ -82,13 +82,13 @@ export const scira = customProvider({
       model: huggingface.chat('Qwen/Qwen3-235B-A22B-Thinking-2507:fireworks-ai'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-glm-air': huggingface.chat('zai-org/GLM-4.5-Air:fireworks-ai'),
+    'scira-glm-air': huggingface.chat('zai-org/GLM-4.5-Air:zai-org'),
     'scira-glm': wrapLanguageModel({
-      model: huggingface.chat('zai-org/GLM-4.5:fireworks-ai'),
+      model: huggingface.chat('zai-org/GLM-4.5:zai-org'),
       middleware,
     }),
     'scira-glm-4.6': wrapLanguageModel({
-      model: huggingface.chat('zai-org/GLM-4.6:fireworks-ai'),
+      model: huggingface.chat('zai-org/GLM-4.6:zai-org'),
       middleware,
     }),
     'scira-kimi-k2-v2': gateway('moonshotai/kimi-k2-0905'),
