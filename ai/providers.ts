@@ -3,7 +3,6 @@ import { wrapLanguageModel, customProvider, extractReasoningMiddleware, gateway 
 import { createOpenAI } from '@ai-sdk/openai';
 import { xai } from '@ai-sdk/xai';
 import { groq } from '@ai-sdk/groq';
-import { createAnthropic } from '@ai-sdk/anthropic';
 import { mistral } from '@ai-sdk/mistral';
 import { google } from '@ai-sdk/google';
 import { createGatewayProvider } from '@ai-sdk/gateway';

@@ -105,10 +105,10 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
           <AvatarFallback className={isMobile ? 'text-base' : 'text-lg'}>
             {user?.name
               ? user.name
-                  .split(' ')
-                  .map((n: string) => n[0])
-                  .join('')
-                  .toUpperCase()
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .toUpperCase()
               : 'U'}
           </AvatarFallback>
         </Avatar>
@@ -304,19 +304,18 @@ function PreferencesSection({
   const [isSaving, setIsSaving] = useState(false);
 
   const enabled = isCustomInstructionsEnabled ?? true;
-  const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
+  const setEnabled = setIsCustomInstructionsEnabled ?? (() => { });
 
   const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
     setSearchProvider(newProvider);
     toast.success(
-      `Search provider changed to ${
-        newProvider === 'exa'
-          ? 'Exa'
-          : newProvider === 'parallel'
-            ? 'Parallel AI'
-            : newProvider === 'tavily'
-              ? 'Tavily'
-              : 'Firecrawl'
+      `Search provider changed to ${newProvider === 'exa'
+        ? 'Exa'
+        : newProvider === 'parallel'
+          ? 'Parallel AI'
+          : newProvider === 'tavily'
+            ? 'Tavily'
+            : 'Firecrawl'
       }`,
     );
   };
@@ -454,7 +453,7 @@ function PreferencesSection({
                       // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
                       try {
                         e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                      } catch {}
+                      } catch { }
                     }}
                     disabled={isSaving || !enabled}
                   />
@@ -1975,12 +1974,12 @@ export function SettingsDialog({
                     : 'pb-[calc(env(safe-area-inset-bottom)+1rem)]',
                 )}
               >
-                <TabsList className="w-full py-1 h-14 bg-transparent rounded-none grid grid-cols-6 gap-1 !mb-2 px-4">
+                <TabsList className="w-full py-1.5 h-24 bg-transparent rounded-none grid grid-cols-3 sm:grid-cols-6 gap-2 !mb-2 px-3 sm:px-4">
                   {tabItems.map((item) => (
                     <TabsTrigger
                       key={item.value}
                       value={item.value}
-                      className="flex-col gap-0.5 h-full rounded-md data-[state=active]:bg-muted data-[state=active]:shadow-none relative px-1 transition-colors"
+                      className="flex-col gap-0.5 h-full rounded-md data-[state=active]:bg-muted data-[state=active]:shadow-none relative px-2 min-w-0 transition-colors"
                     >
                       <item.icon
                         className={cn(
