@@ -28,6 +28,16 @@ const huggingface = createOpenAI({
   apiKey: process.env.HF_TOKEN,
 });
 
+const anannas = createOpenAI({
+  baseURL: 'https://api.anannas.ai/v1',
+  apiKey: process.env.ANANNAS_API_KEY,
+  headers: {
+    'HTTP-Referer': 'https://scira.ai',
+    'X-Title': 'Scira AI',
+    'Content-Type': 'application/json',
+  },
+});
+
 export const scira = customProvider({
   languageModels: {
     'scira-default': xai('grok-4-fast-non-reasoning'),
@@ -47,6 +57,7 @@ export const scira = customProvider({
     'scira-gpt5': gateway('openai/gpt-5'),
     'scira-gpt5-mini': gateway('openai/gpt-5-mini'),
     'scira-gpt5-nano': gateway('openai/gpt-5-nano'),
+    'scira-gp5-codex': gateway('openai/gpt-5-codex'),
     'scira-o3': gateway('openai/o3'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
@@ -66,7 +77,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-deepseek-r1': wrapLanguageModel({
-      model: gateway('deepseek/deepseek-r1'),
+      model: anannas.chat('deepseek/deepseek-r1'),
       middleware,
     }),
     'scira-qwen-coder-small': huggingface.chat('Qwen/Qwen3-Coder-30B-A3B-Instruct:fireworks-ai'),
@@ -395,6 +406,22 @@ export const models: Model[] = [
     value: 'scira-gpt5',
     label: 'GPT 5',
     description: "OpenAI's flagship LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    fast: false,
+    isNew: true,
+  },
+  {
+    value: 'scira-gp5-codex',
+    label: 'GPT 5 Codex',
+    description: "OpenAI's advanced coding LLM",
     vision: true,
     reasoning: true,
     experimental: false,
