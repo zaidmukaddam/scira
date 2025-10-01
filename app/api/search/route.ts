@@ -511,13 +511,13 @@ export async function POST(req: Request) {
               model === 'scira-gpt5-mini' ||
               model === 'scira-o3' ||
               model === 'scira-gpt5-nano' ||
-              model === 'scira-gp5-codex'
+              model === 'scira-gpt5-codex'
               ? {
                 reasoningEffort: 'medium',
                 parallelToolCalls: false,
                 store: false,
                 reasoningSummary: 'detailed',
-                textVerbosity: (model === 'scira-o3' ? 'medium' : 'high'),
+                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' ? 'medium' : 'high'),
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },

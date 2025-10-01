@@ -56,7 +56,7 @@ export const scira = customProvider({
     'scira-gpt5': gateway('openai/gpt-5'),
     'scira-gpt5-mini': gateway('openai/gpt-5-mini'),
     'scira-gpt5-nano': gateway('openai/gpt-5-nano'),
-    'scira-gp5-codex': gateway('openai/gpt-5-codex'),
+    'scira-gpt5-codex': gateway('openai/gpt-5-codex'),
     'scira-o3': gateway('openai/o3'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
@@ -418,7 +418,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gp5-codex',
+    value: 'scira-gpt5-codex',
     label: 'GPT 5 Codex',
     description: "OpenAI's advanced coding LLM",
     vision: true,

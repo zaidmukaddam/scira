@@ -38,13 +38,13 @@ import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-q
 import { cn, invalidateChatsCache } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClassicLoader } from './ui/loading';
+import { useChatPrefetch } from '@/hooks/use-chat-prefetch';
+import Link from 'next/link';
 
 // Constants
-const SCROLL_BUFFER_MAX = 100;
 const SCROLL_THRESHOLD = 0.8;
 const INTERSECTION_ROOT_MARGIN = '100px';
 const FOCUS_DELAY = 100;
-const LOADING_DEBOUNCE = 300;
 
 interface Chat {
   id: string;
@@ -222,7 +222,6 @@ function isSameDay(date1: Date, date2: Date): boolean {
 function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
   if (!query) return true;
 
-  const queryLower = query.toLowerCase();
 
   // Handle special search prefixes
   if (query.startsWith('public:')) {
@@ -296,6 +295,14 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [, forceUpdate] = useState({});
+
+  // Use the new prefetching system
+  const {
+    prefetchChats,
+    prefetchOnHover,
+    prefetchOnFocus,
+    prefetchChatRoute,
+  } = useChatPrefetch();
 
   // Focus search input on dialog open
   const inputRef = useRef<HTMLInputElement>(null);
@@ -527,31 +534,30 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     };
   }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
-  // prefetch chats
+  // Enhanced prefetching with data prefetching
   useEffect(() => {
-    if (open) {
-      allChats.forEach((chat) => {
-        router.prefetch(`/search/${chat.id}`);
-        console.log(`Prefetching chat ${chat.id}`);
+    if (open && allChats.length > 0) {
+      // Prefetch the first 10 chats with high priority (visible ones)
+      const visibleChats = allChats.slice(0, 10);
+      
+      // Prefetch route and data for visible chats
+      visibleChats.forEach((chat) => {
+        prefetchChatRoute(chat.id);
       });
+      
+      // Prefetch data for remaining chats with lower priority
+      if (allChats.length > 10) {
+        const remainingChats = allChats.slice(10, 20); // Next 10 chats
+        const remainingChatIds = remainingChats.map(chat => chat.id);
+        prefetchChats(remainingChatIds);
+      }
     }
-  }, [open, allChats, router]);
+  }, [open, allChats, prefetchChats, prefetchChatRoute]);
 
   // Handle chat selection
-  const handleSelectChat = useCallback(
-    (id: string, title: string) => {
-      setNavigating(id);
-      const displayTitle = title || 'Untitled Conversation';
-      toast.info(`Opening "${displayTitle}"...`);
-      invalidateChatsCache();
-      onOpenChange(false);
-      router.push(`/search/${id}`);
-    },
-    [onOpenChange],
-  );
 
   // Handle chat deletion with inline confirmation
-  const handleDeleteChat = useCallback((e: React.MouseEvent | KeyboardEvent, id: string, title: string) => {
+  const handleDeleteChat = useCallback((e: React.MouseEvent | KeyboardEvent, id: string) => {
     e.stopPropagation();
     console.log('SETTING DELETING CHAT ID:', id);
     setDeletingChatId(id);
@@ -678,18 +684,39 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   }, [searchMode]);
 
   // Helper function to render a chat item
-  const renderChatItem = (chat: Chat, index: number) => {
+  const renderChatItem = (chat: Chat) => {
     const isCurrentChat = currentChatId === chat.id;
     const isPublic = chat.visibility === 'public';
     const isDeleting = deletingChatId === chat.id;
     const isEditing = editingChatId === chat.id;
     const displayTitle = chat.title || 'Untitled Conversation';
 
+    // Prefetch on hover
+    const handleMouseEnter = () => {
+      if (!isDeleting && !isEditing) {
+        prefetchOnHover(chat.id);
+      }
+    };
+
+    // Prefetch on focus (keyboard navigation)
+    const handleFocus = () => {
+      if (!isDeleting && !isEditing) {
+        prefetchOnFocus(chat.id);
+      }
+    };
+
     return (
       <CommandItem
         key={chat.id}
         value={chat.id}
-        onSelect={() => !isDeleting && !isEditing && handleSelectChat(chat.id, chat.title)}
+        onSelect={() => {
+          if (!isDeleting && !isEditing) {
+            setNavigating(chat.id);
+            router.push(`/search/${chat.id}`);
+          }
+        }}
+        onMouseEnter={handleMouseEnter}
+        onFocus={handleFocus}
         className={cn(
           'flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-md transition-all duration-200 ease-in-out',
           isDeleting &&
@@ -708,6 +735,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               : `Open chat: ${displayTitle}`
         }
       >
+        <Link href={`/search/${chat.id}`} prefetch className="w-full">
         <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
           {/* Icon with visibility indicator */}
           <div className="flex items-center justify-center w-5 relative">
@@ -865,7 +893,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                       !!editingChatId) &&
                       'opacity-50 pointer-events-none',
                   )}
-                  onClick={(e) => handleDeleteChat(e, chat.id, chat.title)}
+                  onClick={(e) => handleDeleteChat(e, chat.id)}
                   aria-label={`Delete ${displayTitle}`}
                   disabled={
                     navigating === chat.id ||
@@ -888,6 +916,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             )}
           </div>
         </div>
+        </Link>
       </CommandItem>
     );
   };
@@ -1005,7 +1034,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                             heading={heading}
                             className="[&_[cmdk-group-heading]]:py-0.5! py-1! mb-0!"
                           >
-                            {chats.map((chat) => renderChatItem(chat, allChats.indexOf(chat)))}
+                            {chats.map((chat) => renderChatItem(chat))}
                           </CommandGroup>
                         )
                       );

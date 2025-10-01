@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { getUser } from '@/lib/auth-utils';
-import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
+import { getChatWithUserAndInitialMessages } from '@/lib/db/chat-queries';
+import { getChatById } from '@/lib/db/queries';
 import { Message, type Chat } from '@/lib/db/schema';
 import { Metadata } from 'next';
 import { UIMessagePart } from 'ai';
@@ -228,16 +229,29 @@ function convertLegacyReasoningPart(part: unknown): unknown {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
-  const chat = await fetchChatWithBackoff(id);
+
+  console.log('🔍 [PAGE] Starting optimized chat page load for:', id);
+  const pageStartTime = Date.now();
+
+  // Get user first for ownership checks
+  const user = await getUser();
+
+  // Use optimized combined query to get chat, user, and messages in fewer DB calls
+  const { chat, messages: messagesFromDb } =
+    await getChatWithUserAndInitialMessages({
+      id,
+      messageLimit: 20,
+      messageOffset: 0,
+    });
 
   if (!chat) {
     notFound();
   }
 
   console.log('Chat: ', chat);
+  console.log('Messages from DB: ', messagesFromDb);
 
-  const user = await getUser();
-
+  // Check visibility and ownership
   if (chat.visibility === 'private') {
     if (!user) {
       return notFound();
@@ -248,18 +262,13 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     }
   }
 
-  // Fetch only the initial 20 messages for faster loading
-  const messagesFromDb = await getMessagesByChatId({
-    id,
-    offset: 0,
-  });
-
-  console.log('Messages from DB: ', messagesFromDb);
-
   const initialMessages = convertToUIMessages(messagesFromDb);
 
   // Determine if the current user owns this chat
   const isOwner = user ? user.id === chat.userId : false;
+
+  const pageLoadTime = (Date.now() - pageStartTime) / 1000;
+  console.log(`⏱️  [PAGE] Total page load time: ${pageLoadTime.toFixed(2)}s`);
 
   return (
     <ChatInterface
