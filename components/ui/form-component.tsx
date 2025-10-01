@@ -1075,9 +1075,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         const shouldShowDiscount = isDevMode
                           ? discountConfig.code && discountConfig.message && discountConfig.percentage
                           : discountConfig.enabled &&
-                            discountConfig.code &&
-                            discountConfig.message &&
-                            discountConfig.percentage;
+                          discountConfig.code &&
+                          discountConfig.message &&
+                          discountConfig.percentage;
 
                         if (shouldShowDiscount && discountConfig.showPrice && discountConfig.finalPrice) {
                           return (
@@ -3133,7 +3133,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const submitForm = useCallback(
     debounce(() => {
-      onSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>);
+      onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
       resetSuggestedQuestions();
 
       // Handle iOS keyboard behavior differently
@@ -3162,26 +3162,46 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        event.key === 'Enter' &&
-        !isCompositionActive.current &&
-        ((isMobile && (event.ctrlKey || event.metaKey)) || (!isMobile && !event.ctrlKey && !event.metaKey))
-      ) {
-        event.preventDefault();
-        if (isProcessing) {
-          toast.error('Please wait for the response to complete!');
-        } else if (isRecording) {
-          toast.error('Please stop recording before submitting!');
-        } else {
-          const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
-
-          if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-            toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+      // Desktop: submit on Cmd/Ctrl + Enter.
+      // Mobile: submit on Enter, allow Shift+Enter to insert newline (when available).
+      if (event.key === 'Enter' && !isCompositionActive.current) {
+        if (isMobile) {
+          if (event.shiftKey) {
+            // Allow newline on Shift+Enter (no preventDefault)
+            return;
+          }
+          event.preventDefault();
+          if (isProcessing) {
+            toast.error('Please wait for the response to complete!');
+          } else if (isRecording) {
+            toast.error('Please stop recording before submitting!');
           } else {
-            submitForm();
-            setTimeout(() => {
-              inputRef.current?.focus();
-            }, 100);
+            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+            if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
+              toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+            } else {
+              submitForm();
+              setTimeout(() => {
+                inputRef.current?.focus();
+              }, 100);
+            }
+          }
+        } else if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          if (isProcessing) {
+            toast.error('Please wait for the response to complete!');
+          } else if (isRecording) {
+            toast.error('Please stop recording before submitting!');
+          } else {
+            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+            if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
+              toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+            } else {
+              submitForm();
+              setTimeout(() => {
+                inputRef.current?.focus();
+              }, 100);
+            }
           }
         }
       }
@@ -3262,7 +3282,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -3275,7 +3295,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -3301,7 +3321,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       size: 0,
                     } as Attachment
                   }
-                  onRemove={() => {}}
+                  onRemove={() => { }}
                   isUploading={true}
                 />
               ))}
