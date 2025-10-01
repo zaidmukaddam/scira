@@ -1,9 +1,6 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-// CSS imports
-import 'katex/dist/katex.min.css';
-
 // React and React-related imports
 import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
 
@@ -136,6 +133,7 @@ const ChatInterface = memo(
       'scira-3-0-update-toast-dismissed',
       false,
     );
+    const [isUpdateToastReady, setIsUpdateToastReady] = useState(false);
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
       'scira-search-provider',
@@ -420,6 +418,17 @@ const ChatInterface = memo(
       }
     }, [status]);
 
+    // Defer rendering of the update toast until the main thread is idle
+    useEffect(() => {
+      const schedule =
+        typeof (window as any).requestIdleCallback === 'function'
+          ? (cb: () => void) => (window as any).requestIdleCallback(cb, { timeout: 2000 })
+          : (cb: () => void) => setTimeout(cb, 1200)
+
+      const id = schedule(() => setIsUpdateToastReady(true)) as unknown as number
+      return () => clearTimeout(id)
+    }, [])
+
     useEffect(() => {
       if (user && status === 'streaming' && messages.length > 0) {
         console.log('[chatId]:', chatId);
@@ -673,7 +682,7 @@ const ChatInterface = memo(
         />
 
         {/* Scira AI 3.0 Update Toast */}
-        {!isDismissedUpdateToast && (
+        {!isDismissedUpdateToast && isUpdateToastReady && (
           <div className="fixed top-4 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="relative group">
               <button
@@ -694,6 +703,9 @@ const ChatInterface = memo(
                   src="https://peerlist.io/api/v1/projects/embed/PRJHP6L9LNDKJ6K7E1QGPQ6OAQPMPJ?showUpvote=true&theme=dark"
                   alt="Scira AI 3.0"
                   className="rounded-md shadow-lg"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   style={{ width: 'auto', height: '60px' }}
                 />
               </a>
