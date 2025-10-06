@@ -75,11 +75,9 @@ import { ChatMessage } from '@/lib/types';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { getCachedCustomInstructionsByUserId } from '@/lib/user-data-server';
+import { GoogleGenerativeAIProvider, GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 
 let globalStreamContext: ResumableStreamContext | null = null;
-
-// Database operations tracking
-const dbOperationTimings: { operation: string; time: number }[] = [];
 
 // Shared config promise to avoid duplicate calls
 let configPromise: Promise<any>;
@@ -104,8 +102,6 @@ export function getStreamContext() {
 }
 
 export async function POST(req: Request) {
-  console.log('🔍 Search API endpoint hit');
-
   const requestStartTime = Date.now();
   const {
     messages,
@@ -119,363 +115,201 @@ export async function POST(req: Request) {
     selectedConnectors,
   } = await req.json();
   const { latitude, longitude } = geolocation(req);
-
-  console.log('--------------------------------');
-  console.log('Location: ', latitude, longitude);
-  console.log('--------------------------------');
-
-  console.log('--------------------------------');
-  console.log('Messages: ', messages);
-  console.log('--------------------------------');
-
-  console.log('Running with model: ', model.trim());
-  console.log('Group: ', group);
-  console.log('Timezone: ', timezone);
-
-  // OPTIMIZATION: Use lightweight auth check first for faster validation
-  const lightweightAuthCheckTime = Date.now();
-  console.log('🔍 [DB] Starting getLightweightUser() (fast auth check)...');
-  const lightweightUser = await getLightweightUser();
   const streamId = 'stream-' + uuidv4();
-  const lightweightAuthTime = (Date.now() - lightweightAuthCheckTime) / 1000;
-  dbOperationTimings.push({ operation: 'getLightweightUser', time: lightweightAuthTime });
-  console.log(`⏱️  [DB] getLightweightUser() took: ${lightweightAuthTime.toFixed(2)}s`);
 
+  console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
+
+  // CRITICAL PATH: Get auth status first (required for all subsequent checks)
+  const lightweightUser = await getLightweightUser();
+
+  // Early exit checks (no DB operations needed)
   if (!lightweightUser) {
-    console.log('User not authenticated');
+    if (requiresAuthentication(model)) {
+      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
+    }
+    if (group === 'extreme') {
+      return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
+    }
+  } else {
+    // Fast auth checks using lightweight user (no additional DB calls)
+    if (requiresProSubscription(model) && !lightweightUser.isProUser) {
+      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
+    }
   }
 
-  // Check if model requires authentication (fast check using lightweight user)
-  const authRequiredModels = models.filter((m) => m.requiresAuth).map((m) => m.value);
-  if (authRequiredModels.includes(model) && !lightweightUser) {
-    return new ChatSDKError('unauthorized:model', `Authentication required to access ${model}`).toResponse();
-  }
-
-  // Check if model requires Pro subscription (fast check using lightweight user)
-  if (lightweightUser && requiresProSubscription(model) && !lightweightUser.isProUser) {
-    return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
-  }
-
-  // OPTIMIZATION: Start config fetch immediately for all users (parallel with everything else)
-  const configStartTime = Date.now();
-  console.log('🔍 [DB] Starting getGroupConfig() early (parallel)...');
-  configPromise = getGroupConfig(group).then((config) => {
-    const configTime = (Date.now() - configStartTime) / 1000;
-    dbOperationTimings.push({ operation: 'getGroupConfig', time: configTime });
-    console.log(`⏱️  [DB] getGroupConfig() took: ${configTime.toFixed(2)}s`);
-    return config;
-  });
-
-  // Fetch full user data in parallel with other operations (only if authenticated)
+  // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
+  const isProUser = lightweightUser?.isProUser ?? false;
+  
+  // 1. Config (needed for streaming) - start immediately
+  configPromise = getGroupConfig(group);
+  
+  // 2. Full user data (needed for usage checks and custom instructions)
   const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
+  
+  // 3. Custom instructions (only if enabled and authenticated)
+  const customInstructionsPromise = lightweightUser && (isCustomInstructionsEnabled ?? true)
+    ? fullUserPromise.then(user => user ? getCachedCustomInstructionsByUserId(user.id) : null)
+    : Promise.resolve(null);
 
-  let customInstructions: CustomInstructions | null = null;
-
-  console.log('--------------------------------');
-  console.log('Custom Instructions Enabled:', isCustomInstructionsEnabled);
-  console.log('--------------------------------');
-
-  // For authenticated users, do critical checks in parallel
+  // 4. For authenticated users: start ALL operations in parallel
   let criticalChecksPromise: Promise<{
     canProceed: boolean;
     error?: any;
-    isProUser?: boolean;
-  }> = Promise.resolve({ canProceed: true });
-
-  const customInstructionsPromise = lightweightUser
-    ? fullUserPromise.then(async (user) => {
-      if (!user) return null;
-      console.log('🔍 [DB] Fetching (cached) custom instructions...');
-      const start = Date.now();
-      const instructions = await getCachedCustomInstructionsByUserId(user.id);
-      const elapsed = (Date.now() - start) / 1000;
-      dbOperationTimings.push({ operation: 'getCustomInstructions', time: elapsed });
-      console.log(`⏱️  [DB] getCustomInstructions() took: ${elapsed.toFixed(2)}s`);
-      return instructions;
-    })
-    : Promise.resolve(null);
+    isProUser: boolean;
+    messageCount?: number;
+    extremeSearchUsage?: number;
+    subscriptionData?: any;
+    shouldBypassLimits?: boolean;
+  }>;
 
   if (lightweightUser) {
-    const isProUser = lightweightUser.isProUser;
-
-    // OPTIMIZATION: Start all independent DB operations in parallel
-    const parallelOpsStartTime = Date.now();
-    console.log('🔍 [DB] Starting parallel operations (getChatById, getGroupConfig, usage checks)...');
-
-    // Start getChatById immediately
-    const getChatStartTime = Date.now();
-    const getChatPromise = getChatById({ id }).then((chat) => {
-      const getChatTime = (Date.now() - getChatStartTime) / 1000;
-      dbOperationTimings.push({ operation: 'getChatById', time: getChatTime });
-      console.log(`⏱️  [DB] getChatById() took: ${getChatTime.toFixed(2)}s`);
-      return chat;
-    });
-
-    // For non-Pro users, start usage checks in parallel
-    let usageChecksPromise: Promise<{
-      messageCountResult: any;
-      extremeSearchUsage: any;
-      user: any;
-    } | null>;
-    if (!isProUser) {
-      const criticalChecksStartTime = Date.now();
-      usageChecksPromise = fullUserPromise.then(async (user) => {
-        if (!user) {
-          throw new ChatSDKError('unauthorized:auth', 'User authentication failed');
-        }
-        console.log('🔍 [DB] Starting getUserMessageCount() and getExtremeSearchUsageCount()...');
-        const [messageCountResult, extremeSearchUsage] = await Promise.all([
-          getUserMessageCount(user),
-          getExtremeSearchUsageCount(user),
-        ]);
-        const criticalChecksTime = (Date.now() - criticalChecksStartTime) / 1000;
-        dbOperationTimings.push({
-          operation: 'getUserMessageCount + getExtremeSearchUsageCount',
-          time: criticalChecksTime,
-        });
-        console.log(
-          `⏱️  [DB] getUserMessageCount() + getExtremeSearchUsageCount() took: ${criticalChecksTime.toFixed(2)}s`,
-        );
-        return { messageCountResult, extremeSearchUsage, user };
-      });
-    } else {
-      usageChecksPromise = Promise.resolve(null);
-    }
-
-    // Wait for chat check to complete before creating/validating
-    try {
-      const existingChat = await getChatPromise;
-
+    // Chat validation and creation (must be synchronous for DB consistency)
+    const chatValidationPromise = getChatById({ id }).then(async (existingChat) => {
+      // Validate ownership if chat exists
+      if (existingChat && existingChat.userId !== lightweightUser.userId) {
+        throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+      }
+      
+      // Create chat if it doesn't exist (MUST be sync - other operations depend on it)
       if (!existingChat) {
-        // Create chat immediately with a temporary title to avoid blocking the request
-        const saveChatStartTime = Date.now();
-        console.log('🔍 [DB] Starting saveChat()...');
         await saveChat({
           id,
           userId: lightweightUser.userId,
-          title: 'New Chat', // Temporary title
+          title: 'New Chat',
           visibility: selectedVisibilityType,
         });
-        const saveChatTime = (Date.now() - saveChatStartTime) / 1000;
-        dbOperationTimings.push({ operation: 'saveChat', time: saveChatTime });
-        console.log(`⏱️  [DB] saveChat() took: ${saveChatTime.toFixed(2)}s`);
-
-        // Generate title in background and update the chat
+        
+        // Generate better title in background (non-critical)
         after(async () => {
           try {
             const title = await generateTitleFromUserMessage({
               message: messages[messages.length - 1],
             });
-            console.log('--------------------------------');
-            console.log('Generated title: ', title);
-            console.log('--------------------------------');
-            // Update the chat with the generated title
-            await updateChatTitleById({
-              chatId: id,
-              title: title,
-            });
-            console.log('✅ Background title generation completed');
-          } catch (titleError) {
-            console.error('Background title generation failed:', titleError);
+            await updateChatTitleById({ chatId: id, title });
+          } catch (error) {
+            console.error('Background title generation failed:', error);
           }
         });
-
-        console.log('✅ Early chat creation completed for authenticated user');
-      } else {
-        if (existingChat.userId !== lightweightUser.userId) {
-          throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
-        }
       }
+      
+      // Stream tracking in background (non-critical for functionality)
+      after(async () => {
+        try {
+          await createStreamId({ streamId, chatId: id });
+        } catch (error) {
+          console.error('Background createStreamId failed:', error);
+        }
+      });
+      
+      return existingChat;
+    });
 
-      // Create stream record - can run in parallel with usage checks
-      const createStreamStartTime = Date.now();
-      console.log('🔍 [DB] Starting createStreamId()...');
-      await createStreamId({ streamId, chatId: id });
-      const createStreamTime = (Date.now() - createStreamStartTime) / 1000;
-      dbOperationTimings.push({ operation: 'createStreamId', time: createStreamTime });
-      console.log(`⏱️  [DB] createStreamId() took: ${createStreamTime.toFixed(2)}s`);
-      console.log('✅ Early stream creation completed');
-    } catch (earlyChatError) {
-      console.error('Early chat creation failed:', earlyChatError);
-      return new ChatSDKError('bad_request:database', 'Failed to initialize chat').toResponse();
-    }
-
-    const parallelOpsTime = (Date.now() - parallelOpsStartTime) / 1000;
-    console.log(`⏱️  [PARALLEL] All parallel operations initiated in: ${parallelOpsTime.toFixed(2)}s`);
-
-    // Pro subscription check already done earlier with lightweight user
-
+    // For non-Pro users: run usage checks in parallel
     if (!isProUser) {
-      try {
-        const usageResults = await usageChecksPromise;
-        if (!usageResults) {
-          return new ChatSDKError('unauthorized:auth', 'User authentication failed').toResponse();
+      criticalChecksPromise = Promise.all([
+        fullUserPromise,
+        chatValidationPromise,
+      ]).then(async ([user]) => {
+        if (!user) {
+          throw new ChatSDKError('unauthorized:auth', 'User authentication failed');
         }
 
-        const { messageCountResult, extremeSearchUsage, user } = usageResults;
+        const [messageCountResult, extremeSearchUsage] = await Promise.all([
+          getUserMessageCount(user),
+          getExtremeSearchUsageCount(user),
+        ]);
 
         if (messageCountResult.error) {
-          console.error('Error getting message count:', messageCountResult.error);
-          return new ChatSDKError('bad_request:api', 'Failed to verify usage limits').toResponse();
+          throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
         }
 
         const shouldBypassLimits = shouldBypassRateLimits(model, user);
-
-        if (!shouldBypassLimits && messageCountResult.count !== undefined) {
-          const dailyLimit = 100;
-          if (messageCountResult.count >= dailyLimit) {
-            return new ChatSDKError('rate_limit:chat', 'Daily search limit reached').toResponse();
-          }
+        if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
+          throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
         }
 
-        criticalChecksPromise = Promise.resolve({
+        return {
           canProceed: true,
-          messageCount: messageCountResult.count,
           isProUser: false,
+          messageCount: messageCountResult.count,
+          extremeSearchUsage: extremeSearchUsage.count,
           subscriptionData: user.polarSubscription
-            ? {
-              hasSubscription: true,
-              subscription: { ...user.polarSubscription, organizationId: null },
-            }
+            ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
             : { hasSubscription: false },
           shouldBypassLimits,
-          extremeSearchUsage: extremeSearchUsage.count,
-        });
-      } catch (error) {
-        console.error('Critical checks failed:', error);
-        if (error instanceof ChatSDKError) {
-          return error.toResponse();
-        }
-        return new ChatSDKError('bad_request:api', 'Failed to verify user access').toResponse();
-      }
+        };
+      }).catch(error => {
+        if (error instanceof ChatSDKError) throw error;
+        throw new ChatSDKError('bad_request:api', 'Failed to verify user access');
+      });
     } else {
-      console.log('⏱️  Critical checks skipped (Pro user - no usage limits)');
-      criticalChecksPromise = fullUserPromise.then((user) => ({
+      // Pro users: just validate chat ownership
+      criticalChecksPromise = Promise.all([
+        fullUserPromise,
+        chatValidationPromise,
+      ]).then(([user]) => ({
         canProceed: true,
-        messageCount: 0,
         isProUser: true,
+        messageCount: 0,
+        extremeSearchUsage: 0,
         subscriptionData: user?.polarSubscription
-          ? {
-            hasSubscription: true,
-            subscription: { ...user.polarSubscription, organizationId: null },
-          }
+          ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
           : { hasSubscription: false },
         shouldBypassLimits: true,
-        extremeSearchUsage: 0,
       }));
     }
   } else {
-    if (requiresAuthentication(model)) {
-      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
-    }
-
+    // Unauthenticated users: no checks needed
     criticalChecksPromise = Promise.resolve({
       canProceed: true,
-      messageCount: 0,
       isProUser: false,
+      messageCount: 0,
+      extremeSearchUsage: 0,
       subscriptionData: null,
       shouldBypassLimits: false,
-      extremeSearchUsage: 0,
     });
   }
 
-  // Config promise already started early for all users
-
-  // If we don't have custom instructions promise yet (unauthenticated user), create it now
-  const finalCustomInstructionsPromise = customInstructionsPromise || Promise.resolve(null);
+  let customInstructions: CustomInstructions | null = null;
 
   // Start streaming immediately while background operations continue
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      const criticalWaitStartTime = Date.now();
-      const criticalResult = await criticalChecksPromise;
-      console.log(`⏱️  Critical checks wait took: ${((Date.now() - criticalWaitStartTime) / 1000).toFixed(2)}s`);
+      // Wait for critical checks and config in parallel (only what's needed to start streaming)
+      const [criticalResult, { tools: activeTools, instructions }, customInstructionsResult, user] = await Promise.all([
+        criticalChecksPromise,
+        configPromise,
+        customInstructionsPromise,
+        fullUserPromise,
+      ]);
 
       if (!criticalResult.canProceed) {
         throw criticalResult.error;
       }
 
-      // Add individual timing for each operation
-      const configWaitStartTime = Date.now();
-      const customInstructionsWaitStartTime = Date.now();
-
-      const configWithTiming = configPromise.then((result) => {
-        console.log(`⏱️  [DB] Config promise wait took: ${((Date.now() - configWaitStartTime) / 1000).toFixed(2)}s`);
-        return result;
-      });
-
-      const customInstructionsWithTiming = finalCustomInstructionsPromise.then((result) => {
-        console.log(
-          `⏱️  [DB] Custom instructions promise wait took: ${((Date.now() - customInstructionsWaitStartTime) / 1000).toFixed(2)}s`,
-        );
-        return result;
-      });
-
-      const combinedWaitStartTime = Date.now();
-      const [{ tools: activeTools, instructions }, customInstructionsResult] = await Promise.all([
-        configWithTiming,
-        customInstructionsWithTiming,
-      ]);
       customInstructions = customInstructionsResult;
-      console.log(`⏱️  Combined wait took: ${((Date.now() - combinedWaitStartTime) / 1000).toFixed(2)}s`);
-      console.log('Custom Instructions from DB:', customInstructions ? 'Found' : 'Not found');
-      console.log('Will apply custom instructions:', !!(customInstructions && (isCustomInstructionsEnabled ?? true)));
-
-      // Get full user data for message saving
-      const user = await fullUserPromise;
+      
+      // Save user message BEFORE streaming (critical for conversation history)
       if (user) {
-        const backgroundOperations = (async () => {
-          try {
-            const backgroundStartTime = Date.now();
-            console.log('🔍 [DB] Starting background saveMessages()...');
-            await saveMessages({
-              messages: [
-                {
-                  chatId: id,
-                  id: messages[messages.length - 1].id,
-                  role: 'user',
-                  parts: messages[messages.length - 1].parts,
-                  attachments: messages[messages.length - 1].experimental_attachments ?? [],
-                  createdAt: new Date(),
-                  model: model,
-                  inputTokens: 0,
-                  outputTokens: 0,
-                  totalTokens: 0,
-                  completionTime: 0,
-                },
-              ],
-            });
-            console.log(
-              `⏱️  [DB] Background saveMessages() took: ${((Date.now() - backgroundStartTime) / 1000).toFixed(2)}s`,
-            );
-
-            console.log('--------------------------------');
-            console.log('Messages saved: ', messages);
-            console.log('--------------------------------');
-          } catch (error) {
-            console.error('Error in background message operations:', error);
-          }
-        })();
-
-        backgroundOperations.catch((error) => {
-          console.error('Background operations failed:', error);
+        await saveMessages({
+          messages: [{
+            chatId: id,
+            id: messages[messages.length - 1].id,
+            role: 'user',
+            parts: messages[messages.length - 1].parts,
+            attachments: messages[messages.length - 1].experimental_attachments ?? [],
+            createdAt: new Date(),
+            model: model,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            completionTime: 0,
+          }],
         });
       }
 
-      const preStreamTime = Date.now();
-      const setupTime = (preStreamTime - requestStartTime) / 1000;
-      const totalDbTime = dbOperationTimings.reduce((sum, op) => sum + op.time, 0);
-
-      console.log('================================');
-      console.log(`🚀 TOTAL TIME TO REACH STREAMTEXT: ${setupTime.toFixed(2)} seconds`);
-      console.log(
-        `📊 TOTAL DATABASE TIME: ${totalDbTime.toFixed(2)} seconds (${((totalDbTime / setupTime) * 100).toFixed(1)}% of total)`,
-      );
-      console.log('📋 DB OPERATIONS BREAKDOWN:');
-      dbOperationTimings.forEach((op) => {
-        console.log(`   • ${op.operation}: ${op.time.toFixed(2)}s`);
-      });
-      console.log('================================');
+      const setupTime = (Date.now() - requestStartTime) / 1000;
+      console.log(`🚀 Time to streamText: ${setupTime.toFixed(2)}s`);
 
       const streamStartTime = Date.now();
 
@@ -499,7 +333,8 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           gateway: {
-            only: ['openai', 'anthropic', 'moonshotai', 'zai', 'deepseek', 'fireworks', 'bedrock', 'alibaba'],
+            only: ['openai', 'anthropic', 'vertex', 'moonshotai', 'zai', 'deepseek', 'fireworks', 'bedrock', 'alibaba'],
+            order: ['anthropic', 'vertex', 'bedrock']
           },
           openai: {
             ...(model !== 'scira-qwen-coder'
@@ -513,7 +348,13 @@ export async function POST(req: Request) {
               model === 'scira-gpt5-nano' ||
               model === 'scira-gpt5-codex'
               ? {
-                reasoningEffort: 'medium',
+                reasoningEffort: (
+                  model === 'scira-gpt5-nano' ||
+                    model === 'scira-gpt5' ||
+                    model === 'scira-gpt5-mini' ?
+                    'minimal' :
+                    'medium'
+                ),
                 parallelToolCalls: false,
                 store: false,
                 reasoningSummary: 'detailed',
@@ -555,6 +396,29 @@ export async function POST(req: Request) {
               : {}),
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
+          google: {
+            ...(model === 'scira-google-think'
+              ? {
+                thinkingConfig: {
+                  thinkingBudget: 400,
+                  includeThoughts: true,
+                },
+              }
+              : {}),
+            threshold: "OFF"
+          } satisfies GoogleGenerativeAIProviderOptions,
+        },
+        prepareStep: async ({ steps }) => {
+          if (steps.length > 0) {
+            const lastStep = steps[steps.length - 1];
+
+            // If tools were called and results are available, disable further tool calls
+            if (lastStep.toolCalls.length > 0 && lastStep.toolResults.length > 0) {
+              return {
+                toolChoice: 'none',
+              };
+            }
+          }
         },
         tools: (() => {
           const baseTools = {
@@ -652,52 +516,35 @@ export async function POST(req: Request) {
           }
         },
         onFinish: async (event) => {
-          console.log('Finished event:', event);
-          console.log('Reason:', event.finishReason);
-          console.log('Steps:', event.steps);
-          console.log('Reasoning:', event.reasoning);
+          const processingTime = (Date.now() - requestStartTime) / 1000;
+          console.log(`✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason})`);
+          
           if (user?.id && event.finishReason === 'stop') {
+            // Track usage in background
             after(async () => {
               try {
                 if (!shouldBypassRateLimits(model, user)) {
                   await incrementMessageUsage({ userId: user.id });
                 }
-              } catch (error) {
-                console.error('Failed to track message usage:', error);
-              }
-            });
-
-            if (group === 'extreme') {
-              after(async () => {
-                try {
+                
+                // Track extreme search usage if used
+                if (group === 'extreme') {
                   const extremeSearchUsed = event.steps?.some((step) =>
                     step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
                   );
-
                   if (extremeSearchUsed) {
-                    console.log('Extreme search was used successfully, incrementing count');
                     await incrementExtremeSearchUsage({ userId: user.id });
                   }
-                } catch (error) {
-                  console.error('Failed to track extreme search usage:', error);
                 }
-              });
-            }
+              } catch (error) {
+                console.error('Failed to track usage:', error);
+              }
+            });
           }
-
-          const requestEndTime = Date.now();
-          const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
         },
         onError(event) {
-          console.log('Error: ', event.error);
-          const requestEndTime = Date.now();
-          const processingTime = (requestEndTime - requestStartTime) / 1000;
-          console.log('--------------------------------');
-          console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
-          console.log('--------------------------------');
+          const processingTime = (Date.now() - requestStartTime) / 1000;
+          console.error(`❌ Request failed: ${processingTime.toFixed(2)}s`, event.error);
         },
       });
 
@@ -731,10 +578,7 @@ export async function POST(req: Request) {
       return 'Oops, an error occurred!';
     },
     onFinish: async ({ messages }) => {
-      console.log('onFinish', messages);
       if (lightweightUser) {
-        const finalSaveStartTime = Date.now();
-        console.log('🔍 [DB] Starting final saveMessages()...');
         await saveMessages({
           messages: messages.map((message) => ({
             id: message.id,
@@ -750,9 +594,6 @@ export async function POST(req: Request) {
             totalTokens: message.metadata?.totalTokens ?? 0,
           })),
         });
-        const finalSaveTime = (Date.now() - finalSaveStartTime) / 1000;
-        console.log(`⏱️  [DB] Final saveMessages() took: ${finalSaveTime.toFixed(2)}s`);
-        console.log('✅ Messages saved');
       }
     },
   });

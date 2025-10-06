@@ -52,10 +52,10 @@ type MultiSearchResponse = {
 type Topic = 'general' | 'news';
 
 type MultiSearchArgs = {
-  queries?: (string | undefined)[] | null;
-  maxResults?: (number | undefined)[] | null;
-  topics?: (Topic | undefined)[] | null;
-  quality?: (('default' | 'best') | undefined)[] | null;
+  queries?: (string | undefined)[] | string | null;
+  maxResults?: (number | undefined)[] | number | null;
+  topics?: (Topic | undefined)[] | Topic | null;
+  quality?: (('default' | 'best') | undefined)[] | ('default' | 'best') | null;
 };
 
 type NormalizedMultiSearchArgs = {
@@ -624,12 +624,12 @@ const MultiSearch = ({
   // Normalize args to ensure required arrays for UI rendering
   const normalizedArgs = React.useMemo<NormalizedMultiSearchArgs>(
     () => ({
-      queries: (args.queries ?? ['']).filter((q): q is string => typeof q === 'string' && q.length > 0),
-      maxResults: (args.maxResults ?? [10]).filter((n): n is number => typeof n === 'number'),
-      topics: (args.topics ?? ['general']).filter(
-        (t): t is Topic => t === 'general' || t === 'news' || t === 'finance',
+      queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter((q): q is string => typeof q === 'string' && q.length > 0),
+      maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 10]).filter((n): n is number => typeof n === 'number'),
+      topics: (Array.isArray(args.topics) ? args.topics : [args.topics ?? 'general']).filter(
+        (t): t is Topic => t === 'general' || t === 'news',
       ),
-      quality: (args.quality ?? ['default']).filter((q): q is 'default' | 'best' => q === 'default' || q === 'best'),
+      quality: (Array.isArray(args.quality) ? args.quality : [args.quality ?? 'default']).filter((q): q is 'default' | 'best' => q === 'default' || q === 'best'),
     }),
     [args],
   );

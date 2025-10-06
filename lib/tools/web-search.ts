@@ -136,81 +136,89 @@ class ParallelSearchStrategy implements SearchStrategy {
       });
     });
 
-    const maxResults_total = Math.max(...options.maxResults, 15);
-
     try {
-      const batchResponse = await this.parallel.beta.search({
-        objective: limitedQueries[0],
-        search_queries: limitedQueries,
-        processor: options.quality.includes('best') ? 'pro' : 'base',
-        max_results: maxResults_total,
-        max_chars_per_result: 1000,
-      });
+      const perQueryPromises = limitedQueries.map(async (query, index) => {
+        const currentQuality = options.quality[index] || options.quality[0] || 'default';
+        const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
 
-      // Get images for all queries in parallel using Firecrawl
-      const imagePromises = limitedQueries.map(async (query) => {
         try {
-          const result = await this.firecrawl.search(query, {
-            sources: ['images'],
-            limit: 3,
+          // Run Parallel AI search and Firecrawl images concurrently per query
+          const [singleResponse, firecrawlImages] = await Promise.all([
+            this.parallel.beta.search({
+              objective: query,
+              search_queries: [query],
+              processor: currentQuality === 'best' ? 'pro' : 'base',
+              max_results: Math.max(currentMaxResults, 10),
+              max_chars_per_result: 1000,
+            }),
+            this.firecrawl.search(query, {
+              sources: ['images'],
+              limit: 3,
+            }).catch((error) => {
+              console.error(`Firecrawl error for query "${query}":`, error);
+              return { images: [] } as Partial<Document> as any;
+            }),
+          ]);
+
+          const results = (singleResponse?.results || []).map((result: any) => ({
+            url: result.url,
+            title: cleanTitle(result.title || ''),
+            content: Array.isArray(result.excerpts)
+              ? result.excerpts.join(' ').substring(0, 1000)
+              : (result.content || '').substring(0, 1000),
+            published_date: undefined,
+            author: undefined,
+          }));
+
+          const images = ((firecrawlImages as any)?.images || [])
+            .filter(isSearchResultImages)
+            .map((item: any) => ({
+              url: getImageUrl(item) || '',
+              description: cleanTitle(item.title || ''),
+            }))
+            .filter((item: any) => item.url);
+
+          // Send completion notification
+          options.dataStream?.write({
+            type: 'data-query_completion',
+            data: {
+              query,
+              index,
+              total: limitedQueries.length,
+              status: 'completed',
+              resultsCount: results.length,
+              imagesCount: images.length,
+            },
           });
-          return (
-            result?.images
-              ?.filter(isSearchResultImages)
-              .map((item) => ({
-                url: getImageUrl(item) || '',
-                description: cleanTitle(item.title || ''),
-              }))
-              .filter((item) => item.url) || []
-          );
+
+          return {
+            query,
+            results: deduplicateByDomainAndUrl(results),
+            images: deduplicateByDomainAndUrl(images),
+          };
         } catch (error) {
-          console.error(`Firecrawl error for query "${query}":`, error);
-          return [];
+          console.error(`Parallel AI search error for query "${query}":`, error);
+
+          options.dataStream?.write({
+            type: 'data-query_completion',
+            data: {
+              query,
+              index,
+              total: limitedQueries.length,
+              status: 'error',
+              resultsCount: 0,
+              imagesCount: 0,
+            },
+          });
+
+          return { query, results: [], images: [] };
         }
       });
 
-      const allImagesResults = await Promise.all(imagePromises);
-
-      // Process results and distribute them across queries
-      const searchResults = limitedQueries.map((query, index) => {
-        // For batch response, results are combined - we'll split them evenly
-        const startIdx = Math.floor((index / limitedQueries.length) * batchResponse.results.length || 0);
-        const endIdx = Math.floor(((index + 1) / limitedQueries.length) * batchResponse.results.length || 0);
-        const queryResults = batchResponse.results.slice(startIdx, endIdx) || [];
-
-        const results = queryResults.map((result) => ({
-          url: result.url,
-          title: cleanTitle(result.title || ''),
-          content: result.excerpts.join(' ').substring(0, 1000),
-          published_date: undefined,
-          author: undefined,
-        }));
-
-        const queryImages = allImagesResults[index] || [];
-
-        // Send completion notification
-        options.dataStream?.write({
-          type: 'data-query_completion',
-          data: {
-            query,
-            index,
-            total: limitedQueries.length,
-            status: 'completed',
-            resultsCount: results.length,
-            imagesCount: queryImages.length,
-          },
-        });
-
-        return {
-          query,
-          results: deduplicateByDomainAndUrl(results),
-          images: deduplicateByDomainAndUrl(queryImages),
-        };
-      });
-
+      const searchResults = await Promise.all(perQueryPromises);
       return { searches: searchResults };
     } catch (error) {
-      console.error('Parallel AI batch search error:', error);
+      console.error('Parallel AI batch orchestration error:', error);
 
       // Send error notifications for all queries
       limitedQueries.forEach((query, index) => {
@@ -228,11 +236,7 @@ class ParallelSearchStrategy implements SearchStrategy {
       });
 
       return {
-        searches: limitedQueries.map((query) => ({
-          query,
-          results: [],
-          images: [],
-        })),
+        searches: limitedQueries.map((query) => ({ query, results: [], images: [] })),
       };
     }
   }
@@ -641,27 +645,24 @@ export function webSearchTool(
       maxResults: z.array(
         z
           .number()
-          .optional()
           .describe(
             'Array of maximum number of results to return per query. Default is 10. Minimum is 8. Maximum is 15.',
           ),
-      ),
+      ).optional(),
       topics: z.array(
         z
           .enum(['general', 'news'])
-          .optional()
           .describe(
             'Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.',
           ),
-      ),
+      ).optional(),
       quality: z.array(
         z
           .enum(['default', 'best'])
-          .optional()
           .describe(
             'Array of quality levels for the search. Default is default. Other option is best. DO NOT use best unless necessary.',
           ),
-      ),
+      ).optional(),
     }),
     execute: async ({
       queries,
@@ -670,9 +671,9 @@ export function webSearchTool(
       quality,
     }: {
       queries: string[];
-      maxResults: (number | undefined)[];
-      topics: ('general' | 'news' | undefined)[];
-      quality: ('default' | 'best' | undefined)[];
+      maxResults?: (number | undefined)[];
+      topics?: ('general' | 'news' | undefined)[];
+      quality?: ('default' | 'best' | undefined)[];
     }) => {
       // Initialize all clients
       const clients = {

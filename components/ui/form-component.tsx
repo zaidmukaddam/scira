@@ -14,12 +14,13 @@ import {
   getAcceptedFileTypes,
   shouldBypassRateLimits,
 } from '@/ai/providers';
-import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles } from 'lucide-react';
+import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
 
 import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
 import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
@@ -523,10 +524,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           setOpen(false);
                         }}
                       >
-                        <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
                           <div
                             className={cn(
-                              'font-medium truncate flex items-center gap-1',
+                              'font-medium truncate flex-1',
                               isMobile ? 'text-sm' : 'text-[11px]',
                             )}
                           >
@@ -538,63 +539,48 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             ) : (
                               <span className="inline">{model.label}</span>
                             )}
-                            {requiresAuth ? (
-                              <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-3.5' : 'size-3')} />
-                            ) : (
-                              <HugeiconsIcon
-                                icon={Crown02Icon}
-                                size={isMobile ? 14 : 12}
-                                color="currentColor"
-                                strokeWidth={1.5}
-                                className="text-muted-foreground"
-                              />
-                            )}
-                            {model.vision && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
-                            {model.reasoning && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
-                            {model.pdf && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
                           </div>
-                          <div
-                            className={cn(
-                              'text-muted-foreground truncate leading-tight',
-                              isMobile ? 'text-xs' : 'text-[9px]',
-                            )}
-                          >
-                            {!isMobile && searchQuery ? (
-                              <span
-                                className="inline"
-                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
-                              />
-                            ) : (
-                              <span className="inline">{model.description}</span>
-                            )}
-                          </div>
+                          {requiresAuth ? (
+                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={Crown02Icon}
+                              size={isMobile ? 14 : 12}
+                              color="currentColor"
+                              strokeWidth={1.5}
+                              className="text-muted-foreground flex-shrink-0"
+                            />
+                          )}
+                          {model.vision && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
+                          {model.reasoning && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
+                          {model.pdf && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -615,10 +601,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         'data-[selected=true]:bg-accent',
                       )}
                     >
-                      <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
                         <div
                           className={cn(
-                            'font-medium truncate flex items-center gap-1',
+                            'font-medium truncate',
                             isMobile ? 'text-sm' : 'text-[11px]',
                           )}
                         >
@@ -630,10 +616,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           ) : (
                             <span className="inline">{model.label}</span>
                           )}
+                        </div>
+                        <Check
+                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                        />
+                        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                           {model.isNew && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -643,7 +634,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.fast && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -674,7 +665,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.vision && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -684,7 +675,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.reasoning && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -694,7 +685,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.pdf && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -702,25 +693,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             </div>
                           )}
                         </div>
-                        <div
-                          className={cn(
-                            'text-muted-foreground truncate leading-tight',
-                            isMobile ? 'text-xs' : 'text-[9px]',
-                          )}
-                        >
-                          {!isMobile && searchQuery ? (
-                            <span
-                              className="inline"
-                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
-                            />
-                          ) : (
-                            <span className="inline">{model.description}</span>
-                          )}
-                        </div>
                       </div>
-                      <Check
-                        className={cn('ml-auto h-4 w-4', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
-                      />
                     </CommandItem>
                   );
                 })}
@@ -767,10 +740,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           setOpen(false);
                         }}
                       >
-                        <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
                           <div
                             className={cn(
-                              'font-medium truncate flex items-center gap-1',
+                              'font-medium truncate flex-1',
                               isMobile ? 'text-sm' : 'text-[11px]',
                             )}
                           >
@@ -782,63 +755,48 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             ) : (
                               <span className="inline">{model.label}</span>
                             )}
-                            {requiresAuth ? (
-                              <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-3.5' : 'size-3')} />
-                            ) : (
-                              <HugeiconsIcon
-                                icon={Crown02Icon}
-                                size={isMobile ? 14 : 12}
-                                color="currentColor"
-                                strokeWidth={1.5}
-                                className="text-muted-foreground"
-                              />
-                            )}
-                            {model.vision && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
-                            {model.reasoning && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
-                            {model.pdf && (
-                              <div
-                                className={cn(
-                                  'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
-                                  isMobile ? 'p-1' : 'p-0.5',
-                                )}
-                              >
-                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                              </div>
-                            )}
                           </div>
-                          <div
-                            className={cn(
-                              'text-muted-foreground truncate leading-tight',
-                              isMobile ? 'text-xs' : 'text-[9px]',
-                            )}
-                          >
-                            {!isMobile && searchQuery ? (
-                              <span
-                                className="inline"
-                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
-                              />
-                            ) : (
-                              <span className="inline">{model.description}</span>
-                            )}
-                          </div>
+                          {requiresAuth ? (
+                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={Crown02Icon}
+                              size={isMobile ? 14 : 12}
+                              color="currentColor"
+                              strokeWidth={1.5}
+                              className="text-muted-foreground flex-shrink-0"
+                            />
+                          )}
+                          {model.vision && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
+                          {model.reasoning && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
+                          {model.pdf && (
+                            <div
+                              className={cn(
+                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                isMobile ? 'p-1' : 'p-0.5',
+                              )}
+                            >
+                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -859,10 +817,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         'data-[selected=true]:bg-accent',
                       )}
                     >
-                      <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
                         <div
                           className={cn(
-                            'font-medium truncate flex items-center gap-1',
+                            'font-medium truncate',
                             isMobile ? 'text-sm' : 'text-[11px]',
                           )}
                         >
@@ -874,10 +832,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           ) : (
                             <span className="inline">{model.label}</span>
                           )}
+                        </div>
+                        <Check
+                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                        />
+                        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                           {model.isNew && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -887,7 +850,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.fast && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -918,7 +881,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.vision && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -928,7 +891,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.reasoning && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -938,7 +901,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.pdf && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 ml-1',
+                                'inline-flex items-center justify-center rounded bg-secondary/50',
                                 isMobile ? 'p-1' : 'p-0.5',
                               )}
                             >
@@ -946,25 +909,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             </div>
                           )}
                         </div>
-                        <div
-                          className={cn(
-                            'text-muted-foreground truncate leading-tight',
-                            isMobile ? 'text-xs' : 'text-[9px]',
-                          )}
-                        >
-                          {!isMobile && searchQuery ? (
-                            <span
-                              className="inline"
-                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.description) }}
-                            />
-                          ) : (
-                            <span className="inline">{model.description}</span>
-                          )}
-                        </div>
                       </div>
-                      <Check
-                        className={cn('ml-auto h-4 w-4', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
-                      />
                     </CommandItem>
                   );
                 })}
@@ -1028,7 +973,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <TriggerButton />
             </PopoverTrigger>
             <PopoverContent
-              className="w-[90vw] sm:w-[16em] max-w-[16em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
+              className="w-[90vw] sm:w-[20em] max-w-[20em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
               align="start"
               side="bottom"
               sideOffset={4}
@@ -1721,13 +1666,20 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           onGroupSelect(webGroup);
         }
       } else {
+        // Check if user is authenticated before allowing extreme mode
+        if (!session) {
+          // Redirect to sign in page
+          window.location.href = '/sign-in';
+          return;
+        }
+
         // Switch to extreme mode
         const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
         if (extremeGroup) {
           onGroupSelect(extremeGroup);
         }
       }
-    }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
+    }, [isExtreme, onGroupSelect, dynamicSearchGroups, session]);
 
     // Shared handler for group selection
     const handleGroupSelect = useCallback(
@@ -1888,8 +1840,53 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                     </Button>
                   </DrawerTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
+                <TooltipContent side="bottom" className="max-w-[220px] p-2">
+                  {isExtreme ? (
+                    <p className="text-xs">Switch back to search modes</p>
+                  ) : selectedGroupData ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="p-0.5 rounded bg-primary">
+                          <HugeiconsIcon
+                            icon={selectedGroupData.icon}
+                            size={14}
+                            className="text-primary-foreground"
+                            strokeWidth={2}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
+                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
+                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
+                              PRO
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[11px] leading-snug text-secondary">
+                        {selectedGroupData.description}
+                      </p>
+                      <p className="text-[10px] text-accent italic">
+                        Click to switch search mode
+                      </p>
+                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
+                        <div className="pt-1 border-t border-border/50">
+                          <a
+                            href="/pricing"
+                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
+                          >
+                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
+                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
+                              Unlock with Pro
+                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                            </span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs">Choose search mode</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
               <DrawerContent className="max-h-[80vh]">
@@ -1965,8 +1962,53 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{isExtreme ? 'Switch back to search modes' : 'Choose search mode'}</p>
+                <TooltipContent side="bottom" className="max-w-[220px] p-2">
+                  {isExtreme ? (
+                    <p className="text-xs">Switch back to search modes</p>
+                  ) : selectedGroupData ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="p-0.5 rounded bg-primary">
+                          <HugeiconsIcon
+                            icon={selectedGroupData.icon}
+                            size={14}
+                            className="text-primary-foreground"
+                            strokeWidth={2}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
+                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
+                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
+                              PRO
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[11px] leading-snug text-secondary">
+                        {selectedGroupData.description}
+                      </p>
+                      <p className="text-[10px] text-accent italic">
+                        Click to switch search mode
+                      </p>
+                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
+                        <div className="pt-1 border-t border-border/50">
+                          <a
+                            href="/pricing"
+                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
+                          >
+                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
+                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
+                              Unlock with Pro
+                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                            </span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs">Choose search mode</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
               <PopoverContent
@@ -1991,14 +2033,54 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 onClick={handleToggleExtreme}
                 className={cn(
                   'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
-                  isExtreme ? 'bg-accent text-foreground hover:bg-accent/80' : 'text-muted-foreground hover:bg-accent',
+                  isExtreme
+                    ? 'bg-accent text-foreground hover:bg-accent/80'
+                    : !session
+                      ? 'text-muted-foreground/50 cursor-pointer'
+                      : 'text-muted-foreground hover:bg-accent',
                 )}
               >
                 <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{isExtreme ? 'Extreme Search mode on' : 'Switch to Extreme Search mode'}</p>
+            <TooltipContent side="bottom" className="max-w-[220px] p-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-0.5 rounded bg-primary">
+                    <HugeiconsIcon
+                      icon={AtomicPowerIcon}
+                      size={14}
+                      className="text-primary-foreground"
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <p className="font-semibold text-xs">
+                    {isExtreme
+                      ? 'Extreme Search Active'
+                      : session
+                        ? 'Extreme Search'
+                        : 'Sign in Required'
+                    }
+                  </p>
+                </div>
+                <p className="text-[11px] leading-snug text-secondary">
+                  Deep research with multiple sources and in-depth analysis with 3x sources
+                </p>
+                {!isProUser && (
+                  <div className="pt-1 border-t border-border/50">
+                    <a
+                      href="/pricing"
+                      className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
+                    >
+                      <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
+                      <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
+                        Get unlimited searches with Pro
+                        <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </span>
+                    </a>
+                  </div>
+                )}
+              </div>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -3686,8 +3768,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <div className="text-center">
                           <div className="font-medium text-[11px] mb-1">Send Message</div>
                           <div className="text-[10px] text-accent space-y-0.5">
-                            <div>⌘/Ctrl + Enter to send</div>
-                            <div>Enter for new line</div>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <KbdGroup>
+                                <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Shift</Kbd>
+                                <span>+</span>
+                                <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
+                              </KbdGroup>
+                              <span>for new line</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
+                              <span>to send</span>
+                            </div>
                           </div>
                         </div>
                       </TooltipContent>

@@ -1,8 +1,9 @@
 'use client';
 
+import 'leaflet/dist/leaflet.css';
 import { cn } from '@/lib/utils';
 import type * as Leaflet from 'leaflet';
-import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { useTheme } from 'next-themes';
 
 interface Location {

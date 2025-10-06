@@ -40,6 +40,7 @@ import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
+import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -214,6 +215,7 @@ const UserProfile = memo(
   }) => {
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
+    const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
@@ -378,20 +380,28 @@ const UserProfile = memo(
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="secondary"
+                variant="default"
                 size="sm"
-                className={cn('px-3 py-1.5 text-sm', signingIn && 'animate-pulse', className)}
+                className={cn(
+                  'h-7 px-2.5 text-xs rounded-md shadow-sm group',
+                  'hover:scale-[1.02] active:scale-[0.98] transition-transform',
+                  signingIn && 'animate-pulse',
+                  className,
+                )}
                 onClick={() => {
                   setSigningIn(true);
-                  redirect('/sign-in');
+                  setSignInDialogOpen(true);
                 }}
               >
-                <SignInIcon className="size-4 mr-1.5" />
-                Sign In
+                <SignInIcon className="size-3.5 mr-1.5" />
+                <span>Sign in</span>
+                <span className="ml-1.5 hidden sm:inline text-[9px] px-1.5 py-0.5 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
+                  Free
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={4}>
-              Sign in to save your progress
+              Sign in to save progress and sync across devices
             </TooltipContent>
           </Tooltip>
         )}
@@ -410,6 +420,11 @@ const UserProfile = memo(
             initialTab={settingsInitialTab}
           />
         )}
+
+        <SignInPromptDialog open={signInDialogOpen} onOpenChange={(open) => {
+          setSignInDialogOpen(open);
+          if (!open) setSigningIn(false);
+        }} />
       </>
     );
   },

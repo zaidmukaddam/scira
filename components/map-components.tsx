@@ -1,5 +1,6 @@
 'use client';
 
+import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useRef, useState, memo } from 'react';
 import L from 'leaflet';
 import { WarningCircleIcon } from '@phosphor-icons/react';

@@ -62,6 +62,7 @@ import {
 } from '@phosphor-icons/react';
 import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { Spinner } from '../ui/spinner';
 
 // Lazy load tool components
 const FlightTracker = lazy(() =>
@@ -91,107 +92,8 @@ const CurrencyConverter = lazy(() =>
 );
 const InteractiveStockChart = lazy(() => import('@/components/interactive-stock-chart'));
 
-// Realistic animated loader component for stock chart
-const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [startTime] = useState(Date.now());
-
-  // Define realistic steps with expected durations
-  const allSteps = [
-    { id: 0, label: 'Stock prices', color: 'bg-emerald-500', duration: 2000, always: true, source: 'Valyu' },
-    { id: 1, label: 'Financial reports', color: 'bg-amber-500', duration: 3000, always: true, source: 'Exa' },
-    { id: 2, label: 'Market news', color: 'bg-purple-500', duration: 2500, always: true, source: 'Tavily' },
-    {
-      id: 3,
-      label: 'Company statistics',
-      color: 'bg-cyan-500',
-      duration: 1500,
-      show: input?.include_statistics,
-      source: 'Valyu',
-    },
-    {
-      id: 4,
-      label: 'Financial statements',
-      color: 'bg-indigo-500',
-      duration: 2000,
-      show: input?.include_balance_sheet || input?.include_income_statement || input?.include_cash_flow,
-      source: 'Valyu',
-    },
-    {
-      id: 5,
-      label: 'Dividend history',
-      color: 'bg-green-500',
-      duration: 1800,
-      show: input?.include_dividends,
-      source: 'Valyu',
-    },
-    {
-      id: 6,
-      label: 'Insider trades',
-      color: 'bg-blue-500',
-      duration: 2200,
-      show: input?.include_insider_transactions,
-      source: 'Valyu',
-    },
-    {
-      id: 7,
-      label: 'SEC filings',
-      color: 'bg-red-500',
-      duration: 4000,
-      show: input?.filing_types && input.filing_types.length > 0,
-      source: 'Valyu',
-    },
-    {
-      id: 8,
-      label: 'Market movers',
-      color: 'bg-orange-500',
-      duration: 1000,
-      show: input?.include_market_movers,
-      source: 'Valyu',
-    },
-  ];
-
-  const steps = allSteps.filter((step) => step.always || step.show);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    let stepStartTime = Date.now();
-
-    const advanceStep = () => {
-      setCurrentStep((prev) => {
-        if (prev < steps.length - 1) {
-          setCompletedSteps((prevCompleted) => {
-            const newCompleted = new Set(prevCompleted);
-            newCompleted.add(prev);
-            return newCompleted;
-          });
-
-          const nextStep = prev + 1;
-          stepStartTime = Date.now();
-
-          // Schedule next step
-          timeoutId = setTimeout(advanceStep, steps[nextStep]?.duration || 2000);
-
-          return nextStep;
-        }
-        return prev;
-      });
-    };
-
-    // Start first step
-    if (steps.length > 0) {
-      timeoutId = setTimeout(advanceStep, steps[0]?.duration || 2000);
-    }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [steps]);
-
-  const currentStepData = steps[currentStep];
-  const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-
+// Simple loader component for stock chart - no useEffect needed
+const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
   return (
     <div className="flex flex-col gap-3 w-full mt-4">
       <Badge
@@ -202,11 +104,8 @@ const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => 
         )}
       >
         <TrendingUpIcon className="h-4 w-4" />
-        <span className="font-medium">
-          {title || 'Loading Stock Chart'}
-          {currentStepData && ` • Fetching ${currentStepData.label.toLowerCase()}`}
-        </span>
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="font-medium">{title || 'Loading Stock Chart'}</span>
+        <Spinner className="size-5" />
       </Badge>
     </div>
   );

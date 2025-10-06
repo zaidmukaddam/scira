@@ -13,9 +13,10 @@ export function useUserData() {
   } = useQuery({
     queryKey: ['comprehensive-user-data'],
     queryFn: getCurrentUser,
-    staleTime: 1000 * 60 * 30, // 30 minutes - matches server cache
-    gcTime: 1000 * 60 * 60, // 1 hour cache retention
-    refetchOnWindowFocus: false,
+    // Keep this aggressively fresh so subscription changes reflect quickly
+    staleTime: 5 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 

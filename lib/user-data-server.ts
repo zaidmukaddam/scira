@@ -91,6 +91,10 @@ function setCachedUserData(userId: string, data: ComprehensiveUserData): void {
 
 export function clearUserDataCache(userId: string): void {
   userDataCache.delete(userId);
+  // Also clear lightweight auth cache to avoid stale pro status
+  lightweightAuthCache.delete(userId);
+  // Clear any per-user custom instructions cache
+  customInstructionsCache.delete(userId);
 }
 
 export function clearAllUserDataCache(): void {

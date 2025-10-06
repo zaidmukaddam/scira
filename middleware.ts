@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
 const authRoutes = ['/sign-in', '/sign-up'];
-const protectedRoutes = ['/lookout', '/xql'];
+const protectedRoutes = ['/lookout', '/xql', '/settings'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   // Redirect /settings to /#settings to open settings dialog (only if authenticated)
-  if (pathname === '/settings') {
+  if (pathname === '/settings' || pathname === '/#settings') {
     if (!sessionCookie) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }

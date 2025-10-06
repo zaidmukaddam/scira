@@ -37,9 +37,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { cn, invalidateChatsCache } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ClassicLoader } from './ui/loading';
+import { Spinner } from '@/components/ui/spinner';
 import { useChatPrefetch } from '@/hooks/use-chat-prefetch';
 import Link from 'next/link';
+import { Kbd } from '@/components/ui/kbd';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 
 // Constants
 const SCROLL_THRESHOLD = 0.8;
@@ -539,12 +541,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     if (open && allChats.length > 0) {
       // Prefetch the first 10 chats with high priority (visible ones)
       const visibleChats = allChats.slice(0, 10);
-      
+
       // Prefetch route and data for visible chats
       visibleChats.forEach((chat) => {
         prefetchChatRoute(chat.id);
       });
-      
+
       // Prefetch data for remaining chats with lower priority
       if (allChats.length > 10) {
         const remainingChats = allChats.slice(10, 20); // Next 10 chats
@@ -720,7 +722,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
         className={cn(
           'flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-md transition-all duration-200 ease-in-out',
           isDeleting &&
-            'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 shadow-sm',
+          'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 shadow-sm',
           isEditing && 'bg-muted/30 dark:bg-muted/20 border border-muted-foreground/20 shadow-sm',
           !isDeleting && !isEditing && 'hover:bg-muted/50 border border-transparent',
         )}
@@ -736,186 +738,183 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
         }
       >
         <Link href={`/search/${chat.id}`} prefetch className="w-full">
-        <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
-          {/* Icon with visibility indicator */}
-          <div className="flex items-center justify-center w-5 relative">
-            {navigating === chat.id ? (
-              <div
-                className="h-4 w-4 shrink-0 animate-spin rounded-full border-b-2 border-foreground"
-                aria-label="Loading"
-              ></div>
-            ) : isPublic ? (
-              <Globe
-                className={cn(
-                  'h-4 w-4 shrink-0',
-                  isCurrentChat ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500/70 dark:text-blue-500/70',
-                )}
-                aria-label="Public chat"
-              />
-            ) : (
-              <Lock
-                className={cn('h-4 w-4 shrink-0', isCurrentChat ? 'text-foreground' : 'text-muted-foreground')}
-                aria-label="Private chat"
-              />
-            )}
-          </div>
-
-          {/* Title - editable when in edit mode */}
-          <div className="min-w-0 flex-1">
-            {isEditing ? (
-              <input
-                type="text"
-                value={editingTitle}
-                onChange={(e) => setEditingTitle(e.target.value)}
-                onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
-                placeholder="Enter title..."
-                autoFocus
-                maxLength={100}
-              />
-            ) : (
-              <span
-                className={cn(
-                  'truncate block',
-                  isCurrentChat && 'font-medium',
-                  isDeleting && 'text-red-700 dark:text-red-300 font-medium',
-                  isEditing && 'text-muted-foreground',
-                )}
-              >
-                {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
-              </span>
-            )}
-          </div>
-
-          {/* Meta information and actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {isDeleting ? (
-              // Delete confirmation actions
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  onClick={(e) => confirmDeleteChat(e, chat.id)}
-                  aria-label="Confirm delete"
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-red-600"></div>
-                  ) : (
-                    <Check className="h-4 w-4" />
+          <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
+            {/* Icon with visibility indicator */}
+            <div className="flex items-center justify-center w-5 relative">
+              {navigating === chat.id ? (
+                <Spinner className="h-4 w-4 shrink-0" />
+              ) : isPublic ? (
+                <Globe
+                  className={cn(
+                    'h-4 w-4 shrink-0',
+                    isCurrentChat ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500/70 dark:text-blue-500/70',
                   )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
-                  onClick={cancelDeleteChat}
-                  aria-label="Cancel delete"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </>
-            ) : isEditing ? (
-              // Edit confirmation actions
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-foreground hover:text-foreground hover:bg-muted"
-                  onClick={(e) => saveEditedTitle(e, chat.id)}
-                  aria-label="Save title"
-                  disabled={updateTitleMutation.isPending}
-                >
-                  {updateTitleMutation.isPending ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-foreground"></div>
-                  ) : (
-                    <Check className="h-4 w-4" />
+                  aria-label="Public chat"
+                />
+              ) : (
+                <Lock
+                  className={cn('h-4 w-4 shrink-0', isCurrentChat ? 'text-foreground' : 'text-muted-foreground')}
+                  aria-label="Private chat"
+                />
+              )}
+            </div>
+
+            {/* Title - editable when in edit mode */}
+            <div className="min-w-0 flex-1">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
+                  placeholder="Enter title..."
+                  autoFocus
+                  maxLength={100}
+                />
+              ) : (
+                <span
+                  className={cn(
+                    'truncate block',
+                    isCurrentChat && 'font-medium',
+                    isDeleting && 'text-red-700 dark:text-red-300 font-medium',
+                    isEditing && 'text-muted-foreground',
                   )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
-                  onClick={cancelEditTitle}
-                  aria-label="Cancel edit"
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              // Normal state actions
-              <>
-                {/* Timestamp - more compact */}
-                <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
-                  {formatCompactTime(new Date(chat.createdAt))}
+                  {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
                 </span>
+              )}
+            </div>
 
-                {/* Actions - contextual based on states */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'transition-colors h-7 w-7 flex-shrink-0',
-                    isCurrentChat
-                      ? 'text-foreground/70 hover:text-foreground hover:bg-muted'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                    (deleteMutation.isPending ||
+            {/* Meta information and actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {isDeleting ? (
+                // Delete confirmation actions
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    onClick={(e) => confirmDeleteChat(e, chat.id)}
+                    aria-label="Confirm delete"
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Spinner className="h-4 w-4 text-red-600" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
+                    onClick={cancelDeleteChat}
+                    aria-label="Cancel delete"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : isEditing ? (
+                // Edit confirmation actions
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 flex-shrink-0 text-foreground hover:text-foreground hover:bg-muted"
+                    onClick={(e) => saveEditedTitle(e, chat.id)}
+                    aria-label="Save title"
+                    disabled={updateTitleMutation.isPending}
+                  >
+                    {updateTitleMutation.isPending ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
+                    onClick={cancelEditTitle}
+                    aria-label="Cancel edit"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                // Normal state actions
+                <>
+                  {/* Timestamp - more compact */}
+                  <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
+                    {formatCompactTime(new Date(chat.createdAt))}
+                  </span>
+
+                  {/* Actions - contextual based on states */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'transition-colors h-7 w-7 flex-shrink-0',
+                      isCurrentChat
+                        ? 'text-foreground/70 hover:text-foreground hover:bg-muted'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                      (deleteMutation.isPending ||
+                        updateTitleMutation.isPending ||
+                        !!deletingChatId ||
+                        !!editingChatId) &&
+                      'opacity-50 pointer-events-none',
+                    )}
+                    onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
+                    aria-label={`Edit title of ${displayTitle}`}
+                    disabled={
+                      navigating === chat.id ||
+                      deleteMutation.isPending ||
                       updateTitleMutation.isPending ||
                       !!deletingChatId ||
-                      !!editingChatId) &&
+                      !!editingChatId
+                    }
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'transition-colors h-7 w-7 flex-shrink-0',
+                      isCurrentChat
+                        ? 'text-red-600/70 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
+                        : 'text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30',
+                      (deleteMutation.isPending ||
+                        updateTitleMutation.isPending ||
+                        !!deletingChatId ||
+                        !!editingChatId) &&
                       'opacity-50 pointer-events-none',
-                  )}
-                  onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
-                  aria-label={`Edit title of ${displayTitle}`}
-                  disabled={
-                    navigating === chat.id ||
-                    deleteMutation.isPending ||
-                    updateTitleMutation.isPending ||
-                    !!deletingChatId ||
-                    !!editingChatId
-                  }
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'transition-colors h-7 w-7 flex-shrink-0',
-                    isCurrentChat
-                      ? 'text-red-600/70 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
-                      : 'text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30',
-                    (deleteMutation.isPending ||
+                    )}
+                    onClick={(e) => handleDeleteChat(e, chat.id)}
+                    aria-label={`Delete ${displayTitle}`}
+                    disabled={
+                      navigating === chat.id ||
+                      deleteMutation.isPending ||
                       updateTitleMutation.isPending ||
                       !!deletingChatId ||
-                      !!editingChatId) &&
-                      'opacity-50 pointer-events-none',
-                  )}
-                  onClick={(e) => handleDeleteChat(e, chat.id)}
-                  aria-label={`Delete ${displayTitle}`}
-                  disabled={
-                    navigating === chat.id ||
-                    deleteMutation.isPending ||
-                    updateTitleMutation.isPending ||
-                    !!deletingChatId ||
-                    !!editingChatId
-                  }
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-                <div className="w-6 flex justify-end">
-                  {isCurrentChat ? (
-                    <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
-                  ) : (
-                    <ArrowUpRight className="h-3 w-3" />
-                  )}
-                </div>
-              </>
-            )}
+                      !!editingChatId
+                    }
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                  <div className="w-6 flex justify-end">
+                    {isCurrentChat ? (
+                      <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
+                    ) : (
+                      <ArrowUpRight className="h-3 w-3" />
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
         </Link>
       </CommandItem>
     );
@@ -931,21 +930,25 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   if (!user) {
     return (
       <CommandDialog open={open} onOpenChange={onOpenChange}>
-        <div className="flex flex-col items-center justify-center p-6 text-center h-full min-h-[250px]">
-          <History className="size-8 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-1">Access Your Chat History</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-            Sign in to view, search, and manage all your previous conversations seamlessly.
-          </p>
-
-          <Button onClick={handleSignIn} className="w-full max-w-[200px]">
-            Sign In
-          </Button>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            Your conversations are automatically saved when you are signed in.
-          </p>
-        </div>
+        <Empty className="min-h-[250px]">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <History className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>Access Your Chat History</EmptyTitle>
+            <EmptyDescription>
+              Sign in to view, search, and manage all your previous conversations seamlessly.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={handleSignIn} className="w-full max-w-[200px]">
+              Sign In
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Your conversations are automatically saved when you are signed in.
+            </p>
+          </EmptyContent>
+        </Empty>
       </CommandDialog>
     );
   }
@@ -1045,7 +1048,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                       <div ref={loadMoreTriggerRef} className="flex items-center justify-center py-2 px-3">
                         {isFetchingNextPage ? (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <ClassicLoader size="sm" />
+                            <Spinner />
                             Loading more...
                           </div>
                         ) : (
@@ -1056,31 +1059,50 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   </>
                 ) : (
                   <CommandEmpty>
-                    <div className="py-6 px-4 text-center flex flex-col items-center">
-                      <History className="size-10 text-muted-foreground mb-3" />
-                      <p className="text-sm font-medium">No conversations found</p>
-                      {searchQuery && (
-                        <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                          <p>Try a different search term or change search mode</p>
-                          <div className="text-xs text-muted-foreground/70">
-                            <p>Search tips:</p>
-                            <p>
-                              • <code>public:</code> or <code>private:</code> for visibility
-                            </p>
-                            <p>
-                              • <code>today:</code>, <code>week:</code>, <code>month:</code> for dates
-                            </p>
-                            <p>
-                              • <code>date:22/05/25</code> for specific date (DD/MM/YY)
-                            </p>
-                            <p>
-                              • Switch to Date mode and type <code>22/05/25</code>
-                            </p>
+                    <Empty className="border-0">
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <History className="size-6" />
+                        </EmptyMedia>
+                        <EmptyTitle>No conversations found</EmptyTitle>
+                        {searchQuery ? (
+                          <EmptyDescription>
+                            Try a different search term or change search mode
+                          </EmptyDescription>
+                        ) : (
+                          <EmptyDescription>
+                            Start a new chat to begin
+                          </EmptyDescription>
+                        )}
+                      </EmptyHeader>
+                      {searchQuery ? (
+                        <EmptyContent>
+                          <div className="text-xs text-muted-foreground/80 space-y-1.5">
+                            <p className="font-medium">Search tips:</p>
+                            <div className="space-y-0.5">
+                              <p>
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">public:</code> or <code className="bg-muted px-1 py-0.5 rounded text-xs">private:</code> for visibility
+                              </p>
+                              <p>
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">today:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">week:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">month:</code> for dates
+                              </p>
+                              <p>
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">date:22/05/25</code> for specific date (DD/MM/YY)
+                              </p>
+                              <p>
+                                • Switch to Date mode and type <code className="bg-muted px-1 py-0.5 rounded text-xs">22/05/25</code>
+                              </p>
+                            </div>
                           </div>
-                        </div>
+                        </EmptyContent>
+                      ) : (
+                        <EmptyContent>
+                          <Button onClick={() => onOpenChange(false)} className="w-full max-w-[200px]">
+                            Start a new search
+                          </Button>
+                        </EmptyContent>
                       )}
-                      {!searchQuery && <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>}
-                    </div>
+                    </Empty>
                   </CommandEmpty>
                 )}
               </>
@@ -1104,15 +1126,15 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               {/* Important navigation shortcuts on the left */}
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">⏎</kbd> open
+                  <Kbd className="rounded font-mono">⏎</Kbd> open
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">↑</kbd>
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">↓</kbd>
+                  <Kbd className="rounded">↑</Kbd>
+                  <Kbd className="rounded">↓</Kbd>
                   navigate
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Tab</kbd> toggle mode
+                  <Kbd className="rounded">Tab</Kbd> toggle mode
                 </span>
               </div>
 
@@ -1120,7 +1142,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               <div className="flex items-center gap-4">
                 <span className="text-muted-foreground/80">Click edit to rename • Click trash to delete</span>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border px-1.5 py-0.5 bg-muted text-xs">Esc</kbd> close
+                  <Kbd className="rounded">Esc</Kbd> close
                 </span>
               </div>
             </div>

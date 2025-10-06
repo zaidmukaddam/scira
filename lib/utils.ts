@@ -110,6 +110,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       description: 'Deep research with multiple sources and analysis',
       icon: AtomicPowerIcon,
       show: true,
+      requireAuth: true,
     },
     {
       id: 'memory' as const,

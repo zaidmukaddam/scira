@@ -1,15 +1,19 @@
-'use client';
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-import { Suspense } from 'react';
-import { ChatInterface } from '@/components/chat-interface';
+const ChatInterface = dynamic(() => import('@/components/chat-interface').then(m => m.ChatInterface), {
+  ssr: true,
+  loading: () => <div style={{ minHeight: 240 }} />,
+});
+
 import { InstallPrompt } from '@/components/InstallPrompt';
 
 const Home = () => {
   return (
-    <Suspense>
+    <React.Fragment>
       <ChatInterface />
       <InstallPrompt />
-    </Suspense>
+    </React.Fragment>
   );
 };
 

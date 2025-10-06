@@ -273,16 +273,6 @@ CodeBlock.displayName = 'CodeBlock';
 // Optimized synchronous content processor using useMemo
 const useProcessedContent = (content: string) => {
   return useMemo(() => {
-    // For very small content, return immediately
-    if (content.length <= 1000) {
-      return {
-        processedContent: content,
-        citations: [],
-        latexBlocks: [],
-        isProcessing: false,
-      };
-    }
-
     const citations: CitationLink[] = [];
     const latexBlocks: Array<{ id: string; content: string; isBlock: boolean }> = [];
     let modifiedContent = content;
@@ -310,10 +300,11 @@ const useProcessedContent = (content: string) => {
         modifiedContent = newContent;
       }
 
-      // Extract monetary amounts
+      // Extract monetary amounts FIRST to protect them from LaTeX patterns
       const monetaryBlocks: Array<{ id: string; content: string }> = [];
+      // Match monetary amounts with optional scale words and currency codes
       const monetaryRegex =
-        /(^|[\s([>])\$\d+(?:,\d{3})*(?:\.\d+)?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)|(?:million|thousand|billion|k|K|M|B)))?(?=$|[\s).,;!?<\]])/g;
+        /(^|[\s([>~≈<)])\$\d+(?:,\d{3})*(?:\.\d+)?(?:[kKmMbBtT]|\s+(?:thousand|million|billion|trillion|k|K|M|B|T))?(?:\s+(?:USD|EUR|GBP|CAD|AUD|JPY|CNY|CHF))?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)))?(?=$|[\s).,;!?<\]])/g;
 
       let monetaryProcessed = '';
       let lastMonetaryIndex = 0;
@@ -332,10 +323,28 @@ const useProcessedContent = (content: string) => {
       monetaryProcessed += modifiedContent.slice(lastMonetaryIndex);
       modifiedContent = monetaryProcessed;
 
-      // Extract LaTeX blocks
+      // Extract LaTeX blocks AFTER monetary amounts are protected
       const allLatexPatterns = [
         { patterns: [/\\\[([\s\S]*?)\\\]/g, /\$\$([\s\S]*?)\$\$/g], isBlock: true, prefix: 'LATEXBLOCK' },
-        { patterns: [/\\\(([\s\S]*?)\\\)/g, /\$(?![{#\d])[^\$\n]*[a-zA-Z_\\][^\$\n]*\$/g], isBlock: false, prefix: 'LATEXINLINE' },
+        { 
+          patterns: [
+            /\\\(([\s\S]*?)\\\)/g, 
+            // Match $ expressions containing LaTeX commands, superscripts, subscripts, or braces
+            /\$[^\$\n]*[\\^_{}][^\$\n]*\$/g,
+            // Match algebraic expressions with parentheses and variables
+            /\$[^\$\n]*\([^\)]*[a-zA-Z][^\)]*\)[^\$\n]*\$/g,
+            // Match absolute value notation with pipes
+            /\$[^\$\n]*\|[^\|]*\|[^\$\n]*\$/g,
+            // Match $ expressions with single-letter variable followed by operator and number/variable
+            /\$[a-zA-Z]\s*[=<>≤≥≠]\s*[0-9a-zA-Z][^\$\n]*\$/g,
+            // Match $ expressions with number followed by LaTeX-style operators
+            /\$[0-9][^\$\n]*[\\^_≤≥≠∈∉⊂⊃∪∩θΘπΠαβγδεζηλμνξρσςτφχψωΑΒΓΔΕΖΗΛΜΝΞΡΣΤΦΧΨΩ°][^\$\n]*\$/g,
+            // Match simple mathematical variables (single letter or Greek letters, but not plain numbers)
+            /\$[a-zA-ZθΘπΠαβγδεζηλμνξρσςτφχψωΑΒΓΔΕΖΗΛΜΝΞΡΣΤΦΧΨΩ]+\$/g
+          ], 
+          isBlock: false, 
+          prefix: 'LATEXINLINE' 
+        },
       ];
 
       for (const { patterns, isBlock, prefix } of allLatexPatterns) {
@@ -357,6 +366,29 @@ const useProcessedContent = (content: string) => {
           modifiedContent = newContent;
         }
       }
+
+      // Escape unescaped pipe characters inside explicit markdown link texts to avoid table cell splits
+      // Example: [A | B](url) -> [A \| B](url)
+      try {
+        const explicitLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+        const linkMatches = [...modifiedContent.matchAll(explicitLinkPattern)];
+        if (linkMatches.length > 0) {
+          let rebuilt = '';
+          let lastPos = 0;
+          for (let i = 0; i < linkMatches.length; i++) {
+            const m = linkMatches[i];
+            const full = m[0];
+            const textPart = m[1];
+            const urlPart = m[2];
+            // Replace only unescaped '|'
+            const fixedText = textPart.replace(/(^|[^\\])\|/g, '$1\\|');
+            rebuilt += modifiedContent.slice(lastPos, m.index!) + `[${fixedText}](${urlPart})`;
+            lastPos = m.index! + full.length;
+          }
+          rebuilt += modifiedContent.slice(lastPos);
+          modifiedContent = rebuilt;
+        }
+      } catch {}
 
       // Process citations (simplified for performance)
       const refWithUrlRegex =
@@ -381,13 +413,20 @@ const useProcessedContent = (content: string) => {
       citationProcessed += modifiedContent.slice(lastCitationIndex);
       modifiedContent = citationProcessed;
 
-      // Restore protected blocks
+      // Restore protected blocks in the main content and in collected citation texts
       monetaryBlocks.forEach(({ id, content }) => {
         modifiedContent = modifiedContent.replace(id, content);
+        // Also restore inside citation titles so hover cards don't show placeholders
+        for (let i = 0; i < citations.length; i++) {
+          citations[i].text = citations[i].text.replace(id, content);
+        }
       });
 
       codeBlocks.forEach(({ id, content }) => {
         modifiedContent = modifiedContent.replace(id, content);
+        for (let i = 0; i < citations.length; i++) {
+          citations[i].text = citations[i].text.replace(id, content);
+        }
       });
 
       return {
@@ -799,8 +838,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
           );
         }
 
+        const linkText = typeof text === 'string' ? text : href;
+
+        // For user messages, keep raw text to avoid accidental linkification changes
         if (isUserMessage) {
-          const linkText = typeof text === 'string' ? text : href;
           if (linkText !== href && linkText !== '') {
             return (
               <span key={key} className="break-all">
@@ -815,23 +856,20 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
           );
         }
 
-        let citationIndex = citationLinks.findIndex((link) => link.link === href);
-        if (citationIndex !== -1) {
-          const citationText = citationLinks[citationIndex].text;
-          return renderCitation(citationIndex, citationText, href, key);
+        // If there's descriptive link text, render a normal anchor with hover preview.
+        // This preserves full text inside tables and prevents truncation to citation chips.
+        if (linkText && linkText !== href) {
+          return renderHoverCard(href, linkText, false);
         }
 
-        if (isValidUrl(href)) {
-          citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
+        // For bare URLs, render as citation chips
+        let citationIndex = citationLinks.findIndex((link) => link.link === href);
+        if (citationIndex === -1) {
+          citationLinks.push({ text: href, link: href });
           citationIndex = citationLinks.length - 1;
-          const citationText = citationLinks[citationIndex].text;
-          return renderCitation(citationIndex, citationText, href, key);
-        } else {
-          citationLinks.push({ text: typeof text === 'string' ? text : href, link: href });
-          citationIndex = citationLinks.length - 1;
-          const citationText = citationLinks[citationIndex].text;
-          return renderCitation(citationIndex, citationText, href, key);
         }
+        const citationText = citationLinks[citationIndex].text;
+        return renderCitation(citationIndex, citationText, href, key);
       },
       heading(children, level) {
         const key = getElementKey('heading', String(children));
