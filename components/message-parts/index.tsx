@@ -220,8 +220,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
   }) => {
     // Handle text parts
     if (part.type === 'text') {
-      // For empty text parts in a streaming message, show loading animation only if no tool invocations are present
-      if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations) {
+      // Check if there are any reasoning parts in the message
+      const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
+      
+      // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
+      if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations && !hasReasoningParts) {
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
