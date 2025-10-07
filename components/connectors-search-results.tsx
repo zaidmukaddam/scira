@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   FileText,
-  Image,
+  Image as ImageIcon,
   ExternalLink,
   ChevronDown,
   ArrowUpRight,
@@ -107,7 +107,7 @@ const DocumentCard: React.FC<{ document: Document; onClick?: () => void }> = ({ 
       lowerType.includes('gif') ||
       lowerType.includes('webp')
     ) {
-      return <Image className="h-4 w-4" />;
+      return <ImageIcon className="h-4 w-4" />;
     }
 
     // PDFs

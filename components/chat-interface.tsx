@@ -191,7 +191,7 @@ const ChatInterface = memo(
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Generate a consistent ID for new chats
-    const chatId = useMemo(() => initialChatId ?? uuidv4(), []);
+    const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
 
     // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);

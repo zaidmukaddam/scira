@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Latex from 'react-latex-next';
 import Marked, { ReactRenderer } from 'marked-react';
-import React, { useCallback, useMemo, useState, Fragment, useRef, lazy, Suspense } from 'react';
+import React, { useCallback, useMemo, useState, Fragment, useRef, lazy, Suspense, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -1092,16 +1092,16 @@ CopyButton.displayName = 'CopyButton';
 const usePerformanceMonitor = (content: string) => {
   const renderStartTime = useRef<number>(0);
   
-  useMemo(() => {
+  useEffect(() => {
     renderStartTime.current = performance.now();
   }, [content]);
   
-  useMemo(() => {
+  useEffect(() => {
     const renderTime = performance.now() - renderStartTime.current;
     if (renderTime > 100) {
       console.warn(`Markdown render took ${renderTime.toFixed(2)}ms for ${content.length} characters`);
     }
-  }, []);
+  }, [content.length]);
 };
 
 // Main optimized markdown component with automatic optimization selection

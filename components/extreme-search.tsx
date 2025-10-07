@@ -1116,7 +1116,7 @@ const ExtremeSearchComponent = ({
       currentStatus: dynamicStatus,
       planData: plan,
     };
-  }, [annotations, toolInvocation, state, isCompleted]);
+  }, [annotations, state, isCompleted]);
 
   // Extract search queries from the ACTUAL tool invocation structure
   const searchQueries = useMemo(() => {

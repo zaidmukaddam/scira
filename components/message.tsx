@@ -570,7 +570,7 @@ export const Message: React.FC<MessageProps> = ({
       const contentHeight = messageContentRef.current.scrollHeight;
       setExceedsMaxHeight(contentHeight > USER_MESSAGE_MAX_HEIGHT);
     }
-  }, [message.parts?.map((part) => (part.type === 'text' ? part.text : '')).join('')]);
+  }, [combinedUserText]);
 
   // Dynamic font size based on content length with mobile responsiveness
   const getDynamicFontSize = useCallback((content: string) => {

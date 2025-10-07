@@ -116,7 +116,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         };
       })
       .filter((citation) => citation.tweet_id);
-  }, [result.citations]);
+  }, [result.citations, result.sources]);
 
   const displayedTweets = useMemo(() => {
     return tweetCitations.slice(0, 3);

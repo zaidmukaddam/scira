@@ -289,7 +289,7 @@ const InteractiveMapComponent = memo<InteractiveMapProps>(
         }
         marker.on('click', () => onPlaceSelect(place));
       });
-    }, [places, selectedPlace, isMapLoaded]);
+    }, [places, selectedPlace, isMapLoaded, onPlaceSelect]);
 
     // Fly to selected place; when overlay is visible (map view with selectedPlace), bias center upward
     useEffect(() => {

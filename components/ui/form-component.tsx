@@ -466,7 +466,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect],
+      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect, fetchDiscountConfig],
     );
 
     // Shared command content renderer (not a component) to preserve focus
@@ -2346,7 +2346,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isRecording, input, setInput]);
+  }, [isRecording, input, setInput, inputRef]);
 
   // Typewriter effect for enhanced text
   const typewriterText = useCallback(
@@ -3131,7 +3131,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       return () => clearTimeout(focusTimeout);
     }
-  }, [status]);
+  }, [status, inputRef]);
 
   const onSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -3200,6 +3200,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       input,
       attachments,
       sendMessage,
+      setInput,
       setAttachments,
       fileInputRef,
       lastSubmittedQueryRef,
@@ -3214,7 +3215,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   );
 
   const submitForm = useCallback(
-    debounce(() => {
+    () => debounce(() => {
       onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
       resetSuggestedQuestions();
 
@@ -3225,7 +3226,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       } else {
         inputRef.current?.focus();
       }
-    }, 500),
+    }, 500)(),
     [onSubmit, resetSuggestedQuestions, inputRef],
   );
 

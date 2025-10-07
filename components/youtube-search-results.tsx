@@ -160,6 +160,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
         aria-label={`Watch ${video.details?.title || 'YouTube video'}`}
       >
         {video.details?.thumbnail_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={video.details.thumbnail_url}
             alt=""

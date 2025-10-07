@@ -509,7 +509,7 @@ export const InteractiveStockChart = React.memo(
         tooltipHtml += `</div>`;
         return tooltipHtml;
       },
-      [interval, processedData, isDark],
+      [processedData, isDark],
     );
 
     // Chart options
@@ -635,7 +635,7 @@ export const InteractiveStockChart = React.memo(
           };
         }),
       };
-    }, [processedData, interval, getTooltipFormatter, isDark, isMobile]);
+    }, [processedData, getTooltipFormatter, isDark, isMobile]);
 
     // Process earnings data for individual chart visualization per company
     const createEarningsChartForCompany = useCallback(
@@ -2172,6 +2172,7 @@ export const InteractiveStockChart = React.memo(
                                     <div className="flex items-center justify-between mt-1.5">
                                       <div className="flex items-center gap-1">
                                         <div className="relative w-3 h-3 rounded-sm bg-muted/50 flex items-center justify-center overflow-hidden">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
                                           <img
                                             src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(news.url).hostname}`}
                                             alt=""
@@ -2249,6 +2250,7 @@ export const InteractiveStockChart = React.memo(
                                     <div className="flex items-center justify-between mt-1.5">
                                       <div className="flex items-center gap-1">
                                         <div className="relative w-3 h-3 rounded-sm bg-muted/50 flex items-center justify-center overflow-hidden">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
                                           <img
                                             src={`https://www.google.com/s2/favicons?sz=128&domain=${
                                               new URL(news.url).hostname

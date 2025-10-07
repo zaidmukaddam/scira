@@ -78,7 +78,6 @@ export const scira = customProvider({
       model: anannas.chat('deepseek/deepseek-r1'),
       middleware,
     }),
-    'scira-qwen-coder-small': huggingface.chat('Qwen/Qwen3-Coder-30B-A3B-Instruct:nebius'),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
     'scira-qwen-30': huggingface.chat('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
     'scira-qwen-30-think': wrapLanguageModel({
