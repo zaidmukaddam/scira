@@ -1,4 +1,5 @@
 export type XQLMessage = {
+  id: string;
   role: 'user' | 'assistant' | 'system';
   parts: Array<
     | { type: 'text'; text: string }
