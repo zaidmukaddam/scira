@@ -16,7 +16,6 @@ import { XQLProUpgradeScreen } from '@/components/xql-pro-upgrade-screen';
 import { BorderTrail } from '@/components/core/border-trail';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { cn } from '@/lib/utils';
-import { type XQLMessage } from '@/app/api/xql/route';
 import { highlight } from 'sugar-high';
 import { SciraLogo } from '@/components/logos/scira-logo';
 
@@ -28,7 +27,7 @@ export default function XQLPage() {
   const { user, isProUser, isLoading: isProStatusLoading } = useUser();
   const router = useRouter();
 
-  const { messages, sendMessage, status } = useChat<XQLMessage>({
+  const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/xql',
     }),
