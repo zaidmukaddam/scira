@@ -1,43 +1,21 @@
-import { supermemoryTools } from '@supermemory/tools/ai-sdk';
-import { Tool } from 'ai';
-import { serverEnv } from '@/env/server';
+import { tool, type Tool } from 'ai';
+import { z } from 'zod';
 
-export function createMemoryTools(userId: string) {
-  return supermemoryTools(serverEnv.SUPERMEMORY_API_KEY, {
-    containerTags: [userId],
+export function createMemoryTools(_userId: string) {
+  const searchMemories = tool({
+    description: 'Disabled memory search tool',
+    inputSchema: z.object({ informationToGet: z.string() }),
+    execute: async () => ({ success: false, error: 'disabled' }),
   });
+
+  const addMemory = tool({
+    description: 'Disabled memory add tool',
+    inputSchema: z.object({ memory: z.string() }),
+    execute: async () => ({ success: false, error: 'disabled' }),
+  });
+
+  return { searchMemories, addMemory };
 }
 
-export type SearchMemoryTool = Tool<
-  {
-    informationToGet: string;
-  },
-  | {
-      success: boolean;
-      results: any[];
-      count: number;
-      error?: undefined;
-    }
-  | {
-      success: boolean;
-      error: string;
-      results?: undefined;
-      count?: undefined;
-    }
->;
-
-export type AddMemoryTool = Tool<
-  {
-    memory: string;
-  },
-  | {
-      success: boolean;
-      memory: any;
-      error?: undefined;
-    }
-  | {
-      success: boolean;
-      error: string;
-      memory?: undefined;
-    }
->;
+export type SearchMemoryTool = Tool<{ informationToGet: string }, { success: boolean; results?: any[]; count?: number; error?: string }>;
+export type AddMemoryTool = Tool<{ memory: string }, { success: boolean; memory?: any; error?: string }>;

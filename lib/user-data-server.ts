@@ -4,7 +4,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import { subscription, payment, user } from './db/schema';
 import { db } from './db';
 import { auth } from './auth';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
 import { getCustomInstructionsByUserId } from './db/queries';
 import type { CustomInstructions } from './db/schema';
@@ -165,8 +165,41 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       headers: await headers(),
     });
 
+    // Anonymous fallback using arka_client_id cookie when no auth session is present
     if (!session?.user?.id) {
-      return null;
+      const anonId = cookies().get('arka_client_id')?.value;
+      if (!anonId) return null;
+
+      const arkaUserId = `arka:${anonId}`;
+      // Try cache first
+      const cachedAnon = getCachedLightweightAuth(arkaUserId);
+      if (cachedAnon) return cachedAnon;
+
+      // Ensure anonymous user exists in DB
+      try {
+        const existing = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, arkaUserId)).limit(1);
+        if (!existing || existing.length === 0) {
+          await db.insert(user).values({
+            id: arkaUserId,
+            name: 'Anonymous',
+            email: `arka-${anonId}@anon.local`,
+            emailVerified: false,
+            image: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      } catch (e) {
+        // Ignore race conditions on create
+      }
+
+      const lightweightData: LightweightUserAuth = {
+        userId: arkaUserId,
+        email: `arka-${anonId}@anon.local`,
+        isProUser: false,
+      };
+      setCachedLightweightAuth(arkaUserId, lightweightData);
+      return lightweightData;
     }
 
     const userId = session.user.id;
@@ -254,8 +287,48 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       headers: await headers(),
     });
 
+    // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
     if (!session?.user?.id) {
-      return null;
+      const anonId = cookies().get('arka_client_id')?.value;
+      if (!anonId) return null;
+      const arkaUserId = `arka:${anonId}`;
+
+      // Cache check
+      const cached = getCachedUserData(arkaUserId);
+      if (cached) return cached;
+
+      try {
+        const existing = await db.select({ id: user.id, email: user.email, name: user.name }).from(user).where(eq(user.id, arkaUserId)).limit(1);
+        if (!existing || existing.length === 0) {
+          await db.insert(user).values({
+            id: arkaUserId,
+            name: 'Anonymous',
+            email: `arka-${anonId}@anon.local`,
+            emailVerified: false,
+            image: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      } catch (_) {
+        // ignore
+      }
+
+      const anonData: ComprehensiveUserData = {
+        id: arkaUserId,
+        email: `arka-${anonId}@anon.local`,
+        emailVerified: false,
+        name: 'Anonymous',
+        image: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isProUser: false,
+        proSource: 'none',
+        subscriptionStatus: 'none',
+        paymentHistory: [],
+      };
+      setCachedUserData(arkaUserId, anonData);
+      return anonData;
     }
 
     const userId = session.user.id;
