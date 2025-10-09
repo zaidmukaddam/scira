@@ -1,8 +1,21 @@
 {
+  "version": 2,
   "crons": [
     {
       "path": "/api/clean_images",
       "schedule": "0 * * * *"
+    }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/$1"
     }
   ]
 }
