@@ -1,119 +1,59 @@
-import { wrapLanguageModel, customProvider, extractReasoningMiddleware, gateway } from 'ai';
-
-import { createOpenAI } from '@ai-sdk/openai';
-import { xai } from '@ai-sdk/xai';
-import { groq } from '@ai-sdk/groq';
-import { mistral } from '@ai-sdk/mistral';
+import { customProvider } from 'ai';
 import { google } from '@ai-sdk/google';
-import { createAnthropic } from '@ai-sdk/anthropic';
 
-const middleware = extractReasoningMiddleware({
-  tagName: 'think',
-});
+// Arka backend: single provider mapping to Google Gemini Flash.
+// Default model is gemini-2.5-flash with intended fallbacks to gemini-2.0-flash then gemini-2.0-flash-exp
+// If 2.5 is unavailable in your project, adjust DEFAULT_GOOGLE_MODEL below.
+const DEFAULT_GOOGLE_MODEL = 'gemini-2.5-flash';
+// Fallbacks (documented only; selection is handled at call sites when needed):
+const FALLBACK_GOOGLE_MODELS = ['gemini-2.0-flash', 'gemini-2.0-flash-exp'];
 
-const middlewareWithStartWithReasoning = extractReasoningMiddleware({
-  tagName: 'think',
-  startWithReasoning: true,
-});
-
-const anthropic = createAnthropic({
-  headers: {
-    'anthropic-beta': 'context-1m-2025-08-07',
-  },
-});
-
-const huggingface = createOpenAI({
-  baseURL: 'https://router.huggingface.co/v1',
-  apiKey: process.env.HF_TOKEN,
-});
-
-const anannas = createOpenAI({
-  baseURL: 'https://api.anannas.ai/v1',
-  apiKey: process.env.ANANNAS_API_KEY,
-  headers: {
-    'HTTP-Referer': 'https://scira.ai',
-    'X-Title': 'Scira AI',
-    'Content-Type': 'application/json',
-  },
-});
-
+// Single Google provider for all scira-* model ids expected by the UI.
+// We keep all original model ids/labels for UI parity, but route everything to Gemini Flash.
 export const scira = customProvider({
   languageModels: {
-    'scira-default': xai('grok-4-fast-non-reasoning'),
-    'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': anannas.chat('meta-llama/llama-3.3-70b-instruct'),
-    'scira-grok-3': xai('grok-3'),
-    'scira-grok-4': xai('grok-4'),
-    'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
-    'scira-grok-4-fast-think': xai('grok-4-fast'),
-    'scira-code': xai('grok-code-fast-1'),
-    'scira-enhance': groq('moonshotai/kimi-k2-instruct'),
-    'scira-qwen-4b': huggingface.chat('Qwen/Qwen3-4B-Instruct-2507:nscale'),
-    'scira-qwen-4b-thinking': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-4B-Thinking-2507:nscale'),
-      middleware: [middlewareWithStartWithReasoning],
-    }),
-    'scira-gpt5': anannas.chat('openai/gpt-5'),
-    'scira-gpt5-mini': anannas.chat('openai/gpt-5-mini'),
-    'scira-gpt5-nano': anannas.chat('openai/gpt-5-nano'),
-    'scira-o3': anannas.chat('openai/o3'),
-    'scira-qwen-32b': wrapLanguageModel({
-      model: groq('qwen/qwen3-32b'),
-      middleware,
-    }),
-    'scira-gpt-oss-20': wrapLanguageModel({
-      model: huggingface.chat('openai/gpt-oss-20b:fireworks-ai'),
-      middleware,
-    }),
-    'scira-gpt-oss-120': wrapLanguageModel({
-      model: huggingface.chat('openai/gpt-oss-120b:novita'),
-      middleware,
-    }),
-    'scira-deepseek-chat': gateway('deepseek/deepseek-v3.2-exp'),
-    'scira-deepseek-chat-think': wrapLanguageModel({
-      model: gateway('deepseek/deepseek-v3.2-exp-thinking'),
-      middleware,
-    }),
-    'scira-deepseek-r1': wrapLanguageModel({
-      model: anannas.chat('deepseek/deepseek-r1'),
-      middleware,
-    }),
-    'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
-    'scira-qwen-30': huggingface.chat('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
-    'scira-qwen-30-think': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-30B-A3B-Thinking-2507:nebius'),
-      middleware,
-    }),
-    'scira-qwen-3-next': huggingface.chat('Qwen/Qwen3-Next-80B-A3B-Instruct:hyperbolic'),
-    'scira-qwen-3-next-think': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-Next-80B-A3B-Thinking:hyperbolic'),
-      middleware: [middlewareWithStartWithReasoning],
-    }),
-    'scira-qwen-3-max': gateway('alibaba/qwen3-max'),
-    'scira-qwen-3-max-preview': gateway('alibaba/qwen3-max-preview'),
-    'scira-qwen-235': huggingface.chat('Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai'),
-    'scira-qwen-235-think': wrapLanguageModel({
-      model: huggingface.chat('Qwen/Qwen3-235B-A22B-Thinking-2507:fireworks-ai'),
-      middleware: [middlewareWithStartWithReasoning],
-    }),
-    'scira-glm-air': gateway('zai/glm-4.5-air'),
-    'scira-glm': wrapLanguageModel({
-      model: gateway('zai/glm-4.5'),
-      middleware,
-    }),
-    'scira-glm-4.6': wrapLanguageModel({
-      model: gateway('zai/glm-4.6'),
-      middleware,
-    }),
-    'scira-kimi-k2-v2': groq('moonshotai/kimi-k2-instruct-0905'),
-    'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
-    'scira-mistral-medium': mistral('mistral-medium-2508'),
-    'scira-magistral-small': mistral('magistral-small-2509'),
-    'scira-magistral-medium': mistral('magistral-medium-2509'),
-    'scira-google-lite': google('gemini-flash-lite-latest'),
-    'scira-google': google('gemini-flash-latest'),
-    'scira-google-think': google('gemini-flash-latest'),
-    'scira-anthropic': anthropic('claude-sonnet-4-5-20250929'),
+    'scira-default': google(DEFAULT_GOOGLE_MODEL),
+    'scira-nano': google(DEFAULT_GOOGLE_MODEL),
+    'scira-name': google(DEFAULT_GOOGLE_MODEL),
+    'scira-grok-3': google(DEFAULT_GOOGLE_MODEL),
+    'scira-grok-4': google(DEFAULT_GOOGLE_MODEL),
+    'scira-grok-4-fast': google(DEFAULT_GOOGLE_MODEL),
+    'scira-grok-4-fast-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-code': google(DEFAULT_GOOGLE_MODEL),
+    'scira-enhance': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-4b': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-4b-thinking': google(DEFAULT_GOOGLE_MODEL),
+    'scira-gpt5': google(DEFAULT_GOOGLE_MODEL),
+    'scira-gpt5-mini': google(DEFAULT_GOOGLE_MODEL),
+    'scira-gpt5-nano': google(DEFAULT_GOOGLE_MODEL),
+    'scira-o3': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-32b': google(DEFAULT_GOOGLE_MODEL),
+    'scira-gpt-oss-20': google(DEFAULT_GOOGLE_MODEL),
+    'scira-gpt-oss-120': google(DEFAULT_GOOGLE_MODEL),
+    'scira-deepseek-chat': google(DEFAULT_GOOGLE_MODEL),
+    'scira-deepseek-chat-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-deepseek-r1': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-coder': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-30': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-30-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-3-next': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-3-next-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-3-max': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-3-max-preview': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-235': google(DEFAULT_GOOGLE_MODEL),
+    'scira-qwen-235-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-glm-air': google(DEFAULT_GOOGLE_MODEL),
+    'scira-glm': google(DEFAULT_GOOGLE_MODEL),
+    'scira-glm-4.6': google(DEFAULT_GOOGLE_MODEL),
+    'scira-kimi-k2-v2': google(DEFAULT_GOOGLE_MODEL),
+    'scira-haiku': google(DEFAULT_GOOGLE_MODEL),
+    'scira-mistral-medium': google(DEFAULT_GOOGLE_MODEL),
+    'scira-magistral-small': google(DEFAULT_GOOGLE_MODEL),
+    'scira-magistral-medium': google(DEFAULT_GOOGLE_MODEL),
+    'scira-google-lite': google(DEFAULT_GOOGLE_MODEL),
+    'scira-google': google(DEFAULT_GOOGLE_MODEL),
+    'scira-google-think': google(DEFAULT_GOOGLE_MODEL),
+    'scira-anthropic': google(DEFAULT_GOOGLE_MODEL),
   },
 });
 

@@ -35,10 +35,10 @@ import {
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
-import { groq } from '@ai-sdk/groq';
+
 import { Client } from '@upstash/qstash';
-import { experimental_generateSpeech as generateVoice } from 'ai';
-import { elevenlabs } from '@ai-sdk/elevenlabs';
+
+
 import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
 import { getComprehensiveUserData, getLightweightUserAuth } from '@/lib/user-data-server';
@@ -119,21 +119,9 @@ export async function suggestQuestions(history: any[]) {
 }
 
 export async function checkImageModeration(images: string[]) {
-  const messages: ModelMessage[] = images.map((image) => ({
-    role: 'user',
-    content: [{ type: 'image', image: image }],
-  }));
-
-  const { text } = await generateText({
-    model: groq('meta-llama/llama-guard-4-12b'),
-    messages,
-    providerOptions: {
-      groq: {
-        service_tier: 'flex',
-      },
-    },
-  });
-  return text;
+  'use server';
+  // Disabled: moderation is not performed server-side in Arka
+  return 'disabled';
 }
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
@@ -148,11 +136,6 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - do not write anything other than the title
     - do not use quotes or colons`,
     prompt: JSON.stringify(message),
-    providerOptions: {
-      groq: {
-        service_tier: 'flex',
-      },
-    },
   });
 
   return title;
@@ -199,16 +182,9 @@ Guidelines (MANDATORY):
   }
 }
 
-export async function generateSpeech(text: string) {
-  const result = await generateVoice({
-    model: elevenlabs.speech('eleven_v3'),
-    text,
-    voice: 'TX3LPaxmHKxFdv7VOQHJ',
-  });
-
-  return {
-    audio: `data:audio/mp3;base64,${result.audio.base64}`,
-  };
+export async function generateSpeech(_text: string) {
+  'use server';
+  return { audio: '' };
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility

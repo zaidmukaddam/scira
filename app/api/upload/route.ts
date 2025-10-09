@@ -8,16 +8,16 @@ import { auth } from '@/lib/auth';
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)
-    .refine((file) => file.size <= 5 * 1024 * 1024, {
-      message: 'File size should be less than 5MB',
+    .refine((file) => file.size <= 10 * 1024 * 1024, {
+      message: 'File size should be 10MB or less',
     })
     .refine(
       (file) => {
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-        return validTypes.includes(file.type);
+        const t = file.type || '';
+        return t.startsWith('image/') || t === 'application/pdf';
       },
       {
-        message: 'File type should be JPEG, PNG, GIF or PDF',
+        message: 'File type should be image/* or application/pdf',
       },
     ),
 });
