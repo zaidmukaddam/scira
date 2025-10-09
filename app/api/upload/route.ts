@@ -14,10 +14,18 @@ const FileSchema = z.object({
     .refine(
       (file) => {
         const t = file.type || '';
-        return t.startsWith('image/') || t === 'application/pdf';
+        const allowedTypes = [
+          'image/jpeg',
+          'image/jpg', 
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'application/pdf'
+        ];
+        return allowedTypes.includes(t);
       },
       {
-        message: 'File type should be image/* or application/pdf',
+        message: 'File type must be JPEG, PNG, GIF, WebP, or PDF',
       },
     ),
 });
