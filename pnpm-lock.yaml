@@ -308,6 +308,9 @@ importers:
       sugar-high:
         specifier: ^0.9.3
         version: 0.9.3
+      supermemory:
+        specifier: ^3.0.0-alpha.26
+        version: 3.4.0
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -5359,6 +5362,9 @@ packages:
 
   sugar-high@0.9.3:
     resolution: {integrity: sha512-sjJH8J76D1dRMU3QINnsYr1wfQyXbyEVQQvdgzJvIer6mkgM8ahB9fNrb+FDWzRKsLuITiBOR0ZbbhDZDUbqjg==}
+
+  supermemory@3.4.0:
+    resolution: {integrity: sha512-acomTikn701JDhGnK7jGlsE/hTa+nYha1/Q4+4C8oB80BOIiQuyNufM3wXQ45z1YIqhL5m+JkgdTDGZH5zCIVw==}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -11423,6 +11429,8 @@ snapshots:
       react: 19.2.0
 
   sugar-high@0.9.3: {}
+
+  supermemory@3.4.0: {}
 
   supports-color@7.2.0:
     dependencies:
