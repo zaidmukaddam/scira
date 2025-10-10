@@ -49,8 +49,9 @@ export function getSessionFromHeaders(hdrs: Headers): { userId: string; email?: 
   return verifySessionToken(token);
 }
 
-export function getSessionFromRequestCookies(): { userId: string; email?: string } | null {
-  const token = cookies().get(COOKIE_NAME)?.value;
+export async function getSessionFromRequestCookies(): Promise<{ userId: string; email?: string } | null> {
+  const store = await cookies();
+  const token = store.get(COOKIE_NAME)?.value;
   return verifySessionToken(token || null);
 }
 

@@ -169,7 +169,8 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
 
     // Anonymous fallback using arka_client_id cookie when no auth or local session is present
     if (!effectiveUserId) {
-      const anonId = cookies().get('arka_client_id')?.value;
+      const cookieStore = await cookies();
+      const anonId = cookieStore.get('arka_client_id')?.value;
       if (!anonId) return null;
 
       const arkaUserId = `arka:${anonId}`;
@@ -295,7 +296,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
     if (!effectiveUserId) {
-      const anonId = cookies().get('arka_client_id')?.value;
+      const cookieStore = await cookies();
+      const anonId = cookieStore.get('arka_client_id')?.value;
       if (!anonId) return null;
       const arkaUserId = `arka:${anonId}`;
 
