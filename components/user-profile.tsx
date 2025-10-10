@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSession, signOut } from '@/lib/auth-client';
+import { useLocalSession } from '@/hooks/use-local-session';
 import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -53,7 +53,7 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 // Navigation Menu Component - contains all the general navigation items
 const NavigationMenu = memo(() => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useLocalSession();
   const isAuthenticated = !!session;
   const [isOpen, setIsOpen] = useState(false);
   const settingsIconRef = useRef<SettingsIconHandle>(null);
@@ -217,7 +217,7 @@ const UserProfile = memo(
     const [signingIn, setSigningIn] = useState(false);
     const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
-    const { data: session, isPending } = useSession();
+    const { data: session, isLoading: isPending } = useLocalSession();
     const router = useRouter();
 
     // Use passed user prop if available, otherwise fall back to session
@@ -347,28 +347,22 @@ const UserProfile = memo(
 
               <DropdownMenuItem
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
-                onClick={() =>
-                  signOut({
-                    fetchOptions: {
-                      onRequest: () => {
-                        setSigningOut(true);
-                        toast.loading('Signing out...');
-                      },
-                      onSuccess: () => {
-                        setSigningOut(false);
-                        localStorage.clear();
-                        toast.success('Signed out successfully');
-                        toast.dismiss();
-                        window.location.href = '/new';
-                      },
-                      onError: () => {
-                        setSigningOut(false);
-                        toast.error('Failed to sign out');
-                        window.location.reload();
-                      },
-                    },
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    setSigningOut(true);
+                    toast.loading('Signing out...');
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    setSigningOut(false);
+                    localStorage.clear();
+                    toast.success('Signed out successfully');
+                    toast.dismiss();
+                    window.location.href = '/new';
+                  } catch {
+                    setSigningOut(false);
+                    toast.error('Failed to sign out');
+                    window.location.reload();
+                  }
+                }}
               >
                 <span>Sign Out</span>
                 <SignOutIcon className="size-4" />
