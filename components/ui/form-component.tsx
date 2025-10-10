@@ -2383,11 +2383,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   );
 
   const handleEnhance = useCallback(async () => {
-    if (!isProUser) {
-      fetchDiscountConfigForm();
-      setShowUpgradeDialog(true);
-      return;
-    }
     if (!input || input.trim().length === 0) {
       toast.error('Please enter a prompt to enhance');
       return;
