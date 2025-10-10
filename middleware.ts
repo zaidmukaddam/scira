@@ -16,18 +16,8 @@ export async function middleware(request: NextRequest) {
     session = null;
   }
 
-  const existingAnon = request.cookies.get('arka_client_id')?.value;
+  // Guest sessions disabled: do not create arka_client_id cookie
   let response = NextResponse.next();
-  if (!existingAnon) {
-    const anonId = crypto.randomUUID();
-    response.cookies.set('arka_client_id', anonId, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 180,
-    });
-  }
 
   if (pathname === '/api/search' || pathname.startsWith('/api/search/') || pathname.startsWith('/api/upload')) {
     return response;

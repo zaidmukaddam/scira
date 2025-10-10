@@ -167,42 +167,9 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
     let effectiveUserId: string | null = local?.userId ?? null;
     let effectiveEmail: string | null = local?.email ?? null;
 
-    // Anonymous fallback using arka_client_id cookie when no auth or local session is present
+    // Guest sessions disabled: if no local session, return null
     if (!effectiveUserId) {
-      const cookieStore = await cookies();
-      const anonId = cookieStore.get('arka_client_id')?.value;
-      if (!anonId) return null;
-
-      const arkaUserId = `arka:${anonId}`;
-      // Try cache first
-      const cachedAnon = getCachedLightweightAuth(arkaUserId);
-      if (cachedAnon) return cachedAnon;
-
-      // Ensure anonymous user exists in DB
-      try {
-        const existing = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, arkaUserId)).limit(1);
-        if (!existing || existing.length === 0) {
-          await db.insert(user).values({
-            id: arkaUserId,
-            name: 'Anonymous',
-            email: `arka-${anonId}@anon.local`,
-            emailVerified: false,
-            image: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-        }
-      } catch (e) {
-        // Ignore race conditions on create
-      }
-
-      const lightweightData: LightweightUserAuth = {
-        userId: arkaUserId,
-        email: `arka-${anonId}@anon.local`,
-        isProUser: false,
-      };
-      setCachedLightweightAuth(arkaUserId, lightweightData);
-      return lightweightData;
+      return null;
     }
 
     const userId = effectiveUserId;
@@ -294,49 +261,9 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     let effectiveUserId: string | null = local?.userId ?? null;
     let effectiveEmail: string | null = local?.email ?? null;
 
-    // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
+    // Guest sessions disabled: if no local session, return null
     if (!effectiveUserId) {
-      const cookieStore = await cookies();
-      const anonId = cookieStore.get('arka_client_id')?.value;
-      if (!anonId) return null;
-      const arkaUserId = `arka:${anonId}`;
-
-      // Cache check
-      const cached = getCachedUserData(arkaUserId);
-      if (cached) return cached;
-
-      try {
-        const existing = await db.select({ id: user.id, email: user.email, name: user.name }).from(user).where(eq(user.id, arkaUserId)).limit(1);
-        if (!existing || existing.length === 0) {
-          await db.insert(user).values({
-            id: arkaUserId,
-            name: 'Anonymous',
-            email: `arka-${anonId}@anon.local`,
-            emailVerified: false,
-            image: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-        }
-      } catch (_) {
-        // ignore
-      }
-
-      const anonData: ComprehensiveUserData = {
-        id: arkaUserId,
-        email: `arka-${anonId}@anon.local`,
-        emailVerified: false,
-        name: 'Anonymous',
-        image: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isProUser: false,
-        proSource: 'none',
-        subscriptionStatus: 'none',
-        paymentHistory: [],
-      };
-      setCachedUserData(arkaUserId, anonData);
-      return anonData;
+      return null;
     }
 
     const userId = effectiveUserId;
