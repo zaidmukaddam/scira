@@ -84,6 +84,7 @@
     "dodopayments": "2.1.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.6",
+    "argon2": "^0.31.2",
     "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.2",
     "embla-carousel": "8.6.0",

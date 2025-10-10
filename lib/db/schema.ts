@@ -168,6 +168,13 @@ export const customInstructions = pgTable('custom_instructions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+// Local auth credentials table (for username/password)
+export const users = pgTable('users', {
+  username: text('username').primaryKey(),
+  passwordHash: text('password_hash').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 // Payment table for Dodo Payments webhook data
 export const payment = pgTable('payment', {
   id: text('id').primaryKey(), // payment_id from webhook

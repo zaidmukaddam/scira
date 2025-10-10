@@ -5,6 +5,7 @@ import { subscription, payment, user } from './db/schema';
 import { db } from './db';
 import { auth } from './auth';
 import { headers, cookies } from 'next/headers';
+import { getSessionFromHeaders } from '@/lib/local-session';
 import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
 import { getCustomInstructionsByUserId } from './db/queries';
 import type { CustomInstructions } from './db/schema';
@@ -161,12 +162,24 @@ export function clearCustomInstructionsCache(userId?: string): void {
  */
 export async function getLightweightUserAuth(): Promise<LightweightUserAuth | null> {
   try {
+    const hdrs = await headers();
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: hdrs,
     });
 
-    // Anonymous fallback using arka_client_id cookie when no auth session is present
-    if (!session?.user?.id) {
+    // Try local session cookie if Better Auth session is missing
+    let effectiveUserId: string | null = session?.user?.id ?? null;
+    let effectiveEmail: string | null = null;
+    if (!effectiveUserId) {
+      const local = getSessionFromHeaders(hdrs as any);
+      if (local?.userId) {
+        effectiveUserId = local.userId;
+        effectiveEmail = local.email ?? null;
+      }
+    }
+
+    // Anonymous fallback using arka_client_id cookie when no auth or local session is present
+    if (!effectiveUserId) {
       const anonId = cookies().get('arka_client_id')?.value;
       if (!anonId) return null;
 
@@ -202,7 +215,7 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return lightweightData;
     }
 
-    const userId = session.user.id;
+    const userId = effectiveUserId;
 
     // Check lightweight cache first
     const cached = getCachedLightweightAuth(userId);
@@ -236,6 +249,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       .$withCache();
 
     if (!result || result.length === 0) {
+      // When local session exists but app user row is missing (rare), return minimal
+      if (effectiveEmail) {
+        return { userId, email: effectiveEmail, isProUser: false };
+      }
       return null;
     }
 
@@ -283,12 +300,24 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
 export async function getComprehensiveUserData(): Promise<ComprehensiveUserData | null> {
   try {
     // Get session once
+    const hdrs = await headers();
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: hdrs,
     });
 
+    // Try local session cookie if Better Auth session is missing
+    let effectiveUserId: string | null = session?.user?.id ?? null;
+    let effectiveEmail: string | null = null;
+    if (!effectiveUserId) {
+      const local = getSessionFromHeaders(hdrs as any);
+      if (local?.userId) {
+        effectiveUserId = local.userId;
+        effectiveEmail = local.email ?? null;
+      }
+    }
+
     // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
-    if (!session?.user?.id) {
+    if (!effectiveUserId) {
       const anonId = cookies().get('arka_client_id')?.value;
       if (!anonId) return null;
       const arkaUserId = `arka:${anonId}`;
@@ -331,7 +360,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       return anonData;
     }
 
-    const userId = session.user.id;
+    const userId = effectiveUserId;
 
     // Check cache first
     const cached = getCachedUserData(userId);
