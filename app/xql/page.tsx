@@ -16,7 +16,6 @@ import { XQLProUpgradeScreen } from '@/components/xql-pro-upgrade-screen';
 import { BorderTrail } from '@/components/core/border-trail';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { cn } from '@/lib/utils';
-import { type XQLMessage } from '@/app/api/xql/route';
 import { highlight } from 'sugar-high';
 import { SciraLogo } from '@/components/logos/scira-logo';
 
@@ -28,7 +27,7 @@ export default function XQLPage() {
   const { user, isProUser, isLoading: isProStatusLoading } = useUser();
   const router = useRouter();
 
-  const { messages, sendMessage, status } = useChat<XQLMessage>({
+  const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/xql',
     }),
@@ -259,7 +258,7 @@ export default function XQLPage() {
                     part.state === 'output-error')
                 ) {
                   console.log('Tool part found:', part); // Debug log
-                  const input = part.input;
+                  const input: any = (part as any).input;
 
                   if (!input || typeof input !== 'object') {
                     console.log('Input is invalid:', input);
@@ -295,7 +294,7 @@ export default function XQLPage() {
                       Array.isArray(input.includeXHandles) &&
                       input.includeXHandles.length > 0
                     ) {
-                      const handles = input.includeXHandles.map((h) => `'${h ?? ''}'`).join(', ');
+                      const handles = input.includeXHandles.map((h: any) => `'${h ?? ''}'`).join(', ');
                       conditions.push(`  author_handle IN (${handles})`);
                     }
 
@@ -304,7 +303,7 @@ export default function XQLPage() {
                       Array.isArray(input.excludeXHandles) &&
                       input.excludeXHandles.length > 0
                     ) {
-                      const handles = input.excludeXHandles.map((h) => `'${h ?? ''}'`).join(', ');
+                      const handles = input.excludeXHandles.map((h: any) => `'${h ?? ''}'`).join(', ');
                       conditions.push(`  author_handle NOT IN (${handles})`);
                     }
 

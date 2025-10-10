@@ -128,7 +128,11 @@ export default function CheckoutPage() {
   const onSubmit = async (data: CheckoutFormData) => {
     setIsLoading(true);
     try {
-      const { data: checkout, error } = await betterauthClient.dodopayments.checkout({
+      if (!(betterauthClient as any)?.dodopayments?.checkout) {
+        toast.error('DodoPayments n\'est pas configuré. Veuillez réessayer plus tard.');
+        return;
+      }
+      const { data: checkout, error } = await (betterauthClient as any).dodopayments.checkout({
         slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG,
         customer: {
           email: data.customer.email,

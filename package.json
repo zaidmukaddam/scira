@@ -136,7 +136,8 @@
     
     "vaul": "^1.1.2",
     
-    "zod": "4.1.8"
+    "zod": "4.1.8",
+    "supermemory": "^3.0.0-alpha.26"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",

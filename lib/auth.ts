@@ -114,15 +114,9 @@ export const auth = betterAuth({
           products: [
             {
               productId:
-                process.env.NEXT_PUBLIC_PREMIUM_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_TIER environment variable is required');
-                })(),
+                process.env.NEXT_PUBLIC_PREMIUM_TIER || '',
               slug:
-                process.env.NEXT_PUBLIC_PREMIUM_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_SLUG environment variable is required');
-                })(),
+                process.env.NEXT_PUBLIC_PREMIUM_SLUG || '' ,
             },
           ],
           successUrl: '/success',
@@ -289,15 +283,9 @@ export const auth = betterAuth({
           products: [
             {
               productId:
-                process.env.NEXT_PUBLIC_STARTER_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_TIER environment variable is required');
-                })(),
+                process.env.NEXT_PUBLIC_STARTER_TIER || '' ,
               slug:
-                process.env.NEXT_PUBLIC_STARTER_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_SLUG environment variable is required');
-                })(),
+                process.env.NEXT_PUBLIC_STARTER_SLUG || '' ,
             },
           ],
           successUrl: `/success`,
@@ -307,10 +295,7 @@ export const auth = betterAuth({
         usage(),
         webhooks({
           secret:
-            process.env.POLAR_WEBHOOK_SECRET ||
-            (() => {
-              throw new Error('POLAR_WEBHOOK_SECRET environment variable is required');
-            })(),
+            process.env.POLAR_WEBHOOK_SECRET || '' ,
           onPayload: async ({ data, type }) => {
             if (
               type === 'subscription.created' ||

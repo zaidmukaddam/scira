@@ -203,7 +203,12 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     try {
       const proSource = getProAccessSource();
       if (proSource === 'dodo') {
-        await betterauthClient.dodopayments.customer.portal();
+        if ((betterauthClient as any)?.dodopayments?.customer?.portal) {
+          await (betterauthClient as any).dodopayments.customer.portal();
+        } else {
+          toast.error('DodoPayments n\'est pas configuré.');
+          return;
+        }
       } else {
         await authClient.customer.portal();
       }
@@ -215,11 +220,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER;
   const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
-
-  if (!STARTER_TIER || !STARTER_SLUG) {
-    console.error('Missing required environment variables');
-    throw new Error('Missing required environment variables for Starter tier');
-  }
+  const STARTER_ENV_OK = Boolean(STARTER_TIER && STARTER_SLUG);
 
   // Check if user has active Polar subscription
   const hasPolarSubscription = () => {
@@ -474,7 +475,14 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     <Button
                       variant="outline"
                       className="w-full group"
-                      onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
+                      disabled={!STARTER_ENV_OK}
+                      onClick={() => {
+                        if (STARTER_ENV_OK) {
+                          handleCheckout(STARTER_TIER as string, STARTER_SLUG as string, 'polar');
+                        } else {
+                          toast.error('Subscription (Polar) non configurée.');
+                        }
+                      }}
                     >
                       💳 Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
