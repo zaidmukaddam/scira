@@ -103,6 +103,8 @@ export async function getChatsByUserId({
   endingBefore: string | null;
 }) {
   try {
+    console.log('[db.getChatsByUserId] query', { userId: id, limit, startingAfter, endingBefore });
+
     const extendedLimit = limit + 1;
 
     const query = (whereCondition?: SQL<any>) =>
@@ -119,16 +121,30 @@ export async function getChatsByUserId({
     if (startingAfter) {
       const [selectedChat] = await db.select().from(chat).where(eq(chat.id, startingAfter)).limit(1);
 
-      if (!selectedChat) {
-        throw new ChatSDKError('not_found:database', `Chat with id ${startingAfter} not found`);
+      if (!selectedChat || selectedChat.userId !== id) {
+        console.log('[db.getChatsByUserId] cursor not found or not owned', {
+          op: 'getChatsByUserId',
+          userId: id,
+          startingAfter,
+          endingBefore,
+          note: 'cursor not found or not owned',
+        });
+        return { chats: [], hasMore: false };
       }
 
       filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
     } else if (endingBefore) {
       const [selectedChat] = await db.select().from(chat).where(eq(chat.id, endingBefore)).limit(1);
 
-      if (!selectedChat) {
-        throw new ChatSDKError('not_found:database', `Chat with id ${endingBefore} not found`);
+      if (!selectedChat || selectedChat.userId !== id) {
+        console.log('[db.getChatsByUserId] cursor not found or not owned', {
+          op: 'getChatsByUserId',
+          userId: id,
+          startingAfter,
+          endingBefore,
+          note: 'cursor not found or not owned',
+        });
+        return { chats: [], hasMore: false };
       }
 
       filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));

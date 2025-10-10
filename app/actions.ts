@@ -35,6 +35,7 @@ import {
   deleteLookout,
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
+import { isAnonymousUser } from '@/lib/utils';
 import { get } from '@vercel/edge-config';
 
 import { Client } from '@upstash/qstash';
@@ -1344,6 +1345,13 @@ export async function getUserChats(
 
   if (!userId) return { chats: [], hasMore: false };
 
+  if (isAnonymousUser(userId)) {
+    console.log('[actions.getUserChats] anonymous user - skipping DB', { userId, startingAfter, endingBefore });
+    return { chats: [], hasMore: false };
+  }
+
+  console.log('[actions.getUserChats] fetching', { userId, limit, startingAfter, endingBefore });
+
   try {
     return await getChatsByUserId({
       id: userId,
@@ -1352,7 +1360,7 @@ export async function getUserChats(
       endingBefore: endingBefore || null,
     });
   } catch (error) {
-    console.error('Error fetching user chats:', error);
+    console.error('[actions.getUserChats] Error fetching user chats', { userId, limit, startingAfter, endingBefore, error: error instanceof Error ? error.message : String(error) });
     return { chats: [], hasMore: false };
   }
 }
@@ -1367,6 +1375,13 @@ export async function loadMoreChats(
 
   if (!userId || !lastChatId) return { chats: [], hasMore: false };
 
+  if (isAnonymousUser(userId)) {
+    console.log('[actions.loadMoreChats] anonymous user - skipping DB', { userId, lastChatId });
+    return { chats: [], hasMore: false };
+  }
+
+  console.log('[actions.loadMoreChats] fetching', { userId, lastChatId, limit });
+
   try {
     return await getChatsByUserId({
       id: userId,
@@ -1375,7 +1390,7 @@ export async function loadMoreChats(
       endingBefore: lastChatId,
     });
   } catch (error) {
-    console.error('Error loading more chats:', error);
+    console.error('[actions.loadMoreChats] Error loading more chats', { userId, lastChatId, limit, error: error instanceof Error ? error.message : String(error) });
     return { chats: [], hasMore: false };
   }
 }
