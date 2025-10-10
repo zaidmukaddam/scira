@@ -1,7 +1,8 @@
 // Better Auth removed. Provide minimal stubs to avoid build-time errors.
 export const signIn = {
   social: async () => {
-    // No-op: returns resolved promise to avoid crashes
+    // No-op: social sign-in disabled
+
     return Promise.resolve();
   },
 } as any;
