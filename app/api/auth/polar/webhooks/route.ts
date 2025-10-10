@@ -4,6 +4,7 @@ import { subscription, user } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from '@/lib/performance-cache';
 import { clearUserDataCache } from '@/lib/user-data-server';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 function safeParseDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
@@ -11,9 +12,45 @@ function safeParseDate(value: string | Date | null | undefined): Date | null {
   return new Date(value);
 }
 
+function verifyPolarWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  if (!signature || !secret) return false;
+  
+  const expectedSignature = createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
+  
+  const providedSignature = signature.startsWith('sha256=') 
+    ? signature.slice(7) 
+    : signature;
+  
+  return timingSafeEqual(
+    Buffer.from(expectedSignature, 'hex'),
+    Buffer.from(providedSignature, 'hex')
+  );
+}
+
 export async function POST(req: Request) {
   try {
-    const payload = await req.json();
+    const rawBody = await req.text();
+    const signature = req.headers.get('x-polar-signature');
+    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error('POLAR_WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+
+    if (!signature) {
+      console.error('Missing x-polar-signature header');
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+    }
+
+    if (!verifyPolarWebhookSignature(rawBody, signature, webhookSecret)) {
+      console.error('Invalid webhook signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawBody);
     const type: string = payload?.type;
     const data = payload?.data;
 
