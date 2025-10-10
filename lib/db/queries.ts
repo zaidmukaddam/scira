@@ -16,7 +16,7 @@ import {
   lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index';
+import { db, maindb } from './index';
 import { getDodoPayments, setDodoPayments, getDodoProStatus, setDodoProStatus } from '../performance-cache';
 
 type VisibilityType = 'public' | 'private';
@@ -51,7 +51,18 @@ export async function saveChat({
 }) {
   try {
     // Ensure user exists to satisfy FK (handles anonymous arka:* users too)
-    const existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
+    console.log('[db.saveChat] ensure user exists', { userId, isArka: userId.startsWith('arka:') });
+    let existingUser: User | null = null;
+    try {
+      existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
+    } catch (error) {
+      console.error('[db.saveChat] user existence check failed on replica, falling back to primary', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      existingUser = await maindb.query.user.findFirst({ where: eq(user.id, userId) });
+    }
+
     if (!existingUser) {
       const isArka = userId.startsWith('arka:');
       const fallbackEmail = isArka ? `${userId.replace(':', '-') }@anon.local` : `${userId.replace(':', '-') }@local`; // best-effort
@@ -75,7 +86,8 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to save chat' + error);
+    console.error('[db.saveChat] failed', { userId, error: error instanceof Error ? error.message : String(error) });
+    throw new ChatSDKError('bad_request:database', 'Failed to save chat');
   }
 }
 
