@@ -203,7 +203,12 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     try {
       const proSource = getProAccessSource();
       if (proSource === 'dodo') {
-        await betterauthClient.dodopayments.customer.portal();
+        if ((betterauthClient as any)?.dodopayments?.customer?.portal) {
+          await (betterauthClient as any).dodopayments.customer.portal();
+        } else {
+          toast.error('DodoPayments n\'est pas configuré.');
+          return;
+        }
       } else {
         await authClient.customer.portal();
       }
