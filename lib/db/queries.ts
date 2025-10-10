@@ -50,9 +50,26 @@ export async function saveChat({
   visibility: VisibilityType;
 }) {
   try {
+    // Ensure user exists to satisfy FK (handles anonymous arka:* users too)
+    const existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
+    if (!existingUser) {
+      const isArka = userId.startsWith('arka:');
+      const fallbackEmail = isArka ? `${userId.replace(':', '-') }@anon.local` : `${userId.replace(':', '-') }@local`; // best-effort
+      await db.insert(user).values({
+        id: userId,
+        name: isArka ? 'Anonymous' : userId,
+        email: fallbackEmail,
+        emailVerified: false,
+        image: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
     return await db.insert(chat).values({
       id,
       createdAt: new Date(),
+      updatedAt: new Date(),
       userId,
       title,
       visibility,

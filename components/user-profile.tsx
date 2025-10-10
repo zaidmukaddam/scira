@@ -40,7 +40,7 @@ import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
-import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
+
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -214,8 +214,6 @@ const UserProfile = memo(
     settingsInitialTab?: string;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
-    const [signingIn, setSigningIn] = useState(false);
-    const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
     const { data: session, isLoading: isPending } = useLocalSession();
     const router = useRouter();
@@ -379,12 +377,10 @@ const UserProfile = memo(
                 className={cn(
                   'h-7 px-2.5 text-xs rounded-md shadow-sm group',
                   'hover:scale-[1.02] active:scale-[0.98] transition-transform',
-                  signingIn && 'animate-pulse',
                   className,
                 )}
                 onClick={() => {
-                  setSigningIn(true);
-                  setSignInDialogOpen(true);
+                  window.location.href = '/sign-in';
                 }}
               >
                 <SignInIcon className="size-3.5 mr-1.5" />
@@ -415,10 +411,7 @@ const UserProfile = memo(
           />
         )}
 
-        <SignInPromptDialog open={signInDialogOpen} onOpenChange={(open) => {
-          setSignInDialogOpen(open);
-          if (!open) setSigningIn(false);
-        }} />
+
       </>
     );
   },

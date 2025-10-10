@@ -1,8 +1,7 @@
 import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-
-import { auth } from '@/lib/auth';
+import { getSessionFromHeaders } from '@/lib/local-session';
 
 // File validation schema
 const FileSchema = z.object({
@@ -34,12 +33,9 @@ export async function POST(request: NextRequest) {
   // Check for authentication but don't require it
   let isAuthenticated = false;
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    isAuthenticated = !!session;
+    const sess = getSessionFromHeaders(request.headers as any);
+    isAuthenticated = !!sess;
   } catch (error) {
-    console.warn('Error checking authentication:', error);
     // Continue as unauthenticated
   }
 
@@ -59,7 +55,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Use a different prefix for authenticated vs unauthenticated uploads
     const prefix = isAuthenticated ? 'auth' : 'public';
 
     const blob = await put(`mplx/${prefix}.${file.name.split('.').pop()}`, file, {

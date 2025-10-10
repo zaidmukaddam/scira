@@ -27,7 +27,7 @@
     "@aws-sdk/lib-storage": "^3.903.0",
     "@babel/runtime": ">=7.28.4",
     
-    "@dodopayments/better-auth": "^1.2.0",
+
     "@dodopayments/core": "^0.2.0",
     "@eslint/plugin-kit": "0.3.4",
     "@foobar404/wave": "^2.0.5",
@@ -37,7 +37,7 @@
     
     "@neondatabase/serverless": "^1.0.2",
     "@phosphor-icons/react": "^2.1.10",
-    "@polar-sh/better-auth": "^1.1.8",
+
     "@polar-sh/sdk": "^0.35.4",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -74,7 +74,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "ai": "5.0.60",
     "axios": "^1.12.2",
-    "better-auth": "https://pkg.pr.new/better-auth/better-auth@8e825ad",
+
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -85,6 +85,7 @@
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.6",
     "argon2": "^0.31.2",
+    "bcryptjs": "^2.4.3",
     "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.2",
     "embla-carousel": "8.6.0",

@@ -31,7 +31,11 @@ export function verifySessionToken(token: string | undefined | null): { userId: 
   if (parts.length !== 3 || parts[0] !== 'v1') return null;
   const [_, body, signature] = parts as [string, string, string];
   const expected = sign(body);
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  } catch {
+    return null;
+  }
   try {
     const json = Buffer.from(body.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
     const data = JSON.parse(json);
@@ -49,8 +53,9 @@ export function getSessionFromHeaders(hdrs: Headers): { userId: string; email?: 
   return verifySessionToken(token);
 }
 
-export function getSessionFromRequestCookies(): { userId: string; email?: string } | null {
-  const token = cookies().get(COOKIE_NAME)?.value;
+export async function getSessionFromRequestCookies(): Promise<{ userId: string; email?: string } | null> {
+  const store = await cookies();
+  const token = store.get(COOKIE_NAME)?.value;
   return verifySessionToken(token || null);
 }
 

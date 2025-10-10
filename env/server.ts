@@ -9,6 +9,8 @@ export const serverEnv = createEnv({
     REDIS_URL: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
+    LOCAL_AUTH_SECRET: z.string().optional(),
+
     // Deprecated / unused at runtime (kept for compile-time compatibility)
     XAI_API_KEY: z.string().optional().default('deprecated'),
     OPENAI_API_KEY: z.string().optional().default('deprecated'),
