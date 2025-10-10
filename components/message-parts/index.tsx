@@ -554,7 +554,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 // Handle error responses
-                if (!part.output.success) {
+                if (!(part as any).output?.success) {
                   return (
                     <div
                       key={`${messageIndex}-${partIndex}-tool`}
@@ -569,7 +569,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             <h3 className="text-sm font-medium text-red-900 dark:text-red-100">
                               Location search failed
                             </h3>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{(part as any).output?.error}</p>
                           </div>
                         </div>
                       </div>
@@ -577,7 +577,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 }
 
-                const { places } = part.output;
+                const { places } = (part as any).output || {};
                 if (!places || places.length === 0) {
                   return (
                     <div
@@ -620,7 +620,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               {places.length} Location{places.length !== 1 ? 's' : ''} Found
                             </h3>
                             <span className="text-[11px] px-2 py-0.5 rounded-full bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]">
-                              {part.output.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
+                              {(part as any).output.search_type === 'forward' ? 'Address Search' : 'Coordinate Search'}
                             </span>
                           </div>
                         </div>
@@ -714,7 +714,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TMDBResult result={part.output} />
+                    <TMDBResult result={(part as any).output as any} />
                   </Suspense>
                 );
             }
@@ -736,42 +736,42 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <StockChartLoader
                     key={`${messageIndex}-${partIndex}-tool`}
-                    title={part.input?.title}
-                    input={part.input}
+                    title={(part as any).input?.title}
+                    input={(part as any).input as any}
                   />
                 );
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <InteractiveStockChart
-                      title={part.input.title}
+                      title={(part as any).input.title}
                       chart={{
-                        ...part.output.chart,
+                        ...(part as any).output.chart,
                         x_scale: 'datetime',
                       }}
-                      data={part.output.chart.elements}
-                      stock_symbols={part.input.companies || []}
+                      data={(part as any).output.chart.elements}
+                      stock_symbols={(part as any).input.companies || []}
                       currency_symbols={
-                        part.output.currency_symbols ||
-                        part.input.currency_symbols ||
-                        part.input.companies?.map(() => 'USD') || ['USD']
+                        (part as any).output.currency_symbols ||
+                        (part as any).input.currency_symbols ||
+                        ((part as any).input.companies?.map(() => 'USD') || ['USD'])
                       }
-                      interval={part.input.time_period || '1 year'}
+                      interval={(part as any).input.time_period || '1 year'}
                       resolved_companies={
-                        part.output.resolved_companies?.map((company) => ({
+                        (part as any).output.resolved_companies?.map((company) => ({
                           ...company,
                           ticker: company.ticker || company.name || 'N/A',
                         })) || []
                       }
                       earnings_data={
-                        part.output.earnings_data?.map((earning) => ({
+                        (part as any).output.earnings_data?.map((earning) => ({
                           ...earning,
                           ticker: earning.ticker || 'N/A',
                         })) || []
                       }
-                      news_results={part.output.news_results}
+                      news_results={(part as any).output.news_results}
                       sec_filings={
-                        part.output.sec_filings?.map((filing) => ({
+                        (part as any).output.sec_filings?.map((filing) => ({
                           id: filing.id,
                           title: filing.title,
                           url: filing.url,
@@ -786,13 +786,13 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                 : '10-K',
                         })) || []
                       }
-                      company_statistics={part.output.company_statistics}
-                      balance_sheets={part.output.balance_sheets}
-                      income_statements={part.output.income_statements}
-                      cash_flows={part.output.cash_flows}
-                      dividends_data={part.output.dividends_data}
-                      insider_transactions={part.output.insider_transactions}
-                      market_movers={part.output.market_movers}
+                      company_statistics={(part as any).output.company_statistics}
+                      balance_sheets={(part as any).output.balance_sheets}
+                      income_statements={(part as any).output.income_statements}
+                      cash_flows={(part as any).output.cash_flows}
+                      dividends_data={(part as any).output.dividends_data}
+                      insider_transactions={(part as any).output.insider_transactions}
+                      market_movers={(part as any).output.market_movers}
                     />
                   </Suspense>
                 );
@@ -869,7 +869,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <WeatherChart result={part.output} />
+                    <WeatherChart result={(part as any).output as any} />
                   </Suspense>
                 );
             }
@@ -884,7 +884,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <MultiSearch
                       result={part.output || null}
-                      args={part.input ? part.input : {}}
+                      args={(part as any).input ? (part as any).input : {}}
                       annotations={annotations as DataQueryCompletionPart[]}
                     />
                   </Suspense>
@@ -941,7 +941,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   }, []);
 
                   // Format the time according to the specified timezone
-                  const timezone = part.output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
+                  const timezone = (part as any).output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
                   const formatter = new Intl.DateTimeFormat('en-US', {
                     hour: 'numeric',
                     minute: 'numeric',
@@ -998,31 +998,31 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               </h3>
                               <div className="bg-neutral-100 dark:bg-neutral-800 rounded px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
                                 <PhosphorClockIcon weight="regular" className="h-3 w-3 text-blue-500" />
-                                {part.output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
+                                {(part as any).output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
                               </div>
                             </div>
                             <LiveClock />
                             <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
-                              {part.output.formatted?.date}
+                              {(part as any).output.formatted?.date}
                             </p>
                           </div>
 
                           {/* Compact Technical Details */}
                           <div className="grid grid-cols-2 gap-3 text-xs">
-                            {part.output.formatted?.iso_local && (
+                            {(part as any).output.formatted?.iso_local && (
                               <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
                                 <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
                                 <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
-                                  {part.output.formatted.iso_local}
+                                  {(part as any).output.formatted.iso_local}
                                 </div>
                               </div>
                             )}
 
-                            {part.output.timestamp && (
+                            {(part as any).output.timestamp && (
                               <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
                                 <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
                                 <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
-                                  {part.output.timestamp}
+                                  {(part as any).output.timestamp}
                                 </div>
                               </div>
                             )}
@@ -1049,7 +1049,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <ExtremeSearch
                       // @ts-ignore - Complex type intersection resolved to never
-                      toolInvocation={{ toolName: 'extreme_search', input: part.input, result: part.output }}
+                      toolInvocation={{ toolName: 'extreme_search', input: (part as any).input, result: (part as any).output as any }}
                       annotations={
                         (annotations?.filter(
                           (annotation) => annotation.type === 'data-extreme_search',
@@ -1072,7 +1072,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'input-available':
               case 'output-available':
                 return (
-                  <TranslationTool key={`${messageIndex}-${partIndex}-tool`} args={part.input} result={part.output} />
+                  <TranslationTool key={`${messageIndex}-${partIndex}-tool`} args={(part as any).input} result={(part as any).output as any} />
                 );
             }
             break;
@@ -1096,7 +1096,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <CodeContextTool key={`${messageIndex}-${partIndex}-tool`} args={part.input} result={part.output} />
+                  <CodeContextTool key={`${messageIndex}-${partIndex}-tool`} args={(part as any).input} result={(part as any).output as any} />
                 );
             }
             break;
@@ -1121,7 +1121,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TrendingResults result={part.output} type="movie" />
+                    <TrendingResults result={(part as any).output as any} type="movie" />
                   </Suspense>
                 );
             }
@@ -1147,7 +1147,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TrendingResults result={part.output} type="tv" />
+                    <TrendingResults result={(part as any).output as any} type="tv" />
                   </Suspense>
                 );
             }
@@ -1175,7 +1175,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <AcademicPapersCard
                       results={
-                        part.output.results?.map((result) => ({
+                        (part as any).output.results?.map((result) => ({
                           ...result,
                           title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
                         })) || []
@@ -1225,7 +1225,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <FlightTracker data={part.output} />
+                    <FlightTracker data={(part as any).output as any} />
                   </Suspense>
                 );
             }
@@ -1252,11 +1252,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <RedditSearch
-                      result={part.output}
+                      result={(part as any).output as any}
                       args={{
                         ...part.input,
-                        maxResults: part.input.maxResults || 10,
-                        timeRange: part.input.timeRange || 'week',
+                        maxResults: (part as any).input.maxResults || 10,
+                        timeRange: (part as any).input.timeRange || 'week',
                       }}
                     />
                   </Suspense>
@@ -1287,9 +1287,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <XSearch
                       result={{
                         ...part.output,
-                        query: part.output.query || '',
+                        query: (part as any).output.query || '',
                         citations:
-                          part.output.citations?.map((citation) => ({
+                          (part as any).output.citations?.map((citation) => ({
                             ...citation,
                             title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
                             url: 'url' in citation ? citation.url : citation.id,
@@ -1297,14 +1297,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       }}
                       args={{
                         ...part.input,
-                        query: part.input.query || '',
-                        startDate: part.input.startDate || '',
-                        endDate: part.input.endDate || '',
-                        includeXHandles: part.input.includeXHandles || [],
-                        excludeXHandles: part.input.excludeXHandles || [],
-                        postFavoritesCount: part.input.postFavoritesCount || 0,
-                        postViewCount: part.input.postViewCount || 0,
-                        maxResults: part.input.maxResults || 20,
+                        query: (part as any).input.query || '',
+                        startDate: (part as any).input.startDate || '',
+                        endDate: (part as any).input.endDate || '',
+                        includeXHandles: (part as any).input.includeXHandles || [],
+                        excludeXHandles: (part as any).input.excludeXHandles || [],
+                        postFavoritesCount: (part as any).input.postFavoritesCount || 0,
+                        postViewCount: (part as any).input.postViewCount || 0,
+                        maxResults: (part as any).input.maxResults || 20,
                       }}
                     />
                   </Suspense>
@@ -1332,7 +1332,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <YouTubeSearchResults results={part.output} />
+                    <YouTubeSearchResults results={(part as any).output as any} />
                   </Suspense>
                 );
             }
@@ -1346,7 +1346,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return <SearchLoadingState icon={MemoryIcon} text="Searching memories..." color="blue" />;
               case 'output-available':
                 // Handle error responses
-                if (!part.output.success) {
+                if (!(part as any).output?.success) {
                   return (
                     <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                       <div className="p-4">
@@ -1356,7 +1356,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           </div>
                           <div className="flex-1">
                             <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Memory search failed</h3>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{(part as any).output?.error}</p>
                           </div>
                         </div>
                       </div>
@@ -1364,7 +1364,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 }
 
-                const { results, count } = part.output;
+                const { results, count } = (part as any).output || {};
                 if (!results || results.length === 0) {
                   return (
                     <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
@@ -1435,7 +1435,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return <SearchLoadingState icon={MemoryIcon} text="Adding memory..." color="green" />;
               case 'output-available':
                 // Handle error responses
-                if (!part.output.success) {
+                if (!(part as any).output?.success) {
                   return (
                     <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                       <div className="p-4">
@@ -1445,7 +1445,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           </div>
                           <div className="flex-1">
                             <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Failed to add memory</h3>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{(part as any).output?.error}</p>
                           </div>
                         </div>
                       </div>
@@ -1453,7 +1453,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 }
 
-                const { memory: addedMemory } = part.output;
+                const { memory: addedMemory } = (part as any).output || {};
                 return (
                   <div className="w-full my-4 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 shadow-sm overflow-hidden">
                     <div className="px-4 py-3">
@@ -1488,7 +1488,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             </h4>
                           )}
                           <p className="text-xs text-green-700 dark:text-green-300">
-                            {addedMemory.summary || addedMemory.content || part.input.memory || 'Memory stored'}
+                            {addedMemory.summary || addedMemory.content || (part as any).input.memory || 'Memory stored'}
                           </p>
                           {addedMemory.type && (
                             <div className="flex items-center gap-2 mt-2">
@@ -1518,7 +1518,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <ConnectorsSearchResults
                       results={[]}
-                      query={part.input?.query || ''}
+                      query={(part as any).input?.query || ''}
                       totalResults={0}
                       isLoading={true}
                     />
@@ -1548,19 +1548,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'input-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <NearbySearchSkeleton type={part.input?.type || 'places'} />
+                    <NearbySearchSkeleton type={(part as any).input?.type || 'places'} />
                   </Suspense>
                 );
               case 'output-available':
                 // Handle error cases or missing data
-                if (!part.output.success || !part.output.center) {
+                if (!(part as any).output?.success || !(part as any).output.center) {
                   return (
                     <div
                       key={`${messageIndex}-${partIndex}-tool`}
                       className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg"
                     >
                       <p className="text-red-700 dark:text-red-300">
-                        {part.output.error ||
+                        {(part as any).output.error ||
                           'Unable to find nearby places. Please try a different location or search term.'}
                       </p>
                     </div>
@@ -1571,11 +1571,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <NearbySearchMapView
                       center={{
-                        lat: part.output.center?.lat || 0,
-                        lng: part.output.center?.lng || 0,
+                        lat: (part as any).output.center?.lat || 0,
+                        lng: (part as any).output.center?.lng || 0,
                       }}
                       places={
-                        part.output.places?.map((place: any) => ({
+                        (part as any).output.places?.map((place: any) => ({
                           name: place.name,
                           location: place.location,
                           place_id: place.place_id,
@@ -1594,9 +1594,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           distance: place.distance,
                         })) || []
                       }
-                      type={part.output.type || ''}
-                      query={part.output.query || ''}
-                      searchRadius={'radius' in part.output ? Number(part.output.radius) || 1000 : 1000}
+                      type={(part as any).output.type || ''}
+                      query={(part as any).output.query || ''}
+                      searchRadius={'radius' in part.output ? Number((part as any).output.radius) || 1000 : 1000}
                     />
                   </Suspense>
                 );
@@ -1616,8 +1616,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <CurrencyConverter
-                      toolInvocation={{ toolName: 'currency_converter', input: part.input, result: part.output }}
-                      result={part.output}
+                      toolInvocation={{ toolName: 'currency_converter', input: (part as any).input, result: (part as any).output as any }}
+                      result={(part as any).output as any}
                     />
                   </Suspense>
                 );
@@ -1638,13 +1638,13 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-3 w-full overflow-hidden">
                     <Suspense fallback={<ComponentLoader />}>
                       <CodeInterpreterView
-                        code={part.input?.code}
+                        code={(part as any).input?.code}
                         output={part.output?.message}
-                        error={part.output && 'error' in part.output ? String(part.output.error) : undefined}
+                        error={(part as any).output && 'error' in (part as any).output ? String((part as any).output.error) : undefined}
                         language="python"
-                        title={part.input?.title || 'Code Execution'}
+                        title={(part as any).input?.title || 'Code Execution'}
                         status={
-                          part.output && 'error' in part.output && part.output.error
+                          (part as any).output && 'error' in (part as any).output && (part as any).output.error
                             ? 'error'
                             : part.output
                               ? 'completed'
@@ -1656,7 +1656,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     {part.output?.chart && (
                       <div className="pt-1 overflow-x-auto">
                         <Suspense fallback={<ComponentLoader />}>
-                          <InteractiveChart chart={part.output.chart} />
+                          <InteractiveChart chart={(part as any).output.chart} />
                         </Suspense>
                       </div>
                     )}
@@ -1717,18 +1717,18 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 // Handle error responses
                 if (
-                  (part.output && 'error' in part.output && part.output.error) ||
-                  (part.output.results &&
-                    part.output.results[0] &&
-                    'error' in part.output.results[0] &&
-                    part.output.results[0].error)
+                  ((part as any).output && 'error' in (part as any).output && (part as any).output.error) ||
+                  ((part as any).output.results &&
+                    (part as any).output.results[0] &&
+                    'error' in (part as any).output.results[0] &&
+                    (part as any).output.results[0].error)
                 ) {
                   const errorMessage = String(
-                    (part.output && 'error' in part.output && part.output.error) ||
-                      (part.output.results &&
-                        part.output.results[0] &&
-                        'error' in part.output.results[0] &&
-                        part.output.results[0].error),
+                    ((part as any).output && 'error' in (part as any).output && (part as any).output.error) ||
+                      ((part as any).output.results &&
+                        (part as any).output.results[0] &&
+                        'error' in (part as any).output.results[0] &&
+                        (part as any).output.results[0].error),
                   );
                   return (
                     <div
@@ -1751,7 +1751,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 }
 
                 // Handle no content
-                if (!part.output.results || part.output.results.length === 0) {
+                if (!(part as any).output.results || (part as any).output.results.length === 0) {
                   return (
                     <div
                       key={`${messageIndex}-${partIndex}-tool`}
@@ -1957,7 +1957,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" />
+                    <CryptoChart result={(part as any).output as any} coinId={(part as any).input.coinId} chartType="candlestick" />
                   </Suspense>
                 );
             }
@@ -1983,7 +1983,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoCoinsData result={part.output} coinId={part.input.coinId} />
+                    <CryptoCoinsData result={(part as any).output as any} coinId={(part as any).input.coinId} />
                   </Suspense>
                 );
             }
@@ -2009,7 +2009,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoCoinsData result={part.output} contractAddress={part.input.contractAddress} />
+                    <CryptoCoinsData result={(part as any).output as any} contractAddress={(part as any).input.contractAddress} />
                   </Suspense>
                 );
             }
@@ -2040,25 +2040,25 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   >
                     <div className="p-3">
                       <div className="flex items-start gap-3">
-                        {part.output.timeEmoji && (
+                        {(part as any).output.timeEmoji && (
                           <div className="mt-0.5 w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
-                            <span className="text-xs">{part.output.timeEmoji}</span>
+                            <span className="text-xs">{(part as any).output.timeEmoji}</span>
                           </div>
                         )}
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex items-center gap-2 text-xs">
                             <span className="font-medium text-neutral-900 dark:text-neutral-100">
-                              {part.output.greeting}
+                              {(part as any).output.greeting}
                             </span>
                             <span className="text-neutral-400">•</span>
-                            <span className="text-neutral-500 dark:text-neutral-400">{part.output.dayOfWeek}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400">{(part as any).output.dayOfWeek}</span>
                           </div>
                           <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                            {part.output.professionalMessage}
+                            {(part as any).output.professionalMessage}
                           </div>
-                          {part.output.helpfulTip && (
+                          {(part as any).output.helpfulTip && (
                             <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                              {part.output.helpfulTip}
+                              {(part as any).output.helpfulTip}
                             </div>
                           )}
                         </div>

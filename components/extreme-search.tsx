@@ -1126,9 +1126,9 @@ const ExtremeSearchComponent = ({
       const researchData = output as { research?: Research } | null;
 
       if (researchData?.research?.toolResults) {
-        const webSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'webSearch');
+        const webSearchResults = researchData.research.toolResults.filter((result: any) => result.toolName === 'webSearch');
 
-        return webSearchResults.map((result, index) => {
+        return webSearchResults.map((result: any, index: number) => {
           const query = result.args?.query || result.input?.query || `Query ${index + 1}`;
 
           const sources = (result.result || result.output || []).map((source: any) => ({
@@ -1156,7 +1156,7 @@ const ExtremeSearchComponent = ({
     if (annotations?.length) {
       const queryMap = new Map<string, SearchQuery>();
 
-      annotations.forEach((ann) => {
+      annotations.forEach((ann: any) => {
         if (ann.type !== 'data-extreme_search') return;
 
         const { data } = ann;
@@ -1179,7 +1179,7 @@ const ExtremeSearchComponent = ({
           }
         } else if (data.kind === 'source' && data.source) {
           const query = queryMap.get(data.queryId);
-          if (query && !query.sources.find((s) => s.url === data.source.url)) {
+          if (query && !query.sources.find((s: any) => s.url === data.source.url)) {
             query.sources.push({
               title: data.source.title || '',
               url: data.source.url,
@@ -1191,7 +1191,7 @@ const ExtremeSearchComponent = ({
           }
         } else if (data.kind === 'content' && data.content) {
           const query = queryMap.get(data.queryId);
-          if (query && !query.content.find((c) => c.url === data.content.url)) {
+          if (query && !query.content.find((c: any) => c.url === data.content.url)) {
             query.content.push({
               title: data.content.title || '',
               url: data.content.url,
@@ -1209,7 +1209,7 @@ const ExtremeSearchComponent = ({
       // 🔧 MERGE content data into sources for each query
       queries.forEach((query) => {
         query.sources.forEach((source) => {
-          const matchingContent = query.content.find((c) => c.url === source.url);
+          const matchingContent = query.content.find((c: any) => c.url === source.url);
           if (matchingContent && matchingContent.text) {
             source.content = matchingContent.text;
           }
@@ -1230,9 +1230,9 @@ const ExtremeSearchComponent = ({
       const researchData = output as { research?: Research } | null;
 
       if (researchData?.research?.toolResults) {
-        const xSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'xSearch');
+        const xSearchResults = researchData.research.toolResults.filter((result: any) => result.toolName === 'xSearch');
 
-        return xSearchResults.map((result, index) => {
+        return xSearchResults.map((result: any, index: number) => {
           const query = result.args?.query || result.input?.query || `X Search ${index + 1}`;
           const startDate = result.args?.startDate || result.input?.startDate || '';
           const endDate = result.args?.endDate || result.input?.endDate || '';
@@ -1256,7 +1256,7 @@ const ExtremeSearchComponent = ({
     if (annotations?.length) {
       const xSearchMap = new Map<string, XSearchExecution>();
 
-      annotations.forEach((ann) => {
+      annotations.forEach((ann: any) => {
         if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'x_search') return;
 
         const { data } = ann;
@@ -1285,9 +1285,9 @@ const ExtremeSearchComponent = ({
       const researchData = output as { research?: Research } | null;
 
       if (researchData?.research?.toolResults) {
-        const codeResults = researchData.research.toolResults.filter((result) => result.toolName === 'codeRunner');
+        const codeResults = researchData.research.toolResults.filter((result: any) => result.toolName === 'codeRunner');
 
-        return codeResults.map((result, index) => {
+        return codeResults.map((result: any, index: number) => {
           const title = result.args?.title || result.input?.title || `Code Execution ${index + 1}`;
           const code = result.args?.code || result.input?.code || '';
           const resultData = result.result || result.output || {};
@@ -1308,7 +1308,7 @@ const ExtremeSearchComponent = ({
     if (annotations?.length) {
       const codeMap = new Map<string, CodeExecution>();
 
-      annotations.forEach((ann) => {
+      annotations.forEach((ann: any) => {
         if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'code') return;
 
         const { data } = ann;
@@ -1398,19 +1398,19 @@ const ExtremeSearchComponent = ({
         if (ann.type !== 'data-extreme_search') continue;
         const d = ann.data as any;
         if (d.kind === 'query') {
-          const q = searchQueries.find((sq) => sq.id === d.queryId);
+          const q = searchQueries.find((sq: any) => sq.id === d.queryId);
           if (q && !seen[`q:${q.id}`]) {
             items.push({ kind: 'query', item: q });
             seen[`q:${q.id}`] = true;
           }
         } else if (d.kind === 'x_search') {
-          const x = xSearchExecutions.find((xe) => xe.id === d.xSearchId);
+          const x = xSearchExecutions.find((xe: any) => xe.id === d.xSearchId);
           if (x && !seen[`x:${x.id}`]) {
             items.push({ kind: 'x_search', item: x });
             seen[`x:${x.id}`] = true;
           }
         } else if (d.kind === 'code') {
-          const c = codeExecutions.find((ce) => ce.id === d.codeId);
+          const c = codeExecutions.find((ce: any) => ce.id === d.codeId);
           if (c && !seen[`c:${c.id}`]) {
             items.push({ kind: 'code', item: c });
             seen[`c:${c.id}`] = true;
@@ -1419,18 +1419,18 @@ const ExtremeSearchComponent = ({
       }
       if (items.length === 0) {
         return [
-          ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
-          ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
-          ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+          ...searchQueries.map((q: any) => ({ kind: 'query', item: q }) as TimelineItem),
+          ...xSearchExecutions.map((x: any) => ({ kind: 'x_search', item: x }) as TimelineItem),
+          ...codeExecutions.map((c: any) => ({ kind: 'code', item: c }) as TimelineItem),
         ];
       }
       return items;
     }
 
     return [
-      ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
-      ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
-      ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+      ...searchQueries.map((q: any) => ({ kind: 'query', item: q }) as TimelineItem),
+      ...xSearchExecutions.map((x: any) => ({ kind: 'x_search', item: x }) as TimelineItem),
+      ...codeExecutions.map((c: any) => ({ kind: 'code', item: c }) as TimelineItem),
     ];
   }, [isCompleted, toolInvocation, annotations, searchQueries, xSearchExecutions, codeExecutions]);
 
@@ -1458,7 +1458,7 @@ const ExtremeSearchComponent = ({
       const research = researchData?.research;
 
       if (research?.sources?.length) {
-        return research.sources.map((s) => ({
+        return research.sources.map((s: any) => ({
           ...s,
           favicon:
             s.favicon ||
@@ -1468,8 +1468,8 @@ const ExtremeSearchComponent = ({
 
       if (research?.toolResults) {
         return research.toolResults
-          .filter((result) => result.toolName === 'webSearch')
-          .flatMap((result) =>
+          .filter((result: any) => result.toolName === 'webSearch')
+          .flatMap((result: any) =>
             (result.result || result.output || []).map((source: any) => ({
               title: source.title || '',
               url: source.url || '',
@@ -1484,17 +1484,17 @@ const ExtremeSearchComponent = ({
     }
 
     // Use sources from search queries (whether completed or not)
-    const querySources = searchQueries.flatMap((q) => q.sources);
+    const querySources = searchQueries.flatMap((q: any) => q.sources);
 
     // Remove duplicates by URL
-    return Array.from(new Map(querySources.map((s) => [s.url, s])).values());
+    return Array.from(new Map(querySources.map((s: any) => [s.url, s])).values());
   }, [isCompleted, toolInvocation, searchQueries]);
 
   // Get all charts for final result view
   const allCharts = useMemo(() => {
     if (isCompleted && 'output' in toolInvocation) {
       const { output } = toolInvocation;
-      const researchData = output as { research: Research } | null;
+      const researchData = output as { research?: Research } | null;
       const research = researchData?.research;
 
       if (research?.charts?.length) {
@@ -1503,7 +1503,7 @@ const ExtremeSearchComponent = ({
     }
 
     // Use charts from code executions (whether completed or not)
-    return codeExecutions.flatMap((c) => c.charts || []);
+    return codeExecutions.flatMap((c: any) => c.charts || []);
   }, [isCompleted, toolInvocation, codeExecutions]);
 
   const toggleItemExpansion = (itemId: string) => {
@@ -1524,7 +1524,7 @@ const ExtremeSearchComponent = ({
       let shouldUpdate = false;
 
       // Only auto-expand currently active items (not user-controlled)
-      searchQueries.forEach((query) => {
+      searchQueries.forEach((query: any) => {
         const isActive = query.status === 'started' || query.status === 'reading_content';
         const wasUserControlled = userExpandedItems[query.id];
 
@@ -1541,7 +1541,7 @@ const ExtremeSearchComponent = ({
         }
       });
 
-      codeExecutions.forEach((code) => {
+      codeExecutions.forEach((code: any) => {
         const isActive = code.status === 'running';
         const wasUserControlled = userExpandedItems[code.id];
 
@@ -1558,7 +1558,7 @@ const ExtremeSearchComponent = ({
         }
       });
 
-      xSearchExecutions.forEach((xSearch) => {
+      xSearchExecutions.forEach((xSearch: any) => {
         const isActive = xSearch.status === 'started';
         const wasUserControlled = userExpandedItems[xSearch.id];
 
@@ -2222,7 +2222,7 @@ const ExtremeSearchComponent = ({
                   className="overflow-hidden border-t border-border"
                 >
                   <div className="p-3 space-y-4">
-                    {allCharts.map((chart, index) => (
+                    {allCharts.map((chart: any, index: number) => (
                       <ExtremeChart key={index} chart={chart} />
                     ))}
                   </div>
@@ -2234,21 +2234,21 @@ const ExtremeSearchComponent = ({
 
         {/* X Search Results (combined) */}
         {(() => {
-          const completedX = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
+          const completedX = xSearchExecutions.filter((x: any) => x.status === 'completed' && x.result);
           if (completedX.length === 0) return null;
           const combined = {
-            content: completedX.map((x) => x.result!.content).join('\n\n'),
-            citations: completedX.flatMap((x) => x.result!.citations || []),
-            sources: completedX.flatMap((x) => x.result!.sources || []),
-            query: completedX.map((x) => x.query).join(' | '),
+            content: completedX.map((x: any) => x.result!.content).join('\n\n'),
+            citations: completedX.flatMap((x: any) => x.result!.citations || []),
+            sources: completedX.flatMap((x: any) => x.result!.sources || []),
+            query: completedX.map((x: any) => x.query).join(' | '),
             dateRange: `${completedX[0].startDate || ''} to ${completedX[completedX.length - 1].endDate || ''}`,
-            handles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+            handles: Array.from(new Set(completedX.flatMap((x: any) => x.handles || []))),
           };
           const combinedArgs = {
             query: combined.query,
             startDate: completedX[0].startDate,
             endDate: completedX[completedX.length - 1].endDate,
-            xHandles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+            xHandles: Array.from(new Set(completedX.flatMap((x: any) => x.handles || []))),
           };
           return (
             <div className="space-y-3">
