@@ -32,7 +32,8 @@ export type SearchGroupId =
   | 'memory'
   | 'crypto'
   | 'code'
-  | 'connectors';
+  | 'connectors'
+  | 'cyrus';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -139,6 +140,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'YouTube',
       description: 'Search YouTube videos powered by Exa',
       icon: YoutubeIcon,
+      show: true,
+    },
+    {
+      id: 'cyrus' as const,
+      name: 'Cyrus Structure',
+      description: 'Classifie les articles par hiérarchie (Markdown)',
+      icon: Database02Icon,
       show: true,
     },
   ] as const;

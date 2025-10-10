@@ -9,7 +9,7 @@ import { geolocation } from '@vercel/functions';
 
 import { saveChat, saveMessages, createStreamId, getChatById, updateChatTitleById } from '@/lib/db/queries';
 import type { ChatMessage } from '@/lib/types';
-import { getLightweightUser, generateTitleFromUserMessage } from '@/app/actions';
+import { getLightweightUser, generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -144,7 +144,9 @@ export async function POST(req: Request) {
 
   const dataStream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer }) => {
+      const { instructions } = await getGroupConfig(group);
       const systemParts: string[] = [];
+      if (instructions) systemParts.unshift(instructions);
       if (autoContext) systemParts.push(autoContext);
       if (latitude && longitude) systemParts.push(`User location (approx): ${latitude}, ${longitude}`);
 

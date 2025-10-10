@@ -9,6 +9,7 @@ import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
+import { CYRUS_PROMPT, CYRUS_OUTPUT_RULES } from '@/ai/prompts/classification-cyrus';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -208,6 +209,7 @@ const groupTools = {
   stocks: ['stock_chart', 'currency_converter', 'datetime'] as const,
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: [] as const,
+  cyrus: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
   memory: ['datetime', 'search_memories', 'add_memory'] as const,
@@ -1291,6 +1293,7 @@ $$
   - Highlight key insights and important details
   - Maintain accuracy to the source documents
   - Use the document content to provide comprehensive answers`,
+  cyrus: `${CYRUS_PROMPT}\n\n${CYRUS_OUTPUT_RULES}`,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
