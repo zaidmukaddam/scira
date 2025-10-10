@@ -7,7 +7,14 @@ const protectedRoutes = ['/lookout', '/xql', '/settings'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('local.session')?.value || null;
-  const session = verifySessionToken(token);
+  let session;
+  try {
+    session = verifySessionToken(token);
+
+  } catch {
+
+    session = null;
+  }
 
   const existingAnon = request.cookies.get('arka_client_id')?.value;
   let response = NextResponse.next();

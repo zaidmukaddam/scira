@@ -6,15 +6,18 @@ import { invalidateUserCaches } from '@/lib/performance-cache';
 import { clearUserDataCache } from '@/lib/user-data-server';
 import { createHmac, timingSafeEqual } from 'crypto';
 
+
 function safeParseDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
   if (value instanceof Date) return value;
   return new Date(value);
 }
 
+
 function verifyPolarWebhookSignature(payload: string, signature: string, secret: string): boolean {
   if (!signature || !secret) return false;
   
+
   const expectedSignature = createHmac('sha256', secret)
     .update(payload, 'utf8')
     .digest('hex');
@@ -27,6 +30,8 @@ function verifyPolarWebhookSignature(payload: string, signature: string, secret:
     Buffer.from(expectedSignature, 'hex'),
     Buffer.from(providedSignature, 'hex')
   );
+  return expectedSignature === actualSignature;
+
 }
 
 export async function POST(req: Request) {
@@ -48,6 +53,8 @@ export async function POST(req: Request) {
     if (!verifyPolarWebhookSignature(rawBody, signature, webhookSecret)) {
       console.error('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     }
 
     const payload = JSON.parse(rawBody);
@@ -139,11 +146,13 @@ export async function POST(req: Request) {
         }
       } catch (e) {
         console.error('Error processing Polar webhook:', e);
+        throw e;
       }
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ ok: true }, { status: 200 });
+    console.error('Error processing Polar webhook request:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
