@@ -36,6 +36,8 @@ import {
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { isAnonymousUser } from '@/lib/utils';
+import { db, maindb } from '@/lib/db';
+import { user as userTable } from '@/lib/db/schema';
 import { get } from '@vercel/edge-config';
 
 import { Client } from '@upstash/qstash';
@@ -1734,6 +1736,44 @@ export async function deleteCustomInstructionsAction() {
     console.error('Error deleting custom instructions:', error);
     return { success: false, error: 'Failed to delete custom instructions' };
   }
+}
+
+// Minimal DB connectivity diagnostic (server-only)
+export async function debugDbConnectivity() {
+  'use server';
+  const results: any = { replica: {}, primary: {} };
+
+  try {
+    const rows = await db.select({ id: userTable.id }).from(userTable).limit(1);
+    results.replica.ok = true;
+    results.replica.sample = rows?.[0]?.id ?? null;
+  } catch (error) {
+    results.replica.ok = false;
+    results.replica.error = {
+      name: (error as any)?.name,
+      message: (error as any)?.message,
+      code: (error as any)?.code,
+    };
+  }
+
+  try {
+    const rows = await maindb.select({ id: userTable.id }).from(userTable).limit(1);
+    results.primary.ok = true;
+    results.primary.sample = rows?.[0]?.id ?? null;
+  } catch (error) {
+    results.primary.ok = false;
+    results.primary.error = {
+      name: (error as any)?.name,
+      message: (error as any)?.message,
+      code: (error as any)?.code,
+    };
+  }
+
+  return {
+    ok: Boolean(results.replica.ok || results.primary.ok),
+    replica: results.replica,
+    primary: results.primary,
+  };
 }
 
 // Fast pro user status check - UNIFIED VERSION
