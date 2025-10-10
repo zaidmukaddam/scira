@@ -124,7 +124,7 @@ export function extractSessionToken(headers: Headers): string | null {
   const cookies = headers.get('cookie');
   if (!cookies) return null;
 
-  const match = cookies.match(/better-auth\.session_token=([^;]+)/);
+  const match = cookies.match(/local\.session=([^;]+)/);
   return match ? match[1] : null;
 }
 

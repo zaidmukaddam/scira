@@ -22,7 +22,7 @@ import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
-import { useSession } from '@/lib/auth-client';
+import { useLocalSession } from '@/hooks/use-local-session';
 import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { PRICING } from '@/lib/constants';
@@ -1629,7 +1629,7 @@ ConnectorSelector.displayName = 'ConnectorSelector';
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
   ({ selectedGroup, onGroupSelect, status, onOpenSettings, isProUser }) => {
-    const { data: session } = useSession();
+    const { data: session } = useLocalSession();
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
     const isExtreme = selectedGroup === 'extreme';

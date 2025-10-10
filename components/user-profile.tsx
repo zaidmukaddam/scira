@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSession, signOut } from '@/lib/auth-client';
+import { useLocalSession } from '@/hooks/use-local-session';
 import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -40,7 +40,7 @@ import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
-import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
+
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -53,7 +53,7 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 // Navigation Menu Component - contains all the general navigation items
 const NavigationMenu = memo(() => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useLocalSession();
   const isAuthenticated = !!session;
   const [isOpen, setIsOpen] = useState(false);
   const settingsIconRef = useRef<SettingsIconHandle>(null);
@@ -214,10 +214,8 @@ const UserProfile = memo(
     settingsInitialTab?: string;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
-    const [signingIn, setSigningIn] = useState(false);
-    const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
-    const { data: session, isPending } = useSession();
+    const { data: session, isLoading: isPending } = useLocalSession();
     const router = useRouter();
 
     // Use passed user prop if available, otherwise fall back to session
@@ -347,28 +345,22 @@ const UserProfile = memo(
 
               <DropdownMenuItem
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
-                onClick={() =>
-                  signOut({
-                    fetchOptions: {
-                      onRequest: () => {
-                        setSigningOut(true);
-                        toast.loading('Signing out...');
-                      },
-                      onSuccess: () => {
-                        setSigningOut(false);
-                        localStorage.clear();
-                        toast.success('Signed out successfully');
-                        toast.dismiss();
-                        window.location.href = '/new';
-                      },
-                      onError: () => {
-                        setSigningOut(false);
-                        toast.error('Failed to sign out');
-                        window.location.reload();
-                      },
-                    },
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    setSigningOut(true);
+                    toast.loading('Signing out...');
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    setSigningOut(false);
+                    localStorage.clear();
+                    toast.success('Signed out successfully');
+                    toast.dismiss();
+                    window.location.href = '/new';
+                  } catch {
+                    setSigningOut(false);
+                    toast.error('Failed to sign out');
+                    window.location.reload();
+                  }
+                }}
               >
                 <span>Sign Out</span>
                 <SignOutIcon className="size-4" />
@@ -385,12 +377,10 @@ const UserProfile = memo(
                 className={cn(
                   'h-7 px-2.5 text-xs rounded-md shadow-sm group',
                   'hover:scale-[1.02] active:scale-[0.98] transition-transform',
-                  signingIn && 'animate-pulse',
                   className,
                 )}
                 onClick={() => {
-                  setSigningIn(true);
-                  setSignInDialogOpen(true);
+                  window.location.href = '/sign-in';
                 }}
               >
                 <SignInIcon className="size-3.5 mr-1.5" />
@@ -421,10 +411,7 @@ const UserProfile = memo(
           />
         )}
 
-        <SignInPromptDialog open={signInDialogOpen} onOpenChange={(open) => {
-          setSignInDialogOpen(open);
-          if (!open) setSigningIn(false);
-        }} />
+
       </>
     );
   },

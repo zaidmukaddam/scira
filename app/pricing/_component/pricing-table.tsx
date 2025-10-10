@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { authClient, betterauthClient } from '@/lib/auth-client';
+
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -159,63 +159,21 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     return result;
   };
 
-  const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
+  const handleCheckout = async (_productId: string, _slug: string, paymentMethod?: 'dodo' | 'polar') => {
     if (!user) {
-      router.push('/sign-up');
+      router.push('/sign-in');
       return;
     }
 
-    try {
-      if (paymentMethod === 'dodo') {
-        router.push('/checkout');
-      } else {
-        // Auto-apply discount if available
-        const discountIdToUse = discountConfig.discountId || '';
-
-        // TEMPORARY: Force disable all discounts
-        const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
-        
-        // Show special messaging for student discounts
-        if (!discountsDisabled && discountConfig.isStudentDiscount) {
-          toast.success('🎓 Student discount applied automatically!');
-        } else if (!discountsDisabled && discountIdToUse && (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development'))) {
-          toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
-        }
-
-        await authClient.checkout({
-          products: [productId],
-          slug: slug,
-          allowDiscountCodes: true,
-          ...(discountIdToUse !== '' &&
-            !discountsDisabled &&
-            (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
-              discountId: discountIdToUse,
-            }),
-        });
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      toast.error('Something went wrong. Please try again.');
+    if (paymentMethod === 'dodo') {
+      router.push('/checkout');
+    } else {
+      toast.error('Subscription checkout is currently unavailable.');
     }
   };
 
   const handleManageSubscription = async () => {
-    try {
-      const proSource = getProAccessSource();
-      if (proSource === 'dodo') {
-        if ((betterauthClient as any)?.dodopayments?.customer?.portal) {
-          await (betterauthClient as any).dodopayments.customer.portal();
-        } else {
-          toast.error('DodoPayments n\'est pas configuré.');
-          return;
-        }
-      } else {
-        await authClient.customer.portal();
-      }
-    } catch (error) {
-      console.error('Failed to open customer portal:', error);
-      toast.error('Failed to open subscription management');
-    }
+    router.push('/pricing');
   };
 
   const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER;

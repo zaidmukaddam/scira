@@ -32,6 +32,26 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 </div>
 
+## Local authentication (username + password)
+
+- Authentication is now 100% local using a signed cookie `local.session`.
+- No OAuth providers are used. Account self‑registration is disabled.
+- Admins create users manually via SQL or by inserting Argon2/Bcrypt hashes.
+
+Environment
+- LOCAL_AUTH_SECRET: required secret for HMAC signing the session token
+- DATABASE_URL: Postgres/Neon connection string
+
+Neon seed SQL
+- See `neon-local-auth.sql` for a ready SQL to create the `users` credentials table and seed an admin user `sam`/`sam` (bcrypt).
+
+Manual user insert (argon2 example)
+- You can also create users with Argon2 hashes; the backend verifies both Argon2 and Bcrypt by prefix detection.
+
+Notes
+- After login, an entry is ensured in the application table `user` with id `local:{username}` and email `{username}@local`.
+- All post‑auth features (settings, models, rights) continue to work with the same IDs.
+
 ## Features
 
 ### Core Search & Information
@@ -108,7 +128,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Aviation Stack](https://aviationstack.com/) - Flight tracking
 - [TMDB](https://www.themoviedb.org/) - Movie and TV data
 - [Mem0](https://mem0.ai/) - Memory management
-- [Better Auth](https://github.com/better-auth/better-auth) - Authentication
+- Local authentication (username/password) - Authentication
 - [Drizzle ORM](https://orm.drizzle.team/) - Database management
 
 ### Deploy your own

@@ -3,8 +3,9 @@ import 'server-only';
 import { eq, and, desc } from 'drizzle-orm';
 import { subscription, payment, user } from './db/schema';
 import { db } from './db';
-import { auth } from './auth';
+// Better Auth removed
 import { headers, cookies } from 'next/headers';
+import { getSessionFromHeaders } from '@/lib/local-session';
 import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
 import { getCustomInstructionsByUserId } from './db/queries';
 import type { CustomInstructions } from './db/schema';
@@ -161,13 +162,15 @@ export function clearCustomInstructionsCache(userId?: string): void {
  */
 export async function getLightweightUserAuth(): Promise<LightweightUserAuth | null> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const hdrs = await headers();
+    const local = getSessionFromHeaders(hdrs as any);
+    let effectiveUserId: string | null = local?.userId ?? null;
+    let effectiveEmail: string | null = local?.email ?? null;
 
-    // Anonymous fallback using arka_client_id cookie when no auth session is present
-    if (!session?.user?.id) {
-      const anonId = cookies().get('arka_client_id')?.value;
+    // Anonymous fallback using arka_client_id cookie when no auth or local session is present
+    if (!effectiveUserId) {
+      const cookieStore = await cookies();
+      const anonId = cookieStore.get('arka_client_id')?.value;
       if (!anonId) return null;
 
       const arkaUserId = `arka:${anonId}`;
@@ -202,7 +205,7 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return lightweightData;
     }
 
-    const userId = session.user.id;
+    const userId = effectiveUserId;
 
     // Check lightweight cache first
     const cached = getCachedLightweightAuth(userId);
@@ -236,6 +239,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       .$withCache();
 
     if (!result || result.length === 0) {
+      // When local session exists but app user row is missing (rare), return minimal
+      if (effectiveEmail) {
+        return { userId, email: effectiveEmail, isProUser: false };
+      }
       return null;
     }
 
@@ -282,14 +289,15 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
 
 export async function getComprehensiveUserData(): Promise<ComprehensiveUserData | null> {
   try {
-    // Get session once
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const hdrs = await headers();
+    const local = getSessionFromHeaders(hdrs as any);
+    let effectiveUserId: string | null = local?.userId ?? null;
+    let effectiveEmail: string | null = local?.email ?? null;
 
     // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
-    if (!session?.user?.id) {
-      const anonId = cookies().get('arka_client_id')?.value;
+    if (!effectiveUserId) {
+      const cookieStore = await cookies();
+      const anonId = cookieStore.get('arka_client_id')?.value;
       if (!anonId) return null;
       const arkaUserId = `arka:${anonId}`;
 
@@ -331,7 +339,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       return anonData;
     }
 
-    const userId = session.user.id;
+    const userId = effectiveUserId;
 
     // Check cache first
     const cached = getCachedUserData(userId);
