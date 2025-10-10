@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 400 });
     }
 
-    const [cred] = await db.select().from(users).where(eq(users.username, uname)).limit(1);
+    const cred = await db.query.users.findFirst({ where: eq(users.username, uname) });
     if (!cred) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
@@ -51,13 +51,9 @@ export async function POST(req: Request) {
     const localUserId = `local:${uname}`;
     const localEmail = `${uname}@local`;
 
-    const existing = await db
-      .select({ id: appUser.id })
-      .from(appUser)
-      .where(eq(appUser.id, localUserId))
-      .limit(1);
+    const existing = await db.query.user.findFirst({ where: eq(appUser.id, localUserId) });
 
-    if (!existing || existing.length === 0) {
+    if (!existing) {
       const now = new Date();
       await db.insert(appUser).values({
         id: localUserId,
