@@ -29,7 +29,6 @@ import {
   getConnectorSyncStatusAction,
 } from '@/app/actions';
 import { SEARCH_LIMITS } from '@/lib/constants';
-import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
   MagnifyingGlassIcon,
   LightningIcon,
@@ -917,31 +916,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const dodoProStatus = user?.dodoProStatus || null;
 
   useEffect(() => {
-    const fetchPolarOrders = async () => {
-      try {
-        setOrdersLoading(true);
-
-        // Only fetch Polar orders (DodoPayments data comes from user cache)
-        const ordersResponse = await authClient.customer.orders
-          .list({
-            query: {
-              page: 1,
-              limit: 10,
-              productBillingType: 'recurring',
-            },
-          })
-          .catch(() => ({ data: null }));
-
-        setOrders(ordersResponse.data);
-      } catch (error) {
-        console.log('Failed to fetch Polar orders:', error);
-        setOrders(null);
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
-
-    fetchPolarOrders();
+    setOrdersLoading(false);
+    setOrders(null);
   }, []);
 
   const handleManageSubscription = async () => {
@@ -963,21 +939,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.log('User dodoProStatus:', user?.dodoProStatus);
       console.log('User full object keys:', Object.keys(user || {}));
 
-      if (proSource === 'dodo') {
-        // Use DodoPayments portal for DodoPayments users
-        console.log('Opening DodoPayments portal');
-        console.log('User object for DodoPayments:', {
-          id: user?.id,
-          email: user?.email,
-          dodoProStatus: user?.dodoProStatus,
-          isProUser: user?.isProUser,
-        });
-        await betterauthClient.dodopayments.customer.portal();
-      } else {
-        // Use Polar portal for Polar subscribers
-        console.log('Opening Polar portal');
-        await authClient.customer.portal();
-      }
+      // Route to pricing page for managing billing without Better Auth integrations
+      window.location.href = '/pricing';
     } catch (error) {
       console.error('Subscription management error:', error);
 

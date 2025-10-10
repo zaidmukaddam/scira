@@ -1,7 +1,10 @@
 'use client';
 
-import AuthCard from '@/components/auth-card';
+import { useEffect } from 'react';
 
 export default function SignUpPage() {
-  return <AuthCard title="Create an account" description="Get started with Scira AI today" mode="sign-up" />;
+  useEffect(() => {
+    window.location.href = '/sign-in';
+  }, []);
+  return null;
 }

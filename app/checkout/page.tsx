@@ -12,10 +12,9 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { betterauthClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/use-location';
-import { useSession } from '@/lib/auth-client';
+import { useLocalSession } from '@/hooks/use-local-session';
 import { useIsProUser } from '@/contexts/user-context';
 import { PRICING } from '@/lib/constants';
 import { getDiscountConfigAction } from '@/app/actions';
@@ -42,7 +41,7 @@ export default function CheckoutPage() {
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
   const router = useRouter();
   const location = useLocation();
-  const { data: session, isPending } = useSession();
+  const { data: session, isLoading: isPending } = useLocalSession();
   const { isProUser, isLoading: isProStatusLoading } = useIsProUser();
 
   const form = useForm<CheckoutFormData>({
@@ -125,42 +124,10 @@ export default function CheckoutPage() {
           (discountConfig.percentage || discountConfig.inrPrice);
   };
 
-  const onSubmit = async (data: CheckoutFormData) => {
+  const onSubmit = async (_data: CheckoutFormData) => {
     setIsLoading(true);
     try {
-      if (!(betterauthClient as any)?.dodopayments?.checkout) {
-        toast.error('DodoPayments n\'est pas configuré. Veuillez réessayer plus tard.');
-        return;
-      }
-      const { data: checkout, error } = await (betterauthClient as any).dodopayments.checkout({
-        slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG,
-        customer: {
-          email: data.customer.email,
-          name: data.customer.name,
-        },
-        billing: {
-          city: data.billing.city,
-          country: 'IN', // Always India
-          state: data.billing.state,
-          street: data.billing.street,
-          zipcode: data.billing.zipcode,
-        },
-        referenceId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Checkout failed');
-      }
-
-      if (checkout?.url) {
-        // Redirect to DodoPayments checkout
-        window.location.href = checkout.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+      toast.error('DodoPayments checkout is currently unavailable.');
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +135,7 @@ export default function CheckoutPage() {
 
   // Redirect if not authenticated
   if (!isPending && !session) {
-    router.push('/sign-up');
+    router.push('/sign-in');
     return null;
   }
 

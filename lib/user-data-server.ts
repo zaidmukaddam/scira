@@ -3,7 +3,7 @@ import 'server-only';
 import { eq, and, desc } from 'drizzle-orm';
 import { subscription, payment, user } from './db/schema';
 import { db } from './db';
-import { auth } from './auth';
+// Better Auth removed
 import { headers, cookies } from 'next/headers';
 import { getSessionFromHeaders } from '@/lib/local-session';
 import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
@@ -163,20 +163,9 @@ export function clearCustomInstructionsCache(userId?: string): void {
 export async function getLightweightUserAuth(): Promise<LightweightUserAuth | null> {
   try {
     const hdrs = await headers();
-    const session = await auth.api.getSession({
-      headers: hdrs,
-    });
-
-    // Try local session cookie if Better Auth session is missing
-    let effectiveUserId: string | null = session?.user?.id ?? null;
-    let effectiveEmail: string | null = null;
-    if (!effectiveUserId) {
-      const local = getSessionFromHeaders(hdrs as any);
-      if (local?.userId) {
-        effectiveUserId = local.userId;
-        effectiveEmail = local.email ?? null;
-      }
-    }
+    const local = getSessionFromHeaders(hdrs as any);
+    let effectiveUserId: string | null = local?.userId ?? null;
+    let effectiveEmail: string | null = local?.email ?? null;
 
     // Anonymous fallback using arka_client_id cookie when no auth or local session is present
     if (!effectiveUserId) {
@@ -299,22 +288,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
 
 export async function getComprehensiveUserData(): Promise<ComprehensiveUserData | null> {
   try {
-    // Get session once
     const hdrs = await headers();
-    const session = await auth.api.getSession({
-      headers: hdrs,
-    });
-
-    // Try local session cookie if Better Auth session is missing
-    let effectiveUserId: string | null = session?.user?.id ?? null;
-    let effectiveEmail: string | null = null;
-    if (!effectiveUserId) {
-      const local = getSessionFromHeaders(hdrs as any);
-      if (local?.userId) {
-        effectiveUserId = local.userId;
-        effectiveEmail = local.email ?? null;
-      }
-    }
+    const local = getSessionFromHeaders(hdrs as any);
+    let effectiveUserId: string | null = local?.userId ?? null;
+    let effectiveEmail: string | null = local?.email ?? null;
 
     // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
     if (!effectiveUserId) {

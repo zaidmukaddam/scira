@@ -4,33 +4,53 @@ import { users, user as appUser } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createSessionToken, createCookie } from '@/lib/local-session';
 
-// Lazy import to avoid bundling issues if argon2 isn't installed in some environments
-async function verifyPassword(hash: string, pwd: string) {
-  const argon2 = await import('argon2');
-  return argon2.verify(hash, pwd);
+function isArgon2(hash: string) {
+  return hash.startsWith('$argon2');
+}
+
+function isBcrypt(hash: string) {
+  return /^\$2[aby]\$/.test(hash);
+}
+
+async function verifyHybridPassword(hash: string, pwd: string) {
+  if (isArgon2(hash)) {
+    const argon2 = await import('argon2');
+    return argon2.verify(hash, pwd);
+  }
+  if (isBcrypt(hash)) {
+    const bcrypt = await import('bcryptjs');
+    return bcrypt.compare(pwd, hash);
+  }
+  return false;
 }
 
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
+
+    const uname = (username || '').trim();
+    const pwd = String(password || '');
+
+    if (!/^[a-zA-Z0-9._-]{3,32}$/.test(uname)) {
+      return NextResponse.json({ error: 'Invalid username' }, { status: 400 });
+    }
+    if (pwd.length < 3) {
+      return NextResponse.json({ error: 'Invalid password' }, { status: 400 });
     }
 
-    const [cred] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    const [cred] = await db.select().from(users).where(eq(users.username, uname)).limit(1);
     if (!cred) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
-    const ok = await verifyPassword(cred.passwordHash, password).catch(() => false);
+    const ok = await verifyHybridPassword(cred.passwordHash, pwd).catch(() => false);
     if (!ok) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
-    const localUserId = `local:${username}`;
-    const localEmail = `local-${username}@local`;
+    const localUserId = `local:${uname}`;
+    const localEmail = `${uname}@local`;
 
-    // Ensure app user exists (used throughout the app)
     const existing = await db
       .select({ id: appUser.id })
       .from(appUser)
@@ -41,7 +61,7 @@ export async function POST(req: Request) {
       const now = new Date();
       await db.insert(appUser).values({
         id: localUserId,
-        name: username,
+        name: uname,
         email: localEmail,
         emailVerified: false,
         image: null,
