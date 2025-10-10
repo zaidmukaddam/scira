@@ -51,7 +51,7 @@ export async function saveChat({
 }) {
   try {
     // Ensure user exists to satisfy FK (handles anonymous arka:* users too)
-    const [existingUser] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+    const existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
     if (!existingUser) {
       const isArka = userId.startsWith('arka:');
       const fallbackEmail = isArka ? `${userId.replace(':', '-') }@anon.local` : `${userId.replace(':', '-') }@local`; // best-effort
