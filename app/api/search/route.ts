@@ -168,9 +168,10 @@ export async function POST(req: Request) {
       if (!result) throw lastError ?? new Error('Failed to start stream');
 
       result.consumeStream();
+      const enableReasoning = String(model) === 'scira-google-think';
       writer.merge(
         result.toUIMessageStream({
-          sendReasoning: true,
+          sendReasoning: enableReasoning,
           messageMetadata: ({ part }) => {
             if (part.type === 'finish') {
               const processingTime = (Date.now() - streamStart) / 1000;
