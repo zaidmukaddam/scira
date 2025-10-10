@@ -4,6 +4,7 @@ import { subscription, user } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from '@/lib/performance-cache';
 import { clearUserDataCache } from '@/lib/user-data-server';
+import { createHmac } from 'crypto';
 
 function safeParseDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
@@ -11,9 +12,38 @@ function safeParseDate(value: string | Date | null | undefined): Date | null {
   return new Date(value);
 }
 
+function verifyPolarSignature(payload: string, signature: string, secret: string): boolean {
+  const expectedSignature = createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
+  
+  const actualSignature = signature.replace('sha256=', '');
+  
+  return expectedSignature === actualSignature;
+}
+
 export async function POST(req: Request) {
   try {
-    const payload = await req.json();
+    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('POLAR_WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+    }
+
+    const signature = req.headers.get('polar-signature') || req.headers.get('x-polar-signature');
+    if (!signature) {
+      console.error('Missing Polar webhook signature');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rawBody = await req.text();
+    
+    if (!verifyPolarSignature(rawBody, signature, webhookSecret)) {
+      console.error('Invalid Polar webhook signature');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawBody);
     const type: string = payload?.type;
     const data = payload?.data;
 
@@ -102,11 +132,13 @@ export async function POST(req: Request) {
         }
       } catch (e) {
         console.error('Error processing Polar webhook:', e);
+        throw e;
       }
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ ok: true }, { status: 200 });
+    console.error('Error processing Polar webhook request:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

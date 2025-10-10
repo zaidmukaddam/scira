@@ -2,6 +2,7 @@
 export const signIn = {
   social: async () => {
     // No-op: social sign-in disabled
+
     return Promise.resolve();
   },
 } as any;
