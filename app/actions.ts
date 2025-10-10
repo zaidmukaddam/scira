@@ -143,11 +143,6 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
 
 export async function enhancePrompt(raw: string) {
   try {
-    const user = await getComprehensiveUserData();
-    if (!user || !user.isProUser) {
-      return { success: false, error: 'Pro subscription required' };
-    }
-
     const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
