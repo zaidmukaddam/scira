@@ -10,7 +10,9 @@ export async function middleware(request: NextRequest) {
   let session;
   try {
     session = verifySessionToken(token);
+
   } catch {
+
     session = null;
   }
 
