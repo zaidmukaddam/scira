@@ -102,11 +102,13 @@ export async function POST(req: Request) {
         }
       } catch (e) {
         console.error('Error processing Polar webhook:', e);
+        throw e;
       }
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ ok: true }, { status: 200 });
+    console.error('Error processing Polar webhook request:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
