@@ -16,7 +16,7 @@ import {
   lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index';
+import { db, maindb } from './index';
 import { getDodoPayments, setDodoPayments, getDodoProStatus, setDodoProStatus } from '../performance-cache';
 
 type VisibilityType = 'public' | 'private';
@@ -51,7 +51,18 @@ export async function saveChat({
 }) {
   try {
     // Ensure user exists to satisfy FK (handles anonymous arka:* users too)
-    const existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
+    console.log('[db.saveChat] ensure user exists', { userId, isArka: userId.startsWith('arka:') });
+    let existingUser: User | null = null;
+    try {
+      existingUser = await db.query.user.findFirst({ where: eq(user.id, userId) });
+    } catch (error) {
+      console.error('[db.saveChat] user existence check failed on replica, falling back to primary', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      existingUser = await maindb.query.user.findFirst({ where: eq(user.id, userId) });
+    }
+
     if (!existingUser) {
       const isArka = userId.startsWith('arka:');
       const fallbackEmail = isArka ? `${userId.replace(':', '-') }@anon.local` : `${userId.replace(':', '-') }@local`; // best-effort
@@ -75,7 +86,8 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to save chat' + error);
+    console.error('[db.saveChat] failed', { userId, error: error instanceof Error ? error.message : String(error) });
+    throw new ChatSDKError('bad_request:database', 'Failed to save chat');
   }
 }
 
@@ -103,6 +115,8 @@ export async function getChatsByUserId({
   endingBefore: string | null;
 }) {
   try {
+    console.log('[db.getChatsByUserId] query', { userId: id, limit, startingAfter, endingBefore });
+
     const extendedLimit = limit + 1;
 
     const query = (whereCondition?: SQL<any>) =>
@@ -119,16 +133,30 @@ export async function getChatsByUserId({
     if (startingAfter) {
       const [selectedChat] = await db.select().from(chat).where(eq(chat.id, startingAfter)).limit(1);
 
-      if (!selectedChat) {
-        throw new ChatSDKError('not_found:database', `Chat with id ${startingAfter} not found`);
+      if (!selectedChat || selectedChat.userId !== id) {
+        console.log('[db.getChatsByUserId] cursor not found or not owned', {
+          op: 'getChatsByUserId',
+          userId: id,
+          startingAfter,
+          endingBefore,
+          note: 'cursor not found or not owned',
+        });
+        return { chats: [], hasMore: false };
       }
 
       filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
     } else if (endingBefore) {
       const [selectedChat] = await db.select().from(chat).where(eq(chat.id, endingBefore)).limit(1);
 
-      if (!selectedChat) {
-        throw new ChatSDKError('not_found:database', `Chat with id ${endingBefore} not found`);
+      if (!selectedChat || selectedChat.userId !== id) {
+        console.log('[db.getChatsByUserId] cursor not found or not owned', {
+          op: 'getChatsByUserId',
+          userId: id,
+          startingAfter,
+          endingBefore,
+          note: 'cursor not found or not owned',
+        });
+        return { chats: [], hasMore: false };
       }
 
       filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));

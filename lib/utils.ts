@@ -163,3 +163,7 @@ export function invalidateChatsCache() {
     window.dispatchEvent(event);
   }
 }
+
+export function isAnonymousUser(userId: string): boolean {
+  return typeof userId === 'string' && userId.startsWith('arka:');
+}

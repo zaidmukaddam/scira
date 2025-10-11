@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { User } from '@/lib/db/schema';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { cn, invalidateChatsCache } from '@/lib/utils';
+import { cn, invalidateChatsCache, isAnonymousUser } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
 import { useChatPrefetch } from '@/hooks/use-chat-prefetch';
@@ -331,7 +331,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       if (!lastPage.hasMore || lastPage.chats.length === 0) return undefined;
       return lastPage.chats[lastPage.chats.length - 1].id;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isAnonymousUser(user.id),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 30000, // 30 seconds
@@ -421,7 +421,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 
   // Explicitly refetch when dialog opens
   useEffect(() => {
-    if (open && user?.id) {
+    if (open && user?.id && !isAnonymousUser(user.id)) {
       refetch();
     }
   }, [open, user?.id, refetch]);
@@ -429,7 +429,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Listen for cache invalidation events
   useEffect(() => {
     const handleCacheInvalidation = () => {
-      if (user?.id) {
+      if (user?.id && !isAnonymousUser(user.id)) {
         refetch();
       }
     };
@@ -947,6 +947,29 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             <p className="text-xs text-muted-foreground">
               Your conversations are automatically saved when you are signed in.
             </p>
+          </EmptyContent>
+        </Empty>
+      </CommandDialog>
+    );
+  }
+
+  if (user && isAnonymousUser(user.id)) {
+    return (
+      <CommandDialog open={open} onOpenChange={onOpenChange}>
+        <Empty className="min-h-[250px]">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <History className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>Veuillez vous connecter pour voir l’historique</EmptyTitle>
+            <EmptyDescription>
+              Les sessions invitées ne disposent pas d’un historique. Connectez-vous pour retrouver vos conversations.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={handleSignIn} className="w-full max-w-[200px]">
+              Se connecter
+            </Button>
           </EmptyContent>
         </Empty>
       </CommandDialog>

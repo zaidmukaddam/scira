@@ -1,12 +1,11 @@
 import 'server-only';
 
-import { eq, and, desc } from 'drizzle-orm';
-import { subscription, payment, user } from './db/schema';
+import { eq } from 'drizzle-orm';
+import { user } from './db/schema';
 import { db } from './db';
 // Better Auth removed
 import { headers, cookies } from 'next/headers';
 import { getSessionFromHeaders } from '@/lib/local-session';
-import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
 import { getCustomInstructionsByUserId } from './db/queries';
 import type { CustomInstructions } from './db/schema';
 
@@ -167,42 +166,9 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
     let effectiveUserId: string | null = local?.userId ?? null;
     let effectiveEmail: string | null = local?.email ?? null;
 
-    // Anonymous fallback using arka_client_id cookie when no auth or local session is present
+    // Guest sessions disabled: if no local session, return null
     if (!effectiveUserId) {
-      const cookieStore = await cookies();
-      const anonId = cookieStore.get('arka_client_id')?.value;
-      if (!anonId) return null;
-
-      const arkaUserId = `arka:${anonId}`;
-      // Try cache first
-      const cachedAnon = getCachedLightweightAuth(arkaUserId);
-      if (cachedAnon) return cachedAnon;
-
-      // Ensure anonymous user exists in DB
-      try {
-        const existing = await db.select({ id: user.id, email: user.email }).from(user).where(eq(user.id, arkaUserId)).limit(1);
-        if (!existing || existing.length === 0) {
-          await db.insert(user).values({
-            id: arkaUserId,
-            name: 'Anonymous',
-            email: `arka-${anonId}@anon.local`,
-            emailVerified: false,
-            image: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-        }
-      } catch (e) {
-        // Ignore race conditions on create
-      }
-
-      const lightweightData: LightweightUserAuth = {
-        userId: arkaUserId,
-        email: `arka-${anonId}@anon.local`,
-        isProUser: false,
-      };
-      setCachedLightweightAuth(arkaUserId, lightweightData);
-      return lightweightData;
+      return null;
     }
 
     const userId = effectiveUserId;
@@ -225,61 +191,26 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return lightweightData;
     }
 
-    // Optimized query: Use JOIN to fetch user + subscription status in a single query
-    const result = await db
-      .select({
-        userId: user.id,
-        email: user.email,
-        subscriptionStatus: subscription.status,
-        subscriptionEnd: subscription.currentPeriodEnd,
-      })
+    // Simple lookup: fetch minimal user info and treat as Pro
+    const found = await db
+      .select({ userId: user.id, email: user.email })
       .from(user)
-      .leftJoin(subscription, eq(subscription.userId, user.id))
       .where(eq(user.id, userId))
+      .limit(1)
       .$withCache();
 
-    if (!result || result.length === 0) {
-      // When local session exists but app user row is missing (rare), return minimal
-      if (effectiveEmail) {
-        return { userId, email: effectiveEmail, isProUser: false };
-      }
+    if (!found || found.length === 0) {
+      if (effectiveEmail) return { userId, email: effectiveEmail, isProUser: true };
       return null;
     }
 
-    // Check for active Polar subscription (quick check)
-    const hasActivePolarSub = result.some((row) => row.subscriptionStatus === 'active');
-
-    // For DodoPayments, we need to do a quick check
-    // Only fetch the most recent successful payment for quick pro status check
-    let isDodoActive = false;
-    if (!hasActivePolarSub) {
-      const recentDodoPayment = await db
-        .select({
-          createdAt: payment.createdAt,
-        })
-        .from(payment)
-        .where(and(eq(payment.userId, userId), eq(payment.status, 'succeeded')))
-        .orderBy(desc(payment.createdAt))
-        .limit(1)
-        .$withCache();
-
-      if (recentDodoPayment.length > 0) {
-        const paymentDate = new Date(recentDodoPayment[0].createdAt);
-        const subscriptionEndDate = new Date(paymentDate);
-        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-        isDodoActive = subscriptionEndDate > new Date();
-      }
-    }
-
     const lightweightData: LightweightUserAuth = {
-      userId: result[0].userId,
-      email: result[0].email,
-      isProUser: hasActivePolarSub || isDodoActive,
+      userId: found[0].userId,
+      email: found[0].email,
+      isProUser: true,
     };
 
-    // Cache the result
     setCachedLightweightAuth(userId, lightweightData);
-
     return lightweightData;
   } catch (error) {
     console.error('Error in lightweight auth check:', error);
@@ -294,49 +225,9 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     let effectiveUserId: string | null = local?.userId ?? null;
     let effectiveEmail: string | null = local?.email ?? null;
 
-    // Anonymous fallback: synthesize a minimal user record linked to arka_client_id
+    // Guest sessions disabled: if no local session, return null
     if (!effectiveUserId) {
-      const cookieStore = await cookies();
-      const anonId = cookieStore.get('arka_client_id')?.value;
-      if (!anonId) return null;
-      const arkaUserId = `arka:${anonId}`;
-
-      // Cache check
-      const cached = getCachedUserData(arkaUserId);
-      if (cached) return cached;
-
-      try {
-        const existing = await db.select({ id: user.id, email: user.email, name: user.name }).from(user).where(eq(user.id, arkaUserId)).limit(1);
-        if (!existing || existing.length === 0) {
-          await db.insert(user).values({
-            id: arkaUserId,
-            name: 'Anonymous',
-            email: `arka-${anonId}@anon.local`,
-            emailVerified: false,
-            image: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-        }
-      } catch (_) {
-        // ignore
-      }
-
-      const anonData: ComprehensiveUserData = {
-        id: arkaUserId,
-        email: `arka-${anonId}@anon.local`,
-        emailVerified: false,
-        name: 'Anonymous',
-        image: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isProUser: false,
-        proSource: 'none',
-        subscriptionStatus: 'none',
-        paymentHistory: [],
-      };
-      setCachedUserData(arkaUserId, anonData);
-      return anonData;
+      return null;
     }
 
     const userId = effectiveUserId;
@@ -347,164 +238,42 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       return cached;
     }
 
-    // OPTIMIZED: Use JOIN query to reduce DB round trips
-    // Fetch user + subscriptions in a single query
-    const userWithSubscriptions = await db
+    // Simplified: fetch only user row and treat as Pro without subscriptions/payments
+    const rows = await db
       .select({
-        // User fields
         userId: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
         name: user.name,
         image: user.image,
-        userCreatedAt: user.createdAt,
-        userUpdatedAt: user.updatedAt,
-        // Subscription fields (will be null if no subscription)
-        subscriptionId: subscription.id,
-        subscriptionCreatedAt: subscription.createdAt,
-        subscriptionStatus: subscription.status,
-        subscriptionAmount: subscription.amount,
-        subscriptionCurrency: subscription.currency,
-        subscriptionRecurringInterval: subscription.recurringInterval,
-        subscriptionCurrentPeriodStart: subscription.currentPeriodStart,
-        subscriptionCurrentPeriodEnd: subscription.currentPeriodEnd,
-        subscriptionCancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-        subscriptionCanceledAt: subscription.canceledAt,
-        subscriptionProductId: subscription.productId,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       })
       .from(user)
-      .leftJoin(subscription, eq(subscription.userId, user.id))
       .where(eq(user.id, userId))
       .$withCache();
 
-    if (!userWithSubscriptions || userWithSubscriptions.length === 0) {
+    if (!rows || rows.length === 0) {
       return null;
     }
 
-    const userData = userWithSubscriptions[0];
+    const u = rows[0];
 
-    // Fetch payment data in parallel (still separate as it's less commonly needed)
-    const [dodoPayments, dodoExpirationInfo] = await Promise.all([
-      getPaymentsByUserId({ userId }),
-      getDodoPaymentsExpirationInfo({ userId }),
-    ]);
-
-    // Process Polar subscriptions from the joined data
-    const polarSubscriptions = userWithSubscriptions
-      .filter((row) => row.subscriptionId !== null)
-      .map((row) => ({
-        id: row.subscriptionId!,
-        createdAt: row.subscriptionCreatedAt!,
-        status: row.subscriptionStatus!,
-        amount: row.subscriptionAmount!,
-        currency: row.subscriptionCurrency!,
-        recurringInterval: row.subscriptionRecurringInterval!,
-        currentPeriodStart: row.subscriptionCurrentPeriodStart!,
-        currentPeriodEnd: row.subscriptionCurrentPeriodEnd!,
-        cancelAtPeriodEnd: row.subscriptionCancelAtPeriodEnd!,
-        canceledAt: row.subscriptionCanceledAt,
-        productId: row.subscriptionProductId!,
-      }));
-
-    // Process Polar subscription
-    const activePolarSubscription = polarSubscriptions
-      .filter((sub) => sub.status === 'active')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-    // Process DodoPayments
-    const successfulDodoPayments = dodoPayments
-      .filter((p: any) => p.status === 'succeeded')
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const hasDodoPayments = successfulDodoPayments.length > 0;
-    let isDodoActive = false;
-
-    if (hasDodoPayments) {
-      const mostRecentPayment = successfulDodoPayments[0];
-      const paymentDate = new Date(mostRecentPayment.createdAt);
-      const subscriptionEndDate = new Date(paymentDate);
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-      isDodoActive = subscriptionEndDate > new Date();
-    }
-
-    // Determine overall Pro status and source
-    let isProUser = false;
-    let proSource: 'polar' | 'dodo' | 'none' = 'none';
-    let subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none' = 'none';
-
-    if (activePolarSubscription) {
-      isProUser = true;
-      proSource = 'polar';
-      subscriptionStatus = 'active';
-    } else if (isDodoActive) {
-      isProUser = true;
-      proSource = 'dodo';
-      subscriptionStatus = 'active';
-    } else {
-      // Check for expired/canceled Polar subscriptions
-      const latestPolarSubscription = polarSubscriptions.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )[0];
-
-      if (latestPolarSubscription) {
-        const now = new Date();
-        const isExpired = new Date(latestPolarSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestPolarSubscription.status === 'canceled';
-
-        if (isCanceled) {
-          subscriptionStatus = 'canceled';
-        } else if (isExpired) {
-          subscriptionStatus = 'expired';
-        }
-      }
-    }
-
-    // Build comprehensive user data
     const comprehensiveData: ComprehensiveUserData = {
-      id: userData.userId,
-      email: userData.email,
-      emailVerified: userData.emailVerified,
-      name: userData.name || userData.email.split('@')[0], // Fallback to email prefix if name is null
-      image: userData.image,
-      createdAt: userData.userCreatedAt,
-      updatedAt: userData.userUpdatedAt,
-      isProUser,
-      proSource,
-      subscriptionStatus,
-      paymentHistory: dodoPayments,
+      id: u.userId,
+      email: u.email,
+      emailVerified: u.emailVerified,
+      name: u.name || (u.email ? u.email.split('@')[0] : 'User'),
+      image: u.image,
+      createdAt: u.createdAt,
+      updatedAt: u.updatedAt,
+      isProUser: true,
+      proSource: 'none',
+      subscriptionStatus: 'none',
+      paymentHistory: [],
     };
 
-    // Add Polar subscription details if exists
-    if (activePolarSubscription) {
-      comprehensiveData.polarSubscription = {
-        id: activePolarSubscription.id,
-        productId: activePolarSubscription.productId,
-        status: activePolarSubscription.status,
-        amount: activePolarSubscription.amount,
-        currency: activePolarSubscription.currency,
-        recurringInterval: activePolarSubscription.recurringInterval,
-        currentPeriodStart: activePolarSubscription.currentPeriodStart,
-        currentPeriodEnd: activePolarSubscription.currentPeriodEnd,
-        cancelAtPeriodEnd: activePolarSubscription.cancelAtPeriodEnd,
-        canceledAt: activePolarSubscription.canceledAt,
-      };
-    }
-
-    // Always add DodoPayments details if user has any payments or dodo pro status
-    if (dodoPayments.length > 0 || proSource === 'dodo') {
-      comprehensiveData.dodoPayments = {
-        hasPayments: hasDodoPayments,
-        expiresAt: dodoExpirationInfo?.expirationDate || null,
-        mostRecentPayment: hasDodoPayments ? successfulDodoPayments[0].createdAt : undefined,
-        daysUntilExpiration: dodoExpirationInfo?.daysUntilExpiration,
-        isExpired: dodoExpirationInfo?.isExpired || false,
-        isExpiringSoon: dodoExpirationInfo?.isExpiringSoon || false,
-      };
-    }
-
-    // Cache the result
     setCachedUserData(userId, comprehensiveData);
-
     return comprehensiveData;
   } catch (error) {
     console.error('Error getting comprehensive user data:', error);
