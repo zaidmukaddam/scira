@@ -4,10 +4,12 @@ import { DataUIPart, isToolUIPart } from 'ai';
 import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
+import { CyrusLoadingState } from '@/components/cyrus-loading-state';
 import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { SearchGroupId } from '@/lib/utils';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -27,14 +29,15 @@ interface MessagesProps {
   suggestedQuestions: string[];
   setSuggestedQuestions: (questions: string[]) => void;
   status: UseChatHelpers<ChatMessage>['status'];
-  error: Error | null; // Add error from useChat
-  user?: ComprehensiveUserData | null; // Add user prop
-  selectedVisibilityType?: 'public' | 'private'; // Add visibility type
-  chatId?: string; // Add chatId prop
-  onVisibilityChange?: (visibility: 'public' | 'private') => void; // Add visibility change handler
-  initialMessages?: any[]; // Add initial messages prop to detect existing chat
-  isOwner?: boolean; // Add ownership prop
-  onHighlight?: (text: string) => void; // Add highlight handler
+  error: Error | null;
+  user?: ComprehensiveUserData | null;
+  selectedVisibilityType?: 'public' | 'private';
+  chatId?: string;
+  onVisibilityChange?: (visibility: 'public' | 'private') => void;
+  initialMessages?: any[];
+  isOwner?: boolean;
+  onHighlight?: (text: string) => void;
+  selectedGroup?: SearchGroupId;
 }
 
 const Messages: React.FC<MessagesProps> = ({
@@ -54,6 +57,7 @@ const Messages: React.FC<MessagesProps> = ({
   onHighlight,
   sendMessage,
   regenerate,
+  selectedGroup,
 }) => {
   // Track visibility state for each reasoning section using messageIndex-partIndex as key
   const [reasoningVisibilityMap, setReasoningVisibilityMap] = useState<Record<string, boolean>>({});
@@ -256,11 +260,9 @@ const Messages: React.FC<MessagesProps> = ({
 
     if (status === 'streaming') {
       const lastMessage = memoizedMessages[memoizedMessages.length - 1];
-      // Show loading if only user message exists (no assistant response yet)
       if (lastMessage?.role === 'user') {
         return true;
       }
-      // Show loading if assistant message exists but has 0 or 1 parts (just starting)
       if (lastMessage?.role === 'assistant') {
         const partsCount = lastMessage.parts?.length || 0;
         return partsCount <= 1;
@@ -269,6 +271,11 @@ const Messages: React.FC<MessagesProps> = ({
 
     return false;
   }, [status, memoizedMessages]);
+
+  // Conditional Cyrus loader
+  const shouldShowCyrusLoader = useMemo(() => {
+    return status === 'streaming' && selectedGroup === 'cyrus' && !hasActiveToolInvocations;
+  }, [status, selectedGroup, hasActiveToolInvocations]);
 
   // Compute index of the most recent assistant message; only that one should keep min-height
   const lastAssistantIndex = useMemo(() => {
@@ -417,8 +424,19 @@ const Messages: React.FC<MessagesProps> = ({
         })}
       </div>
 
-      {/* Loading animation when status is submitted or streaming with minimal assistant content */}
-      {shouldShowLoading && (
+      {/* Cyrus Structure loader only during streaming in Cyrus group and no active tools */}
+      {shouldShowCyrusLoader && (
+        <div
+          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+        >
+          <div className="w-full !m-0 !p-0">
+            <CyrusLoadingState />
+          </div>
+        </div>
+      )}
+
+      {/* Default loading animation when not in Cyrus condition */}
+      {!shouldShowCyrusLoader && shouldShowLoading && (
         <div
           className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
         >
