@@ -31,7 +31,7 @@ const CpuArchitecture = ({
       height={height}
       viewBox="0 0 200 100"
     >
-      {/* Master loop controller: total cycle = last begin (8.4s) + dur (5s) + pause (2s) = 15.4s */}
+
       <rect width="0" height="0" fill="none">
         <animate id="cpu-loop" attributeName="x" from="0" to="0" dur="15.4s" repeatCount="indefinite" />
       </rect>
