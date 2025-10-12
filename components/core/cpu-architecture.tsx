@@ -30,6 +30,7 @@ const CpuArchitecture = ({
       width={width}
       height={height}
       viewBox="0 0 200 100"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
     >
       <g
         stroke="currentColor"
@@ -61,60 +62,91 @@ const CpuArchitecture = ({
         )}
       </g>
 
+      {/* L1: Bleu cyan */}
       <g mask="url(#cpu-mask-1)">
         <circle className="cpu-architecture cpu-line-1" cx="0" cy="0" r="8" fill="url(#cpu-blue-grad)">
-          <animateMotion dur="3.6s" begin="0s" repeatCount="indefinite" rotate="auto">
+          <animateMotion
+            dur="2.7s"
+            begin="0s"
+            repeatCount="indefinite"
+            rotate="auto"
+            calcMode="spline"
+            keyTimes="0;0.926;1"
+            keySplines="0.25 0.1 0.5 1; 0.4 0 0.2 1"
+            keyPoints="0;1;1"
+          >
             <mpath xlinkHref="#cpu-path-1" />
           </animateMotion>
         </circle>
       </g>
+
+      {/* L2: Jaune doré */}
       <g mask="url(#cpu-mask-2)">
         <circle className="cpu-architecture cpu-line-2" cx="0" cy="0" r="8" fill="url(#cpu-yellow-grad)">
-          <animateMotion dur="3.8s" begin="0.2s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="2.2s" begin="0.25s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-2" />
           </animateMotion>
+          <animate attributeName="r" values="8;10;8" dur="0.9s" begin="0.25s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
         </circle>
       </g>
+
+      {/* L3: Rose / Violet */}
       <g mask="url(#cpu-mask-3)">
         <circle className="cpu-architecture cpu-line-3" cx="0" cy="0" r="8" fill="url(#cpu-pinkish-grad)">
-          <animateMotion dur="4s" begin="0.4s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="3s" begin="0.5s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.2 0 0.5 1">
             <mpath xlinkHref="#cpu-path-3" />
           </animateMotion>
+          <animate attributeName="r" values="8;11;8" dur="3s" begin="0.5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.9;1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
         </circle>
       </g>
+
+      {/* L4: Blanche */}
       <g mask="url(#cpu-mask-4)">
         <circle className="cpu-architecture cpu-line-4" cx="0" cy="0" r="8" fill="url(#cpu-white-grad)">
-          <animateMotion dur="4.2s" begin="0.6s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="2.8s" begin="0.75s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-4" />
           </animateMotion>
+          <animate attributeName="r" values="8;10;8" dur="2.8s" begin="0.75s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
+          <animate attributeName="opacity" values="0.8;1;0.85" dur="2.8s" begin="0.75s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
         </circle>
       </g>
+
+      {/* L5: Verte */}
       <g mask="url(#cpu-mask-5)">
         <circle className="cpu-architecture cpu-line-5" cx="0" cy="0" r="8" fill="url(#cpu-green-grad)">
-          <animateMotion dur="4.4s" begin="0.8s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="3.5s" begin="1s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-5" />
           </animateMotion>
         </circle>
       </g>
+
+      {/* L6: Orange */}
       <g mask="url(#cpu-mask-6)">
         <circle className="cpu-architecture cpu-line-6" cx="0" cy="0" r="8" fill="url(#cpu-orange-grad)">
-          <animateMotion dur="4.6s" begin="1s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="2s" begin="1.2s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-6" />
           </animateMotion>
+          <animate attributeName="opacity" values="1;1;0.2" dur="2s" begin="1.2s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.85;1" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
         </circle>
       </g>
+
+      {/* L7: Cyan */}
       <g mask="url(#cpu-mask-7)">
         <circle className="cpu-architecture cpu-line-7" cx="0" cy="0" r="8" fill="url(#cpu-cyan-grad)">
-          <animateMotion dur="4.8s" begin="1.2s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="3s" begin="1.4s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-7" />
           </animateMotion>
+          <animate attributeName="r" values="8;10;8;10;8" dur="3s" begin="1.4s" repeatCount="indefinite" keyTimes="0;0.25;0.5;0.75;1" calcMode="spline" />
         </circle>
       </g>
+
+      {/* L8: Rose */}
       <g mask="url(#cpu-mask-8)">
         <circle className="cpu-architecture cpu-line-8" cx="0" cy="0" r="8" fill="url(#cpu-rose-grad)">
-          <animateMotion dur="5s" begin="1.4s" repeatCount="indefinite" rotate="auto">
+          <animateMotion dur="2.7s" begin="1.6s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.5 1">
             <mpath xlinkHref="#cpu-path-8" />
           </animateMotion>
+          <animate attributeName="r" values="8;10;8;10;8" dur="2.7s" begin="1.6s" repeatCount="indefinite" keyTimes="0;0.4;0.45;0.7;1" calcMode="spline" />
         </circle>
       </g>
 
