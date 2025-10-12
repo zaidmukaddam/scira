@@ -764,6 +764,7 @@ const ChatInterface = memo(
                 initialMessages={initialMessages}
                 isOwner={isOwner}
                 onHighlight={handleHighlight}
+                selectedGroup={selectedGroup}
               />
             )}
 
