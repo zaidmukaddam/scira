@@ -50,6 +50,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
+import { BorderTrail } from '@/components/core/border-trail';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -3415,11 +3416,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <div className="absolute -inset-1 rounded-2xl bg-primary/5 dark:bg-primary/2 !blur-sm pointer-events-none z-9999" />
             <div
               className={cn(
-                'relative rounded-xl !bg-muted border border-border/60 focus-within:border-ring/50 transition-all duration-200',
+                'relative rounded-xl overflow-hidden !bg-muted border border-border/60 focus-within:border-ring/50 transition-all duration-200',
                 'border-0',
                 (isEnhancing || isTypewriting) && '!bg-muted',
               )}
             >
+              {messages.length === 0 && (
+                <BorderTrail
+                  className={cn('bg-gradient-to-r from-primary/20 via-primary to-primary/20', 'motion-reduce:hidden')}
+                  size={60}
+                  transition={{ repeat: Infinity, duration: 5, ease: 'linear' }}
+                />
+              )}
               {isRecording ? (
                 <Textarea
                   ref={inputRef}
