@@ -14,6 +14,7 @@ import {
   AppleStocksIcon,
   ConnectIcon,
   CodeCircleIcon,
+  HierarchyIcon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -146,7 +147,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       id: 'cyrus' as const,
       name: 'Cyrus Structure',
       description: 'Classifie les articles par hiérarchie (Markdown)',
-      icon: Database02Icon,
+      icon: HierarchyIcon,
       show: true,
     },
   ] as const;

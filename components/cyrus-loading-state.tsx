@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BorderTrail } from "@/components/core/border-trail";
 import { TextShimmer } from "@/components/core/text-shimmer";
 import { cn } from "@/lib/utils";
-import { TreeStructure } from "@phosphor-icons/react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { HierarchyIcon as CyrusIcon } from "@hugeicons/core-free-icons";
 
 export interface CyrusLoadingStateProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: number;
@@ -40,7 +41,7 @@ export function CyrusLoadingState({ size = 80, duration = 5, className, ...props
                 size={40}
                 transition={{ repeat: Infinity, duration, ease: "linear" }}
               />
-              <TreeStructure className={cn("h-5 w-5 text-[#70665D] dark:text-[#C7C0B9]")} />
+              <HugeiconsIcon icon={CyrusIcon} size={20} color="currentColor" strokeWidth={2} className={cn("text-[#70665D] dark:text-[#C7C0B9]")} />
             </div>
             <div className="space-y-2">
               <TextShimmer className="text-base font-medium" duration={1.6}>
