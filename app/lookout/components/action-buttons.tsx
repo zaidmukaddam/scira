@@ -116,7 +116,7 @@ export function ActionButtons({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Lookout is currently running</p>
+            <p>Hyper Fix is currently running</p>
           </TooltipContent>
         </Tooltip>
       )}

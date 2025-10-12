@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const user = await getUser();
   // if not chat, return Scira Chat
   if (!chat) {
-    return { title: 'Scira Chat' };
+    return { title: 'Hyper Chat' };
   }
   let title;
   // if chat is public, return title
@@ -50,24 +50,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // if chat is private, return title
   if (chat.visibility === 'private') {
     if (!user) {
-      title = 'Scira Chat';
+      title = 'Hyper Chat';
     }
     if (user!.id !== chat.userId) {
-      title = 'Scira Chat';
+      title = 'Hyper Chat';
     }
     title = chat.title;
   }
   return {
     title: title,
-    description: 'A search in scira.ai',
+    description: 'A search in hhyper.vercel.app',
     openGraph: {
       title: title,
-      url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      url: `https://hhyper.vercel.app/search/${id}`,
+      description: 'A search in hhyper.vercel.app',
+      siteName: 'hhyper.vercel.app',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://hhyper.vercel.app/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
@@ -76,20 +76,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      url: `https://hhyper.vercel.app/search/${id}`,
+      description: 'A search in hhyper.vercel.app',
+      siteName: 'hhyper.vercel.app',
       creator: '@sciraai',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://hhyper.vercel.app/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
       ],
     },
     alternates: {
-      canonical: `https://scira.ai/search/${id}`,
+      canonical: `https://hhyper.vercel.app/search/${id}`,
     },
   } as Metadata;
 }
