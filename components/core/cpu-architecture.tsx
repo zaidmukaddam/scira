@@ -31,6 +31,11 @@ const CpuArchitecture = ({
       height={height}
       viewBox="0 0 200 100"
     >
+      {/* Master loop controller: total cycle = last line (0.84s + 1s) + 2s pause = 3.84s */}
+      <rect width="0" height="0" fill="none">
+        <animate id="cpu-loop" attributeName="x" from="0" to="0" dur="3.84s" repeatCount="indefinite" />
+      </rect>
+
       {/* Paths */}
       <g
         stroke="currentColor"
@@ -52,7 +57,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0s"
+              begin="cpu-loop.begin+0s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -72,7 +77,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.12s"
+              begin="cpu-loop.begin+0.12s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -88,7 +93,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.24s"
+              begin="cpu-loop.begin+0.24s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -104,7 +109,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.36s"
+              begin="cpu-loop.begin+0.36s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -124,7 +129,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.48s"
+              begin="cpu-loop.begin+0.48s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -140,7 +145,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.6s"
+              begin="cpu-loop.begin+0.6s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -156,7 +161,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.72s"
+              begin="cpu-loop.begin+0.72s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
@@ -172,7 +177,7 @@ const CpuArchitecture = ({
               from="100"
               to="0"
               dur="1s"
-              begin="0.84s"
+              begin="cpu-loop.begin+0.84s"
               fill="freeze"
               calcMode="spline"
               keySplines="0.25,0.1,0.5,1"
