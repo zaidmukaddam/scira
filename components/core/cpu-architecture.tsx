@@ -31,12 +31,6 @@ const CpuArchitecture = ({
       height={height}
       viewBox="0 0 200 100"
     >
-
-      <rect width="0" height="0" fill="none">
-        <animate id="cpu-loop" attributeName="x" from="0" to="0" dur="15.4s" repeatCount="indefinite" />
-      </rect>
-
-      {/* Paths */}
       <g
         stroke="currentColor"
         fill="none"
@@ -50,144 +44,43 @@ const CpuArchitecture = ({
           strokeDasharray="100 100"
           pathLength="100"
           d="M 10 20 h 79.5 q 5 0 5 5 v 30"
-        >
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+0s; cpu-loop.repeatEvent+0s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        />
         {/* 2nd */}
         <path
           strokeDasharray="100 100"
           pathLength="100"
           d="M 180 10 h -69.7 q -5 0 -5 5 v 30"
-        >
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+1.2s; cpu-loop.repeatEvent+1.2s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        />
         {/* 3rd */}
-        <path d="M 130 20 v 21.8 q 0 5 -5 5 h -10">
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+2.4s; cpu-loop.repeatEvent+2.4s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        <path d="M 130 20 v 21.8 q 0 5 -5 5 h -10" />
         {/* 4th */}
-        <path d="M 170 80 v -21.8 q 0 -5 -5 -5 h -50">
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+3.6s; cpu-loop.repeatEvent+3.6s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        <path d="M 170 80 v -21.8 q 0 -5 -5 -5 h -50" />
         {/* 5th */}
         <path
           strokeDasharray="100 100"
           pathLength="100"
           d="M 135 65 h 15 q 5 0 5 5 v 10 q 0 5 -5 5 h -39.8 q -5 0 -5 -5 v -20"
-        >
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+4.8s; cpu-loop.repeatEvent+4.8s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        />
         {/* 6th */}
-        <path d="M 94.8 95 v -36">
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+6s; cpu-loop.repeatEvent+6s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        <path d="M 94.8 95 v -36" />
         {/* 7th */}
-        <path d="M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 14">
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+7.2s; cpu-loop.repeatEvent+7.2s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        <path d="M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 14" />
         {/* 8th */}
-        <path d="M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 20">
-          {animateLines && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="100"
-              to="0"
-              dur="5s"
-              begin="cpu-loop.begin+8.4s; cpu-loop.repeatEvent+8.4s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25,0.1,0.5,1"
-              keyTimes="0; 1"
-            />
-          )}
-        </path>
+        <path d="M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 20" />
+        {animateLines && (
+          <animate
+            attributeName="stroke-dashoffset"
+            from="100"
+            to="0"
+            dur="1s"
+            fill="freeze"
+            calcMode="spline"
+            keySplines="0.25,0.1,0.5,1"
+            keyTimes="0; 1"
+          />
+        )}
       </g>
 
-      {/* 1. Blue Light */}
       <g mask="url(#cpu-mask-1)">
         <circle
           className="cpu-architecture cpu-line-1"
@@ -197,7 +90,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-blue-grad)"
         />
       </g>
-      {/* 2. Yellow Light */}
       <g mask="url(#cpu-mask-2)">
         <circle
           className="cpu-architecture cpu-line-2"
@@ -207,7 +99,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-yellow-grad)"
         />
       </g>
-      {/* 3. Pinkish Light */}
       <g mask="url(#cpu-mask-3)">
         <circle
           className="cpu-architecture cpu-line-3"
@@ -217,7 +108,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-pinkish-grad)"
         />
       </g>
-      {/* 4. White Light */}
       <g mask="url(#cpu-mask-4)">
         <circle
           className="cpu-architecture cpu-line-4"
@@ -227,7 +117,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-white-grad)"
         />
       </g>
-      {/* 5. Green Light */}
       <g mask="url(#cpu-mask-5)">
         <circle
           className="cpu-architecture cpu-line-5"
@@ -237,7 +126,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-green-grad)"
         />
       </g>
-      {/* 6. Orange Light */}
       <g mask="url(#cpu-mask-6)">
         <circle
           className="cpu-architecture cpu-line-6"
@@ -247,7 +135,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-orange-grad)"
         />
       </g>
-      {/* 7. Cyan Light */}
       <g mask="url(#cpu-mask-7)">
         <circle
           className="cpu-architecture cpu-line-7"
@@ -257,7 +144,6 @@ const CpuArchitecture = ({
           fill="url(#cpu-cyan-grad)"
         />
       </g>
-      {/* 8. Rose Light */}
       <g mask="url(#cpu-mask-8)">
         <circle
           className="cpu-architecture cpu-line-8"
@@ -267,9 +153,8 @@ const CpuArchitecture = ({
           fill="url(#cpu-rose-grad)"
         />
       </g>
-      {/* CPU Box */}
+
       <g>
-        {/* Cpu connections */}
         {showCpuConnections && (
           <g fill="url(#cpu-connection-gradient)">
             <rect x="93" y="37" width="2.5" height="5" rx="0.7" />
@@ -324,7 +209,6 @@ const CpuArchitecture = ({
             />
           </g>
         )}
-        {/* Main CPU Rectangle */}
         <rect
           x="85"
           y="40"
@@ -334,7 +218,6 @@ const CpuArchitecture = ({
           fill="#181818"
           filter="url(#cpu-light-shadow)"
         />
-        {/* CPU Text */}
         <text
           x="100"
           y="50"
@@ -348,7 +231,7 @@ const CpuArchitecture = ({
           {text}
         </text>
       </g>
-      {/* Masks */}
+
       <defs>
         <mask id="cpu-mask-1">
           <path
@@ -402,7 +285,6 @@ const CpuArchitecture = ({
             stroke="white"
           />
         </mask>
-        {/* Gradients */}
         <radialGradient id="cpu-blue-grad" fx="1">
           <stop offset="0%" stopColor="#00E8ED" />
           <stop offset="50%" stopColor="#08F" />
@@ -438,20 +320,8 @@ const CpuArchitecture = ({
           <stop offset="0%" stopColor="#f43f5e" />
           <stop offset="100%" stopColor="transparent" />
         </radialGradient>
-        <filter
-          id="cpu-light-shadow"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-        >
-          <feDropShadow
-            dx="1.5"
-            dy="1.5"
-            stdDeviation="1"
-            floodColor="black"
-            floodOpacity="0.1"
-          />
+        <filter id="cpu-light-shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="1.5" dy="1.5" stdDeviation="1" floodColor="black" floodOpacity="0.1" />
         </filter>
         <marker
           id="cpu-circle-marker"
@@ -461,32 +331,14 @@ const CpuArchitecture = ({
           markerWidth={lineMarkerSize}
           markerHeight={lineMarkerSize}
         >
-          <circle
-            id="innerMarkerCircle"
-            cx="5"
-            cy="5"
-            r="2"
-            fill="black"
-            stroke="#232323"
-            strokeWidth="0.5"
-          >
-            {animateMarkers && (
-              <animate attributeName="r" values="0; 3; 2" dur="0.5s" />
-            )}
+          <circle id="innerMarkerCircle" cx="5" cy="5" r="2" fill="black" stroke="#232323" strokeWidth="0.5">
+            {animateMarkers && <animate attributeName="r" values="0; 3; 2" dur="0.5s" />}
           </circle>
         </marker>
-        {/* Cpu connection gradient */}
-        <linearGradient
-          id="cpu-connection-gradient"
-          x1="0"
-          y1="0"
-          x2="0"
-          y2="1"
-        >
+        <linearGradient id="cpu-connection-gradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#4F4F4F" />
           <stop offset="60%" stopColor="#121214" />
         </linearGradient>
-        {/* Add CPU Text Gradient */}
         <linearGradient id="cpu-text-gradient" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#666666">
             <animate
@@ -513,7 +365,7 @@ const CpuArchitecture = ({
           <stop offset="50%" stopColor="#666666">
             <animate
               attributeName="offset"
-              values="0; 1; 2;"
+              values="0; 1; 2"
               dur="5s"
               repeatCount="indefinite"
               calcMode="spline"
