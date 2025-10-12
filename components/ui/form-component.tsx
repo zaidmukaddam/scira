@@ -3424,7 +3424,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               {messages.length === 0 && (
                 <BorderTrail
                   className={cn('bg-gradient-to-r from-primary/20 via-primary to-primary/20', 'motion-reduce:hidden')}
-                  size={105}
+                  size={115}
                   transition={{ repeat: Infinity, duration: 5, ease: 'linear' }}
                 />
               )}
