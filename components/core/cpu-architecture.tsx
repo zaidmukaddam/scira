@@ -45,42 +45,141 @@ const CpuArchitecture = ({
           strokeDasharray="100 100"
           pathLength="100"
           d="M 10 20 h 79.5 q 5 0 5 5 v 30"
-        />
+        >
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 2nd */}
         <path
           strokeDasharray="100 100"
           pathLength="100"
           d="M 180 10 h -69.7 q -5 0 -5 5 v 30"
-        />
+        >
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.12s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 3rd */}
-        <path d="M 130 20 v 21.8 q 0 5 -5 5 h -10" />
+        <path d="M 130 20 v 21.8 q 0 5 -5 5 h -10">
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.24s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 4th */}
-        <path d="M 170 80 v -21.8 q 0 -5 -5 -5 h -50" />
+        <path d="M 170 80 v -21.8 q 0 -5 -5 -5 h -50">
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.36s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 5th */}
         <path
           strokeDasharray="100 100"
           pathLength="100"
           d="M 135 65 h 15 q 5 0 5 5 v 10 q 0 5 -5 5 h -39.8 q -5 0 -5 -5 v -20"
-        />
+        >
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.48s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 6th */}
-        <path d="M 94.8 95 v -36" />
+        <path d="M 94.8 95 v -36">
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.6s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 7th */}
-        <path d="M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 14" />
+        <path d="M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 14">
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.72s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
         {/* 8th */}
-        <path d="M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 20" />
-        {/* Animation For Path Starting */}
-        {animateLines && (
-          <animate
-            attributeName="stroke-dashoffset"
-            from="100"
-            to="0"
-            dur="1s"
-            fill="freeze"
-            calcMode="spline"
-            keySplines="0.25,0.1,0.5,1"
-            keyTimes="0; 1"
-          />
-        )}
+        <path d="M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 20">
+          {animateLines && (
+            <animate
+              attributeName="stroke-dashoffset"
+              from="100"
+              to="0"
+              dur="1s"
+              begin="0.84s"
+              fill="freeze"
+              calcMode="spline"
+              keySplines="0.25,0.1,0.5,1"
+              keyTimes="0; 1"
+            />
+          )}
+        </path>
       </g>
 
       {/* 1. Blue Light */}
@@ -232,8 +331,10 @@ const CpuArchitecture = ({
         />
         {/* CPU Text */}
         <text
-          x="92"
-          y="52.5"
+          x="100"
+          y="50"
+          textAnchor="middle"
+          dominantBaseline="middle"
           fontSize="7"
           fill={animateText ? "url(#cpu-text-gradient)" : "white"}
           fontWeight="600"
