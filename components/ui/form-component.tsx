@@ -57,7 +57,7 @@ const ProBadge = ({ className = '' }: { className?: string }) => (
   <span
     className={`font-baumans inline-flex items-center gap-1 rounded-lg shadow-sm !border-none !outline-0 ring-offset-1 !ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 !pb-2 sm:pt-1 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
-    <span>pro</span>
+    <span>Fix</span>
   </span>
 );
 
@@ -1008,7 +1008,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         </>
                       ) : (
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Scira</span>
+                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Hyper</span>
                           <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
                         </div>
                       )}
@@ -1099,7 +1099,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-sm font-medium text-foreground">Hyper Fix</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>
@@ -3868,7 +3868,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary flex-shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-sm font-medium text-foreground">Hyper Fix</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>

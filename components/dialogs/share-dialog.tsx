@@ -27,7 +27,7 @@ export function ShareIconDialog({
   const [copied, setCopied] = useState(false);
 
   // Generate the share URL
-  const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+  const shareUrl = chatId ? `https://hhyper.vercel.app/search/${chatId}` : '';
 
   const handleMakePublic = async () => {
     if (currentVisibility === 'public') return;
@@ -82,7 +82,7 @@ export function ShareIconDialog({
     if (navigator.share) {
       navigator
         .share({
-          title: 'ShareIcond Chat - Scira',
+          title: 'ShareIcond Chat - Hyper',
           url: shareUrl,
         })
         .then(() => {

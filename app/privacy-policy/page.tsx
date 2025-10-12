@@ -57,7 +57,7 @@ export default function PrivacyPage() {
       <div className="py-16 px-4">
         <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
           <p className="text-lg">
-            At Scira AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
+            At Hyper AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
             explains how we collect, use, and safeguard your information when you use our AI-powered search engine.
           </p>
 
@@ -88,7 +88,7 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
+            <strong>Important Note on Payment Data:</strong> Hyper AI does not collect, store, or process any payment
             card details, bank information, UPI details, or other sensitive payment data. All payment information is
             handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective
             privacy policies and security standards.
@@ -172,14 +172,14 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai" className="flex items-center gap-1">
-              zaid@scira.ai <ExternalLink className="h-4 w-4" />
+            <a href="mailto:zaid@hhyper.vercel.app" className="flex items-center gap-1">
+              zaid@hhyper.vercel.app <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 
           <div className="my-8 border-t pt-8">
             <p className="text-sm text-muted-foreground">
-              By using Scira AI, you agree to our Privacy Policy and our{' '}
+              By using Hyper AI, you agree to our Privacy Policy and our{' '}
               <Link href="/terms" className="underline">
                 Terms of Service
               </Link>
@@ -199,7 +199,7 @@ export default function PrivacyPage() {
                 <SciraLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
+                © {new Date().getFullYear()} Hyper AI by Zaid Mukaddam
               </div>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">

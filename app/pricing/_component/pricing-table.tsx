@@ -521,7 +521,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </p>
           <p className="text-sm text-muted-foreground">
             Questions?{' '}
-            <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
+            <a href="mailto:zaid@hhyper.vercel.app" className="text-foreground hover:underline">
               Get in touch
             </a>
           </p>

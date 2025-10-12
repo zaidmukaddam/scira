@@ -18,7 +18,7 @@ const ProBadge = ({ className = '' }: { className?: string }) => (
   <span
     className={`font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-offset-1 ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pb-2.5 pt-1.5 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
-    <span>pro</span>
+    <span>Fix</span>
   </span>
 );
 
@@ -110,7 +110,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           <div className="relative h-80 overflow-hidden rounded-t-lg">
             <Image
               src="/placeholder.png"
-              alt="Scira Pro"
+              alt="Hyper Pro"
               width={1200}
               height={630}
               className="w-full h-full object-cover"
@@ -189,7 +189,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           <div className="flex items-center gap-4">
             <CheckIcon className="size-4 text-primary flex-shrink-0" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+              <p className="text-sm font-medium text-foreground">Hyper Fix</p>
               <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
             </div>
           </div>
@@ -284,7 +284,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
           <div className="relative h-40 sm:h-48 overflow-hidden rounded-t-lg">
             <Image
               src="/lookout-promo.png"
-              alt="Scira Lookout"
+              alt="Hyper Fix"
               width={1200}
               height={630}
               className="w-full h-full object-cover"
@@ -295,7 +295,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 New Feature
               </div>
               <DialogTitle className="text-white text-xl sm:text-2xl font-bold tracking-tight">
-                Introducing Scira Lookout
+                Introducing Hyper Fix
               </DialogTitle>
               <DialogDescription className="text-white/80 text-sm mt-1">
                 Automated search monitoring on your schedule
@@ -336,7 +336,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 className="w-full sm:flex-1 group"
               >
                 <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-                Explore Lookout
+                Explore Fix
                 <span className="sm:ml-auto text-xs font-mono hidden sm:inline opacity-60">⌘ ⏎</span>
               </Button>
               <Button

@@ -12,19 +12,19 @@ import { ClientAnalytics } from '@/components/client-analytics';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://scira.ai'),
+  metadataBase: new URL('https://hhyper.vercel.app'),
   title: {
-    default: 'Scira AI - Fastest AI research engine, Perplexity alternative',
-    template: '%s | Scira AI',
+    default: 'Hyper AI - Fastest AI research engine, Perplexity alternative',
+    template: "%s | Hyper AI",
   },
   description:
-    'Scira is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
+    'Hyper is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
   openGraph: {
-    url: 'https://scira.ai',
-    siteName: 'Scira AI',
+    url: 'https://hhyper.vercel.app',
+    siteName: 'Hyper AI',
   },
   keywords: [
-    'scira.ai',
+    'hhyper.vercel.app',
     'perplexity alternative',
     'ai search engine',
     'search engine',
