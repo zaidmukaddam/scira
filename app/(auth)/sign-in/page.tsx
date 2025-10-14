@@ -3,5 +3,5 @@
 import AuthCard from '@/components/auth-card';
 
 export default function SignInPage() {
-  return <AuthCard title="Welcome back" description="Sign in to continue to Hyper AI" />;
+  return <AuthCard title="Bon retour" description="Connectez-vous pour continuer vers Hyper AI" />;
 }

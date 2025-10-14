@@ -32,7 +32,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
             ? selectedTimezone.label.length > 30
               ? `${selectedTimezone.label.substring(0, 30)}...`
               : selectedTimezone.label
-            : 'Select timezone'}
+            : 'Sélectionner un fuseau horaire'}
           <HugeiconsIcon
             icon={CircleArrowUpDownIcon}
             size={16}
@@ -51,8 +51,8 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
         collisionPadding={8}
       >
         <Command>
-          <CommandInput placeholder="Search timezone..." className="h-9" />
-          <CommandEmpty>No timezone found.</CommandEmpty>
+          <CommandInput placeholder="Rechercher un fuseau horaire…" className="h-9" />
+          <CommandEmpty>Aucun fuseau horaire trouvé.</CommandEmpty>
           <CommandList
             className="max-h-[200px] !overflow-y-scroll"
             style={{ overflowY: 'scroll', pointerEvents: 'auto' }}

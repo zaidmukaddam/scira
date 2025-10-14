@@ -121,30 +121,30 @@ const formatCompactTime = (() => {
 
     let result: string;
     if (seconds < 60) {
-      result = `${seconds}s ago`;
+      result = `il y a ${seconds} s`;
     } else {
       const minutes = differenceInMinutes(now, date);
       if (minutes < 60) {
-        result = `${minutes}m ago`;
+        result = `il y a ${minutes} min`;
       } else {
         const hours = differenceInHours(now, date);
         if (hours < 24) {
-          result = `${hours}h ago`;
+          result = `il y a ${hours} h`;
         } else {
           const days = differenceInDays(now, date);
           if (days < 7) {
-            result = `${days}d ago`;
+            result = `il y a ${days} j`;
           } else {
             const weeks = differenceInWeeks(now, date);
             if (weeks < 4) {
-              result = `${weeks}w ago`;
+              result = `il y a ${weeks} sem`;
             } else {
               const months = differenceInMonths(now, date);
               if (months < 12) {
-                result = `${months}mo ago`;
+                result = `il y a ${months} mois`;
               } else {
                 const years = differenceInYears(now, date);
-                result = `${years}y ago`;
+                result = `il y a ${years} ans`;
               }
             }
           }
@@ -446,7 +446,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       await deleteChat(id);
     },
     onSuccess: (_, id) => {
-      toast.success('Chat deleted');
+      toast.success('Conversation supprimée');
       // Update cache after successful deletion
       queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -461,7 +461,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onError: (error) => {
       console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat. Please try again.');
+      toast.error('Échec de la suppression de la conversation. Veuillez réessayer.');
       queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
     },
   });
@@ -472,7 +472,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onSuccess: (updatedChat, { id, title }) => {
       if (updatedChat) {
-        toast.success('Title updated');
+        toast.success('Titre mis à jour');
         // Update cache after successful title update
         queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
           if (!oldData) return oldData;
@@ -485,12 +485,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           };
         });
       } else {
-        toast.error('Failed to update title. Please try again.');
+        toast.error('Échec de la mise à jour du titre. Veuillez réessayer.');
       }
     },
     onError: (error) => {
       console.error('Failed to update chat title:', error);
-      toast.error('Failed to update title. Please try again.');
+      toast.error('Échec de la mise à jour du titre. Veuillez réessayer.');
     },
   });
 
@@ -582,7 +582,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       } catch (error) {
         // Error handling is done in mutation callbacks, but we should reset state
         console.error('Delete chat error:', error);
-        toast.error('Failed to delete chat. Please try again.');
+        toast.error('Échec de la suppression de la conversation. Veuillez réessayer.');
       }
     },
     [deleteMutation, currentChatId],
@@ -618,12 +618,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       e.stopPropagation();
 
       if (!editingTitle.trim()) {
-        toast.error('Title cannot be empty');
+        toast.error('Le titre ne peut pas être vide');
         return;
       }
 
       if (editingTitle.trim().length > 100) {
-        toast.error('Title is too long (max 100 characters)');
+        toast.error('Le titre est trop long (100 caractères max)');
         return;
       }
 
@@ -662,14 +662,14 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const getSearchModeInfo = (mode: SearchMode) => {
     switch (mode) {
       case 'title':
-        return { icon: Hash, label: 'Title' };
+        return { icon: Hash, label: 'Titre' };
       case 'date':
         return { icon: Calendar, label: 'Date' };
       case 'visibility':
-        return { icon: Globe, label: 'Visibility' };
+        return { icon: Globe, label: 'Visibilité' };
       case 'all':
       default:
-        return { icon: Search, label: 'All' };
+        return { icon: Search, label: 'Tout' };
     }
   };
 
@@ -691,7 +691,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     const isPublic = chat.visibility === 'public';
     const isDeleting = deletingChatId === chat.id;
     const isEditing = editingChatId === chat.id;
-    const displayTitle = chat.title || 'Untitled Conversation';
+    const displayTitle = chat.title || 'Conversation sans titre';
 
     // Prefetch on hover
     const handleMouseEnter = () => {
@@ -731,10 +731,10 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
         role="option"
         aria-label={
           isDeleting
-            ? `Delete ${displayTitle}? Press Enter to confirm, Escape to cancel`
+            ? `Supprimer ${displayTitle} ? Appuyez sur Entrée pour confirmer, Échap pour annuler`
             : isEditing
-              ? `Editing title: ${displayTitle}`
-              : `Open chat: ${displayTitle}`
+              ? `Modification du titre : ${displayTitle}`
+              : `Ouvrir la conversation : ${displayTitle}`
         }
       >
         <Link href={`/search/${chat.id}`} prefetch className="w-full">
@@ -749,12 +749,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     'h-4 w-4 shrink-0',
                     isCurrentChat ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500/70 dark:text-blue-500/70',
                   )}
-                  aria-label="Public chat"
+                  aria-label="Conversation publique"
                 />
               ) : (
                 <Lock
                   className={cn('h-4 w-4 shrink-0', isCurrentChat ? 'text-foreground' : 'text-muted-foreground')}
-                  aria-label="Private chat"
+                  aria-label="Conversation privée"
                 />
               )}
             </div>
@@ -769,7 +769,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
                   onClick={(e) => e.stopPropagation()}
                   className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
-                  placeholder="Enter title..."
+                  placeholder="Saisissez un titre…"
                   autoFocus
                   maxLength={100}
                 />
@@ -782,7 +782,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     isEditing && 'text-muted-foreground',
                   )}
                 >
-                  {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
+                  {isDeleting ? `Supprimer « ${displayTitle} » ?` : displayTitle}
                 </span>
               )}
             </div>
@@ -797,7 +797,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     size="icon"
                     className="h-7 w-7 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
                     onClick={(e) => confirmDeleteChat(e, chat.id)}
-                    aria-label="Confirm delete"
+                    aria-label="Confirmer la suppression"
                     disabled={deleteMutation.isPending}
                   >
                     {deleteMutation.isPending ? (
@@ -811,7 +811,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     size="icon"
                     className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
                     onClick={cancelDeleteChat}
-                    aria-label="Cancel delete"
+                    aria-label="Annuler la suppression"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -824,7 +824,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     size="icon"
                     className="h-7 w-7 flex-shrink-0 text-foreground hover:text-foreground hover:bg-muted"
                     onClick={(e) => saveEditedTitle(e, chat.id)}
-                    aria-label="Save title"
+                    aria-label="Enregistrer le titre"
                     disabled={updateTitleMutation.isPending}
                   >
                     {updateTitleMutation.isPending ? (
@@ -838,7 +838,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                     size="icon"
                     className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
                     onClick={cancelEditTitle}
-                    aria-label="Cancel edit"
+                    aria-label="Annuler la modification"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -867,7 +867,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                       'opacity-50 pointer-events-none',
                     )}
                     onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
-                    aria-label={`Edit title of ${displayTitle}`}
+                    aria-label={`Modifier le titre de ${displayTitle}`}
                     disabled={
                       navigating === chat.id ||
                       deleteMutation.isPending ||
@@ -893,7 +893,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                       'opacity-50 pointer-events-none',
                     )}
                     onClick={(e) => handleDeleteChat(e, chat.id)}
-                    aria-label={`Delete ${displayTitle}`}
+                    aria-label={`Supprimer ${displayTitle}`}
                     disabled={
                       navigating === chat.id ||
                       deleteMutation.isPending ||
@@ -906,7 +906,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   </Button>
                   <div className="w-6 flex justify-end">
                     {isCurrentChat ? (
-                      <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
+                      <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">En cours</span>
                     ) : (
                       <ArrowUpRight className="h-3 w-3" />
                     )}
@@ -935,17 +935,17 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             <EmptyMedia variant="icon">
               <History className="size-6" />
             </EmptyMedia>
-            <EmptyTitle>Access Your Chat History</EmptyTitle>
+            <EmptyTitle>Access Your Historique des conversations</EmptyTitle>
             <EmptyDescription>
-              Sign in to view, search, and manage all your previous conversations seamlessly.
+              Connectez-vous pour afficher, rechercher et gérer toutes vos conversations précédentes en toute simplicité.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={handleSignIn} className="w-full max-w-[200px]">
-              Sign In
+              Se connecter
             </Button>
             <p className="text-xs text-muted-foreground">
-              Your conversations are automatically saved when you are signed in.
+              Vos conversations sont automatiquement enregistrées lorsque vous êtes connecté(e).
             </p>
           </EmptyContent>
         </Empty>
@@ -986,7 +986,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             <input
               ref={inputRef}
               className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 pr-2"
-              placeholder={`Search ${currentModeInfo.label.toLowerCase()}...`}
+              placeholder={`Rechercher ${currentModeInfo.label.toLowerCase()}…`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -1014,11 +1014,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             ref={listRef}
             onScroll={handleScroll}
             role="listbox"
-            aria-label="Chat history"
+            aria-label="Historique des conversations"
           >
             {isLoading ? (
               <div>
-                <CommandGroup heading="Recent Conversations">
+                <CommandGroup heading="Conversations récentes">
                   {Array(5)
                     .fill(0)
                     .map((_, i) => (
@@ -1045,12 +1045,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                 {allChats.length > 0 ? (
                   <>
                     {[
-                      { key: 'today', heading: 'Today' },
-                      { key: 'yesterday', heading: 'Yesterday' },
-                      { key: 'thisWeek', heading: 'This Week' },
-                      { key: 'lastWeek', heading: 'Last Week' },
-                      { key: 'thisMonth', heading: 'This Month' },
-                      { key: 'older', heading: 'Older' },
+                      { key: 'today', heading: 'Aujourd’hui' },
+                      { key: 'yesterday', heading: 'Hier' },
+                      { key: 'thisWeek', heading: 'Cette semaine' },
+                      { key: 'lastWeek', heading: 'La semaine dernière' },
+                      { key: 'thisMonth', heading: 'Ce mois-ci' },
+                      { key: 'older', heading: 'Plus ancien' },
                     ].map(({ key, heading }) => {
                       const chats = categorizedChats[key as keyof typeof categorizedChats];
                       return (
@@ -1072,7 +1072,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                         {isFetchingNextPage ? (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Spinner />
-                            Loading more...
+                            Chargement…
                           </div>
                         ) : (
                           <div className="h-1"></div>
@@ -1087,33 +1087,33 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                         <EmptyMedia variant="icon">
                           <History className="size-6" />
                         </EmptyMedia>
-                        <EmptyTitle>No conversations found</EmptyTitle>
+                        <EmptyTitle>Aucune conversation trouvée</EmptyTitle>
                         {searchQuery ? (
                           <EmptyDescription>
-                            Try a different search term or change search mode
+                            Essayez un autre terme de recherche ou changez de mode de recherche
                           </EmptyDescription>
                         ) : (
                           <EmptyDescription>
-                            Start a new chat to begin
+                            Démarrez une nouvelle conversation pour commencer
                           </EmptyDescription>
                         )}
                       </EmptyHeader>
                       {searchQuery ? (
                         <EmptyContent>
                           <div className="text-xs text-muted-foreground/80 space-y-1.5">
-                            <p className="font-medium">Search tips:</p>
+                            <p className="font-medium">Astuces de recherche :</p>
                             <div className="space-y-0.5">
                               <p>
-                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">public:</code> or <code className="bg-muted px-1 py-0.5 rounded text-xs">private:</code> for visibility
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">public:</code> or <code className="bg-muted px-1 py-0.5 rounded text-xs">private:</code> pour la visibilité
                               </p>
                               <p>
-                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">today:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">week:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">month:</code> for dates
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">today:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">week:</code>, <code className="bg-muted px-1 py-0.5 rounded text-xs">month:</code> pour les dates
                               </p>
                               <p>
-                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">date:22/05/25</code> for specific date (DD/MM/YY)
+                                • <code className="bg-muted px-1 py-0.5 rounded text-xs">date:22/05/25</code> pour une date précise (JJ/MM/AA)
                               </p>
                               <p>
-                                • Switch to Date mode and type <code className="bg-muted px-1 py-0.5 rounded text-xs">22/05/25</code>
+                                • Passez en mode Date et saisissez <code className="bg-muted px-1 py-0.5 rounded text-xs">22/05/25</code>
                               </p>
                             </div>
                           </div>
@@ -1121,7 +1121,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                       ) : (
                         <EmptyContent>
                           <Button onClick={() => onOpenChange(false)} className="w-full max-w-[200px]">
-                            Start a new search
+                            Commencer une nouvelle recherche
                           </Button>
                         </EmptyContent>
                       )}
@@ -1135,11 +1135,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           {/* Mobile hints */}
           <div className="block sm:hidden bottom-0 left-0 right-0 p-3 text-xs text-center text-muted-foreground border-t border-border bg-background/90">
             <div className="flex justify-center items-center gap-3">
-              <span>Tap to open</span>
+              <span>Touchez pour ouvrir</span>
               <span>•</span>
-              <span>Edit to rename</span>
+              <span>Modifier pour renommer</span>
               <span>•</span>
-              <span>Trash to delete</span>
+              <span>Corbeille pour supprimer</span>
             </div>
           </div>
 
@@ -1149,15 +1149,15 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               {/* Important navigation shortcuts on the left */}
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded font-mono">⏎</Kbd> open
+                  <Kbd className="rounded font-mono">⏎</Kbd> ouvrir
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Kbd className="rounded">↑</Kbd>
                   <Kbd className="rounded">↓</Kbd>
-                  navigate
+                  naviguer
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded">Tab</Kbd> toggle mode
+                  <Kbd className="rounded">Tab</Kbd> basculer de mode
                 </span>
               </div>
 
@@ -1165,7 +1165,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               <div className="flex items-center gap-4">
                 <span className="text-muted-foreground/80">Click edit to rename • Click trash to delete</span>
                 <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded">Esc</Kbd> close
+                  <Kbd className="rounded">Esc</Kbd> fermer
                 </span>
               </div>
             </div>
@@ -1186,14 +1186,14 @@ export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void
           size="icon"
           onClick={onClickAction}
           className="size-6 !p-0 !m-0 rounded-full hover:bg-muted"
-          aria-label="Chat History"
+          aria-label="Historique des conversations"
         >
           <HugeiconsIcon icon={SearchList02Icon} className="size-6" />
-          <span className="sr-only">Chat History</span>
+          <span className="sr-only">Historique des conversations</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
-        Chat History
+        Historique des conversations
       </TooltipContent>
     </Tooltip>
   );

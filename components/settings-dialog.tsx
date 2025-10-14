@@ -125,7 +125,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
                   'dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground',
                 )}
               >
-                pro user
+                utilisateur Pro
               </span>
             )
           )}
@@ -135,18 +135,18 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
       <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
         <div className={cn('bg-muted/50 rounded-lg space-y-3', isMobile ? 'p-3' : 'p-4')}>
           <div>
-            <Label className="text-xs text-muted-foreground">Full Name</Label>
-            <p className="text-sm font-medium mt-1">{user?.name || 'Not provided'}</p>
+            <Label className="text-xs text-muted-foreground">Nom complet</Label>
+            <p className="text-sm font-medium mt-1">{user?.name || 'Non renseigné'}</p>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Email Address</Label>
-            <p className="text-sm font-medium mt-1 break-all">{user?.email || 'Not provided'}</p>
+            <Label className="text-xs text-muted-foreground">Adresse e-mail</Label>
+            <p className="text-sm font-medium mt-1 break-all">{user?.email || 'Non renseigné'}</p>
           </div>
         </div>
 
         <div className={cn('bg-muted/30 rounded-lg border border-border', isMobile ? 'p-2.5' : 'p-3')}>
           <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Profile information is managed through your authentication provider. Contact support to update your details.
+            Les informations de profil sont gérées par votre fournisseur d’authentification. Contactez le support pour mettre à jour vos informations.
           </p>
         </div>
       </div>
@@ -182,28 +182,28 @@ const searchProviders = [
   {
     value: 'firecrawl',
     label: 'Firecrawl',
-    description: 'Web, news, and image search with content scraping capabilities',
+    description: 'Recherche Web, actualités et images avec capacités d’extraction de contenu',
     icon: FirecrawlIcon,
     default: false,
   },
   {
     value: 'exa',
     label: 'Exa',
-    description: 'Enhanced and faster web search with images and advanced filtering',
+    description: 'Recherche Web améliorée et plus rapide avec images et filtres avancés',
     icon: ExaIcon,
     default: false,
   },
   {
     value: 'parallel',
     label: 'Parallel AI',
-    description: 'Base and premium web search along with Firecrawl image search support',
+    description: 'Recherche Web de base et premium ainsi que prise en charge de la recherche d’images Firecrawl',
     icon: ParallelIcon,
     default: true,
   },
   {
     value: 'tavily',
     label: 'Tavily',
-    description: 'Wide web search with comprehensive results and analysis',
+    description: 'Recherche Web étendue avec résultats complets et analyse',
     icon: TavilyIcon,
     default: false,
   },
@@ -246,7 +246,7 @@ function SearchProviderSelector({
                     {currentProvider.label}
                     {currentProvider.default && (
                       <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
-                        Default
+                        Par défaut
                       </Badge>
                     )}
                   </div>
@@ -268,7 +268,7 @@ function SearchProviderSelector({
                     {provider.label}
                     {provider.default && (
                       <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
-                        Default
+                        Par défaut
                       </Badge>
                     )}
                   </div>
@@ -308,7 +308,7 @@ function PreferencesSection({
   const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
     setSearchProvider(newProvider);
     toast.success(
-      `Search provider changed to ${newProvider === 'exa'
+      `Moteur de recherche changé pour ${newProvider === 'exa'
         ? 'Exa'
         : newProvider === 'parallel'
           ? 'Parallel AI'
@@ -338,7 +338,7 @@ function PreferencesSection({
 
   const handleSave = async () => {
     if (!content.trim()) {
-      toast.error('Please enter some instructions');
+      toast.error('Veuillez saisir des instructions');
       return;
     }
 
@@ -346,13 +346,13 @@ function PreferencesSection({
     try {
       const result = await saveCustomInstructions(content);
       if (result.success) {
-        toast.success('Custom instructions saved successfully');
+        toast.success('Instructions personnalisées enregistrées');
         refetch();
       } else {
-        toast.error(result.error || 'Failed to save instructions');
+        toast.error(result.error || 'Échec de l’enregistrement des instructions');
       }
     } catch (error) {
-      toast.error('Failed to save instructions');
+      toast.error('Échec de l’enregistrement des instructions');
     } finally {
       setIsSaving(false);
     }
@@ -363,14 +363,14 @@ function PreferencesSection({
     try {
       const result = await deleteCustomInstructionsAction();
       if (result.success) {
-        toast.success('Custom instructions deleted successfully');
+        toast.success('Instructions personnalisées supprimées');
         setContent('');
         refetch();
       } else {
-        toast.error(result.error || 'Failed to delete instructions');
+        toast.error(result.error || 'Échec de la suppression des instructions');
       }
     } catch (error) {
-      toast.error('Failed to delete instructions');
+      toast.error('Échec de la suppression des instructions');
     } finally {
       setIsSaving(false);
     }
@@ -379,9 +379,9 @@ function PreferencesSection({
   return (
     <div className={cn('space-y-6', isMobile ? 'space-y-4' : 'space-y-6')}>
       <div>
-        <h3 className={cn('font-semibold mb-1.5', isMobile ? 'text-sm' : 'text-base')}>Preferences</h3>
+        <h3 className={cn('font-semibold mb-1.5', isMobile ? 'text-sm' : 'text-base')}>Préférences</h3>
         <p className={cn('text-muted-foreground', isMobile ? 'text-xs leading-relaxed' : 'text-xs')}>
-          Configure your search provider and customize how the AI responds to your questions.
+          Configurez votre moteur de recherche et personnalisez la façon dont l’IA répond à vos questions.
         </p>
       </div>
 
@@ -393,16 +393,15 @@ function PreferencesSection({
               <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">Search Provider</h4>
-              <p className="text-xs text-muted-foreground">Choose your preferred search engine</p>
+              <h4 className="font-semibold text-sm">Moteur de recherche</h4>
+              <p className="text-xs text-muted-foreground">Choisissez votre moteur de recherche préféré</p>
             </div>
           </div>
 
           <div className="space-y-2.5">
             <SearchProviderSelector value={searchProvider} onValueChange={handleSearchProviderChange} />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Select your preferred search provider for web searches. Changes take effect immediately and will be used
-              for all future searches.
+              Sélectionnez votre moteur de recherche préféré pour les recherches Web. Les changements prennent effet immédiatement et seront utilisés pour toutes les recherches futures.
             </p>
           </div>
         </div>
@@ -416,8 +415,8 @@ function PreferencesSection({
               <RobotIcon className="h-3.5 w-3.5 text-primary" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">Custom Instructions</h4>
-              <p className="text-xs text-muted-foreground">Customize how the AI responds to you</p>
+              <h4 className="font-semibold text-sm">Instructions personnalisées</h4>
+              <p className="text-xs text-muted-foreground">Personnalisez la façon dont l’IA vous répond</p>
             </div>
           </div>
 
@@ -425,9 +424,9 @@ function PreferencesSection({
             <div className="flex items-start justify-between p-3 rounded-lg border bg-card">
               <div className="flex-1 mr-3">
                 <Label htmlFor="enable-instructions" className="text-sm font-medium">
-                  Enable Custom Instructions
+                  Activer les instructions personnalisées
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">Toggle to enable or disable custom instructions</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Activez ou désactivez les instructions personnalisées</p>
               </div>
               <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
             </div>
@@ -437,13 +436,13 @@ function PreferencesSection({
                 <Label htmlFor="instructions" className="text-sm font-medium">
                   Instructions
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5 mb-2">Guide how the AI responds to your questions</p>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">Définissez la façon dont l’IA répond à vos questions</p>
                 {customInstructionsLoading ? (
                   <Skeleton className="h-28 w-full" />
                 ) : (
                   <Textarea
                     id="instructions"
-                    placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
+                    placeholder="Saisissez vos instructions personnalisées ici… Par exemple : ‘Fournir toujours des exemples de code lors des explications’ ou ‘Rester concis et axé sur les applications pratiques’."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     className="min-h-[100px] resize-y text-sm"
@@ -469,12 +468,12 @@ function PreferencesSection({
                   {isSaving ? (
                     <>
                       <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                      Saving...
+                      Enregistrement…
                     </>
                   ) : (
                     <>
                       <FloppyDiskIcon className="w-3 h-3 mr-1.5" />
-                      Save Instructions
+                      Enregistrer les instructions
                     </>
                   )}
                 </Button>
@@ -498,7 +497,7 @@ function PreferencesSection({
               ) : customInstructions ? (
                 <div className="p-2.5 bg-muted/30 rounded-lg">
                   <p className="text-xs text-muted-foreground">
-                    Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
+                    Dernière mise à jour : {new Date(customInstructions.updatedAt).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
               ) : null}
@@ -603,9 +602,9 @@ function UsageSection({ user }: any) {
     try {
       setIsRefreshing(true);
       await Promise.all([refetchUsageData(), refetchHistoricalData()]);
-      toast.success('Usage data refreshed');
+      toast.success('Données d’utilisation actualisées');
     } catch (error) {
-      toast.error('Failed to refresh usage data');
+      toast.error('Échec de l’actualisation des données d’utilisation');
     } finally {
       setIsRefreshing(false);
     }
@@ -618,7 +617,7 @@ function UsageSection({ user }: any) {
   return (
     <div className={cn(isMobile ? 'space-y-3' : 'space-y-4', isMobile && !isProUser ? 'pb-4' : '')}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold">Daily Search Usage</h3>
+        <h3 className="text-sm font-semibold">Utilisation quotidienne des recherches</h3>
         <Button
           variant="ghost"
           size="sm"
@@ -637,7 +636,7 @@ function UsageSection({ user }: any) {
       <div className={cn('grid grid-cols-2', isMobile ? 'gap-2' : 'gap-3')}>
         <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
           <div className="flex items-center justify-between">
-            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Today</span>
+            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Aujourd’hui</span>
             <MagnifyingGlassIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
@@ -645,12 +644,12 @@ function UsageSection({ user }: any) {
           ) : (
             <div className={cn('font-semibold', isMobile ? 'text-base' : 'text-lg')}>{searchCount?.count || 0}</div>
           )}
-          <p className="text-[10px] text-muted-foreground">Regular searches</p>
+          <p className="text-[10px] text-muted-foreground">Recherches normales</p>
         </div>
 
         <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
           <div className="flex items-center justify-between">
-            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Extreme</span>
+            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Extrême</span>
             <LightningIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
@@ -660,7 +659,7 @@ function UsageSection({ user }: any) {
               {extremeSearchCount?.count || 0}
             </div>
           )}
-          <p className="text-[10px] text-muted-foreground">This month</p>
+          <p className="text-[10px] text-muted-foreground">Ce mois-ci</p>
         </div>
       </div>
 
@@ -678,7 +677,7 @@ function UsageSection({ user }: any) {
             ) : (
               <>
                 <div className="flex justify-between text-xs">
-                  <span className="font-medium">Daily Limit</span>
+                  <span className="font-medium">Limite quotidienne</span>
                   <span className="text-muted-foreground">{usagePercentage.toFixed(0)}%</span>
                 </div>
                 <Progress value={usagePercentage} className="h-1.5 [&>div]:transition-none" />
@@ -686,7 +685,7 @@ function UsageSection({ user }: any) {
                   <span>
                     {searchCount?.count || 0} / {SEARCH_LIMITS.DAILY_SEARCH_LIMIT}
                   </span>
-                  <span>{Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} left</span>
+                  <span>{Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} restantes</span>
                 </div>
               </>
             )}
@@ -695,13 +694,13 @@ function UsageSection({ user }: any) {
           <div className={cn('bg-card rounded-lg border border-border', isMobile ? 'p-3' : 'p-4')}>
             <div className={cn('flex items-center gap-2', isMobile ? 'mb-1.5' : 'mb-2')}>
               <HugeiconsIcon icon={Crown02Icon} size={isMobile ? 14 : 16} color="currentColor" strokeWidth={1.5} />
-              <span className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Upgrade to Pro</span>
+              <span className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Passer en Pro</span>
             </div>
             <p className={cn('text-muted-foreground mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
               Get unlimited searches and premium features
             </p>
             <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-7 text-xs' : 'h-8')}>
-              <Link href="/pricing">Upgrade Now</Link>
+              <Link href="/pricing">Mettre à niveau maintenant</Link>
             </Button>
           </div>
         </div>
@@ -710,7 +709,7 @@ function UsageSection({ user }: any) {
       {!usageLoading && (
         <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Activity (Past 9 Months)
+            Activité (9 derniers mois)
           </h4>
           <div className={cn('bg-muted/50 dark:bg-card rounded-lg p-3')}>
             {historicalLoading ? (
@@ -721,10 +720,10 @@ function UsageSection({ user }: any) {
                   blockMargin={isMobile ? 3 : 4}
                   fontSize={isMobile ? 9 : 12}
                   labels={{
-                    totalCount: 'Loading activity data...',
+                    totalCount: 'Chargement des données d’activité…',
                     legend: {
-                      less: 'Less',
-                      more: 'More',
+                      less: 'Moins',
+                      more: 'Plus',
                     },
                   }}
                   className="w-full opacity-60"
@@ -788,10 +787,10 @@ function UsageSection({ user }: any) {
                   blockMargin={isMobile ? 3 : 4}
                   fontSize={isMobile ? 9 : 12}
                   labels={{
-                    totalCount: '{{count}} total messages in {{year}}',
+                    totalCount: '{{count}} messages au total en {{year}}',
                     legend: {
-                      less: 'Less',
-                      more: 'More',
+                      less: 'Moins',
+                      more: 'Plus',
                     },
                   }}
                   className="w-full"
@@ -824,7 +823,7 @@ function UsageSection({ user }: any) {
                               {activity.count} {activity.count === 1 ? 'message' : 'messages'}
                             </p>
                             <p className="text-xs text-muted">
-                              {new Date(activity.date).toLocaleDateString('en-US', {
+                              {new Date(activity.date).toLocaleDateString('fr-FR', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',
@@ -847,13 +846,13 @@ function UsageSection({ user }: any) {
                         const getTooltipText = (level: number) => {
                           switch (level) {
                             case 0:
-                              return 'No messages';
+                              return 'Aucun message';
                             case 1:
-                              return '1-3 messages';
+                              return '1–3 messages';
                             case 2:
-                              return '4-7 messages';
+                              return '4–7 messages';
                             case 3:
-                              return '8-12 messages';
+                              return '8–12 messages';
                             case 4:
                               return '13+ messages';
                             default:
@@ -894,7 +893,7 @@ function UsageSection({ user }: any) {
               </TooltipProvider>
             ) : (
               <div className="h-24 flex items-center justify-center">
-                <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No activity data</p>
+                <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Aucune donnée d’activité</p>
               </div>
             )}
           </div>
@@ -945,9 +944,9 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@hhyper.vercel.app');
+        toast.error('Impossible d’accéder au portail DodoPayments. Veuillez contacter le support à zaid@hhyper.vercel.app');
       } else {
-        toast.error('Failed to open subscription management');
+        toast.error('Échec de l’ouverture de la gestion de l’abonnement');
       }
     } finally {
       setIsManagingSubscription(false);
@@ -986,13 +985,13 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                 </div>
                 <div>
                   <h3 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>
-                    PRO {hasActiveSubscription ? 'Subscription' : 'Membership'}
+                    {hasActiveSubscription ? 'Abonnement PRO' : 'Adhésion PRO'}
                   </h3>
                   <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>
                     {hasActiveSubscription
                       ? subscription?.status === 'active'
-                        ? 'Active'
-                        : subscription?.status || 'Unknown'
+                        ? 'Actif'
+                        : subscription?.status || 'Inconnu'
                       : 'Active (DodoPayments)'}
                   </p>
                 </div>
@@ -1003,28 +1002,28 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                   isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-xs',
                 )}
               >
-                ACTIVE
+                ACTIF
               </Badge>
             </div>
             <div className={cn('opacity-90 mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
-              <p className="mb-1">Unlimited access to all premium features</p>
+              <p className="mb-1">Accès illimité à toutes les fonctionnalités premium</p>
               {hasActiveSubscription && subscription && (
                 <div className="flex gap-4 text-[10px] opacity-75">
                   <span>
                     ${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}
                   </span>
-                  <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                  <span>Prochaine facturation : {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
                 </div>
               )}
               {hasDodoProStatus && !hasActiveSubscription && (
                 <div className="space-y-1">
                   <div className="flex gap-4 text-[10px] opacity-75">
-                    <span>₹1500 (One-time payment)</span>
-                    <span>🇮🇳 Indian pricing</span>
+                    <span>₹1500 (Paiement unique)</span>
+                    <span>🇮🇳 Tarification indienne</span>
                   </div>
                   {dodoProStatus?.expiresAt && (
                     <div className="text-[10px] opacity-75">
-                      <span>Expires: {new Date(dodoProStatus.expiresAt).toLocaleDateString()}</span>
+                      <span>Expire le : {new Date(dodoProStatus.expiresAt).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
@@ -1042,7 +1041,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                 ) : (
                   <ExternalLink className={isMobile ? 'h-3 w-3 mr-1.5' : 'h-3.5 w-3.5 mr-2'} />
                 )}
-                {isManagingSubscription ? 'Opening...' : 'Manage Billing'}
+                {isManagingSubscription ? 'Ouverture…' : 'Gérer la facturation'}
               </Button>
             )}
           </div>
@@ -1072,7 +1071,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                       isMobile ? 'text-xs' : 'text-sm',
                     )}
                   >
-                    Pro Access Expiring Soon
+                    Accès Pro bientôt expiré
                   </h4>
                   <p
                     className={cn(
@@ -1080,8 +1079,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                       isMobile ? 'text-[11px] mt-1' : 'text-xs mt-1',
                     )}
                   >
-                    Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. Renew
-                    now to continue enjoying unlimited features.
+                    Votre accès Pro expire dans {daysUntilExpiration} {daysUntilExpiration === 1 ? 'jour' : 'jours'}. Renouvelez maintenant pour continuer à profiter des fonctionnalités illimitées.
                   </p>
                   <Button
                     asChild
@@ -1091,7 +1089,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                       isMobile ? 'h-7 text-xs' : 'h-8',
                     )}
                   >
-                    <Link href="/pricing">Renew Pro Access</Link>
+                    <Link href="/pricing">Renouveler l’accès Pro</Link>
                   </Button>
                 </div>
               </div>
@@ -1108,9 +1106,9 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
               strokeWidth={1.5}
               className={cn('mx-auto text-muted-foreground mb-3')}
             />
-            <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>No Active Subscription</h3>
+            <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>Aucun abonnement actif</h3>
             <p className={cn('text-muted-foreground mb-4', isMobile ? 'text-[11px]' : 'text-xs')}>
-              Upgrade to Pro for unlimited access
+              Passez en Pro pour un accès illimité
             </p>
             <div className="space-y-2">
               <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-8 text-xs' : 'h-9')}>
@@ -1122,11 +1120,11 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                     strokeWidth={1.5}
                     className={isMobile ? 'mr-1.5' : 'mr-2'}
                   />
-                  Upgrade to Pro
+                  Passer en Pro
                 </Link>
               </Button>
               <Button asChild variant="outline" size="sm" className={cn('w-full', isMobile ? 'h-7 text-xs' : 'h-8')}>
-                <Link href="/pricing">Compare Plans</Link>
+                <Link href="/pricing">Comparer les offres</Link>
               </Button>
             </div>
           </div>
@@ -1134,7 +1132,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       )}
 
       <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
-        <h4 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Billing History</h4>
+        <h4 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Historique de facturation</h4>
         {ordersLoading ? (
           <div className={cn('border rounded-lg flex items-center justify-center', isMobile ? 'p-3 h-16' : 'p-4 h-20')}>
             <Loader2 className={cn(isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4', 'animate-spin')} />
@@ -1217,7 +1215,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                   )}
                 >
                   <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-                    No billing history yet
+                    Aucun historique de facturation
                   </p>
                 </div>
               )}
@@ -1263,7 +1261,7 @@ function MemoriesSection() {
         return newSet;
       });
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      toast.success('Memory deleted successfully');
+      toast.success('Mémoire supprimée avec succès');
     },
     onError: (_, memoryId) => {
       setDeletingMemoryIds((prev) => {
@@ -1271,7 +1269,7 @@ function MemoriesSection() {
         newSet.delete(memoryId);
         return newSet;
       });
-      toast.error('Failed to delete memory');
+      toast.error('Échec de la suppression de la mémoire');
     },
   });
 
@@ -1282,7 +1280,7 @@ function MemoriesSection() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('fr-FR', {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
@@ -1318,7 +1316,7 @@ function MemoriesSection() {
         ) : displayedMemories.length === 0 ? (
           <div className="flex flex-col justify-center items-center h-32 border border-dashed rounded-lg bg-muted/20">
             <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No memories found</p>
+            <p className="text-sm text-muted-foreground">Aucune mémoire trouvée</p>
           </div>
         ) : (
           <>
@@ -1380,10 +1378,10 @@ function MemoriesSection() {
                   {isFetchingNextPage ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Loading...
+                      Chargement…
                     </>
                   ) : (
-                    'Load More'
+                    'Charger plus'
                   )}
                 </Button>
               </div>
@@ -1392,7 +1390,7 @@ function MemoriesSection() {
         )}
       </div>
       <div className="flex items-center gap-2 justify-center">
-        <p className="text-xs text-muted-foreground">powered by</p>
+        <p className="text-xs text-muted-foreground">propulsé par</p>
         <Image src="/supermemory.svg" alt="Memories" className="invert dark:invert-0" width={140} height={140} />
       </div>
     </div>
@@ -1509,19 +1507,18 @@ function ConnectorsSection({ user }: { user: any }) {
   return (
     <div className={cn('space-y-4', isMobile ? 'space-y-3' : 'space-y-4')}>
       <div>
-        <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>Connected Services</h3>
+        <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>Services connectés</h3>
         <p className={cn('text-muted-foreground', isMobile ? 'text-[11px] leading-relaxed' : 'text-xs')}>
-          Connect your cloud services to search across all your documents in one place
+          Connectez vos services cloud pour rechercher dans tous vos documents en un seul endroit
         </p>
       </div>
 
       {/* Beta Announcement Alert */}
       <Alert className="border-primary/20 bg-primary/5">
         <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 text-primary" />
-        <AlertTitle className="text-foreground">Connectors Available in Beta</AlertTitle>
+        <AlertTitle className="text-foreground">Connecteurs disponibles en bêta</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          Connectors are now available for Pro users! Please note that this feature is in beta and there may be breaking
-          changes as we continue to improve the experience.
+          Les connecteurs sont désormais disponibles pour les utilisateurs Pro ! Notez que cette fonctionnalité est en bêta et peut encore évoluer.
         </AlertDescription>
       </Alert>
 
@@ -1539,16 +1536,15 @@ function ConnectorsSection({ user }: { user: any }) {
                 />
               </div>
               <div className="space-y-2">
-                <h4 className="font-semibold text-lg">Pro Feature</h4>
+                <h4 className="font-semibold text-lg">Fonctionnalité Pro</h4>
                 <p className="text-muted-foreground text-sm max-w-md">
-                  Connectors are available for Pro users only. Upgrade to connect your Google Drive, Notion, and
-                  OneDrive accounts.
+                  Les connecteurs sont réservés aux utilisateurs Pro. Passez en Pro pour connecter vos comptes Google Drive, Notion et OneDrive.
                 </p>
               </div>
               <Button asChild className="mt-4">
                 <Link href="/pricing">
                   <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} className="mr-2" />
-                  Upgrade to Pro
+                  Passer en Pro
                 </Link>
               </Button>
             </div>
@@ -1599,7 +1595,7 @@ function ConnectorsSection({ user }: { user: any }) {
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted animate-pulse rounded-full"></div>
                           <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
-                            Checking connection...
+                            Vérification de la connexion…
                           </span>
                         </div>
                       ) : isConnected ? (
@@ -1620,7 +1616,7 @@ function ConnectorsSection({ user }: { user: any }) {
                         <div className={cn('flex items-center gap-2', isMobile ? 'mt-0.5' : 'mt-1')}>
                           <div className="w-2 h-2 bg-muted-foreground/30 rounded-full"></div>
                           <span className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
-                            Not connected
+                            Non connecté
                           </span>
                         </div>
                       )}
@@ -1671,10 +1667,10 @@ function ConnectorsSection({ user }: { user: any }) {
                           {isDeleting ? (
                             <>
                               <Loader2 className={cn(isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3', 'animate-spin mr-1')} />
-                              Disconnecting...
+                              Déconnexion…
                             </>
                           ) : (
-                            'Disconnect'
+                            'Déconnecter'
                           )}
                         </Button>
                       </>
@@ -1688,7 +1684,7 @@ function ConnectorsSection({ user }: { user: any }) {
                         {isConnecting ? (
                           <>
                             <Loader2 className={cn(isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3', 'animate-spin mr-1')} />
-                            Connecting...
+                            Connexion…
                           </>
                         ) : (
                           'Connect'
@@ -1702,10 +1698,10 @@ function ConnectorsSection({ user }: { user: any }) {
                   <div className={cn('border-t border-border', isMobile ? 'mt-2 pt-2' : 'mt-3 pt-3')}>
                     <div className={cn('text-xs', isMobile ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-3 gap-4')}>
                       <div>
-                        <span className="text-muted-foreground">Document Chunk:</span>
+                        <span className="text-muted-foreground">Bloc de documents :</span>
                         <div className="font-medium">
                           {isStatusLoading ? (
-                            <span className="text-muted-foreground">Loading...</span>
+                            <span className="text-muted-foreground">Chargement…</span>
                           ) : connectionStatus?.documentCount !== undefined ? (
                             connectionStatus.documentCount === 0 ? (
                               <span
@@ -1734,19 +1730,19 @@ function ConnectorsSection({ user }: { user: any }) {
                         </div>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Last Sync:</span>
+                        <span className="text-muted-foreground">Dernière synchronisation :</span>
                         <div className="font-medium">
                           {isStatusLoading ? (
-                            <span className="text-muted-foreground">Loading...</span>
+                            <span className="text-muted-foreground">Chargement…</span>
                           ) : connectionStatus?.lastSync || connection?.createdAt ? (
                             new Date(connectionStatus?.lastSync || connection?.createdAt).toLocaleDateString()
                           ) : (
-                            <span className="text-muted-foreground">Never</span>
+                            <span className="text-muted-foreground">Jamais</span>
                           )}
                         </div>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Limit:</span>
+                        <span className="text-muted-foreground">Limite :</span>
                         <div className="font-medium">{config.documentLimit.toLocaleString()}</div>
                       </div>
                     </div>
@@ -1760,7 +1756,7 @@ function ConnectorsSection({ user }: { user: any }) {
 
       <div className={cn('text-center', isMobile ? 'pt-1' : 'pt-2')}>
         <div className="flex items-center gap-2 justify-center">
-          <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>powered by</p>
+          <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>propulsé par</p>
           <Image
             src="/supermemory.svg"
             alt="Connectors"
@@ -1828,32 +1824,32 @@ export function SettingsDialog({
   const tabItems = [
     {
       value: 'profile',
-      label: 'Account',
+      label: 'Compte',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={UserAccountIcon} className={className} />,
     },
     {
       value: 'usage',
-      label: 'Usage',
+      label: 'Utilisation',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Analytics01Icon} className={className} />,
     },
     {
       value: 'subscription',
-      label: 'Subscription',
+      label: 'Abonnement',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Crown02Icon} className={className} />,
     },
     {
       value: 'preferences',
-      label: 'Preferences',
+      label: 'Préférences',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Settings02Icon} className={className} />,
     },
     {
       value: 'connectors',
-      label: 'Connectors',
+      label: 'Connecteurs',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={ConnectIcon} className={className} />,
     },
     {
       value: 'memories',
-      label: 'Memories',
+      label: 'Mémoires',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Brain02Icon} className={className} />,
     },
   ];
@@ -1913,7 +1909,7 @@ export function SettingsDialog({
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium flex items-center gap-2">
                 <SciraLogo className="size-6" />
-                Settings
+                Paramètres
               </DrawerTitle>
             </DrawerHeader>
 
@@ -1975,7 +1971,7 @@ export function SettingsDialog({
         <DialogHeader className="p-4 !m-0">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
             <SciraLogo className="size-6" color="currentColor" />
-            Settings
+            Paramètres
           </DialogTitle>
         </DialogHeader>
 
