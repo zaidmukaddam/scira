@@ -85,11 +85,11 @@ const Navbar = memo(
                 className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
               >
                 <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">Nouveau</span>
               </Button>
             </Link>
 
-            {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
+            {/* Mobile-only Mettre à niveau (avoids overlap with share on small screens) */}
             {user && !hasActiveSubscription && !showProLoading && (
               <Button
                 variant="default"
@@ -97,12 +97,12 @@ const Navbar = memo(
                 className="rounded-md h-7 px-2 text-xs sm:hidden"
                 onClick={() => router.push('/pricing')}
               >
-                Upgrade
+                Mettre à niveau
               </Button>
             )}
           </div>
 
-          {/* Centered Upgrade Button */}
+          {/* Centered Mettre à niveau Button */}
           {user && !hasActiveSubscription && !showProLoading && (
             <div
               className={cn(
@@ -111,14 +111,14 @@ const Navbar = memo(
               )}
             >
               <div className="flex items-center bg-muted/50 rounded-lg border border-border">
-                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
+                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Plan gratuit</span>
                 <Button
                   variant="default"
                   size="sm"
                   className="rounded-md mr-1.5 h-6"
                   onClick={() => router.push('/pricing')}
                 >
-                  Upgrade
+                  Mettre à niveau
                 </Button>
               </div>
             </div>
@@ -153,11 +153,11 @@ const Navbar = memo(
                           disabled
                         >
                           <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Partagé</span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" sideOffset={4}>
-                        {user ? "This is someone else's shared page" : 'This is a shared page'}
+                        {user ? "Ceci est la page partagée de quelqu'un d'autre" : 'Ceci est une page partagée'}
                       </TooltipContent>
                     </Tooltip>
                   )
@@ -177,7 +177,7 @@ const Navbar = memo(
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      Loading subscription status...
+                      Chargement du statut de l'abonnement...
                     </TooltipContent>
                   </Tooltip>
                 ) : hasActiveSubscription ? (
@@ -190,7 +190,7 @@ const Navbar = memo(
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      Pro Subscribed - Unlimited access
+                      La Fixation - Notre Raison d'Être
                     </TooltipContent>
                   </Tooltip>
                 ) : null}

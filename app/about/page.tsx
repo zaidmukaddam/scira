@@ -215,7 +215,7 @@ export default function AboutPage() {
                   href="/"
                   className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
-                  Search
+                  Recherche
                 </Link>
                 <Link
                   href="/pricing"
@@ -266,7 +266,7 @@ export default function AboutPage() {
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
                 onClick={() => router.push('/')}
               >
-                Try Free
+                Essayer gratuitement
               </Button>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function AboutPage() {
                   type="submit"
                   className="absolute right-2 top-2 h-10 px-5 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
                 >
-                  Search
+                  Recherche
                 </button>
               </div>
             </form>
@@ -961,7 +961,7 @@ export default function AboutPage() {
       <section className="py-20 px-4">
         <div className="container max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-2xl font-medium mb-4 tracking-tight">Pricing</h2>
+            <h2 className="text-2xl font-medium mb-4 tracking-tight">Tarification</h2>
             <p className="text-muted-foreground/80 max-w-lg mx-auto">Simple, transparent pricing for everyone</p>
           </div>
 
@@ -1180,7 +1180,7 @@ export default function AboutPage() {
 
             <div className="flex items-center gap-6">
               <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms
+                Conditions d'utilisation
               </Link>
               <Link
                 href="/privacy-policy"

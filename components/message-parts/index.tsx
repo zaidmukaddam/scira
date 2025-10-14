@@ -331,7 +331,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Rewrite</TooltipContent>
+                      <TooltipContent>Réécrire</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
@@ -365,7 +365,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent>Copier</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
@@ -396,12 +396,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Info className="h-4 w-4" />
-                          <h4 className="font-semibold text-sm">Response Info</h4>
+                          <h4 className="font-semibold text-sm">Info Réponse</h4>
                         </div>
 
                         {modelLabel && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Model</span>
+                            <span className="text-sm text-muted-foreground">Modèle</span>
                             <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
                               <HugeiconsIcon icon={CpuIcon} size={12} />
                               {modelLabel}
@@ -411,7 +411,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                         {typeof meta.completionTime === 'number' && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Generation Time</span>
+                            <span className="text-sm text-muted-foreground">Temps de génération</span>
                             <div className="flex items-center gap-1 text-xs">
                               <Clock className="h-3 w-3" />
                               {meta.completionTime.toFixed(1)}s
@@ -421,13 +421,13 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                         {(inputCount != null || outputCount != null) && (
                           <div className="space-y-2">
-                            <span className="text-sm text-muted-foreground">Token Usage</span>
+                            <span className="text-sm text-muted-foreground">Utilisation des jetons</span>
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               {inputCount != null && (
                                 <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
                                   <span className="flex items-center gap-1">
                                     <ArrowLeftIcon weight="regular" className="h-3 w-3" />
-                                    Input
+                                    Entrée
                                   </span>
                                   <span className="font-medium">{inputCount.toLocaleString()}</span>
                                 </div>
@@ -436,7 +436,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                 <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
                                   <span className="flex items-center gap-1">
                                     <ArrowRightIcon weight="regular" className="h-3 w-3" />
-                                    Output
+                                    Sortie
                                   </span>
                                   <span className="font-medium">{outputCount.toLocaleString()}</span>
                                 </div>
