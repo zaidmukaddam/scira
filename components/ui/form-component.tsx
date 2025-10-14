@@ -2057,15 +2057,15 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   </div>
                   <p className="font-semibold text-xs">
                     {isExtreme
-                      ? 'Extreme Search Active'
+                      ? 'Recherche extrême active'
                       : session
-                        ? 'Extreme Search'
-                        : 'Sign in Required'
+                        ? 'Recherche extrême'
+                        : 'Connexion requise'
                     }
                   </p>
                 </div>
                 <p className="text-[11px] leading-snug text-secondary">
-                  Deep research with multiple sources and in-depth analysis with 3x sources
+                  Recherche approfondie avec plusieurs sources et analyse en profondeur avec 3x plus de sources
                 </p>
                 {!isProUser && (
                   <div className="pt-1 border-t border-border/50">
@@ -3465,8 +3465,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       : isTypewriting
                         ? '✨ Writing enhanced prompt...'
                         : hasInteracted
-                          ? 'Ask a new question...'
-                          : 'Ask a question...'
+                          ? 'Posez une nouvelle question...'
+                          : 'Posez une question...'
                   }
                   value={input}
                   onChange={handleInput}
@@ -3603,9 +3603,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Attach File</span>
+                          <span className="font-medium text-[11px]">Joindre un fichier</span>
                           <span className="text-[10px] text-accent leading-tight">
-                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
+                            {hasPdfSupport(selectedModel) ? 'Téléchargez une image ou un document PDF' : 'Téléchargez une image'}
                           </span>
                         </div>
                       </TooltipContent>
@@ -3728,10 +3728,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">
-                            {isRecording ? 'Stop Recording' : 'Voice Input'}
+                            {isRecording ? 'Arrêter l\'enregistrement' : 'Entrée vocale'}
                           </span>
                           <span className="text-[10px] text-accent leading-tight">
-                            {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                            {isRecording ? 'Cliquez pour arrêter l\'enregistrement' : 'Enregistrez votre message vocal'}
                           </span>
                         </div>
                       </TooltipContent>

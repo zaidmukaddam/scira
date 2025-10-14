@@ -50,7 +50,7 @@ export function ShareButton({
           return (
             <>
               <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Partagé</span>
               <CopyIcon size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
             </>
           );
@@ -64,7 +64,7 @@ export function ShareButton({
                 strokeWidth={2}
                 className="text-muted-foreground"
               />
-              <span className="text-sm font-medium text-muted-foreground">Share</span>
+              <span className="text-sm font-medium text-muted-foreground">Partager</span>
             </>
           );
         }
@@ -72,7 +72,7 @@ export function ShareButton({
         return (
           <>
             <HugeiconsIcon icon={Share03Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-            {selectedVisibilityType === 'public' ? 'Manage Share' : 'Share'}
+            {selectedVisibilityType === 'public' ? 'Gérer le partage' : 'Partager'}
           </>
         );
       case 'icon':
@@ -126,7 +126,7 @@ export function ShareButton({
 
   const button = <Button {...getButtonProps()}>{getButtonContent()}</Button>;
 
-  const tooltipContent = selectedVisibilityType === 'public' ? 'Manage sharing settings' : 'Share this chat';
+  const tooltipContent = selectedVisibilityType === 'public' ? 'Gérer les paramètres de partage' : 'Partager cette conversation';
 
   return (
     <>

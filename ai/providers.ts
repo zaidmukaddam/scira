@@ -89,7 +89,7 @@ export const models: Model[] = [
   {
     value: 'scira-grok-3',
     label: 'Grok 3',
-    description: "xAI's recent smartest LLM",
+    description: "Le LLM le plus récent et le plus intelligent de xAI",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -103,7 +103,7 @@ export const models: Model[] = [
   {
     value: 'scira-grok-4',
     label: 'Grok 4',
-    description: "xAI's most intelligent LLM",
+    description: "Le LLM le plus intelligent de xAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -117,7 +117,7 @@ export const models: Model[] = [
   {
     value: 'scira-default',
     label: 'Grok 4 Fast',
-    description: "xAI's fastest multimodel LLM",
+    description: "LLM multimodèle le plus rapide de xAI",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -133,7 +133,7 @@ export const models: Model[] = [
   {
     value: 'scira-grok-4-fast-think',
     label: 'Grok 4 Fast Thinking',
-    description: "xAI's fastest multimodel reasoning LLM",
+    description: "LLM multimodèle de raisonnement le plus rapide de xAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -149,7 +149,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-32b',
     label: 'Qwen 3 32B',
-    description: "Alibaba's advanced reasoning LLM",
+    description: "LLM de raisonnement avancé d'Alibaba",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -170,7 +170,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-4b',
     label: 'Qwen 3 4B',
-    description: "Alibaba's small base LLM",
+    description: "Petit LLM de base d'Alibaba",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -190,7 +190,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-4b-thinking',
     label: 'Qwen 3 4B Thinking',
-    description: "Alibaba's small base LLM",
+    description: "Petit LLM de base d'Alibaba",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -210,7 +210,7 @@ export const models: Model[] = [
   {
     value: 'scira-gpt-oss-20',
     label: 'GPT OSS 20B',
-    description: "OpenAI's small OSS LLM",
+    description: "Petit LLM open source d'OpenAI",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -225,7 +225,7 @@ export const models: Model[] = [
   {
     value: 'scira-gpt5-nano',
     label: 'GPT 5 Nano',
-    description: "OpenAI's smallest flagship LLM",
+    description: "Plus petit LLM phare d'OpenAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -240,7 +240,7 @@ export const models: Model[] = [
   {
     value: 'scira-google-lite',
     label: 'Gemini 2.5 Flash Lite',
-    description: "Google's advanced small LLM",
+    description: "Petit LLM avancé de Google",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -255,7 +255,7 @@ export const models: Model[] = [
   {
     value: 'scira-code',
     label: 'Grok Code',
-    description: "xAI's advanced coding LLM",
+    description: "LLM de codage avancé de xAI",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -270,7 +270,7 @@ export const models: Model[] = [
   {
     value: 'scira-mistral-medium',
     label: 'Mistral Medium',
-    description: "Mistral's medium multi-modal LLM",
+    description: "LLM multimodal moyen de Mistral",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -285,7 +285,7 @@ export const models: Model[] = [
   {
     value: 'scira-magistral-small',
     label: 'Magistral Small',
-    description: "Mistral's small reasoning LLM",
+    description: "Petit LLM de raisonnement de Mistral",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -315,7 +315,7 @@ export const models: Model[] = [
   {
     value: 'scira-gpt-oss-120',
     label: 'GPT OSS 120B',
-    description: "OpenAI's advanced OSS LLM",
+    description: "LLM open source avancé d'OpenAI",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -330,7 +330,7 @@ export const models: Model[] = [
   {
     value: 'scira-gpt5-mini',
     label: 'GPT 5 Mini',
-    description: "OpenAI's small flagship LLM",
+    description: "Petit LLM phare d'OpenAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -346,7 +346,7 @@ export const models: Model[] = [
   {
     value: 'scira-gpt5',
     label: 'GPT 5',
-    description: "OpenAI's flagship LLM",
+    description: "LLM phare d'OpenAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -362,7 +362,7 @@ export const models: Model[] = [
   {
     value: 'scira-o3',
     label: 'o3',
-    description: "OpenAI's advanced LLM",
+    description: "LLM avancé d'OpenAI",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -378,7 +378,7 @@ export const models: Model[] = [
   {
     value: 'scira-deepseek-chat',
     label: 'DeepSeek 3.2 Exp',
-    description: "DeepSeek's advanced chat LLM",
+    description: "LLM de conversation avancé de DeepSeek",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -393,7 +393,7 @@ export const models: Model[] = [
   {
     value: 'scira-deepseek-chat-think',
     label: 'DeepSeek 3.2 Exp Thinking',
-    description: "DeepSeek's advanced chat LLM with thinking",
+    description: "LLM de conversation avancé avec raisonnement de DeepSeek",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -408,7 +408,7 @@ export const models: Model[] = [
   {
     value: 'scira-deepseek-r1',
     label: 'DeepSeek R1',
-    description: "DeepSeek's advanced reasoning LLM",
+    description: "LLM de raisonnement avancé de DeepSeek",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -438,7 +438,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-3-next',
     label: 'Qwen 3 Next 80B A3B Instruct',
-    description: "Qwen's advanced instruct LLM",
+    description: "LLM d'instruction avancé de Qwen",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -459,7 +459,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-3-next-think',
     label: 'Qwen 3 Next 80B A3B Thinking',
-    description: "Qwen's advanced thinking LLM",
+    description: "LLM de raisonnement avancé de Qwen",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -479,7 +479,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-3-max',
     label: 'Qwen 3 Max',
-    description: "Qwen's advanced instruct LLM",
+    description: "LLM d'instruction avancé de Qwen",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -494,7 +494,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-3-max-preview',
     label: 'Qwen 3 Max Preview',
-    description: "Qwen's advanced instruct LLM",
+    description: "LLM d'instruction avancé de Qwen",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -509,7 +509,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-235',
     label: 'Qwen 3 235B A22B',
-    description: "Qwen's advanced instruct LLM",
+    description: "LLM d'instruction avancé de Qwen",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -528,7 +528,7 @@ export const models: Model[] = [
   {
     value: 'scira-qwen-235-think',
     label: 'Qwen 3 235B A22B Thinking',
-    description: "Qwen's advanced thinking LLM",
+    description: "LLM de raisonnement avancé de Qwen",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -547,7 +547,7 @@ export const models: Model[] = [
   {
     value: 'scira-kimi-k2-v2',
     label: 'Kimi K2 Latest',
-    description: "MoonShot AI's advanced base LLM",
+    description: "LLM de base avancé de MoonShot AI",
     vision: false,
     reasoning: false,
     experimental: false,
@@ -565,7 +565,7 @@ export const models: Model[] = [
   {
     value: 'scira-glm-4.6',
     label: 'GLM 4.6',
-    description: "Zhipu AI's advanced reasoning LLM",
+    description: "LLM de raisonnement avancé de Zhipu AI",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -580,7 +580,7 @@ export const models: Model[] = [
   {
     value: 'scira-glm-air',
     label: 'GLM 4.5 Air',
-    description: "Zhipu AI's efficient base LLM",
+    description: "LLM de base efficace de Zhipu AI",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -594,7 +594,7 @@ export const models: Model[] = [
   {
     value: 'scira-glm',
     label: 'GLM 4.5',
-    description: "Zhipu AI's previous advanced LLM",
+    description: "Ancien LLM avancé de Zhipu AI",
     vision: false,
     reasoning: true,
     experimental: false,
@@ -608,7 +608,7 @@ export const models: Model[] = [
   {
     value: 'scira-google',
     label: 'Gemini 2.5 Flash',
-    description: "Google's advanced small LLM",
+    description: "Petit LLM avancé de Google",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -623,7 +623,7 @@ export const models: Model[] = [
   {
     value: 'scira-google-think',
     label: 'Gemini 2.5 Flash Thinking',
-    description: "Google's advanced small LLM with thinking",
+    description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -638,7 +638,7 @@ export const models: Model[] = [
   {
     value: 'scira-anthropic',
     label: 'Claude 4.5 Sonnet',
-    description: "Anthropic's most advanced LLM",
+    description: "Le LLM le plus avancé d'Anthropic",
     vision: true,
     reasoning: false,
     experimental: false,

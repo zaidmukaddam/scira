@@ -388,8 +388,8 @@ export default function LookoutPage() {
                 <div className="flex justify-between items-center">
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="bg-muted">
-                      <TabsTrigger value="active">Active</TabsTrigger>
-                      <TabsTrigger value="archived">Archived</TabsTrigger>
+                      <TabsTrigger value="active">Actif</TabsTrigger>
+                      <TabsTrigger value="archived">Archivé</TabsTrigger>
                     </TabsList>
                   </Tabs>
 

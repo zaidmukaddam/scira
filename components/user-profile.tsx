@@ -87,7 +87,7 @@ const NavigationMenu = memo(() => {
           <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
             <div className="w-full flex items-center gap-2">
               <HugeiconsIcon size={16} icon={BinocularsIcon} />
-              <span>Lookout</span>
+              <span>Surveillance</span>
             </div>
           </DropdownMenuItem>
         )}
@@ -110,7 +110,7 @@ const NavigationMenu = memo(() => {
           <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <SunIcon size={16} />
-              <span className="text-sm">Theme</span>
+              <span className="text-sm">Thème</span>
             </div>
             <ThemeSwitcher />
           </div>
@@ -121,7 +121,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/about" className="w-full flex items-center gap-2">
             <InfoIcon size={16} />
-            <span>About</span>
+            <span>À propos</span>
           </Link>
         </DropdownMenuItem>
         {/* Blog */}
@@ -135,13 +135,13 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/terms" className="w-full flex items-center gap-2">
             <FileTextIcon size={16} />
-            <span>Terms</span>
+            <span>Conditions d'utilisation</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/privacy-policy" className="w-full flex items-center gap-2">
             <ShieldIcon size={16} />
-            <span>Privacy</span>
+            <span>Politique de confidentialité</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -150,7 +150,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <a href={'https://git.new/scira'} target="_blank" className="w-full flex items-center gap-2">
             <GithubLogoIcon size={16} />
-            <span>Github</span>
+            <span>GitHub</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
@@ -172,13 +172,13 @@ const NavigationMenu = memo(() => {
             className="w-full flex items-center gap-2"
           >
             <VercelIcon size={14} />
-            <span>Deploy with Vercel</span>
+            <span>Déployer avec Vercel</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <a href={'https://scira.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
             <BugIcon className="size-4" />
-            <span>Feature/Bug Request</span>
+            <span>Demande de fonctionnalité ou bug</span>
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -287,7 +287,7 @@ const UserProfile = memo(
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent side="bottom" sideOffset={4}>
-                Account
+                Compte
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent className="w-[240px] z-[110] mr-5">
@@ -332,13 +332,13 @@ const UserProfile = memo(
               <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
                 <div className="w-full flex items-center gap-2">
                   <GearIcon size={16} />
-                  <span>Settings</span>
+                  <span>Paramètres</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
                 <div className="w-full flex items-center gap-2">
                   <HugeiconsIcon size={16} icon={BinocularsIcon} />
-                  <span>Lookout</span>
+                  <span>Surveillance</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -362,7 +362,7 @@ const UserProfile = memo(
                   }
                 }}
               >
-                <span>Sign Out</span>
+                <span>Se déconnecter</span>
                 <SignOutIcon className="size-4" />
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -384,7 +384,7 @@ const UserProfile = memo(
                 }}
               >
                 <SignInIcon className="size-3.5 mr-1.5" />
-                <span>Sign in</span>
+                <span>Se connecter</span>
                 <span className="ml-1.5 hidden sm:inline text-[9px] px-1.5 py-0.5 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
                   Free
                 </span>

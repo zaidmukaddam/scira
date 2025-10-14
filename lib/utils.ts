@@ -49,7 +49,7 @@ export type SearchProvider = keyof typeof searchProviderInfo;
 // Function to get dynamic web search description based on selected provider
 export function getWebSearchDescription(provider: SearchProvider = 'parallel'): string {
   const providerName = searchProviderInfo[provider];
-  return `Search across the entire internet powered by ${providerName}`;
+  return `Recherchez sur tout Internet avec ${providerName}`;
 }
 
 // Function to get search groups with dynamic descriptions
@@ -65,21 +65,21 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'x' as const,
       name: 'X',
-      description: 'Search X posts',
+      description: 'Rechercher des publications sur X',
       icon: NewTwitterIcon,
       show: true,
     },
     {
       id: 'stocks' as const,
       name: 'Stocks',
-      description: 'Stock and currency information',
+      description: 'Informations sur les actions et les devises',
       icon: AppleStocksIcon,
       show: true,
     },
     {
       id: 'connectors' as const,
       name: 'Connectors',
-      description: 'Search Google Drive, Notion and OneDrive documents',
+      description: 'Recherchez des documents Google Drive, Notion et OneDrive',
       icon: ConnectIcon,
       show: true,
       requireAuth: true,
@@ -88,28 +88,28 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'code' as const,
       name: 'Code',
-      description: 'Get context about languages and frameworks',
+      description: 'Obtenez du contexte sur les langages et frameworks',
       icon: CodeCircleIcon,
       show: true,
     },
     {
       id: 'academic' as const,
-      name: 'Academic',
-      description: 'Search academic papers powered by Exa',
+      name: 'Recherche académique',
+      description: 'Recherche d’articles académiques via Exa',
       icon: MicroscopeIcon,
       show: true,
     },
     {
       id: 'chat' as const,
       name: 'Chat',
-      description: 'Talk to the model directly.',
+      description: 'Discutez directement avec le modèle.',
       icon: ChattingIcon,
       show: true,
     },
     {
       id: 'extreme' as const,
       name: 'Extreme',
-      description: 'Deep research with multiple sources and analysis',
+      description: 'Recherche approfondie avec multiples sources et analyse',
       icon: AtomicPowerIcon,
       show: true,
       requireAuth: true,
@@ -117,7 +117,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'memory' as const,
       name: 'Memory',
-      description: 'Your personal memory companion',
+      description: 'Votre compagnon de mémoire personnel',
       icon: Database02Icon,
       show: true,
       requireAuth: true,
@@ -125,21 +125,21 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'reddit' as const,
       name: 'Reddit',
-      description: 'Search Reddit posts',
+      description: 'Rechercher des publications Reddit',
       icon: RedditIcon,
       show: true,
     },
     {
       id: 'crypto' as const,
       name: 'Crypto',
-      description: 'Cryptocurrency research powered by CoinGecko',
+      description: 'Recherche de cryptomonnaies via CoinGecko',
       icon: Bitcoin02Icon,
       show: true,
     },
     {
       id: 'youtube' as const,
-      name: 'YouTube',
-      description: 'Search YouTube videos powered by Exa',
+      name: 'Recherche YouTube',
+      description: 'Recherche de vidéos YouTube via Exa',
       icon: YoutubeIcon,
       show: true,
     },
