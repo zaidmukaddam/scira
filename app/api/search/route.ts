@@ -151,6 +151,113 @@ export async function POST(req: Request) {
       if (autoContext) systemParts.push(autoContext);
       if (latitude && longitude) systemParts.push(`User location (approx): ${latitude}, ${longitude}`);
 
+      if (group === 'nomenclature') {
+        const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const askForPrompt = /\b(prompt|règles|rules|instructions?)\b/i.test(lastText || '');
+        if (askForPrompt) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "J’applique des règles internes définies par le développeur. Pour les détails, contactez Arka." }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+        if (normalized.length <= 1) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Format d’entrée invalide. Collez une liste multi‑ligne avec un article par ligne (pas de texte libre)." }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+        if (normalized.length > 300) {
+          const warn: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Grand volume détecté, traitement par lots en cours…" }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(warn), transient: true });
+        }
+
+        const modelPlan: Array<{ name: string; retries: number }> = [
+          { name: 'gemini-2.5-flash', retries: 1 },
+          { name: 'gemini-2.0-flash', retries: 2 },
+        ];
+        let result: ReturnType<typeof streamText> | null = null;
+        let lastError: unknown = null;
+        outer: for (const item of modelPlan) {
+          for (let attempt = 0; attempt < item.retries; attempt++) {
+            try {
+              const toolsSpec = undefined;
+              result = streamText({
+                model: google(item.name as any),
+                messages: convertToModelMessages(messages),
+                system: systemParts.join('\n\n'),
+                temperature: 0,
+                topP: 0.1,
+                tools: toolsSpec as any,
+                toolChoice: 'auto',
+              });
+              break outer;
+            } catch (err) {
+              lastError = err;
+              continue;
+            }
+          }
+        }
+        if (!result) throw lastError ?? new Error('Échec du démarrage du flux Nomenclature');
+
+        result.consumeStream();
+        writer.merge(
+          result.toUIMessageStream({
+            sendReasoning: false,
+            messageMetadata: ({ part }) => {
+              if (part.type === 'finish') {
+                const processingTime = (Date.now() - streamStart) / 1000;
+                return {
+                  model: model as string,
+                  completionTime: processingTime,
+                  createdAt: new Date().toISOString(),
+                  totalTokens: part.totalUsage?.totalTokens ?? null,
+                  inputTokens: part.totalUsage?.inputTokens ?? null,
+                  outputTokens: part.totalUsage?.outputTokens ?? null,
+                };
+              }
+            },
+          }),
+        );
+        return;
+      }
+
       // Try Gemini 2.5 with fallbacks
       const modelNames = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-exp'];
       let result: ReturnType<typeof streamText> | null = null;

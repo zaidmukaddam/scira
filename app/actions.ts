@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
 import { CYRUS_PROMPT, CYRUS_OUTPUT_RULES } from '@/ai/prompts/classification-cyrus';
+import { NOMENCLATURE_DOUANIERE_PROMPT } from '@/ai/prompts/nomenclature-douaniere';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -213,6 +214,7 @@ const groupTools = {
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: [] as const,
   cyrus: [] as const,
+  nomenclature: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
   memory: ['datetime', 'search_memories', 'add_memory'] as const,
@@ -1297,6 +1299,7 @@ $$
   - Maintain accuracy to the source documents
   - Use the document content to provide comprehensive answers`,
   cyrus: `${CYRUS_PROMPT}\n\n${CYRUS_OUTPUT_RULES}`,
+  nomenclature: NOMENCLATURE_DOUANIERE_PROMPT,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
