@@ -8,6 +8,7 @@ import { google } from '@ai-sdk/google';
 import { geolocation } from '@vercel/functions';
 
 import { saveChat, saveMessages, createStreamId, getChatById, updateChatTitleById } from '@/lib/db/queries';
+import { extremeSearchTool } from '@/lib/tools';
 import type { ChatMessage } from '@/lib/types';
 import { getLightweightUser, generateTitleFromUserMessage, getGroupConfig } from '@/app/actions';
 
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
 
   const dataStream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer }) => {
-      const { instructions } = await getGroupConfig(group);
+      const { instructions, tools: toolIds } = await getGroupConfig(group);
       const systemParts: string[] = [];
       if (instructions) systemParts.unshift(instructions);
       if (autoContext) systemParts.push(autoContext);
@@ -156,11 +157,18 @@ export async function POST(req: Request) {
       let lastError: unknown = null;
       for (const name of modelNames) {
         try {
-          result = streamText({
-            model: google(name as any),
-            messages: convertToModelMessages(messages),
-            system: systemParts.join('\n\n'),
-          });
+          {
+            const toolsSpec = Array.isArray(toolIds) && toolIds.includes('extreme_search')
+              ? { extreme_search: extremeSearchTool(writer) }
+              : undefined;
+            result = streamText({
+              model: google(name as any),
+              messages: convertToModelMessages(messages),
+              system: systemParts.join('\n\n'),
+              tools: toolsSpec as any,
+              toolChoice: toolsSpec ? 'required' : 'auto',
+            });
+          }
           break;
         } catch (err) {
           lastError = err;
