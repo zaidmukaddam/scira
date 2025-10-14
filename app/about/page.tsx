@@ -619,7 +619,7 @@ export default function AboutPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Filter models</span>
+                <span className="text-sm font-medium text-muted-foreground">Filtrer les modèles</span>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -632,21 +632,21 @@ export default function AboutPage() {
                       aria-expanded={openCategory}
                       className="justify-between w-full sm:w-auto sm:min-w-[140px]"
                     >
-                      {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
+                      {selectedCategory === 'all' ? 'Toutes les catégories' : selectedCategory}
                       <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0">
                     <Command>
-                      <CommandInput placeholder="Search categories..." className="h-10" />
+                      <CommandInput placeholder="Rechercher des catégories…" className="h-10" />
                       <CommandList>
-                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
                         <CommandGroup>
                           {[
-                            { value: 'all', label: 'All Categories' },
-                            { value: 'Free', label: 'Free' },
+                            { value: 'all', label: 'Toutes les catégories' },
+                            { value: 'Free', label: 'Gratuit' },
                             { value: 'Pro', label: 'Pro' },
-                            { value: 'Experimental', label: 'Experimental' },
+                            { value: 'Experimental', label: 'Expérimental' },
                           ].map((category) => (
                             <CommandItem
                               key={category.value}
@@ -676,22 +676,22 @@ export default function AboutPage() {
                       className="justify-between w-full sm:w-auto sm:min-w-[160px]"
                     >
                       {selectedCapabilities.length === 0
-                        ? 'All Capabilities'
+                        ? 'Toutes les capacités'
                         : selectedCapabilities.length === 1
                           ? selectedCapabilities[0]
-                          : `${selectedCapabilities.length} selected`}
+                          : `${selectedCapabilities.length} sélectionnées`}
                       <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0">
                     <Command>
-                      <CommandInput placeholder="Search capabilities..." className="h-10" />
+                      <CommandInput placeholder="Rechercher des capacités…" className="h-10" />
                       <CommandList>
-                        <CommandEmpty>No capability found.</CommandEmpty>
+                        <CommandEmpty>Aucune capacité trouvée.</CommandEmpty>
                         <CommandGroup>
                           {[
                             { value: 'vision', label: 'Vision' },
-                            { value: 'reasoning', label: 'Reasoning' },
+                            { value: 'reasoning', label: 'Raisonnement' },
                             { value: 'pdf', label: 'PDF' },
                           ].map((capability) => (
                             <CommandItem
@@ -818,8 +818,8 @@ export default function AboutPage() {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                       <Filter className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-medium text-foreground mb-2">No models found</h3>
-                    <p className="text-muted-foreground mb-4">Try adjusting your filters to see more models</p>
+                    <h3 className="text-lg font-medium text-foreground mb-2">Aucun modèle trouvé</h3>
+                    <p className="text-muted-foreground mb-4">Essayez d’ajuster vos filtres pour voir plus de modèles</p>
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -827,7 +827,7 @@ export default function AboutPage() {
                         setSelectedCapabilities([]);
                       }}
                     >
-                      Clear all filters
+                      Effacer tous les filtres
                     </Button>
                   </div>
                 );

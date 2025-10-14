@@ -50,11 +50,11 @@ export function MemoryDialog() {
     mutationFn: deleteMemory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      toast.success('MemoryIcon successfully deleted');
+      toast.success('Mémoire supprimée avec succès');
     },
     onError: (error) => {
       console.error('Delete memory error:', error);
-      toast.error('Failed to delete memory');
+      toast.error('Échec de la suppression de la mémoire');
     },
   });
 
@@ -76,9 +76,9 @@ const handleClearSearch = () => {
 
   // Format date in a more readable way
   const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Unknown date';
+    if (!dateString) return 'Date inconnue';
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('fr-FR', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -91,7 +91,7 @@ const handleClearSearch = () => {
   const getMemoryContent = (memory: MemoryItem): string => {
     if (memory.memory) return memory.memory;
     if (memory.name) return memory.name;
-    return 'No content available';
+    return 'Aucun contenu disponible';
   };
 
   // Determine which memories to display
@@ -109,10 +109,10 @@ const handleClearSearch = () => {
       <DialogHeader className="pb-4">
         <DialogTitle className="flex items-center gap-2 text-xl">
           <MemoryIcon className="h-5 w-5" />
-          Your Memories
+          Vos mémoires
         </DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
-          View and manage your saved memories
+          Consultez et gérez vos mémoires enregistrées
         </DialogDescription>
       </DialogHeader>
 
@@ -121,7 +121,7 @@ const handleClearSearch = () => {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search memories..."
+            placeholder="Rechercher dans les mémoires…"
             className="flex-1"
           />
           <Button type="submit" size="icon" variant="secondary" disabled={isSearching || !searchQuery.trim()}>
@@ -131,11 +131,11 @@ const handleClearSearch = () => {
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {totalMemories} {totalMemories === 1 ? 'memory' : 'memories'} found
+            {totalMemories} {totalMemories === 1 ? 'mémoire' : 'mémoires'} trouvée{totalMemories === 1 ? '' : 's'}
           </span>
           {searchQuery.trim() && (
             <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={handleClearSearch}>
-              Clear search
+              Effacer la recherche
             </Button>
           )}
         </div>
@@ -144,15 +144,15 @@ const handleClearSearch = () => {
           {isLoading && !displayedMemories.length ? (
             <div className="flex flex-col justify-center items-center h-[400px]">
               <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mt-4">Loading memories...</p>
+              <p className="text-sm text-muted-foreground mt-4">Chargement des mémoires…</p>
             </div>
           ) : displayedMemories.length === 0 ? (
             <div className="flex flex-col justify-center items-center h-[350px] py-12 px-4 border border-dashed rounded-lg bg-muted/50 m-1">
               <MemoryIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="font-medium">No memories found</p>
-              {searchQuery && <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>}
+              <p className="font-medium">Aucune mémoire trouvée</p>
+              {searchQuery && <p className="text-xs text-muted-foreground mt-1">Essayez un autre terme de recherche</p>}
               {!searchQuery && (
-                <p className="text-xs text-muted-foreground mt-1">Memories will appear here when you save them</p>
+                <p className="text-xs text-muted-foreground mt-1">Vos mémoires apparaîtront ici lorsque vous les enregistrez</p>
               )}
             </div>
           ) : (
@@ -196,10 +196,10 @@ const handleClearSearch = () => {
                     {isFetchingNextPage ? (
                       <>
                         <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                        Loading more...
+                        Chargement…
                       </>
                     ) : (
-                      'Load More'
+                      'Charger plus'
                     )}
                   </Button>
                 </div>

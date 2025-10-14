@@ -54,14 +54,14 @@ export function ShareDialog({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      toast.success('Lien copié dans le presse-papiers');
       console.log('✅ URL copied to clipboard successfully');
 
       // Reset copied state after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('❌ Failed to copy to clipboard:', error);
-      toast.error('Failed to copy link');
+      toast.error("Échec de la copie du lien");
     }
   };
 
@@ -85,7 +85,7 @@ export function ShareDialog({
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
       });
-      toast.error('Failed to share chat');
+      toast.error("Échec du partage de la conversation");
     } finally {
       setIsChangingVisibility(false);
     }
@@ -100,7 +100,7 @@ export function ShareDialog({
       console.log('📡 Changing visibility to private');
       await onVisibilityChange('private');
       console.log('✅ Visibility changed to private successfully');
-      toast.success('Chat is now private');
+      toast.success('La conversation est maintenant privée');
       console.log('🍞 Success toast shown: Chat is now private');
 
       // Close dialog after successful private change
@@ -112,7 +112,7 @@ export function ShareDialog({
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
       });
-      toast.error('Failed to make chat private');
+      toast.error("Échec de la mise en privé de la conversation");
       console.log('🍞 Error toast shown: Failed to make chat private');
     } finally {
       setIsChangingVisibility(false);
@@ -146,7 +146,7 @@ export function ShareDialog({
     console.log('📱 Using native share API:', shareUrl);
     try {
       await navigator.share({
-        title: 'Shared Hyper Chat',
+        title: 'Conversation Hyper partagée',
         url: shareUrl,
       });
       console.log('✅ Native share completed');
@@ -167,12 +167,12 @@ export function ShareDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HugeiconsIcon icon={Share03Icon} size={20} color="currentColor" strokeWidth={2} />
-            Share Chat
+            Partager le chat
           </DialogTitle>
           <DialogDescription>
             {selectedVisibilityType === 'private'
-              ? 'Share this chat to make it accessible to anyone with the link.'
-              : 'This chat is already shared. Anyone with the link can access it.'}
+              ? 'Partagez cette conversation pour la rendre accessible à toute personne disposant du lien.'
+              : 'Cette conversation est déjà partagée. Toute personne disposant du lien peut y accéder.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -182,7 +182,7 @@ export function ShareDialog({
             <div className="space-y-4">
               {/* Make Private Option */}
               <div className="flex justify-between items-center px-1">
-                <h4 className="text-sm font-medium">Share Link</h4>
+                <h4 className="text-sm font-medium">Lien de partage</h4>
                 <Button
                   variant="outline"
                   size="sm"
@@ -191,7 +191,7 @@ export function ShareDialog({
                   disabled={isChangingVisibility}
                 >
                   <LockIcon size={12} className="mr-1" />
-                  {isChangingVisibility ? 'Making Private...' : 'Make Private'}
+                  {isChangingVisibility ? 'Mise en privé…' : 'Rendre privé'}
                 </Button>
               </div>
 
@@ -204,13 +204,13 @@ export function ShareDialog({
                   variant="ghost"
                   className="size-8 flex-shrink-0"
                   onClick={handleCopyIconLink}
-                  title="Copy to clipboard"
+                  title="Copier dans le presse-papiers"
                 >
                   {copied ? <CheckIcon size={16} className="text-green-500" /> : <CopyIcon size={16} />}
                 </Button>
               </div>
 
-              <p className="text-xs text-muted-foreground text-center px-1">Anyone with this link can view this chat</p>
+              <p className="text-xs text-muted-foreground text-center px-1">Toute personne possédant ce lien peut voir cette conversation</p>
 
               <Separator className="my-3" />
 
@@ -218,14 +218,14 @@ export function ShareDialog({
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-1">
                 {/* Social Share Options */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">Share on:</span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Partager sur :</span>
                   {typeof navigator !== 'undefined' && 'share' in navigator && (
                     <Button
                       variant="outline"
                       size="icon"
                       className="size-8"
                       onClick={handleNativeShare}
-                      title="Share via system"
+                      title="Partager via le système"
                     >
                       <HugeiconsIcon icon={Share03Icon} size={14} color="currentColor" strokeWidth={2} />
                     </Button>
@@ -235,7 +235,7 @@ export function ShareDialog({
                     size="icon"
                     className="size-8"
                     onClick={handleShareLinkedIn}
-                    title="Share on LinkedIn"
+                    title="Partager sur LinkedIn"
                   >
                     <LinkedinLogoIcon size={14} />
                   </Button>
@@ -244,7 +244,7 @@ export function ShareDialog({
                     size="icon"
                     className="size-8"
                     onClick={handleShareTwitter}
-                    title="Share on X (Twitter)"
+                    title="Partager sur X (Twitter)"
                   >
                     <XLogoIcon size={14} />
                   </Button>
@@ -253,7 +253,7 @@ export function ShareDialog({
                     size="icon"
                     className="size-8"
                     onClick={handleShareReddit}
-                    title="Share on Reddit"
+                    title="Partager sur Reddit"
                   >
                     <RedditLogoIcon size={14} />
                   </Button>
@@ -262,11 +262,11 @@ export function ShareDialog({
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[36px] text-sm">
-                    Cancel
+                    Annuler
                   </Button>
                   <Button onClick={handleCopyIconLink} className="min-h-[36px] text-sm">
                     <CopyIcon size={14} className="mr-1.5" />
-                    Copy
+                    Copier
                   </Button>
                 </div>
               </div>
@@ -277,7 +277,7 @@ export function ShareDialog({
           {selectedVisibilityType === 'private' && (
             <div className="flex flex-col sm:flex-row justify-end gap-3 px-1">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="order-2 sm:order-1 min-h-[40px]">
-                Cancel
+                Annuler
               </Button>
               <Button
                 onClick={handleShareAndCopyIcon}
@@ -285,7 +285,7 @@ export function ShareDialog({
                 className="order-1 sm:order-2 min-h-[40px]"
               >
                 <HugeiconsIcon icon={Share03Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-                {isChangingVisibility ? 'Sharing...' : 'Share & Copy Link'}
+                {isChangingVisibility ? 'Partage en cours…' : 'Partager et copier le lien'}
               </Button>
             </div>
           )}

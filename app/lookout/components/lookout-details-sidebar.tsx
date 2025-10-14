@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Activity01Icon,
@@ -139,13 +140,13 @@ export function LookoutDetailsSidebar({
             variant="default"
             className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
           >
-            Active
+            Actif
           </Badge>
         );
       case 'paused':
         return (
           <Badge variant="secondary" className="text-xs">
-            Paused
+            En pause
           </Badge>
         );
       case 'running':
@@ -164,13 +165,13 @@ export function LookoutDetailsSidebar({
               }}
             />
             <HugeiconsIcon icon={PlayIcon} size={10} color="currentColor" strokeWidth={1.5} />
-            Running
+            En cours
           </Badge>
         );
       case 'archived':
         return (
           <Badge variant="outline" className="text-xs">
-            Archived
+            Archivé
           </Badge>
         );
       default:
@@ -189,46 +190,46 @@ export function LookoutDetailsSidebar({
           /* Analytics View */
           <div className="space-y-5">
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Performance Metrics</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">Indicateurs de performance</h3>
               <div className="p-3 border rounded-md bg-muted/30 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Success Rate</span>
+                  <span className="text-xs text-muted-foreground">Taux de réussite</span>
                   <span className="text-sm font-medium">{successRate.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Average Duration</span>
+                  <span className="text-xs text-muted-foreground">Durée moyenne</span>
                   <span className="text-sm font-medium">
                     {averageDuration > 0 ? `${(averageDuration / 1000).toFixed(1)}s` : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Total Runs</span>
+                  <span className="text-xs text-muted-foreground">Exécutions totales</span>
                   <span className="text-sm font-medium">{totalRuns}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Failed Runs</span>
+                  <span className="text-xs text-muted-foreground">Échecs</span>
                   <span className="text-sm font-medium text-red-600">{failedRuns}</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Activity Summary</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">Résumé d’activité</h3>
               <div className="p-3 border rounded-md bg-muted/30 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">This Week</span>
+                  <span className="text-xs text-muted-foreground">Cette semaine</span>
                   <span className="text-sm font-medium">{lastWeekRuns} runs</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Frequency</span>
+                  <span className="text-xs text-muted-foreground">Fréquence</span>
                   <span className="text-sm font-medium capitalize">{lookout.frequency}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Timezone</span>
+                  <span className="text-xs text-muted-foreground">Fuseau horaire</span>
                   <span className="text-sm font-medium">{lookout.timezone}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="text-xs text-muted-foreground">Statut</span>
                   <span className="text-sm font-medium capitalize">{lookout.status}</span>
                 </div>
               </div>
@@ -236,7 +237,7 @@ export function LookoutDetailsSidebar({
 
             {failedRuns > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-foreground mb-3">Recent Errors</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Erreurs récentes</h3>
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {runHistory
                     .filter((run) => run.status === 'error')
@@ -247,10 +248,10 @@ export function LookoutDetailsSidebar({
                         className="p-2 bg-red-50 dark:bg-red-950/20 rounded border border-red-200 dark:border-red-800"
                       >
                         <div className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">
-                          {format(new Date(run.runAt), 'MMM d, h:mm a')}
+                          {format(new Date(run.runAt), 'd MMM, HH:mm', { locale: fr })}
                         </div>
                         <div className="text-xs text-red-600 dark:text-red-300 leading-tight">
-                          {run.error || 'Unknown error'}
+                          {run.error || 'Erreur inconnue'}
                         </div>
                       </div>
                     ))}
@@ -261,12 +262,12 @@ export function LookoutDetailsSidebar({
         ) : (
           /* Normal View */
           <>
-            {/* Currently Running Lookouts */}
+            {/* Currently En cours Lookouts */}
             {runningLookouts.length > 0 && (
               <>
                 <div>
                   <h3 className="text-sm font-medium text-foreground mb-3">
-                    Currently Running ({runningLookouts.length})
+                    En cours d’exécution ({runningLookouts.length})
                   </h3>
                   <div className="space-y-2">
                     {runningLookouts.map((runningLookout) => (
@@ -304,7 +305,7 @@ export function LookoutDetailsSidebar({
                           </div>
                           {runningLookout.id === lookout.id && (
                             <Badge variant="outline" className="text-xs">
-                              Current
+                              Actuel
                             </Badge>
                           )}
                         </div>
@@ -329,40 +330,40 @@ export function LookoutDetailsSidebar({
               </div>
 
               <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                <p>Created {format(new Date(lookout.createdAt), 'MMM d, yyyy')}</p>
+                <p>Créé le {format(new Date(lookout.createdAt), 'd MMM yyyy', { locale: fr })}</p>
                 {lookout.nextRunAt && lookout.status === 'active' && (
-                  <p>Next run {format(new Date(lookout.nextRunAt), 'MMM d, h:mm a')}</p>
+                  <p>Prochaine exécution {format(new Date(lookout.nextRunAt), 'd MMM, HH:mm', { locale: fr })}</p>
                 )}
               </div>
 
               <div className="p-3 bg-muted/50 rounded-md border gap-2">
                 <p className="text-xs leading-relaxed">{lookout.prompt}</p>
-                <p className="text-xs leading-relaxed border-t mt-2 pt-2">Grok 4・Extreme Research</p>
+                <p className="text-xs leading-relaxed border-t mt-2 pt-2">Grok 4・Recherche extrême</p>
               </div>
             </div>
 
-            {/* Statistics */}
+            {/* Statistiques */}
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Statistics</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">Statistiques</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Total Runs</div>
+                  <div className="text-xs text-muted-foreground mb-1">Exécutions totales</div>
                   <div className="text-lg font-semibold">{totalRuns}</div>
                 </div>
 
                 <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Success Rate</div>
+                  <div className="text-xs text-muted-foreground mb-1">Taux de réussite</div>
                   <div className="text-lg font-semibold">{successRate.toFixed(1)}%</div>
                   <Progress value={successRate} className="mt-2 h-1" />
                 </div>
 
                 <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">This Week</div>
+                  <div className="text-xs text-muted-foreground mb-1">Cette semaine</div>
                   <div className="text-lg font-semibold">{lastWeekRuns}</div>
                 </div>
 
                 <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Avg Duration</div>
+                  <div className="text-xs text-muted-foreground mb-1">Durée moyenne</div>
                   <div className="text-lg font-semibold">
                     {averageDuration > 0 ? `${(averageDuration / 1000).toFixed(1)}s` : 'N/A'}
                   </div>
@@ -372,7 +373,7 @@ export function LookoutDetailsSidebar({
 
             {/* Recent Runs */}
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Recent Runs ({runHistory.length})</h3>
+              <h3 className="text-sm font-medium text-foreground mb-3">Exécutions récentes ({runHistory.length})</h3>
               <div className="space-y-2">
                 {runHistory
                   .slice(-10)
@@ -388,7 +389,7 @@ export function LookoutDetailsSidebar({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(run.runAt), 'MMM d, h:mm a')}
+                                {format(new Date(run.runAt), 'd MMM, HH:mm', { locale: fr })}
                               </span>
                               {run.duration && (
                                 <Badge variant="outline" className="text-xs h-4">
@@ -398,7 +399,7 @@ export function LookoutDetailsSidebar({
                             </div>
                             {run.error && <p className="text-xs text-red-600 mb-1 leading-tight">{run.error}</p>}
                             {typeof run.searchesPerformed === 'number' && (
-                              <p className="text-xs text-muted-foreground">{run.searchesPerformed} searches</p>
+                              <p className="text-xs text-muted-foreground">{run.searchesPerformed} recherches</p>
                             )}
                           </div>
                         </div>
@@ -424,7 +425,7 @@ export function LookoutDetailsSidebar({
                         className="opacity-50"
                       />
                     </div>
-                    <p className="text-xs">No runs yet</p>
+                    <p className="text-xs">Aucune exécution pour le moment</p>
                   </div>
                 )}
               </div>
@@ -452,11 +453,11 @@ export function LookoutDetailsSidebar({
                   strokeWidth={1.5}
                   className="mr-1"
                 />
-                Edit
+                Paramètres
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{lookout.status === 'running' ? 'Cannot edit while running' : 'Edit lookout settings'}</p>
+              <p>{lookout.status === 'running' ? 'Impossible de modifier pendant l’exécution' : 'Modifier les paramètres du lookout'}</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -469,16 +470,16 @@ export function LookoutDetailsSidebar({
                 disabled={lookout.status === 'running' || lookout.status === 'archived'}
               >
                 <HugeiconsIcon icon={TestTubeIcon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
-                Test
+                Tester
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>
                 {lookout.status === 'running'
-                  ? 'Cannot test while running'
+                  ? 'Impossible de tester pendant l’exécution'
                   : lookout.status === 'archived'
-                    ? 'Cannot test archived lookout'
-                    : 'Run test now'}
+                    ? 'Impossible de tester un lookout archivé'
+                    : 'Lancer un test maintenant'}
               </p>
             </TooltipContent>
           </Tooltip>
@@ -491,11 +492,11 @@ export function LookoutDetailsSidebar({
                 onClick={() => setShowAnalytics(!showAnalytics)}
               >
                 <HugeiconsIcon icon={Chart01Icon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
-                {showAnalytics ? 'Overview' : 'Analytics'}
+                {showAnalytics ? 'Vue d’ensemble' : 'Analyses'}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{showAnalytics ? 'Show overview' : 'Show analytics'}</p>
+              <p>{showAnalytics ? 'Afficher la vue d’ensemble' : 'Afficher les analyses'}</p>
             </TooltipContent>
           </Tooltip>
         </div>
