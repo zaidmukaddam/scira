@@ -5,6 +5,7 @@ import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { CyrusLoadingState } from '@/components/cyrus-loading-state';
+import { NomenclatureLoadingState } from '@/components/nomenclature-loading-state';
 import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
@@ -277,6 +278,10 @@ const Messages: React.FC<MessagesProps> = ({
     return status === 'streaming' && selectedGroup === 'cyrus' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
+  const shouldShowNomenclatureLoader = useMemo(() => {
+    return status === 'streaming' && selectedGroup === 'nomenclature' && !hasActiveToolInvocations;
+  }, [status, selectedGroup, hasActiveToolInvocations]);
+
   // Compute index of the most recent assistant message; only that one should keep min-height
   const lastAssistantIndex = useMemo(() => {
     for (let i = memoizedMessages.length - 1; i >= 0; i -= 1) {
@@ -431,6 +436,17 @@ const Messages: React.FC<MessagesProps> = ({
         >
           <div className="w-full !m-0 !p-0">
             <CyrusLoadingState />
+          </div>
+        </div>
+      )}
+
+      {/* Nomenclature loader only during streaming in Nomenclature group and no active tools */}
+      {shouldShowNomenclatureLoader && (
+        <div
+          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+        >
+          <div className="w-full !m-0 !p-0">
+            <NomenclatureLoadingState />
           </div>
         </div>
       )}
