@@ -2164,6 +2164,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
     };
   }, [cleanupMediaRecorder]);
 
+  useEffect(() => {
+    const finishHandler = () => {
+      setIsEnhancing(false);
+      setIsTypewriting(false);
+      setIsRecording(false);
+      try {
+        inputRef.current?.focus({ preventScroll: true });
+      } catch {}
+    };
+    window.addEventListener('chat-stream-finished', finishHandler);
+    return () => window.removeEventListener('chat-stream-finished', finishHandler);
+  }, [inputRef]);
+
   // Fetch discount config when needed
   const fetchDiscountConfigForm = useCallback(async () => {
     if (discountConfig) return; // Already fetched

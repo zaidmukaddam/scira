@@ -312,52 +312,67 @@ const ChatInterface = memo(
         console.log('onData<Client>', dataPart);
         setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       },
-      onFinish: async ({ message }) => {
+      onFinish: ({ message }) => {
         console.log('onFinish<Client>', message.parts);
-        // Refresh usage data after message completion for authenticated users
-        if (user) {
-          refetchUsage();
-        }
+        try {
+          if (user) {
+            refetchUsage();
+          }
 
-        // Check if this is the first message completion and user is not Pro
-        const isFirstMessage = messages.length <= 1;
+          const isFirstMessage = messages.length <= 1;
+          console.log('Upgrade dialog check:', {
+            isFirstMessage,
+            isProUser: isUserPro,
+            hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
+            user: !!user,
+            messagesLength: messages.length,
+          });
 
-        console.log('Upgrade dialog check:', {
-          isFirstMessage,
-          isProUser: isUserPro,
-          hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
-          user: !!user,
-          messagesLength: messages.length,
-        });
+          if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
+            console.log('Showing upgrade dialog...');
+            setTimeout(() => {
+              dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
+              dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
+              setPersitedHasShownUpgradeDialog(true);
+            }, 1000);
+          }
 
-        // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-        if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
-          console.log('Showing upgrade dialog...');
-          setTimeout(() => {
-            dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
-            setPersitedHasShownUpgradeDialog(true);
-          }, 1000);
-        }
-
-        // Only generate suggested questions if authenticated user or private chat
-        if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
-          const lastPart = message.parts[message.parts.length - 1];
-          const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
-          const newHistory = [
-            { role: 'user', content: lastSubmittedQueryRef.current },
-            { role: 'assistant', content: lastPartText },
-          ];
-          console.log('newHistory', newHistory);
-          const { questions } = await suggestQuestions(newHistory);
-          dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+          if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
+            const lastPart = message.parts[message.parts.length - 1];
+            const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
+            const newHistory = [
+              { role: 'user', content: lastSubmittedQueryRef.current },
+              { role: 'assistant', content: lastPartText },
+            ];
+            console.log('newHistory', newHistory);
+            Promise.resolve()
+              .then(async () => {
+                try {
+                  const { questions } = await suggestQuestions(newHistory);
+                  dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+                } catch (err) {
+                  console.error('Error generating suggested questions:', err);
+                }
+              })
+              .catch(() => {});
+          }
+        } finally {
+          try {
+            setDataStream(() => []);
+          } catch {}
+          try {
+            invalidateChatsCache();
+          } catch {}
+          try {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('chat-stream-finished'));
+            }
+          } catch {}
         }
       },
       onError: (error) => {
-        // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
         if (error instanceof ChatSDKError) {
           console.log('ChatSDK Error:', error.type, error.surface, error.message);
-          // Only show toast for certain error types that need immediate attention
           if (error.type === 'offline' || error.surface === 'stream') {
             toast.error('Connection Error', {
               description: error.message,
@@ -369,7 +384,18 @@ const ChatInterface = memo(
             description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
           });
         }
-      },
+        try {
+          setDataStream(() => []);
+        } catch {}
+        try {
+          invalidateChatsCache();
+        } catch {}
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('chat-stream-finished'));
+          }
+        } catch {}
+      }
       messages: initialMessages || [],
     });
 
