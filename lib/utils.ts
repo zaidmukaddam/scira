@@ -15,6 +15,7 @@ import {
   ConnectIcon,
   CodeCircleIcon,
   HierarchyIcon,
+  MagicWandIcon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -35,6 +36,7 @@ export type SearchGroupId =
   | 'code'
   | 'connectors'
   | 'cyrus'
+  | 'libeller'
   | 'nomenclature';
 
 // Search provider information for dynamic descriptions
@@ -149,6 +151,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'Cyrus Structure',
       description: 'Classifie les articles par hiérarchie (Markdown)',
       icon: HierarchyIcon,
+      show: true,
+    },
+    {
+      id: 'libeller' as const,
+      name: 'Correction Libeller',
+      description: 'Nettoie et standardise des libellés produits (Markdown)',
+      icon: MagicWandIcon,
       show: true,
     },
     {
