@@ -451,8 +451,8 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
 
-      {/* Default loading animation when not in Cyrus condition */}
-      {!shouldShowCyrusLoader && shouldShowLoading && (
+      {/* Default loading animation when not in Cyrus or Nomenclature condition */}
+      {!shouldShowCyrusLoader && !shouldShowNomenclatureLoader && shouldShowLoading && (
         <div
           className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
         >
