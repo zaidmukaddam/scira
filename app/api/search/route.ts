@@ -331,14 +331,28 @@ export async function POST(req: Request) {
         }
 
         // Ensure order and count by aligning with originals
-        const originalIndex = new Map<string, number>();
-        normalized.forEach((o, i) => originalIndex.set(o, i));
+        const originalIndices = new Map<string, number[]>();
+        normalized.forEach((o, i) => {
+          if (!originalIndices.has(o)) {
+            originalIndices.set(o, []);
+          }
+          originalIndices.get(o)!.push(i);
+        });
         // Create rows aligned to originals length
         const alignedRows: string[][] = new Array(normalized.length).fill(null).map(() => ['', '']);
+        
+        // Process corrections and distribute to all duplicate occurrences
+        const usedCorrections = new Map<string, string[]>();
         for (const [orig, corr] of allRows) {
-          if (originalIndex.has(orig)) {
-            const i = originalIndex.get(orig)!;
-            alignedRows[i] = [orig, corr ?? ''];
+          if (originalIndices.has(orig)) {
+            const indices = originalIndices.get(orig)!;
+            // Find the first unfilled index for this original
+            for (const i of indices) {
+              if (!alignedRows[i] || !alignedRows[i][1]) {
+                alignedRows[i] = [orig, corr ?? ''];
+                break;
+              }
+            }
           }
         }
         // Fill any missing originals from input

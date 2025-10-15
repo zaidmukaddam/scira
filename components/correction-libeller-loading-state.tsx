@@ -48,11 +48,11 @@ export function CorrectionLibellerLoadingState({ size = 80, duration = 5, classN
                 {"Correction des libellés en cours…"}
               </TextShimmer>
               <div className="flex gap-2">
-                {[...Array(3)].map((_, i) => (
+                {[32, 48, 28].map((width, i) => (
                   <div
                     key={i}
                     className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse"
-                    style={{ width: `${Math.random() * 40 + 20}px`, animationDelay: `${i * 0.2}s` }}
+                    style={{ width: `${width}px`, animationDelay: `${i * 0.2}s` }}
                   />
                 ))}
               </div>
