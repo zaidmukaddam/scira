@@ -395,7 +395,7 @@ const ChatInterface = memo(
             window.dispatchEvent(new CustomEvent('chat-stream-finished'));
           }
         } catch {}
-      }
+      },
       messages: initialMessages || [],
     });
 
