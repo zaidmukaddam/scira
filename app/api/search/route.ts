@@ -434,7 +434,29 @@ export async function POST(req: Request) {
 
       if (group === 'nomenclature') {
         const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const askForPrompt = /\b(prompt|règles|rules|instructions?)\b/i.test(lastText || '');
+
+        // Conversational greeting handling — do NOT produce a table for simple salutations
+        const isGreeting = (t: string) => /\b(?:salut|bonjour|bonsoir|coucou|hello|hi|slt|bjr|ça va|ca va|comment\s+ça\s+va|comment\s+ca\s+va|السلام\s+عليكم|marhaba|مرحبا)\b/i.test((t || '').trim());
+        if (isGreeting(lastText || '') && normalized.length <= 1) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Bonjour ! Ça va ? Je suis un agent spécialisé dans la classification douanière et les taxes. Comment puis-je vous aider ?" }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+
+        const askForPrompt = normalized.length === 0 && /\b(prompt(?:\s*complet)?|les\s+règles|règles\s+(?:internes|de|du|d’|d'))\b/i.test(lastText || '');
         if (askForPrompt) {
           const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),
