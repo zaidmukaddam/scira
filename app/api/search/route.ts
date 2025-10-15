@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       // Correction Libeller special handling
       if (group === 'libeller') {
         const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const askForPrompt = /\b(prompt|règles|rules|instructions?|prompt\s*complet)\b/i.test(lastText || '');
+        const askForPrompt = normalized.length === 0 && /\b(prompt(?:\s*complet)?|les\s+règles|règles\s+(?:internes|de|du|d’|d'))\b/i.test(lastText || '');
         if (askForPrompt) {
           const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),
@@ -193,7 +193,7 @@ export async function POST(req: Request) {
         }
 
         function containsLeakSignals(text: string) {
-          return /(RÔLE\s+ET\s+OBJECTIF|M[ÉE]THODOLOGIE|\bles\s+règles\b|prompt\s*complet)/i.test(text);
+          return /(RÔLE\s+ET\s+OBJECTIF|M[ÉE]THODOLOGIE|prompt\s*complet)/i.test(text);
         }
 
         function extractFirstMarkdownTable(text: string): string | null {
@@ -253,18 +253,33 @@ export async function POST(req: Request) {
           return table && /^\|.*\|/m.test(table) ? table : null;
         }
 
-        const total = normalized.length;
-        const shouldChunk = total >= 100;
-        const chunkSize = 120; // balanced for Gemini 2.5 Flash
-        const chunks: string[][] = [];
-        if (shouldChunk) {
-          for (let i = 0; i < total; i += chunkSize) {
-            chunks.push(normalized.slice(i, i + chunkSize));
-          }
+        // Conversational greeting handling — do NOT produce a table for simple salutations
+        const isGreeting = (t: string) => /\b(?:salut|bonjour|bonsoir|coucou|hello|hi|slt|bjr|ça va|ca va|comment\s+ça\s+va|comment\s+ca\s+va|السلام\s+عليكم|marhaba|مرحبا)\b/i.test(t.trim());
+        if (isGreeting(lastText || '') && normalized.length <= 1) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Bonjour ! Ça va ? Je suis un agent spécialisé dans la correction de libellés produits. Comment puis-je vous aider ?" }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+
+        // Nomenclature-like streaming pipeline for Libeller
+        if (normalized.length > 300) {
           const warn: ChatMessage = {
             id: 'msg-' + uuidv4(),
             role: 'assistant',
-            parts: [{ type: 'text', text: `Grand volume détecté (${total}). Traitement par lots (${chunks.length})…` }],
+            parts: [{ type: 'text', text: `Grand volume détecté (${normalized.length}). Traitement en cours…` }],
             attachments: [],
             metadata: {
               model: String(model),
@@ -276,108 +291,68 @@ export async function POST(req: Request) {
             },
           } as any;
           writer.write({ type: 'data-appendMessage', data: JSON.stringify(warn), transient: true });
-        } else {
-          chunks.push(normalized);
         }
 
-        const perChunkOutputs: string[] = [];
-        for (let idx = 0; idx < chunks.length; idx++) {
-          const chunk = chunks[idx];
-          const { text } = await generateText({
-            model: google('gemini-2.5-flash' as any),
-            system: systemParts.join('\n\n'),
-            temperature: 0,
-            topP: 0.1,
-            prompt: chunk.join('\n'),
-          });
-          if (containsLeakSignals(text)) {
-            const safe: ChatMessage = {
-              id: 'msg-' + uuidv4(),
-              role: 'assistant',
-              parts: [{ type: 'text', text: "J’applique des règles internes de nettoyage et de standardisation. Pour les détails spécifiques, contactez Arka (développeur)." }],
-              attachments: [],
-              metadata: {
-                model: String(model),
-                completionTime: 0,
-                createdAt: new Date().toISOString(),
-                inputTokens: 0,
-                outputTokens: 0,
-                totalTokens: 0,
-              },
-            } as any;
-            writer.write({ type: 'data-appendMessage', data: JSON.stringify(safe), transient: false });
-            return;
-          }
-          perChunkOutputs.push(text);
-        }
-
-        // Aggregate tables
-        const allRows: string[][] = [];
-        for (const out of perChunkOutputs) {
-          const tableBlock = extractFirstMarkdownTable(out) || out.trim();
-          if (!tableBlock) continue;
-          const parsed = parseTable(tableBlock);
-          if (parsed && parsed.headers.length >= 2) {
-            // Validate headers; tolerate case & extra whitespace
-            const h0 = (parsed.headers[0] || '').toLowerCase();
-            const h1 = (parsed.headers[1] || '').toLowerCase();
-            if (h0.includes('libellé') && h0.includes('original') && h1.includes('corrigé')) {
-              allRows.push(...parsed.rows.map((r) => [r[0] ?? '', r[1] ?? '']));
-            } else {
-              // Header drift — try to accept rows anyway assuming two columns
-              allRows.push(...parsed.rows.map((r) => [r[0] ?? '', r[1] ?? '']));
+        const modelPlan: Array<{ name: string; retries: number }> = [
+          { name: 'gemini-2.5-flash', retries: 1 },
+          { name: 'gemini-2.0-flash', retries: 2 },
+        ];
+        let result: ReturnType<typeof streamText> | null = null;
+        let lastError: unknown = null;
+        outer: for (const item of modelPlan) {
+          for (let attempt = 0; attempt < item.retries; attempt++) {
+            try {
+              const toolsSpec = undefined;
+              result = streamText({
+                model: google(item.name as any),
+                messages: convertToModelMessages(messages),
+                system: systemParts.join('\n\n'),
+                temperature: 0,
+                topP: 0.1,
+                tools: toolsSpec as any,
+                toolChoice: 'auto',
+              });
+              break outer;
+            } catch (err) {
+              lastError = err;
+              continue;
             }
           }
         }
+        if (!result) throw lastError ?? new Error('Échec du démarrage du flux Libeller');
 
-        // Ensure order and count by aligning with originals
-        const originalIndices = new Map<string, number[]>();
-        normalized.forEach((o, i) => {
-          if (!originalIndices.has(o)) {
-            originalIndices.set(o, []);
-          }
-          originalIndices.get(o)!.push(i);
-        });
-        // Create rows aligned to originals length
-        const alignedRows: string[][] = new Array(normalized.length).fill(null).map(() => ['', '']);
-        
-        // Process corrections and distribute to all duplicate occurrences
-        const usedCorrections = new Map<string, string[]>();
-        for (const [orig, corr] of allRows) {
-          if (originalIndices.has(orig)) {
-            const indices = originalIndices.get(orig)!;
-            // Find the first unfilled index for this original
-            for (const i of indices) {
-              if (!alignedRows[i] || !alignedRows[i][1]) {
-                alignedRows[i] = [orig, corr ?? ''];
-                break;
+        result.consumeStream();
+        writer.merge(
+          result.toUIMessageStream({
+            sendReasoning: false,
+            messageMetadata: ({ part }) => {
+              if (part.type === 'finish') {
+                const processingTime = (Date.now() - streamStart) / 1000;
+                return {
+                  model: model as string,
+                  completionTime: processingTime,
+                  createdAt: new Date().toISOString(),
+                  totalTokens: part.totalUsage?.totalTokens ?? null,
+                  inputTokens: part.totalUsage?.inputTokens ?? null,
+                  outputTokens: part.totalUsage?.outputTokens ?? null,
+                };
               }
-            }
-          }
-        }
-        // Fill any missing originals from input
-        for (let i = 0; i < normalized.length; i++) {
-          if (!alignedRows[i] || !alignedRows[i][0]) alignedRows[i] = [normalized[i], alignedRows[i]?.[1] ?? ''];
-        }
+            },
+          }),
+        );
+        return;
+      }
 
-        let finalTable = buildTable(['Libellé Original', 'Libellé Corrigé'], alignedRows);
+      if (group === 'nomenclature') {
+        const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
-        // Validate row count
-        const parsedFinal = parseTable(finalTable);
-        const rowCount = parsedFinal?.rows.length ?? 0;
-        if (rowCount !== normalized.length) {
-          const repaired = await repairTableWithModel(normalized, finalTable);
-          if (repaired) {
-            finalTable = repaired;
-          }
-        }
-
-        // Final leak guard
-        if (containsLeakSignals(finalTable)) {
-          const safe: ChatMessage = {
+        // Conversational greeting handling — do NOT produce a table for simple salutations
+        const isGreeting = (t: string) => /\b(?:salut|bonjour|bonsoir|coucou|hello|hi|slt|bjr|ça va|ca va|comment\s+ça\s+va|comment\s+ca\s+va|السلام\s+عليكم|marhaba|مرحبا)\b/i.test((t || '').trim());
+        if (isGreeting(lastText || '') && normalized.length <= 1) {
+          const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),
             role: 'assistant',
-            parts: [{ type: 'text', text: "J’applique des règles internes de nettoyage et de standardisation. Pour les détails spécifiques, contactez Arka (développeur)." }],
+            parts: [{ type: 'text', text: "Bonjour ! Ça va ? Je suis un agent spécialisé dans la classification douanière et les taxes. Comment puis-je vous aider ?" }],
             attachments: [],
             metadata: {
               model: String(model),
@@ -388,31 +363,11 @@ export async function POST(req: Request) {
               totalTokens: 0,
             },
           } as any;
-          writer.write({ type: 'data-appendMessage', data: JSON.stringify(safe), transient: false });
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
           return;
         }
 
-        const msg: ChatMessage = {
-          id: 'msg-' + uuidv4(),
-          role: 'assistant',
-          parts: [{ type: 'text', text: finalTable }],
-          attachments: [],
-          metadata: {
-            model: String(model),
-            completionTime: (Date.now() - streamStart) / 1000,
-            createdAt: new Date().toISOString(),
-            inputTokens: 0,
-            outputTokens: 0,
-            totalTokens: 0,
-          },
-        } as any;
-        writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
-        return;
-      }
-
-      if (group === 'nomenclature') {
-        const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const askForPrompt = /\b(prompt|règles|rules|instructions?)\b/i.test(lastText || '');
+        const askForPrompt = normalized.length === 0 && /\b(prompt(?:\s*complet)?|les\s+règles|règles\s+(?:internes|de|du|d’|d'))\b/i.test(lastText || '');
         if (askForPrompt) {
           const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),

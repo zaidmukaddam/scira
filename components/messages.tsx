@@ -284,7 +284,7 @@ const Messages: React.FC<MessagesProps> = ({
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   const shouldShowLibellerLoader = useMemo(() => {
-    return status === 'streaming' && selectedGroup === 'libeller' && !hasActiveToolInvocations;
+    return (status === 'submitted' || status === 'streaming') && selectedGroup === 'libeller' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   // Compute index of the most recent assistant message; only that one should keep min-height
