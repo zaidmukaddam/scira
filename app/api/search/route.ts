@@ -172,7 +172,7 @@ export async function POST(req: Request) {
           writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
           return;
         }
-        if (normalized.length <= 1) {
+        if (normalized.length === 0) {
           const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),
             role: 'assistant',
