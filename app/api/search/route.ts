@@ -331,14 +331,34 @@ export async function POST(req: Request) {
         }
 
         // Ensure order and count by aligning with originals
-        const originalIndex = new Map<string, number>();
-        normalized.forEach((o, i) => originalIndex.set(o, i));
+        // Track which original indices need corrections
+        const originalIndices = new Map<string, number[]>();
+        normalized.forEach((o, i) => {
+          if (!originalIndices.has(o)) {
+            originalIndices.set(o, []);
+          }
+          originalIndices.get(o)!.push(i);
+        });
+        
         // Create rows aligned to originals length
         const alignedRows: string[][] = new Array(normalized.length).fill(null).map(() => ['', '']);
+        
+        // Process corrections and distribute to all duplicate occurrences
+        const usedCorrections = new Map<string, string[]>();
         for (const [orig, corr] of allRows) {
-          if (originalIndex.has(orig)) {
-            const i = originalIndex.get(orig)!;
-            alignedRows[i] = [orig, corr ?? ''];
+          if (!usedCorrections.has(orig)) {
+            usedCorrections.set(orig, []);
+          }
+          usedCorrections.get(orig)!.push(corr ?? '');
+        }
+        
+        // Assign corrections to all occurrences of each original label
+        for (const [original, indices] of originalIndices) {
+          const corrections = usedCorrections.get(original) || [''];
+          for (let i = 0; i < indices.length; i++) {
+            const idx = indices[i];
+            const correction = corrections[i] || corrections[0] || '';
+            alignedRows[idx] = [original, correction];
           }
         }
         // Fill any missing originals from input
