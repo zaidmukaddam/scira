@@ -42,7 +42,7 @@ Article | Nomenclature | Produits-Catégorie | Surtaxe | TIC sur base | TIC | Ta
 
 **Réponse attendue** :
 
-| Article              | Nomenclature | Produits-Catégorie | Surface | TIC sur base | TIC | Taxe sanitaire (kg net) |
+| Article              | Nomenclature | Produits-Catégorie | Surtaxe | TIC sur base | TIC | Taxe sanitaire (kg net) |
 |----------------------|--------------|--------------------|---------|--------------|-----|--------------------------|
 | Pâtes alimentaires   | 2040         | P.NET Pâtes alimentaires | 40      | 20%          | 5   | 5                        |
 
@@ -52,7 +52,7 @@ Article | Nomenclature | Produits-Catégorie | Surtaxe | TIC sur base | TIC | Ta
 
 **Réponse attendue** :
 
-| Article   | Nomenclature | Produits-Catégorie | Surface | TIC sur base | TIC | Taxe sanitaire (kg net) |
+| Article   | Nomenclature | Produits-Catégorie | Surtaxe | TIC sur base | TIC | Taxe sanitaire (kg net) |
 |-----------|--------------|--------------------|---------|--------------|-----|--------------------------|
 | Yaourts   | 2010         | P.NET YAOURTS      | 100     | 10%          | 20  | 20                       |
 
