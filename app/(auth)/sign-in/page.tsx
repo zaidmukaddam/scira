@@ -11,9 +11,9 @@ export default function SignInPage() {
       if (raw) {
         const data = JSON.parse(raw) as { label?: string } | null;
         if (data?.label) {
-          toast.success('Profil sélectionné', { description: data.label, duration: Infinity });
+          toast.success('Profil sélectionné', { description: data.label, duration: 3000 });
         } else {
-          toast.success('Profil sélectionné', { duration: Infinity });
+          toast.success('Profil sélectionné', { duration: 3000 });
         }
         localStorage.removeItem('scira:selected-profile');
       }
