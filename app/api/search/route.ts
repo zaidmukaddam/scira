@@ -1,5 +1,5 @@
 // /app/api/search/route.ts
-import { convertToModelMessages, streamText, createUIMessageStream, JsonToSseTransformStream } from 'ai';
+import { convertToModelMessages, streamText, createUIMessageStream, JsonToSseTransformStream, generateText } from 'ai';
 import { scira } from '@/ai/providers';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
@@ -150,6 +150,265 @@ export async function POST(req: Request) {
       if (instructions) systemParts.unshift(instructions);
       if (autoContext) systemParts.push(autoContext);
       if (latitude && longitude) systemParts.push(`User location (approx): ${latitude}, ${longitude}`);
+
+      // Correction Libeller special handling
+      if (group === 'libeller') {
+        const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const askForPrompt = /\b(prompt|règles|rules|instructions?|prompt\s*complet)\b/i.test(lastText || '');
+        if (askForPrompt) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "J’applique des règles internes de nettoyage et de standardisation. Pour les détails spécifiques, contactez Arka (développeur)." }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+        if (normalized.length === 0) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Format d’entrée invalide. Collez une liste multi‑ligne avec un libellé par ligne (pas de texte libre)." }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+
+        function containsLeakSignals(text: string) {
+          return /(RÔLE\s+ET\s+OBJECTIF|M[ÉE]THODOLOGIE|\bles\s+règles\b|prompt\s*complet)/i.test(text);
+        }
+
+        function extractFirstMarkdownTable(text: string): string | null {
+          const lines = text.split(/\r?\n/);
+          let start = -1;
+          let end = -1;
+          for (let i = 0; i < lines.length; i++) {
+            if (/^\s*\|.*\|\s*$/.test(lines[i])) {
+              if (start === -1) start = i;
+              end = i;
+            } else if (start !== -1) {
+              break;
+            }
+          }
+          if (start !== -1 && end > start) {
+            const block = lines.slice(start, end + 1).join('\n').trim();
+            // Require at least header + alignment + one row OR allow empty rows to repair later
+            return block;
+          }
+          return null;
+        }
+
+        function parseTable(tableText: string): { headers: string[]; rows: string[][] } | null {
+          const rows = tableText
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter((l) => /^\|.*\|$/.test(l));
+          if (rows.length < 2) return null; // need header + alignment
+          const header = rows[0]
+            .slice(1, -1)
+            .split('|')
+            .map((c) => c.trim());
+          const body = rows.slice(2).map((r) => r.slice(1, -1).split('|').map((c) => c.trim()));
+          return { headers: header, rows: body };
+        }
+
+        function buildTable(headers: string[], rows: string[][]): string {
+          const headerLine = `| ${headers.join(' | ')} |`;
+          const alignLine = `| ${headers.map(() => '---').join(' | ')} |`;
+          const body = rows.map((r) => `| ${r.map((c) => c ?? '').join(' | ')} |`).join('\n');
+          return [headerLine, alignLine, body].filter(Boolean).join('\n');
+        }
+
+        async function repairTableWithModel(originals: string[], maybeText: string): Promise<string | null> {
+          const repairSystem = [
+            ...systemParts,
+            'STRICT REPAIR ONLY: Convert the following content into a valid Markdown table with exactly two columns named "Libellé Original" and "Libellé Corrigé". Preserve every original label exactly as provided and in the same order. If a corrected value is missing, generate it using the transformation methodology without adding new words beyond transformations. Output ONLY the table.'
+          ].join('\n\n');
+          const { text } = await generateText({
+            model: google('gemini-2.5-flash' as any),
+            system: repairSystem,
+            temperature: 0,
+            topP: 0.1,
+            prompt: `Libellés (ordre à respecter):\n${originals.join('\n')}\n\nContenu à réparer:\n${maybeText}`,
+          });
+          const table = extractFirstMarkdownTable(text) || text.trim();
+          return table && /^\|.*\|/m.test(table) ? table : null;
+        }
+
+        const total = normalized.length;
+        const shouldChunk = total >= 100;
+        const chunkSize = 120; // balanced for Gemini 2.5 Flash
+        const chunks: string[][] = [];
+        if (shouldChunk) {
+          for (let i = 0; i < total; i += chunkSize) {
+            chunks.push(normalized.slice(i, i + chunkSize));
+          }
+          const warn: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: `Grand volume détecté (${total}). Traitement par lots (${chunks.length})…` }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(warn), transient: true });
+        } else {
+          chunks.push(normalized);
+        }
+
+        const perChunkOutputs: string[] = [];
+        for (let idx = 0; idx < chunks.length; idx++) {
+          const chunk = chunks[idx];
+          const { text } = await generateText({
+            model: google('gemini-2.5-flash' as any),
+            system: systemParts.join('\n\n'),
+            temperature: 0,
+            topP: 0.1,
+            prompt: chunk.join('\n'),
+          });
+          if (containsLeakSignals(text)) {
+            const safe: ChatMessage = {
+              id: 'msg-' + uuidv4(),
+              role: 'assistant',
+              parts: [{ type: 'text', text: "J’applique des règles internes de nettoyage et de standardisation. Pour les détails spécifiques, contactez Arka (développeur)." }],
+              attachments: [],
+              metadata: {
+                model: String(model),
+                completionTime: 0,
+                createdAt: new Date().toISOString(),
+                inputTokens: 0,
+                outputTokens: 0,
+                totalTokens: 0,
+              },
+            } as any;
+            writer.write({ type: 'data-appendMessage', data: JSON.stringify(safe), transient: false });
+            return;
+          }
+          perChunkOutputs.push(text);
+        }
+
+        // Aggregate tables
+        const allRows: string[][] = [];
+        for (const out of perChunkOutputs) {
+          const tableBlock = extractFirstMarkdownTable(out) || out.trim();
+          if (!tableBlock) continue;
+          const parsed = parseTable(tableBlock);
+          if (parsed && parsed.headers.length >= 2) {
+            // Validate headers; tolerate case & extra whitespace
+            const h0 = (parsed.headers[0] || '').toLowerCase();
+            const h1 = (parsed.headers[1] || '').toLowerCase();
+            if (h0.includes('libellé') && h0.includes('original') && h1.includes('corrigé')) {
+              allRows.push(...parsed.rows.map((r) => [r[0] ?? '', r[1] ?? '']));
+            } else {
+              // Header drift — try to accept rows anyway assuming two columns
+              allRows.push(...parsed.rows.map((r) => [r[0] ?? '', r[1] ?? '']));
+            }
+          }
+        }
+
+        // Ensure order and count by aligning with originals
+        const originalIndices = new Map<string, number[]>();
+        normalized.forEach((o, i) => {
+          if (!originalIndices.has(o)) {
+            originalIndices.set(o, []);
+          }
+          originalIndices.get(o)!.push(i);
+        });
+        // Create rows aligned to originals length
+        const alignedRows: string[][] = new Array(normalized.length).fill(null).map(() => ['', '']);
+        
+        // Process corrections and distribute to all duplicate occurrences
+        const usedCorrections = new Map<string, string[]>();
+        for (const [orig, corr] of allRows) {
+          if (originalIndices.has(orig)) {
+            const indices = originalIndices.get(orig)!;
+            // Find the first unfilled index for this original
+            for (const i of indices) {
+              if (!alignedRows[i] || !alignedRows[i][1]) {
+                alignedRows[i] = [orig, corr ?? ''];
+                break;
+              }
+            }
+          }
+        }
+        // Fill any missing originals from input
+        for (let i = 0; i < normalized.length; i++) {
+          if (!alignedRows[i] || !alignedRows[i][0]) alignedRows[i] = [normalized[i], alignedRows[i]?.[1] ?? ''];
+        }
+
+        let finalTable = buildTable(['Libellé Original', 'Libellé Corrigé'], alignedRows);
+
+        // Validate row count
+        const parsedFinal = parseTable(finalTable);
+        const rowCount = parsedFinal?.rows.length ?? 0;
+        if (rowCount !== normalized.length) {
+          const repaired = await repairTableWithModel(normalized, finalTable);
+          if (repaired) {
+            finalTable = repaired;
+          }
+        }
+
+        // Final leak guard
+        if (containsLeakSignals(finalTable)) {
+          const safe: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "J’applique des règles internes de nettoyage et de standardisation. Pour les détails spécifiques, contactez Arka (développeur)." }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(safe), transient: false });
+          return;
+        }
+
+        const msg: ChatMessage = {
+          id: 'msg-' + uuidv4(),
+          role: 'assistant',
+          parts: [{ type: 'text', text: finalTable }],
+          attachments: [],
+          metadata: {
+            model: String(model),
+            completionTime: (Date.now() - streamStart) / 1000,
+            createdAt: new Date().toISOString(),
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+          },
+        } as any;
+        writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+        return;
+      }
 
       if (group === 'nomenclature') {
         const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
