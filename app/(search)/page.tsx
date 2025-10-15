@@ -92,6 +92,11 @@ export default function Home() {
 
   const handleSelect = (id: string) => {
     const p = profiles.find((x) => x.id === id);
+    try {
+      if (p?.label) {
+        localStorage.setItem('scira:selected-profile', JSON.stringify({ label: p.label, t: Date.now() }));
+      }
+    } catch {}
     toast('Connexion…', {
       description: p?.label ? `Profil: ${p.label}` : undefined,
       icon: <Spinner className="size-3.5" />,
