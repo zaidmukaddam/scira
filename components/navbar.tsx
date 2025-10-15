@@ -59,6 +59,7 @@ const Navbar = memo(
     const router = useRouter();
     const pathname = usePathname();
     const isSearchWithId = useMemo(() => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)), [pathname]);
+    const isBusy = useMemo(() => status === 'streaming' || status === 'submitted', [status]);
 
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
@@ -82,7 +83,18 @@ const Navbar = memo(
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+                aria-disabled={isBusy}
+                disabled={isBusy}
+                onClick={(e) => {
+                  if (isBusy) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                className={cn(
+                  "rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto",
+                  isBusy && "opacity-50 cursor-not-allowed pointer-events-none hover:scale-100",
+                )}
               >
                 <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
                 <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">Nouveau</span>

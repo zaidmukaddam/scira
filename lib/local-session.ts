@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import { cookies, headers } from 'next/headers';
 import crypto from 'crypto';
 import { serverEnv } from '@/env/server';
