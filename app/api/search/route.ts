@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       // Correction Libeller special handling
       if (group === 'libeller') {
         const normalized = (lastText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const askForPrompt = /\b(prompt|règles|rules|instructions?|prompt\s*complet)\b/i.test(lastText || '');
+        const askForPrompt = normalized.length === 0 && /\b(prompt(?:\s*complet)?|les\s+règles|règles\s+(?:internes|de|du|d’|d'))\b/i.test(lastText || '');
         if (askForPrompt) {
           const msg: ChatMessage = {
             id: 'msg-' + uuidv4(),
