@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BorderTrail } from "@/components/core/border-trail";
 import { TextShimmer } from "@/components/core/text-shimmer";
@@ -13,6 +13,7 @@ export interface NomenclatureLoadingStateProps extends React.HTMLAttributes<HTML
 }
 
 export function NomenclatureLoadingState({ size = 80, duration = 5, className, ...props }: NomenclatureLoadingStateProps) {
+  const skeletonWidths = useMemo(() => [45, 28, 52], []);
   return (
     <Card
       className={cn("relative w-full h-[100px] my-4 overflow-hidden shadow-none", className)}
@@ -48,11 +49,11 @@ export function NomenclatureLoadingState({ size = 80, duration = 5, className, .
                 {"Classification douanière en cours…"}
               </TextShimmer>
               <div className="flex gap-2">
-                {[...Array(3)].map((_, i) => (
+                {skeletonWidths.map((width, i) => (
                   <div
                     key={i}
                     className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse"
-                    style={{ width: `${Math.random() * 40 + 20}px`, animationDelay: `${i * 0.2}s` }}
+                    style={{ width: `${width}px`, animationDelay: `${i * 0.2}s` }}
                   />
                 ))}
               </div>
