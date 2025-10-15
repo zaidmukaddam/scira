@@ -14,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
 
 const ChatInterface = dynamic(() => import('@/components/chat-interface').then((m) => m.ChatInterface), {
   ssr: true,
@@ -56,21 +58,6 @@ export default function Home() {
   const [newName, setNewName] = React.useState('');
   const [newIcon, setNewIcon] = React.useState('');
 
-  const [selectedOpen, setSelectedOpen] = React.useState(false);
-  const [selectedLabel, setSelectedLabel] = React.useState('');
-
-  React.useEffect(() => {
-    let t: any;
-    if (selectedOpen) {
-      t = setTimeout(() => {
-        router.push('/sign-in');
-      }, 900);
-    }
-    return () => {
-      if (t) clearTimeout(t);
-    };
-  }, [selectedOpen, router]);
-
   if (isLoading) {
     return <div className="min-h-[240px]" />;
   }
@@ -105,8 +92,14 @@ export default function Home() {
 
   const handleSelect = (id: string) => {
     const p = profiles.find((x) => x.id === id);
-    setSelectedLabel(p?.label || '');
-    setSelectedOpen(true);
+    toast('Connexion…', {
+      description: p?.label ? `Profil: ${p.label}` : undefined,
+      icon: <Spinner className="size-3.5" />,
+      duration: 900,
+    });
+    setTimeout(() => {
+      router.push('/sign-in');
+    }, 700);
   };
 
   return (
@@ -146,15 +139,6 @@ export default function Home() {
             </Button>
             <Button onClick={handleCreateProfile}>Créer</Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={selectedOpen} onOpenChange={setSelectedOpen}>
-        <DialogContent showCloseButton={false} className="max-w-xs p-5 text-center">
-          <DialogHeader>
-            <DialogTitle>Profil sélectionné</DialogTitle>
-            <DialogDescription className="text-base">{selectedLabel}</DialogDescription>
-          </DialogHeader>
         </DialogContent>
       </Dialog>
     </div>
