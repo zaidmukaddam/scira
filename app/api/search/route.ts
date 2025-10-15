@@ -193,7 +193,7 @@ export async function POST(req: Request) {
         }
 
         function containsLeakSignals(text: string) {
-          return /(RÔLE\s+ET\s+OBJECTIF|M[ÉE]THODOLOGIE|\bles\s+règles\b|prompt\s*complet)/i.test(text);
+          return /(RÔLE\s+ET\s+OBJECTIF|M[ÉE]THODOLOGIE|prompt\s*complet)/i.test(text);
         }
 
         function extractFirstMarkdownTable(text: string): string | null {
@@ -253,6 +253,27 @@ export async function POST(req: Request) {
           return table && /^\|.*\|/m.test(table) ? table : null;
         }
 
+        // Conversational greeting handling — do NOT produce a table for simple salutations
+        const isGreeting = (t: string) => /\b(?:salut|bonjour|bonsoir|coucou|hello|hi|slt|bjr|ça va|ca va|comment\s+ça\s+va|comment\s+ca\s+va|السلام\s+عليكم|marhaba|مرحبا)\b/i.test(t.trim());
+        if (isGreeting(lastText || '') && normalized.length <= 1) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: "Bonjour ! Ça va ? Je suis un agent spécialisé dans la correction de libellés produits. Comment puis-je vous aider ?" }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+
         const total = normalized.length;
         const shouldChunk = total >= 100;
         const chunkSize = 120; // balanced for Gemini 2.5 Flash
@@ -290,7 +311,8 @@ export async function POST(req: Request) {
             topP: 0.1,
             prompt: chunk.join('\n'),
           });
-          if (containsLeakSignals(text)) {
+          const maybeTable = extractFirstMarkdownTable(text);
+          if (containsLeakSignals(text) && !maybeTable) {
             const safe: ChatMessage = {
               id: 'msg-' + uuidv4(),
               role: 'assistant',
@@ -308,7 +330,7 @@ export async function POST(req: Request) {
             writer.write({ type: 'data-appendMessage', data: JSON.stringify(safe), transient: false });
             return;
           }
-          perChunkOutputs.push(text);
+          perChunkOutputs.push(maybeTable || text);
         }
 
         // Aggregate tables
@@ -372,8 +394,8 @@ export async function POST(req: Request) {
           }
         }
 
-        // Final leak guard
-        if (containsLeakSignals(finalTable)) {
+        // Final leak guard — only if no table is present (avoid false positives on product name 'règles')
+        if (containsLeakSignals(finalTable) && !/^\s*\|.*\|/m.test(finalTable)) {
           const safe: ChatMessage = {
             id: 'msg-' + uuidv4(),
             role: 'assistant',
