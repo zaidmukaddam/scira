@@ -340,6 +340,9 @@ export async function POST(req: Request) {
         });
         // Create rows aligned to originals length
         const alignedRows: string[][] = new Array(normalized.length).fill(null).map(() => ['', '']);
+        
+        // Process corrections and distribute to all duplicate occurrences
+        const usedCorrections = new Map<string, string[]>();
         for (const [orig, corr] of allRows) {
           if (originalIndices.has(orig)) {
             const indices = originalIndices.get(orig)!;
