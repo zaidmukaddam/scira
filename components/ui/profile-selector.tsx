@@ -46,6 +46,7 @@ export const ProfileSelector = ({
           {showAddTile && onAddProfile && (
             <div className="group flex flex-col items-center gap-3">
               <button
+                type="button"
                 onClick={onAddProfile}
                 aria-label="Ajouter un nouveau profil"
                 className="group relative h-28 w-28 rounded-full border border-dashed border-border transition-all duration-300 ease-in-out hover:-translate-y-2 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:h-36 md:w-36"
@@ -63,6 +64,7 @@ export const ProfileSelector = ({
             <div key={profile.id} className="group relative flex flex-col items-center gap-3">
               {onDeleteProfile && (
                 <button
+                  type="button"
                   aria-label={`Supprimer le profil ${profile.label}`}
                   onClick={() => onDeleteProfile(profile.id)}
                   className="absolute -top-1.5 -right-1.5 z-10 size-7 rounded-full border border-border bg-background/80 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-destructive/10 hover:text-destructive"
@@ -72,6 +74,7 @@ export const ProfileSelector = ({
               )}
 
               <button
+                type="button"
                 onClick={() => onProfileSelect(profile.id)}
                 aria-label={`Sélectionner le profil: ${profile.label}`}
                 className="group relative h-28 w-28 rounded-full transition-transform duration-300 ease-in-out hover:-translate-y-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:h-36 md:w-36"
