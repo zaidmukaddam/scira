@@ -1654,9 +1654,32 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       [dynamicSearchGroups, session],
     );
 
+    const visibleGroupIds = useMemo(() => visibleGroups.map((g) => g.id), [visibleGroups]);
+
+    const defaultAgentOrder = useMemo(() => {
+      const preferred: SearchGroupId[] = ['cyrus', 'libeller', 'nomenclature'].filter((id) =>
+        visibleGroupIds.includes(id as SearchGroupId),
+      ) as SearchGroupId[];
+      const rest = visibleGroupIds.filter((id) => !preferred.includes(id as SearchGroupId)) as SearchGroupId[];
+      return [...preferred, ...rest] as SearchGroupId[];
+    }, [visibleGroupIds]);
+
+    const [agentOrder] = useLocalStorage<SearchGroupId[]>('scira-agent-order', defaultAgentOrder);
+
+    const orderedVisibleGroups = useMemo(() => {
+      const orderIndex = new Map(agentOrder.map((id, idx) => [id, idx]));
+      const origIndex = new Map(visibleGroups.map((g, idx) => [g.id, idx]));
+      return [...visibleGroups].sort((a, b) => {
+        const ia = orderIndex.has(a.id) ? (orderIndex.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+        const ib = orderIndex.has(b.id) ? (orderIndex.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+        if (ia !== ib) return ia - ib;
+        return (origIndex.get(a.id) ?? 0) - (origIndex.get(b.id) ?? 0);
+      });
+    }, [agentOrder, visibleGroups]);
+
     const selectedGroupData = useMemo(
-      () => visibleGroups.find((group) => group.id === selectedGroup),
-      [visibleGroups, selectedGroup],
+      () => orderedVisibleGroups.find((group) => group.id === selectedGroup),
+      [orderedVisibleGroups, selectedGroup],
     );
 
     const handleToggleExtreme = useCallback(() => {
@@ -1685,7 +1708,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     // Shared handler for group selection
     const handleGroupSelect = useCallback(
       async (currentValue: string) => {
-        const selectedGroup = visibleGroups.find((g) => g.id === currentValue);
+        const selectedGroup = orderedVisibleGroups.find((g) => g.id === currentValue);
 
         if (selectedGroup) {
           // Check if this is a Pro-only group and user is not Pro
@@ -1754,7 +1777,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       <Command
         className="rounded-lg"
         filter={(value, search) => {
-          const group = visibleGroups.find((g) => g.id === value);
+          const group = orderedVisibleGroups.find((g) => g.id === value);
           if (!group || !search) return 1;
 
           const searchTerm = search.toLowerCase();
@@ -1768,7 +1791,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         <CommandList className="max-h-[240px]">
           <CommandGroup>
             <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
-            {visibleGroups.map((group) => (
+            {orderedVisibleGroups.map((group) => (
               <CommandItem
                 key={group.id}
                 value={group.id}
@@ -1896,7 +1919,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </DrawerHeader>
                 <div className="px-4 pb-6 max-h-[calc(80vh-100px)] overflow-y-auto">
                   <div className="space-y-2">
-                    {visibleGroups.map((group) => (
+                    {orderedVisibleGroups.map((group) => (
                       <button
                         key={group.id}
                         onClick={() => handleGroupSelect(group.id)}

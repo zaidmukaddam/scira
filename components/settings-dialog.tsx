@@ -46,7 +46,7 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
 import { Loader2, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getSearchGroups, SearchGroupId } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
 import { SciraLogo } from './logos/scira-logo';
@@ -74,6 +74,11 @@ import {
 } from '@/components/ui/kibo-ui/contribution-graph';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
+import { useLocalSession } from '@/hooks/use-local-session';
+import { GripIcon } from '@/components/ui/grip';
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -319,6 +324,116 @@ function PreferencesSection({
     );
   };
 
+  // Agents reordering (drag-and-drop)
+  const { data: session } = useLocalSession();
+  const dynamicGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+  const reorderVisibleGroups = useMemo(
+    () =>
+      dynamicGroups.filter((group) => {
+        if (!group.show) return false;
+        if ('requireAuth' in group && group.requireAuth && !session) return false;
+        if (group.id === 'extreme') return false;
+        return true;
+      }),
+    [dynamicGroups, session],
+  );
+  const reorderVisibleIds = useMemo(() => reorderVisibleGroups.map((g) => g.id), [reorderVisibleGroups]);
+
+  const defaultAgentOrder = useMemo(() => {
+    const preferred: SearchGroupId[] = ['cyrus', 'libeller', 'nomenclature'].filter((id) =>
+      reorderVisibleIds.includes(id as SearchGroupId),
+    ) as SearchGroupId[];
+    const rest = reorderVisibleIds.filter((id) => !preferred.includes(id as SearchGroupId)) as SearchGroupId[];
+    return [...preferred, ...rest] as SearchGroupId[];
+  }, [reorderVisibleIds]);
+
+  const [agentOrder, setAgentOrder] = useLocalStorage<SearchGroupId[]>('scira-agent-order', defaultAgentOrder);
+
+  const normalizedAgentOrder = useMemo(() => {
+    const filtered = agentOrder.filter((id) => reorderVisibleIds.includes(id));
+    const missing = reorderVisibleIds.filter((id) => !filtered.includes(id));
+    return [...filtered, ...missing] as SearchGroupId[];
+  }, [agentOrder, reorderVisibleIds]);
+
+  useEffect(() => {
+    if (normalizedAgentOrder.length !== agentOrder.length || normalizedAgentOrder.some((id, i) => id !== agentOrder[i])) {
+      setAgentOrder(normalizedAgentOrder);
+    }
+  }, [normalizedAgentOrder, agentOrder, setAgentOrder]);
+
+  const [items, setItems] = useState<SearchGroupId[]>(normalizedAgentOrder);
+
+  useEffect(() => setItems(normalizedAgentOrder), [normalizedAgentOrder]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleAgentDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.indexOf(active.id as SearchGroupId);
+    const newIndex = items.indexOf(over.id as SearchGroupId);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const previous = items;
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    setItems(newItems);
+    try {
+      setAgentOrder(newItems);
+      toast.success('Ordre des agents mis à jour');
+    } catch (e) {
+      setItems(previous);
+      toast.error('Impossible d’enregistrer l’ordre');
+    }
+  };
+
+  function SortableAgentCard({ id }: { id: SearchGroupId }) {
+    const group = reorderVisibleGroups.find((g) => g.id === id);
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    } as React.CSSProperties;
+    if (!group) return null;
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          'rounded-lg border bg-card p-3 sm:p-4 flex items-start gap-2.5 select-none',
+          'cursor-grab active:cursor-grabbing',
+          isDragging ? 'shadow-lg ring-1 ring-primary/30' : 'hover:shadow-sm',
+        )}
+        aria-grabbed={isDragging}
+      >
+        <div className="flex items-center justify-center rounded-md bg-muted/50 p-1.5">
+          <HugeiconsIcon icon={group.icon} size={20} color="currentColor" strokeWidth={2} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{group.name}</div>
+              <div className="text-[11px] text-muted-foreground truncate">{group.description}</div>
+            </div>
+            <button
+              className="ml-2 p-1 text-muted-foreground/80 hover:text-foreground rounded focus:outline-none focus:ring-1 focus:ring-ring"
+              aria-label="Déplacer"
+              {...attributes}
+              {...listeners}
+            >
+              <GripIcon size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Custom Instructions queries and handlers
   const {
     data: customInstructions,
@@ -404,6 +519,33 @@ function PreferencesSection({
               Sélectionnez votre moteur de recherche préféré pour les recherches Web. Les changements prennent effet immédiatement et seront utilisés pour toutes les recherches futures.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Agents Reorder Section */}
+      <div className="space-y-3">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm">Réorganiser les Agents</h4>
+              <p className="text-xs text-muted-foreground">Faites glisser pour définir votre ordre préféré</p>
+            </div>
+          </div>
+
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgentDragEnd}>
+            <SortableContext items={items} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {items.map((id) => (
+                  <SortableAgentCard key={id} id={id} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <p className="text-xs text-muted-foreground">L’ordre sera sauvegardé automatiquement.</p>
         </div>
       </div>
 
