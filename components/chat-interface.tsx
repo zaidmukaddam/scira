@@ -126,8 +126,8 @@ const ChatInterface = memo(
       false,
     );
     const [persistedHasShownLookoutAnnouncement, setPersitedHasShownLookoutAnnouncement] = useLocalStorage(
-      'scira-lookout-announcement-shown',
-      false,
+      'scira-lookout-announcement-disabled',
+      true,
     );
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
