@@ -93,7 +93,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
-    const availableModels = useMemo(() => models, []);
+    const THINK_MODELS = ['scira-google-think','scira-google-think-v2','scira-google-think-v3'];
+    const COMING_SOON_MODELS = new Set(['scira-google-think-v2','scira-google-think-v3']);
+    const availableModels = useMemo(() => models.filter(m => THINK_MODELS.includes(m.value)), []);
 
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
@@ -417,6 +419,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [availableModels, selectedModel],
     );
 
+    useEffect(() => {
+      if (!THINK_MODELS.includes(selectedModel) || COMING_SOON_MODELS.has(selectedModel)) {
+        setSelectedModel('scira-google-think');
+      }
+    }, []);
+
     // Auto-switch away from pro models when user loses pro access
     useEffect(() => {
       if (isSubscriptionLoading) return;
@@ -498,7 +506,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 {rankedModels.map((model) => {
                   const requiresAuth = requiresAuthentication(model.value) && !user;
                   const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                  const isLocked = requiresAuth || requiresPro;
+                  const isComingSoon = COMING_SOON_MODELS.has(model.value);
+                  const isLocked = requiresAuth || requiresPro || isComingSoon;
 
                   if (isLocked) {
                     return (
@@ -714,7 +723,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 {categoryModels.map((model) => {
                   const requiresAuth = requiresAuthentication(model.value) && !user;
                   const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                  const isLocked = requiresAuth || requiresPro;
+                  const isComingSoon = COMING_SOON_MODELS.has(model.value);
+                  const isLocked = requiresAuth || requiresPro || isComingSoon;
 
                   if (isLocked) {
                     return (
