@@ -654,7 +654,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-google-think-v3',
-    label: 'Direction — Bientôt disponible'
+    label: 'Direction — Bientôt disponible',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
     reasoning: true,
