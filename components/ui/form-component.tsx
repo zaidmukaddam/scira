@@ -93,7 +93,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
-    const availableModels = useMemo(() => models, []);
+    const THINK_MODELS = ['scira-google-think','scira-google-think-v2','scira-google-think-v3'];
+    const availableModels = useMemo(() => models.filter(m => THINK_MODELS.includes(m.value)), []);
 
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
@@ -416,6 +417,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       () => availableModels.find((m) => m.value === selectedModel),
       [availableModels, selectedModel],
     );
+
+    useEffect(() => {
+      if (!THINK_MODELS.includes(selectedModel)) {
+        setSelectedModel('scira-google-think');
+      }
+    }, []);
 
     // Auto-switch away from pro models when user loses pro access
     useEffect(() => {

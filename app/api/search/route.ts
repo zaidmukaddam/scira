@@ -499,7 +499,7 @@ export async function POST(req: Request) {
       if (!result) throw lastError ?? new Error('Failed to start stream');
 
       result.consumeStream();
-      const enableReasoning = String(model) === 'scira-google-think';
+      const enableReasoning = new Set(['scira-google-think','scira-google-think-v2','scira-google-think-v3']).has(String(model));
       writer.merge(
         result.toUIMessageStream({
           sendReasoning: enableReasoning,
