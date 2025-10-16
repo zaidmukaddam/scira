@@ -624,7 +624,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-google-think',
-    label: 'Gemini 2.5 Flash Thinking',
+    label: 'Hypermarché L’Hyper',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
     reasoning: true,
@@ -639,7 +639,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-google-think-v2',
-    label: 'Gemini 2.5 Flash Thinking',
+    label: 'Plateforme — Bientôt disponible',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
     reasoning: true,
@@ -654,7 +654,7 @@ export const models: Model[] = [
   },
   {
     value: 'scira-google-think-v3',
-    label: 'Gemini 2.5 Flash Thinking',
+    label: 'Direction — Bientôt disponible'
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
     reasoning: true,
