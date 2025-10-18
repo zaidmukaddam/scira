@@ -5,7 +5,7 @@ import { BorderTrail } from "@/components/core/border-trail";
 import { TextShimmer } from "@/components/core/text-shimmer";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FileExcel01Icon as FileExcelIcon } from "@hugeicons/core-free-icons";
+import { File01Icon as FileExcelIcon } from "@hugeicons/core-free-icons";
 
 export interface PdfToExcelLoadingStateProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: number;
