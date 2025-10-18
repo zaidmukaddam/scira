@@ -121,7 +121,7 @@
     "unist-util-visit": "^5.0.0",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
-    "xlsx": "^0.19.3",
+    "xlsx": "^0.18.5",
     "zod": "4.1.8"
   },
   "devDependencies": {
