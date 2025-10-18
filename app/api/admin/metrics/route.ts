@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest) {
   const since60s = new Date(now.getTime() - 60 * 1000);
 
   const [allUsers, activeUsers, suspendedUsers, deletedUsers, recentMessages] = await Promise.all([
-    db.select({ id: user.id, status: user.status }).from(user),
+    db.select({ id: user.id, status: user.status, name: user.name }).from(user),
     db.select({ id: user.id }).from(user).where(and((user as any).lastSeen.isNotNull?.() ?? (user.lastSeen as any), gte(user.lastSeen, since60s))),
     db.select({ id: user.id }).from(user).where((user.status as any).eq ? (user.status as any).eq('suspended') : (user.status as any) as any),
     db.select({ id: user.id }).from(user).where((user.status as any).eq ? (user.status as any).eq('deleted') : (user.status as any) as any),
@@ -82,5 +82,6 @@ export async function GET(_req: NextRequest) {
       usersActivity: messagesByUser,
       usersCost: costByUser,
     },
+    users: (allUsers || []).map((u: any) => ({ id: u.id, name: u.name })),
   });
 }

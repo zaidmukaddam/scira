@@ -10,6 +10,8 @@ import { ClientAnalytics } from '@/components/client-analytics';
 // import { Databuddy } from '@databuddy/sdk';
 
 import { Providers } from './providers';
+import AuthGate from '@/components/auth-gate';
+import { ClientHeartbeat } from '@/components/ClientHeartbeat';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://hhyper.vercel.app'),
@@ -118,9 +120,11 @@ export default function RootLayout({
         className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <AuthGate />
         <NuqsAdapter>
           <Providers>
             <Toaster position="top-center" />
+            <ClientHeartbeat />
             {children}
           </Providers>
         </NuqsAdapter>
