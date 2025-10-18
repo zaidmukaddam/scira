@@ -37,7 +37,8 @@ export type SearchGroupId =
   | 'connectors'
   | 'cyrus'
   | 'libeller'
-  | 'nomenclature';
+  | 'nomenclature'
+  | 'pdfExcel';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -165,6 +166,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'Nomenclature',
       description: 'Classification douanière et taxes (table Markdown)',
       icon: AppleStocksIcon,
+      show: true,
+    },
+    {
+      id: 'pdfExcel' as const,
+      name: 'PDF → Excel',
+      description: 'Extraction de tableaux depuis des PDFs (Markdown) + export .xlsx',
+      icon: Database02Icon,
       show: true,
     },
   ] as const;
