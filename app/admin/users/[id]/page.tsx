@@ -28,6 +28,24 @@ export default function UserProfilePage() {
 
   const { data: metrics } = useQuery({ queryKey: ['admin-user-metrics', id, range], queryFn: () => fetchMetrics(id, range), refetchInterval: 30000 });
   const { data: page1 } = useQuery({ queryKey: ['admin-user-messages', id, 0], queryFn: () => fetchMessages(id, 0), refetchInterval: 30000 });
+  const [messages, setMessages] = useState<any[]>([]);
+  const [nextOffset, setNextOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    if (page1) {
+      setMessages(page1.messages || []);
+      setNextOffset(page1.nextOffset || 0);
+      setHasMore(!!page1.hasMore);
+    }
+  }, [page1]);
+
+  async function loadMore() {
+    const res = await fetchMessages(id, nextOffset);
+    setMessages((prev) => [...prev, ...(res.messages || [])]);
+    setNextOffset(res.nextOffset || nextOffset);
+    setHasMore(!!res.hasMore);
+  }
 
   useEffect(() => {
     if (!pusherClient) return;
@@ -116,15 +134,20 @@ export default function UserProfilePage() {
         <Card className="p-4">
           <div className="text-sm font-medium mb-2">Historique des messages</div>
           <div className="space-y-2 max-h-[320px] overflow-y-auto">
-            {(page1?.messages || []).map((m: any) => (
+            {messages.map((m: any) => (
               <div key={m.id} className="text-xs flex items-center justify-between">
                 <div className="truncate mr-2">{new Date(m.createdAt).toLocaleString('fr-FR')}</div>
                 <div className="text-muted-foreground mr-2">{m.role}</div>
                 <div className="text-muted-foreground truncate max-w-[40%]">{m.model || '—'}</div>
               </div>
             ))}
-            {(page1?.messages || []).length === 0 && <div className="text-xs text-muted-foreground">Aucun message</div>}
+            {messages.length === 0 && <div className="text-xs text-muted-foreground">Aucun message</div>}
           </div>
+          {hasMore && (
+            <div className="pt-2">
+              <Button variant="outline" size="sm" onClick={loadMore}>Charger plus</Button>
+            </div>
+          )}
         </Card>
       </div>
     </div>
