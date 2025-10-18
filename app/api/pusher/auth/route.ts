@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { pusher } from '@/lib/pusher';
 import { assertAdmin } from '@/lib/auth';

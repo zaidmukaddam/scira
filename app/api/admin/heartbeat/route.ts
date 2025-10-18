@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';

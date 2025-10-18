@@ -107,6 +107,7 @@
     "recharts": "^2.15.3",
     "pusher": "^5.2.0",
     "pusher-js": "^8.4.0",
+    "@tabler/icons-react": "^3.35.0",
     "redis": "^5.8.3",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",

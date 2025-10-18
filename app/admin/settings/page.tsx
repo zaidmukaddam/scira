@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import SettingsDialog from '@/components/settings-dialog';
+import { SettingsDialog } from '@/components/settings-dialog';
 
 export default function AdminSettingsPage() {
   const [open, setOpen] = useState(true);
