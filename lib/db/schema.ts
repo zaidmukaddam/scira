@@ -9,6 +9,11 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull(),
   image: text('image'),
+  role: varchar('role', { enum: ['user', 'admin'] }).notNull().default('user'),
+  status: varchar('status', { enum: ['active', 'suspended', 'deleted'] }).notNull().default('active'),
+  lastSeen: timestamp('last_seen'),
+  ipAddress: text('ip_address'),
+  geo: json('geo'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 });
@@ -260,4 +265,17 @@ export type Payment = InferSelectModel<typeof payment>;
 export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
+export const event = pgTable('event', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  category: varchar('category', { enum: ['security', 'user', 'system'] }).notNull(),
+  type: text('type').notNull(),
+  message: text('message'),
+  metadata: json('metadata'),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type Event = InferSelectModel<typeof event>;
 export type Lookout = InferSelectModel<typeof lookout>;

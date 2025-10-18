@@ -18,3 +18,12 @@ export const auth = {
     }
   }
 };
+
+export async function assertAdmin(options?: { headers?: any }) {
+  const session = await auth.api.getSession({ headers: options?.headers });
+  const u = (session as any)?.user;
+  if (!u || u.role !== 'admin' || u.status === 'suspended' || u.status === 'deleted') {
+    return null;
+  }
+  return u;
+}

@@ -45,6 +45,12 @@ export const serverEnv = createEnv({
     RESEND_API_KEY: z.string().optional().default('deprecated'),
     SUPERMEMORY_API_KEY: z.string().optional().default('deprecated'),
     ALLOWED_ORIGINS: z.string().optional().default('http://localhost:3000'),
+
+    PUSHER_APP_ID: z.string().optional(),
+    PUSHER_KEY: z.string().optional(),
+    PUSHER_SECRET: z.string().optional(),
+    PUSHER_CLUSTER: z.string().optional(),
+    PUSHER_USE_TLS: z.string().optional().default('true'),
   },
   experimental__runtimeEnv: process.env,
 });
