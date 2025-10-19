@@ -264,22 +264,7 @@ Plan Guidelines:
   // Create the autonomous research agent with tools
   const { text } = await generateText({
     model: scira.languageModel('scira-grok-4-fast-think'),
-    stopWhen: ({ steps }) => {
-      // Stop if step count reaches the limit
-      if (steps.length >= totalTodos) {
-        console.log(`🛑 Step limit reached: ${steps.length}/${totalTodos} steps`);
-        return true;
-      }
-
-      // Calculate total token usage and stop if it exceeds 100k
-      const totalTokens = steps.reduce((sum, step) => sum + (step.usage?.totalTokens ?? 0), 0);
-      if (totalTokens > 200000) {
-        console.log(`🛑 Token limit reached: ${totalTokens} tokens. Stopping agent at step ${steps.length}.`);
-        return true;
-      }
-
-      return false;
-    },
+    stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 

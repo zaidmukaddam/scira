@@ -23,8 +23,7 @@ import { SciraLogoHeader } from '@/components/scira-logo-header';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 
-// Tool-specific components (lazy loaded)
-import { lazy, Suspense } from 'react';
+// Tool-specific components (eagerly loaded for better UX)
 import { motion } from 'framer-motion';
 import { SearchLoadingState } from '@/components/tool-invocation-list-view';
 import {
@@ -64,33 +63,28 @@ import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
 
-// Lazy load tool components
-const FlightTracker = lazy(() =>
-  import('@/components/flight-tracker').then((module) => ({ default: module.FlightTracker })),
-);
-const InteractiveChart = lazy(() => import('@/components/interactive-charts'));
-const MapComponent = lazy(() =>
-  import('@/components/map-components').then((module) => ({ default: module.MapComponent })),
-);
-const TMDBResult = lazy(() => import('@/components/movie-info'));
-const MultiSearch = lazy(() => import('@/components/multi-search'));
-const NearbySearchMapView = lazy(() => import('@/components/nearby-search-map-view'));
-const TrendingResults = lazy(() => import('@/components/trending-tv-movies-results'));
-const AcademicPapersCard = lazy(() => import('@/components/academic-papers'));
-const WeatherChart = lazy(() => import('@/components/weather-chart'));
-const MCPServerList = lazy(() => import('@/components/mcp-server-list'));
-const RedditSearch = lazy(() => import('@/components/reddit-search'));
-const XSearch = lazy(() => import('@/components/x-search'));
-const ExtremeSearch = lazy(() =>
-  import('@/components/extreme-search').then((module) => ({ default: module.ExtremeSearch })),
-);
-const CryptoCoinsData = lazy(() =>
-  import('@/components/crypto-coin-data').then((module) => ({ default: module.CoinData })),
-);
-const CurrencyConverter = lazy(() =>
-  import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
-);
-const InteractiveStockChart = lazy(() => import('@/components/interactive-stock-chart'));
+// Eagerly load tool components for better UX
+import { FlightTracker } from '@/components/flight-tracker';
+import InteractiveChart from '@/components/interactive-charts';
+import { MapComponent } from '@/components/map-components';
+import TMDBResult from '@/components/movie-info';
+import MultiSearch from '@/components/multi-search';
+import NearbySearchMapView from '@/components/nearby-search-map-view';
+import TrendingResults from '@/components/trending-tv-movies-results';
+import AcademicPapersCard from '@/components/academic-papers';
+import WeatherChart from '@/components/weather-chart';
+import MCPServerList from '@/components/mcp-server-list';
+import RedditSearch from '@/components/reddit-search';
+import XSearch from '@/components/x-search';
+import { ExtremeSearch } from '@/components/extreme-search';
+import { CoinData as CryptoCoinsData } from '@/components/crypto-coin-data';
+import { CurrencyConverter } from '@/components/currency_conv';
+import InteractiveStockChart from '@/components/interactive-stock-chart';
+import { CryptoChart, CryptoTickers } from '@/components/crypto-charts';
+import { OnChainTokenPrice as OnChainCryptoComponents } from '@/components/onchain-crypto-components';
+import { YouTubeSearchResults } from '@/components/youtube-search-results';
+import { ConnectorsSearchResults } from '@/components/connectors-search-results';
+import { CodeInterpreterView, NearbySearchSkeleton } from '@/components/tool-invocation-list-view';
 
 // Simple loader component for stock chart - no useEffect needed
 const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
@@ -110,46 +104,6 @@ const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
     </div>
   );
 };
-const CryptoChart = lazy(() =>
-  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoChart })),
-);
-const OnChainCryptoComponents = lazy(() =>
-  import('@/components/onchain-crypto-components').then((module) => ({ default: module.OnChainTokenPrice })),
-);
-const CryptoTickers = lazy(() =>
-  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoTickers })),
-);
-
-const YouTubeSearchResults = lazy(() =>
-  import('@/components/youtube-search-results').then((module) => ({ default: module.YouTubeSearchResults })),
-);
-const ConnectorsSearchResults = lazy(() =>
-  import('@/components/connectors-search-results').then((module) => ({ default: module.ConnectorsSearchResults })),
-);
-const CodeInterpreterView = lazy(() =>
-  import('@/components/tool-invocation-list-view').then((module) => ({ default: module.CodeInterpreterView })),
-);
-const NearbySearchSkeleton = lazy(() =>
-  import('@/components/tool-invocation-list-view').then((module) => ({ default: module.NearbySearchSkeleton })),
-);
-
-// Loading component for lazy-loaded components
-const ComponentLoader = () => (
-  <div className="flex space-x-2 mt-2">
-    <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '0ms' }}
-    ></div>
-    <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '150ms' }}
-    ></div>
-    <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '300ms' }}
-    ></div>
-  </div>
-);
 
 // Error component for tool errors
 const ToolErrorDisplay = ({ errorText, toolName }: { errorText: string; toolName: string }) => (
@@ -226,7 +180,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
 
       // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
-      if ((!part.text || part.text.trim() === '') &&( status === 'streaming' || status === 'submitted') && !hasActiveToolInvocations && !hasReasoningParts) {
+      if ((!part.text || part.text.trim() === '') && (status === 'streaming' || status === 'submitted') && !hasActiveToolInvocations && !hasReasoningParts) {
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
@@ -635,19 +589,17 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                     {/* Map */}
                     <div className="relative h-[360px] sm:h-[400px] bg-[hsl(var(--muted))]">
-                      <Suspense fallback={<ComponentLoader />}>
-                        <MapComponent
-                          center={{ lat: places[0].location.lat, lng: places[0].location.lng }}
-                          places={places.map((place: any) => ({
-                            name: place.name,
-                            location: place.location,
-                            address: place.formatted_address,
-                            place_id: place.place_id,
-                            types: place.types,
-                          }))}
-                          zoom={places.length === 1 ? 15 : 12}
-                        />
-                      </Suspense>
+                      <MapComponent
+                        center={{ lat: places[0].location.lat, lng: places[0].location.lng }}
+                        places={places.map((place: any) => ({
+                          name: place.name,
+                          location: place.location,
+                          address: place.formatted_address,
+                          place_id: place.place_id,
+                          types: place.types,
+                        }))}
+                        zoom={places.length === 1 ? 15 : 12}
+                      />
                     </div>
 
                     {/* Results list */}
@@ -719,9 +671,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TMDBResult result={part.output} />
-                  </Suspense>
+                  <TMDBResult result={part.output} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -748,59 +698,58 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <InteractiveStockChart
-                      title={part.input.title}
-                      chart={{
-                        ...part.output.chart,
-                        x_scale: 'datetime',
-                      }}
-                      data={part.output.chart.elements}
-                      stock_symbols={part.input.companies || []}
-                      currency_symbols={
-                        part.output.currency_symbols ||
-                        part.input.currency_symbols ||
-                        part.input.companies?.map(() => 'USD') || ['USD']
-                      }
-                      interval={part.input.time_period || '1 year'}
-                      resolved_companies={
-                        part.output.resolved_companies?.map((company) => ({
-                          ...company,
-                          ticker: company.ticker || company.name || 'N/A',
-                        })) || []
-                      }
-                      earnings_data={
-                        part.output.earnings_data?.map((earning) => ({
-                          ...earning,
-                          ticker: earning.ticker || 'N/A',
-                        })) || []
-                      }
-                      news_results={part.output.news_results}
-                      sec_filings={
-                        part.output.sec_filings?.map((filing) => ({
-                          id: filing.id,
-                          title: filing.title,
-                          url: filing.url,
-                          content: filing.content,
-                          metadata: filing.metadata,
-                          requestedCompany: 'requestedCompany' in filing ? String(filing.requestedCompany) : 'N/A',
-                          requestedFilingType:
-                            'requestedFilingType' in filing
-                              ? String(filing.requestedFilingType)
-                              : 'form_type' in filing
-                                ? String(filing.form_type)
-                                : '10-K',
-                        })) || []
-                      }
-                      company_statistics={part.output.company_statistics}
-                      balance_sheets={part.output.balance_sheets}
-                      income_statements={part.output.income_statements}
-                      cash_flows={part.output.cash_flows}
-                      dividends_data={part.output.dividends_data}
-                      insider_transactions={part.output.insider_transactions}
-                      market_movers={part.output.market_movers}
-                    />
-                  </Suspense>
+                  <InteractiveStockChart
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    title={part.input.title}
+                    chart={{
+                      ...part.output.chart,
+                      x_scale: 'datetime',
+                    }}
+                    data={part.output.chart.elements}
+                    stock_symbols={part.input.companies || []}
+                    currency_symbols={
+                      part.output.currency_symbols ||
+                      part.input.currency_symbols ||
+                      part.input.companies?.map(() => 'USD') || ['USD']
+                    }
+                    interval={part.input.time_period || '1 year'}
+                    resolved_companies={
+                      part.output.resolved_companies?.map((company) => ({
+                        ...company,
+                        ticker: company.ticker || company.name || 'N/A',
+                      })) || []
+                    }
+                    earnings_data={
+                      part.output.earnings_data?.map((earning) => ({
+                        ...earning,
+                        ticker: earning.ticker || 'N/A',
+                      })) || []
+                    }
+                    news_results={part.output.news_results}
+                    sec_filings={
+                      part.output.sec_filings?.map((filing) => ({
+                        id: filing.id,
+                        title: filing.title,
+                        url: filing.url,
+                        content: filing.content,
+                        metadata: filing.metadata,
+                        requestedCompany: 'requestedCompany' in filing ? String(filing.requestedCompany) : 'N/A',
+                        requestedFilingType:
+                          'requestedFilingType' in filing
+                            ? String(filing.requestedFilingType)
+                            : 'form_type' in filing
+                              ? String(filing.form_type)
+                              : '10-K',
+                      })) || []
+                    }
+                    company_statistics={part.output.company_statistics}
+                    balance_sheets={part.output.balance_sheets}
+                    income_statements={part.output.income_statements}
+                    cash_flows={part.output.cash_flows}
+                    dividends_data={part.output.dividends_data}
+                    insider_transactions={part.output.insider_transactions}
+                    market_movers={part.output.market_movers}
+                  />
                 );
             }
             break;
@@ -874,9 +823,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <WeatherChart result={part.output} />
-                  </Suspense>
+                  <WeatherChart result={part.output} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -887,13 +834,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'input-available':
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <MultiSearch
-                      result={part.output || null}
-                      args={part.input ? part.input : {}}
-                      annotations={annotations as DataQueryCompletionPart[]}
-                    />
-                  </Suspense>
+                  <MultiSearch
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    result={part.output || null}
+                    args={part.input ? part.input : {}}
+                    annotations={annotations as DataQueryCompletionPart[]}
+                  />
                 );
             }
             break;
@@ -1052,17 +998,16 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'input-available':
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <ExtremeSearch
-                      // @ts-ignore - Complex type intersection resolved to never
-                      toolInvocation={{ toolName: 'extreme_search', input: part.input, result: part.output }}
-                      annotations={
-                        (annotations?.filter(
-                          (annotation) => annotation.type === 'data-extreme_search',
-                        ) as DataExtremeSearchPart[]) || []
-                      }
-                    />
-                  </Suspense>
+                  <ExtremeSearch
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    // @ts-ignore - Complex type intersection resolved to never
+                    toolInvocation={{ toolName: 'extreme_search', input: part.input, result: part.output }}
+                    annotations={
+                      (annotations?.filter(
+                        (annotation) => annotation.type === 'data-extreme_search',
+                      ) as DataExtremeSearchPart[]) || []
+                    }
+                  />
                 );
             }
             break;
@@ -1126,9 +1071,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TrendingResults result={part.output} type="movie" />
-                  </Suspense>
+                  <TrendingResults result={part.output} type="movie" key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -1152,9 +1095,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TrendingResults result={part.output} type="tv" />
-                  </Suspense>
+                  <TrendingResults result={part.output} type="tv" key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -1178,20 +1119,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <AcademicPapersCard
-                      response={part.output ? {
-                        searches: part.output.searches?.map((search: any) => ({
-                          query: search.query,
-                          results: search.results?.map((result: any) => ({
-                            ...result,
-                            title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
-                          })) || [],
+                  <AcademicPapersCard
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    response={part.output ? {
+                      searches: part.output.searches?.map((search: any) => ({
+                        query: search.query,
+                        results: search.results?.map((result: any) => ({
+                          ...result,
+                          title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
                         })) || [],
-                      } : null}
-                      args={part.input ? part.input : {}}
-                    />
-                  </Suspense>
+                      })) || [],
+                    } : null}
+                    args={part.input ? part.input : {}}
+                  />
                 );
             }
             break;
@@ -1234,9 +1174,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <FlightTracker data={part.output} />
-                  </Suspense>
+                  <FlightTracker data={part.output} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -1260,12 +1198,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <RedditSearch
-                      result={part.output || null}
-                      args={part.input ? part.input : {}}
-                    />
-                  </Suspense>
+                  <RedditSearch
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    result={part.output || null}
+                    args={part.input ? part.input : {}}
+                  />
                 );
             }
             break;
@@ -1289,27 +1226,26 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <XSearch
-                      result={{
-                        ...part.output,
-                        searches: part.output.searches?.map((search: any) => ({
-                          ...search,
-                          query: search.query || '',
-                          sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
-                          citations:
-                            search.citations?.map((citation: any) => ({
-                              ...citation,
-                              title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
-                              url: 'url' in citation ? citation.url : citation.id,
-                            })) || [],
-                        })) || [],
-                        dateRange: part.output.dateRange || '',
-                        handles: part.output.handles || [],
-                      }}
-                      args={part.input ? part.input : {}}
-                    />
-                  </Suspense>
+                  <XSearch
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    result={{
+                      ...part.output,
+                      searches: part.output.searches?.map((search: any) => ({
+                        ...search,
+                        query: search.query || '',
+                        sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
+                        citations:
+                          search.citations?.map((citation: any) => ({
+                            ...citation,
+                            title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
+                            url: 'url' in citation ? citation.url : citation.id,
+                          })) || [],
+                      })) || [],
+                      dateRange: part.output.dateRange || '',
+                      handles: part.output.handles || [],
+                    }}
+                    args={part.input ? part.input : {}}
+                  />
                 );
             }
             break;
@@ -1333,9 +1269,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <YouTubeSearchResults results={part.output} />
-                  </Suspense>
+                  <YouTubeSearchResults results={part.output} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -1517,24 +1451,22 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'input-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <ConnectorsSearchResults
-                      results={[]}
-                      query={part.input?.query || ''}
-                      totalResults={0}
-                      isLoading={true}
-                    />
-                  </Suspense>
+                  <ConnectorsSearchResults
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    results={[]}
+                    query={part.input?.query || ''}
+                    totalResults={0}
+                    isLoading={true}
+                  />
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <ConnectorsSearchResults
-                      results={part.output?.success ? part.output.results : []}
-                      query={part.output?.success ? part.output.query : ''}
-                      totalResults={part.output?.success ? part.output.count : 0}
-                    />
-                  </Suspense>
+                  <ConnectorsSearchResults
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    results={part.output?.success ? part.output.results : []}
+                    query={part.output?.success ? part.output.query : ''}
+                    totalResults={part.output?.success ? part.output.count : 0}
+                  />
                 );
             }
             break;
@@ -1549,9 +1481,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'input-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <NearbySearchSkeleton type={part.input?.type || 'places'} />
-                  </Suspense>
+                  <NearbySearchSkeleton type={part.input?.type || 'places'} key={`${messageIndex}-${partIndex}-tool`} />
                 );
               case 'output-available':
                 // Handle error cases or missing data
@@ -1570,37 +1500,36 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 }
 
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <NearbySearchMapView
-                      center={{
-                        lat: part.output.center?.lat || 0,
-                        lng: part.output.center?.lng || 0,
-                      }}
-                      places={
-                        part.output.places?.map((place: any) => ({
-                          name: place.name,
-                          location: place.location,
-                          place_id: place.place_id,
-                          vicinity: place.formatted_address,
-                          rating: place.rating,
-                          reviews_count: place.reviews_count,
-                          reviews: place.reviews,
-                          price_level: place.price_level,
-                          photos: place.photos,
-                          is_closed: !place.is_open,
-                          type: place.types?.[0]?.replace(/_/g, ' '),
-                          source: place.source,
-                          phone: place.phone,
-                          website: place.website,
-                          hours: place.opening_hours,
-                          distance: place.distance,
-                        })) || []
-                      }
-                      type={part.output.type || ''}
-                      query={part.output.query || ''}
-                      searchRadius={'radius' in part.output ? Number(part.output.radius) || 1000 : 1000}
-                    />
-                  </Suspense>
+                  <NearbySearchMapView
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    center={{
+                      lat: part.output.center?.lat || 0,
+                      lng: part.output.center?.lng || 0,
+                    }}
+                    places={
+                      part.output.places?.map((place: any) => ({
+                        name: place.name,
+                        location: place.location,
+                        place_id: place.place_id,
+                        vicinity: place.formatted_address,
+                        rating: place.rating,
+                        reviews_count: place.reviews_count,
+                        reviews: place.reviews,
+                        price_level: place.price_level,
+                        photos: place.photos,
+                        is_closed: !place.is_open,
+                        type: place.types?.[0]?.replace(/_/g, ' '),
+                        source: place.source,
+                        phone: place.phone,
+                        website: place.website,
+                        hours: place.opening_hours,
+                        distance: place.distance,
+                      })) || []
+                    }
+                    type={part.output.type || ''}
+                    query={part.output.query || ''}
+                    searchRadius={'radius' in part.output ? Number(part.output.radius) || 1000 : 1000}
+                  />
                 );
             }
             break;
@@ -1616,12 +1545,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'input-available':
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CurrencyConverter
-                      toolInvocation={{ toolName: 'currency_converter', input: part.input, result: part.output }}
-                      result={part.output}
-                    />
-                  </Suspense>
+                  <CurrencyConverter
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolInvocation={{ toolName: 'currency_converter', input: part.input, result: part.output }}
+                    result={part.output}
+                  />
                 );
             }
             break;
@@ -1638,28 +1566,24 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case 'output-available':
                 return (
                   <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-3 w-full overflow-hidden">
-                    <Suspense fallback={<ComponentLoader />}>
-                      <CodeInterpreterView
-                        code={part.input?.code}
-                        output={part.output?.message}
-                        error={part.output && 'error' in part.output ? String(part.output.error) : undefined}
-                        language="python"
-                        title={part.input?.title || 'Code Execution'}
-                        status={
-                          part.output && 'error' in part.output && part.output.error
-                            ? 'error'
-                            : part.output
-                              ? 'completed'
-                              : 'running'
-                        }
-                      />
-                    </Suspense>
+                    <CodeInterpreterView
+                      code={part.input?.code}
+                      output={part.output?.message}
+                      error={part.output && 'error' in part.output ? String(part.output.error) : undefined}
+                      language="python"
+                      title={part.input?.title || 'Code Execution'}
+                      status={
+                        part.output && 'error' in part.output && part.output.error
+                          ? 'error'
+                          : part.output
+                            ? 'completed'
+                            : 'running'
+                      }
+                    />
 
                     {part.output?.chart && (
                       <div className="pt-1 overflow-x-auto">
-                        <Suspense fallback={<ComponentLoader />}>
-                          <InteractiveChart chart={part.output.chart} />
-                        </Suspense>
+                        <InteractiveChart chart={part.output.chart} />
                       </div>
                     )}
                   </div>
@@ -1958,9 +1882,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" />
-                  </Suspense>
+                  <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -1984,9 +1906,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoCoinsData result={part.output} coinId={part.input.coinId} />
-                  </Suspense>
+                  <CryptoCoinsData result={part.output} coinId={part.input.coinId} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
@@ -2010,9 +1930,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <CryptoCoinsData result={part.output} contractAddress={part.input.contractAddress} />
-                  </Suspense>
+                  <CryptoCoinsData result={part.output} contractAddress={part.input.contractAddress} key={`${messageIndex}-${partIndex}-tool`} />
                 );
             }
             break;
