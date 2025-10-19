@@ -294,6 +294,7 @@ interface MessageProps {
   suggestedQuestions: string[];
   user?: ComprehensiveUserData | null;
   selectedVisibilityType?: 'public' | 'private';
+  selectedGroup?: import('@/lib/utils').SearchGroupId;
   isLastMessage?: boolean;
   error?: any;
   isMissingAssistantResponse?: boolean;
@@ -534,6 +535,7 @@ export const Message: React.FC<MessageProps> = ({
   suggestedQuestions,
   user,
   selectedVisibilityType = 'private',
+  selectedGroup,
   regenerate,
   isLastMessage,
   error,

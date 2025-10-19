@@ -5,6 +5,7 @@ import { createResumableStreamContext, type ResumableStreamContext } from 'resum
 import { after } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { google } from '@ai-sdk/google';
+import { SMART_PDF_TO_EXCEL_PROMPT } from '@/ai/prompts/pdf-to-excel';
 import { geolocation } from '@vercel/functions';
 
 import { saveChat, saveMessages, createStreamId, getChatById, updateChatTitleById } from '@/lib/db/queries';
@@ -320,6 +321,80 @@ export async function POST(req: Request) {
           }
         }
         if (!result) throw lastError ?? new Error('Échec du démarrage du flux Libeller');
+
+        result.consumeStream();
+        writer.merge(
+          result.toUIMessageStream({
+            sendReasoning: false,
+            messageMetadata: ({ part }) => {
+              if (part.type === 'finish') {
+                const processingTime = (Date.now() - streamStart) / 1000;
+                return {
+                  model: model as string,
+                  completionTime: processingTime,
+                  createdAt: new Date().toISOString(),
+                  totalTokens: part.totalUsage?.totalTokens ?? null,
+                  inputTokens: part.totalUsage?.inputTokens ?? null,
+                  outputTokens: part.totalUsage?.outputTokens ?? null,
+                };
+              }
+            },
+          }),
+        );
+        return;
+      }
+
+      if (group === 'pdfExcel') {
+        const lastMsg = messages?.[messages.length - 1] || {};
+        const parts = (lastMsg.parts || []) as any[];
+        const pdfParts = parts.filter((p) => p?.type === 'file' && (p?.contentType === 'application/pdf' || p?.mediaType === 'application/pdf'));
+
+        if (!pdfParts || pdfParts.length === 0) {
+          const msg: ChatMessage = {
+            id: 'msg-' + uuidv4(),
+            role: 'assistant',
+            parts: [{ type: 'text', text: 'Merci d’uploader au moins un PDF.' }],
+            attachments: [],
+            metadata: {
+              model: String(model),
+              completionTime: 0,
+              createdAt: new Date().toISOString(),
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: 0,
+            },
+          } as any;
+          writer.write({ type: 'data-appendMessage', data: JSON.stringify(msg), transient: false });
+          return;
+        }
+
+        const modelPlan: Array<{ name: string; retries: number }> = [
+          { name: 'gemini-2.5-flash', retries: 1 },
+          { name: 'gemini-2.0-flash', retries: 2 },
+        ];
+        let result: ReturnType<typeof streamText> | null = null;
+        let lastError: unknown = null;
+        outer: for (const item of modelPlan) {
+          for (let attempt = 0; attempt < item.retries; attempt++) {
+            try {
+              const toolsSpec = undefined;
+              result = streamText({
+                model: google(item.name as any),
+                messages: convertToModelMessages(messages),
+                system: SMART_PDF_TO_EXCEL_PROMPT,
+                temperature: 0,
+                topP: 0.1,
+                tools: toolsSpec as any,
+                toolChoice: 'auto',
+              });
+              break outer;
+            } catch (err) {
+              lastError = err;
+              continue;
+            }
+          }
+        }
+        if (!result) throw lastError ?? new Error('Échec du démarrage du flux PDF → Excel');
 
         result.consumeStream();
         writer.merge(

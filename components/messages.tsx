@@ -7,6 +7,7 @@ import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { CyrusLoadingState } from '@/components/cyrus-loading-state';
 import { NomenclatureLoadingState } from '@/components/nomenclature-loading-state';
 import { CorrectionLibellerLoadingState } from '@/components/correction-libeller-loading-state';
+import { PdfToExcelLoadingState } from '@/components/pdf-to-excel-loading-state';
 import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
@@ -231,6 +232,7 @@ const Messages: React.FC<MessagesProps> = ({
           regenerate={regenerate}
           onHighlight={onHighlight}
           annotations={annotations}
+          selectedGroup={selectedGroup}
         />
       );
     },
@@ -251,6 +253,7 @@ const Messages: React.FC<MessagesProps> = ({
       setReasoningVisibilityMap,
       setReasoningFullscreenMap,
       onHighlight,
+      selectedGroup,
     ],
   );
 
@@ -285,6 +288,10 @@ const Messages: React.FC<MessagesProps> = ({
 
   const shouldShowLibellerLoader = useMemo(() => {
     return (status === 'submitted' || status === 'streaming') && selectedGroup === 'libeller' && !hasActiveToolInvocations;
+  }, [status, selectedGroup, hasActiveToolInvocations]);
+
+  const shouldShowPdfExcelLoader = useMemo(() => {
+    return (status === 'submitted' || status === 'streaming') && selectedGroup === 'pdfExcel' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   // Compute index of the most recent assistant message; only that one should keep min-height
@@ -409,6 +416,7 @@ const Messages: React.FC<MessagesProps> = ({
                 suggestedQuestions={index === memoizedMessages.length - 1 ? suggestedQuestions : []}
                 user={user ?? undefined}
                 selectedVisibilityType={selectedVisibilityType}
+                selectedGroup={selectedGroup}
                 isLastMessage={isLastMessage}
                 error={error}
                 isMissingAssistantResponse={isMissingAssistantResponse}
@@ -467,8 +475,19 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
 
-      {/* Default loading animation when not in Cyrus, Nomenclature, or Libeller condition */}
-      {!shouldShowCyrusLoader && !shouldShowNomenclatureLoader && !shouldShowLibellerLoader && shouldShowLoading && (
+      {/* PdfExcel loader only during streaming/submitted in pdfExcel group and no active tools */}
+      {shouldShowPdfExcelLoader && (
+        <div
+          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+        >
+          <div className="w-full !m-0 !p-0">
+            <PdfToExcelLoadingState />
+          </div>
+        </div>
+      )}
+
+      {/* Default loading animation when not in Cyrus, Nomenclature, Libeller, or PdfExcel condition */}
+      {!shouldShowCyrusLoader && !shouldShowNomenclatureLoader && !shouldShowLibellerLoader && !shouldShowPdfExcelLoader && shouldShowLoading && (
         <div
           className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
         >

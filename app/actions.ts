@@ -12,6 +12,7 @@ import { scira } from '@/ai/providers';
 import { CYRUS_PROMPT, CYRUS_OUTPUT_RULES } from '@/ai/prompts/classification-cyrus';
 import { NOMENCLATURE_DOUANIERE_PROMPT } from '@/ai/prompts/nomenclature-douaniere';
 import { LIBELLER_PROMPT } from '@/ai/prompts/correction-libeller';
+import { SMART_PDF_TO_EXCEL_PROMPT } from '@/ai/prompts/pdf-to-excel';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -217,6 +218,7 @@ const groupTools = {
   cyrus: [] as const,
   libeller: [] as const,
   nomenclature: [] as const,
+  pdfExcel: [] as const,
   extreme: ['extreme_search'] as const,
   x: ['x_search'] as const,
   memory: ['datetime', 'search_memories', 'add_memory'] as const,
@@ -1303,6 +1305,7 @@ $$
   cyrus: `${CYRUS_PROMPT}\n\n${CYRUS_OUTPUT_RULES}`,
   libeller: LIBELLER_PROMPT,
   nomenclature: NOMENCLATURE_DOUANIERE_PROMPT,
+  pdfExcel: SMART_PDF_TO_EXCEL_PROMPT,
 };
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {

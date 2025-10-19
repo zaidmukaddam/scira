@@ -50,6 +50,7 @@ import {
   Info,
   Code,
   Copy,
+  Download,
 } from 'lucide-react';
 import {
   RedditLogoIcon,
@@ -63,6 +64,7 @@ import {
 import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
+import { markdownTablesToXlsx } from '@/lib/export-xlsx';
 
 // Lazy load tool components
 const FlightTracker = lazy(() =>
@@ -191,6 +193,7 @@ interface MessagePartRendererProps {
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   onHighlight?: (text: string) => void;
   annotations?: DataUIPart<CustomUIDataTypes>[];
+  selectedGroup?: import('@/lib/utils').SearchGroupId;
 }
 
 export const MessagePartRenderer = memo<MessagePartRendererProps>(
@@ -217,6 +220,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     regenerate,
     onHighlight,
     annotations,
+    selectedGroup,
   }) => {
     // Handle text parts
     if (part.type === 'text') {
@@ -272,6 +276,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       if (prevPart?.type === 'step-start' && nextPart?.type.includes('tool-')) {
         return null;
       }
+
+      const hasMarkdownTable = /\n\s*\|[^\n]+\|\s*\n\s*\|\s*[-:]+[^\n]*\|/.test(part.text || '');
 
       return (
         <div key={`${messageIndex}-${partIndex}-text`} className="mt-2">
@@ -335,6 +341,42 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </Tooltip>
                   </TooltipProvider>
                 )}
+                {/* Excel Download for pdfExcel group when tables present */}
+                {selectedGroup === 'pdfExcel' && hasMarkdownTable && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            try {
+                              const blob = markdownTablesToXlsx(part.text || '', 'pdf-to-excel');
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+                              a.href = url;
+                              a.download = `pdf-to-excel-${ts}.xlsx`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Échec du téléchargement Excel");
+                            }
+                          }}
+                          className="size-8 p-0 rounded-full"
+                          aria-label="Télécharger en Excel (.xlsx)"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Télécharger en Excel (.xlsx)</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
                 {/* Share button using unified component */}
                 {onVisibilityChange && (
                   <ShareButton
