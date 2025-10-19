@@ -10,12 +10,12 @@ export default async function PricingPage() {
   // Extract subscription details from unified user data
   const subscriptionDetails = user?.polarSubscription
     ? {
-        hasSubscription: true,
-        subscription: {
-          ...user.polarSubscription,
-          organizationId: null,
-        },
-      }
+      hasSubscription: true,
+      subscription: {
+        ...user.polarSubscription,
+        organizationId: null,
+      },
+    }
     : { hasSubscription: false };
 
   return (

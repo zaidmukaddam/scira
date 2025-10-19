@@ -5,9 +5,9 @@ import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
 export const xSearchTool = tool({
   description:
-    'Search X (formerly Twitter) posts using xAI Live Search for the past 15 days by default otherwise user can specify a date range.',
+    'Search X (formerly Twitter) posts using xAI Live Search with multiple queries for the past 15 days by default otherwise user can specify a date range.',
   inputSchema: z.object({
-    query: z.string().describe('The search query for X posts'),
+    queries: z.array(z.string()).describe('Array of search queries for X posts. Minimum 1, recommended 3-5.').min(1).max(5),
     startDate: z
       .string()
       .optional()
@@ -30,7 +30,7 @@ export const xSearchTool = tool({
       .describe('The X handles to exclude in the search (max 10). Cannot be used with includeXHandles.'),
     postFavoritesCount: z.number().min(0).optional().describe('Minimum number of favorites (likes) the post must have'),
     postViewCount: z.number().min(0).optional().describe('Minimum number of views the post must have'),
-    maxResults: z.number().min(1).max(100).optional().describe('Maximum number of search results to return (default 15)'),
+    maxResults: z.array(z.number().min(1).max(100)).optional().describe('Array of maximum results per query (default 15 per query)'),
   }).refine(data => {
     // Ensure includeXHandles and excludeXHandles are not both specified
     return !(data.includeXHandles && data.excludeXHandles);
@@ -39,14 +39,14 @@ export const xSearchTool = tool({
     path: ["includeXHandles", "excludeXHandles"]
   }),
   execute: async ({
-    query,
+    queries,
     startDate,
     endDate,
     includeXHandles,
     excludeXHandles,
     postFavoritesCount,
     postViewCount,
-    maxResults = 15,
+    maxResults,
   }) => {
     try {
       const sanitizeHandle = (handle: string) => handle.replace(/^@+/, '').trim();
@@ -64,77 +64,102 @@ export const xSearchTool = tool({
       const effectiveStart = startDate && startDate.trim().length > 0 ? startDate : toYMD(daysAgo);
       const effectiveEnd = endDate && endDate.trim().length > 0 ? endDate : toYMD(today);
 
+      console.log('[X search - queries]:', queries);
       console.log('[X search - includeHandles]:', normalizedInclude, '[excludeHandles]:', normalizedExclude);
 
-      const { text, sources } = await generateText({
-        model: xai('grok-4-fast-non-reasoning'),
-        system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-        messages: [{ role: 'user', content: `${query}` }],
-        maxOutputTokens: 10,
-        providerOptions: {
-          xai: {
-            searchParameters: {
-              mode: 'on',
-              fromDate: effectiveStart,
-              toDate: effectiveEnd,
-              maxSearchResults: maxResults && maxResults < 15 ? 15 : maxResults ?? 15,
-              returnCitations: true,
-              sources: [
-                {
-                  type: 'x',
-                  ...(normalizedInclude?.length ? { includedXHandles: normalizedInclude } : {}),
-                  ...(normalizedExclude?.length ? { excludedXHandles: normalizedExclude } : {}),
-                  ...(typeof postFavoritesCount === 'number' ? { postFavoriteCount: postFavoritesCount } : {}),
-                  ...(typeof postViewCount === 'number' ? { postViewCount: postViewCount } : {}),
+      const searchPromises = queries.map(async (query, index) => {
+        const currentMaxResults = maxResults?.[index] || maxResults?.[0] || 15;
+
+        try {
+          const { text, sources } = await generateText({
+            model: xai('grok-4-fast-non-reasoning'),
+            system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
+            messages: [{ role: 'user', content: `${query}` }],
+            maxOutputTokens: 10,
+            providerOptions: {
+              xai: {
+                searchParameters: {
+                  mode: 'on',
+                  fromDate: effectiveStart,
+                  toDate: effectiveEnd,
+                  maxSearchResults: currentMaxResults < 15 ? 15 : currentMaxResults,
+                  returnCitations: true,
+                  sources: [
+                    {
+                      type: 'x',
+                      ...(normalizedInclude?.length ? { includedXHandles: normalizedInclude } : {}),
+                      ...(normalizedExclude?.length ? { excludedXHandles: normalizedExclude } : {}),
+                      ...(typeof postFavoritesCount === 'number' ? { postFavoriteCount: postFavoritesCount } : {}),
+                      ...(typeof postViewCount === 'number' ? { postViewCount: postViewCount } : {}),
+                    },
+                  ],
                 },
-              ],
+              } satisfies XaiProviderOptions,
             },
-          } satisfies XaiProviderOptions,
-        },
-        onStepFinish: (step) => {
-          console.log('[X search step]: ', step);
-        },
-      });
-
-      console.log('[X search data]: ', text);
-
-      const citations = sources || [];
-      let allSources = [];
-
-      if (citations.length > 0) {
-        const tweetFetchPromises = citations
-          .filter((link) => link.sourceType === 'url')
-          .map(async (link) => {
-            try {
-              const tweetUrl = link.sourceType === 'url' ? link.url : '';
-              const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
-
-              const tweetData = await getTweet(tweetId);
-              if (!tweetData) return null;
-
-              const text = tweetData.text;
-              if (!text) return null;
-
-              return {
-                text: text,
-                link: tweetUrl,
-              };
-            } catch (error) {
-              console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
-              return null;
-            }
+            onStepFinish: (step) => {
+              console.log(`[X search step for "${query}"]: `, step);
+            },
           });
 
-        const tweetResults = await Promise.all(tweetFetchPromises);
+          console.log(`[X search data for "${query}"]: `, text);
 
-        allSources.push(...tweetResults.filter((result) => result !== null));
-      }
+          const citations = sources || [];
+          let allSources = [];
+
+          if (citations.length > 0) {
+            const tweetFetchPromises = citations
+              .filter((link) => link.sourceType === 'url')
+              .map(async (link) => {
+                try {
+                  const tweetUrl = link.sourceType === 'url' ? link.url : '';
+                  const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
+
+                  const tweetData = await getTweet(tweetId);
+                  if (!tweetData) return null;
+
+                  const text = tweetData.text;
+                  if (!text) return null;
+
+                  return {
+                    text: text,
+                    link: tweetUrl,
+                  };
+                } catch (error) {
+                  console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
+                  return null;
+                }
+              });
+
+            const tweetResults = await Promise.all(tweetFetchPromises);
+
+            allSources.push(...tweetResults.filter((result) => result !== null));
+          }
+
+          return {
+            content: text,
+            citations: citations,
+            sources: allSources,
+            query,
+            dateRange: `${effectiveStart} to ${effectiveEnd}`,
+            handles: normalizedInclude || normalizedExclude || [],
+          };
+        } catch (error) {
+          console.error(`X search error for query "${query}":`, error);
+          return {
+            content: '',
+            citations: [],
+            sources: [],
+            query,
+            dateRange: `${effectiveStart} to ${effectiveEnd}`,
+            handles: normalizedInclude || normalizedExclude || [],
+          };
+        }
+      });
+
+      const searches = await Promise.all(searchPromises);
 
       return {
-        content: text,
-        citations: citations,
-        sources: allSources,
-        query,
+        searches,
         dateRange: `${effectiveStart} to ${effectiveEnd}`,
         handles: normalizedInclude || normalizedExclude || [],
       };

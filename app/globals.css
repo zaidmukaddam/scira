@@ -68,6 +68,112 @@
     position: absolute;
     right: 0;
   }
+
+  /* Enhanced list styling for better readability */
+  .markdown-body ol {
+    counter-reset: item;
+    list-style-type: none;
+  }
+
+  .markdown-body ol > li {
+    counter-increment: item;
+    position: relative;
+  }
+
+  .markdown-body ol > li::before {
+    content: counter(item) ".";
+    font-weight: 600;
+    color: hsl(var(--primary));
+    display: inline-block;
+    width: 2em;
+    margin-left: -2em;
+    text-align: right;
+    padding-right: 0.5em;
+  }
+
+  .markdown-body ul > li::marker {
+    color: hsl(var(--primary) / 0.7);
+    font-size: 1.1em;
+  }
+
+  .markdown-body ol > li > ol,
+  .markdown-body ul > li > ul,
+  .markdown-body ol > li > ul,
+  .markdown-body ul > li > ol {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Nested list styling */
+  .markdown-body ol ol > li::before {
+    content: counter(item, lower-alpha) ".";
+  }
+
+  .markdown-body ol ol ol > li::before {
+    content: counter(item, lower-roman) ".";
+  }
+
+  /* Better spacing for paragraphs within list items */
+  .markdown-body li > p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .markdown-body li > p:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-body li > p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Horizontal rule styling */
+  .markdown-body hr {
+    margin: 2rem 0;
+    border: none;
+    border-top: 2px solid hsl(var(--border));
+    opacity: 0.5;
+  }
+
+  /* Better heading differentiation */
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+  }
+
+  .markdown-body h1 {
+    letter-spacing: -0.02em;
+  }
+
+  .markdown-body h2 {
+    letter-spacing: -0.015em;
+  }
+
+  /* Improve strong/bold visibility */
+  .markdown-body strong {
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  /* Better code inline spacing */
+  .markdown-body p > code,
+  .markdown-body li > code {
+    margin: 0 0.1em;
+  }
+
+  /* Improve blockquote spacing */
+  .markdown-body blockquote > *:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-body blockquote > *:last-child {
+    margin-bottom: 0;
+  }
 }
 
 @layer utilities {
@@ -84,54 +190,30 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 24px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+    height: 16px;
+    background: linear-gradient(transparent, hsl(var(--card)));
     pointer-events: none;
     z-index: 10;
   }
 
-  .dark .tweet-wrapper::after {
-    background: linear-gradient(transparent, rgba(9, 9, 11, 0.95));
-  }
-
   .tweet-wrapper [data-theme] {
     margin: 0 !important;
-    border-radius: 1rem !important;
-    border: 1px solid rgb(229 231 235) !important;
-    box-shadow:
-      0 1px 3px 0 rgb(0 0 0 / 0.1),
-      0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
-    background: white !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: var(--shadow-sm) !important;
+    background: hsl(var(--card)) !important;
     height: 100%;
-  }
-
-  .dark .tweet-wrapper [data-theme] {
-    border: 1px solid rgb(39 39 42) !important;
-    background: rgb(9 9 11) !important;
-    box-shadow:
-      0 1px 3px 0 rgb(0 0 0 / 0.3),
-      0 1px 2px -1px rgb(0 0 0 / 0.2) !important;
   }
 
   /* Tweet wrapper styling for sheet */
   .tweet-wrapper-sheet [data-theme] {
     margin: 0 !important;
-    border-radius: 1rem !important;
-    border: 1px solid rgb(229 231 235) !important;
-    box-shadow:
-      0 1px 3px 0 rgb(0 0 0 / 0.1),
-      0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
-    background: white !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: var(--shadow-sm) !important;
+    background: hsl(var(--card)) !important;
     max-width: 100% !important;
     width: 100% !important;
-  }
-
-  .dark .tweet-wrapper-sheet [data-theme] {
-    border: 1px solid rgb(39 39 42) !important;
-    background: rgb(9 9 11) !important;
-    box-shadow:
-      0 1px 3px 0 rgb(0 0 0 / 0.3),
-      0 1px 2px -1px rgb(0 0 0 / 0.2) !important;
   }
 
   /* Ensure proper tweet spacing */
@@ -204,30 +286,17 @@
 }
 
 :root {
-  --sh-class: #2563eb;
-  --sh-identifier: #1f2937;
-  --sh-sign: #6b7280;
-  --sh-property: #3b82f6;
-  --sh-entity: #8b5cf6;
-  --sh-jsxliterals: #f59e0b;
-  --sh-string: #059669;
-  --sh-keyword: #dc2626;
-  --sh-comment: #9ca3af;
-}
-
-.dark {
-  --sh-class: #60a5fa;
-  --sh-identifier: #e5e7eb;
-  --sh-sign: #9ca3af;
-  --sh-property: #93c5fd;
-  --sh-entity: #a78bfa;
-  --sh-jsxliterals: #fbbf24;
-  --sh-string: #34d399;
-  --sh-keyword: #f87171;
-  --sh-comment: #6b7280;
-}
-
-:root {
+  /* Sugar-high syntax highlighting - Light theme */
+  --sh-identifier: oklch(0.35 0.02 250);
+  --sh-keyword: oklch(0.55 0.15 25);
+  --sh-string: oklch(0.50 0.12 160);
+  --sh-class: oklch(0.55 0.14 280);
+  --sh-property: oklch(0.50 0.12 240);
+  --sh-entity: oklch(0.48 0.10 200);
+  --sh-jsxliterals: oklch(0.52 0.13 330);
+  --sh-sign: oklch(0.45 0.03 250);
+  --sh-comment: oklch(0.55 0.02 250);
+  
   --font-be-vietnam-pro: 'Be Vietnam Pro';
   --background: oklch(0.9821 0 0);
   --foreground: oklch(0.2435 0 0);
@@ -275,6 +344,17 @@
 }
 
 .dark {
+  /* Sugar-high syntax highlighting - Dark theme */
+  --sh-identifier: oklch(0.85 0.03 250);
+  --sh-keyword: oklch(0.75 0.12 25);
+  --sh-string: oklch(0.72 0.14 160);
+  --sh-class: oklch(0.78 0.16 280);
+  --sh-property: oklch(0.75 0.14 240);
+  --sh-entity: oklch(0.73 0.12 200);
+  --sh-jsxliterals: oklch(0.76 0.14 330);
+  --sh-sign: oklch(0.70 0.04 250);
+  --sh-comment: oklch(0.55 0.03 250);
+  
   --font-be-vietnam-pro: 'Be Vietnam Pro';
   --background: oklch(0.1776 0 0);
   --foreground: oklch(0.9491 0 0);
@@ -549,48 +629,3 @@ body {
 }
 
 /* Sugar-high syntax highlighting styles */
-.sh__token--keyword {
-  color: #c792ea;
-}
-.sh__token--string {
-  color: #c3e88d;
-}
-.sh__token--comment {
-  color: #546e7a;
-  font-style: italic;
-}
-.sh__token--identifier {
-  color: #82b1ff;
-}
-.sh__token--number {
-  color: #f78c6c;
-}
-.sh__token--operator {
-  color: #89ddff;
-}
-.sh__token--punctuation {
-  color: #89ddff;
-}
-
-/* Dark mode adjustments for sugar-high */
-.dark .sh__token--keyword {
-  color: #bb86fc;
-}
-.dark .sh__token--string {
-  color: #4caf50;
-}
-.dark .sh__token--comment {
-  color: #6a737d;
-}
-.dark .sh__token--identifier {
-  color: #64b5f6;
-}
-.dark .sh__token--number {
-  color: #ff9800;
-}
-.dark .sh__token--operator {
-  color: #03dac6;
-}
-.dark .sh__token--punctuation {
-  color: #03dac6;
-}

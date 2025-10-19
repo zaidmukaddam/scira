@@ -59,8 +59,8 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       containerTag: user.id,
       limit: pageSize,
     });
-    
-    
+
+
     return { memories: [], total: result.total || 0 };
   } catch (error) {
     console.error('Error searching memories:', error);

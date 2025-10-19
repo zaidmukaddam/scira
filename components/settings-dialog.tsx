@@ -42,17 +42,28 @@ import {
 
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
-import { Loader2, Search } from 'lucide-react';
+import { getAllMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
+import { Loader2, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { getSearchGroups, type SearchGroupId } from '@/lib/utils';
+import { models } from '@/ai/providers';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
 import { SciraLogo } from './logos/scira-logo';
 import Image from 'next/image';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Crown02Icon,
@@ -89,7 +100,7 @@ interface SettingsDialogProps {
 }
 
 // Component for Profile Information
-function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading }: any) {
+export function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading }: any) {
   const { isProUser: fastProStatus, isLoading: fastProLoading } = useIsProUser();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -181,6 +192,13 @@ const FirecrawlIcon = ({ className }: { className?: string }) => (
 // Search Provider Options
 const searchProviders = [
   {
+    value: 'parallel',
+    label: 'Parallel AI',
+    description: 'Base and premium web search along with Firecrawl image search support',
+    icon: ParallelIcon,
+    default: true,
+  },
+  {
     value: 'firecrawl',
     label: 'Firecrawl',
     description: 'Web, news, and image search with content scraping capabilities',
@@ -193,13 +211,6 @@ const searchProviders = [
     description: 'Enhanced and faster web search with images and advanced filtering',
     icon: ExaIcon,
     default: false,
-  },
-  {
-    value: 'parallel',
-    label: 'Parallel AI',
-    description: 'Base and premium web search along with Firecrawl image search support',
-    icon: ParallelIcon,
-    default: true,
   },
   {
     value: 'tavily',
@@ -223,69 +234,45 @@ function SearchProviderSelector({
   className?: string;
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const currentProvider = searchProviders.find((provider) => provider.value === value);
 
   return (
-    <div className="w-full">
-      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger
-          className={cn(
-            'w-full h-auto min-h-18 sm:min-h-14 p-4',
-            'border border-input bg-background',
-            'transition-all duration-200',
-            'focus:outline-none focus:ring-0 focus:ring-offset-0',
-            disabled && 'opacity-50 cursor-not-allowed',
-            className,
-          )}
-        >
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {currentProvider && (
-              <>
-                <currentProvider.icon className="text-muted-foreground size-4 flex-shrink-0" />
-                <div className="text-left flex-1 min-w-0">
-                  <div className="font-medium text-sm flex items-center gap-2 mb-0.5">
-                    {currentProvider.label}
-                    {currentProvider.default && (
-                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground leading-tight line-clamp-2 text-wrap">
-                    {currentProvider.description}
-                  </div>
-                </div>
-              </>
+    <div className={cn('w-full', className)}>
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+        {searchProviders.map((provider) => (
+          <button
+            key={provider.value}
+            onClick={() => onValueChange(provider.value as any)}
+            disabled={disabled}
+            className={cn(
+              'flex flex-col items-start p-4 rounded-lg border transition-all duration-200',
+              'hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              value === provider.value
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border bg-background hover:border-border/80',
             )}
-          </div>
-        </SelectTrigger>
-        <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-32px)]">
-          {searchProviders.map((provider) => (
-            <SelectItem key={provider.value} value={provider.value}>
-              <div className="flex items-center gap-2.5">
-                <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
-                <div className="flex flex-col">
-                  <div className="font-medium text-sm flex items-center gap-2">
-                    {provider.label}
-                    {provider.default && (
-                      <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{provider.description}</div>
-                </div>
+          >
+            <div className="flex items-center gap-2.5 w-full mb-2">
+              <provider.icon className="text-muted-foreground size-4 flex-shrink-0" />
+              <div className="font-medium text-sm flex items-center gap-2">
+                {provider.label}
+                {provider.default && (
+                  <Badge variant="secondary" className="text-[9px] px-1 py-0.5 bg-primary/10 text-primary border-0">
+                    Default
+                  </Badge>
+                )}
               </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            </div>
+            <div className="text-xs text-muted-foreground leading-relaxed text-left">{provider.description}</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 // Component for Combined Preferences (Search + Custom Instructions)
-function PreferencesSection({
+export function PreferencesSection({
   user,
   isCustomInstructionsEnabled,
   setIsCustomInstructionsEnabled,
@@ -302,6 +289,30 @@ function PreferencesSection({
 
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Reorder state: groups and models
+  const dynamicGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+  const [groupOrder, setGroupOrder] = useLocalStorage<SearchGroupId[]>(
+    'scira-group-order',
+    dynamicGroups.map((g) => g.id),
+  );
+  const mergedGroupOrder = useMemo(() => {
+    const currentIds = dynamicGroups.map((g) => g.id);
+    const filteredExisting = groupOrder.filter((id) => currentIds.includes(id));
+    const missing = currentIds.filter((id) => !filteredExisting.includes(id));
+    return [...filteredExisting, ...missing] as SearchGroupId[];
+  }, [dynamicGroups, groupOrder]);
+
+  const allModelIds = useMemo(() => models.map((m) => m.value), []);
+  const [globalModelOrder, setGlobalModelOrder] = useLocalStorage<string[]>('scira-model-order-global', allModelIds);
+  const mergedModelOrder = useMemo(() => {
+    const validSet = new Set(allModelIds);
+    const base = (globalModelOrder && globalModelOrder.length > 0 ? globalModelOrder : []).filter((id) =>
+      validSet.has(id),
+    );
+    const missing = allModelIds.filter((id) => !base.includes(id));
+    return [...base, ...missing];
+  }, [globalModelOrder, allModelIds]);
 
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabled ?? (() => { });
@@ -377,146 +388,303 @@ function PreferencesSection({
     }
   };
 
+  const [preferencesTab, setPreferencesTab] = useState<'general' | 'ordering'>('general');
+
   return (
-    <div className={cn('space-y-6', isMobile ? 'space-y-4' : 'space-y-6')}>
-      <div>
-        <h3 className={cn('font-semibold mb-1.5', isMobile ? 'text-sm' : 'text-base')}>Preferences</h3>
-        <p className={cn('text-muted-foreground', isMobile ? 'text-xs leading-relaxed' : 'text-xs')}>
-          Configure your search provider and customize how the AI responds to your questions.
-        </p>
-      </div>
+    <div className={cn('space-y-4', isMobile ? 'space-y-3' : 'space-y-4')}>
+      <Tabs value={preferencesTab} onValueChange={(v) => setPreferencesTab(v as 'general' | 'ordering')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="ordering">Ordering</TabsTrigger>
+        </TabsList>
 
-      {/* Search Provider Section */}
-      <div className="space-y-3">
-        <div className="space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm">Search Provider</h4>
-              <p className="text-xs text-muted-foreground">Choose your preferred search engine</p>
-            </div>
-          </div>
-
-          <div className="space-y-2.5">
-            <SearchProviderSelector value={searchProvider} onValueChange={handleSearchProviderChange} />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Select your preferred search provider for web searches. Changes take effect immediately and will be used
-              for all future searches.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Custom Instructions Section */}
-      <div className="space-y-3">
-        <div className="space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <RobotIcon className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm">Custom Instructions</h4>
-              <p className="text-xs text-muted-foreground">Customize how the AI responds to you</p>
-            </div>
-          </div>
-
+        <TabsContent value="general" className="space-y-6 mt-4">
+          {/* Custom Instructions Section */}
           <div className="space-y-3">
-            <div className="flex items-start justify-between p-3 rounded-lg border bg-card">
-              <div className="flex-1 mr-3">
-                <Label htmlFor="enable-instructions" className="text-sm font-medium">
-                  Enable Custom Instructions
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">Toggle to enable or disable custom instructions</p>
-              </div>
-              <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
-            </div>
-
-            <div className={cn('space-y-3', !enabled && 'opacity-50')}>
-              <div>
-                <Label htmlFor="instructions" className="text-sm font-medium">
-                  Instructions
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5 mb-2">Guide how the AI responds to your questions</p>
-                {customInstructionsLoading ? (
-                  <Skeleton className="h-28 w-full" />
-                ) : (
-                  <Textarea
-                    id="instructions"
-                    placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[100px] resize-y text-sm"
-                    style={{ maxHeight: '25dvh' }}
-                    onFocus={(e) => {
-                      // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
-                      try {
-                        e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                      } catch { }
-                    }}
-                    disabled={isSaving || !enabled}
-                  />
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || !content.trim() || customInstructionsLoading || !enabled}
-                  size="sm"
-                  className="flex-1 h-8"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FloppyDiskIcon className="w-3 h-3 mr-1.5" />
-                      Save Instructions
-                    </>
-                  )}
-                </Button>
-                {customInstructions && (
-                  <Button
-                    variant="outline"
-                    onClick={handleDelete}
-                    disabled={isSaving || customInstructionsLoading || !enabled}
-                    size="sm"
-                    className="h-8 px-2.5"
-                  >
-                    <TrashIcon className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-
-              {customInstructionsLoading ? (
-                <div className="p-2.5 bg-muted/30 rounded-lg">
-                  <Skeleton className="h-3 w-28" />
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <RobotIcon className="h-3.5 w-3.5 text-primary" />
                 </div>
-              ) : customInstructions ? (
-                <div className="p-2.5 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">
-                    Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
-                  </p>
+                <div>
+                  <h4 className="font-semibold text-sm">Custom Instructions</h4>
+                  <p className="text-xs text-muted-foreground">Customize how the AI responds to you</p>
                 </div>
-              ) : null}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-start justify-between p-3 rounded-lg border bg-card">
+                  <div className="flex-1 mr-3">
+                    <Label htmlFor="enable-instructions" className="text-sm font-medium">
+                      Enable Custom Instructions
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Toggle to enable or disable custom instructions
+                    </p>
+                  </div>
+                  <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
+                </div>
+
+                <div className={cn('space-y-3', !enabled && 'opacity-50')}>
+                  <div>
+                    <Label htmlFor="instructions" className="text-sm font-medium">
+                      Instructions
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                      Guide how the AI responds to your questions
+                    </p>
+                    {customInstructionsLoading ? (
+                      <Skeleton className="h-28 w-full" />
+                    ) : (
+                      <Textarea
+                        id="instructions"
+                        placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="min-h-[100px] resize-y text-sm"
+                        style={{ maxHeight: '25dvh' }}
+                        onFocus={(e) => {
+                          // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
+                          try {
+                            e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                          } catch {}
+                        }}
+                        disabled={isSaving || !enabled}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving || !content.trim() || customInstructionsLoading || !enabled}
+                      size="sm"
+                      className="flex-1 h-8"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FloppyDiskIcon className="w-3 h-3 mr-1.5" />
+                          Save Instructions
+                        </>
+                      )}
+                    </Button>
+                    {customInstructions && (
+                      <Button
+                        variant="outline"
+                        onClick={handleDelete}
+                        disabled={isSaving || customInstructionsLoading || !enabled}
+                        size="sm"
+                        className="h-8 px-2.5"
+                      >
+                        <TrashIcon className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {customInstructionsLoading ? (
+                    <div className="p-2.5 bg-muted/30 rounded-lg">
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  ) : customInstructions ? (
+                    <div className="p-2.5 bg-muted/30 rounded-lg">
+                      <p className="text-xs text-muted-foreground">
+                        Last updated: {new Date(customInstructions.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Search Provider Section */}
+          <div className="space-y-3">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Search Provider</h4>
+                  <p className="text-xs text-muted-foreground">Choose your preferred search engine</p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <SearchProviderSelector value={searchProvider} onValueChange={handleSearchProviderChange} />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Select your preferred search provider for web searches. Changes take effect immediately and will be
+                  used for all future searches.
+                </p>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ordering" className="space-y-6 mt-4">
+          {/* Reorder Search Groups */}
+          <div className="space-y-3">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Reorder Search Modes</h4>
+                  <p className="text-xs text-muted-foreground">Drag to set your preferred order</p>
+                </div>
+              </div>
+
+              <ReorderList
+                items={mergedGroupOrder.filter((id) => dynamicGroups.some((g) => g.id === id))}
+                renderItem={(id) => {
+                  const group = dynamicGroups.find((g) => g.id === id)!;
+                  return (
+                    <div className="flex items-center justify-between p-3 rounded-md border bg-card">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <HugeiconsIcon icon={group.icon} size={16} color="currentColor" strokeWidth={2} />
+                        <span className="text-sm font-medium truncate">{group.name}</span>
+                      </div>
+                      {'requirePro' in group && group.requirePro && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          PRO
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                }}
+                onReorder={(ids) => setGroupOrder(ids as SearchGroupId[])}
+              />
+            </div>
+          </div>
+
+          {/* Reorder Models (Pro users only) - simplified single list */}
+          {user?.isProUser && (
+            <div className="space-y-3">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">Reorder Models</h4>
+                    <p className="text-xs text-muted-foreground">Drag to set your preferred model order</p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const visible = mergedModelOrder.filter((id) => models.some((m) => m.value === id));
+                  return (
+                    <ReorderList
+                      items={visible as string[]}
+                      renderItem={(id: string) => {
+                        const m = models.find((x) => x.value === id)!;
+                        return (
+                          <div className="flex flex-col p-3 rounded-md border bg-card">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-sm font-medium truncate">{m.label}</div>
+                              {m.pro && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  PRO
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">{m.description}</div>
+                          </div>
+                        );
+                      }}
+                      onReorder={(ids) => setGlobalModelOrder(ids as string[])}
+                    />
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
+// Generic sortable item component
+const SortableItem = memo(function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  } as React.CSSProperties;
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 select-none">
+      <button
+        {...attributes}
+        {...listeners}
+        className="h-6 w-6 flex items-center justify-center rounded hover:bg-accent text-muted-foreground cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Drag"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+});
+
+const ReorderList = memo(function ReorderList<T extends string>({
+  items,
+  renderItem,
+  onReorder,
+}: {
+  items: T[];
+  renderItem: (id: T) => React.ReactNode;
+  onReorder: (ids: T[]) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 120,
+        tolerance: 5,
+      },
+    }),
+  );
+
+  const handleDragEnd = useCallback(
+    (event: any) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = items.indexOf(active.id);
+      const newIndex = items.indexOf(over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      onReorder(arrayMove(items, oldIndex, newIndex));
+    },
+    [items, onReorder],
+  );
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items} strategy={rectSortingStrategy}>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map((id) => (
+            <SortableItem key={id} id={id}>
+              {renderItem(id)}
+            </SortableItem>
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+});
+
 // Component for Usage Information
-function UsageSection({ user }: any) {
+export function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isProUser = user?.isProUser;
+  const monthsWindow = isMobile ? 6 : 12;
 
   const {
     data: usageData,
@@ -547,8 +715,8 @@ function UsageSection({ user }: any) {
     isLoading: historicalLoading,
     refetch: refetchHistoricalData,
   } = useQuery({
-    queryKey: ['historicalUsage', user?.id, 9],
-    queryFn: () => getHistoricalUsage(user, 9),
+    queryKey: ['historicalUsage', user?.id, monthsWindow],
+    queryFn: () => getHistoricalUsage(user, monthsWindow),
     enabled: !!user,
     staleTime: 1000 * 60 * 10,
   });
@@ -560,7 +728,7 @@ function UsageSection({ user }: any) {
   const loadingStars = useMemo(() => {
     if (!historicalLoading) return [];
 
-    const months = 9;
+    const months = monthsWindow;
     const totalDays = months * 30;
     const futureDays = Math.min(15, Math.floor(totalDays * 0.08));
     const pastDays = totalDays - futureDays - 1;
@@ -598,7 +766,7 @@ function UsageSection({ user }: any) {
     }
 
     return completeData;
-  }, [historicalLoading]);
+  }, [historicalLoading, monthsWindow]);
 
   const handleRefreshUsage = async () => {
     try {
@@ -617,7 +785,7 @@ function UsageSection({ user }: any) {
     : Math.min(((searchCount?.count || 0) / SEARCH_LIMITS.DAILY_SEARCH_LIMIT) * 100, 100);
 
   return (
-    <div className={cn(isMobile ? 'space-y-3' : 'space-y-4', isMobile && !isProUser ? 'pb-4' : '')}>
+    <div className={cn(isMobile ? 'space-y-4' : 'space-y-5', isMobile && !isProUser ? 'pb-4' : '')}>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold">Daily Search Usage</h3>
         <Button
@@ -635,8 +803,8 @@ function UsageSection({ user }: any) {
         </Button>
       </div>
 
-      <div className={cn('grid grid-cols-2', isMobile ? 'gap-2' : 'gap-3')}>
-        <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
+      <div className={cn('grid', isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-3')}>
+        <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-3' : 'p-3')}>
           <div className="flex items-center justify-between">
             <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Today</span>
             <MagnifyingGlassIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
@@ -649,7 +817,7 @@ function UsageSection({ user }: any) {
           <p className="text-[10px] text-muted-foreground">Regular searches</p>
         </div>
 
-        <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-2.5' : 'p-3')}>
+        <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-3' : 'p-3')}>
           <div className="flex items-center justify-between">
             <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Extreme</span>
             <LightningIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
@@ -666,8 +834,8 @@ function UsageSection({ user }: any) {
       </div>
 
       {!isProUser && (
-        <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
-          <div className={cn('bg-muted/30 rounded-lg space-y-2', isMobile ? 'p-2.5' : 'p-3')}>
+        <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
+          <div className={cn('bg-muted/30 rounded-lg space-y-2 p-3')}>
             {usageLoading ? (
               <>
                 <div className="flex justify-between text-xs">
@@ -711,14 +879,14 @@ function UsageSection({ user }: any) {
       {!usageLoading && (
         <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-            Activity (Past 9 Months)
+            Activity (Past {monthsWindow} Months)
           </h4>
           <div className={cn('bg-muted/50 dark:bg-card rounded-lg p-3')}>
             {historicalLoading ? (
               <TooltipProvider>
                 <ContributionGraph
                   data={loadingStars}
-                  blockSize={isMobile ? 8 : 12}
+                  blockSize={isMobile ? 10 : 12}
                   blockMargin={isMobile ? 3 : 4}
                   fontSize={isMobile ? 9 : 12}
                   labels={{
@@ -759,7 +927,7 @@ function UsageSection({ user }: any) {
                     />
                     <ContributionGraphLegend className={cn('text-muted-foreground', isMobile ? 'flex-shrink-0' : '')}>
                       {({ level }) => (
-                        <svg height={isMobile ? 8 : 12} width={isMobile ? 8 : 12}>
+                        <svg height={isMobile ? 10 : 12} width={isMobile ? 10 : 12}>
                           <rect
                             className={cn(
                               'stroke-[1px] stroke-border/50',
@@ -770,10 +938,10 @@ function UsageSection({ user }: any) {
                               'data-[level="4"]:fill-primary/90',
                             )}
                             data-level={level}
-                            height={isMobile ? 8 : 12}
+                            height={isMobile ? 10 : 12}
                             rx={2}
                             ry={2}
-                            width={isMobile ? 8 : 12}
+                            width={isMobile ? 10 : 12}
                           />
                         </svg>
                       )}
@@ -785,7 +953,7 @@ function UsageSection({ user }: any) {
               <TooltipProvider>
                 <ContributionGraph
                   data={historicalUsageData}
-                  blockSize={isMobile ? 8 : 12}
+                  blockSize={isMobile ? 10 : 12}
                   blockMargin={isMobile ? 3 : 4}
                   fontSize={isMobile ? 9 : 12}
                   labels={{
@@ -865,7 +1033,7 @@ function UsageSection({ user }: any) {
                         return (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <svg height={isMobile ? 8 : 12} width={isMobile ? 8 : 12} className="cursor-help">
+                              <svg height={isMobile ? 10 : 12} width={isMobile ? 10 : 12} className="cursor-help">
                                 <rect
                                   className={cn(
                                     'stroke-[1px] stroke-border/50',
@@ -876,10 +1044,10 @@ function UsageSection({ user }: any) {
                                     'data-[level="4"]:fill-primary',
                                   )}
                                   data-level={level}
-                                  height={isMobile ? 8 : 12}
+                                  height={isMobile ? 10 : 12}
                                   rx={2}
                                   ry={2}
-                                  width={isMobile ? 8 : 12}
+                                  width={isMobile ? 10 : 12}
                                 />
                               </svg>
                             </TooltipTrigger>
@@ -906,7 +1074,7 @@ function UsageSection({ user }: any) {
 }
 
 // Component for Subscription Information
-function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
+export function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [orders, setOrders] = useState<any>(null);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
@@ -1266,7 +1434,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
 }
 
 // Component for Memories
-function MemoriesSection() {
+export function MemoriesSection() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingMemoryIds, setDeletingMemoryIds] = useState<Set<string>>(new Set());
@@ -1437,7 +1605,7 @@ function MemoriesSection() {
 }
 
 // Component for Connectors
-function ConnectorsSection({ user }: { user: any }) {
+export function ConnectorsSection({ user }: { user: any }) {
   const isProUser = user?.isProUser || false;
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);

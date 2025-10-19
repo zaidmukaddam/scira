@@ -11,7 +11,7 @@ import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
 import { suggestQuestions, updateChatVisibility } from '@/app/actions';
@@ -70,51 +70,17 @@ const ChatInterface = memo(
       true,
     );
 
-    // Settings dialog state management with URL hash support
+    // Settings page navigation (replaces dialog/hash approach)
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsInitialTab, setSettingsInitialTab] = useState<string>('profile');
 
-    // Function to open settings with a specific tab
-    const handleOpenSettings = useCallback((tab: string = 'profile') => {
-      setSettingsInitialTab(tab);
-      setSettingsOpen(true);
-    }, []);
-
-    // URL hash detection for settings dialog
-    useEffect(() => {
-      const handleHashChange = () => {
-        const hash = window.location.hash;
-        if (hash === '#settings') {
-          setSettingsOpen(true);
-        }
-      };
-
-      // Check initial hash
-      handleHashChange();
-
-      // Listen for hash changes
-      window.addEventListener('hashchange', handleHashChange);
-
-      return () => {
-        window.removeEventListener('hashchange', handleHashChange);
-      };
-    }, []);
-
-    // Update URL hash when settings dialog opens/closes
-    useEffect(() => {
-      if (settingsOpen) {
-        // Only update hash if it's not already #settings to prevent infinite loops
-        if (window.location.hash !== '#settings') {
-          window.history.pushState(null, '', '#settings');
-        }
-      } else {
-        // Remove hash if settings is closed and hash is #settings
-        if (window.location.hash === '#settings') {
-          // Use replaceState to avoid adding to browser history
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-      }
-    }, [settingsOpen]);
+    const handleOpenSettings = useCallback(
+      (tab: string = 'profile') => {
+        setSettingsInitialTab(tab);
+        router.push(tab ? `/settings?tab=${encodeURIComponent(tab)}` : '/settings');
+      },
+      [router],
+    );
 
     // Get persisted values for dialog states
     const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
@@ -191,7 +157,7 @@ const ChatInterface = memo(
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Generate a consistent ID for new chats
-    const chatId = useMemo(() => initialChatId ?? uuidv4(), [initialChatId]);
+    const chatId = useMemo(() => initialChatId ?? uuidv7(), [initialChatId]);
 
     // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
@@ -668,11 +634,10 @@ const ChatInterface = memo(
 
 
         <div
-          className={`w-full p-2 sm:p-4 relative ${
-            status === 'ready' && messages.length === 0
+          className={`w-full p-2 sm:p-4 relative ${status === 'ready' && messages.length === 0
               ? 'flex-1 !flex !flex-col !items-center !justify-center' // Center everything when no messages
               : '!mt-20 sm:!mt-16 flex !flex-col' // Add top margin when showing messages
-          }`}
+            }`}
         >
           <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
             {status === 'ready' && messages.length === 0 && (

@@ -218,17 +218,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     onHighlight,
     annotations,
   }) => {
+    const [isRegenerating, setIsRegenerating] = useState(false);
+
     // Handle text parts
     if (part.type === 'text') {
       // Check if there are any reasoning parts in the message
       const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
-      
+
       // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
-      if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations && !hasReasoningParts) {
+      if ((!part.text || part.text.trim() === '') &&( status === 'streaming' || status === 'submitted') && !hasActiveToolInvocations && !hasReasoningParts) {
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
-            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
+            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0 !mt-4"
           >
             <div className="flex space-x-2 ml-8 mt-2">
               <div
@@ -294,8 +296,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         <Button
                           variant="ghost"
                           size="icon"
+                          disabled={isRegenerating}
                           onClick={async () => {
+                            if (isRegenerating) return;
+
                             try {
+                              setIsRegenerating(true);
                               const lastUserMessage = messages.findLast((m) => m.role === 'user');
                               if (!lastUserMessage) return;
 
@@ -324,6 +330,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               await regenerate();
                             } catch (error) {
                               console.error('Error in reload:', error);
+                            } finally {
+                              setIsRegenerating(false);
                             }
                           }}
                           className="size-8 p-0 rounded-full"
@@ -379,7 +387,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         variant="ghost"
                         size="icon"
                         className="size-8 p-0 rounded-full touch-manipulation"
-                        onTouchStart={() => {}} // Enable touch events
+                        onTouchStart={() => { }} // Enable touch events
                       >
                         <Info className="h-4 w-4" />
                       </Button>
@@ -506,8 +514,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           key={sectionKey}
           part={mergedPart}
           sectionKey={sectionKey}
-          isComplete={isComplete}
-          duration={null}
           parallelTool={parallelTool}
           isExpanded={isExpanded}
           isFullscreen={isFullscreen}
@@ -1167,19 +1173,23 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     key={`${messageIndex}-${partIndex}-tool`}
                     icon={Book}
                     text="Searching academic papers..."
-                    color="violet"
+                    color="gray"
                   />
                 );
               case 'output-available':
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <AcademicPapersCard
-                      results={
-                        part.output.results?.map((result) => ({
-                          ...result,
-                          title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
-                        })) || []
-                      }
+                      response={part.output ? {
+                        searches: part.output.searches?.map((search: any) => ({
+                          query: search.query,
+                          results: search.results?.map((result: any) => ({
+                            ...result,
+                            title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
+                          })) || [],
+                        })) || [],
+                      } : null}
+                      args={part.input ? part.input : {}}
                     />
                   </Suspense>
                 );
@@ -1252,12 +1262,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <RedditSearch
-                      result={part.output}
-                      args={{
-                        ...part.input,
-                        maxResults: part.input.maxResults || 10,
-                        timeRange: part.input.timeRange || 'week',
-                      }}
+                      result={part.output || null}
+                      args={part.input ? part.input : {}}
                     />
                   </Suspense>
                 );
@@ -1287,25 +1293,21 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <XSearch
                       result={{
                         ...part.output,
-                        query: part.output.query || '',
-                        citations:
-                          part.output.citations?.map((citation) => ({
-                            ...citation,
-                            title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
-                            url: 'url' in citation ? citation.url : citation.id,
-                          })) || [],
+                        searches: part.output.searches?.map((search: any) => ({
+                          ...search,
+                          query: search.query || '',
+                          sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
+                          citations:
+                            search.citations?.map((citation: any) => ({
+                              ...citation,
+                              title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
+                              url: 'url' in citation ? citation.url : citation.id,
+                            })) || [],
+                        })) || [],
+                        dateRange: part.output.dateRange || '',
+                        handles: part.output.handles || [],
                       }}
-                      args={{
-                        ...part.input,
-                        query: part.input.query || '',
-                        startDate: part.input.startDate || '',
-                        endDate: part.input.endDate || '',
-                        includeXHandles: part.input.includeXHandles || [],
-                        excludeXHandles: part.input.excludeXHandles || [],
-                        postFavoritesCount: part.input.postFavoritesCount || 0,
-                        postViewCount: part.input.postViewCount || 0,
-                        maxResults: part.input.maxResults || 20,
-                      }}
+                      args={part.input ? part.input : {}}
                     />
                   </Suspense>
                 );
@@ -1528,9 +1530,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <ConnectorsSearchResults
-                      results={part.output?.results || []}
-                      query={part.output?.query || ''}
-                      totalResults={part.output?.count || 0}
+                      results={part.output?.success ? part.output.results : []}
+                      query={part.output?.success ? part.output.query : ''}
+                      totalResults={part.output?.success ? part.output.count : 0}
                     />
                   </Suspense>
                 );
@@ -1725,10 +1727,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 ) {
                   const errorMessage = String(
                     (part.output && 'error' in part.output && part.output.error) ||
-                      (part.output.results &&
-                        part.output.results[0] &&
-                        'error' in part.output.results[0] &&
-                        part.output.results[0].error),
+                    (part.output.results &&
+                      part.output.results[0] &&
+                      'error' in part.output.results[0] &&
+                      part.output.results[0].error),
                   );
                   return (
                     <div

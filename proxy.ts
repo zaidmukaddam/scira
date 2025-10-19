@@ -4,7 +4,7 @@ import { getSessionCookie } from 'better-auth/cookies';
 const authRoutes = ['/sign-in', '/sign-up'];
 const protectedRoutes = ['/lookout', '/xql', '/settings'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   console.log('Pathname: ', pathname);
   if (pathname === '/api/search') return NextResponse.next();
@@ -32,12 +32,12 @@ export async function middleware(request: NextRequest) {
 
   const sessionCookie = getSessionCookie(request);
 
-  // Redirect /settings to /#settings to open settings dialog (only if authenticated)
-  if (pathname === '/settings' || pathname === '/#settings') {
+  // Allow /settings as a real page; still protect it behind auth
+  if (pathname === '/settings') {
     if (!sessionCookie) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
-    return NextResponse.redirect(new URL('/#settings', request.url));
+    return NextResponse.next();
   }
 
   // If user is authenticated but trying to access auth routes

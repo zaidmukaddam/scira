@@ -637,11 +637,17 @@ export function webSearchTool(
     - The queries should always be in the same language as the user's message.
     - And count of the queries should be 3-5.
     - Do not use the best quality unless absolutly required since it is time expensive.
+    - ⚠️ CRITICAL: ALWAYS include date/time context in search queries:
+      - For current events: "latest", "${new Date().getFullYear()}", "today", "current", "recent"
+      - For historical info: specific years or date ranges
+      - For time-sensitive topics: "newest", "updated", "${new Date().getFullYear()}"
+      - **NO TEMPORAL ASSUMPTIONS**: Never assume time periods - always be explicit about dates/years
+      - Examples: "latest AI news ${new Date().getFullYear()}", "current stock prices today", "recent developments in ${new Date().getFullYear()}"
     `,
     inputSchema: z.object({
       queries: z.array(
         z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'),
-      ),
+      ).min(3),
       maxResults: z.array(
         z
           .number()

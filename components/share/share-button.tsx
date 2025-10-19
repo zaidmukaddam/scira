@@ -33,13 +33,11 @@ export function ShareButton({
 }: ShareButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Don't render if user is not owner or no user
   if (!user || !isOwner || !chatId) {
     return null;
   }
 
   const handleClick = () => {
-    console.log('🔗 Share button clicked, opening dialog');
     setIsDialogOpen(true);
   };
 
@@ -49,9 +47,10 @@ export function ShareButton({
         if (selectedVisibilityType === 'public') {
           return (
             <>
-              <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
-              <CopyIcon size={14} className="ml-1 text-blue-600 dark:text-blue-400 opacity-70" />
+              <div className="flex items-center justify-center rounded-full bg-primary/10 size-[18px]">
+                <GlobeHemisphereWestIcon size={11} weight="fill" className="text-primary" />
+              </div>
+              <span className="text-sm font-medium">Public</span>
             </>
           );
         } else {
@@ -62,9 +61,8 @@ export function ShareButton({
                 size={14}
                 color="currentColor"
                 strokeWidth={2}
-                className="text-muted-foreground"
               />
-              <span className="text-sm font-medium text-muted-foreground">Share</span>
+              <span className="text-sm font-medium">Share</span>
             </>
           );
         }
@@ -72,7 +70,7 @@ export function ShareButton({
         return (
           <>
             <HugeiconsIcon icon={Share03Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-            {selectedVisibilityType === 'public' ? 'Manage Share' : 'Share'}
+            Share
           </>
         );
       case 'icon':
@@ -99,11 +97,11 @@ export function ShareButton({
       case 'navbar':
         return {
           ...baseProps,
-          variant: 'secondary' as const,
+          variant: selectedVisibilityType === 'public' ? ('secondary' as const) : ('ghost' as const),
           size: 'sm' as const,
-          className: `${className} !h-7 p-auto sm:!p-4 ${
-            selectedVisibilityType === 'public'
-              ? 'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800'
+          className: `${className} !h-8 px-3 gap-2 font-medium transition-all ${
+            selectedVisibilityType === 'public' 
+              ? 'bg-primary/5 hover:bg-primary/10 border-primary/20' 
               : ''
           }`,
         };
@@ -112,6 +110,7 @@ export function ShareButton({
           ...baseProps,
           variant: 'default' as const,
           size: size === 'sm' ? ('sm' as const) : ('default' as const),
+          className: `${className} font-medium`,
         };
       case 'icon':
       default:
@@ -126,7 +125,7 @@ export function ShareButton({
 
   const button = <Button {...getButtonProps()}>{getButtonContent()}</Button>;
 
-  const tooltipContent = selectedVisibilityType === 'public' ? 'Manage sharing settings' : 'Share this chat';
+  const tooltipContent = selectedVisibilityType === 'public' ? 'Manage sharing' : 'Share chat';
 
   return (
     <>

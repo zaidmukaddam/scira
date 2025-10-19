@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, memo, useRef, useEffect } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSession, signOut } from '@/lib/auth-client';
-import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   SignOutIcon,
@@ -33,6 +32,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -217,6 +217,7 @@ const UserProfile = memo(
     const [signingIn, setSigningIn] = useState(false);
     const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
+    const [blurPersonalInfo] = useLocalStorage<boolean>('scira-blur-personal-info', false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
@@ -299,17 +300,23 @@ const UserProfile = memo(
                     <AvatarImage
                       src={currentUser?.image ?? ''}
                       alt={currentUser?.name ?? ''}
-                      className="rounded-md p-0 m-0 size-8"
+                      className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}
                     />
-                    <AvatarFallback className="rounded-md p-0 m-0 size-8">
+                    <AvatarFallback className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}>
                       {currentUser?.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <p className="font-medium text-sm leading-none truncate">{currentUser?.name}</p>
+                    <p className={cn('font-medium text-sm leading-none truncate', blurPersonalInfo && 'blur-sm')}>
+                      {currentUser?.name}
+                    </p>
                     <div className="flex items-center mt-0.5 gap-1">
                       <div
-                        className={`text-xs text-muted-foreground ${showEmail ? '' : 'max-w-[160px] truncate'}`}
+                        className={cn(
+                          'text-xs text-muted-foreground',
+                          showEmail ? '' : 'max-w-[160px] truncate',
+                          blurPersonalInfo && 'blur-sm',
+                        )}
                         title={currentUser?.email || ''}
                       >
                         {formatEmail(currentUser?.email)}
@@ -331,7 +338,7 @@ const UserProfile = memo(
                 </div>
               </div>
 
-              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/settings')}>
                 <div className="w-full flex items-center gap-2">
                   <GearIcon size={16} />
                   <span>Settings</span>
@@ -421,10 +428,13 @@ const UserProfile = memo(
           />
         )}
 
-        <SignInPromptDialog open={signInDialogOpen} onOpenChange={(open) => {
-          setSignInDialogOpen(open);
-          if (!open) setSigningIn(false);
-        }} />
+        <SignInPromptDialog
+          open={signInDialogOpen}
+          onOpenChange={(open) => {
+            setSignInDialogOpen(open);
+            if (!open) setSigningIn(false);
+          }}
+        />
       </>
     );
   },

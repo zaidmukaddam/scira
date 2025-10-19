@@ -53,13 +53,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     subscriptionDetails,
     userProStatus: user
       ? {
-          id: user.id,
-          isProUser: user.isProUser,
-          proSource: user.proSource,
-          hasPolarSubscription: !!user.polarSubscription,
-          polarSubStatus: user.polarSubscription?.status,
-          polarSubProductId: user.polarSubscription?.productId,
-        }
+        id: user.id,
+        isProUser: user.isProUser,
+        proSource: user.proSource,
+        hasPolarSubscription: !!user.polarSubscription,
+        polarSubStatus: user.polarSubscription?.status,
+        polarSubProductId: user.polarSubscription?.productId,
+      }
       : null,
   });
 
@@ -99,7 +99,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     if (process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true') {
       return originalPrice;
     }
-    
+
     const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
     const shouldApplyDiscount = isDevMode
       ? discountConfig.code && discountConfig.message
@@ -134,15 +134,15 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       console.log('Discounts disabled via NEXT_PUBLIC_DISABLE_DISCOUNTS');
       return false;
     }
-    
+
     const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
     const hasRequiredFields = discountConfig.code && discountConfig.message;
     const hasDiscountValue = discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice;
-    
+
     const result = isDevMode
       ? hasRequiredFields && hasDiscountValue
       : discountConfig.enabled && hasRequiredFields && hasDiscountValue;
-    
+
     console.log('shouldShowDiscount Debug:', {
       isDevMode,
       hasCode: !!discountConfig.code,
@@ -155,7 +155,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       hasDiscountValue,
       result
     });
-    
+
     return result;
   };
 
@@ -174,7 +174,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
         // TEMPORARY: Force disable all discounts
         const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
-        
+
         // Show special messaging for student discounts
         if (!discountsDisabled && discountConfig.isStudentDiscount) {
           toast.success('🎓 Student discount applied automatically!');
@@ -189,8 +189,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           ...(discountIdToUse !== '' &&
             !discountsDisabled &&
             (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
-              discountId: discountIdToUse,
-            }),
+            discountId: discountIdToUse,
+          }),
         });
       }
     } catch (error) {
@@ -467,21 +467,25 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   </Button>
                 ) : (
                   <div className="space-y-3">
-                    <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}>
-                      🇮🇳 Pay ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <div className="border border-border/60 rounded-md p-3 bg-muted/30">
+                      <p className="text-xs text-muted-foreground">
+                        UPI AutoPay coming soon. Use subscription below.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      className="w-full opacity-50 cursor-not-allowed" 
+                      disabled
+                    >
+                      Pay ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)} (Unavailable)
                     </Button>
                     <Button
-                      variant="outline"
                       className="w-full group"
                       onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
                     >
-                      💳 Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
+                      Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      One-time payment vs Monthly subscription
-                    </p>
                     {shouldShowDiscount() && discountConfig.discountAvail && (
                       <p className="text-xs text-primary text-center font-medium">{discountConfig.discountAvail}</p>
                     )}

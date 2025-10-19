@@ -13,17 +13,17 @@ export type SearchMemoryTool = Tool<
     informationToGet: string;
   },
   | {
-      success: boolean;
-      results: any[];
-      count: number;
-      error?: undefined;
-    }
+    success: boolean;
+    results: any[];
+    count: number;
+    error?: undefined;
+  }
   | {
-      success: boolean;
-      error: string;
-      results?: undefined;
-      count?: undefined;
-    }
+    success: boolean;
+    error: string;
+    results?: undefined;
+    count?: undefined;
+  }
 >;
 
 export type AddMemoryTool = Tool<
@@ -31,13 +31,13 @@ export type AddMemoryTool = Tool<
     memory: string;
   },
   | {
-      success: boolean;
-      memory: any;
-      error?: undefined;
-    }
+    success: boolean;
+    memory: any;
+    error?: undefined;
+  }
   | {
-      success: boolean;
-      error: string;
-      memory?: undefined;
-    }
+    success: boolean;
+    error: string;
+    memory?: undefined;
+  }
 >;

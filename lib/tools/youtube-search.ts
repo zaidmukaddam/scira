@@ -202,7 +202,7 @@ export const youtubeSearchTool = tool({
                   console.warn(`⚠️ getVideoDetails failed for ${videoId}:`, e);
                   return null;
                 });
-
+ 
                 // Extract transcript text from subtitles (prefer details.subtitles, fallback to direct API)
                 let transcriptText: string | undefined = undefined;
                 if (details && Array.isArray(details.subtitles) && details.subtitles.length > 0) {

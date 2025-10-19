@@ -110,9 +110,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                     <button
                       key={index}
                       onClick={() => api?.scrollTo(index)}
-                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                        index === current ? 'bg-foreground' : 'bg-muted-foreground/30'
-                      }`}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${index === current ? 'bg-foreground' : 'bg-muted-foreground/30'
+                        }`}
                       aria-label={`Go to testimonial ${index + 1}`}
                     />
                   ))}

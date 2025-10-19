@@ -103,6 +103,12 @@ export const weatherTool = tool({
       );
       const airPollutionForecastData = await airPollutionForecastResponse.json();
 
+      console.log('Air pollution forecast data:', airPollutionForecastData);
+
+      console.log('Daily forecast data:', dailyForecastData);
+
+      console.log('Weather data:', weatherData);
+
       return {
         ...weatherData,
         geocoding: {

@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import isEqual from 'fast-deep-equal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,7 +24,7 @@ import {
   RefreshCw,
   LogIn,
 } from 'lucide-react';
-import { TextUIPart, UIMessagePart } from 'ai';
+import { UIMessagePart } from 'ai';
 import { MarkdownRenderer } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
@@ -41,10 +40,8 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
-import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { cn } from '@/lib/utils';
-import { useDataStream } from './data-stream-provider';
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -441,11 +438,11 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
               className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden
               font-sans font-normal max-w-none !text-base sm:!text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden
               relative w-full resize-none
-              border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none leading-relaxed min-h-[auto]
-              transition-colors bg-transparent"
+              border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none min-h-[auto]
+              transition-colors !bg-transparent"
               placeholder="Edit your message..."
               style={{
-                lineHeight: '1.625',
+                lineHeight: '1.25',
               }}
             />
 
@@ -487,10 +484,10 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                 disabled={
                   isSubmitting ||
                   draftContent.trim() ===
-                    message.parts
-                      ?.map((part) => (part.type === 'text' ? part.text : ''))
-                      .join('')
-                      .trim()
+                  message.parts
+                    ?.map((part) => (part.type === 'text' ? part.text : ''))
+                    .join('')
+                    .trim()
                 }
               >
                 {isSubmitting ? (
@@ -614,7 +611,7 @@ export const Message: React.FC<MessageProps> = ({
     // Check if the message has parts that should be rendered
     if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
       return (
-        <div className="mb-0! px-0">
+        <div className="!mb-0 px-0">
           <div className="grow min-w-0">
             {mode === 'edit' ? (
               <MessageEditor
@@ -636,9 +633,8 @@ export const Message: React.FC<MessageProps> = ({
                         <div
                           key={`user-${index}-${partIndex}`}
                           ref={messageContentRef}
-                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${
-                            !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
-                          }`}
+                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
+                            }`}
                         >
                           <div
                             className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
@@ -662,13 +658,7 @@ export const Message: React.FC<MessageProps> = ({
                               />
                             )}
                             <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
-                              <ChatTextHighlighter
-                                className={`${getDynamicFontSize(part.text)}`}
-                                onHighlight={onHighlight}
-                                removeHighlightOnClick={true}
-                              >
-                                <MarkdownRenderer content={part.text} isUserMessage={true} />
-                              </ChatTextHighlighter>
+                              <MarkdownRenderer content={part.text} isUserMessage={true} />
                               {message.parts?.filter((part) => part.type === 'file') &&
                                 message.parts?.filter((part) => part.type === 'file').length > 0 && (
                                   <div className="mt-2">
@@ -700,9 +690,8 @@ export const Message: React.FC<MessageProps> = ({
                           ?.map((part) => (part.type === 'text' ? part.text : ''))
                           .join('')
                           .trim() || '',
-                      )} text-foreground dark:text-foreground overflow-hidden relative ${
-                        !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
-                      }`}
+                      )} text-foreground dark:text-foreground overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
+                        }`}
                     >
                       <div
                         className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
@@ -722,26 +711,15 @@ export const Message: React.FC<MessageProps> = ({
                           <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
                         )}
                         <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
-                          <ChatTextHighlighter
-                            className={`${getDynamicFontSize(
+                          <MarkdownRenderer
+                            content={
                               message.parts
                                 ?.map((part) => (part.type === 'text' ? part.text : ''))
                                 .join('')
-                                .trim() || '',
-                            )}`}
-                            onHighlight={onHighlight}
-                            removeHighlightOnClick={true}
-                          >
-                            <MarkdownRenderer
-                              content={
-                                message.parts
-                                  ?.map((part) => (part.type === 'text' ? part.text : ''))
-                                  .join('')
-                                  .trim() || ''
-                              }
-                              isUserMessage={true}
-                            />
-                          </ChatTextHighlighter>
+                                .trim() || ''
+                            }
+                            isUserMessage={true}
+                          />
                           {message.parts?.filter((part) => part.type === 'file') &&
                             message.parts?.filter((part) => part.type === 'file').length > 0 && (
                               <div className="mt-2">
@@ -775,7 +753,7 @@ export const Message: React.FC<MessageProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute right-0 -bottom-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
+                  <div className="absolute right-0 -bottom-4 opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-all duration-200 transform xl:group-hover:translate-x-0 xl:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
                     {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
                       <>
                         <Button
@@ -803,11 +781,10 @@ export const Message: React.FC<MessageProps> = ({
                         );
                         toast.success('Copied to clipboard');
                       }}
-                      className={`h-7 w-7 ${
-                        (!user || !isOwner) && selectedVisibilityType === 'public'
-                          ? 'rounded-md'
-                          : 'rounded-r-md rounded-l-none'
-                      } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
+                      className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public'
+                        ? 'rounded-md'
+                        : 'rounded-r-md rounded-l-none'
+                        } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
                       aria-label="Copy message"
                     >
                       <HugeiconsIcon icon={Copy01Icon} size={24} className="flex-shrink-0 pr-1 size-6" />
@@ -820,152 +797,6 @@ export const Message: React.FC<MessageProps> = ({
         </div>
       );
     }
-
-    // Fallback to the original rendering if no parts are present
-    return (
-      <div className="mb-0! px-0">
-        <div className="grow min-w-0">
-          {mode === 'edit' ? (
-            <MessageEditor
-              message={message}
-              setMode={setMode}
-              setMessages={setMessages}
-              regenerate={regenerate}
-              messages={messages}
-              setSuggestedQuestions={setSuggestedQuestions}
-              user={user}
-            />
-          ) : (
-            <div className="group relative">
-              <div className="relative">
-                <div
-                  ref={messageContentRef}
-                  className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:font-be-vietnam-pro! font-normal max-w-none ${getDynamicFontSize(
-                    message.parts
-                      ?.map((part) => (part.type === 'text' ? part.text : ''))
-                      .join('')
-                      .trim() || '',
-                  )} text-foreground dark:text-foreground overflow-hidden relative ${
-                    !isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
-                  }`}
-                >
-                  <div className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}>
-                    {user ? (
-                      <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
-                        <AvatarImage
-                          src={user.image ?? ''}
-                          alt={user.name ?? ''}
-                          className="rounded-md !p-0 !m-0 size-7"
-                        />
-                        <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
-                          {(user.name || user.email || '?').charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
-                    )}
-                    <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
-                      <ChatTextHighlighter
-                        className={`${getDynamicFontSize(
-                          message.parts
-                            ?.map((part) => (part.type === 'text' ? part.text : ''))
-                            .join('')
-                            .trim() || '',
-                        )}`}
-                        onHighlight={onHighlight}
-                        removeHighlightOnClick={true}
-                      >
-                        <MarkdownRenderer
-                          content={
-                            message.parts
-                              ?.map((part) => (part.type === 'text' ? part.text : ''))
-                              .join('')
-                              .trim() || ''
-                          }
-                          isUserMessage={true}
-                        />
-                      </ChatTextHighlighter>
-                      {message.parts?.filter((part) => part.type === 'file') &&
-                        message.parts?.filter((part) => part.type === 'file').length > 0 && (
-                          <div className="mt-2">
-                            <AttachmentsBadge
-                              attachments={
-                                message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
-                              }
-                            />
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  {!isExpanded && exceedsMaxHeight && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                  )}
-                </div>
-
-                {exceedsMaxHeight && (
-                  <div className="flex justify-center mt-0.5">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-transparent"
-                      aria-label={isExpanded ? 'Show less' : 'Show more'}
-                    >
-                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                    </Button>
-                  </div>
-                )}
-
-                <div className="absolute right-0 -bottom-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:group-hover:translate-x-0 sm:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
-                  {/* Only show edit button for owners OR unauthenticated users on private chats */}
-                  {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setMode('edit')}
-                        className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-                        disabled={status === 'submitted' || status === 'streaming'}
-                        aria-label="Edit message"
-                      >
-                        <HugeiconsIcon
-                          icon={PencilEdit02Icon}
-                          size={24}
-                          className="text-primary flex-shrink-0 pl-1 size-6"
-                        />
-                      </Button>
-                    </>
-                  )}
-                  <Separator orientation="vertical" className="h-5 bg-black dark:bg-white" />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        message.parts
-                          ?.map((part) => (part.type === 'text' ? part.text : ''))
-                          .join('')
-                          .trim() || '',
-                      );
-                      toast.success('Copied to clipboard');
-                    }}
-                    className={`h-7 w-7 ${
-                      (!user || !isOwner) && selectedVisibilityType === 'public'
-                        ? 'rounded-md'
-                        : 'rounded-r-md rounded-l-none'
-                    } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
-                    aria-label="Copy message"
-                  >
-                    <HugeiconsIcon icon={Copy01Icon} size={24} className="flex-shrink-0 pr-1 size-6" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
   }
 
   if (message.role === 'assistant') {
@@ -1312,11 +1143,10 @@ export const EditableAttachmentsBadge = ({
                     <button
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
-                        selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
+                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
+                        }`}
                     >
                       {isPdf(attachment) ? (
                         <div className="h-full w-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
@@ -1599,11 +1429,10 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                     <button
                       key={idx}
                       onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${
-                        selectedIndex === idx
-                          ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
+                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
+                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                        : 'opacity-70 hover:opacity-100'
+                        }`}
                     >
                       {isPdf(attachment) ? (
                         <div className="h-full w-full flex items-center justify-center bg-muted dark:bg-muted">

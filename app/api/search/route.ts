@@ -10,6 +10,7 @@ import {
 import {
   convertToModelMessages,
   streamText,
+  pruneMessages,
   NoSuchToolError,
   createUIMessageStream,
   generateObject,
@@ -22,8 +23,8 @@ import {
   requiresAuthentication,
   requiresProSubscription,
   shouldBypassRateLimits,
-  models,
   getModelParameters,
+  hasReasoningSupport,
 } from '@/ai/providers';
 import {
   createStreamId,
@@ -38,7 +39,7 @@ import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
 import { CustomInstructions } from '@/lib/db/schema';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
 import {
@@ -75,7 +76,9 @@ import { ChatMessage } from '@/lib/types';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { getCachedCustomInstructionsByUserId } from '@/lib/user-data-server';
-import { GoogleGenerativeAIProvider, GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { CohereChatModelOptions } from '@ai-sdk/cohere';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -115,12 +118,26 @@ export async function POST(req: Request) {
     selectedConnectors,
   } = await req.json();
   const { latitude, longitude } = geolocation(req);
-  const streamId = 'stream-' + uuidv4();
+  const streamId = 'stream-' + uuidv7();
 
   console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
 
   // CRITICAL PATH: Get auth status first (required for all subsequent checks)
   const lightweightUser = await getLightweightUser();
+
+  // Rate limit check for unauthenticated users
+  if (!lightweightUser) {
+    const identifier = getClientIdentifier(req);
+    const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
+
+    if (!success) {
+      const resetDate = new Date(reset);
+      return new ChatSDKError(
+        'rate_limit:api',
+        `You've reached the limit of ${limit} searches per day for unauthenticated users. Sign in for more searches or wait until ${resetDate.toLocaleString()}.`
+      ).toResponse();
+    }
+  }
 
   // Early exit checks (no DB operations needed)
   if (!lightweightUser) {
@@ -139,13 +156,13 @@ export async function POST(req: Request) {
 
   // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
   const isProUser = lightweightUser?.isProUser ?? false;
-  
+
   // 1. Config (needed for streaming) - start immediately
   configPromise = getGroupConfig(group);
-  
+
   // 2. Full user data (needed for usage checks and custom instructions)
   const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
-  
+
   // 3. Custom instructions (only if enabled and authenticated)
   const customInstructionsPromise = lightweightUser && (isCustomInstructionsEnabled ?? true)
     ? fullUserPromise.then(user => user ? getCachedCustomInstructionsByUserId(user.id) : null)
@@ -169,7 +186,7 @@ export async function POST(req: Request) {
       if (existingChat && existingChat.userId !== lightweightUser.userId) {
         throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
       }
-      
+
       // Create chat if it doesn't exist (MUST be sync - other operations depend on it)
       if (!existingChat) {
         await saveChat({
@@ -178,7 +195,7 @@ export async function POST(req: Request) {
           title: 'New Chat',
           visibility: selectedVisibilityType,
         });
-        
+
         // Generate better title in background (non-critical)
         after(async () => {
           try {
@@ -191,16 +208,10 @@ export async function POST(req: Request) {
           }
         });
       }
-      
-      // Stream tracking in background (non-critical for functionality)
-      after(async () => {
-        try {
-          await createStreamId({ streamId, chatId: id });
-        } catch (error) {
-          console.error('Background createStreamId failed:', error);
-        }
-      });
-      
+
+      // Stream tracking (must be sync for proper stream management)
+      await createStreamId({ streamId, chatId: id });
+
       return existingChat;
     });
 
@@ -288,7 +299,7 @@ export async function POST(req: Request) {
       }
 
       customInstructions = customInstructionsResult;
-      
+
       // Save user message BEFORE streaming (critical for conversation history)
       if (user) {
         await saveMessages({
@@ -333,8 +344,7 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           gateway: {
-            only: ['openai', 'anthropic', 'vertex', 'moonshotai', 'zai', 'deepseek', 'fireworks', 'bedrock', 'alibaba'],
-            order: ['anthropic', 'vertex', 'bedrock']
+            only: ['zai', 'deepseek', 'alibaba', 'baseten'],
           },
           openai: {
             ...(model !== 'scira-qwen-coder'
@@ -346,7 +356,12 @@ export async function POST(req: Request) {
               model === 'scira-gpt5-mini' ||
               model === 'scira-o3' ||
               model === 'scira-gpt5-nano' ||
-              model === 'scira-gpt5-codex'
+              model === 'scira-gpt5-codex' ||
+              model === 'scira-gpt5-medium' ||
+              model === 'scira-o4-mini' ||
+              model === 'scira-gpt-4.1' ||
+              model === 'scira-gpt-4.1-mini' ||
+              model === 'scira-gpt-4.1-nano'
               ? {
                 reasoningEffort: (
                   model === 'scira-gpt5-nano' ||
@@ -355,10 +370,10 @@ export async function POST(req: Request) {
                     'minimal' :
                     'medium'
                 ),
+                promptCacheKey: 'scira-oai',
                 parallelToolCalls: false,
-                store: false,
                 reasoningSummary: 'detailed',
-                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' ? 'medium' : 'high'),
+                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' || model === 'scira-o4-mini' || model === 'scira-gpt-4.1' || model === 'scira-gpt-4.1-mini' ? 'medium' : 'high'),
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
@@ -384,6 +399,16 @@ export async function POST(req: Request) {
           xai: {
             parallel_tool_calls: false,
           },
+          cohere: {
+            ...(model === 'scira-cmd-a-think'
+              ? {
+                thinking: {
+                  type: 'enabled',
+                  tokenBudget: 1000,
+                },
+              }
+              : {}),
+          } satisfies CohereChatModelOptions,
           anthropic: {
             ...(model === 'scira-anthropic-think'
               ? {
@@ -397,7 +422,7 @@ export async function POST(req: Request) {
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
           google: {
-            ...(model === 'scira-google-think'
+            ...(model === 'scira-google-think' || model === 'scira-google-pro-think'
               ? {
                 thinkingConfig: {
                   thinkingBudget: 400,
@@ -408,7 +433,39 @@ export async function POST(req: Request) {
             threshold: "OFF"
           } satisfies GoogleGenerativeAIProviderOptions,
         },
-        prepareStep: async ({ steps }) => {
+        prepareStep: async ({ steps, messages }) => {
+          // Calculate total token usage across all steps
+          const totalTokens = steps.reduce((sum, step) => sum + (step.usage?.totalTokens ?? 0), 0);
+
+          // Check if we need to prune messages
+          const shouldPrune = messages.length > 10 || totalTokens > 100000;
+          
+          // Always check if model supports reasoning
+          const modelHasReasoning = hasReasoningSupport(model);
+
+          let prunedMessages = messages;
+          
+          // If model doesn't support reasoning, always prune ALL reasoning content
+          // to prevent errors when switching from reasoning to non-reasoning models
+          if (!modelHasReasoning) {
+            prunedMessages = pruneMessages({
+              messages,
+              reasoning: 'all',
+              toolCalls: shouldPrune ? 'before-last-2-messages' : 'none',
+              emptyMessages: shouldPrune ? 'remove' : 'keep',
+            });
+            console.log(`🧹 Removed reasoning content for non-reasoning model (${messages.length} → ${prunedMessages.length} messages)`);
+          } else if (shouldPrune) {
+            // For reasoning models, only prune when needed
+            console.log(`🔧 Pruning messages: ${messages.length} messages, ${totalTokens} tokens used`);
+            prunedMessages = pruneMessages({
+              messages,
+              toolCalls: 'before-last-2-messages',
+              emptyMessages: 'remove',
+            });
+            console.log(`✂️ Pruned to ${prunedMessages.length} messages`);
+          }
+
           if (steps.length > 0) {
             const lastStep = steps[steps.length - 1];
 
@@ -416,9 +473,14 @@ export async function POST(req: Request) {
             if (lastStep.toolCalls.length > 0 && lastStep.toolResults.length > 0) {
               return {
                 toolChoice: 'none',
+                activeTools: [],
+                messages: (!modelHasReasoning || shouldPrune) ? prunedMessages : undefined,
               };
             }
           }
+
+          // Return pruned messages if needed
+          return (!modelHasReasoning || shouldPrune) ? { messages: prunedMessages } : undefined;
         },
         tools: (() => {
           const baseTools = {
@@ -518,7 +580,7 @@ export async function POST(req: Request) {
         onFinish: async (event) => {
           const processingTime = (Date.now() - requestStartTime) / 1000;
           console.log(`✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason})`);
-          
+
           if (user?.id && event.finishReason === 'stop') {
             // Track usage in background
             after(async () => {
@@ -526,7 +588,7 @@ export async function POST(req: Request) {
                 if (!shouldBypassRateLimits(model, user)) {
                   await incrementMessageUsage({ userId: user.id });
                 }
-                
+
                 // Track extreme search usage if used
                 if (group === 'extreme') {
                   const extremeSearchUsed = event.steps?.some((step) =>

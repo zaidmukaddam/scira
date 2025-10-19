@@ -35,6 +35,7 @@ export async function getChatWithInitialMessages({
       .select()
       .from(chat)
       .where(eq(chat.id, id))
+      .limit(1)
       .$withCache();
 
     if (!selectedChat) {
@@ -100,6 +101,7 @@ export async function getChatWithUserAndInitialMessages({
       .from(chat)
       .leftJoin(user, eq(chat.userId, user.id))
       .where(eq(chat.id, id))
+      .limit(1)
       .$withCache();
 
     if (!chatWithUser?.chat) {

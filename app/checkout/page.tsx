@@ -120,9 +120,9 @@ export default function CheckoutPage() {
     return isDevMode
       ? discountConfig.code && discountConfig.message && (discountConfig.percentage || discountConfig.inrPrice)
       : discountConfig.enabled &&
-          discountConfig.code &&
-          discountConfig.message &&
-          (discountConfig.percentage || discountConfig.inrPrice);
+      discountConfig.code &&
+      discountConfig.message &&
+      (discountConfig.percentage || discountConfig.inrPrice);
   };
 
   const onSubmit = async (data: CheckoutFormData) => {
@@ -212,7 +212,35 @@ export default function CheckoutPage() {
           <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed">
             Complete your one-time payment for Scira Pro
           </p>
-          <div className="mt-4 space-y-2">
+
+          {/* Coming Soon Notice */}
+          <div className="mt-6 mb-6">
+            <div className="border border-border rounded-lg p-6 bg-muted/30">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <p className="text-sm font-medium text-foreground">
+                      This payment method is temporarily unavailable
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      We&apos;re upgrading to UPI AutoPay for a better experience. Please use the{' '}
+                      <Link href="/pricing" className="text-foreground underline underline-offset-4 hover:text-foreground/80 transition-colors">
+                        monthly subscription option
+                      </Link>{' '}
+                      instead.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2 opacity-50">
             <div className="inline-flex items-center bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-sm">
               🇮🇳 One-time payment:{' '}
               {shouldShowDiscount() ? (
@@ -240,7 +268,7 @@ export default function CheckoutPage() {
 
       {/* Checkout Form */}
       <div className="max-w-2xl mx-auto px-6 pb-24">
-        <Card>
+        <Card className="opacity-50 pointer-events-none">
           <CardHeader>
             <CardTitle>Billing Information</CardTitle>
             <CardDescription>Please provide your details to complete the checkout process</CardDescription>
@@ -366,22 +394,12 @@ export default function CheckoutPage() {
                   <Button
                     type="submit"
                     className="w-full h-12 bg-black dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black font-medium text-sm tracking-[-0.01em] transition-all duration-200 disabled:opacity-50"
-                    disabled={isLoading}
+                    disabled={true}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Continue to Payment
-                        <CreditCard className="w-4 h-4 ml-2" />
-                      </>
-                    )}
+                    Temporarily Unavailable
                   </Button>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mt-3">
-                    You will be redirected to a secure payment page
+                    UPI AutoPay coming soon for better experience
                   </p>
                 </div>
               </form>
@@ -390,7 +408,7 @@ export default function CheckoutPage() {
         </Card>
 
         {/* Tax Information Notice */}
-        <div className="mt-6">
+        <div className="mt-6 opacity-50">
           <Card>
             <CardHeader className="pb-0">
               <CardTitle>📄 Tax & Invoice Information</CardTitle>
@@ -407,7 +425,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* Security Notice */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center opacity-50">
           <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-6 py-4 inline-block">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               🔒 Secure checkout powered by{' '}

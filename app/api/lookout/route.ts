@@ -16,7 +16,7 @@ import {
 } from '@/lib/db/queries';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 import { CronExpressionParser } from 'cron-parser';
 import { sendLookoutCompletionEmail } from '@/lib/email';
 import { db } from '@/lib/db';
@@ -138,8 +138,8 @@ export async function POST(req: Request) {
     }
 
     // Generate a new chat ID for this scheduled search
-    const chatId = uuidv4();
-    const streamId = 'stream-' + uuidv4();
+    const chatId = uuidv7();
+    const streamId = 'stream-' + uuidv7();
 
     // Create the chat
     await saveChat({
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
 
     // Create user message
     const userMessage = {
-      id: uuidv4(),
+      id: uuidv7(),
       role: 'user' as const,
       content: prompt,
       parts: [{ type: 'text' as const, text: prompt }],
@@ -286,10 +286,10 @@ You are an advanced research assistant focused on deep analysis and comprehensiv
 **STRICT Citation Examples:**
 
 **✅ CORRECT - Immediate Citation Placement:**
-The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Forecast 2024](https://example.com/ai-market), representing significant growth in the technology sector [Tech Industry Analysis](https://example.com/tech-growth). Recent advances in transformer architectures have enabled models to achieve 95% accuracy on complex reasoning tasks [Deep Learning Advances 2024](https://example.com/dl-advances).
+The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Forecast 2025](https://example.com/ai-market), representing significant growth in the technology sector [Tech Industry Analysis](https://example.com/tech-growth). Recent advances in transformer architectures have enabled models to achieve 95% accuracy on complex reasoning tasks [Deep Learning Advances 2025](https://example.com/dl-advances).
 
 **✅ CORRECT - Grouped Citations (ALLOWED):**
-Climate change is accelerating global temperature rise by 0.2°C per decade [IPCC Report 2024](https://example.com/ipcc) [NASA Climate Data](https://example.com/nasa-climate) [NOAA Temperature Analysis](https://example.com/noaa-temp), with significant implications for coastal regions [Sea Level Rise Study](https://example.com/sea-level).
+Climate change is accelerating global temperature rise by 0.2°C per decade [IPCC Report 2025](https://example.com/ipcc) [NASA Climate Data](https://example.com/nasa-climate) [NOAA Temperature Analysis](https://example.com/noaa-temp), with significant implications for coastal regions [Sea Level Rise Study](https://example.com/sea-level).
 
 **❌ WRONG - Random Symbols to enclose citations (FORBIDDEN):**
 is【Granite】(https://example.com/granite)

@@ -50,6 +50,8 @@ import {
   getSyncStatus,
   type ConnectorProvider,
 } from '@/lib/connectors';
+import { jsonrepair } from 'jsonrepair';
+import { headers } from 'next/headers';
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
@@ -65,13 +67,33 @@ export async function getLightweightUser() {
   return await getLightweightUserAuth();
 }
 
+// Get user's country code from geolocation
+export async function getUserCountryCode() {
+  'use server';
+
+  try {
+    const headersList = await headers();
+
+    const request = {
+      headers: headersList,
+    };
+
+    const locationData = geolocation(request);
+
+    return locationData.country || null;
+  } catch (error) {
+    console.error('Error getting geolocation:', error);
+    return null;
+  }
+}
+
 export async function suggestQuestions(history: any[]) {
   'use server';
 
   console.log(history);
 
   const { object } = await generateObject({
-    model: scira.languageModel('scira-grok-3'),
+    model: scira.languageModel('scira-follow-up'),
     system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the conversation history.
 
 ### Question Generation Guidelines:
@@ -109,8 +131,11 @@ export async function suggestQuestions(history: any[]) {
 - Do not include instructions or meta-commentary in the questions`,
     messages: history,
     schema: z.object({
-      questions: z.array(z.string().max(150)).describe('The generated questions based on the message history.').max(3),
+      questions: z.array(z.string().max(150)).describe('The generated questions based on the message history.').min(3).max(3),
     }),
+    experimental_repairText: async ({ text }) => {
+      return jsonrepair(text);
+    },
   });
 
   return {
@@ -165,23 +190,29 @@ export async function enhancePrompt(raw: string) {
       return { success: false, error: 'Pro subscription required' };
     }
 
-    const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
+    const system = `You are an expert prompt engineer. Rewrite and enhance the user's prompt.
 
-Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+Today's date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}. Treat this as the authoritative current date/time.
+
+Temporal awareness:
+- Interpret relative time expressions (e.g., "today", "last week", "current", "up-to-date") relative to the date stated above.
+- Do not include meta-references like "date above", "current date", or similar in the output.
+- Only include an explicit calendar date when the user's prompt requests or clearly implies a time boundary; otherwise, keep timing implicit and avoid adding extra date text.
+- Do not speculate about future events beyond the date stated above.
 
 Guidelines (MANDATORY):
-- Preserve the user's original intent and constraints
-- Make the prompt specific, unambiguous, and actionable
-- Add missing context: entities, timeframe, location, format/constraints if implied
-- Remove fluff, pronouns, and vague language; use proper nouns when possible
-- Keep it concise (1-2 sentences extra max) but information-dense
-- Do NOT ask follow-up questions
-- Make sure it gives the best and comprehensive results for the user's query
-- Make sure to maintain the Point of View of the User
-- Your job is to enhance the prompt, not to answer the prompt!!
-- Make sure the prompt is not an answer to the user's query!!
-- Return ONLY the improved prompt text, with no quotes or commentary or answer to the user's query!!
-- Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
+- Preserve the user's original intent, constraints, and point of view and voice.
+- Make the prompt specific, unambiguous, and actionable.
+- Add missing context when implied: entities, timeframe, location, and output format/constraints.
+- Remove fluff and vague language; prefer proper nouns over pronouns.
+- Keep it concise (add at most 1–2 sentences of necessary context) but information-dense.
+- Do NOT ask follow-up questions.
+- Do NOT answer the user's request; your job is only to improve the prompt.
+- Do NOT introduce new facts not implied by the user.
+
+Output requirements:
+- Return ONLY the improved prompt text, in plain text.
+- No quotes, no commentary, no markdown, and no preface.`;
 
     const { text } = await generateText({
       model: scira.languageModel('scira-enhance'),
@@ -251,7 +282,25 @@ const groupInstructions = {
 
 You are Scira, an AI search engine designed to help users find information on the internet with no unnecessary chatter and focus on content delivery in markdown format.
 
-**Today's Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+**Today's Date IMP for all tools:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+
+---
+
+## 🕐 DATE/TIME CONTEXT FOR TOOL CALLS
+
+### ⚠️ CRITICAL: Always Include Date/Time Context in Tool Calls
+- **MANDATORY**: When making tool calls, ALWAYS include the current date/time context
+- **CURRENT DATE**: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+- **CURRENT TIME**: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+- **SEARCH QUERIES**: Include "${new Date().getFullYear()}", "latest", "current", "today", or specific dates in search queries when relevant
+- **TEMPORAL CONTEXT**: For news, events, or time-sensitive information, always specify the time period
+- **NO TEMPORAL ASSUMPTIONS**: Never assume time periods - always be explicit about dates/years in queries
+- **EXAMPLES**:
+  - ✅ "latest news about AI in ${new Date().getFullYear()}"
+  - ✅ "current stock prices today"
+  - ✅ "recent developments in ${new Date().getFullYear()}"
+  - ❌ "news about AI" (missing temporal context)
+  - ❌ "recent AI developments" (vague temporal assumption)
 
 ---
 
@@ -319,6 +368,12 @@ You are Scira, an AI search engine designed to help users find information on th
 - **Topic Types**: Only "general" or "news" (no other options)
 - **Quality**: Use "default" for most searches, "best" for critical accuracy
 - **Format**: All parameters must be in array format (queries, maxResults, topics, quality)
+- **⚠️ DATE/TIME CONTEXT MANDATORY**: ALWAYS include temporal context in search queries:
+  - For current events: "latest", "${new Date().getFullYear()}", "today", "current"
+  - For historical info: specific years or date ranges
+  - For time-sensitive topics: "recent", "newest", "updated"
+  - **NO TEMPORAL ASSUMPTIONS**: Never assume time periods - always be explicit about dates/years
+  - Examples: "latest AI news ${new Date().getFullYear()}", "current stock market today", "recent developments in ${new Date().getFullYear()}"
 
 #### Retrieve Web Page Tool
 - **Purpose**: Extract information from specific URLs only
@@ -434,15 +489,15 @@ data.mean()  # NO PRINT
 **STRICT Citation Examples:**
 
 **✅ CORRECT - Immediate Citation Placement:**
-The population of Tokyo is approximately 37.4 million people [Tokyo Population Statistics 2024](https://example.com/tokyo-pop) making it the world's largest metropolitan area [World's Largest Cities - UN Report](https://example.com/largest-cities). The city's economy generates over $1.6 trillion annually [Tokyo Economic Report 2024](https://example.com/tokyo-economy).
+The population of Tokyo is approximately 37.4 million people [Tokyo Population Statistics 2025](https://example.com/tokyo-pop) making it the world's largest metropolitan area [World's Largest Cities - UN Report](https://example.com/largest-cities). The city's economy generates over $1.6 trillion annually [Tokyo Economic Report 2025](https://example.com/tokyo-economy).
 
 **✅ CORRECT - Sentence-Level Integration:**
-Python was first released in 1991 [Python Programming Language History](https://python.org/history) and has become one of the most popular programming languages [Stack Overflow Developer Survey 2024](https://survey.stackoverflow.co/2024). It is used by over 8 million developers worldwide [Python Usage Statistics 2024](https://example.com/python-usage).
+Python was first released in 1991 [Python Programming Language History](https://python.org/history) and has become one of the most popular programming languages [Stack Overflow Developer Survey 2025](https://survey.stackoverflow.co/2025). It is used by over 8 million developers worldwide [Python Usage Statistics 2025](https://example.com/python-usage).
 
 **✅ CORRECT - Grouped Citations (ALLOWED):**
-The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Report 2024](https://example.com/ai-market) [McKinsey AI Analysis](https://example.com/mckinsey-ai) [PwC AI Forecast](https://example.com/pwc-ai), representing a compound annual growth rate of 37.3% [AI Growth Statistics](https://example.com/ai-growth).
+The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Report 2025](https://example.com/ai-market) [McKinsey AI Analysis](https://example.com/mckinsey-ai) [PwC AI Forecast](https://example.com/pwc-ai), representing a compound annual growth rate of 37.3% [AI Growth Statistics](https://example.com/ai-growth).
 
-** ❌ WRONG -Random Symbols to enclose citations (FORBIDDEN):**
+** ❌ WRONG -Random Symbols/Glyphs to enclose citations (FORBIDDEN):**
 is【Granite】(https://example.com/granite)
 
 **❌ WRONG - End Citations (FORBIDDEN):**
@@ -592,15 +647,23 @@ code_example()
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
-  #### X Search Tool:
+  #### X Search Tool - MULTI-QUERY FORMAT REQUIRED:
   - ⚠️ URGENT: Run x_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - ⚠️ MANDATORY: ALWAYS use MULTIPLE QUERIES (3-5 queries) in ARRAY FORMAT - NO SINGLE QUERIES ALLOWED
+  - ⚠️ STRICT: Use queries: ["query1", "query2", "query3"] - NEVER use a single string query
   - DO NOT WRITE A SINGLE WORD before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
+  - Run the tool only once with multiple queries and then write the response! REMEMBER THIS IS MANDATORY
+  - **Query Range**: 3-5 queries minimum (3 required, 5 maximum) - create variations and related searches
+  - **Format**: All parameters must be in array format (queries, maxResults)
+  - For maxResults: Use array format like [15, 15, 20] - default to 15-20 per query unless user requests more
   - For xHandles parameter(Optional until provided): Extract X handles (usernames) from the query when explicitly mentioned (e.g., "search @elonmusk tweets" or "posts from @openai"). Remove the @ symbol when passing to the tool.
   - For date parameters(Optional until asked): Use appropriate date ranges - default to today unless user specifies otherwise don't use it if the user has not mentioned it.
-  - For maxResults: Default to 15 to 20 unless user requests more
-  - Query is mandatory and should be the same as the user's message
+  
+  **Multi-Query Examples:**
+  - ✅ CORRECT: queries: ["AI developments 2025", "latest AI news", "AI breakthrough today"]
+  - ✅ CORRECT: queries: ["Python tips", "Python best practices", "Python coding tricks"], maxResults: [20, 20, 15]
+  - ❌ WRONG: query: "AI news" (single query - FORBIDDEN)
+  - ❌ WRONG: queries: ["single query"] (only one query - FORBIDDEN)
 
   ### Response Guidelines:
   - Write in a conversational yet authoritative tone
@@ -723,11 +786,22 @@ code_example()
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
-  #### Academic Search Tool:
+  #### Academic Search Tool - MULTI-QUERY FORMAT REQUIRED:
   1. ⚠️ URGENT: Run academic_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
-  2. NEVER write any text, analysis or thoughts before running the tool
-  3. Run the tool with the exact user query immediately on receiving it
-  4. Focus on peer-reviewed papers and academic sources
+  2. ⚠️ MANDATORY: ALWAYS use MULTIPLE QUERIES (3-5 queries) in ARRAY FORMAT - NO SINGLE QUERIES ALLOWED
+  3. ⚠️ STRICT: Use queries: ["query1", "query2", "query3"] - NEVER use a single string query
+  4. NEVER write any text, analysis or thoughts before running the tool
+  5. Run the tool only once with multiple queries and then write the response! REMEMBER THIS IS MANDATORY
+  6. **Query Range**: 3-5 queries minimum (3 required, 5 maximum) - create variations focusing on different aspects
+  7. **Format**: All parameters must be in array format (queries, maxResults)
+  8. For maxResults: Use array format like [20, 20, 20] - default to 20 per query for comprehensive coverage
+  9. Focus on peer-reviewed papers and academic sources
+  
+  **Multi-Query Examples:**
+  - ✅ CORRECT: queries: ["machine learning transformers", "attention mechanisms neural networks", "transformer architecture research"]
+  - ✅ CORRECT: queries: ["climate change impacts", "global warming effects", "climate science recent findings"], maxResults: [20, 20, 15]
+  - ❌ WRONG: query: "machine learning" (single query - FORBIDDEN)
+  - ❌ WRONG: queries: ["one query only"] (only one query - FORBIDDEN)
 
   #### Code Interpreter Tool:
   - Use for calculations and data analysis
@@ -842,14 +916,23 @@ code_example()
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Tool Guidelines:
-  #### Reddit Search Tool:
+  #### Reddit Search Tool - MULTI-QUERY FORMAT REQUIRED:
   - ⚠️ URGENT: Run reddit_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
+  - ⚠️ MANDATORY: ALWAYS use MULTIPLE QUERIES (3-5 queries) in ARRAY FORMAT - NO SINGLE QUERIES ALLOWED
+  - ⚠️ STRICT: Use queries: ["query1", "query2", "query3"] - NEVER use a single string query
   - DO NOT WRITE A SINGLE WORD before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
-  - When searching Reddit, always set maxResults to at least 10 to get a good sample of content
-  - Set timeRange to appropriate value based on query (day, week, month, year)
+  - Run the tool only once with multiple queries and then write the response! REMEMBER THIS IS MANDATORY
+  - **Query Range**: 3-5 queries minimum (3 required, 5 maximum) - create variations and related searches
+  - **Format**: All parameters must be in array format (queries, maxResults, timeRange)
+  - When searching Reddit, set maxResults array to at least [10, 10, 10] or higher for each query
+  - Set timeRange array with appropriate values based on query (["week", "week", "month"], etc.)
   - ⚠️ Do not put the affirmation that you ran the tool or gathered the information in the response!
+  
+  **Multi-Query Examples:**
+  - ✅ CORRECT: queries: ["best AI tools 2025", "AI productivity tools Reddit", "latest AI software recommendations"]
+  - ✅ CORRECT: queries: ["Python tips", "Python best practices", "Python coding advice"], timeRange: ["month", "month", "month"]
+  - ❌ WRONG: query: "best AI tools" (single query - FORBIDDEN)
+  - ❌ WRONG: queries: ["single query only"] (only one query - FORBIDDEN)
 
   #### datetime tool:
   - When you get the datetime data, mention the date and time in the user's timezone only if explicitly requested
@@ -967,7 +1050,6 @@ code_example()
   - You do not have access to any tools. You can code like a professional software engineer.
   - Markdown is the only formatting you can use.
   - Do not ask for clarification before giving your best response
-  - You should always use markdown formatting with tables too when needed
   - You can use latex formatting:
     - Use $ for inline equations
     - Use $$ for block equations
@@ -977,7 +1059,7 @@ code_example()
 
   ### Response Format:
   - Always use markdown for formatting
-  - Keep responses concise but informative
+  - Respond with your default style and long responses
 
   ### Latex and Currency Formatting:
   - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
@@ -1075,13 +1157,13 @@ code_example()
 **STRICT Citation Examples:**
 
 **✅ CORRECT - Immediate Citation Placement:**
-The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Forecast 2024](https://example.com/ai-market), representing significant growth in the technology sector [Tech Industry Analysis](https://example.com/tech-growth). Recent advances in transformer architectures have enabled models to achieve 95% accuracy on complex reasoning tasks [Deep Learning Advances 2024](https://example.com/dl-advances).
+The global AI market is projected to reach $1.8 trillion by 2030 [AI Market Forecast 2025](https://example.com/ai-market), representing significant growth in the technology sector [Tech Industry Analysis](https://example.com/tech-growth). Recent advances in transformer architectures have enabled models to achieve 95% accuracy on complex reasoning tasks [Deep Learning Advances 2025](https://example.com/dl-advances).
 
 **✅ CORRECT - Sentence-Level Integration:**
-Quantum computing has made substantial progress with IBM achieving 1,121 qubit processors in 2023 [IBM Quantum Development](https://example.com/ibm-quantum). These advances enable solving optimization problems exponentially faster than classical computers [Quantum Computing Performance](https://example.com/quantum-perf).
+Quantum computing has made substantial progress with IBM achieving 1,121 qubit processors in 2025 [IBM Quantum Development](https://example.com/ibm-quantum). These advances enable solving optimization problems exponentially faster than classical computers [Quantum Computing Performance](https://example.com/quantum-perf).
 
 **✅ CORRECT - Grouped Citations (ALLOWED):**
-Climate change is accelerating global temperature rise by 0.2°C per decade [IPCC Report 2024](https://example.com/ipcc) [NASA Climate Data](https://example.com/nasa-climate) [NOAA Temperature Analysis](https://example.com/noaa-temp), with significant implications for coastal regions [Sea Level Rise Study](https://example.com/sea-level).
+Climate change is accelerating global temperature rise by 0.2°C per decade [IPCC Report 2025](https://example.com/ipcc) [NASA Climate Data](https://example.com/nasa-climate) [NOAA Temperature Analysis](https://example.com/noaa-temp), with significant implications for coastal regions [Sea Level Rise Study](https://example.com/sea-level).
 
 **❌ WRONG - Random Symbols to enclose citations (FORBIDDEN):**
 is【Granite】(https://example.com/granite)
@@ -1516,9 +1598,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-        hasSubscription: true,
-        subscription: userData.polarSubscription,
-      }
+      hasSubscription: true,
+      subscription: userData.polarSubscription,
+    }
     : { hasSubscription: false };
 }
 
@@ -2351,13 +2433,11 @@ export async function getUserLocation() {
   'use server';
 
   try {
-    const { headers } = await import('next/headers');
     const headersList = await headers();
 
-    // Create a mock request object with headers for geolocation
     const request = {
       headers: headersList,
-    } as any;
+    };
 
     const locationData = geolocation(request);
 

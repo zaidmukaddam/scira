@@ -13,6 +13,9 @@ import {
   hasPdfSupport,
   getAcceptedFileTypes,
   shouldBypassRateLimits,
+  getFilteredModels,
+  isModelRestrictedInRegion,
+  supportsExtremeMode,
 } from '@/ai/providers';
 import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
@@ -23,7 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
-import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
+import { checkImageModeration, enhancePrompt, getDiscountConfigAction, getUserCountryCode } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { PRICING } from '@/lib/constants';
 import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
@@ -70,6 +73,7 @@ interface ModelSwitcherProps {
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
   user?: ComprehensiveUserData | null;
+  selectedGroup: SearchGroupId;
 }
 
 const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
@@ -83,6 +87,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     onModelSelect,
     subscriptionData,
     user,
+    selectedGroup,
   }) => {
     const isProUser = useMemo(
       () =>
@@ -92,7 +97,16 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
-    const availableModels = useMemo(() => models, []);
+    const [countryCode, setCountryCode] = useState<string | null>(null);
+
+    // Fetch country code on mount
+    useEffect(() => {
+      getUserCountryCode().then((code) => {
+        setCountryCode(code);
+      });
+    }, []);
+
+    const availableModels = useMemo(() => getFilteredModels(countryCode || undefined), [countryCode]);
 
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
@@ -105,6 +119,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const isMobile = useIsMobile();
 
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Global model order (Pro users): top-level hook to satisfy Rules of Hooks
+    const [globalModelOrder] = useLocalStorage<string[]>('scira-model-order-global', [] as string[]);
 
     const normalizeText = useCallback((input: string): string => {
       return input
@@ -349,23 +366,33 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     }, [attachments, messages, isFilePart]);
 
     const filteredModels = useMemo(() => {
-      if (!hasImageAttachments && !hasPdfAttachments) {
-        return availableModels;
-      }
+      let filtered = availableModels;
+      
+      // Filter by attachment types
       if (hasImageAttachments && hasPdfAttachments) {
-        return availableModels.filter((model) => model.vision && model.pdf);
+        filtered = filtered.filter((model) => model.vision && model.pdf);
+      } else if (hasImageAttachments) {
+        filtered = filtered.filter((model) => model.vision);
+      } else if (hasPdfAttachments) {
+        filtered = filtered.filter((model) => model.pdf);
       }
-      if (hasImageAttachments) {
-        return availableModels.filter((model) => model.vision);
+      
+      // Filter by extreme mode
+      const isExtremeMode = selectedGroup === 'extreme';
+      if (isExtremeMode) {
+        filtered = filtered.filter((model) => supportsExtremeMode(model.value));
       }
-      // Only PDFs attached
-      return availableModels.filter((model) => model.pdf);
-    }, [availableModels, hasImageAttachments, hasPdfAttachments]);
+      
+      return filtered;
+    }, [availableModels, hasImageAttachments, hasPdfAttachments, selectedGroup]);
+
+    // Show all models (including Pro) for everyone; locked models will prompt auth/upgrade on click
+    const visibleModelsForList = useMemo(() => filteredModels, [filteredModels]);
 
     const rankedModels = useMemo(() => {
       const query = searchQuery.trim();
       if (!query) return null;
-      const scored = filteredModels
+      const scored = visibleModelsForList
         .map((m) => ({ model: m, score: computeScore(m.value, query) }))
         .filter((x) => x.score > 0);
 
@@ -384,9 +411,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       });
 
       return scored.map((s) => s.model);
-    }, [filteredModels, searchQuery, computeScore, normalizeText]);
+    }, [visibleModelsForList, searchQuery, computeScore, normalizeText]);
 
-    const sortedModels = useMemo(() => filteredModels, [filteredModels]);
+    const sortedModels = useMemo(() => visibleModelsForList, [visibleModelsForList]);
 
     const groupedModels = useMemo(
       () =>
@@ -404,24 +431,77 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [sortedModels],
     );
 
+    // Persisted ordering: category order and per-category model order
+    const [modelCategoryOrder] = useLocalStorage<string[]>(
+      'scira-model-category-order',
+      isProUser ? ['Pro', 'Experimental', 'Free'] : ['Free', 'Experimental', 'Pro'],
+    );
+    const [modelOrderMap] = useLocalStorage<Record<string, string[]>>('scira-model-order', {});
+
     const orderedGroupEntries = useMemo(() => {
-      const groupOrder = isProUser ? ['Pro', 'Experimental', 'Free'] : ['Free', 'Experimental', 'Pro'];
-      return groupOrder
+      const baseOrder = modelCategoryOrder && modelCategoryOrder.length > 0
+        ? modelCategoryOrder
+        : isProUser
+          ? ['Pro', 'Experimental', 'Free']
+          : ['Free', 'Experimental', 'Pro'];
+      const categoriesPresent = Object.keys(groupedModels);
+      const normalizedOrder = [
+        ...baseOrder.filter((c) => categoriesPresent.includes(c)),
+        ...categoriesPresent.filter((c) => !baseOrder.includes(c)),
+      ];
+      const normalizedByCategory = normalizedOrder
         .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
-        .map((category) => [category, groupedModels[category]] as const);
-    }, [groupedModels, isProUser]);
+        .map((category) => {
+          const order = modelOrderMap[category] || [];
+          const modelsInCategory = groupedModels[category];
+          // Preserve original order when no overrides are set; apply only explicit positions
+          const positionById = new Map(order.map((id, idx) => [id, idx] as const));
+          const orderedModels = [...modelsInCategory].sort((a, b) => {
+            const ia = positionById.get(a.value);
+            const ib = positionById.get(b.value);
+            if (ia !== undefined && ib !== undefined) return ia - ib;
+            if (ia !== undefined) return -1;
+            if (ib !== undefined) return 1;
+            return 0; // keep insertion order
+          });
+          return [category, orderedModels] as const;
+        });
+
+      if (isProUser) {
+        // If a global order exists, use it to flatten and order the combined list
+        const flat = normalizedByCategory.flatMap(([, ms]) => ms);
+        if (globalModelOrder && globalModelOrder.length > 0) {
+          const byId = new Map(flat.map((m) => [m.value, m] as const));
+          const ordered = globalModelOrder.map((id) => byId.get(id)).filter(Boolean) as typeof flat;
+          const remaining = flat.filter((m) => !globalModelOrder.includes(m.value));
+          return [['all', [...ordered, ...remaining]] as const];
+        }
+        return [['all', flat] as const];
+      }
+
+      return normalizedByCategory;
+    }, [groupedModels, isProUser, modelCategoryOrder, modelOrderMap, globalModelOrder]);
 
     const currentModel = useMemo(
       () => availableModels.find((m) => m.value === selectedModel),
       [availableModels, selectedModel],
     );
 
-    // Auto-switch away from pro models when user loses pro access
+    // Auto-switch away from restricted or pro models when necessary
     useEffect(() => {
       if (isSubscriptionLoading) return;
 
       const currentModelRequiresPro = requiresProSubscription(selectedModel);
       const currentModelExists = availableModels.find((m) => m.value === selectedModel);
+      const isCurrentModelRestricted = isModelRestrictedInRegion(selectedModel, countryCode || undefined);
+
+      // If current model is restricted in user's region, switch to default
+      if (isCurrentModelRestricted && selectedModel !== 'scira-default') {
+        console.log(`Auto-switching from restricted model '${selectedModel}' to 'scira-default' - model not available in region ${countryCode}`);
+        setSelectedModel('scira-default');
+        toast.info('Switched to default model - Selected model not available in your region');
+        return;
+      }
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
@@ -432,7 +512,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         // Show a toast notification to inform the user
         toast.info('Switched to default model - Pro subscription required for premium models');
       }
-    }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels]);
+    }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels, countryCode]);
 
     const handleModelChange = useCallback(
       (value: string) => {
@@ -702,14 +782,24 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="px-3 py-6 text-xs text-muted-foreground">No model found.</div>
             )
           ) : (
-            orderedGroupEntries.map(([category, categoryModels], categoryIndex) => (
-              <CommandGroup key={category}>
-                {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
-                <div
-                  className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
-                >
-                  {category} Models
-                </div>
+            (isProUser
+              ? [
+                [
+                  'all',
+                  orderedGroupEntries.flatMap(([, ms]) => ms),
+                ] as const,
+              ]
+              : orderedGroupEntries
+            ).map(([category, categoryModels], categoryIndex) => (
+              <CommandGroup key={String(category)}>
+                {!isProUser && categoryIndex > 0 && <div className="my-1 border-t border-border" />}
+                {!isProUser && (
+                  <div
+                    className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
+                  >
+                    {String(category)} Models
+                  </div>
+                )}
                 {categoryModels.map((model) => {
                   const requiresAuth = requiresAuthentication(model.value) && !user;
                   const requiresPro = requiresProSubscription(model.value) && !isProUser;
@@ -922,7 +1012,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     // Common trigger button component
     const TriggerButton = React.forwardRef<
-      React.ElementRef<typeof Button>,
+      React.ComponentRef<typeof Button>,
       React.ComponentPropsWithoutRef<typeof Button>
     >((props, ref) => (
       <Button
@@ -1653,9 +1743,33 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       [dynamicSearchGroups, session],
     );
 
+    // Persisted order for groups - must match settings-dialog.tsx
+    const [groupOrder] = useLocalStorage<SearchGroupId[]>(
+      'scira-group-order',
+      dynamicSearchGroups.map((g) => g.id),
+    );
+
+    // Merge group order with current groups (same logic as settings-dialog.tsx)
+    const mergedGroupOrder = useMemo(() => {
+      const currentIds = dynamicSearchGroups.map((g) => g.id);
+      const filteredExisting = (groupOrder || []).filter((id) => currentIds.includes(id));
+      const missing = currentIds.filter((id) => !filteredExisting.includes(id));
+      return [...filteredExisting, ...missing] as SearchGroupId[];
+    }, [dynamicSearchGroups, groupOrder]);
+
+    const orderedVisibleGroups = useMemo(() => {
+      const order = mergedGroupOrder;
+      const byId = new Map(visibleGroups.map((g) => [g.id, g] as const));
+      const ordered = order
+        .map((id) => byId.get(id))
+        .filter((g): g is NonNullable<typeof g> => Boolean(g));
+      const remaining = visibleGroups.filter((g) => !order.includes(g.id));
+      return [...ordered, ...remaining];
+    }, [visibleGroups, mergedGroupOrder]);
+
     const selectedGroupData = useMemo(
-      () => visibleGroups.find((group) => group.id === selectedGroup),
-      [visibleGroups, selectedGroup],
+      () => orderedVisibleGroups.find((group) => group.id === selectedGroup),
+      [orderedVisibleGroups, selectedGroup],
     );
 
     const handleToggleExtreme = useCallback(() => {
@@ -1767,7 +1881,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         <CommandList className="max-h-[240px]">
           <CommandGroup>
             <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
-            {visibleGroups.map((group) => (
+            {orderedVisibleGroups.map((group) => (
               <CommandItem
                 key={group.id}
                 value={group.id}
@@ -1895,7 +2009,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </DrawerHeader>
                 <div className="px-4 pb-6 max-h-[calc(80vh-100px)] overflow-y-auto">
                   <div className="space-y-2">
-                    {visibleGroups.map((group) => (
+                    {orderedVisibleGroups.map((group) => (
                       <button
                         key={group.id}
                         onClick={() => handleGroupSelect(group.id)}
@@ -2128,6 +2242,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isTypewriting, setIsTypewriting] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
 
   // Combined state for animations to avoid restart issues
@@ -2438,6 +2553,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     } else {
       try {
+        // Check if user is signed in
+        if (!user) {
+          setShowSignInDialog(true);
+          return;
+        }
+
         // Environment and feature checks
         if (typeof window === 'undefined') {
           toast.error('Voice recording is only available in the browser.');
@@ -2546,7 +2667,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setIsRecording(false);
       }
     }
-  }, [isRecording, cleanupMediaRecorder, setInput]);
+  }, [isRecording, cleanupMediaRecorder, setInput, user, setShowSignInDialog]);
 
   const handleInput = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -2567,10 +2688,42 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (group: SearchGroup) => {
       if (!isEnhancing && !isTypewriting) {
         setSelectedGroup(group.id);
+        
+        // Auto-switch to extreme-enabled model when extreme mode is selected
+        if (group.id === 'extreme' && !supportsExtremeMode(selectedModel)) {
+          // Get all available models and filter for extreme support
+          const allModels = models;
+          const extremeModels = allModels.filter((model) => {
+            // Check if model supports extreme mode
+            if (!supportsExtremeMode(model.value)) return false;
+            
+            // Check authentication requirement
+            if (requiresAuthentication(model.value) && !user) return false;
+            
+            // Check pro requirement
+            if (requiresProSubscription(model.value) && !isProUser) return false;
+            
+            return true;
+          });
+          
+          if (extremeModels.length > 0) {
+            // Prioritize: scira-default if available, otherwise first free model, then first available
+            const defaultModel = extremeModels.find((m) => m.value === 'scira-default');
+            const firstFreeModel = extremeModels.find((m) => !m.pro);
+            const fallbackModel = extremeModels[0];
+            
+            const targetModel = defaultModel || firstFreeModel || fallbackModel;
+            
+            console.log(`Auto-switching to extreme-enabled model '${targetModel.value}' for extreme mode`);
+            setSelectedModel(targetModel.value);
+            toast.info(`Switched to ${targetModel.label} for extreme mode`);
+          }
+        }
+        
         inputRef.current?.focus();
       }
     },
-    [setSelectedGroup, inputRef, isEnhancing, isTypewriting],
+    [setSelectedGroup, inputRef, isEnhancing, isTypewriting, selectedModel, setSelectedModel, user, isProUser],
   );
 
   const handleConnectorToggle = useCallback(
@@ -3214,21 +3367,33 @@ const FormComponent: React.FC<FormComponentProps> = ({
     ],
   );
 
-  const submitForm = useCallback(
-    () => debounce(() => {
-      onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
-      resetSuggestedQuestions();
+  // Create a ref to track if submission is in progress
+  const isSubmittingRef = useRef(false);
 
-      // Handle iOS keyboard behavior differently
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        inputRef.current?.blur();
-      } else {
-        inputRef.current?.focus();
-      }
-    }, 500)(),
-    [onSubmit, resetSuggestedQuestions, inputRef],
-  );
+  const submitForm = useCallback(() => {
+    // Prevent multiple rapid submissions
+    if (isSubmittingRef.current) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
+
+    onSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>);
+    resetSuggestedQuestions();
+
+    // Handle iOS keyboard behavior differently
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      inputRef.current?.blur();
+    } else {
+      inputRef.current?.focus();
+    }
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isSubmittingRef.current = false;
+    }, 500);
+  }, [onSubmit, resetSuggestedQuestions, inputRef]);
 
   const triggerFileInput = useCallback(() => {
     if (attachments.length >= MAX_FILES) {
@@ -3245,31 +3410,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Desktop: submit on Cmd/Ctrl + Enter.
-      // Mobile: submit on Enter, allow Shift+Enter to insert newline (when available).
       if (event.key === 'Enter' && !isCompositionActive.current) {
         if (isMobile) {
-          if (event.shiftKey) {
-            // Allow newline on Shift+Enter (no preventDefault)
-            return;
-          }
-          event.preventDefault();
-          if (isProcessing) {
-            toast.error('Please wait for the response to complete!');
-          } else if (isRecording) {
-            toast.error('Please stop recording before submitting!');
-          } else {
-            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
-            if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-              toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
-            } else {
-              submitForm();
-              setTimeout(() => {
-                inputRef.current?.focus();
-              }, 100);
-            }
-          }
+          // On mobile, allow Enter to create new lines only
+          // Don't submit the form - users should use the send button
+          // Just let the default behavior happen (newline insertion)
+          return;
         } else {
+          // Desktop behavior: Enter submits, Shift+Enter creates newline
           if (event.shiftKey) {
             return;
           }
@@ -3569,6 +3717,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     }}
                     subscriptionData={subscriptionData}
                     user={user}
+                    selectedGroup={selectedGroup}
                   />
                 </div>
 
@@ -3768,20 +3917,22 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       >
                         <div className="text-center">
                           <div className="font-medium text-[11px] mb-1">Send Message</div>
-                          <div className="text-[10px] text-accent space-y-0.5">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <KbdGroup>
-                                <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Shift</Kbd>
-                                <span>+</span>
+                          {!isMobile && (
+                            <div className="text-[10px] text-accent space-y-0.5">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <KbdGroup>
+                                  <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Shift</Kbd>
+                                  <span>+</span>
+                                  <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
+                                </KbdGroup>
+                                <span>for new line</span>
+                              </div>
+                              <div className="flex items-center justify-center gap-1.5">
                                 <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
-                              </KbdGroup>
-                              <span>for new line</span>
+                                <span>to send</span>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-center gap-1.5">
-                              <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
-                              <span>to send</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -3884,6 +4035,102 @@ const FormComponent: React.FC<FormComponentProps> = ({
               >
                 Not now
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Sign In Dialog */}
+        <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
+          <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
+            <DialogHeader className="p-2">
+              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+                </div>
+                <div className="relative z-10 flex flex-col gap-4">
+                  <DialogTitle className="flex items-center gap-3 text-white">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4 text-white"
+                      >
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                      <span className="text-lg sm:text-xl font-bold">Sign in required</span>
+                      <span className="text-sm text-white/70 truncate">for Voice Input</span>
+                    </div>
+                  </DialogTitle>
+                  <DialogDescription className="text-white/90">
+                    <p className="text-sm text-white/80 text-left">
+                      Voice input requires an account to access. Create an account to unlock this feature and more.
+                    </p>
+                  </DialogDescription>
+                  <Button
+                    onClick={() => {
+                      window.location.href = '/sign-in';
+                    }}
+                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
+                  >
+                    Sign in
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="px-6 py-6 flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Voice Input</p>
+                  <p className="text-xs text-muted-foreground">Record and transcribe voice messages</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Access better models</p>
+                  <p className="text-xs text-muted-foreground">GPT-5 Nano and more premium models</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Save search history</p>
+                  <p className="text-xs text-muted-foreground">Keep track of your conversations</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Free to start</p>
+                  <p className="text-xs text-muted-foreground">No payment required for basic features</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 w-full items-center mt-4">
+                <div className="flex-1 border-b border-foreground/10" />
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowSignInDialog(false)}
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground text-xs px-3"
+                >
+                  Maybe later
+                </Button>
+                <div className="flex-1 border-b border-foreground/10" />
+              </div>
             </div>
           </DialogContent>
         </Dialog>

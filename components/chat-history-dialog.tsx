@@ -10,9 +10,8 @@ import {
   CommandGroup,
   CommandItem,
   CommandList,
-  CommandInput,
 } from '@/components/ui/command';
-import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil } from 'lucide-react';
+import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil, Trash2, CheckSquare, Square } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { SearchList02Icon } from '@hugeicons/core-free-icons';
 import {
@@ -35,11 +34,10 @@ import { toast } from 'sonner';
 import { User } from '@/lib/db/schema';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { cn, invalidateChatsCache } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
 import { useChatPrefetch } from '@/hooks/use-chat-prefetch';
-import Link from 'next/link';
 import { Kbd } from '@/components/ui/kbd';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 
@@ -297,6 +295,9 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [, forceUpdate] = useState({});
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const [selectedChatIds, setSelectedChatIds] = useState<Set<string>>(new Set());
+  const [deletingBulk, setDeletingBulk] = useState(false);
 
   // Use the new prefetching system
   const {
@@ -353,6 +354,9 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       setEditingTitle('');
       setSearchQuery('');
       setSearchMode('all');
+      setBulkSelectMode(false);
+      setSelectedChatIds(new Set());
+      setDeletingBulk(false);
       if (focusTimeoutRef.current) {
         clearTimeout(focusTimeoutRef.current);
         focusTimeoutRef.current = null;
@@ -463,6 +467,39 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       console.error('Failed to delete chat:', error);
       toast.error('Failed to delete chat. Please try again.');
       queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
+    },
+  });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete chats in parallel
+      await Promise.all(ids.map((id) => deleteChat(id)));
+    },
+    onSuccess: (_, ids) => {
+      const count = ids.length;
+      toast.success(`${count} chat${count > 1 ? 's' : ''} deleted`);
+      // Update cache after successful deletion
+      queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            chats: page.chats.filter((chat: Chat) => !ids.includes(chat.id)),
+          })),
+        };
+      });
+      // Clear selection and exit bulk mode
+      setSelectedChatIds(new Set());
+      setBulkSelectMode(false);
+      setDeletingBulk(false);
+    },
+    onError: (error) => {
+      console.error('Failed to delete chats:', error);
+      toast.error('Failed to delete chats. Please try again.');
+      queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
+      setDeletingBulk(false);
     },
   });
 
@@ -685,25 +722,90 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     setSearchMode(nextMode);
   }, [searchMode]);
 
+  // Bulk selection handlers
+  const toggleBulkSelectMode = useCallback(() => {
+    setBulkSelectMode((prev) => !prev);
+    setSelectedChatIds(new Set());
+  }, []);
+
+  const toggleChatSelection = useCallback((chatId: string) => {
+    setSelectedChatIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(chatId)) {
+        newSet.delete(chatId);
+      } else {
+        newSet.add(chatId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllChats = useCallback(() => {
+    const allChatIds = new Set(filteredChats.map((chat) => chat.id));
+    setSelectedChatIds(allChatIds);
+  }, [filteredChats]);
+
+  const deselectAllChats = useCallback(() => {
+    setSelectedChatIds(new Set());
+  }, []);
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedChatIds.size === 0) {
+      toast.error('No chats selected');
+      return;
+    }
+    setDeletingBulk(true);
+  }, [selectedChatIds]);
+
+  const confirmBulkDelete = useCallback(async () => {
+    const idsToDelete = Array.from(selectedChatIds);
+    await bulkDeleteMutation.mutateAsync(idsToDelete);
+
+    // If current chat is in the deleted list, redirect to home
+    if (currentChatId && selectedChatIds.has(currentChatId)) {
+      redirect('/');
+    }
+  }, [selectedChatIds, bulkDeleteMutation, currentChatId]);
+
+  const cancelBulkDelete = useCallback(() => {
+    setDeletingBulk(false);
+  }, []);
+
+  // Check if all filtered chats are selected
+  const allFilteredSelected = useMemo(() => {
+    return filteredChats.length > 0 && filteredChats.every((chat) => selectedChatIds.has(chat.id));
+  }, [filteredChats, selectedChatIds]);
+
   // Helper function to render a chat item
   const renderChatItem = (chat: Chat) => {
     const isCurrentChat = currentChatId === chat.id;
     const isPublic = chat.visibility === 'public';
     const isDeleting = deletingChatId === chat.id;
     const isEditing = editingChatId === chat.id;
+    const isSelected = selectedChatIds.has(chat.id);
     const displayTitle = chat.title || 'Untitled Conversation';
 
     // Prefetch on hover
     const handleMouseEnter = () => {
-      if (!isDeleting && !isEditing) {
+      if (!isDeleting && !isEditing && !bulkSelectMode) {
         prefetchOnHover(chat.id);
       }
     };
 
     // Prefetch on focus (keyboard navigation)
     const handleFocus = () => {
-      if (!isDeleting && !isEditing) {
+      if (!isDeleting && !isEditing && !bulkSelectMode) {
         prefetchOnFocus(chat.id);
+      }
+    };
+
+    // Handle click on the chat item
+    const handleChatClick = () => {
+      if (bulkSelectMode) {
+        toggleChatSelection(chat.id);
+      } else if (!isDeleting && !isEditing) {
+        setNavigating(chat.id);
+        router.push(`/search/${chat.id}`);
       }
     };
 
@@ -711,20 +813,17 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       <CommandItem
         key={chat.id}
         value={chat.id}
-        onSelect={() => {
-          if (!isDeleting && !isEditing) {
-            setNavigating(chat.id);
-            router.push(`/search/${chat.id}`);
-          }
-        }}
+        onSelect={handleChatClick}
         onMouseEnter={handleMouseEnter}
         onFocus={handleFocus}
         className={cn(
-          'flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-md transition-all duration-200 ease-in-out',
+          'flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-lg transition-all duration-200 ease-in-out cursor-pointer',
           isDeleting &&
           'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 shadow-sm',
           isEditing && 'bg-muted/30 dark:bg-muted/20 border border-muted-foreground/20 shadow-sm',
-          !isDeleting && !isEditing && 'hover:bg-muted/50 border border-transparent',
+          isSelected && 'bg-accent border border-accent-foreground/10 shadow-sm ring-1 ring-accent-foreground/5',
+          !isDeleting && !isEditing && !isSelected && 'hover:bg-accent/50 border border-transparent',
+          bulkSelectMode && !isSelected && 'hover:border-accent-foreground/20',
         )}
         disabled={navigating === chat.id}
         data-chat-id={chat.id}
@@ -734,14 +833,32 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             ? `Delete ${displayTitle}? Press Enter to confirm, Escape to cancel`
             : isEditing
               ? `Editing title: ${displayTitle}`
-              : `Open chat: ${displayTitle}`
+              : bulkSelectMode
+                ? `Select ${displayTitle}`
+                : `Open chat: ${displayTitle}`
         }
       >
-        <Link href={`/search/${chat.id}`} prefetch className="w-full">
-          <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
-            {/* Icon with visibility indicator */}
+        <div className="grid grid-cols-[auto_1fr_auto] w-full gap-3 items-center">
+            {/* Checkbox or Icon with visibility indicator */}
             <div className="flex items-center justify-center w-5 relative">
-              {navigating === chat.id ? (
+              {bulkSelectMode ? (
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isSelected}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleChatSelection(chat.id);
+                  }}
+                  className={cn(
+                    "h-[18px] w-[18px] rounded-md border-2 transition-all duration-200 flex items-center justify-center",
+                    isSelected 
+                      ? "bg-primary border-primary shadow-sm scale-105" 
+                      : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/20 hover:scale-105"
+                  )}
+                  aria-label={`Select ${displayTitle}`}
+                />
+              ) : navigating === chat.id ? (
                 <Spinner className="h-4 w-4 shrink-0" />
               ) : isPublic ? (
                 <Globe
@@ -768,7 +885,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   onChange={(e) => setEditingTitle(e.target.value)}
                   onKeyDown={(e) => handleTitleKeyPress(e, chat.id)}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full bg-background border border-muted-foreground/10 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-muted-foreground/20 focus:border-muted-foreground/20"
+                  className="w-full bg-background border border-muted-foreground/10 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                   placeholder="Enter title..."
                   autoFocus
                   maxLength={100}
@@ -776,10 +893,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               ) : (
                 <span
                   className={cn(
-                    'truncate block',
+                    'truncate block transition-all duration-200',
                     isCurrentChat && 'font-medium',
                     isDeleting && 'text-red-700 dark:text-red-300 font-medium',
                     isEditing && 'text-muted-foreground',
+                    isSelected && 'font-medium text-foreground',
                   )}
                 >
                   {isDeleting ? `Delete "${displayTitle}"?` : displayTitle}
@@ -846,76 +964,79 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               ) : (
                 // Normal state actions
                 <>
-                  {/* Timestamp - more compact */}
-                  <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
-                    {formatCompactTime(new Date(chat.createdAt))}
-                  </span>
+                  {!bulkSelectMode && (
+                    <>
+                      {/* Timestamp - more compact */}
+                      <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
+                        {formatCompactTime(new Date(chat.createdAt))}
+                      </span>
 
-                  {/* Actions - contextual based on states */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      'transition-colors h-7 w-7 flex-shrink-0',
-                      isCurrentChat
-                        ? 'text-foreground/70 hover:text-foreground hover:bg-muted'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                      (deleteMutation.isPending ||
-                        updateTitleMutation.isPending ||
-                        !!deletingChatId ||
-                        !!editingChatId) &&
-                      'opacity-50 pointer-events-none',
-                    )}
-                    onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
-                    aria-label={`Edit title of ${displayTitle}`}
-                    disabled={
-                      navigating === chat.id ||
-                      deleteMutation.isPending ||
-                      updateTitleMutation.isPending ||
-                      !!deletingChatId ||
-                      !!editingChatId
-                    }
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      'transition-colors h-7 w-7 flex-shrink-0',
-                      isCurrentChat
-                        ? 'text-red-600/70 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
-                        : 'text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30',
-                      (deleteMutation.isPending ||
-                        updateTitleMutation.isPending ||
-                        !!deletingChatId ||
-                        !!editingChatId) &&
-                      'opacity-50 pointer-events-none',
-                    )}
-                    onClick={(e) => handleDeleteChat(e, chat.id)}
-                    aria-label={`Delete ${displayTitle}`}
-                    disabled={
-                      navigating === chat.id ||
-                      deleteMutation.isPending ||
-                      updateTitleMutation.isPending ||
-                      !!deletingChatId ||
-                      !!editingChatId
-                    }
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                  <div className="w-6 flex justify-end">
-                    {isCurrentChat ? (
-                      <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
-                    ) : (
-                      <ArrowUpRight className="h-3 w-3" />
-                    )}
-                  </div>
+                      {/* Actions - contextual based on states */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          'transition-colors h-7 w-7 flex-shrink-0',
+                          isCurrentChat
+                            ? 'text-foreground/70 hover:text-foreground hover:bg-muted'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                          (deleteMutation.isPending ||
+                            updateTitleMutation.isPending ||
+                            !!deletingChatId ||
+                            !!editingChatId) &&
+                          'opacity-50 pointer-events-none',
+                        )}
+                        onClick={(e) => handleEditTitle(e, chat.id, chat.title)}
+                        aria-label={`Edit title of ${displayTitle}`}
+                        disabled={
+                          navigating === chat.id ||
+                          deleteMutation.isPending ||
+                          updateTitleMutation.isPending ||
+                          !!deletingChatId ||
+                          !!editingChatId
+                        }
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          'transition-colors h-7 w-7 flex-shrink-0',
+                          isCurrentChat
+                            ? 'text-red-600/70 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
+                            : 'text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30',
+                          (deleteMutation.isPending ||
+                            updateTitleMutation.isPending ||
+                            !!deletingChatId ||
+                            !!editingChatId) &&
+                          'opacity-50 pointer-events-none',
+                        )}
+                        onClick={(e) => handleDeleteChat(e, chat.id)}
+                        aria-label={`Delete ${displayTitle}`}
+                        disabled={
+                          navigating === chat.id ||
+                          deleteMutation.isPending ||
+                          updateTitleMutation.isPending ||
+                          !!deletingChatId ||
+                          !!editingChatId
+                        }
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                      <div className="w-6 flex justify-end">
+                        {isCurrentChat ? (
+                          <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">Current</span>
+                        ) : (
+                          <ArrowUpRight className="h-3 w-3" />
+                        )}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
           </div>
-        </Link>
       </CommandItem>
     );
   };
@@ -958,7 +1079,10 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       <CommandDialog open={open} onOpenChange={onOpenChange}>
         <div className="relative">
           {/* Custom search input with mode indicator */}
-          <div className="flex h-12 items-center gap-2 border-b px-3 pr-16 sm:pr-20">
+          <div className={cn(
+            "flex h-12 items-center gap-2 border-b px-3 pr-12 transition-all duration-200",
+            bulkSelectMode && "bg-accent/30"
+          )}>
             <IconComponent className="size-4 shrink-0 opacity-50" />
             <input
               ref={inputRef}
@@ -973,16 +1097,110 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   cycleSearchMode();
                 }
               }}
+              disabled={bulkSelectMode}
             />
-            <div className="flex items-center gap-1 absolute right-12 top-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs h-6 px-1.5 sm:px-2 bg-muted hover:bg-muted/80"
-                onClick={cycleSearchMode}
-              >
-                {currentModeInfo.label}
-              </Button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {bulkSelectMode ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-7 px-2.5 rounded-md hover:bg-accent transition-all"
+                    onClick={allFilteredSelected ? deselectAllChats : selectAllChats}
+                  >
+                    {allFilteredSelected ? (
+                      <>
+                        <Square className="h-3.5 w-3.5 mr-1.5" />
+                        Deselect
+                      </>
+                    ) : (
+                      <>
+                        <CheckSquare className="h-3.5 w-3.5 mr-1.5" />
+                        Select All
+                      </>
+                    )}
+                  </Button>
+                  {deletingBulk ? (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-6 px-2 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-md"
+                        onClick={confirmBulkDelete}
+                        disabled={bulkDeleteMutation.isPending}
+                      >
+                        {bulkDeleteMutation.isPending ? (
+                          <Spinner className="h-3 w-3 mr-1" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        Confirm
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-6 px-2 hover:bg-muted rounded-md"
+                        onClick={cancelBulkDelete}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "text-xs h-7 px-2.5 rounded-md transition-all",
+                          selectedChatIds.size > 0 
+                            ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30" 
+                            : "text-muted-foreground"
+                        )}
+                        onClick={handleBulkDelete}
+                        disabled={selectedChatIds.size === 0}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                        Delete {selectedChatIds.size > 0 && `(${selectedChatIds.size})`}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 px-2.5 rounded-md hover:bg-accent"
+                        onClick={toggleBulkSelectMode}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-6 px-1.5 sm:px-2 bg-muted hover:bg-muted/80 rounded-md transition-all"
+                    onClick={cycleSearchMode}
+                  >
+                    {currentModeInfo.label}
+                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-md hover:bg-accent transition-all hover:scale-105"
+                        onClick={toggleBulkSelectMode}
+                      >
+                        <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={4}>
+                      <p className="text-xs font-medium">Bulk Select</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
             </div>
           </div>
 

@@ -1,9 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,15 +12,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDown,
   ChevronRight,
-  ArrowUpRight,
-  Globe,
   Search,
-  ExternalLink,
   Target,
   Zap,
-  Brain,
   FlaskConical,
 } from 'lucide-react';
+
+// Custom minimal icons
+const Icons = {
+  Globe: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  ),
+  ExternalLink: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+    </svg>
+  ),
+  ArrowUpRight: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M7 17L17 7M17 7H7M17 7v10" />
+    </svg>
+  ),
+};
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactECharts, { EChartsOption } from 'echarts-for-react';
@@ -831,7 +844,7 @@ const getFaviconUrl = (url: string) => {
   }
 };
 
-// Source Card Component for Extreme Search (matching multi-search design)
+// Source Card Component for Extreme Search (minimal design)
 const ExtremeSourceCard: React.FC<{
   source: ExtremeSearchSource;
   onClick?: () => void;
@@ -849,57 +862,54 @@ const ExtremeSourceCard: React.FC<{
   return (
     <div
       className={cn(
-        'group relative bg-background',
-        'border border-neutral-200 dark:border-neutral-800',
-        'rounded-xl p-4 transition-all duration-200',
-        'hover:border-neutral-300 dark:hover:border-neutral-700',
+        'group py-2.5 px-3 flex items-start gap-2.5',
+        'border-b border-border last:border-0',
+        'hover:bg-accent/50 transition-colors',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="relative w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
-          {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
-          {faviconUrl ? (
-            <img
-              src={faviconUrl}
-              alt=""
-              width={24}
-              height={24}
-              className={cn('object-contain', !imageLoaded && 'opacity-0')}
-              onLoad={() => setImageLoaded(true)}
-              onError={(e) => {
-                setImageLoaded(true);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          ) : (
-            <Globe className="w-5 h-5 text-neutral-400" />
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 line-clamp-1 mb-1">
-            {source.title || hostname}
-          </h3>
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="truncate">{hostname}</span>
-            {source.author && (
-              <>
-                <span>•</span>
-                <span className="truncate">{source.author}</span>
-              </>
-            )}
-            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </div>
+      {/* Favicon */}
+      <div className="relative w-4 h-4 mt-0.5 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-muted">
+        {faviconUrl ? (
+          <img
+            src={faviconUrl}
+            alt=""
+            width={16}
+            height={16}
+            className={cn('object-contain opacity-60', !imageLoaded && 'opacity-0')}
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => {
+              setImageLoaded(true);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <Icons.Globe className="w-3.5 h-3.5 text-muted-foreground" />
+        )}
       </div>
 
       {/* Content */}
-      <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-        {source.content || 'Loading content...'}
-      </p>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-medium text-sm text-foreground line-clamp-1">
+            {source.title || hostname}
+          </h3>
+          <Icons.ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-1.5">
+          {source.content || 'Loading content...'}
+        </p>
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="truncate">{hostname}</span>
+          {source.author && (
+            <>
+              <span>·</span>
+              <span className="truncate">{source.author}</span>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -917,19 +927,19 @@ const ExtremeSourcesSheet: React.FC<{
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>
-      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0')}>
+      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0 bg-background border-border')}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="px-6 py-5 border-b border-border">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{sources.length} research sources</p>
+              <h2 className="text-lg font-semibold text-foreground">All Sources</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">{sources.length} research sources</p>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-3">
+            <div className="divide-y divide-border">
               {sources.map((source, index) => (
                 <a key={index} href={source.url} target="_blank" className="block">
                   <ExtremeSourceCard source={source} />
@@ -1618,7 +1628,7 @@ const ExtremeSearchComponent = ({
 
                 {itemIndex > 0 && (
                   <div
-                    className="absolute bg-neutral-300 dark:bg-neutral-700"
+                    className="absolute bg-border"
                     style={{
                       left: '-0.6rem',
                       top: '-6px',
@@ -1630,7 +1640,7 @@ const ExtremeSearchComponent = ({
                 )}
 
                 <div
-                  className="absolute bg-neutral-300 dark:bg-neutral-700"
+                  className="absolute bg-border"
                   style={{
                     left: '-0.6rem',
                     top: '7px',
@@ -1675,7 +1685,7 @@ const ExtremeSearchComponent = ({
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
-                      className="dark:border-neutral-700 overflow-hidden"
+                      className="overflow-hidden"
                     >
                       <div className="pl-0.5 py-0.5">
                         {query.sources.length > 0 && (
@@ -1780,7 +1790,7 @@ const ExtremeSearchComponent = ({
 
                 {itemIndex > 0 && (
                   <div
-                    className="absolute bg-neutral-300 dark:bg-neutral-700"
+                    className="absolute bg-border"
                     style={{
                       left: '-0.6rem',
                       top: '-6px',
@@ -1792,7 +1802,7 @@ const ExtremeSearchComponent = ({
                 )}
 
                 <div
-                  className="absolute bg-neutral-300 dark:bg-neutral-700"
+                  className="absolute bg-border"
                   style={{
                     left: '-0.6rem',
                     top: '7px',
@@ -1823,9 +1833,9 @@ const ExtremeSearchComponent = ({
                     )}
                   </span>
                   {xSearch.handles && xSearch.handles.length > 0 && (
-                    <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px] h-4">
+                    <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
                       {xSearch.handles.length} handles
-                    </Badge>
+                    </span>
                   )}
                   {expandedItems[xSearch.id] ? (
                     <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
@@ -1842,7 +1852,7 @@ const ExtremeSearchComponent = ({
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
-                      className="dark:border-neutral-700 overflow-hidden"
+                      className="overflow-hidden"
                     >
                       <div className="pl-0.5 py-0.5">
                         <div className="text-[10px] text-muted-foreground mb-1">
@@ -1931,13 +1941,13 @@ const ExtremeSearchComponent = ({
 
               {itemIndex > 0 && (
                 <div
-                  className="absolute bg-neutral-300 dark:bg-neutral-700"
+                  className="absolute bg-border"
                   style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
                 />
               )}
 
               <div
-                className="absolute bg-neutral-300 dark:bg-neutral-700"
+                className="absolute bg-border"
                 style={{
                   left: '-0.6rem',
                   top: '7px',
@@ -1982,17 +1992,17 @@ const ExtremeSearchComponent = ({
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
-                    className="dark:border-neutral-700 overflow-hidden"
+                    className="overflow-hidden"
                   >
                     <div className="pl-0.5 py-0.5">
-                      <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md my-1 overflow-auto max-h-[150px] text-xs font-mono">
-                        <pre className="whitespace-pre-wrap break-words">{code.code}</pre>
+                      <div className="bg-muted p-2 rounded-md my-1 overflow-auto max-h-[150px] text-xs font-mono">
+                        <pre className="whitespace-pre-wrap break-words text-foreground">{code.code}</pre>
                       </div>
                       {code.result && (
                         <div className="mt-2">
-                          <div className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mb-1">Result:</div>
-                          <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md overflow-auto max-h-[100px] text-xs font-mono">
-                            <pre className="whitespace-pre-wrap break-words">{code.result}</pre>
+                          <div className="text-xs text-muted-foreground font-medium mb-1">Result:</div>
+                          <div className="bg-muted p-2 rounded-md overflow-auto max-h-[100px] text-xs font-mono">
+                            <pre className="whitespace-pre-wrap break-words text-foreground">{code.result}</pre>
                           </div>
                         </div>
                       )}
@@ -2052,87 +2062,63 @@ const ExtremeSearchComponent = ({
     }
   };
 
-  // Render sources section (matching multi-search design)
+  // Render sources section (minimal design)
   const renderSources = (sources: ExtremeSearchSource[]) => {
     console.log('[ExtremeSearch] renderSources called with:', sources.length, 'sources');
     console.log('[ExtremeSearch] Sources data:', sources);
 
     return (
-      <div className="w-full">
-        <div
-          className={cn(
-            'py-3 px-4 hover:no-underline group',
-            'bg-white dark:bg-neutral-900',
-            'border border-neutral-200 dark:border-neutral-800',
-            'data-[state=open]:rounded-b-none cursor-pointer',
-            sourcesAccordionOpen ? 'rounded-t-lg' : 'rounded-lg',
-          )}
+      <div className="w-full border border-border rounded-lg overflow-hidden bg-card">
+        <button
           onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
-                <Globe className="h-3.5 w-3.5 text-neutral-500" />
-              </div>
-              <h2 className="font-medium text-sm">Sources</h2>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-muted">
+              <Icons.Globe className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                {sources.length}
-              </Badge>
-              {sources.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSourcesSheetOpen(true);
-                  }}
-                >
-                  View all
-                  <ArrowUpRight className="w-3 h-3 ml-1" />
-                </Button>
+            <h2 className="font-medium text-sm text-foreground">Sources</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{sources.length} sources</span>
+            {sources.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSourcesSheetOpen(true);
+                }}
+                className="flex items-center gap-1 text-xs text-foreground hover:text-foreground/80 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors"
+              >
+                View all
+                <Icons.ArrowUpRight className="w-3 h-3" />
+              </button>
+            )}
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
+                sourcesAccordionOpen ? 'rotate-180' : '',
               )}
-              <ChevronDown
-                className={cn(
-                  'h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200',
-                  sourcesAccordionOpen ? 'rotate-180' : '',
-                )}
-              />
+            />
+          </div>
+        </button>
+
+        {sourcesAccordionOpen && (
+          <div className="border-t border-border">
+            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+              {sources.length > 0 ? (
+                sources.map((source, index) => (
+                  <a key={index} href={source.url} target="_blank" className="block">
+                    <ExtremeSourceCard source={source} />
+                  </a>
+                ))
+              ) : (
+                <div className="p-4 text-center">
+                  <p className="text-muted-foreground text-sm">No sources found</p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-
-        <AnimatePresence>
-          {sourcesAccordionOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className={cn(
-                'overflow-hidden',
-                'bg-white dark:bg-neutral-900',
-                'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-lg',
-              )}
-            >
-              <div className="p-3 space-y-3">
-                {sources.length > 0 ? (
-                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
-                    {sources.map((source, index) => (
-                      <a key={index} href={source.url} target="_blank" className="block flex-shrink-0 w-[320px]">
-                        <ExtremeSourceCard source={source} />
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-neutral-500 text-sm">No sources found</p>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        )}
       </div>
     );
   };
@@ -2146,61 +2132,55 @@ const ExtremeSearchComponent = ({
     return (
       <div className="space-y-2">
         {/* Research Process */}
-        <Card className="!p-0 !gap-0 rounded-lg shadow-none">
-          <div
-            className="flex items-center justify-between p-3 cursor-pointer gap-2"
+        <div className="border border-border rounded-lg overflow-hidden bg-card">
+          <button
             onClick={() => setResearchProcessOpen(!researchProcessOpen)}
+            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
           >
-            {/* icon */}
-            <div className="rounded-md flex items-center gap-2">
-              <FlaskConical className="h-3.5 w-3.5 text-neutral-500" />
-              <h3 className="font-medium">Research Process</h3>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-muted">
+                <FlaskConical className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <h3 className="font-medium text-sm text-foreground">Research Process</h3>
             </div>
-            {/* title */}
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
+                researchProcessOpen ? 'rotate-180' : '',
+              )}
+            />
+          </button>
 
-            {researchProcessOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </div>
-          <AnimatePresence>
-            {researchProcessOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-              >
-                <CardContent className="mx-3 mb-0 !p-0">
-                  <div className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
-                    {renderTimeline()}
-                  </div>
-                </CardContent>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
+          {researchProcessOpen && (
+            <div className="border-t border-border">
+              <div className="p-3 max-h-[300px] overflow-y-auto">
+                {renderTimeline()}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Charts */}
         {allCharts.length > 0 && (
-          <Card className="!p-0 !gap-0 rounded-lg shadow-none">
-            <div
-              className={`flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors ${visualizationsOpen ? 'rounded-t-lg' : 'rounded-lg'}`}
+          <div className="border border-border rounded-lg overflow-hidden bg-card">
+            <button
               onClick={() => setVisualizationsOpen(!visualizationsOpen)}
+              className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-primary/10">
-                  <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-1.5 rounded-md bg-muted">
+                  <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
                       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                     />
                   </svg>
                 </div>
-                <h3 className="font-medium text-sm">Visualizations</h3>
+                <h3 className="font-medium text-sm text-foreground">Visualizations</h3>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {allCharts.length}
-                </Badge>
+                <span className="text-xs text-muted-foreground">{allCharts.length} {allCharts.length === 1 ? 'chart' : 'charts'}</span>
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
@@ -2208,28 +2188,18 @@ const ExtremeSearchComponent = ({
                   )}
                 />
               </div>
-            </div>
-            <AnimatePresence>
-              {visualizationsOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{
-                    height: { duration: 0.3, ease: 'easeOut' },
-                    opacity: { duration: 0.2 },
-                  }}
-                  className="overflow-hidden border-t border-border"
-                >
-                  <div className="p-3 space-y-4">
-                    {allCharts.map((chart, index) => (
-                      <ExtremeChart key={index} chart={chart} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Card>
+            </button>
+
+            {visualizationsOpen && (
+              <div className="border-t border-border">
+                <div className="p-3 space-y-4">
+                  {allCharts.map((chart, index) => (
+                    <ExtremeChart key={index} chart={chart} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* X Search Results (combined) */}
@@ -2269,9 +2239,9 @@ const ExtremeSearchComponent = ({
 
   // In-progress view
   return (
-    <Card className="!p-0 !m-0 !gap-0 rounded-lg shadow-none">
-      <div className="py-3 px-4 border-b bg-neutral-50 dark:bg-neutral-900 rounded-t-lg">
-        <div className="text-sm font-medium">
+    <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <div className="py-3 px-4 border-b border-border bg-muted/30">
+        <div className="text-sm font-medium text-foreground">
           {state === 'input-streaming' || state === 'input-available' ? (
             <TextShimmer duration={2}>{currentStatus}</TextShimmer>
           ) : (
@@ -2280,7 +2250,7 @@ const ExtremeSearchComponent = ({
         </div>
       </div>
 
-      <CardContent className="p-4">
+      <div className="p-4">
         {/* Show plan if available and no timeline items yet */}
         {planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
@@ -2426,14 +2396,14 @@ const ExtremeSearchComponent = ({
         {(searchQueries.length > 0 || codeExecutions.length > 0 || xSearchExecutions.length > 0) && (
           <div
             ref={timelineRef}
-            className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent"
+            className="max-h-[300px] overflow-y-auto pr-1"
             onScroll={markManualScroll}
           >
             {renderTimeline()}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

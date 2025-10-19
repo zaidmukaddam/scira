@@ -7,27 +7,14 @@ import {
   Bot,
   GraduationCap,
   Eye,
-  Zap,
-  Image as ImageIcon,
-  FileText,
   Sparkles,
   Filter,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogFooter,
-//   DialogHeader,
-//   DialogTitle,
-// } from '@/components/ui/dialog';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-// import { Checkbox } from '@/components/ui/checkbox';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
@@ -39,13 +26,11 @@ import {
   ProAccordionTrigger,
   ProAccordionContent,
 } from '@/components/ui/pro-accordion';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGitHubStars } from '@/hooks/use-github-stars';
 import { models } from '@/ai/providers';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
-import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -708,9 +693,8 @@ export default function AboutPage() {
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-2.5 h-2.5 rounded-full ${
-                                    selectedCapabilities.includes(capability.value) ? 'bg-primary' : 'bg-muted'
-                                  }`}
+                                  className={`w-2.5 h-2.5 rounded-full ${selectedCapabilities.includes(capability.value) ? 'bg-primary' : 'bg-muted'
+                                    }`}
                                 />
                                 {capability.label}
                               </div>

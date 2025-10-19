@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean, json, varchar, integer, uuid, real } from 'drizzle-orm/pg-core';
 import { generateId } from 'ai';
 import { InferSelectModel } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -57,7 +57,7 @@ export const chat = pgTable('chat', {
   id: text('id')
     .primaryKey()
     .notNull()
-    .$defaultFn(() => uuidv4()),
+    .$defaultFn(() => uuidv7()),
   userId: text('userId')
     .notNull()
     .references(() => user.id),

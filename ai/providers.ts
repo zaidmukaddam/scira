@@ -1,11 +1,12 @@
 import { wrapLanguageModel, customProvider, extractReasoningMiddleware, gateway } from 'ai';
 
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI, openai } from '@ai-sdk/openai';
 import { xai } from '@ai-sdk/xai';
 import { groq } from '@ai-sdk/groq';
 import { mistral } from '@ai-sdk/mistral';
 import { google } from '@ai-sdk/google';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { anthropic } from "@ai-sdk/anthropic";
+import { cohere } from '@ai-sdk/cohere';
 
 const middleware = extractReasoningMiddleware({
   tagName: 'think',
@@ -14,12 +15,6 @@ const middleware = extractReasoningMiddleware({
 const middlewareWithStartWithReasoning = extractReasoningMiddleware({
   tagName: 'think',
   startWithReasoning: true,
-});
-
-const anthropic = createAnthropic({
-  headers: {
-    'anthropic-beta': 'context-1m-2025-08-07',
-  },
 });
 
 const huggingface = createOpenAI({
@@ -42,31 +37,39 @@ export const scira = customProvider({
     'scira-default': xai('grok-4-fast-non-reasoning'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
     'scira-name': anannas.chat('meta-llama/llama-3.3-70b-instruct'),
+    'scira-grok-3-mini': xai('grok-3-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
     'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
     'scira-grok-4-fast-think': xai('grok-4-fast'),
     'scira-code': xai('grok-code-fast-1'),
-    'scira-enhance': groq('moonshotai/kimi-k2-instruct'),
+    'scira-enhance': groq('moonshotai/kimi-k2-instruct-0905'),
+    'scira-follow-up': xai('grok-4-fast-non-reasoning'),
     'scira-qwen-4b': huggingface.chat('Qwen/Qwen3-4B-Instruct-2507:nscale'),
     'scira-qwen-4b-thinking': wrapLanguageModel({
       model: huggingface.chat('Qwen/Qwen3-4B-Thinking-2507:nscale'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-gpt5': anannas.chat('openai/gpt-5'),
-    'scira-gpt5-mini': anannas.chat('openai/gpt-5-mini'),
-    'scira-gpt5-nano': anannas.chat('openai/gpt-5-nano'),
-    'scira-o3': anannas.chat('openai/o3'),
+    'scira-gpt-4.1-nano': openai('gpt-4.1-nano'),
+    'scira-gpt-4.1-mini': openai('gpt-4.1-mini'),
+    'scira-gpt-4.1': openai('gpt-4.1'),
+    'scira-gpt5': openai('gpt-5'),
+    'scira-gpt5-medium': openai('gpt-5'),
+    'scira-gpt5-mini': openai('gpt-5-mini'),
+    'scira-gpt5-nano': openai('gpt-5-nano'),
+    'scira-o3': openai('o3'),
+    'scira-o4-mini': openai('o4-mini'),
+    'scira-gpt5-codex': openai('gpt-5-codex'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
     }),
     'scira-gpt-oss-20': wrapLanguageModel({
-      model: huggingface.chat('openai/gpt-oss-20b:fireworks-ai'),
+      model: groq('openai/gpt-oss-20b'),
       middleware,
     }),
     'scira-gpt-oss-120': wrapLanguageModel({
-      model: huggingface.chat('openai/gpt-oss-120b:novita'),
+      model: gateway('openai/gpt-oss-120b'),
       middleware,
     }),
     'scira-deepseek-chat': gateway('deepseek/deepseek-v3.2-exp'),
@@ -76,6 +79,10 @@ export const scira = customProvider({
     }),
     'scira-deepseek-r1': wrapLanguageModel({
       model: anannas.chat('deepseek/deepseek-r1'),
+      middleware,
+    }),
+    'scira-deepseek-r1-0528': wrapLanguageModel({
+      model: anannas.chat('deepseek/deepseek-r1-0528'),
       middleware,
     }),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
@@ -102,18 +109,22 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-glm-4.6': wrapLanguageModel({
-      model: gateway('zai/glm-4.6'),
+      model: huggingface.chat('zai-org/GLM-4.6:novita'),
       middleware,
     }),
+    'scira-cmd-a': cohere('command-a-03-2025'),
+    'scira-cmd-a-think': cohere('command-a-reasoning-08-2025'),
     'scira-kimi-k2-v2': groq('moonshotai/kimi-k2-instruct-0905'),
-    'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
+    'scira-haiku': anannas.chat('anthropic/claude-3-5-haiku-20241022'),
     'scira-mistral-medium': mistral('mistral-medium-2508'),
     'scira-magistral-small': mistral('magistral-small-2509'),
     'scira-magistral-medium': mistral('magistral-medium-2509'),
     'scira-google-lite': google('gemini-flash-lite-latest'),
     'scira-google': google('gemini-flash-latest'),
     'scira-google-think': google('gemini-flash-latest'),
-    'scira-anthropic': anthropic('claude-sonnet-4-5-20250929'),
+    'scira-google-pro': google('gemini-2.5-pro'),
+    'scira-google-pro-think': google('gemini-2.5-pro'),
+    'scira-anthropic': anthropic('claude-sonnet-4-5'),
   },
 });
 
@@ -138,7 +149,7 @@ interface Model {
   requiresAuth: boolean;
   freeUnlimited: boolean;
   maxOutputTokens: number;
-  // Tags
+  extreme?: boolean;
   fast?: boolean;
   isNew?: boolean;
   parameters?: ModelParameters;
@@ -146,6 +157,20 @@ interface Model {
 
 export const models: Model[] = [
   // Models (xAI)
+  {
+    value: 'scira-grok-3-mini',
+    label: 'Grok 3 Mini',
+    description: "xAI's recent smallest LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Free',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+  },
   {
     value: 'scira-grok-3',
     label: 'Grok 3',
@@ -187,6 +212,7 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    extreme: true,
     fast: true,
     isNew: true,
   },
@@ -203,6 +229,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    extreme: true,
     fast: true,
     isNew: true,
   },
@@ -295,6 +322,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    extreme: true,
     fast: true,
   },
   {
@@ -310,6 +338,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
+    extreme: true,
     isNew: true,
   },
   {
@@ -388,6 +417,55 @@ export const models: Model[] = [
     fast: true,
   },
   {
+    value: 'scira-gpt-4.1-nano',
+    label: 'GPT 4.1 Nano',
+    description: "OpenAI's smallest LLM",
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Free',
+    pdf: true,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    extreme: true,
+    fast: true,
+  },
+  {
+    value: 'scira-gpt-4.1-mini',
+    label: 'GPT 4.1 Mini',
+    description: "OpenAI's small LLM",
+    vision: true,
+    reasoning: false,
+    category: 'Free',
+    pdf: true,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    fast: true,
+    extreme: true,
+    experimental: false,
+  },
+  {
+    value: 'scira-gpt-4.1',
+    label: 'GPT 4.1',
+    description: "OpenAI's LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    extreme: true,
+    fast: false,
+    isNew: true,
+  },
+  {
     value: 'scira-gpt5-mini',
     label: 'GPT 5 Mini',
     description: "OpenAI's small flagship LLM",
@@ -400,6 +478,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    extreme: true,
     fast: false,
     isNew: true,
   },
@@ -407,6 +486,23 @@ export const models: Model[] = [
     value: 'scira-gpt5',
     label: 'GPT 5',
     description: "OpenAI's flagship LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    extreme: true,
+    fast: false,
+    isNew: true,
+  },
+  {
+    value: 'scira-o4-mini',
+    label: 'o4 mini',
+    description: "OpenAI's recent mini reasoning LLM",
     vision: true,
     reasoning: true,
     experimental: false,
@@ -433,6 +529,70 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 16000,
     fast: false,
+    isNew: true,
+  },
+  {
+    value: 'scira-gpt5-medium',
+    label: 'GPT 5 Medium',
+    description: "OpenAI's latest flagship reasoning LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    extreme: true,
+    fast: false,
+    isNew: true,
+  },
+  {
+    value: 'scira-gpt5-codex',
+    label: 'GPT 5 Codex',
+    description: "OpenAI's advanced coding LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    extreme: true,
+    fast: false,
+    isNew: true,
+  },
+  {
+    value: 'scira-cmd-a',
+    label: 'Command A',
+    description: "Cohere's advanced command LLM",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    isNew: true,
+  },
+  {
+    value: 'scira-cmd-a-think',
+    label: 'Command A Thinking',
+    description: "Cohere's advanced command LLM with thinking",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
     isNew: true,
   },
   {
@@ -468,6 +628,21 @@ export const models: Model[] = [
   {
     value: 'scira-deepseek-r1',
     label: 'DeepSeek R1',
+    description: "DeepSeek's advanced reasoning LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    isNew: true,
+  },
+  {
+    value: 'scira-deepseek-r1-0528',
+    label: 'DeepSeek R1 0528',
     description: "DeepSeek's advanced reasoning LLM",
     vision: false,
     reasoning: true,
@@ -636,6 +811,10 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 130000,
     isNew: true,
+    parameters: {
+      temperature: 1,
+      topP: 0.95,
+    },
   },
   {
     value: 'scira-glm-air',
@@ -677,6 +856,7 @@ export const models: Model[] = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
+    extreme: true,
     maxOutputTokens: 10000,
     isNew: true,
   },
@@ -692,13 +872,46 @@ export const models: Model[] = [
     pro: true,
     requiresAuth: true,
     freeUnlimited: false,
+    extreme: true,
+    maxOutputTokens: 10000,
+    isNew: true,
+  },
+  {
+    value: 'scira-google-pro',
+    label: 'Gemini 2.5 Pro',
+    description: "Google's advanced LLM",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    extreme: true,
+    maxOutputTokens: 10000,
+    isNew: true,
+  },
+  {
+    value: 'scira-google-pro-think',
+    label: 'Gemini 2.5 Pro Thinking',
+    description: "Google's advanced LLM with thinking",
+    vision: true,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: true,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    extreme: true,
     maxOutputTokens: 10000,
     isNew: true,
   },
   {
     value: 'scira-anthropic',
-    label: 'Claude 4.5 Sonnet',
-    description: "Anthropic's most advanced LLM",
+    label: 'Claude Sonnet 4.5',
+    description: "Anthropic's latest and greatest LLM",
     vision: true,
     reasoning: false,
     experimental: false,
@@ -708,7 +921,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 8000,
-    isNew: false,
+    isNew: true,
   },
 ];
 
@@ -796,6 +1009,54 @@ export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): st
     return 'image/*,.pdf';
   }
   return 'image/*';
+}
+
+// Check if a model supports extreme mode
+export function supportsExtremeMode(modelValue: string): boolean {
+  const model = getModelConfig(modelValue);
+  return model?.extreme || false;
+}
+
+// Get models that support extreme mode
+export function getExtremeModels(): Model[] {
+  return models.filter((model) => model.extreme);
+}
+
+// Restricted regions for OpenAI and Anthropic models
+const RESTRICTED_REGIONS = ['CN', 'KP', 'RU']; // China, North Korea, Russia
+
+// Models that should be filtered in restricted regions
+const OPENAI_MODELS = [
+  'scira-gpt5',
+  'scira-gpt5-mini',
+  'scira-gpt5-nano',
+  'scira-o3',
+  'scira-gpt-oss-20',
+  'scira-gpt-oss-120',
+];
+
+const ANTHROPIC_MODELS = ['scira-haiku', 'scira-anthropic'];
+
+// Check if a model should be filtered based on region
+export function isModelRestrictedInRegion(modelValue: string, countryCode?: string): boolean {
+  if (!countryCode) return false;
+
+  const isRestricted = RESTRICTED_REGIONS.includes(countryCode.toUpperCase());
+  if (!isRestricted) return false;
+
+  const isOpenAI = OPENAI_MODELS.includes(modelValue);
+  const isAnthropic = ANTHROPIC_MODELS.includes(modelValue);
+
+  return isOpenAI || isAnthropic;
+}
+
+// Filter models based on user's region
+export function getFilteredModels(countryCode?: string): Model[] {
+  if (!countryCode || !RESTRICTED_REGIONS.includes(countryCode.toUpperCase())) {
+    return models;
+  }
+
+  return models.filter((model) => !isModelRestrictedInRegion(model.value, countryCode));
 }
 
 // Legacy arrays for backward compatibility (deprecated - use helper functions instead)

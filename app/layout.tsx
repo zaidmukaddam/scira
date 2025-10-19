@@ -25,7 +25,13 @@ export const metadata: Metadata = {
   },
   keywords: [
     'scira.ai',
+    'free ai search',
+    'ai search',
+    'ai research tool',
+    'ai search tool',
+    'perplexity ai alternative',
     'perplexity alternative',
+    'chatgpt alternative',
     'ai search engine',
     'search engine',
     'scira ai',

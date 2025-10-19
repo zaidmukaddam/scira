@@ -2,7 +2,6 @@ import 'katex/dist/katex.min.css';
 
 import { Geist_Mono } from 'next/font/google';
 import { highlight } from 'sugar-high';
-import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
 import Latex from 'react-latex-next';
@@ -278,19 +277,76 @@ const useProcessedContent = (content: string) => {
     let modifiedContent = content;
 
     try {
-      // Extract and protect code blocks
+      // Extract and protect code blocks FIRST
       const codeBlocks: Array<{ id: string; content: string }> = [];
-      const codeBlockPatterns = [/```[\s\S]*?```/g, /`[^`\n]+`/g];
 
-      for (const pattern of codeBlockPatterns) {
-        const matches = [...modifiedContent.matchAll(pattern)];
+      // Combined pattern that matches triple backticks first (longer matches), then single backticks
+      // This prevents the issue where single backticks match parts of already-protected content
+      const allCodeMatches: Array<{ match: string; index: number; length: number }> = [];
+
+      // First, find all triple-backtick code blocks
+      const tripleBacktickPattern = /```[\s\S]*?```/g;
+      let match;
+      while ((match = tripleBacktickPattern.exec(modifiedContent)) !== null) {
+        allCodeMatches.push({
+          match: match[0],
+          index: match.index,
+          length: match[0].length
+        });
+      }
+
+      // Then, find all inline code (single backticks) that don't overlap with triple-backtick blocks
+      const inlineCodePattern = /`[^`\n]+`/g;
+      while ((match = inlineCodePattern.exec(modifiedContent)) !== null) {
+        const matchStart = match.index;
+        const matchEnd = match.index + match[0].length;
+
+        // Check if this inline code is inside a triple-backtick block
+        const isInsideTripleBacktick = allCodeMatches.some(
+          (m) => matchStart >= m.index && matchEnd <= m.index + m.length
+        );
+
+        if (!isInsideTripleBacktick) {
+          allCodeMatches.push({
+            match: match[0],
+            index: match.index,
+            length: match[0].length
+          });
+        }
+      }
+
+      // Sort by index to process in order
+      allCodeMatches.sort((a, b) => a.index - b.index);
+
+      // Replace all code blocks with placeholders
+      let newContent = '';
+      let lastIndex = 0;
+
+      for (const codeMatch of allCodeMatches) {
+        // Use very unique placeholder that won't match markdown syntax
+        const id = `<<<CODEBLOCK_PROTECTED_${codeBlocks.length}>>>`;
+        codeBlocks.push({ id, content: codeMatch.match });
+
+        newContent += modifiedContent.slice(lastIndex, codeMatch.index) + id;
+        lastIndex = codeMatch.index + codeMatch.length;
+      }
+
+      newContent += modifiedContent.slice(lastIndex);
+      modifiedContent = newContent;
+
+      // Protect table rows to preserve pipe delimiters
+      const tableBlocks: Array<{ id: string; content: string }> = [];
+      const tableRowPattern = /^\|.+\|$/gm;
+      const tableMatches = [...modifiedContent.matchAll(tableRowPattern)];
+
+      if (tableMatches.length > 0) {
         let lastIndex = 0;
         let newContent = '';
 
-        for (let i = 0; i < matches.length; i++) {
-          const match = matches[i];
-          const id = `CODEBLOCK${codeBlocks.length}END`;
-          codeBlocks.push({ id, content: match[0] });
+        for (let i = 0; i < tableMatches.length; i++) {
+          const match = tableMatches[i];
+          const id = `TABLEROW${tableBlocks.length}END`;
+          tableBlocks.push({ id, content: match[0] });
 
           newContent += modifiedContent.slice(lastIndex, match.index) + id;
           lastIndex = match.index! + match[0].length;
@@ -303,8 +359,9 @@ const useProcessedContent = (content: string) => {
       // Extract monetary amounts FIRST to protect them from LaTeX patterns
       const monetaryBlocks: Array<{ id: string; content: string }> = [];
       // Match monetary amounts with optional scale words and currency codes
+      // Exclude mathematical expressions by using negative lookahead for backslashes or ending $
       const monetaryRegex =
-        /(^|[\s([>~≈<)])\$\d+(?:,\d{3})*(?:\.\d+)?(?:[kKmMbBtT]|\s+(?:thousand|million|billion|trillion|k|K|M|B|T))?(?:\s+(?:USD|EUR|GBP|CAD|AUD|JPY|CNY|CHF))?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)))?(?=$|[\s).,;!?<\]])/g;
+        /(^|[\s([>~≈<)])\$\d+(?:,\d{3})*(?:\.\d+)?(?:[kKmMbBtT]|\s+(?:thousand|million|billion|trillion|k|K|M|B|T))?(?:\s+(?:USD|EUR|GBP|CAD|AUD|JPY|CNY|CHF))?(?:\s*(?:per\s+(?:million|thousand|token|month|year)|\/(?:month|year|token)))?(?=\s|$|[).,;!?<\]])(?![^$]*\\[^$]*\$)/g;
 
       let monetaryProcessed = '';
       let lastMonetaryIndex = 0;
@@ -323,12 +380,33 @@ const useProcessedContent = (content: string) => {
       monetaryProcessed += modifiedContent.slice(lastMonetaryIndex);
       modifiedContent = monetaryProcessed;
 
+      // Also protect monetary amounts inside protected table rows
+      if (typeof tableBlocks !== 'undefined' && tableBlocks.length > 0) {
+        for (let t = 0; t < tableBlocks.length; t++) {
+          let rowContent = tableBlocks[t].content;
+          const rowMonetaryMatches = [...rowContent.matchAll(monetaryRegex)];
+          if (rowMonetaryMatches.length === 0) continue;
+          let lastIndex = 0;
+          let newRow = '';
+          for (let i = 0; i < rowMonetaryMatches.length; i++) {
+            const match = rowMonetaryMatches[i];
+            const prefix = match[1];
+            const id = `MONETARY${monetaryBlocks.length}END`;
+            monetaryBlocks.push({ id, content: match[0].slice(prefix.length) });
+            newRow += rowContent.slice(lastIndex, match.index) + prefix + id;
+            lastIndex = match.index! + match[0].length;
+          }
+          newRow += rowContent.slice(lastIndex);
+          tableBlocks[t].content = newRow;
+        }
+      }
+
       // Extract LaTeX blocks AFTER monetary amounts are protected
       const allLatexPatterns = [
-        { patterns: [/\\\[([\s\S]*?)\\\]/g, /\$\$([\s\S]*?)\$\$/g], isBlock: true, prefix: 'LATEXBLOCK' },
-        { 
+        { patterns: [/\\\[([\s\S]*?)\\\]/g, /\$\$([\s\S]*?)\$\$/g], isBlock: true, prefix: '§§§LATEXBLOCK_PROTECTED_' },
+        {
           patterns: [
-            /\\\(([\s\S]*?)\\\)/g, 
+            /\\\(([\s\S]*?)\\\)/g,
             // Match $ expressions containing LaTeX commands, superscripts, subscripts, or braces
             /\$[^\$\n]*[\\^_{}][^\$\n]*\$/g,
             // Match algebraic expressions with parentheses and variables
@@ -339,11 +417,15 @@ const useProcessedContent = (content: string) => {
             /\$[a-zA-Z]\s*[=<>≤≥≠]\s*[0-9a-zA-Z][^\$\n]*\$/g,
             // Match $ expressions with number followed by LaTeX-style operators
             /\$[0-9][^\$\n]*[\\^_≤≥≠∈∉⊂⊃∪∩θΘπΠαβγδεζηλμνξρσςτφχψωΑΒΓΔΕΖΗΛΜΝΞΡΣΤΦΧΨΩ°][^\$\n]*\$/g,
+            // Match pure numeric inline math like $5$ or $3.14$
+            /\$\d+(?:\.\d+)?\$/g,
             // Match simple mathematical variables (single letter or Greek letters, but not plain numbers)
-            /\$[a-zA-ZθΘπΠαβγδεζηλμνξρσςτφχψωΑΒΓΔΕΖΗΛΜΝΞΡΣΤΦΧΨΩ]+\$/g
-          ], 
-          isBlock: false, 
-          prefix: 'LATEXINLINE' 
+            /\$[a-zA-ZθΘπΠαβγδεζηλμνξρσςτφχψωΑΒΓΔΕΖΗΛΜΝΞΡΣΤΦΧΨΩ]+\$/g,
+            // Match simple single-letter variables (like $ m $, $ b $, $ x $, $ y $)
+            /\$\s*[a-zA-Z]\s*\$/g
+          ],
+          isBlock: false,
+          prefix: '§§§LATEXINLINE_PROTECTED_'
         },
       ];
 
@@ -355,7 +437,7 @@ const useProcessedContent = (content: string) => {
 
           for (let i = 0; i < matches.length; i++) {
             const match = matches[i];
-            const id = `${prefix}${latexBlocks.length}END`;
+            const id = `${prefix}${latexBlocks.length}§§§`;
             latexBlocks.push({ id, content: match[0], isBlock });
 
             newContent += modifiedContent.slice(lastIndex, match.index) + id;
@@ -364,6 +446,31 @@ const useProcessedContent = (content: string) => {
 
           newContent += modifiedContent.slice(lastIndex);
           modifiedContent = newContent;
+        }
+      }
+
+      // Additionally, extract LaTeX inside protected table rows so it renders later
+      if (typeof tableBlocks !== 'undefined' && tableBlocks.length > 0) {
+        for (let t = 0; t < tableBlocks.length; t++) {
+          let rowContent = tableBlocks[t].content;
+          for (const { patterns, isBlock, prefix } of allLatexPatterns) {
+            for (const pattern of patterns) {
+              const matches = [...rowContent.matchAll(pattern)];
+              if (matches.length === 0) continue;
+              let lastIndex = 0;
+              let newRow = '';
+              for (let i = 0; i < matches.length; i++) {
+                const match = matches[i];
+                const id = `${prefix}${latexBlocks.length}§§§`;
+                latexBlocks.push({ id, content: match[0], isBlock });
+                newRow += rowContent.slice(lastIndex, match.index) + id;
+                lastIndex = match.index! + match[0].length;
+              }
+              newRow += rowContent.slice(lastIndex);
+              rowContent = newRow;
+            }
+          }
+          tableBlocks[t].content = rowContent;
         }
       }
 
@@ -388,7 +495,7 @@ const useProcessedContent = (content: string) => {
           rebuilt += modifiedContent.slice(lastPos);
           modifiedContent = rebuilt;
         }
-      } catch {}
+      } catch { }
 
       // Process citations (simplified for performance)
       const refWithUrlRegex =
@@ -414,18 +521,41 @@ const useProcessedContent = (content: string) => {
       modifiedContent = citationProcessed;
 
       // Restore protected blocks in the main content and in collected citation texts
+      // Use replaceAll or global regex to ensure ALL instances are replaced
       monetaryBlocks.forEach(({ id, content }) => {
-        modifiedContent = modifiedContent.replace(id, content);
+        const regex = new RegExp(id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        modifiedContent = modifiedContent.replace(regex, content);
         // Also restore inside citation titles so hover cards don't show placeholders
         for (let i = 0; i < citations.length; i++) {
-          citations[i].text = citations[i].text.replace(id, content);
+          citations[i].text = citations[i].text.replace(regex, content);
         }
       });
 
       codeBlocks.forEach(({ id, content }) => {
-        modifiedContent = modifiedContent.replace(id, content);
+        const regex = new RegExp(id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        modifiedContent = modifiedContent.replace(regex, content);
         for (let i = 0; i < citations.length; i++) {
-          citations[i].text = citations[i].text.replace(id, content);
+          citations[i].text = citations[i].text.replace(regex, content);
+        }
+      });
+
+      // Restore table rows LAST so they render with all LaTeX processed
+      tableBlocks.forEach(({ id, content }) => {
+        // Restore any protected monetary or code placeholders within the row content first
+        let restoredRow = content;
+        monetaryBlocks.forEach(({ id: mid, content: mcontent }) => {
+          const mregex = new RegExp(mid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+          restoredRow = restoredRow.replace(mregex, mcontent);
+        });
+        codeBlocks.forEach(({ id: cid, content: ccontent }) => {
+          const cregex = new RegExp(cid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+          restoredRow = restoredRow.replace(cregex, ccontent);
+        });
+
+        const tregex = new RegExp(id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        modifiedContent = modifiedContent.replace(tregex, restoredRow);
+        for (let i = 0; i < citations.length; i++) {
+          citations[i].text = citations[i].text.replace(tregex, restoredRow);
         }
       });
 
@@ -699,8 +829,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
   const renderer: Partial<ReactRenderer> = useMemo(
     () => ({
       text(text: string) {
-        const blockPattern = /LATEXBLOCK(\d+)END/g;
-        const inlinePattern = /LATEXINLINE(\d+)END/g;
+        const blockPattern = /§§§LATEXBLOCK_PROTECTED_(\d+)§§§/g;
+        const inlinePattern = /§§§LATEXINLINE_PROTECTED_(\d+)§§§/g;
 
         if (!blockPattern.test(text) && !inlinePattern.test(text)) {
           return text;
@@ -783,7 +913,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
         const key = getElementKey('paragraph', String(children));
 
         if (typeof children === 'string') {
-          const blockMatch = children.match(/^LATEXBLOCK(\d+)END$/);
+          const blockMatch = children.match(/^§§§LATEXBLOCK_PROTECTED_(\d+)§§§$/);
           if (blockMatch) {
             const latexBlock = latexBlocks.find((block) => block.id === children);
             if (latexBlock && latexBlock.isBlock) {
@@ -807,7 +937,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
         return (
           <p
             key={key}
-            className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-relaxed text-foreground`}
+            className={`${isUserMessage ? 'leading-relaxed text-foreground !m-0' : ''} my-5 leading-[1.75] text-foreground/95`}
           >
             {children}
           </p>
@@ -876,16 +1006,16 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
         const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
         const sizeClasses =
           {
-            1: 'text-2xl md:text-3xl font-extrabold mt-4 mb-4',
-            2: 'text-xl md:text-2xl font-bold mt-4 mb-3',
-            3: 'text-lg md:text-xl font-semibold mt-4 mb-3',
-            4: 'text-base md:text-lg font-medium mt-4 mb-2',
-            5: 'text-sm md:text-base font-medium mt-4 mb-2',
-            6: 'text-xs md:text-sm font-medium mt-4 mb-2',
+            1: 'text-2xl md:text-3xl font-extrabold mt-8 mb-4 border-b border-border/50 pb-2',
+            2: 'text-xl md:text-2xl font-bold mt-7 mb-4',
+            3: 'text-lg md:text-xl font-semibold mt-6 mb-3',
+            4: 'text-base md:text-lg font-semibold mt-5 mb-3',
+            5: 'text-sm md:text-base font-semibold mt-4 mb-2',
+            6: 'text-xs md:text-sm font-semibold mt-4 mb-2',
           }[level] || '';
 
         return (
-          <HeadingTag key={key} className={`${sizeClasses} text-foreground tracking-tight`}>
+          <HeadingTag key={key} className={`${sizeClasses} text-foreground tracking-tight scroll-mt-20`}>
             {children}
           </HeadingTag>
         );
@@ -896,7 +1026,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
         return (
           <ListTag
             key={key}
-            className={`my-5 pl-6 space-y-2 text-foreground ${ordered ? 'list-decimal' : 'list-disc'}`}
+            className={cn(
+              'my-6 space-y-3 text-foreground',
+              ordered ? 'pl-8' : 'pl-8 list-disc marker:text-primary/70'
+            )}
           >
             {children}
           </ListTag>
@@ -905,8 +1038,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
       listItem(children) {
         const key = getElementKey('listItem');
         return (
-          <li key={key} className="pl-1 leading-relaxed">
-            {children}
+          <li key={key} className="pl-2 leading-relaxed text-foreground/90">
+            <span className="inline">{children}</span>
           </li>
         );
       },
@@ -915,10 +1048,26 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content,
         return (
           <blockquote
             key={key}
-            className="my-6 border-l-4 border-primary/30 pl-4 py-1 text-foreground italic bg-muted/50 rounded-r-md"
+            className="my-6 border-l-4 border-primary/30 pl-4 py-2 text-foreground/90 italic bg-muted/50 rounded-r-md"
           >
             {children}
           </blockquote>
+        );
+      },
+      strong(children) {
+        const key = getElementKey('text', String(children));
+        return (
+          <strong key={key} className="font-bold text-foreground">
+            {children}
+          </strong>
+        );
+      },
+      em(children) {
+        const key = getElementKey('text', String(children));
+        return (
+          <em key={key} className="italic text-foreground/95">
+            {children}
+          </em>
         );
       },
       table(children) {
@@ -1012,28 +1161,28 @@ MarkdownRenderer.displayName = 'MarkdownRenderer';
 const VirtualMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, isUserMessage = false }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Split content into chunks for virtual scrolling
   const contentChunks = useMemo(() => {
     const lines = content.split('\n');
     const chunkSize = 20; // Lines per chunk
     const chunks = [];
-    
+
     for (let i = 0; i < lines.length; i += chunkSize) {
       chunks.push(lines.slice(i, i + chunkSize).join('\n'));
     }
-    
+
     return chunks;
   }, [content]);
 
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
-    
+
     const { scrollTop, clientHeight } = containerRef.current;
     const lineHeight = 24; // Approximate line height
     const start = Math.floor(scrollTop / lineHeight);
     const end = Math.min(start + Math.ceil(clientHeight / lineHeight) + 10, contentChunks.length);
-    
+
     setVisibleRange({ start: Math.max(0, start - 5), end });
   }, [contentChunks.length]);
 
@@ -1043,16 +1192,16 @@ const VirtualMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ c
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="markdown-body prose prose-neutral dark:prose-invert max-w-none text-foreground font-sans max-h-96 overflow-y-auto"
       onScroll={handleScroll}
     >
       {contentChunks.slice(visibleRange.start, visibleRange.end).map((chunk, index) => (
-        <MarkdownRenderer 
+        <MarkdownRenderer
           key={`chunk-${visibleRange.start + index}`}
-          content={chunk} 
-          isUserMessage={isUserMessage} 
+          content={chunk}
+          isUserMessage={isUserMessage}
         />
       ))}
     </div>
@@ -1091,11 +1240,11 @@ CopyButton.displayName = 'CopyButton';
 // Performance monitoring hook
 const usePerformanceMonitor = (content: string) => {
   const renderStartTime = useRef<number>(0);
-  
+
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, [content]);
-  
+
   useEffect(() => {
     const renderTime = performance.now() - renderStartTime.current;
     if (renderTime > 100) {
@@ -1107,12 +1256,12 @@ const usePerformanceMonitor = (content: string) => {
 // Main optimized markdown component with automatic optimization selection
 const OptimizedMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content, isUserMessage = false }) => {
   usePerformanceMonitor(content);
-  
+
   // Automatically choose the best rendering strategy based on content size
   if (content.length > 100000) {
     return <VirtualMarkdownRenderer content={content} isUserMessage={isUserMessage} />;
   }
-  
+
   return <MarkdownRenderer content={content} isUserMessage={isUserMessage} />;
 }, (prevProps, nextProps) => {
   return (

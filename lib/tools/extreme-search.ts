@@ -264,7 +264,22 @@ Plan Guidelines:
   // Create the autonomous research agent with tools
   const { text } = await generateText({
     model: scira.languageModel('scira-grok-4-fast-think'),
-    stopWhen: stepCountIs(totalTodos),
+    stopWhen: ({ steps }) => {
+      // Stop if step count reaches the limit
+      if (steps.length >= totalTodos) {
+        console.log(`🛑 Step limit reached: ${steps.length}/${totalTodos} steps`);
+        return true;
+      }
+
+      // Calculate total token usage and stop if it exceeds 100k
+      const totalTokens = steps.reduce((sum, step) => sum + (step.usage?.totalTokens ?? 0), 0);
+      if (totalTokens > 200000) {
+        console.log(`🛑 Token limit reached: ${totalTokens} tokens. Stopping agent at step ${steps.length}.`);
+        return true;
+      }
+
+      return false;
+    },
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 
@@ -304,8 +319,8 @@ For X search:
 - Use the startDate and endDate parameters to limit the date range of the search, it's the start and end date of the search
 
 ### SEARCH STRATEGY EXAMPLES:
-- Topic: "AI model performance" → Search: "GPT-4 benchmark results 2024", "LLM performance comparison studies", "AI model evaluation metrics research"
-- Topic: "Company financials" → Search: "Tesla Q3 2024 earnings report", "Tesla revenue growth analysis", "electric vehicle market share 2024"
+- Topic: "AI model performance" → Search: "GPT-4 benchmark results 2025", "LLM performance comparison studies", "AI model evaluation metrics research"
+- Topic: "Company financials" → Search: "Tesla Q3 2025 earnings report", "Tesla revenue growth analysis", "electric vehicle market share 2025"
 - Topic: "Technical implementation" → Search: "React Server Components best practices", "Next.js performance optimization techniques", "modern web development patterns"
 - Topic: "Public opinion on topic" → X Search: "GPT-4 user reactions", "Tesla stock price discussions", search recent posts from specific handles if relevant
 - Topic: "Breaking news or events" → X Search: "OpenAI latest announcements", "tech conference live updates", "startup funding news"
@@ -639,7 +654,7 @@ ${JSON.stringify(plan)}
             const result = {
               content: text,
               citations: citations,
-              sources: allSources,
+              sources: allSources.filter((source): source is { text: string; link: string; title: string } => source !== null),
               dateRange: `${searchStartDate} to ${searchEndDate}`,
               handles: xHandles || [],
             };

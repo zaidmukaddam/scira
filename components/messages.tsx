@@ -345,7 +345,7 @@ const Messages: React.FC<MessagesProps> = ({
   console.log('✅ Proceeding to render', memoizedMessages.length, 'messages');
 
   return (
-    <div className="space-y-0 mb-30 sm:mb-36 flex flex-col">
+    <div className="space-y-0 !mb-34 sm:!mb-36 flex flex-col">
       <div className="flex-grow">
         {memoizedMessages.map((message, index) => {
           console.log(`=== RENDERING MESSAGE ${index} ===`);
@@ -441,8 +441,6 @@ const Messages: React.FC<MessagesProps> = ({
           </div>
         </div>
       )}
-
-      {/* Missing assistant response UI is now handled inside the assistant Message */}
 
       {/* Show global error when there is no assistant message to display it */}
       {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
