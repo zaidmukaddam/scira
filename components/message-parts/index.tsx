@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, useRef, useEffect } from 'react';
+import React, { memo, useState, useRef, useEffect } from 'react';
 import isEqual from 'fast-deep-equal';
 import { ReasoningUIPart, DataUIPart, isToolUIPart } from 'ai';
 import { ReasoningPartView } from '@/components/reasoning-part';
@@ -17,7 +17,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { ShareButton } from '@/components/share';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { RepeatIcon, Copy01Icon, CpuIcon } from '@hugeicons/core-free-icons';
-import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart, ChatTools } from '@/lib/types';
+import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import Image from 'next/image';
@@ -48,7 +48,6 @@ import {
   Play as PlayIcon,
   Info,
   Code,
-  Copy,
 } from 'lucide-react';
 import {
   RedditLogoIcon,
@@ -71,13 +70,11 @@ import MultiSearch from '@/components/multi-search';
 import TrendingResults from '@/components/trending-tv-movies-results';
 import AcademicPapersCard from '@/components/academic-papers';
 import WeatherChart from '@/components/weather-chart';
-import MCPServerList from '@/components/mcp-server-list';
 import RedditSearch from '@/components/reddit-search';
 import XSearch from '@/components/x-search';
 import { ExtremeSearch } from '@/components/extreme-search';
 import { CoinData as CryptoCoinsData } from '@/components/crypto-coin-data';
 import { CurrencyConverter } from '@/components/currency_conv';
-import { OnChainTokenPrice as OnChainCryptoComponents } from '@/components/onchain-crypto-components';
 import { YouTubeSearchResults } from '@/components/youtube-search-results';
 import { ConnectorsSearchResults } from '@/components/connectors-search-results';
 import { CodeInterpreterView, NearbySearchSkeleton } from '@/components/tool-invocation-list-view';
