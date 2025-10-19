@@ -16,7 +16,7 @@ import {
   CodeCircleIcon,
   HierarchyIcon,
   MagicWandIcon,
-  AiSheetsIcon,
+  File02Icon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -173,7 +173,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       id: 'pdfExcel' as const,
       name: 'PDF → Excel',
       description: 'Extraction de tableaux depuis des PDFs (Markdown) + export .xlsx',
-      icon: AisheetsIcon,
+      icon: File02Icon,
       show: true,
     },
   ] as const;
