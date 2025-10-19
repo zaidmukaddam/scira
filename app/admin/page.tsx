@@ -34,6 +34,10 @@ export default function AdminHomePage() {
   const { data: online } = useQuery({ queryKey: ['admin-online'], queryFn: fetchOnline, refetchInterval: 15000 });
   const { data: events } = useQuery({ queryKey: ['admin-events'], queryFn: fetchEvents, refetchInterval: 30000 });
 
+  const userMap = new Map<string, string>((metrics?.users || []).map((u: any) => [u.id, u.name]));
+  const usersActivityNamed = (metrics?.charts?.usersActivity || []).map((x: any) => ({ userId: userMap.get(x.userId) || x.userId, count: x.count }));
+  const usersCostNamed = (metrics?.charts?.usersCost || []).map((x: any) => ({ userId: userMap.get(x.userId) || x.userId, cost: x.cost }));
+
   useEffect(() => {
     if (!pusherClient) return;
     const chUsers = pusherClient.subscribe('private-admin-users');
@@ -93,8 +97,8 @@ export default function AdminHomePage() {
           </div>
           <div className="px-4 lg:px-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
             <TopModelsChart data={metrics?.charts?.models || []} />
-            <TopUsersActivityChart data={metrics?.charts?.usersActivity || []} />
-            <TopUsersCostChart data={metrics?.charts?.usersCost || []} />
+            <TopUsersActivityChart data={usersActivityNamed} />
+            <TopUsersCostChart data={usersCostNamed} />
           </div>
           <div className="px-4 lg:px-6 grid grid-cols-1 xl:grid-cols-3 gap-4">
             <Card className="p-4 xl:col-span-1">
