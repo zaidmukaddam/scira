@@ -63,13 +63,11 @@ import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
 
-// Eagerly load tool components for better UX
+// Eagerly load tool components for better UX (except browser-only components)
+import dynamic from 'next/dynamic';
 import { FlightTracker } from '@/components/flight-tracker';
-import InteractiveChart from '@/components/interactive-charts';
-import { MapComponent } from '@/components/map-components';
 import TMDBResult from '@/components/movie-info';
 import MultiSearch from '@/components/multi-search';
-import NearbySearchMapView from '@/components/nearby-search-map-view';
 import TrendingResults from '@/components/trending-tv-movies-results';
 import AcademicPapersCard from '@/components/academic-papers';
 import WeatherChart from '@/components/weather-chart';
@@ -79,12 +77,18 @@ import XSearch from '@/components/x-search';
 import { ExtremeSearch } from '@/components/extreme-search';
 import { CoinData as CryptoCoinsData } from '@/components/crypto-coin-data';
 import { CurrencyConverter } from '@/components/currency_conv';
-import InteractiveStockChart from '@/components/interactive-stock-chart';
-import { CryptoChart, CryptoTickers } from '@/components/crypto-charts';
 import { OnChainTokenPrice as OnChainCryptoComponents } from '@/components/onchain-crypto-components';
 import { YouTubeSearchResults } from '@/components/youtube-search-results';
 import { ConnectorsSearchResults } from '@/components/connectors-search-results';
 import { CodeInterpreterView, NearbySearchSkeleton } from '@/components/tool-invocation-list-view';
+
+// Components that require browser APIs (Leaflet, charts) - load dynamically with ssr: false
+const InteractiveChart = dynamic(() => import('@/components/interactive-charts'), { ssr: false });
+const MapComponent = dynamic(() => import('@/components/map-components').then(m => ({ default: m.MapComponent })), { ssr: false });
+const NearbySearchMapView = dynamic(() => import('@/components/nearby-search-map-view'), { ssr: false });
+const InteractiveStockChart = dynamic(() => import('@/components/interactive-stock-chart'), { ssr: false });
+const CryptoChart = dynamic(() => import('@/components/crypto-charts').then(m => ({ default: m.CryptoChart })), { ssr: false });
+const CryptoTickers = dynamic(() => import('@/components/crypto-charts').then(m => ({ default: m.CryptoTickers })), { ssr: false });
 
 // Simple loader component for stock chart - no useEffect needed
 const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
