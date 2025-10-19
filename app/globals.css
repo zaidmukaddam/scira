@@ -177,43 +177,42 @@
 }
 
 @layer utilities {
-  /* Tweet wrapper styling for horizontal layout */
+  /* Tweet wrapper styling for horizontal layout - compact and minimal */
   .tweet-wrapper {
     position: relative;
-    height: 240px;
+    height: 220px;
     overflow: hidden;
   }
-
-  .tweet-wrapper::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 16px;
-    background: linear-gradient(transparent, hsl(var(--card)));
-    pointer-events: none;
-    z-index: 10;
-  }
+  
 
   .tweet-wrapper [data-theme] {
     margin: 0 !important;
     border-radius: 0.5rem !important;
-    border: 1px solid hsl(var(--border)) !important;
-    box-shadow: var(--shadow-sm) !important;
+    border: 1px solid hsl(var(--border) / 0.5) !important;
+    box-shadow: none !important;
     background: hsl(var(--card)) !important;
     height: 100%;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
   }
 
-  /* Tweet wrapper styling for sheet */
+  .tweet-wrapper [data-theme]:hover {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Tweet wrapper styling for sheet - clean and minimal */
   .tweet-wrapper-sheet [data-theme] {
     margin: 0 !important;
     border-radius: 0.5rem !important;
-    border: 1px solid hsl(var(--border)) !important;
-    box-shadow: var(--shadow-sm) !important;
+    border: 1px solid hsl(var(--border) / 0.5) !important;
+    box-shadow: none !important;
     background: hsl(var(--card)) !important;
     max-width: 100% !important;
     width: 100% !important;
+    transition: border-color 0.2s ease;
+  }
+
+  .tweet-wrapper-sheet [data-theme]:hover {
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Ensure proper tweet spacing */
