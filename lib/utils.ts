@@ -16,7 +16,7 @@ import {
   CodeCircleIcon,
   HierarchyIcon,
   MagicWandIcon,
-  AisheetsIcon,
+  AiSheetsIcon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
