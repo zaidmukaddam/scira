@@ -73,7 +73,8 @@ async function seedTestUsers() {
       const createdAt = randomDate(60);
       const lastSeen = testUser.status === 'active' ? randomDate(7) : null;
 
-      const bcrypt = await import('bcryptjs');
+      const mod = await import('bcryptjs');
+      const bcrypt = (mod as any).default ?? (mod as any);
       const passwordHash = await bcrypt.hash(password, 10);
 
       // Créer les credentials

@@ -56,7 +56,8 @@ async function createUser(
   const userId = `local:${username}`;
   const now = new Date();
 
-  const bcrypt = await import('bcryptjs');
+  const mod = await import('bcryptjs');
+  const bcrypt = (mod as any).default ?? (mod as any);
   const passwordHash = await bcrypt.hash(password, 10);
 
   // Vérifier si le credential existe
@@ -174,6 +175,7 @@ async function main() {
 
   console.log('\n💡 Prochaines étapes :\n');
   console.log('• Générer des données de test : pnpm seed:test-data');
+  console.log('• Comptes créés : sam/sam, ' + (process.env.ADMIN_USERNAME || 'admin') + '/' + (process.env.ADMIN_PASSWORD || 'admin123') + ', demo/demo123');
   console.log('• Réinitialiser tout : pnpm seed:reset');
   console.log('• Lire la documentation : SETUP_ADMIN.md');
 
