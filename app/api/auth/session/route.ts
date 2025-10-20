@@ -1,4 +1,3 @@
-export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { getSessionFromHeaders } from '@/lib/local-session';
 import { db } from '@/lib/db';
