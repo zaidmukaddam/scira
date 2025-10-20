@@ -48,7 +48,6 @@ import { useLocation } from '@/hooks/use-location';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentAccess } from '@/hooks/use-agent-access';
-import { useAgentAccess } from '@/hooks/use-agent-access';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
