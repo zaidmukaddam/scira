@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 // Better Auth removed. This module is intentionally minimal.
 import { headers, cookies } from 'next/headers';
 import { maindb } from '@/lib/db';

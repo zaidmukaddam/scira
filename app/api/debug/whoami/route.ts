@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { cookies, headers } from 'next/headers';
 import { getSessionFromRequestCookies, getSessionFromHeaders } from '@/lib/local-session';

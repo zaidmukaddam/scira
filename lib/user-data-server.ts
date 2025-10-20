@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import 'server-only';
 
 import { eq } from 'drizzle-orm';

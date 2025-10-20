@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { user, type User } from './db/schema';
