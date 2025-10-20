@@ -279,3 +279,18 @@ export const event = pgTable('event', {
 
 export type Event = InferSelectModel<typeof event>;
 export type Lookout = InferSelectModel<typeof lookout>;
+
+export const userAgentAccess = pgTable('user_agent_access', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  agentId: text('agent_id').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type UserAgentAccess = InferSelectModel<typeof userAgentAccess>;

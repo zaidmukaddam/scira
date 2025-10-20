@@ -47,6 +47,8 @@ import { ChatMessage } from '@/lib/types';
 import { useLocation } from '@/hooks/use-location';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAgentAccess } from '@/hooks/use-agent-access';
+import { useAgentAccess } from '@/hooks/use-agent-access';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
@@ -1651,6 +1653,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     // Get dynamic search groups based on the selected search provider
     const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
 
+    // Get agent access from database
+    const { data: agentAccess } = useAgentAccess();
+
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
       () =>
@@ -1659,9 +1664,16 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           if ('requireAuth' in group && group.requireAuth && !session) return false;
           // Don't filter out Pro-only groups, show them with Pro indicator
           if (group.id === 'extreme') return false; // Exclude extreme from dropdown
+          
+          // Filter based on agent access from database
+          if (agentAccess) {
+            const access = agentAccess.find((a: any) => a.agentId === group.id);
+            if (access && !access.enabled) return false;
+          }
+          
           return true;
         }),
-      [dynamicSearchGroups, session],
+      [dynamicSearchGroups, session, agentAccess],
     );
 
     const visibleGroupIds = useMemo(() => visibleGroups.map((g) => g.id), [visibleGroups]);

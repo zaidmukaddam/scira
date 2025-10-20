@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { pusherClient } from '@/lib/pusher-client';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Activity } from 'lucide-react';
 import { TopModelsChart, TopUsersActivityChart, TopUsersCostChart } from '@/components/admin/dashboard-charts';
 
 async function fetchMetrics() {
@@ -29,10 +31,10 @@ async function fetchEvents() {
 
 export default function AdminHomePage() {
   const qc = useQueryClient();
-  const { data: metrics } = useQuery({ queryKey: ['admin-metrics'], queryFn: fetchMetrics, refetchInterval: 30000 });
-  const { data: health } = useQuery({ queryKey: ['admin-health'], queryFn: fetchHealth, refetchInterval: 30000 });
+  const { data: metrics } = useQuery({ queryKey: ['admin-metrics'], queryFn: fetchMetrics, refetchInterval: 20000 });
+  const { data: health } = useQuery({ queryKey: ['admin-health'], queryFn: fetchHealth, refetchInterval: 20000 });
   const { data: online } = useQuery({ queryKey: ['admin-online'], queryFn: fetchOnline, refetchInterval: 15000 });
-  const { data: events } = useQuery({ queryKey: ['admin-events'], queryFn: fetchEvents, refetchInterval: 30000 });
+  const { data: events } = useQuery({ queryKey: ['admin-events'], queryFn: fetchEvents, refetchInterval: 20000 });
 
   const userMap = new Map<string, string>((metrics?.users || []).map((u: any) => [u.id, u.name]));
   const usersActivityNamed = (metrics?.charts?.usersActivity || []).map((x: any) => ({ userId: userMap.get(x.userId) || x.userId, count: x.count }));
@@ -76,7 +78,7 @@ export default function AdminHomePage() {
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="px-4 lg:px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
               <Card className="p-4">
                 <div className="text-sm text-muted-foreground">Utilisateurs actifs (≤60s)</div>
                 <div className="text-2xl font-semibold">{kpis?.activeUsers ?? '—'}</div>
@@ -92,6 +94,21 @@ export default function AdminHomePage() {
               <Card className="p-4">
                 <div className="text-sm text-muted-foreground">Messages (24h)</div>
                 <div className="text-2xl font-semibold">{kpis?.messages24hTotal ?? '—'}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Santé Système</div>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold mt-2">
+                  {health?.globalStatus === 'ok' && <Badge className="bg-green-500">✓ OK</Badge>}
+                  {health?.globalStatus === 'warn' && <Badge className="bg-yellow-500">⚠ Warning</Badge>}
+                  {health?.globalStatus === 'down' && <Badge className="bg-red-500">✗ Down</Badge>}
+                  {!health?.globalStatus && <Badge variant="secondary">?</Badge>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Latence moy: {health?.avgLatency?.toFixed(0) || '—'}ms
+                </p>
               </Card>
             </div>
           </div>

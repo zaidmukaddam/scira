@@ -7,6 +7,7 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconTrophy,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/admin/orcish/nav-documents";
@@ -40,6 +41,11 @@ const data = {
       title: "Utilisateurs",
       url: "/admin/users",
       icon: IconUsers,
+    },
+    {
+      title: "Top Profil",
+      url: "/admin/users/profile",
+      icon: IconTrophy,
     },
     {
       title: "Journaux",
