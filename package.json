@@ -9,7 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "fix": "prettier --write .",
-    "knip": "knip"
+    "knip": "knip",
+    "db:push": "drizzle-kit push",
+    "seed:admin": "tsx scripts/seed-admin.ts",
+    "seed:test-data": "tsx scripts/seed-test-data.ts",
+    "seed:all": "pnpm seed:admin && pnpm seed:test-data",
+    "seed:reset": "pnpm db:push && pnpm seed:all"
   },
   "dependencies": {
     "@ai-sdk/google": "2.0.17",
@@ -147,6 +152,7 @@
     "eslint-config-next": "15.6.0-canary.47",
     "postcss": ">=8.5.5",
     "tailwindcss": "^4.1.14",
+    "tsx": "^4.19.2",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5"
   },
