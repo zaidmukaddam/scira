@@ -14,6 +14,7 @@ import {
   customInstructions,
   payment,
   lookout,
+  userAgentAccess,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db, maindb } from './index';
@@ -971,5 +972,61 @@ export async function deleteLookout({ id }: { id: string }) {
     return deletedLookout;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to delete lookout');
+  }
+}
+
+export async function getUserAgentAccess(userId: string) {
+  try {
+    return await db
+      .select()
+      .from(userAgentAccess)
+      .where(eq(userAgentAccess.userId, userId))
+      .$withCache();
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get user agent access');
+  }
+}
+
+export async function updateUserAgentAccess(userId: string, agentId: string, enabled: boolean) {
+  try {
+    const { generateId } = await import('ai');
+    return await db
+      .insert(userAgentAccess)
+      .values({ 
+        id: generateId(), 
+        userId, 
+        agentId, 
+        enabled,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .onConflictDoUpdate({
+        target: [userAgentAccess.userId, userAgentAccess.agentId],
+        set: { enabled, updatedAt: new Date() }
+      })
+      .returning();
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update user agent access');
+  }
+}
+
+export async function initializeUserAgentAccess(userId: string) {
+  try {
+    const { generateId } = await import('ai');
+    const allAgents = [
+      'web', 'x', 'academic', 'youtube', 'reddit', 'stocks', 'chat', 'extreme', 
+      'memory', 'crypto', 'code', 'connectors', 'cyrus', 'libeller', 'nomenclature', 'pdfExcel'
+    ];
+    const values = allAgents.map(agentId => ({
+      id: generateId(),
+      userId,
+      agentId,
+      enabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }));
+    return await db.insert(userAgentAccess).values(values).onConflictDoNothing();
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to initialize user agent access');
   }
 }

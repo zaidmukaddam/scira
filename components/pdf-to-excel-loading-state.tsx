@@ -20,7 +20,7 @@ export function PdfToExcelLoadingState({
   size = 80,
   duration = 5,
   className,
-  iconComponent: Icon = DefaultDbIcon,
+  iconComponent: Icon = FileExcelIcon, 
   ...props
 }: PdfToExcelLoadingStateProps) {
   return (

@@ -20,6 +20,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { CreateUserForm } from '@/components/admin/create-user-form';
+import { AgentAccessDialog } from '@/components/admin/agent-access-dialog';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -172,6 +174,7 @@ function RowActions({ u, onInvalidate }: { u: any; onInvalidate: () => void }) {
 export default function AdminUsersPage() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ['admin-users'], queryFn: fetchUsers, refetchOnWindowFocus: true });
+  const [selectedUserIdForAgents, setSelectedUserIdForAgents] = useState<string | null>(null);
 
   useEffect(() => {
     if (!pusherClient) return;
@@ -191,7 +194,8 @@ export default function AdminUsersPage() {
   const users = data?.users || [];
 
   return (
-    <div className="px-4 lg:px-6">
+    <div className="px-4 lg:px-6 space-y-4">
+      <CreateUserForm onSuccess={() => qc.invalidateQueries({ queryKey: ['admin-users'] })} />
       <Card className="p-0 overflow-hidden">
         <div className="p-4 border-b">
           <h2 className="text-base font-semibold">Utilisateurs</h2>
@@ -207,6 +211,7 @@ export default function AdminUsersPage() {
                 <TableHead>En ligne</TableHead>
                 <TableHead>IP</TableHead>
                 <TableHead>Dernière activité</TableHead>
+                <TableHead>Accès Agents</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -227,6 +232,11 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>{u.ipAddress || '—'}</TableCell>
                     <TableCell>{u.lastSeen ? new Date(u.lastSeen).toLocaleString('fr-FR') : '—'}</TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedUserIdForAgents(u.id)}>
+                        Gérer Accès
+                      </Button>
+                    </TableCell>
                     <TableCell className="min-w-[170px]"><RowActions u={u} onInvalidate={() => qc.invalidateQueries({ queryKey: ['admin-users'] })} /></TableCell>
                   </TableRow>
                 );
@@ -235,6 +245,14 @@ export default function AdminUsersPage() {
           </Table>
         </div>
       </Card>
+
+      {selectedUserIdForAgents && (
+        <AgentAccessDialog
+          userId={selectedUserIdForAgents}
+          open={!!selectedUserIdForAgents}
+          onClose={() => setSelectedUserIdForAgents(null)}
+        />
+      )}
     </div>
   );
 }
