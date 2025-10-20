@@ -224,14 +224,17 @@ async function seedMessages(chatIds: string[]) {
   let totalMessages = 0;
   const targetMessages = randomBetween(150, 200);
 
-  // Distribuer les messages sur les 7 derniers jours, avec focus sur les dernières 24h
+  // Distribuer les messages : 70% dans les dernières 24h, 30% entre 24h-7j
   while (totalMessages < targetMessages) {
     const chatId = randomElement(chatIds);
 
     // Créer une paire user + assistant
     try {
-      // Message user
-      const userCreatedAt = randomDate(7, 2); // 7 jours, min 2 heures
+      // 70% des messages dans les dernières 24h pour les KPIs
+      const isRecent = Math.random() < 0.7;
+      const userCreatedAt = isRecent
+        ? new Date(Date.now() - randomBetween(1, 24) * 60 * 60 * 1000) // 1-24h
+        : randomDate(7, 24); // 24h-7j
       const userMessageId = generateId();
 
       await db.insert(message).values({
