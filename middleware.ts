@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionToken } from '@/lib/local-session';
 
 const authRoutes = ['/sign-in', '/sign-up'];
 const protectedRoutes = ['/lookout', '/xql', '/settings'];
@@ -9,13 +8,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('local.session')?.value || null;
   let session;
-  try {
-    session = verifySessionToken(token);
-
-  } catch {
-
-    session = null;
-  }
+  session = !!token;
 
   // Guest sessions disabled: do not create arka_client_id cookie
   let response = NextResponse.next();

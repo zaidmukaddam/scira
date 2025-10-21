@@ -81,19 +81,24 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "resetPassword", password: tempPwd }),
+        credentials: "include",
       });
-      if (!res.ok)
-        throw new Error(
-          (await res.json()).error || "Échec de la réinitialisation"
-        );
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur HTTP ${res.status}`);
+      }
+      
       toast.success(`Mot de passe réinitialisé pour ${u.name}`);
       setResetOpen(false);
       setTempPwd("");
       onInvalidate();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      console.error('Erreur reset:', e);
+      toast.error(e.message || "Erreur inconnue");
     }
   }
 
@@ -101,16 +106,23 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "suspend" }),
+        credentials: "include",
       });
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Échec de la suspension");
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur HTTP ${res.status}`);
+      }
+      
       toast.success(`${u.name} a été suspendu`);
       setSuspendOpen(false);
       onInvalidate();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      console.error('Erreur suspension:', e);
+      toast.error(e.message || "Erreur inconnue");
     }
   }
 
@@ -118,14 +130,21 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "DELETE",
+        credentials: "include",
       });
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Échec de la suppression");
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur HTTP ${res.status}`);
+      }
+      
       toast.success(`${u.name} a été supprimé`);
       setDeleteOpen(false);
       onInvalidate();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      console.error('Erreur suppression:', e);
+      toast.error(e.message || "Erreur inconnue");
     }
   }
 
@@ -133,17 +152,22 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "changeRole", role }),
+        credentials: "include",
       });
-      if (!res.ok)
-        throw new Error(
-          (await res.json()).error || "Échec du changement de rôle"
-        );
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur HTTP ${res.status}`);
+      }
+      
       toast.success(`Rôle de ${u.name} mis à jour en ${role}`);
       onInvalidate();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      console.error('Erreur changement rôle:', e);
+      toast.error(e.message || "Erreur inconnue");
     }
   }
 
