@@ -4,13 +4,22 @@ import { useLocalSession } from './use-local-session';
 export function useAgentAccess(userId?: string) {
   const { data: session } = useLocalSession();
   const targetUserId = userId || session?.user?.id;
+  const isAdminContext = !!userId;
 
   return useQuery({
     queryKey: ['agent-access', targetUserId],
     queryFn: async () => {
       if (!targetUserId) return [];
-      const res = await fetch(`/api/admin/users/${targetUserId}/agents`);
-      if (!res.ok) throw new Error('Failed to fetch agent access');
+      
+      const endpoint = isAdminContext
+        ? `/api/admin/users/${targetUserId}/agents`
+        : `/api/user/agent-access`;
+      
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        if (res.status === 401) return [];
+        throw new Error('Failed to fetch agent access');
+      }
       return res.json();
     },
     enabled: !!targetUserId,

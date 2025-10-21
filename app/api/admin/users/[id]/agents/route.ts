@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
@@ -7,11 +8,12 @@ import { db } from '@/lib/db';
 import { event } from '@/lib/db/schema';
 import { pusher } from '@/lib/pusher';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
   const adminUser = await assertAdmin({ headers: hdrs });
   if (!adminUser) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
+  const params = await props.params;
   const userId = decodeURIComponent(params.id);
 
   try {
@@ -22,11 +24,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
   const adminUser = await assertAdmin({ headers: hdrs });
   if (!adminUser) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
+  const params = await props.params;
   const userId = decodeURIComponent(params.id);
   const body = await req.json().catch(() => ({}));
   const agents = body.agents || {};
@@ -40,6 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     try {
       await pusher.trigger('private-admin-users', 'updated', { userId });
+      await pusher.trigger(`private-user-${userId}`, 'agent-access-updated', { userId });
     } catch {}
 
     const evt = {
