@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { and, desc, gte } from 'drizzle-orm';
+import { and, desc, gte, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { user, message, chat } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
