@@ -12,6 +12,7 @@ import { ClientAnalytics } from '@/components/client-analytics';
 import { Providers } from './providers';
 import AuthGate from '@/components/auth-gate';
 import { ClientHeartbeat } from '@/components/ClientHeartbeat';
+import { SuspensionDetector } from '@/components/suspension-detector';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://hhyper.vercel.app'),
@@ -125,6 +126,7 @@ export default function RootLayout({
           <Providers>
             <Toaster position="top-center" />
             <ClientHeartbeat />
+            <SuspensionDetector />
             {children}
           </Providers>
         </NuqsAdapter>

@@ -97,10 +97,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
       try {
         await pusher.trigger('private-admin-users', 'updated', { id, action: 'suspend' });
-        await pusher.trigger('private-admin-events', 'new', evt);
-      } catch (err) {
-        logAdmin('pusher_error', { method: 'PATCH', userId: id, action: 'suspend', error: String(err) });
-      }
+        await pusher.trigger('private-admin-events', 'new', evt)
+        await pusher.trigger(`private-user-${id}`, 'suspended', { 
+          message: 'Votre compte a été suspendu',
+          timestamp: now 
+        });
+      } catch {}
+
 
       logAdmin('success', { method: 'PATCH', userId: id, action: 'suspend' });
       return NextResponse.json({ ok: true });
