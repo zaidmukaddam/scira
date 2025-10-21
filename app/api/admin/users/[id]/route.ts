@@ -19,7 +19,7 @@ function logAdmin(step: string, data: Record<string, any>) {
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
   const adminUser = await assertAdmin({ headers: hdrs });
   if (!adminUser) {
@@ -27,6 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  const params = await props.params;
   const id = decodeURIComponent(params.id);
   let body: any = {};
   try { body = await req.json(); } catch { body = {}; }
@@ -139,7 +140,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
   const adminUser = await assertAdmin({ headers: hdrs });
   if (!adminUser) {
@@ -147,6 +148,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  const params = await props.params;
   const id = decodeURIComponent(params.id);
   logAdmin('start', { method: 'DELETE', adminId: (adminUser as any)?.id, userId: id });
   if (id === adminUser.id) {

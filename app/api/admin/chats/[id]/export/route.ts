@@ -8,11 +8,12 @@ import { chat, message, event } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { pusher } from '@/lib/pusher';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
   const adminUser = await assertAdmin({ headers: hdrs });
   if (!adminUser) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
+  const params = await props.params;
   const chatId = decodeURIComponent(params.id);
   const { searchParams } = new URL(req.url);
   const format = searchParams.get('format') || 'txt';
