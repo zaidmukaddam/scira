@@ -1,10 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserAgentAccess } from '@/lib/db/queries';
-import { getServerSession } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 
 export async function GET(_req: NextRequest) {
-  const session = await getServerSession();
+  const session = await auth.api.getSession();
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
