@@ -81,8 +81,9 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "resetPassword", password: tempPwd }),
+        credentials: "include",
       });
       
       const data = await res.json().catch(() => ({}));
@@ -105,8 +106,9 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "suspend" }),
+        credentials: "include",
       });
       
       const data = await res.json().catch(() => ({}));
@@ -128,6 +130,7 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "DELETE",
+        credentials: "include",
       });
       
       const data = await res.json().catch(() => ({}));
@@ -149,8 +152,9 @@ function RowActions({
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "changeRole", role }),
+        credentials: "include",
       });
       
       const data = await res.json().catch(() => ({}));

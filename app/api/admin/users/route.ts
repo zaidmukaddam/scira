@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { pusher } from '@/lib/pusher';
+import { randomUUID } from 'crypto';
 
 export async function GET() {
   const hdrs = await headers();
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
   }
 
   const evt = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     category: 'user' as any,
     type: 'create',
     message: `Création utilisateur ${uname} (rôle=${r})`,
