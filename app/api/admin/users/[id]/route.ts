@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { pusher } from '@/lib/pusher';
+import { randomUUID } from 'crypto';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const hdrs = await headers();
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
 
       evt = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         category: 'user' as any,
         type: 'password_reset',
         message: `Réinitialisation du mot de passe pour ${existing.name}`,
@@ -62,7 +63,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await db.update(user).set({ status: 'suspended' as any, updatedAt: now }).where(eq(user.id, id));
 
       evt = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         category: 'user' as any,
         type: 'suspend',
         message: `Suspension de ${existing.name}`,
@@ -86,7 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await db.update(user).set({ role: role as any, updatedAt: now }).where(eq(user.id, id));
 
       evt = {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         category: 'user' as any,
         type: 'role_change',
         message: `Changement de rôle pour ${existing.name} → ${role}`,
