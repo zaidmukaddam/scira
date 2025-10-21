@@ -40,6 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     try {
       await pusher.trigger('private-admin-users', 'updated', { userId });
+      await pusher.trigger(`private-user-${userId}`, 'agent-access-updated', { userId });
     } catch {}
 
     const evt = {
