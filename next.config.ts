@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
-    useCache: true,
+    useCache: false,
     optimizePackageImports: [
       '@phosphor-icons/react',
       'lucide-react',

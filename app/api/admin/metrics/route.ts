@@ -1,7 +1,8 @@
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { and, desc, gte } from 'drizzle-orm';
+import { and, desc, gte, eq, isNotNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { user, message, chat } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
@@ -22,9 +23,9 @@ export async function GET(_req: NextRequest) {
 
   const [allUsers, activeUsers, suspendedUsers, deletedUsers, recentMessages] = await Promise.all([
     db.select({ id: user.id, status: user.status, name: user.name }).from(user),
-    db.select({ id: user.id }).from(user).where(and((user as any).lastSeen.isNotNull?.() ?? (user.lastSeen as any), gte(user.lastSeen, since60s))),
-    db.select({ id: user.id }).from(user).where((user.status as any).eq ? (user.status as any).eq('suspended') : (user.status as any) as any),
-    db.select({ id: user.id }).from(user).where((user.status as any).eq ? (user.status as any).eq('deleted') : (user.status as any) as any),
+    db.select({ id: user.id }).from(user).where(and(isNotNull(user.lastSeen), gte(user.lastSeen, since60s))),
+    db.select({ id: user.id }).from(user).where(eq(user.status, 'suspended')),
+    db.select({ id: user.id }).from(user).where(eq(user.status, 'deleted')),
     db
       .select({ id: message.id, model: message.model, totalTokens: message.totalTokens, inputTokens: message.inputTokens, outputTokens: message.outputTokens, createdAt: message.createdAt, chatId: message.chatId })
       .from(message)

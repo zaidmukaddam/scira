@@ -1,12 +1,14 @@
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { and, desc, eq, ne } from 'drizzle-orm';
-import { db } from '@/lib/db';
+import { db, maindb } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { pusher } from '@/lib/pusher';
 import { initializeUserAgentAccess } from '@/lib/db/queries';
+
 
 export async function GET() {
   const hdrs = await headers();
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
   const bcrypt = await import('bcryptjs');
   const passwordHash = await bcrypt.hash(pwd, 10);
 
-  const existingCred = await db.query.credentials?.findFirst?.({ where: eq(credentials.username, uname) }).catch(() => null as any);
+  const existingCred = await maindb.query.credentials?.findFirst?.({ where: eq(credentials.username, uname) }).catch(() => null as any);
   if (existingCred) {
     return NextResponse.json({ error: 'Utilisateur déjà existant' }, { status: 409 });
   }
@@ -63,11 +65,11 @@ export async function POST(req: NextRequest) {
   const localEmail = `${uname}@local`;
   const now = new Date();
 
-  await db.insert(credentials).values({ username: uname, passwordHash });
+  await maindb.insert(credentials).values({ username: uname, passwordHash });
 
-  const existingUser = await db.query.user.findFirst({ where: eq(user.id, localUserId) });
+  const existingUser = await maindb.query.user.findFirst({ where: eq(user.id, localUserId) });
   if (!existingUser) {
-    await db.insert(user).values({
+    await maindb.insert(user).values({
       id: localUserId,
       name: uname,
       email: localEmail,
@@ -82,11 +84,11 @@ export async function POST(req: NextRequest) {
     
     await initializeUserAgentAccess(localUserId);
   } else {
-    await db.update(user).set({ role: r as any, status: 'active' as any, updatedAt: now }).where(eq(user.id, localUserId));
+    await maindb.update(user).set({ role: r as any, status: 'active' as any, updatedAt: now }).where(eq(user.id, localUserId));
   }
 
   const evt = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     category: 'user' as any,
     type: 'create',
     message: `Création utilisateur ${uname} (rôle=${r})`,
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest) {
     userId: localUserId,
     createdAt: now,
   } as any;
-  await db.insert(event).values(evt);
+  await maindb.insert(event).values(evt);
 
   try {
     await pusher.trigger('private-admin-users', 'created', { id: localUserId, username: uname, role: r });
