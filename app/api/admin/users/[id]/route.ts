@@ -74,6 +74,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       try {
         await pusher.trigger('private-admin-users', 'updated', { id, action: 'suspend' });
         await pusher.trigger('private-admin-events', 'new', evt);
+        await pusher.trigger(`private-user-${id}`, 'suspended', { 
+          message: 'Votre compte a été suspendu',
+          timestamp: now 
+        });
       } catch {}
 
       return NextResponse.json({ ok: true });
