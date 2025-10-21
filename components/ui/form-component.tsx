@@ -49,9 +49,10 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentAccess } from '@/hooks/use-agent-access';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
 import { BorderTrail } from '@/components/core/border-trail';
+import { pusherClient } from '@/lib/pusher-client';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -1654,6 +1655,24 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
 
     // Get agent access from database
     const { data: agentAccess } = useAgentAccess();
+    const queryClient = useQueryClient();
+
+    // Listen for real-time agent access updates via Pusher
+    useEffect(() => {
+      if (!session?.user?.id || !pusherClient) return;
+      
+      const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
+      const handleUpdate = () => {
+        queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+      };
+      
+      channel.bind('agent-access-updated', handleUpdate);
+      
+      return () => {
+        channel.unbind('agent-access-updated', handleUpdate);
+        pusherClient.unsubscribe(`private-user-${session.user.id}`);
+      };
+    }, [session?.user?.id, queryClient]);
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
@@ -1665,9 +1684,10 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           if (group.id === 'extreme') return false; // Exclude extreme from dropdown
           
           // Filter based on agent access from database
-          if (agentAccess) {
+          if (agentAccess && agentAccess.length > 0) {
             const access = agentAccess.find((a: any) => a.agentId === group.id);
-            if (access && !access.enabled) return false;
+            // If access record exists and is disabled, hide the agent
+            if (access && access.enabled === false) return false;
           }
           
           return true;

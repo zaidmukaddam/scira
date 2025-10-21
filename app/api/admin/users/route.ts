@@ -7,7 +7,8 @@ import { db, maindb } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { pusher } from '@/lib/pusher';
-import { randomUUID } from 'crypto';
+import { initializeUserAgentAccess } from '@/lib/db/queries';
+
 
 export async function GET() {
   const hdrs = await headers();
@@ -80,6 +81,8 @@ export async function POST(req: NextRequest) {
       role: r,
       status: 'active',
     } as any);
+    
+    await initializeUserAgentAccess(localUserId);
   } else {
     await maindb.update(user).set({ role: r as any, status: 'active' as any, updatedAt: now }).where(eq(user.id, localUserId));
   }
