@@ -2,28 +2,64 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 
-import {
-  Globe,
-  Search,
-  ExternalLink,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  ArrowUpRight,
-  ChevronDown,
-} from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import PlaceholderImage from '@/components/placeholder-image';
 import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
 import type { DataUIPart } from 'ai';
+import { Sparkles as SparklesIcon } from 'lucide-react';
+
+// Custom Premium Icons
+const Icons = {
+  Globe: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  ),
+  ArrowUpRight: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M7 17L17 7M17 7H7M17 7v10" />
+    </svg>
+  ),
+  ChevronLeft: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  ),
+  ChevronRight: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  ),
+  ChevronDown: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  ),
+  Close: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  ),
+  Check: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  Sparkle: ({ className }: { className?: string }) => (
+    <SparklesIcon className={className} />
+  ),
+  Layers: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+    </svg>
+  ),
+};
 
 // Types
 type SearchImage = {
@@ -78,7 +114,7 @@ const getFaviconUrl = (url: string) => {
   }
 };
 
-// Source Card Component
+// Source Card Component - Minimal Premium Design
 const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ result, onClick }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const faviconUrl = getFaviconUrl(result.url);
@@ -87,25 +123,24 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
   return (
     <div
       className={cn(
-        'group relative bg-white dark:bg-neutral-900',
-        'border border-neutral-200 dark:border-neutral-800',
-        'rounded-xl p-4 transition-all duration-200',
-        'hover:border-neutral-300 dark:hover:border-neutral-700',
+        'group relative',
+        'border-b border-border',
+        'py-2.5 px-3 transition-all duration-150',
+        'hover:bg-accent/50',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="relative w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
-          {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
+      <div className="flex items-start gap-2.5">
+        {/* Favicon */}
+        <div className="relative w-4 h-4 mt-0.5 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-muted">
           {faviconUrl ? (
             <img
               src={faviconUrl}
               alt=""
-              width={24}
-              height={24}
-              className={cn('object-contain', !imageLoaded && 'opacity-0')}
+              width={16}
+              height={16}
+              className={cn('object-contain opacity-60', !imageLoaded && 'opacity-0')}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
                 setImageLoaded(true);
@@ -113,34 +148,41 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
               }}
             />
           ) : (
-            <Globe className="w-5 h-5 text-neutral-400" />
+            <Icons.Globe className="w-3.5 h-3.5 text-muted-foreground" />
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 line-clamp-1 mb-1">
-            {result.title}
-          </h3>
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+        <div className="flex-1 min-w-0 space-y-1">
+          {/* Title and Domain */}
+          <div className="flex items-baseline gap-1.5">
+            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">
+              {result.title}
+            </h3>
+            <Icons.ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+
+          {/* Metadata */}
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <span className="truncate">{hostname}</span>
             {result.author && (
               <>
-                <span>•</span>
+                <span>·</span>
                 <span className="truncate">{result.author}</span>
               </>
             )}
-            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
+
+          {/* Description */}
+          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
+            {result.content}
+          </p>
         </div>
       </div>
-
-      {/* Content */}
-      <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">{result.content}</p>
     </div>
   );
 };
 
-// Sources Sheet Component
+// Sources Sheet Component - Minimal Design
 const SourcesSheet: React.FC<{
   searches: SearchQueryResult[];
   open: boolean;
@@ -154,41 +196,48 @@ const SourcesSheet: React.FC<{
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>
-      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0')}>
-        <div className="flex flex-col h-full">
+      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[580px] sm:max-w-[580px]', 'p-0')}>
+        <div className="flex flex-col h-full bg-background">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="px-5 py-4 border-b border-border">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Sources</h2>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {totalResults} results from {searches.length} searches
+              <h2 className="text-base font-semibold text-foreground">Sources</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {totalResults} from {searches.length} {searches.length === 1 ? 'query' : 'queries'}
               </p>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-6">
-              {searches.map((search, searchIndex) => (
-                <div key={searchIndex}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="secondary" className="rounded-full text-xs px-3 py-1">
-                      <Search className="w-3 h-3 mr-1.5" />
+            {searches.map((search, searchIndex) => (
+              <div key={searchIndex} className="border-b border-border last:border-0">
+                <div className="px-5 py-2.5 bg-muted/40 border-b border-border/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-foreground">
                       {search.query}
-                    </Badge>
-                    <span className="text-xs text-neutral-500">{search.results.length} results</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {search.results.map((result, resultIndex) => (
-                      <a key={resultIndex} href={result.url} target="_blank" className="block">
-                        <SourceCard result={result} />
-                      </a>
-                    ))}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {search.results.length}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div>
+                  {search.results.map((result, resultIndex) => (
+                    <a
+                      key={resultIndex}
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block last:border-0"
+                    >
+                      <SourceCard result={result} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </SheetContentWrapper>
@@ -202,14 +251,48 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
   const [selectedImage, setSelectedImage] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
   const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
+  const [imageTransition, setImageTransition] = React.useState<'next' | 'prev' | null>(null);
   const isMobile = useIsMobile();
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const displayImages = React.useMemo(() => images.slice(0, PREVIEW_IMAGE_COUNT), [images]);
-  const hasMore = images.length > PREVIEW_IMAGE_COUNT;
+  const validImages = React.useMemo(
+    () => images.filter(img => !failedImages.has(img.url)),
+    [images, failedImages]
+  );
+
+  // Keyboard navigation
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setImageTransition('prev');
+        setSelectedImage((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
+        setTimeout(() => setImageTransition(null), 300);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setImageTransition('next');
+        setSelectedImage((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
+        setTimeout(() => setImageTransition(null), 300);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, validImages.length]);
+
+  const displayImages = React.useMemo(
+    () => validImages.slice(0, PREVIEW_IMAGE_COUNT),
+    [validImages]
+  );
+  const hasMore = validImages.length > PREVIEW_IMAGE_COUNT;
 
   const ImageViewer = React.useMemo(() => (isMobile ? Drawer : Dialog), [isMobile]);
   const ImageViewerContent = React.useMemo(() => (isMobile ? DrawerContent : DialogContent), [isMobile]);
@@ -224,29 +307,34 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
   }, []);
 
   const handlePrevious = React.useCallback(() => {
-    setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  }, [images.length]);
+    setImageTransition('prev');
+    setSelectedImage((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
+    setTimeout(() => setImageTransition(null), 300);
+  }, [validImages.length]);
 
   const handleNext = React.useCallback(() => {
-    setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  }, [images.length]);
+    setImageTransition('next');
+    setSelectedImage((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
+    setTimeout(() => setImageTransition(null), 300);
+  }, [validImages.length]);
 
   const handleImageError = React.useCallback((imageUrl: string) => {
     setFailedImages((prev) => new Set(prev).add(imageUrl));
   }, []);
 
-  const currentImage = React.useMemo(() => images[selectedImage], [images, selectedImage]);
+  const currentImage = React.useMemo(() => validImages[selectedImage], [validImages, selectedImage]);
 
   const gridItemClassName = React.useCallback(
-    (index: number) =>
+    () =>
       cn(
-        'relative rounded-lg overflow-hidden',
-        'bg-neutral-100 dark:bg-neutral-800',
-        'transition-all duration-200 hover:scale-[1.02]',
-        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-        index === 0 ? 'md:col-span-2 md:row-span-2' : '',
+        'relative rounded-md overflow-hidden shrink-0',
+        'bg-muted',
+        'transition-all duration-150 hover:opacity-90',
+        'focus:outline-none focus:ring-1 focus:ring-ring',
+        'cursor-pointer',
+        'w-[240px] h-[135px]'
       ),
-    [],
+    []
   );
 
   const shouldShowOverlay = React.useCallback(
@@ -257,21 +345,25 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
   const navigationButtonClassName = React.useMemo(
     () =>
       cn(
-        'h-10 w-10 rounded-lg',
-        'bg-white/90 dark:bg-neutral-800/90',
-        'hover:bg-neutral-100 dark:hover:bg-neutral-700',
-        'border border-neutral-200 dark:border-neutral-700',
-        'shadow-sm',
+        'h-9 w-9 rounded-full',
+        'flex items-center justify-center',
+        'bg-background/70',
+        'hover:bg-background/95',
+        'border border-border/40',
+        'backdrop-blur-xl',
+        'transition-all duration-200',
+        'hover:scale-105',
+        'shadow-md hover:shadow-lg'
       ),
-    [],
+    []
   );
 
   const viewerContentClassName = React.useMemo(
     () =>
       cn(
-        isMobile ? 'h-[90vh]' : 'w-full! max-w-2xl! h-3/5',
+        isMobile ? 'h-[92vh]' : 'w-full! max-w-4xl! h-[85vh]',
         'p-0 overflow-hidden',
-        !isMobile && 'border border-neutral-200 dark:border-neutral-800 shadow-lg',
+        !isMobile && 'border border-border shadow-2xl',
       ),
     [isMobile],
   );
@@ -282,29 +374,25 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
 
   return (
     <div className="space-y-4">
-      {/* Image Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
+      {/* Image Gallery - Horizontal Scroll */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {displayImages.map((image, index) => (
           <button
             key={`${image.url}-${index}`}
             onClick={() => handleImageClick(index)}
-            className={gridItemClassName(index)}
+            className={gridItemClassName()}
           >
-            {failedImages.has(image.url) ? (
-              <PlaceholderImage className="absolute inset-0" variant="compact" size="md" />
-            ) : (
-              <img
-                src={image.url}
-                alt={image.description || ''}
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={() => handleImageError(image.url)}
-              />
-            )}
+            <img
+              src={image.url}
+              alt={image.description || ''}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={() => handleImageError(image.url)}
+            />
 
             {/* Overlay for last image if there are more */}
             {shouldShowOverlay(index) && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-sm font-medium">+{images.length - displayImages.length} more</span>
+                <span className="text-white text-sm font-medium">+{validImages.length - displayImages.length} more</span>
               </div>
             )}
           </button>
@@ -314,65 +402,123 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
       {/* Image Viewer */}
       <ImageViewer open={isOpen} onOpenChange={setIsOpen}>
         <ImageViewerContent className={viewerContentClassName}>
-          <div className="relative w-full h-full bg-white dark:bg-neutral-900">
+          <div className="relative w-full h-full bg-background">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
+            <div className="absolute top-0 left-0 right-0 z-50 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border">
               <div className="flex items-center justify-between">
-                <Badge
-                  variant="secondary"
-                  className="rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-                >
-                  {selectedImage + 1} of {images.length}
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-foreground">
+                    {selectedImage + 1} / {validImages.length}
+                  </span>
+                  {currentImage?.description && !isMobile && (
+                    <span className="text-xs text-muted-foreground max-w-md truncate">
+                      {currentImage.description}
+                    </span>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  className="h-8 w-8 rounded-md hover:bg-accent"
                   onClick={handleClose}
                 >
-                  <X className="h-4 w-4" />
+                  <Icons.Close className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Image Display */}
-            <div className="absolute inset-0 flex items-center justify-center p-4 pt-16 pb-16">
-              <div className="relative w-full h-full">
-                {failedImages.has(currentImage.url) ? (
-                  <PlaceholderImage className="absolute inset-0" variant="default" size="lg" />
-                ) : (
+            {/* Image Display with Transition */}
+            <div className="absolute inset-0 flex items-center justify-center px-4 pt-16 pb-28">
+              <div className="relative w-full h-full overflow-hidden">
+                {currentImage && (
                   <img
+                    key={currentImage.url}
                     src={currentImage.url}
                     alt={currentImage.description || ''}
-                    className="w-full h-full object-contain rounded-lg"
+                    className={cn(
+                      'w-full h-full object-contain rounded-lg transition-all duration-300',
+                      imageTransition === 'next' && 'opacity-0 scale-95',
+                      imageTransition === 'prev' && 'opacity-0 scale-95',
+                      !imageTransition && 'opacity-100 scale-100'
+                    )}
                     onError={() => handleImageError(currentImage.url)}
                   />
                 )}
               </div>
             </div>
 
-            {/* Navigation */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn('absolute left-4 top-1/2 -translate-y-1/2', navigationButtonClassName)}
-              onClick={handlePrevious}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn('absolute right-4 top-1/2 -translate-y-1/2', navigationButtonClassName)}
-              onClick={handleNext}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+            {/* Navigation Buttons */}
+            {validImages.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevious}
+                  className={cn(
+                    'absolute left-6 top-1/2 -translate-y-1/2 z-40',
+                    navigationButtonClassName
+                  )}
+                  aria-label="Previous image"
+                >
+                  <Icons.ChevronLeft className="h-4.5 w-4.5 text-foreground/90" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className={cn(
+                    'absolute right-6 top-1/2 -translate-y-1/2 z-40',
+                    navigationButtonClassName
+                  )}
+                  aria-label="Next image"
+                >
+                  <Icons.ChevronRight className="h-4.5 w-4.5 text-foreground/90" />
+                </button>
+              </>
+            )}
 
-            {/* Description */}
-            {currentImage.description && (
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-3xl mx-auto">
+            {/* Thumbnail Strip */}
+            {validImages.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar justify-center pb-1">
+                  {validImages.map((img, index) => (
+                    <button
+                      key={img.url}
+                      onClick={() => {
+                        setImageTransition(index > selectedImage ? 'next' : 'prev');
+                        setSelectedImage(index);
+                        setTimeout(() => setImageTransition(null), 300);
+                      }}
+                      className={cn(
+                        'relative shrink-0 w-16 h-12 rounded-md overflow-hidden',
+                        'border-2 transition-all duration-200',
+                        'hover:scale-105 hover:border-foreground/50',
+                        'bg-muted',
+                        selectedImage === index
+                          ? 'border-foreground ring-1 ring-foreground/20'
+                          : 'border-border opacity-60 hover:opacity-100'
+                      )}
+                      aria-label={`View image ${index + 1}`}
+                    >
+                      <img
+                        src={img.url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {currentImage?.description && isMobile && (
+                  <p className="text-xs text-muted-foreground text-center mt-2 line-clamp-2">
+                    {currentImage.description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Single image description */}
+            {validImages.length === 1 && currentImage?.description && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+                <p className="text-xs text-muted-foreground text-center max-w-3xl mx-auto">
                   {currentImage.description}
                 </p>
               </div>
@@ -386,187 +532,133 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
 
 ImageGallery.displayName = 'ImageGallery';
 
-// Loading State Component
+// Loading State Component - Minimal Design
 const LoadingState: React.FC<{
   queries: string[];
   annotations: DataUIPart<CustomUIDataTypes>[];
   args: MultiSearchArgs;
 }> = ({ queries, annotations, args }) => {
-  const completedCount = annotations.length;
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const totalResults = annotations.reduce((sum, a) => sum + a.data.resultsCount, 0);
   const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
-  const loadingSkeletonRef = React.useRef<HTMLDivElement>(null);
 
   // Add horizontal scroll support with mouse wheel
   const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-
-    // Only handle vertical scrolling
     if (e.deltaY === 0) return;
-
-    // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
     if (!canScrollHorizontally) return;
-
-    // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
-
-    // Check scroll position to determine if we should handle the event
-    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
+    const isAtLeftEdge = container.scrollLeft <= 1;
     const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-
-    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
     if (!isAtLeftEdge && !isAtRightEdge) {
-      // In middle of scroll area - always handle
       e.preventDefault();
       container.scrollLeft += e.deltaY;
     } else if (isAtLeftEdge && e.deltaY > 0) {
-      // At left edge, scrolling right - handle it
       e.preventDefault();
       container.scrollLeft += e.deltaY;
     } else if (isAtRightEdge && e.deltaY < 0) {
-      // At right edge, scrolling left - handle it
       e.preventDefault();
       container.scrollLeft += e.deltaY;
     }
-    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
   };
 
   return (
-    <div className="w-full space-y-2 relative isolate overflow-hidden">
-      {/* Sources Accordion */}
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="sources" className="border-none">
-          <AccordionTrigger
+    <div className="w-full space-y-3">
+      {/* Sources Section */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        {/* Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Icons.Layers className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Sources</span>
+            <span className="text-[11px] text-muted-foreground">
+              {totalResults || '0'} {totalResults === 1 ? 'source' : 'sources'}
+            </span>
+          </div>
+          <Icons.ChevronDown
             className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline group',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'data-[state=open]:rounded-b-none',
-              '[&>svg]:hidden', // Hide default chevron
-              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
+              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+              isExpanded && 'rotate-180'
             )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
-                  <Globe className="h-3.5 w-3.5 text-neutral-500" />
-                </div>
-                <h2 className="font-medium text-sm">Sources</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {totalResults || '0'}
-                </Badge>
-                {totalResults > 0 && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
-                    View all
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-                <ChevronDown
-                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
-                  data-chevron
-                />
-              </div>
-            </div>
-          </AccordionTrigger>
+          />
+        </button>
 
-          <AccordionContent className="p-0">
+        {/* Content */}
+        {isExpanded && (
+          <div className="px-3 pb-3 space-y-2.5 border-t border-border">
+            {/* Query badges */}
             <div
-              className={cn(
-                'p-2 space-y-3',
-                'bg-white dark:bg-neutral-900',
-                'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-xl',
-              )}
+              ref={loadingQueryTagsRef}
+              className="flex gap-1.5 overflow-x-auto no-scrollbar pt-2.5"
+              onWheel={handleWheelScroll}
             >
-              {/* Query badges */}
-              <div
-                ref={loadingQueryTagsRef}
-                className="flex gap-2 overflow-x-auto no-scrollbar"
-                onWheel={handleWheelScroll}
-              >
-                {queries.map((query, i) => {
-                  const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
-                  const currentQuality = (args.quality ?? ['default'])[i] || 'default';
-                  return (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className={cn(
-                        'rounded-full text-xs px-3 py-1 shrink-0 transition-all flex items-center gap-1.5',
-                        isCompleted
-                          ? 'bg-neutral-100 dark:bg-neutral-800'
-                          : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-400',
-                      )}
-                    >
-                      {isCompleted ? (
-                        <Check className="w-3 h-3 mr-1.5" />
-                      ) : (
-                        <div className="w-3 h-3 mr-1.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                      )}
-                      <span>{query}</span>
-                      {currentQuality === 'best' && (
-                        <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
-                          PRO
-                        </span>
-                      )}
-                    </Badge>
-                  );
-                })}
-              </div>
-
-              {/* Skeleton cards */}
-              <div
-                ref={loadingSkeletonRef}
-                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
-                onWheel={handleWheelScroll}
-              >
-                {[...Array(3)].map((_, i) => (
-                  <div
+              {queries.map((query, i) => {
+                const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
+                const currentQuality = (args.quality ?? ['default'])[i] || 'default';
+                return (
+                  <span
                     key={i}
-                    className="flex-shrink-0 w-[320px] bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border',
+                      isCompleted
+                        ? 'bg-muted border-border text-foreground'
+                        : 'bg-card border-border/60 text-muted-foreground'
+                    )}
                   >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-3/4" />
-                        <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-1/2" />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
-                      <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-5/6" />
+                    {isCompleted ? (
+                      <Icons.Check className="w-2.5 h-2.5" />
+                    ) : (
+                      <Spinner className="w-2.5 h-2.5" />
+                    )}
+                    <span className="font-medium">{query}</span>
+                    {currentQuality === 'best' && (
+                      <Icons.Sparkle className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+
+            {/* Skeleton items */}
+            <div className="space-y-px">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="py-2.5 px-3 border-b border-border last:border-0"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 mt-0.5 rounded-full bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-full" />
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          </div>
+        )}
+      </div>
 
       {/* Images skeleton */}
-      <div>
-        <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-2 h-[140px] md:h-[160px]">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse',
-                'relative overflow-hidden',
-                i === 0 ? 'md:col-span-2 md:row-span-2' : '',
-              )}
-            />
-          ))}
-        </div>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className="w-[240px] h-[135px] shrink-0 rounded-md bg-muted animate-pulse"
+          />
+        ))}
       </div>
     </div>
   );
 };
 
-// Main Component
+// Main Component - Minimal Premium Design
 const MultiSearch = ({
   result,
   args,
@@ -577,61 +669,31 @@ const MultiSearch = ({
   annotations?: DataQueryCompletionPart[];
 }) => {
   const [isClient, setIsClient] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const [sourcesOpen, setSourcesOpen] = React.useState(false);
-  const queryTagsRef = React.useRef<HTMLDivElement>(null);
-  const previewResultsRef = React.useRef<HTMLDivElement>(null);
 
   // Ensure hydration safety
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Add horizontal scroll support with mouse wheel
-  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-
-    // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
-
-    // Check if container can scroll horizontally
-    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
-
-    // Always stop propagation first to prevent page scroll interference
-    e.stopPropagation();
-
-    // Check scroll position to determine if we should handle the event
-    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
-    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-
-    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
-    if (!isAtLeftEdge && !isAtRightEdge) {
-      // In middle of scroll area - always handle
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtLeftEdge && e.deltaY > 0) {
-      // At left edge, scrolling right - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtRightEdge && e.deltaY < 0) {
-      // At right edge, scrolling left - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    }
-    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
-  };
-
   // Normalize args to ensure required arrays for UI rendering
   const normalizedArgs = React.useMemo<NormalizedMultiSearchArgs>(
     () => ({
-      queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter((q): q is string => typeof q === 'string' && q.length > 0),
-      maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 10]).filter((n): n is number => typeof n === 'number'),
-      topics: (Array.isArray(args.topics) ? args.topics : [args.topics ?? 'general']).filter(
-        (t): t is Topic => t === 'general' || t === 'news',
+      queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
+        (q): q is string => typeof q === 'string' && q.length > 0
       ),
-      quality: (Array.isArray(args.quality) ? args.quality : [args.quality ?? 'default']).filter((q): q is 'default' | 'best' => q === 'default' || q === 'best'),
+      maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 10]).filter(
+        (n): n is number => typeof n === 'number'
+      ),
+      topics: (Array.isArray(args.topics) ? args.topics : [args.topics ?? 'general']).filter(
+        (t): t is Topic => t === 'general' || t === 'news'
+      ),
+      quality: (Array.isArray(args.quality) ? args.quality : [args.quality ?? 'default']).filter(
+        (q): q is 'default' | 'best' => q === 'default' || q === 'best'
+      ),
     }),
-    [args],
+    [args]
   );
 
   if (!result) {
@@ -642,116 +704,90 @@ const MultiSearch = ({
   const allResults = result.searches.flatMap((search) => search.results);
   const totalResults = allResults.length;
 
-  // Show all results in horizontal scroll
-  const previewResults = allResults;
-
   // Prevent hydration mismatches by only rendering after client-side mount
   if (!isClient) {
-    return <div className="w-full space-y-4" />;
+    return <div className="w-full space-y-3" />;
   }
 
   return (
-    <div className="w-full space-y-4">
-      {/* Sources Accordion */}
-      <Accordion type="single" collapsible defaultValue="sources" className="w-full">
-        <AccordionItem value="sources" className="border-none">
-          <AccordionTrigger
-            className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline group',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'data-[state=open]:rounded-b-none',
-              '[&>svg]:hidden', // Hide default chevron
-              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
-                  <Globe className="h-3.5 w-3.5 text-neutral-500" />
-                </div>
-                <h2 className="font-medium text-sm">Sources</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {totalResults}
-                </Badge>
-                {totalResults > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSourcesOpen(true);
-                    }}
-                  >
-                    View all
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-                <ChevronDown
-                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
-                  data-chevron
-                />
-              </div>
-            </div>
-          </AccordionTrigger>
-
-          <AccordionContent className="p-0">
-            <div
-              className={cn(
-                'p-3 space-y-3',
-                'bg-white dark:bg-neutral-900',
-                'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-xl',
-              )}
-            >
-              {/* Query tags */}
-              <div ref={queryTagsRef} className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
-                {result.searches.map((search, i) => {
-                  const currentQuality = normalizedArgs.quality[i] || 'default';
-                  return (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className="rounded-full text-xs px-3 py-1 shrink-0 flex items-center gap-1.5"
-                    >
-                      <Search className="w-3 h-3" />
-                      <span>{search.query}</span>
-                      {currentQuality === 'best' && (
-                        <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
-                          PRO
-                        </span>
-                      )}
-                    </Badge>
-                  );
-                })}
-              </div>
-
-              {/* Preview results */}
-              <div
-                ref={previewResultsRef}
-                className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
-                onWheel={handleWheelScroll}
+    <div className="w-full space-y-3">
+      {/* Sources Section */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        {/* Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Icons.Layers className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Sources</span>
+            <span className="text-[11px] text-muted-foreground">
+              {totalResults} {totalResults === 1 ? 'source' : 'sources'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {totalResults > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSourcesOpen(true);
+                }}
+                className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 hover:bg-accent rounded-md flex items-center gap-1"
               >
-                {previewResults.map((result, i) => (
-                  <a key={i} href={result.url} target="_blank" className="block flex-shrink-0 w-[320px]">
-                    <SourceCard result={result} />
-                  </a>
-                ))}
-              </div>
+                View all
+                <Icons.ArrowUpRight className="w-3 h-3" />
+              </button>
+            )}
+            <Icons.ChevronDown
+              className={cn(
+                'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+                isExpanded && 'rotate-180'
+              )}
+            />
+          </div>
+        </button>
+
+        {/* Content */}
+        {isExpanded && (
+          <div className="border-t border-border">
+            {/* Query tags */}
+            <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-border">
+              {result.searches.map((search, i) => {
+                const currentQuality = normalizedArgs.quality[i] || 'default';
+                return (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border bg-muted border-border text-foreground font-medium"
+                  >
+                    <span>{search.query}</span>
+                    {currentQuality === 'best' && (
+                      <Icons.Sparkle className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+                    )}
+                  </span>
+                );
+              })}
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+
+            {/* Results list */}
+            <div className="max-h-80 overflow-y-auto">
+              {allResults.map((result, i) => (
+                <a
+                  key={i}
+                  href={result.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block last:border-0"
+                >
+                  <SourceCard result={result} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Images */}
-      {allImages.length > 0 && (
-        <div>
-          <ImageGallery images={allImages} />
-        </div>
-      )}
+      {allImages.length > 0 && <ImageGallery images={allImages} />}
 
       {/* Sources Sheet */}
       <SourcesSheet searches={result.searches} open={sourcesOpen} onOpenChange={setSourcesOpen} />
