@@ -8,8 +8,6 @@ import { ReasoningUIPart } from 'ai';
 interface ReasoningPartViewProps {
   part: ReasoningUIPart;
   sectionKey: string;
-  isComplete: boolean;
-  duration: string | null;
   parallelTool: string | null;
   isExpanded: boolean;
   isFullscreen: boolean;
@@ -180,8 +178,9 @@ const isEmptyContent = (content: string): boolean => {
 };
 
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
-  ({ part, sectionKey, isComplete, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
+  ({ part, sectionKey, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const isComplete = part.state === 'done';
 
     // Auto-scroll to bottom when new content is added during reasoning
     useEffect(() => {
