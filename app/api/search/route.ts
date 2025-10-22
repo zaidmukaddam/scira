@@ -10,7 +10,6 @@ import {
 import {
   convertToModelMessages,
   streamText,
-  pruneMessages,
   NoSuchToolError,
   createUIMessageStream,
   generateObject,
@@ -430,29 +429,6 @@ export async function POST(req: Request) {
           // Always check if model supports reasoning
           const modelHasReasoning = hasReasoningSupport(model);
 
-          let prunedMessages = messages;
-          
-          // If model doesn't support reasoning, always prune ALL reasoning content
-          // to prevent errors when switching from reasoning to non-reasoning models
-          if (!modelHasReasoning) {
-            prunedMessages = pruneMessages({
-              messages,
-              reasoning: 'all',
-              toolCalls: shouldPrune ? 'before-last-2-messages' : 'none',
-              emptyMessages: shouldPrune ? 'remove' : 'keep',
-            });
-            console.log(`🧹 Removed reasoning content for non-reasoning model (${messages.length} → ${prunedMessages.length} messages)`);
-          } else if (shouldPrune) {
-            // For reasoning models, only prune when needed
-            console.log(`🔧 Pruning messages: ${messages.length} messages, ${totalTokens} tokens used`);
-            prunedMessages = pruneMessages({
-              messages,
-              toolCalls: 'before-last-2-messages',
-              emptyMessages: 'remove',
-            });
-            console.log(`✂️ Pruned to ${prunedMessages.length} messages`);
-          }
-
           if (steps.length > 0) {
             const lastStep = steps[steps.length - 1];
 
@@ -461,13 +437,11 @@ export async function POST(req: Request) {
               return {
                 toolChoice: 'none',
                 activeTools: [],
-                messages: (!modelHasReasoning || shouldPrune) ? prunedMessages : undefined,
               };
             }
           }
 
-          // Return pruned messages if needed
-          return (!modelHasReasoning || shouldPrune) ? { messages: prunedMessages } : undefined;
+          return undefined;
         },
         tools: (() => {
           const baseTools = {

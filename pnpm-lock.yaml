@@ -350,6 +350,9 @@ importers:
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
+      youtube-caption-extractor:
+        specifier: ^1.9.1
+        version: 1.9.1
       zod:
         specifier: 4.1.8
         version: 4.1.8
@@ -5265,6 +5268,9 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
 
+  striptags@3.2.0:
+    resolution: {integrity: sha512-g45ZOGzHDMe2bdYMdIvdAfCQkCTDMGBazSw1ypMowwGIee7ZQ5dU0rBJ8Jqgl+jAKIv4dbeE1jscZq9wid1Tkw==}
+
   strnum@2.1.1:
     resolution: {integrity: sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw==}
 
@@ -5585,6 +5591,10 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  youtube-caption-extractor@1.9.1:
+    resolution: {integrity: sha512-KK1OparV3kpIIRkMgLRsQPE73Tu0hYy0CDKcWkF8O3eikyib0IqVjoDNDiGt0KhGbg0/jhh+VUOCcWn/G6nvAw==}
+    engines: {node: '>=14.0.0'}
 
   zod-to-json-schema@3.24.6:
     resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
@@ -11199,6 +11209,8 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
+  striptags@3.2.0: {}
+
   strnum@2.1.1: {}
 
   style-to-js@1.1.17:
@@ -11611,6 +11623,11 @@ snapshots:
   yallist@5.0.0: {}
 
   yocto-queue@0.1.0: {}
+
+  youtube-caption-extractor@1.9.1:
+    dependencies:
+      he: 1.2.0
+      striptags: 3.2.0
 
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
