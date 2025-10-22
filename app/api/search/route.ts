@@ -77,7 +77,7 @@ import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { getCachedCustomInstructionsByUserId } from '@/lib/user-data-server';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
-import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+
 import { CohereChatModelOptions } from '@ai-sdk/cohere';
 
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -125,19 +125,6 @@ export async function POST(req: Request) {
   // CRITICAL PATH: Get auth status first (required for all subsequent checks)
   const lightweightUser = await getLightweightUser();
 
-  // Rate limit check for unauthenticated users
-  if (!lightweightUser) {
-    const identifier = getClientIdentifier(req);
-    const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
-
-    if (!success) {
-      const resetDate = new Date(reset);
-      return new ChatSDKError(
-        'rate_limit:api',
-        `You've reached the limit of ${limit} searches per day for unauthenticated users. Sign in for more searches or wait until ${resetDate.toLocaleString()}.`
-      ).toResponse();
-    }
-  }
 
   // Early exit checks (no DB operations needed)
   if (!lightweightUser) {
