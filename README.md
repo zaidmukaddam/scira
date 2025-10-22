@@ -110,6 +110,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Mem0](https://mem0.ai/) - Memory management
 - [Better Auth](https://github.com/better-auth/better-auth) - Authentication
 - [Drizzle ORM](https://orm.drizzle.team/) - Database management
+- [Novita AI](https://novita.ai) - AI Inference
 
 ### Deploy your own
 
