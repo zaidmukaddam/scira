@@ -21,6 +21,8 @@ export type ComprehensiveUserData = {
   image: string | null;
   createdAt: Date;
   updatedAt: Date;
+  role: 'user' | 'admin';
+  status: 'active' | 'suspended' | 'deleted';
   isProUser: boolean;
   proSource: 'polar' | 'dodo' | 'none';
   subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none';
@@ -248,6 +250,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        role: user.role,
+        status: user.status,
       })
       .from(user)
       .where(eq(user.id, userId))
@@ -267,6 +271,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       image: u.image,
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
+      role: u.role,
+      status: u.status,
       isProUser: true,
       proSource: 'none',
       subscriptionStatus: 'none',
