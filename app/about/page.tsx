@@ -863,7 +863,7 @@ export default function AboutPage() {
                             <div className="flex items-center gap-3">
                               {model.vision && <span className="text-muted-foreground font-mono text-xs">Vision</span>}
                               {model.reasoning && (
-                                <span className="text-muted-foreground font-mono text-xs">Reasoning</span>
+                                <span className="text-muted-foreground font-mono text-xs">Raisonnement</span>
                               )}
                               {model.pdf && <span className="text-muted-foreground font-mono text-xs">PDF</span>}
                               {model.fast && <span className="text-muted-foreground font-mono text-xs">Fast</span>}
@@ -902,7 +902,7 @@ export default function AboutPage() {
                             <div className="flex items-center gap-3 ml-5 pt-1">
                               {model.vision && <span className="text-muted-foreground font-mono text-xs">Vision</span>}
                               {model.reasoning && (
-                                <span className="text-muted-foreground font-mono text-xs">Reasoning</span>
+                                <span className="text-muted-foreground font-mono text-xs">Raisonnement</span>
                               )}
                               {model.pdf && <span className="text-muted-foreground font-mono text-xs">PDF</span>}
                               {model.fast && <span className="text-muted-foreground font-mono text-xs">Fast</span>}
