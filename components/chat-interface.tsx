@@ -348,7 +348,7 @@ const ChatInterface = memo(
             Promise.resolve()
               .then(async () => {
                 try {
-                  const { questions } = await suggestQuestions(newHistory);
+                  const { questions } = await suggestQuestions(newHistory, selectedGroup);
                   dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
                 } catch (err) {
                   console.error('Error generating suggested questions:', err);
@@ -497,7 +497,7 @@ const ChatInterface = memo(
               { role: 'assistant', content: getAssistantContent(lastAssistantMessage) },
             ];
             try {
-              const { questions } = await suggestQuestions(newHistory);
+              const { questions } = await suggestQuestions(newHistory, selectedGroup);
               dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
             } catch (error) {
               console.error('Error generating suggested questions:', error);
