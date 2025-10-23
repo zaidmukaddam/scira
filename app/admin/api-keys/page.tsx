@@ -59,7 +59,7 @@ export default function ApiKeysPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/admin/api-keys');
+      const res = await fetch('/api/admin/api-keys', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setStats(data);
@@ -81,7 +81,7 @@ export default function ApiKeysPage() {
     if (!confirm('Are you sure you want to delete this key?')) return;
 
     try {
-      const res = await fetch(`/api/admin/api-keys/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/api-keys/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error('Failed to delete');
       toast.success('Key deleted successfully');
       fetchStats();
@@ -93,7 +93,7 @@ export default function ApiKeysPage() {
   const handleTestKey = async (id: string) => {
     setTestingKeyId(id);
     try {
-      const res = await fetch(`/api/admin/api-keys/${id}/test`, { method: 'POST' });
+      const res = await fetch(`/api/admin/api-keys/${id}/test`, { method: 'POST', credentials: 'include' });
       const data = await res.json();
 
       if (data.valid) {
@@ -110,7 +110,7 @@ export default function ApiKeysPage() {
 
   const handleActivateKey = async (id: string) => {
     try {
-      const res = await fetch(`/api/admin/api-keys/${id}/activate`, { method: 'POST' });
+      const res = await fetch(`/api/admin/api-keys/${id}/activate`, { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Failed to activate');
       toast.success('Key activated successfully');
       fetchStats();
