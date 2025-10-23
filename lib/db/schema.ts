@@ -294,3 +294,43 @@ export const userAgentAccess = pgTable('user_agent_access', {
 });
 
 export type UserAgentAccess = InferSelectModel<typeof userAgentAccess>;
+
+export const geminiApiKeys = pgTable(
+  'gemini_api_keys',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    key: text('key').notNull().unique(),
+    displayName: text('display_name'),
+    isActive: boolean('is_active').notNull().default(false),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    enabled: boolean('enabled').notNull().default(true),
+    priority: integer('priority').notNull().default(1),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    lastUsedAt: timestamp('last_used_at'),
+    lastErrorAt: timestamp('last_error_at'),
+  },
+);
+
+export const apiKeyUsage = pgTable(
+  'api_key_usage',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    apiKeyId: text('api_key_id')
+      .notNull()
+      .references(() => geminiApiKeys.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    messageCount: integer('message_count').notNull().default(0),
+    apiCallCount: integer('api_call_count').notNull().default(0),
+    tokensUsed: integer('tokens_used').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+);
+
+export type GeminiApiKey = InferSelectModel<typeof geminiApiKeys>;
+export type ApiKeyUsage = InferSelectModel<typeof apiKeyUsage>;
