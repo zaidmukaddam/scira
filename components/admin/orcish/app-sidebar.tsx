@@ -9,6 +9,7 @@ import {
   IconSettings,
   IconUsers,
   IconTrophy,
+  IconKey,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/admin/orcish/nav-documents";
@@ -63,6 +64,11 @@ const data = {
       title: "Journaux",
       url: "/admin/logs",
       icon: IconReport,
+    },
+    {
+      title: "Clés API",
+      url: "/admin/api-keys",
+      icon: IconKey,
     },
   ],
   navSecondary: [

@@ -13,7 +13,8 @@
     "db:push": "drizzle-kit push",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:test-data": "tsx scripts/seed-test-data.ts",
-    "seed:all": "pnpm seed:admin && pnpm seed:test-data",
+    "seed:api-keys": "tsx scripts/seed-api-keys.ts",
+    "seed:all": "pnpm seed:admin && pnpm seed:test-data && pnpm seed:api-keys",
     "seed:reset": "pnpm db:push && pnpm seed:all"
   },
   "dependencies": {
