@@ -235,14 +235,14 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     <div className="size-2.5 text-muted-foreground">
                       <SpinnerIcon />
                     </div>
-                    <span className="text-xs font-normal">Thinking</span>
+                    <span className="text-xs font-normal">Réflexion</span>
                     {parallelTool && <span className="text-xs font-normal opacity-60">({parallelTool})</span>}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="size-3 text-muted-foreground" strokeWidth={2} />
-                  <div className="text-xs font-normal text-muted-foreground">Reasoning</div>
+                  <div className="text-xs font-normal text-muted-foreground">Raisonnement</div>
                 </div>
               )}
             </div>
@@ -261,7 +261,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     setIsFullscreen(!isFullscreen);
                   }}
                   className="p-0.5 hover:bg-muted rounded text-muted-foreground transition-colors"
-                  aria-label={isFullscreen ? 'Minimize' : 'Maximize'}
+                  aria-label={isFullscreen ? 'Réduire' : 'Agrandir'}
                 >
                   {isFullscreen ? (
                     <Minimize2 className="size-3 text-muted-foreground" strokeWidth={2} />
