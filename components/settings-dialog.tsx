@@ -29,7 +29,6 @@ import {
   getConnectorSyncStatusAction,
 } from '@/app/actions';
 import { SEARCH_LIMITS } from '@/lib/constants';
-import { authClient, betterauthClient } from '@/lib/auth-client';
 import {
   MagnifyingGlassIcon,
   LightningIcon,
