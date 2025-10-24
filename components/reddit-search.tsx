@@ -1,17 +1,55 @@
 // /components/reddit-search.tsx
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Search, ThumbsUp, Check, ArrowUpRight, ExternalLink, Globe } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { RedditLogoIcon } from '@phosphor-icons/react';
 import Image from 'next/image';
+
+// Custom Premium Icons
+const Icons = {
+  Calendar: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
+  ThumbsUp: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+    </svg>
+  ),
+  Check: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  ArrowUpRight: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M7 17L17 7M17 7H7M17 7v10" />
+    </svg>
+  ),
+  ExternalLink: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+    </svg>
+  ),
+  ChevronDown: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  ),
+  Messages: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+};
 
 type RedditResult = {
   url: string;
@@ -24,19 +62,29 @@ type RedditResult = {
   score?: number;
 };
 
-type RedditSearchResponse = {
+type RedditSearchQueryResult = {
   query: string;
   results: RedditResult[];
   timeRange: string;
 };
 
-type RedditSearchArgs = {
-  query: string;
-  maxResults: number;
-  timeRange: string;
+type RedditSearchResponse = {
+  searches: RedditSearchQueryResult[];
 };
 
-// Reddit Source Card Component
+type RedditSearchArgs = {
+  queries?: (string | undefined)[] | string | null;
+  maxResults?: (number | undefined)[] | number | null;
+  timeRange?: (('day' | 'week' | 'month' | 'year') | undefined)[] | ('day' | 'week' | 'month' | 'year') | null;
+};
+
+type NormalizedRedditSearchArgs = {
+  queries: string[];
+  maxResults: number[];
+  timeRange: ('day' | 'week' | 'month' | 'year')[];
+};
+
+// Reddit Source Card Component - Minimal Premium Design
 const RedditSourceCard: React.FC<{
   result: RedditResult;
   onClick?: () => void;
@@ -52,24 +100,24 @@ const RedditSourceCard: React.FC<{
   return (
     <div
       className={cn(
-        'group relative bg-white dark:bg-neutral-900',
-        'border border-neutral-200 dark:border-neutral-800',
-        'rounded-xl p-4 transition-all duration-200',
-        'hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700',
+        'group relative',
+        'border-b border-border',
+        'py-2.5 px-3 transition-all duration-150',
+        'hover:bg-accent/50',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="relative w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center overflow-hidden shrink-0">
+      <div className="flex items-start gap-2.5">
+        {/* Reddit Icon */}
+        <div className="relative w-4 h-4 mt-0.5 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-orange-50 dark:bg-orange-900/20">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
           <Image
             src={`https://www.reddit.com/favicon.ico`}
             alt=""
-            width={24}
-            height={24}
-            className={cn('object-contain', !imageLoaded && 'opacity-0')}
+            width={16}
+            height={16}
+            className={cn('object-contain opacity-60', !imageLoaded && 'opacity-0')}
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
               setImageLoaded(true);
@@ -79,85 +127,110 @@ const RedditSourceCard: React.FC<{
           />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 line-clamp-1 mb-1">
-            {result.title}
-          </h3>
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            <Badge
-              variant="secondary"
-              className="px-1.5 py-0 text-[10px] rounded-sm bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
-            >
+        <div className="flex-1 min-w-0 space-y-1">
+          {/* Title and Subreddit */}
+          <div className="flex items-baseline gap-1.5">
+            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">
+              {result.title}
+            </h3>
+            <Icons.ExternalLink className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          
+          {/* Metadata */}
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="px-1.5 py-0.5 rounded-sm bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 font-medium">
               r/{subreddit}
-            </Badge>
-            <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </span>
+            {result.score !== undefined && (
+              <>
+                <span>·</span>
+                <Icons.ThumbsUp className="w-2.5 h-2.5" />
+                <span>{formattedScore}</span>
+              </>
+            )}
+            {result.published_date && (
+              <>
+                <span>·</span>
+                <Icons.Calendar className="w-2.5 h-2.5" />
+                <span>
+                  {new Date(result.published_date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+              </>
+            )}
           </div>
+
+          {/* Content */}
+          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
+            {result.content.length > 150 ? result.content.substring(0, 150) + '...' : result.content}
+          </p>
         </div>
-      </div>
-
-      {/* Content */}
-      <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed mb-3">
-        {result.content.length > 150 ? result.content.substring(0, 150) + '...' : result.content}
-      </p>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-800">
-        {result.score !== undefined && (
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            <ThumbsUp className="w-3 h-3" />
-            <span>{formattedScore} upvotes</span>
-          </div>
-        )}
-        {result.published_date && (
-          <time className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-            <Calendar className="w-3 h-3" />
-            {new Date(result.published_date).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </time>
-        )}
       </div>
     </div>
   );
 };
 
-// Reddit Sources Sheet Component
+// Reddit Sources Sheet Component - Minimal Design
 const RedditSourcesSheet: React.FC<{
-  results: RedditResult[];
+  searches: RedditSearchQueryResult[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}> = ({ results, open, onOpenChange }) => {
+}> = ({ searches, open, onOpenChange }) => {
   const isMobile = useIsMobile();
+  const totalResults = searches.reduce((sum, search) => sum + search.results.length, 0);
 
   const SheetWrapper = isMobile ? Drawer : Sheet;
   const SheetContentWrapper = isMobile ? DrawerContent : SheetContent;
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>
-      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0')}>
-        <div className="flex flex-col h-full">
+      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[580px] sm:max-w-[580px]', 'p-0')}>
+        <div className="flex flex-col h-full bg-background">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-2 mb-0.5">
               <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                <RedditLogoIcon className="h-4 w-4 text-orange-500" />
+                <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
               </div>
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">All Reddit Results</h2>
+              <h2 className="text-base font-semibold text-foreground">Reddit Results</h2>
             </div>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{results.length} posts and comments</p>
+            <p className="text-xs text-muted-foreground">
+              {totalResults} from {searches.length} {searches.length === 1 ? 'query' : 'queries'}
+            </p>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-3">
-              {results.map((result, index) => (
-                <a key={index} href={result.url} target="_blank" className="block">
-                  <RedditSourceCard result={result} />
-                </a>
-              ))}
-            </div>
+            {searches.map((search, searchIndex) => (
+              <div key={searchIndex} className="border-b border-border last:border-0">
+                <div className="px-5 py-2.5 bg-muted/40 border-b border-border/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-foreground">
+                      {search.query}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {search.results.length}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  {search.results.map((result, resultIndex) => (
+                    <a
+                      key={resultIndex}
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block last:border-0"
+                    >
+                      <RedditSourceCard result={result} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </SheetContentWrapper>
@@ -165,229 +238,180 @@ const RedditSourcesSheet: React.FC<{
   );
 };
 
-// Loading state component
+// Loading state component - Minimal Design
 const SearchLoadingState = () => {
   return (
-    <div className="w-full space-y-3">
-      <Accordion type="single" collapsible defaultValue="search" className="w-full">
-        <AccordionItem value="search" className="border-none">
-          <AccordionTrigger
-            className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'data-[state=open]:rounded-b-none',
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                  <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
-                </div>
-                <h2 className="font-medium text-sm">Reddit Results</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  0
-                </Badge>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
-                  View all
-                  <ArrowUpRight className="w-3 h-3 ml-1" />
-                </Button>
-              </div>
+    <div className="w-full my-3">
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        {/* Header */}
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
+              <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
             </div>
-          </AccordionTrigger>
+            <span className="text-sm font-medium text-foreground">Reddit Results</span>
+            <span className="text-[11px] text-muted-foreground">0 posts</span>
+          </div>
+          <Icons.ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
 
-          <AccordionContent className="p-0">
-            <div
-              className={cn(
-                'p-3 space-y-3',
-                'bg-white dark:bg-neutral-900',
-                'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-xl',
-              )}
-            >
-              {/* Query badges */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                <Badge
-                  variant="outline"
-                  className="rounded-full text-xs px-3 py-1 shrink-0 bg-neutral-50 dark:bg-neutral-900 text-neutral-400"
-                >
-                  <div className="w-3 h-3 mr-1.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  Searching Reddit...
-                </Badge>
-              </div>
+        {/* Loading Content */}
+        <div className="border-t border-border px-3 py-3 space-y-2.5">
+          {/* Loading badge */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border border-border bg-card text-muted-foreground">
+              <Spinner className="w-2.5 h-2.5" />
+              <span className="font-medium">Searching Reddit...</span>
+            </span>
+          </div>
 
-              {/* Skeleton cards */}
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0 w-[320px] bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 animate-pulse flex items-center justify-center">
-                        <RedditLogoIcon className="h-5 w-5 text-orange-500/30" />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-3/4" />
-                        <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-1/2" />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
-                      <div className="h-3 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse w-5/6" />
-                    </div>
+          {/* Skeleton items */}
+          <div className="space-y-px">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="py-2.5 px-3 border-b border-border last:border-0"
+              >
+                <div className="flex items-start gap-2.5">
+                  <div className="w-4 h-4 mt-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 animate-pulse flex items-center justify-center">
+                    <RedditLogoIcon className="h-2.5 w-2.5 text-orange-500/30" />
                   </div>
-                ))}
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                    <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                    <div className="h-2.5 bg-muted rounded animate-pulse w-full" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-// Main component
+// Main component - Minimal Premium Design
 const RedditSearch: React.FC<{
-  result: RedditSearchResponse;
+  result: RedditSearchResponse | null;
   args: RedditSearchArgs;
 }> = ({ result, args }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
 
-  // Add horizontal scroll support with mouse wheel
-  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-
-    // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
-
-    // Check if container can scroll horizontally
-    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
-
-    // Always stop propagation first to prevent page scroll interference
-    e.stopPropagation();
-
-    // Check scroll position to determine if we should handle the event
-    const isAtLeftEdge = container.scrollLeft <= 1; // Small tolerance for edge detection
-    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-
-    // Only prevent default if we're not at edges OR if we're scrolling in the direction that would move within bounds
-    if (!isAtLeftEdge && !isAtRightEdge) {
-      // In middle of scroll area - always handle
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtLeftEdge && e.deltaY > 0) {
-      // At left edge, scrolling right - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    } else if (isAtRightEdge && e.deltaY < 0) {
-      // At right edge, scrolling left - handle it
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    }
-    // If at edge and scrolling in direction that would go beyond bounds, let the event continue but without propagation
-  };
+  // Normalize args to ensure required arrays for UI rendering
+  const normalizedArgs = React.useMemo<NormalizedRedditSearchArgs>(
+    () => ({
+      queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
+        (q): q is string => typeof q === 'string' && q.length > 0
+      ),
+      maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 20]).filter(
+        (n): n is number => typeof n === 'number'
+      ),
+      timeRange: (Array.isArray(args.timeRange) ? args.timeRange : [args.timeRange ?? 'week']).filter(
+        (t): t is 'day' | 'week' | 'month' | 'year' => 
+          t === 'day' || t === 'week' || t === 'month' || t === 'year'
+      ),
+    }),
+    [args]
+  );
 
   if (!result) {
     return <SearchLoadingState />;
   }
 
-  const formattedTimeRange =
-    {
-      day: 'past 24 hours',
-      week: 'past week',
-      month: 'past month',
-      year: 'past year',
-    }[result.timeRange] || result.timeRange;
+  const allResults = result.searches.flatMap((search) => search.results);
+  const totalResults = allResults.length;
 
-  // Show first 5 results in preview
-  const previewResults = result.results.slice(0, 5);
+  const formatTimeRange = (timeRange: string) => ({
+    day: 'past 24 hours',
+    week: 'past week',
+    month: 'past month',
+    year: 'past year',
+  }[timeRange] || timeRange);
 
   return (
-    <div className="w-full space-y-3 my-4">
-      <Accordion type="single" collapsible defaultValue="reddit_search" className="w-full">
-        <AccordionItem value="reddit_search" className="border-none">
-          <AccordionTrigger
-            className={cn(
-              'py-3 px-4 rounded-xl hover:no-underline',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'data-[state=open]:rounded-b-none',
+    <div className="w-full my-3">
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        {/* Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
+              <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
+            </div>
+            <span className="text-sm font-medium text-foreground">Reddit Results</span>
+            <span className="text-[11px] text-muted-foreground">
+              {totalResults} {totalResults === 1 ? 'post' : 'posts'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {totalResults > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSourcesSheetOpen(true);
+                }}
+                className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 hover:bg-accent rounded-md flex items-center gap-1"
+              >
+                View all
+                <Icons.ArrowUpRight className="w-3 h-3" />
+              </button>
             )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                  <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
-                </div>
-                <h2 className="font-medium text-sm">Reddit Results</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {result.results.length}
-                </Badge>
-                {result.results.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSourcesSheetOpen(true);
-                    }}
-                  >
-                    View all
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </AccordionTrigger>
-
-          <AccordionContent className="p-0">
-            <div
+            <Icons.ChevronDown
               className={cn(
-                'p-3 space-y-3',
-                'bg-white dark:bg-neutral-900',
-                'border-x border-b border-neutral-200 dark:border-neutral-800',
-                'rounded-b-xl',
+                'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+                isExpanded && 'rotate-180'
               )}
-            >
-              {/* Query badges */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar" onWheel={handleWheelScroll}>
-                <Badge
-                  variant="outline"
-                  className="rounded-full text-xs px-3 py-1 shrink-0 bg-neutral-100 dark:bg-neutral-800"
-                >
-                  <Check className="w-3 h-3 mr-1.5" />
-                  {args.query}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="rounded-full text-xs px-3 py-1 shrink-0 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
-                >
-                  {formattedTimeRange}
-                </Badge>
-              </div>
+            />
+          </div>
+        </button>
 
-              {/* Preview results */}
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1" onWheel={handleWheelScroll}>
-                {previewResults.map((post, index) => (
-                  <a key={index} href={post.url} target="_blank" className="block flex-shrink-0 w-[320px]">
-                    <RedditSourceCard result={post} />
-                  </a>
-                ))}
-              </div>
+        {/* Content */}
+        {isExpanded && (
+          <div className="border-t border-border">
+            {/* Query tags */}
+            <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-border">
+              {result.searches.map((search, i) => {
+                const currentTimeRange = normalizedArgs.timeRange[i] || 'week';
+                return (
+                  <span 
+                    key={i}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border bg-muted border-border text-foreground font-medium"
+                  >
+                    <Icons.Check className="w-2.5 h-2.5" />
+                    <span>{search.query}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-orange-600 dark:text-orange-400">
+                      {formatTimeRange(currentTimeRange)}
+                    </span>
+                  </span>
+                );
+              })}
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+
+            {/* Results list */}
+            <div className="max-h-80 overflow-y-auto">
+              {allResults.map((post, index) => (
+                <a
+                  key={index}
+                  href={post.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block last:border-0"
+                >
+                  <RedditSourceCard result={post} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Sources Sheet */}
-      <RedditSourcesSheet results={result.results} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
+      <RedditSourcesSheet searches={result.searches} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
     </div>
   );
 };
