@@ -1,5 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
+import { Valyu } from 'valyu-js';
+import { serverEnv } from '@/env/server';
 
 export const currencyConverterTool = tool({
   description: 'Convert currency amounts using public FX rates',
