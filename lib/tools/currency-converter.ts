@@ -4,83 +4,78 @@ import { Valyu } from 'valyu-js';
 import { serverEnv } from '@/env/server';
 
 export const currencyConverterTool = tool({
-  description: 'Convert currency from one to another using Valyu forex data',
-  inputSchema: z.object({
-    from: z.string().describe('The source currency code.'),
-    to: z.string().describe('The target currency code.'),
-    amount: z.number().describe('The amount to convert. Default is 1.'),
-  }),
+  description: 'Convert currency amounts using public FX rates',
+  inputSchema: z.object({ from: z.string(), to: z.string(), amount: z.number() }),
   execute: async ({ from, to, amount }: { from: string; to: string; amount: number }) => {
-    const valyu = new Valyu(serverEnv.VALYU_API_KEY);
+    const safeFrom = from.toUpperCase();
+    const safeTo = to.toUpperCase();
 
-    type ForexResult = {
-      id?: string;
-      title: string;
-      url: string;
-      content: number;
-      metadata?: {
-        base_currency?: string;
-        quote_currency?: string;
-        name?: string;
-        timestamp?: string;
+    if (!Number.isFinite(amount) || amount < 0) {
+      return { error: 'invalid_amount' };
+    }
+
+    if (safeFrom === safeTo) {
+      return {
+        amount,
+        from: safeFrom,
+        to: safeTo,
+        forwardRate: 1,
+        reverseRate: 1,
+        convertedAmount: amount,
+        provider: 'identity',
       };
+    }
+
+    const fetchExchangerateHost = async () => {
+      const url = `https://api.exchangerate.host/convert?from=${encodeURIComponent(safeFrom)}&to=${encodeURIComponent(safeTo)}&amount=${encodeURIComponent(amount)}`;
+      const res = await fetch(url, { headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error('exchangerate_host_error');
+      const data = await res.json();
+      const rate = data?.info?.rate;
+      const result = data?.result;
+      if (!rate || !Number.isFinite(rate) || !Number.isFinite(result)) throw new Error('exchangerate_host_invalid');
+      return { rate: Number(rate), converted: Number(result), date: data?.date };
     };
 
-    const fetchRate = async (base: string, quote: string): Promise<number | undefined> => {
-      const query = `${base} to ${quote}`;
+    const fetchFrankfurter = async () => {
+      const url = `https://api.frankfurter.app/latest?amount=${encodeURIComponent(amount)}&from=${encodeURIComponent(safeFrom)}&to=${encodeURIComponent(safeTo)}`;
+      const res = await fetch(url, { headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error('frankfurter_error');
+      const data = await res.json();
+      const converted = data?.rates?.[safeTo];
+      if (!Number.isFinite(converted)) throw new Error('frankfurter_invalid');
+      const rate = Number(converted) / amount;
+      return { rate, converted: Number(converted), date: data?.date };
+    };
+
+    try {
+      const { rate, converted, date } = await fetchExchangerateHost();
+      return {
+        amount,
+        from: safeFrom,
+        to: safeTo,
+        forwardRate: rate,
+        reverseRate: 1 / rate,
+        convertedAmount: converted,
+        provider: 'exchangerate.host',
+        date,
+      };
+    } catch (_) {
       try {
-        const response = await valyu.search(query, {
-          searchType: 'proprietary',
-          includedSources: ['valyu/valyu-forex', 'valyu/valyu-crypto'],
-        });
-        if (!response || !Array.isArray(response.results)) return undefined;
-
-        const candidates = (response.results as unknown[]).filter((r): r is ForexResult => {
-          if (!r || typeof r !== 'object') return false;
-          const obj = r as Record<string, unknown>;
-          const meta = obj['metadata'] as Record<string, unknown> | undefined;
-          const baseOk = meta && typeof meta['base_currency'] === 'string' && meta['base_currency'] === base;
-          const quoteOk = meta && typeof meta['quote_currency'] === 'string' && meta['quote_currency'] === quote;
-          const contentOk = typeof obj['content'] === 'number';
-          return Boolean(contentOk && baseOk && quoteOk);
-        });
-
-        if (candidates.length > 0) {
-          return candidates[0].content;
-        }
-
-        // Fallback: first numeric content
-        const firstNumeric = (response.results as unknown[]).find(
-          (r) => r && typeof (r as Record<string, unknown>)['content'] === 'number',
-        ) as ForexResult | undefined;
-        return firstNumeric?.content;
-      } catch (error) {
-        console.error('Valyu forex fetch error:', error);
-        return undefined;
+        const { rate, converted, date } = await fetchFrankfurter();
+        return {
+          amount,
+          from: safeFrom,
+          to: safeTo,
+          forwardRate: rate,
+          reverseRate: 1 / rate,
+          convertedAmount: converted,
+          provider: 'frankfurter.app',
+          date,
+        };
+      } catch (e) {
+        return { disabled: false, error: 'service_unavailable' };
       }
-    };
-
-    const [forwardRateRaw, reverseRateRaw] = await Promise.all([fetchRate(from, to), fetchRate(to, from)]);
-
-    const forwardRate =
-      typeof forwardRateRaw === 'number' && Number.isFinite(forwardRateRaw) ? forwardRateRaw : undefined;
-    const reverseRate =
-      typeof reverseRateRaw === 'number' && Number.isFinite(reverseRateRaw)
-        ? reverseRateRaw
-        : forwardRate && forwardRate > 0
-          ? 1 / forwardRate
-          : undefined;
-
-    const convertedAmount = forwardRate ? forwardRate * amount : undefined;
-
-    return {
-      rate: typeof convertedAmount === 'number' ? convertedAmount : 'Rate unavailable',
-      forwardRate: forwardRate ?? null,
-      reverseRate: reverseRate ?? null,
-      fromCurrency: from,
-      toCurrency: to,
-      amount: amount,
-      convertedAmount: convertedAmount ?? null,
-    };
+    }
   },
 });
