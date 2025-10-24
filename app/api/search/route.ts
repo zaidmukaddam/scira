@@ -333,84 +333,6 @@ export async function POST(req: Request) {
           (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
         toolChoice: 'auto',
         providerOptions: {
-          gateway: {
-            only: ['zai', 'deepseek', 'alibaba', 'baseten'],
-          },
-          openai: {
-            ...(resolvedModel !== 'scira-qwen-coder'
-              ? {
-                parallelToolCalls: false,
-              }
-              : {}),
-            ...((resolvedModel === 'scira-gpt5' ||
-              resolvedModel === 'scira-gpt5-mini' ||
-              resolvedModel === 'scira-o3' ||
-              resolvedModel === 'scira-gpt5-nano' ||
-              resolvedModel === 'scira-gpt5-codex' ||
-              resolvedModel === 'scira-gpt5-medium' ||
-              resolvedModel === 'scira-o4-mini' ||
-              resolvedModel === 'scira-gpt-4.1' ||
-              resolvedModel === 'scira-gpt-4.1-mini' ||
-              resolvedModel === 'scira-gpt-4.1-nano'
-              ? {
-                reasoningEffort: (
-                  resolvedModel === 'scira-gpt5-nano' ||
-                    resolvedModel === 'scira-gpt5' ||
-                    resolvedModel === 'scira-gpt5-mini' ?
-                    'minimal' :
-                    'medium'
-                ),
-                promptCacheKey: 'scira-oai',
-                parallelToolCalls: false,
-                reasoningSummary: 'detailed',
-                textVerbosity: (resolvedModel === 'scira-o3' || resolvedModel === 'scira-gpt5-codex' || resolvedModel === 'scira-o4-mini' || resolvedModel === 'scira-gpt-4.1' || resolvedModel === 'scira-gpt-4.1-mini' || resolvedModel === 'scira-gpt-4.1-nano' ? 'medium' : 'high'),
-              }
-              : {}) satisfies OpenAIResponsesProviderOptions),
-          },
-          deepseek: {
-            parallelToolCalls: false,
-          },
-          groq: {
-            ...(resolvedModel === 'scira-gpt-oss-20' || resolvedModel === 'scira-gpt-oss-120'
-              ? {
-                reasoningEffort: 'high',
-                reasoningFormat: 'hidden',
-              }
-              : {}),
-            ...(resolvedModel === 'scira-qwen-32b'
-              ? {
-                reasoningEffort: 'none',
-              }
-              : {}),
-            parallelToolCalls: false,
-            structuredOutputs: true,
-            serviceTier: 'auto',
-          } satisfies GroqProviderOptions,
-          xai: {
-            parallel_tool_calls: false,
-          },
-          cohere: {
-            ...(resolvedModel === 'scira-cmd-a-think'
-              ? {
-                thinking: {
-                  type: 'enabled',
-                  tokenBudget: 1000,
-                },
-              }
-              : {}),
-          } satisfies CohereChatModelOptions,
-          anthropic: {
-            ...(resolvedModel === 'scira-anthropic-think'
-              ? {
-                sendReasoning: true,
-                thinking: {
-                  type: 'enabled',
-                  budgetTokens: 4000,
-                },
-              }
-              : {}),
-            disableParallelToolUse: true,
-          } satisfies AnthropicProviderOptions,
           google: {
             ...(resolvedModel === 'scira-google-think' || resolvedModel === 'scira-google-pro-think'
               ? {
@@ -420,7 +342,7 @@ export async function POST(req: Request) {
                 },
               }
               : {}),
-            threshold: "OFF"
+            threshold: "OFF",
           } satisfies GoogleGenerativeAIProviderOptions,
         },
         prepareStep: async ({ steps, messages }) => {
