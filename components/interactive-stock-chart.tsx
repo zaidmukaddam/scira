@@ -525,36 +525,36 @@ export const InteractiveStockChart = React.memo(
       // Create a multi-axis chart if needed
       const yAxis = hasMultipleCurrencies
         ? uniqueCurrencies.map((currency, i) => ({
-            type: 'value' as const,
-            position: i === 0 ? ('right' as const) : ('left' as const),
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: {
-              formatter: (value: number) => formatCurrency(value, currency),
-              color: subTextColor,
-              fontSize: 10,
-            },
-            splitLine: {
-              lineStyle: { color: gridColor },
-            },
-          }))
+          type: 'value' as const,
+          position: i === 0 ? ('right' as const) : ('left' as const),
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: {
+            formatter: (value: number) => formatCurrency(value, currency),
+            color: subTextColor,
+            fontSize: 10,
+          },
+          splitLine: {
+            lineStyle: { color: gridColor },
+          },
+        }))
         : {
-            type: 'value',
-            position: 'right',
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: {
-              formatter: (value: number) => {
-                const currency = processedData[0]?.currency || 'USD';
-                return formatCurrency(value, currency);
-              },
-              color: subTextColor,
-              fontSize: 10,
+          type: 'value',
+          position: 'right',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: {
+            formatter: (value: number) => {
+              const currency = processedData[0]?.currency || 'USD';
+              return formatCurrency(value, currency);
             },
-            splitLine: {
-              lineStyle: { color: gridColor },
-            },
-          };
+            color: subTextColor,
+            fontSize: 10,
+          },
+          splitLine: {
+            lineStyle: { color: gridColor },
+          },
+        };
 
       return {
         backgroundColor: 'transparent',
@@ -672,22 +672,22 @@ export const InteractiveStockChart = React.memo(
           },
           ...(estimateData.length > 0
             ? [
-                {
-                  name: 'Estimate',
-                  type: 'line' as const,
-                  data: estimateData,
-                  lineStyle: {
-                    color: color.line,
-                    width: 1,
-                    type: 'dashed' as const,
-                    opacity: 0.7,
-                  },
-                  itemStyle: { color: color.line, opacity: 0.7 },
-                  showSymbol: false,
-                  smooth: true,
-                  emphasis: { focus: 'series' },
+              {
+                name: 'Estimate',
+                type: 'line' as const,
+                data: estimateData,
+                lineStyle: {
+                  color: color.line,
+                  width: 1,
+                  type: 'dashed' as const,
+                  opacity: 0.7,
                 },
-              ]
+                itemStyle: { color: color.line, opacity: 0.7 },
+                showSymbol: false,
+                smooth: true,
+                emphasis: { focus: 'series' },
+              },
+            ]
             : []),
         ];
 
@@ -857,11 +857,10 @@ export const InteractiveStockChart = React.memo(
                   <h2 className="text-base font-semibold text-foreground/90">{title}</h2>
                   <Badge
                     variant={totalChange.isPositive ? 'green' : 'destructive'}
-                    className={`${
-                      totalChange.isPositive
+                    className={`${totalChange.isPositive
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                         : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
-                    } text-xs px-2 py-0.5`}
+                      } text-xs px-2 py-0.5`}
                   >
                     {totalChange.isPositive ? (
                       <ArrowUpRight className="h-3 w-3 mr-0.5" />
@@ -890,11 +889,10 @@ export const InteractiveStockChart = React.memo(
                       </div>
                       <div className="font-medium">{formatCurrency(series.lastPrice, series.currency)}</div>
                       <div
-                        className={`text-xs ${
-                          series.priceChange >= 0
+                        className={`text-xs ${series.priceChange >= 0
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-red-600 dark:text-red-400'
-                        }`}
+                          }`}
                       >
                         {series.priceChange >= 0 ? '+' : ''}
                         {series.percentChange}%
@@ -1154,13 +1152,13 @@ export const InteractiveStockChart = React.memo(
                                                     'text-xs px-1.5 py-0',
                                                     (filing.metadata?.document_type === '10-K' ||
                                                       filing.metadata?.form_type === '10-K') &&
-                                                      'border-blue-500/50 text-blue-600 dark:text-blue-400',
+                                                    'border-blue-500/50 text-blue-600 dark:text-blue-400',
                                                     (filing.metadata?.document_type === '10-Q' ||
                                                       filing.metadata?.form_type === '10-Q') &&
-                                                      'border-emerald-500/50 text-emerald-600 dark:text-emerald-400',
+                                                    'border-emerald-500/50 text-emerald-600 dark:text-emerald-400',
                                                     (filing.metadata?.document_type === '8-K' ||
                                                       filing.metadata?.form_type === '8-K') &&
-                                                      'border-orange-500/50 text-orange-600 dark:text-orange-400',
+                                                    'border-orange-500/50 text-orange-600 dark:text-orange-400',
                                                   )}
                                                 >
                                                   {filing.metadata?.document_type ||
@@ -1216,13 +1214,13 @@ export const InteractiveStockChart = React.memo(
                                                 'text-xs',
                                                 (filing.metadata?.document_type === '10-K' ||
                                                   filing.metadata?.form_type === '10-K') &&
-                                                  'border-blue-500/50 text-blue-600 dark:text-blue-400',
+                                                'border-blue-500/50 text-blue-600 dark:text-blue-400',
                                                 (filing.metadata?.document_type === '10-Q' ||
                                                   filing.metadata?.form_type === '10-Q') &&
-                                                  'border-emerald-500/50 text-emerald-600 dark:text-emerald-400',
+                                                'border-emerald-500/50 text-emerald-600 dark:text-emerald-400',
                                                 (filing.metadata?.document_type === '8-K' ||
                                                   filing.metadata?.form_type === '8-K') &&
-                                                  'border-orange-500/50 text-orange-600 dark:text-orange-400',
+                                                'border-orange-500/50 text-orange-600 dark:text-orange-400',
                                               )}
                                             >
                                               {filing.metadata?.document_type || filing.metadata?.form_type}
@@ -1365,270 +1363,66 @@ export const InteractiveStockChart = React.memo(
 
                 {/* Financial Statements Section */}
                 {(balance_sheets && Object.keys(balance_sheets).length > 0) ||
-                (income_statements && Object.keys(income_statements).length > 0) ||
-                (cash_flows && Object.keys(cash_flows).length > 0)
+                  (income_statements && Object.keys(income_statements).length > 0) ||
+                  (cash_flows && Object.keys(cash_flows).length > 0)
                   ? (() => {
-                      const hasIncome = !!(income_statements && Object.keys(income_statements).length > 0);
-                      const hasBalance = !!(balance_sheets && Object.keys(balance_sheets).length > 0);
-                      const hasCash = !!(cash_flows && Object.keys(cash_flows).length > 0);
+                    const hasIncome = !!(income_statements && Object.keys(income_statements).length > 0);
+                    const hasBalance = !!(balance_sheets && Object.keys(balance_sheets).length > 0);
+                    const hasCash = !!(cash_flows && Object.keys(cash_flows).length > 0);
 
-                      const availableTabs = [];
-                      if (hasIncome) availableTabs.push('income');
-                      if (hasBalance) availableTabs.push('balance');
-                      if (hasCash) availableTabs.push('cash');
+                    const availableTabs = [];
+                    if (hasIncome) availableTabs.push('income');
+                    if (hasBalance) availableTabs.push('balance');
+                    if (hasCash) availableTabs.push('cash');
 
-                      const defaultTab = availableTabs[0] || 'income';
-                      const gridCols =
-                        availableTabs.length === 1
-                          ? 'grid-cols-1'
-                          : availableTabs.length === 2
-                            ? 'grid-cols-2'
-                            : 'grid-cols-3';
+                    const defaultTab = availableTabs[0] || 'income';
+                    const gridCols =
+                      availableTabs.length === 1
+                        ? 'grid-cols-1'
+                        : availableTabs.length === 2
+                          ? 'grid-cols-2'
+                          : 'grid-cols-3';
 
-                      return (
-                        <div className="mt-5 pt-4 border-t border-border/30">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-1.5">
-                              <Wallet className="size-3.5 text-primary/80" />
-                              <h3 className="text-xs font-medium text-foreground/90">
-                                {availableTabs.length === 1
-                                  ? hasIncome
-                                    ? 'Income Statement'
-                                    : hasBalance
-                                      ? 'Balance Sheet'
-                                      : 'Cash Flow Statement'
-                                  : 'Financial Statements'}
-                              </h3>
-                            </div>
+                    return (
+                      <div className="mt-5 pt-4 border-t border-border/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-1.5">
+                            <Wallet className="size-3.5 text-primary/80" />
+                            <h3 className="text-xs font-medium text-foreground/90">
+                              {availableTabs.length === 1
+                                ? hasIncome
+                                  ? 'Income Statement'
+                                  : hasBalance
+                                    ? 'Balance Sheet'
+                                    : 'Cash Flow Statement'
+                                : 'Financial Statements'}
+                            </h3>
                           </div>
+                        </div>
 
-                          {availableTabs.length > 1 ? (
-                            <Tabs defaultValue={defaultTab} className="w-full">
-                              <TabsList className={`grid w-full ${gridCols} mb-3`}>
-                                {hasIncome && (
-                                  <TabsTrigger value="income" className="text-xs">
-                                    Income Statement
-                                  </TabsTrigger>
-                                )}
-                                {hasBalance && (
-                                  <TabsTrigger value="balance" className="text-xs">
-                                    Balance Sheet
-                                  </TabsTrigger>
-                                )}
-                                {hasCash && (
-                                  <TabsTrigger value="cash" className="text-xs">
-                                    Cash Flow
-                                  </TabsTrigger>
-                                )}
-                              </TabsList>
+                        {availableTabs.length > 1 ? (
+                          <Tabs defaultValue={defaultTab} className="w-full">
+                            <TabsList className={`grid w-full ${gridCols} mb-3`}>
+                              {hasIncome && (
+                                <TabsTrigger value="income" className="text-xs">
+                                  Income Statement
+                                </TabsTrigger>
+                              )}
+                              {hasBalance && (
+                                <TabsTrigger value="balance" className="text-xs">
+                                  Balance Sheet
+                                </TabsTrigger>
+                              )}
+                              {hasCash && (
+                                <TabsTrigger value="cash" className="text-xs">
+                                  Cash Flow
+                                </TabsTrigger>
+                              )}
+                            </TabsList>
 
-                              {/* Income Statement Tab */}
-                              <TabsContent value="income" className="space-y-3">
-                                {income_statements &&
-                                  Object.entries(income_statements).map(([company, statements]: [string, any[]]) => (
-                                    <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Building2 className="size-4 text-muted-foreground" />
-                                        <h4 className="font-medium text-sm">{company}</h4>
-                                      </div>
-
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                          <thead>
-                                            <tr className="border-b border-border/30">
-                                              <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
-                                                Period
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Revenue
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Gross Profit
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Operating Income
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Net Income
-                                              </th>
-                                              <th className="text-right pl-2 text-muted-foreground font-medium">EPS</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {statements.slice(0, 5).map((stmt, idx) => (
-                                              <tr key={idx} className="border-b border-border/20">
-                                                <td className="py-2 pr-2">
-                                                  {new Date(stmt.fiscal_date).toLocaleDateString('en-US', {
-                                                    month: 'short',
-                                                    year: 'numeric',
-                                                  })}
-                                                </td>
-                                                <td className="text-right px-2 font-medium">
-                                                  ${(stmt.sales / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  ${(stmt.gross_profit / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  ${(stmt.operating_income / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2 font-medium">
-                                                  ${(stmt.net_income / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right pl-2">
-                                                  ${stmt.eps_diluted?.toFixed(2) || 'N/A'}
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  ))}
-                              </TabsContent>
-
-                              {/* Balance Sheet Tab */}
-                              <TabsContent value="balance" className="space-y-3">
-                                {balance_sheets &&
-                                  Object.entries(balance_sheets).map(([company, sheets]: [string, any[]]) => (
-                                    <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Building2 className="size-4 text-muted-foreground" />
-                                        <h4 className="font-medium text-sm">{company}</h4>
-                                      </div>
-
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                          <thead>
-                                            <tr className="border-b border-border/30">
-                                              <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
-                                                Period
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Total Assets
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Total Liabilities
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Shareholders Equity
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Cash
-                                              </th>
-                                              <th className="text-right pl-2 text-muted-foreground font-medium">
-                                                Debt/Equity
-                                              </th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {sheets.slice(0, 5).map((sheet, idx) => (
-                                              <tr key={idx} className="border-b border-border/20">
-                                                <td className="py-2 pr-2">{sheet.year}</td>
-                                                <td className="text-right px-2 font-medium">
-                                                  ${(sheet.assets.total_assets / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  ${(sheet.liabilities.total_liabilities / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  $
-                                                  {(sheet.shareholders_equity.total_shareholders_equity / 1e9).toFixed(
-                                                    2,
-                                                  )}
-                                                  B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  $
-                                                  {(
-                                                    sheet.assets.current_assets.cash_and_cash_equivalents / 1e9
-                                                  ).toFixed(2)}
-                                                  B
-                                                </td>
-                                                <td className="text-right pl-2">
-                                                  {(
-                                                    (sheet.liabilities.non_current_liabilities.long_term_debt /
-                                                      sheet.shareholders_equity.total_shareholders_equity) *
-                                                    100
-                                                  ).toFixed(1)}
-                                                  %
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  ))}
-                              </TabsContent>
-
-                              {/* Cash Flow Tab */}
-                              <TabsContent value="cash" className="space-y-3">
-                                {cash_flows &&
-                                  Object.entries(cash_flows).map(([company, flows]: [string, any[]]) => (
-                                    <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Building2 className="size-4 text-muted-foreground" />
-                                        <h4 className="font-medium text-sm">{company}</h4>
-                                      </div>
-
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                          <thead>
-                                            <tr className="border-b border-border/30">
-                                              <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
-                                                Period
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Operating CF
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Investing CF
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Financing CF
-                                              </th>
-                                              <th className="text-right px-2 text-muted-foreground font-medium">
-                                                Free Cash Flow
-                                              </th>
-                                              <th className="text-right pl-2 text-muted-foreground font-medium">
-                                                Cash End
-                                              </th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {flows.slice(0, 5).map((flow, idx) => (
-                                              <tr key={idx} className="border-b border-border/20">
-                                                <td className="py-2 pr-2">{flow.year}</td>
-                                                <td className="text-right px-2 font-medium">
-                                                  ${(flow.operating_activities.operating_cash_flow / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  ${(flow.investing_activities.investing_cash_flow / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2">
-                                                  ${(flow.financing_activities.financing_cash_flow / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right px-2 font-medium">
-                                                  ${(flow.free_cash_flow / 1e9).toFixed(2)}B
-                                                </td>
-                                                <td className="text-right pl-2">
-                                                  ${(flow.end_cash_position / 1e9).toFixed(2)}B
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  ))}
-                              </TabsContent>
-                            </Tabs>
-                          ) : (
-                            // Single statement - show directly without tabs
-                            <div className="space-y-3">
-                              {hasIncome &&
-                                income_statements &&
+                            {/* Income Statement Tab */}
+                            <TabsContent value="income" className="space-y-3">
+                              {income_statements &&
                                 Object.entries(income_statements).map(([company, statements]: [string, any[]]) => (
                                   <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
                                     <div className="flex items-center gap-2 mb-3">
@@ -1689,9 +1483,11 @@ export const InteractiveStockChart = React.memo(
                                     </div>
                                   </div>
                                 ))}
+                            </TabsContent>
 
-                              {hasBalance &&
-                                balance_sheets &&
+                            {/* Balance Sheet Tab */}
+                            <TabsContent value="balance" className="space-y-3">
+                              {balance_sheets &&
                                 Object.entries(balance_sheets).map(([company, sheets]: [string, any[]]) => (
                                   <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
                                     <div className="flex items-center gap-2 mb-3">
@@ -1715,7 +1511,9 @@ export const InteractiveStockChart = React.memo(
                                             <th className="text-right px-2 text-muted-foreground font-medium">
                                               Shareholders Equity
                                             </th>
-                                            <th className="text-right px-2 text-muted-foreground font-medium">Cash</th>
+                                            <th className="text-right px-2 text-muted-foreground font-medium">
+                                              Cash
+                                            </th>
                                             <th className="text-right pl-2 text-muted-foreground font-medium">
                                               Debt/Equity
                                             </th>
@@ -1733,14 +1531,16 @@ export const InteractiveStockChart = React.memo(
                                               </td>
                                               <td className="text-right px-2">
                                                 $
-                                                {(sheet.shareholders_equity.total_shareholders_equity / 1e9).toFixed(2)}
+                                                {(sheet.shareholders_equity.total_shareholders_equity / 1e9).toFixed(
+                                                  2,
+                                                )}
                                                 B
                                               </td>
                                               <td className="text-right px-2">
                                                 $
-                                                {(sheet.assets.current_assets.cash_and_cash_equivalents / 1e9).toFixed(
-                                                  2,
-                                                )}
+                                                {(
+                                                  sheet.assets.current_assets.cash_and_cash_equivalents / 1e9
+                                                ).toFixed(2)}
                                                 B
                                               </td>
                                               <td className="text-right pl-2">
@@ -1758,9 +1558,11 @@ export const InteractiveStockChart = React.memo(
                                     </div>
                                   </div>
                                 ))}
+                            </TabsContent>
 
-                              {hasCash &&
-                                cash_flows &&
+                            {/* Cash Flow Tab */}
+                            <TabsContent value="cash" className="space-y-3">
+                              {cash_flows &&
                                 Object.entries(cash_flows).map(([company, flows]: [string, any[]]) => (
                                   <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
                                     <div className="flex items-center gap-2 mb-3">
@@ -1818,11 +1620,207 @@ export const InteractiveStockChart = React.memo(
                                     </div>
                                   </div>
                                 ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()
+                            </TabsContent>
+                          </Tabs>
+                        ) : (
+                          // Single statement - show directly without tabs
+                          <div className="space-y-3">
+                            {hasIncome &&
+                              income_statements &&
+                              Object.entries(income_statements).map(([company, statements]: [string, any[]]) => (
+                                <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="size-4 text-muted-foreground" />
+                                    <h4 className="font-medium text-sm">{company}</h4>
+                                  </div>
+
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="border-b border-border/30">
+                                          <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
+                                            Period
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Revenue
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Gross Profit
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Operating Income
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Net Income
+                                          </th>
+                                          <th className="text-right pl-2 text-muted-foreground font-medium">EPS</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {statements.slice(0, 5).map((stmt, idx) => (
+                                          <tr key={idx} className="border-b border-border/20">
+                                            <td className="py-2 pr-2">
+                                              {new Date(stmt.fiscal_date).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                year: 'numeric',
+                                              })}
+                                            </td>
+                                            <td className="text-right px-2 font-medium">
+                                              ${(stmt.sales / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              ${(stmt.gross_profit / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              ${(stmt.operating_income / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2 font-medium">
+                                              ${(stmt.net_income / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right pl-2">
+                                              ${stmt.eps_diluted?.toFixed(2) || 'N/A'}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ))}
+
+                            {hasBalance &&
+                              balance_sheets &&
+                              Object.entries(balance_sheets).map(([company, sheets]: [string, any[]]) => (
+                                <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="size-4 text-muted-foreground" />
+                                    <h4 className="font-medium text-sm">{company}</h4>
+                                  </div>
+
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="border-b border-border/30">
+                                          <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
+                                            Period
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Total Assets
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Total Liabilities
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Shareholders Equity
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">Cash</th>
+                                          <th className="text-right pl-2 text-muted-foreground font-medium">
+                                            Debt/Equity
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {sheets.slice(0, 5).map((sheet, idx) => (
+                                          <tr key={idx} className="border-b border-border/20">
+                                            <td className="py-2 pr-2">{sheet.year}</td>
+                                            <td className="text-right px-2 font-medium">
+                                              ${(sheet.assets.total_assets / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              ${(sheet.liabilities.total_liabilities / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              $
+                                              {(sheet.shareholders_equity.total_shareholders_equity / 1e9).toFixed(2)}
+                                              B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              $
+                                              {(sheet.assets.current_assets.cash_and_cash_equivalents / 1e9).toFixed(
+                                                2,
+                                              )}
+                                              B
+                                            </td>
+                                            <td className="text-right pl-2">
+                                              {(
+                                                (sheet.liabilities.non_current_liabilities.long_term_debt /
+                                                  sheet.shareholders_equity.total_shareholders_equity) *
+                                                100
+                                              ).toFixed(1)}
+                                              %
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ))}
+
+                            {hasCash &&
+                              cash_flows &&
+                              Object.entries(cash_flows).map(([company, flows]: [string, any[]]) => (
+                                <div key={company} className="bg-card/40 border border-border/30 rounded-lg p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="size-4 text-muted-foreground" />
+                                    <h4 className="font-medium text-sm">{company}</h4>
+                                  </div>
+
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="border-b border-border/30">
+                                          <th className="text-left py-2 pr-2 text-muted-foreground font-medium">
+                                            Period
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Operating CF
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Investing CF
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Financing CF
+                                          </th>
+                                          <th className="text-right px-2 text-muted-foreground font-medium">
+                                            Free Cash Flow
+                                          </th>
+                                          <th className="text-right pl-2 text-muted-foreground font-medium">
+                                            Cash End
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {flows.slice(0, 5).map((flow, idx) => (
+                                          <tr key={idx} className="border-b border-border/20">
+                                            <td className="py-2 pr-2">{flow.year}</td>
+                                            <td className="text-right px-2 font-medium">
+                                              ${(flow.operating_activities.operating_cash_flow / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              ${(flow.investing_activities.investing_cash_flow / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2">
+                                              ${(flow.financing_activities.financing_cash_flow / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right px-2 font-medium">
+                                              ${(flow.free_cash_flow / 1e9).toFixed(2)}B
+                                            </td>
+                                            <td className="text-right pl-2">
+                                              ${(flow.end_cash_position / 1e9).toFixed(2)}B
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
                   : null}
 
                 {/* Dividends - full width */}
@@ -2252,9 +2250,8 @@ export const InteractiveStockChart = React.memo(
                                         <div className="relative w-3 h-3 rounded-sm bg-muted/50 flex items-center justify-center overflow-hidden">
                                           {/* eslint-disable-next-line @next/next/no-img-element */}
                                           <img
-                                            src={`https://www.google.com/s2/favicons?sz=128&domain=${
-                                              new URL(news.url).hostname
-                                            }`}
+                                            src={`https://www.google.com/s2/favicons?sz=128&domain=${new URL(news.url).hostname
+                                              }`}
                                             alt=""
                                             className="w-3 h-3 object-contain"
                                             onError={(e) => {
