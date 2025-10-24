@@ -24,6 +24,7 @@ import {
   shouldBypassRateLimits,
   getModelParameters,
   hasReasoningSupport,
+  getModelConfig,
 } from '@/ai/providers';
 import {
   createStreamId,
@@ -119,7 +120,10 @@ export async function POST(req: Request) {
   const { latitude, longitude } = geolocation(req);
   const streamId = 'stream-' + uuidv7();
 
-  console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
+  const rawModel = typeof model === 'string' ? model.trim() : '';
+  const resolvedModel = getModelConfig(rawModel) ? rawModel : 'scira-default';
+
+  console.log('🔍 Search API:', { model: resolvedModel, group, latitude, longitude });
 
   // CRITICAL PATH: Get auth status first (required for all subsequent checks)
   const lightweightUser = await getLightweightUser();
@@ -127,16 +131,16 @@ export async function POST(req: Request) {
 
   // Early exit checks (no DB operations needed)
   if (!lightweightUser) {
-    if (requiresAuthentication(model)) {
-      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
+    if (requiresAuthentication(resolvedModel)) {
+      return new ChatSDKError('unauthorized:model', `${resolvedModel} requires authentication`).toResponse();
     }
     if (group === 'extreme') {
       return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
     }
   } else {
     // Fast auth checks using lightweight user (no additional DB calls)
-    if (requiresProSubscription(model) && !lightweightUser.isProUser) {
-      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
+    if (requiresProSubscription(resolvedModel) && !lightweightUser.isProUser) {
+      return new ChatSDKError('upgrade_required:model', `${resolvedModel} requires a Pro subscription`).toResponse();
     }
   }
 
@@ -220,7 +224,7 @@ export async function POST(req: Request) {
           throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
         }
 
-        const shouldBypassLimits = shouldBypassRateLimits(model, user);
+        const shouldBypassLimits = shouldBypassRateLimits(resolvedModel, user);
         if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
           throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
         }
@@ -296,7 +300,7 @@ export async function POST(req: Request) {
             parts: messages[messages.length - 1].parts,
             attachments: messages[messages.length - 1].experimental_attachments ?? [],
             createdAt: new Date(),
-            model: model,
+            model: resolvedModel,
             inputTokens: 0,
             outputTokens: 0,
             totalTokens: 0,
@@ -311,9 +315,9 @@ export async function POST(req: Request) {
       const streamStartTime = Date.now();
 
       const result = streamText({
-        model: scira.languageModel(model),
+        model: scira.languageModel(resolvedModel),
         messages: convertToModelMessages(messages),
-        ...getModelParameters(model),
+        ...getModelParameters(resolvedModel),
         stopWhen: stepCountIs(5),
         onAbort: ({ steps }) => {
           console.log('Stream aborted after', steps.length, 'steps');
@@ -333,33 +337,33 @@ export async function POST(req: Request) {
             only: ['zai', 'deepseek', 'alibaba', 'baseten'],
           },
           openai: {
-            ...(model !== 'scira-qwen-coder'
+            ...(resolvedModel !== 'scira-qwen-coder'
               ? {
                 parallelToolCalls: false,
               }
               : {}),
-            ...((model === 'scira-gpt5' ||
-              model === 'scira-gpt5-mini' ||
-              model === 'scira-o3' ||
-              model === 'scira-gpt5-nano' ||
-              model === 'scira-gpt5-codex' ||
-              model === 'scira-gpt5-medium' ||
-              model === 'scira-o4-mini' ||
-              model === 'scira-gpt-4.1' ||
-              model === 'scira-gpt-4.1-mini' ||
-              model === 'scira-gpt-4.1-nano'
+            ...((resolvedModel === 'scira-gpt5' ||
+              resolvedModel === 'scira-gpt5-mini' ||
+              resolvedModel === 'scira-o3' ||
+              resolvedModel === 'scira-gpt5-nano' ||
+              resolvedModel === 'scira-gpt5-codex' ||
+              resolvedModel === 'scira-gpt5-medium' ||
+              resolvedModel === 'scira-o4-mini' ||
+              resolvedModel === 'scira-gpt-4.1' ||
+              resolvedModel === 'scira-gpt-4.1-mini' ||
+              resolvedModel === 'scira-gpt-4.1-nano'
               ? {
                 reasoningEffort: (
-                  model === 'scira-gpt5-nano' ||
-                    model === 'scira-gpt5' ||
-                    model === 'scira-gpt5-mini' ?
+                  resolvedModel === 'scira-gpt5-nano' ||
+                    resolvedModel === 'scira-gpt5' ||
+                    resolvedModel === 'scira-gpt5-mini' ?
                     'minimal' :
                     'medium'
                 ),
                 promptCacheKey: 'scira-oai',
                 parallelToolCalls: false,
                 reasoningSummary: 'detailed',
-                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' || model === 'scira-o4-mini' || model === 'scira-gpt-4.1' || model === 'scira-gpt-4.1-mini' || model === 'scira-gpt-4.1-nano' ? 'medium' : 'high'),
+                textVerbosity: (resolvedModel === 'scira-o3' || resolvedModel === 'scira-gpt5-codex' || resolvedModel === 'scira-o4-mini' || resolvedModel === 'scira-gpt-4.1' || resolvedModel === 'scira-gpt-4.1-mini' || resolvedModel === 'scira-gpt-4.1-nano' ? 'medium' : 'high'),
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
@@ -367,13 +371,13 @@ export async function POST(req: Request) {
             parallelToolCalls: false,
           },
           groq: {
-            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+            ...(resolvedModel === 'scira-gpt-oss-20' || resolvedModel === 'scira-gpt-oss-120'
               ? {
                 reasoningEffort: 'high',
                 reasoningFormat: 'hidden',
               }
               : {}),
-            ...(model === 'scira-qwen-32b'
+            ...(resolvedModel === 'scira-qwen-32b'
               ? {
                 reasoningEffort: 'none',
               }
@@ -386,7 +390,7 @@ export async function POST(req: Request) {
             parallel_tool_calls: false,
           },
           cohere: {
-            ...(model === 'scira-cmd-a-think'
+            ...(resolvedModel === 'scira-cmd-a-think'
               ? {
                 thinking: {
                   type: 'enabled',
@@ -396,7 +400,7 @@ export async function POST(req: Request) {
               : {}),
           } satisfies CohereChatModelOptions,
           anthropic: {
-            ...(model === 'scira-anthropic-think'
+            ...(resolvedModel === 'scira-anthropic-think'
               ? {
                 sendReasoning: true,
                 thinking: {
@@ -408,7 +412,7 @@ export async function POST(req: Request) {
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
           google: {
-            ...(model === 'scira-google-think' || model === 'scira-google-pro-think'
+            ...(resolvedModel === 'scira-google-think' || resolvedModel === 'scira-google-pro-think'
               ? {
                 thinkingConfig: {
                   thinkingBudget: 400,
@@ -427,7 +431,7 @@ export async function POST(req: Request) {
           const shouldPrune = messages.length > 10 || totalTokens > 100000;
           
           // Always check if model supports reasoning
-          const modelHasReasoning = hasReasoningSupport(model);
+          const modelHasReasoning = hasReasoningSupport(resolvedModel);
 
           if (steps.length > 0) {
             const lastStep = steps[steps.length - 1];
@@ -546,7 +550,7 @@ export async function POST(req: Request) {
             // Track usage in background
             after(async () => {
               try {
-                if (!shouldBypassRateLimits(model, user)) {
+                if (!shouldBypassRateLimits(resolvedModel, user)) {
                   await incrementMessageUsage({ userId: user.id });
                 }
 
@@ -581,7 +585,7 @@ export async function POST(req: Request) {
               console.log('Finish part: ', part);
               const processingTime = (Date.now() - streamStartTime) / 1000;
               return {
-                model: model as string,
+                model: resolvedModel as string,
                 completionTime: processingTime,
                 createdAt: new Date().toISOString(),
                 totalTokens: part.totalUsage?.totalTokens ?? null,
@@ -610,7 +614,7 @@ export async function POST(req: Request) {
             createdAt: new Date(),
             attachments: [],
             chatId: id,
-            model: model,
+            model: resolvedModel,
             completionTime: message.metadata?.completionTime ?? 0,
             inputTokens: message.metadata?.inputTokens ?? 0,
             outputTokens: message.metadata?.outputTokens ?? 0,
