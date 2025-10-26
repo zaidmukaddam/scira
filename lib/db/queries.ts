@@ -977,11 +977,10 @@ export async function deleteLookout({ id }: { id: string }) {
 
 export async function getUserAgentAccess(userId: string) {
   try {
-    return await db
+    return await maindb
       .select()
       .from(userAgentAccess)
-      .where(eq(userAgentAccess.userId, userId))
-      .$withCache();
+      .where(eq(userAgentAccess.userId, userId));
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get user agent access');
   }
