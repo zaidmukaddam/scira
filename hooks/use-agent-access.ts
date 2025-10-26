@@ -26,7 +26,7 @@ export function useAgentAccess(userId?: string) {
       return res.json();
     },
     enabled: !!targetUserId,
-    staleTime: 0,
+    staleTime: 5000,
     cacheTime: 0,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
