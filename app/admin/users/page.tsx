@@ -58,7 +58,10 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
 async function fetchUsers() {
-  const res = await fetch("/api/admin/users", { cache: "no-store" });
+  const res = await fetch("/api/admin/users", {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("failed");
   return res.json();
 }
@@ -308,14 +311,18 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (!pusherClient) return;
     const channel = pusherClient.subscribe("private-admin-users");
+    const presenceChannel = pusherClient.subscribe("presence-online");
     const onUpdate = () => qc.invalidateQueries({ queryKey: ["admin-users"] });
     channel.bind("created", onUpdate);
     channel.bind("updated", onUpdate);
+    presenceChannel.bind("heartbeat", onUpdate);
     return () => {
       try {
         channel.unbind("created", onUpdate);
         channel.unbind("updated", onUpdate);
+        presenceChannel.unbind("heartbeat", onUpdate);
         pusherClient.unsubscribe("private-admin-users");
+        pusherClient.unsubscribe("presence-online");
       } catch {}
     };
   }, [qc]);

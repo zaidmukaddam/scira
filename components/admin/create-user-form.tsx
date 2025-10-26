@@ -127,15 +127,23 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/local-auth/register", {
+      const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, password, role }),
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create user");
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {}
+
+      if (!res.ok || data?.ok !== true) {
+        const message =
+          (data && typeof data.error === "string" && data.error) ||
+          `Erreur ${res.status}`;
+        throw new Error(message);
       }
 
       toast.success(`Utilisateur ${username} créé avec succès`, {
@@ -148,8 +156,12 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
       setOpen(false);
       onSuccess();
     } catch (error: any) {
+      const description =
+        error?.message && typeof error.message === "string"
+          ? error.message
+          : "Une erreur est survenue";
       toast.error("Erreur lors de la création", {
-        description: error.message || "Une erreur est survenue",
+        description,
       });
     } finally {
       setLoading(false);
