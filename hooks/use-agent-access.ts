@@ -15,7 +15,7 @@ export function useAgentAccess(userId?: string) {
         ? `/api/admin/users/${targetUserId}/agents`
         : `/api/user/agent-access`;
       
-      const res = await fetch(endpoint);
+      const res = await fetch(endpoint, { credentials: 'include' });
       if (!res.ok) {
         if (res.status === 401) return [];
         throw new Error('Failed to fetch agent access');
