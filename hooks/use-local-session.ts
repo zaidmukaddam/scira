@@ -9,7 +9,7 @@ export function useLocalSession() {
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    fetch('/api/auth/session')
+    fetch('/api/auth/session', { credentials: 'include' })
       .then((r) => r.json())
       .then((j) => {
         if (mounted) setData(j?.user || null);
