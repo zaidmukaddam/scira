@@ -46,6 +46,7 @@ import { StatsHeader } from "@/components/admin/stats-header";
 import {
   MoreVertical,
   KeyRound,
+  UserCheck,
   UserX,
   Trash2,
   UserCog,
@@ -78,7 +79,10 @@ function RowActions({
   const [resetOpen, setResetOpen] = useState(false);
   const [tempPwd, setTempPwd] = useState("");
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const isSuspended = u.status === "suspended";
 
   async function doReset() {
     try {
@@ -125,6 +129,30 @@ function RowActions({
       onInvalidate();
     } catch (e: any) {
       console.error('Erreur suspension:', e);
+      toast.error(e.message || "Erreur inconnue");
+    }
+  }
+
+  async function doReactivate() {
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action: "reactivate" }),
+        credentials: "include",
+      });
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur HTTP ${res.status}`);
+      }
+      
+      toast.success(`${u.name} a été réactivé`);
+      setReactivateOpen(false);
+      onInvalidate();
+    } catch (e: any) {
+      console.error('Erreur réactivation:', e);
       toast.error(e.message || "Erreur inconnue");
     }
   }
@@ -192,9 +220,12 @@ function RowActions({
             <KeyRound className="size-4" />
             Réinitialiser mot de passe
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setSuspendOpen(true)} className="gap-2">
-            <UserX className="size-4" />
-            Suspendre
+          <DropdownMenuItem
+            onClick={() => (isSuspended ? setReactivateOpen(true) : setSuspendOpen(true))}
+            className="gap-2"
+          >
+            {isSuspended ? <UserCheck className="size-4" /> : <UserX className="size-4" />}
+            {isSuspended ? "Réactiver" : "Suspendre"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuSub>
@@ -268,6 +299,21 @@ function RowActions({
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={doSuspend}>Suspendre</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={reactivateOpen} onOpenChange={setReactivateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réactiver l’utilisateur ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{u.name}</strong> retrouvera immédiatement l’accès au système.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={doReactivate}>Réactiver</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
