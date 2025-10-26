@@ -18,6 +18,7 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
     queryFn: async () => {
       const res = await fetch(`/api/admin/users/${userId}/agents`, {
         credentials: 'include',
+        cache: 'no-store',
       });
       if (!res.ok) throw new Error('Failed to fetch agents');
       return res.json();
@@ -31,6 +32,7 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({ agents: { [agentId]: enabled } }),
       });
       if (!res.ok) throw new Error('Failed to update agent access');
