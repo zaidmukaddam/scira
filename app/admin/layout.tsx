@@ -5,7 +5,7 @@ import { ActiveThemeProvider } from "@/components/admin/orcish/active-theme";
 import { SidebarProvider } from "@/components/admin/orcish/ui/sidebar";
 import { AppSidebar } from "@/components/admin/orcish/app-sidebar";
 import { SiteHeader } from "@/components/admin/orcish/site-header";
-import { assertAdmin } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -21,9 +21,15 @@ export default async function AdminLayout({
   const activeThemeValue = cookieStore.get("active_theme")?.value;
   const isScaled = activeThemeValue?.endsWith("-scaled");
 
-  const adminUser = await assertAdmin({ headers: await headers() });
-  if (!adminUser) {
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null as any);
+  const user = (session as any)?.user as any;
+
+  if (!user) {
     redirect("/sign-in");
+  }
+
+  if (user.role !== "admin") {
+    redirect("/");
   }
 
   return (
