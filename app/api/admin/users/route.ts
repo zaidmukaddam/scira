@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { randomUUID } from 'crypto';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { db, maindb } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
@@ -56,8 +57,13 @@ export async function POST(req: NextRequest) {
   const bcrypt = await import('bcryptjs');
   const passwordHash = await bcrypt.hash(pwd, 10);
 
-  const existingCred = await maindb.query.credentials?.findFirst?.({ where: eq(credentials.username, uname) }).catch(() => null as any);
-  if (existingCred) {
+  const existingCred = await maindb
+    .select({ username: credentials.username })
+    .from(credentials)
+    .where(eq(credentials.username, uname))
+    .limit(1);
+
+  if (existingCred.length > 0) {
     return NextResponse.json({ error: 'Utilisateur déjà existant' }, { status: 409 });
   }
 

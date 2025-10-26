@@ -7,7 +7,7 @@ export function ClientHeartbeat({ intervalMs = 35000 }: { intervalMs?: number })
 
   useEffect(() => {
     let mounted = true;
-    fetch('/api/auth/session', { cache: 'no-store' })
+    fetch('/api/auth/session', { cache: 'no-store', credentials: 'include' })
       .then((r) => r.json())
       .then((j) => {
         if (!mounted) return;
@@ -22,7 +22,7 @@ export function ClientHeartbeat({ intervalMs = 35000 }: { intervalMs?: number })
   useEffect(() => {
     if (!enabled) return;
     const send = () => {
-      fetch('/api/heartbeat', { method: 'POST' }).catch(() => {});
+      fetch('/api/heartbeat', { method: 'POST', credentials: 'include' }).catch(() => {});
     };
     // fire once immediately
     send();

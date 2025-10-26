@@ -11,7 +11,13 @@ export async function GET() {
   if (!sess) return NextResponse.json({ user: null });
 
   const [u] = await db
-    .select({ id: appUser.id, email: appUser.email, name: appUser.name })
+    .select({
+      id: appUser.id,
+      email: appUser.email,
+      name: appUser.name,
+      role: appUser.role,
+      status: appUser.status,
+    })
     .from(appUser)
     .where(eq(appUser.id, sess.userId))
     .limit(1);

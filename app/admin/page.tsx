@@ -28,25 +28,37 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { cn } from "@/lib/utils";
 
 async function fetchMetrics() {
-  const res = await fetch("/api/admin/metrics", { cache: "no-store" });
+  const res = await fetch("/api/admin/metrics", {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("failed");
   return res.json();
 }
 
 async function fetchHealth() {
-  const res = await fetch("/api/admin/health", { cache: "no-store" });
+  const res = await fetch("/api/admin/health", {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("failed");
   return res.json();
 }
 
 async function fetchOnline() {
-  const res = await fetch("/api/admin/online", { cache: "no-store" });
+  const res = await fetch("/api/admin/online", {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("failed");
   return res.json();
 }
 
 async function fetchEvents() {
-  const res = await fetch("/api/admin/events/recent", { cache: "no-store" });
+  const res = await fetch("/api/admin/events/recent", {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("failed");
   return res.json();
 }
@@ -124,7 +136,7 @@ export default function AdminHomePage() {
     );
 
     const interval = setInterval(() => {
-      fetch("/api/admin/heartbeat", { method: "POST" });
+      fetch("/api/admin/heartbeat", { method: "POST", credentials: "include" });
     }, 35000);
 
     return () => {

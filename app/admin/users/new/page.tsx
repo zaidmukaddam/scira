@@ -38,6 +38,7 @@ export default function NewUserPage() {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password, role }),
       });
       const data = await res.json();

@@ -51,8 +51,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       const username = id.slice('local:'.length);
       const bcrypt = await import('bcryptjs');
       const passwordHash = await bcrypt.hash(pwd, 10);
-      const cred = await maindb.query.credentials?.findFirst?.({ where: eq(credentials.username, username) }).catch(() => null as any);
-      if (cred) {
+      const existingCred = await maindb
+        .select({ username: credentials.username })
+        .from(credentials)
+        .where(eq(credentials.username, username))
+        .limit(1);
+
+      if (existingCred.length > 0) {
         await maindb.update(credentials).set({ passwordHash }).where(eq(credentials.username, username));
       } else {
         await maindb.insert(credentials).values({ username, passwordHash });
@@ -82,6 +87,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     if (action === 'suspend') {
       if (existing.status === 'deleted') return NextResponse.json({ error: 'Utilisateur supprimé' }, { status: 400 });
+      const suspensionMessage = "L’accès à ce compte a été restreint suite à une mesure de sécurité. Merci de contacter l’administrateur du système afin d’examiner la situation et rétablir votre accès si nécessaire.";
       await maindb.update(user).set({ status: 'suspended' as any, updatedAt: now }).where(eq(user.id, id));
 
       evt = {
@@ -97,15 +103,43 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
       try {
         await pusher.trigger('private-admin-users', 'updated', { id, action: 'suspend' });
-        await pusher.trigger('private-admin-events', 'new', evt)
-        await pusher.trigger(`private-user-${id}`, 'suspended', { 
-          message: 'Votre compte a été suspendu',
-          timestamp: now 
+        await pusher.trigger('private-admin-events', 'new', evt);
+        await pusher.trigger(`private-user-${id}`, 'suspended', {
+          message: suspensionMessage,
+          timestamp: now.toISOString(),
         });
       } catch {}
 
-
       logAdmin('success', { method: 'PATCH', userId: id, action: 'suspend' });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === 'reactivate') {
+      if (existing.status === 'deleted') return NextResponse.json({ error: 'Utilisateur supprimé' }, { status: 400 });
+      if (existing.status !== 'suspended') return NextResponse.json({ error: 'Utilisateur non suspendu' }, { status: 400 });
+
+      await maindb.update(user).set({ status: 'active' as any, updatedAt: now }).where(eq(user.id, id));
+
+      evt = {
+        id: randomUUID(),
+        category: 'user' as any,
+        type: 'reactivate',
+        message: `Réactivation de ${existing.name}`,
+        metadata: { by: adminUser.id },
+        userId: id,
+        createdAt: now,
+      } as any;
+      await maindb.insert(event).values(evt);
+
+      try {
+        await pusher.trigger('private-admin-users', 'updated', { id, action: 'reactivate' });
+        await pusher.trigger('private-admin-events', 'new', evt);
+        await pusher.trigger(`private-user-${id}`, 'reactivated', {
+          timestamp: now.toISOString(),
+        });
+      } catch {}
+
+      logAdmin('success', { method: 'PATCH', userId: id, action: 'reactivate' });
       return NextResponse.json({ ok: true });
     }
 
