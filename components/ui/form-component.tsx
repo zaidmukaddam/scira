@@ -1654,7 +1654,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
 
     // Get agent access from database
-    const { data: agentAccess } = useAgentAccess();
+    const { data: agentAccess, refetch: refetchAgentAccess } = useAgentAccess();
     const queryClient = useQueryClient();
 
     // Listen for real-time agent access updates via Pusher
@@ -1662,8 +1662,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       if (!session?.user?.id || !pusherClient) return;
       
       const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
-      const handleUpdate = () => {
-        queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+      const handleUpdate = async () => {
+        await queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+        refetchAgentAccess();
       };
       
       channel.bind('agent-access-updated', handleUpdate);
@@ -1672,7 +1673,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         channel.unbind('agent-access-updated', handleUpdate);
         pusherClient.unsubscribe(`private-user-${session.user.id}`);
       };
-    }, [session?.user?.id, queryClient]);
+    }, [session?.user?.id, queryClient, refetchAgentAccess]);
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(

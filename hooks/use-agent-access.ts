@@ -29,5 +29,7 @@ export function useAgentAccess(userId?: string) {
     staleTime: 0,
     cacheTime: 0,
     refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }

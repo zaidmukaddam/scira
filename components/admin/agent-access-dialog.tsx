@@ -24,6 +24,10 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
       return res.json();
     },
     enabled: open,
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const handleToggle = async (agentId: string, enabled: boolean) => {
