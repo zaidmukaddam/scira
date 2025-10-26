@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { randomUUID } from 'crypto';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { db, maindb } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
