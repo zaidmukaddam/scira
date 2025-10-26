@@ -51,8 +51,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       const username = id.slice('local:'.length);
       const bcrypt = await import('bcryptjs');
       const passwordHash = await bcrypt.hash(pwd, 10);
-      const cred = await maindb.query.credentials?.findFirst?.({ where: eq(credentials.username, username) }).catch(() => null as any);
-      if (cred) {
+      const existingCred = await maindb
+        .select({ username: credentials.username })
+        .from(credentials)
+        .where(eq(credentials.username, username))
+        .limit(1);
+
+      if (existingCred.length > 0) {
         await maindb.update(credentials).set({ passwordHash }).where(eq(credentials.username, username));
       } else {
         await maindb.insert(credentials).values({ username, passwordHash });
