@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, memo, useRef, useEffect } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useLocalSession } from '@/hooks/use-local-session';
-import { redirect } from 'next/navigation';
+import { useSession, signOut } from '@/lib/auth-client';
 import { toast } from 'sonner';
 import {
   SignOutIcon,
@@ -33,6 +32,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -40,7 +40,7 @@ import Link from 'next/link';
 import { User } from '@/lib/db/schema';
 import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
-
+import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 
 const VercelIcon = ({ size = 16 }: { size: number }) => {
   return (
@@ -53,7 +53,7 @@ const VercelIcon = ({ size = 16 }: { size: number }) => {
 // Navigation Menu Component - contains all the general navigation items
 const NavigationMenu = memo(() => {
   const router = useRouter();
-  const { data: session } = useLocalSession();
+  const { data: session } = useSession();
   const isAuthenticated = !!session;
   const [isOpen, setIsOpen] = useState(false);
   const settingsIconRef = useRef<SettingsIconHandle>(null);
@@ -87,7 +87,7 @@ const NavigationMenu = memo(() => {
           <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
             <div className="w-full flex items-center gap-2">
               <HugeiconsIcon size={16} icon={BinocularsIcon} />
-              <span>Surveillance</span>
+              <span>Lookout</span>
             </div>
           </DropdownMenuItem>
         )}
@@ -110,7 +110,7 @@ const NavigationMenu = memo(() => {
           <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <SunIcon size={16} />
-              <span className="text-sm">Thème</span>
+              <span className="text-sm">Theme</span>
             </div>
             <ThemeSwitcher />
           </div>
@@ -121,7 +121,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/about" className="w-full flex items-center gap-2">
             <InfoIcon size={16} />
-            <span>À propos</span>
+            <span>About</span>
           </Link>
         </DropdownMenuItem>
         {/* Blog */}
@@ -135,13 +135,13 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/terms" className="w-full flex items-center gap-2">
             <FileTextIcon size={16} />
-            <span>Conditions d'utilisation</span>
+            <span>Terms</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/privacy-policy" className="w-full flex items-center gap-2">
             <ShieldIcon size={16} />
-            <span>Politique de confidentialité</span>
+            <span>Privacy</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -150,7 +150,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem className="cursor-pointer" asChild>
           <a href={'https://git.new/scira'} target="_blank" className="w-full flex items-center gap-2">
             <GithubLogoIcon size={16} />
-            <span>GitHub</span>
+            <span>Github</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
@@ -172,13 +172,13 @@ const NavigationMenu = memo(() => {
             className="w-full flex items-center gap-2"
           >
             <VercelIcon size={14} />
-            <span>Déployer avec Vercel</span>
+            <span>Deploy with Vercel</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <a href={'https://scira.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
             <BugIcon className="size-4" />
-            <span>Demande de fonctionnalité ou bug</span>
+            <span>Feature/Bug Request</span>
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -214,8 +214,11 @@ const UserProfile = memo(
     settingsInitialTab?: string;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
+    const [signingIn, setSigningIn] = useState(false);
+    const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
-    const { data: session, isLoading: isPending } = useLocalSession();
+    const [blurPersonalInfo] = useLocalStorage<boolean>('scira-blur-personal-info', false);
+    const { data: session, isPending } = useSession();
     const router = useRouter();
 
     // Use passed user prop if available, otherwise fall back to session
@@ -287,7 +290,7 @@ const UserProfile = memo(
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent side="bottom" sideOffset={4}>
-                Compte
+                Account
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent className="w-[240px] z-[110] mr-5">
@@ -297,17 +300,23 @@ const UserProfile = memo(
                     <AvatarImage
                       src={currentUser?.image ?? ''}
                       alt={currentUser?.name ?? ''}
-                      className="rounded-md p-0 m-0 size-8"
+                      className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}
                     />
-                    <AvatarFallback className="rounded-md p-0 m-0 size-8">
+                    <AvatarFallback className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}>
                       {currentUser?.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
-                    <p className="font-medium text-sm leading-none truncate">{currentUser?.name}</p>
+                    <p className={cn('font-medium text-sm leading-none truncate', blurPersonalInfo && 'blur-sm')}>
+                      {currentUser?.name}
+                    </p>
                     <div className="flex items-center mt-0.5 gap-1">
                       <div
-                        className={`text-xs text-muted-foreground ${showEmail ? '' : 'max-w-[160px] truncate'}`}
+                        className={cn(
+                          'text-xs text-muted-foreground',
+                          showEmail ? '' : 'max-w-[160px] truncate',
+                          blurPersonalInfo && 'blur-sm',
+                        )}
                         title={currentUser?.email || ''}
                       >
                         {formatEmail(currentUser?.email)}
@@ -329,40 +338,46 @@ const UserProfile = memo(
                 </div>
               </div>
 
-              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/settings')}>
                 <div className="w-full flex items-center gap-2">
                   <GearIcon size={16} />
-                  <span>Paramètres</span>
+                  <span>Settings</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
                 <div className="w-full flex items-center gap-2">
                   <HugeiconsIcon size={16} icon={BinocularsIcon} />
-                  <span>Surveillance</span>
+                  <span>Lookout</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
                 className="cursor-pointer w-full flex items-center justify-between gap-2"
-                onClick={async () => {
-                  try {
-                    setSigningOut(true);
-                    toast.loading('Signing out...');
-                    await fetch('/api/auth/logout', { method: 'POST' });
-                    setSigningOut(false);
-                    localStorage.clear();
-                    toast.success('Signed out successfully');
-                    toast.dismiss();
-                    window.location.href = '/new';
-                  } catch {
-                    setSigningOut(false);
-                    toast.error('Failed to sign out');
-                    window.location.reload();
-                  }
-                }}
+                onClick={() =>
+                  signOut({
+                    fetchOptions: {
+                      onRequest: () => {
+                        setSigningOut(true);
+                        toast.loading('Signing out...');
+                      },
+                      onSuccess: () => {
+                        setSigningOut(false);
+                        localStorage.clear();
+                        toast.success('Signed out successfully');
+                        toast.dismiss();
+                        window.location.href = '/new';
+                      },
+                      onError: () => {
+                        setSigningOut(false);
+                        toast.error('Failed to sign out');
+                        window.location.reload();
+                      },
+                    },
+                  })
+                }
               >
-                <span>Se déconnecter</span>
+                <span>Sign Out</span>
                 <SignOutIcon className="size-4" />
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -377,14 +392,16 @@ const UserProfile = memo(
                 className={cn(
                   'h-7 px-2.5 text-xs rounded-md shadow-sm group',
                   'hover:scale-[1.02] active:scale-[0.98] transition-transform',
+                  signingIn && 'animate-pulse',
                   className,
                 )}
                 onClick={() => {
-                  window.location.href = '/sign-in';
+                  setSigningIn(true);
+                  setSignInDialogOpen(true);
                 }}
               >
                 <SignInIcon className="size-3.5 mr-1.5" />
-                <span>Se connecter</span>
+                <span>Sign in</span>
                 <span className="ml-1.5 hidden sm:inline text-[9px] px-1.5 py-0.5 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
                   Free
                 </span>
@@ -411,7 +428,13 @@ const UserProfile = memo(
           />
         )}
 
-
+        <SignInPromptDialog
+          open={signInDialogOpen}
+          onOpenChange={(open) => {
+            setSignInDialogOpen(open);
+            if (!open) setSigningIn(false);
+          }}
+        />
       </>
     );
   },
