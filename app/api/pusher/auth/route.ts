@@ -48,6 +48,11 @@ export async function POST(req: NextRequest) {
   const isPresence = channelName.startsWith('presence-');
 
   try {
+    if (!pusher) {
+      console.error('Pusher not initialized');
+      return NextResponse.json({ error: 'server_error' }, { status: 500 });
+    }
+
     const authResponse = isPresence
       ? pusher.authenticate(socketId, channelName, {
           user_id: currentUser.id,
@@ -60,6 +65,7 @@ export async function POST(req: NextRequest) {
       headers: { 'content-type': 'application/json' },
     });
   } catch (e) {
-    return NextResponse.json({ error: 'auth_failed' }, { status: 500 });
+    console.error('Pusher auth error:', e);
+    return NextResponse.json({ error: 'auth_failed', details: String(e) }, { status: 500 });
   }
 }

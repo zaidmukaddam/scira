@@ -1659,20 +1659,30 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
 
     // Listen for real-time agent access updates via Pusher
     useEffect(() => {
-      if (!session?.user?.id || !pusherClient) return;
+      if (!session?.user?.id) return;
       
-      const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
-      const handleUpdate = () => {
-        queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
-        queryClient.refetchQueries({ queryKey: ['agent-access', session.user.id] });
-      };
+      if (!pusherClient) {
+        console.warn('Pusher not available, relying on polling');
+        return;
+      }
       
-      channel.bind('agent-access-updated', handleUpdate);
-      
-      return () => {
-        channel.unbind('agent-access-updated', handleUpdate);
-        pusherClient.unsubscribe(`private-user-${session.user.id}`);
-      };
+      try {
+        const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
+        const handleUpdate = () => {
+          console.log('Agent access updated via Pusher');
+          queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+          queryClient.refetchQueries({ queryKey: ['agent-access', session.user.id] });
+        };
+        
+        channel.bind('agent-access-updated', handleUpdate);
+        
+        return () => {
+          channel.unbind('agent-access-updated', handleUpdate);
+          pusherClient.unsubscribe(`private-user-${session.user.id}`);
+        };
+      } catch (error) {
+        console.error('Pusher subscription error:', error);
+      }
     }, [session?.user?.id, queryClient]);
 
     // Memoize visible groups calculation
