@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 export default function SignInPage() {
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('scira:selected-profile');
+      const raw = localStorage.getItem('hyper:selected-profile');
       if (raw) {
         const data = JSON.parse(raw) as { label?: string } | null;
         if (data?.label) {
@@ -15,7 +15,7 @@ export default function SignInPage() {
         } else {
           toast.success('Profil sélectionné', { duration: 3000 });
         }
-        localStorage.removeItem('scira:selected-profile');
+        localStorage.removeItem('hyper:selected-profile');
       }
     } catch {}
   }, []);

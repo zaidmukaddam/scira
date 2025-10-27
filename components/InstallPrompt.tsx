@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Share } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { HyperLogo } from '@/components/logos/hyper-logo';
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -41,7 +41,7 @@ export function InstallPrompt() {
         >
           <div className="flex items-start justify-between gap-3">
             {/* App Icon */}
-            <SciraLogo className="size-9" />
+            <HyperLogo className="size-9" />
             <div className="flex-grow">
               <p className="text-sm font-semibold text-foreground">Installer Hyper sur votre appareil</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">

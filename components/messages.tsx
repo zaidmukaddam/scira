@@ -3,7 +3,7 @@ import { Message } from '@/components/message';
 import { DataUIPart, isToolUIPart } from 'ai';
 import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
-import { SciraLogoHeader } from '@/components/scira-logo-header';
+import { HyperLogoHeader } from '@/components/hyper-logo-header';
 import { CyrusLoadingState } from '@/components/cyrus-loading-state';
 import { NomenclatureLoadingState } from '@/components/nomenclature-loading-state';
 import { CorrectionLibellerLoadingState } from '@/components/correction-libeller-loading-state';
@@ -492,7 +492,7 @@ const Messages: React.FC<MessagesProps> = ({
           className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
         >
           <div className="w-full !m-0 !p-0">
-            <SciraLogoHeader />
+            <HyperLogoHeader />
             <div className="flex space-x-2 ml-8 mt-2">
               <div
                 className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"

@@ -311,7 +311,7 @@ export default function LookoutPage() {
               {/* Title - Always at top */}
               <div className="flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={BinocularsIcon} size={32} color="currentColor" strokeWidth={1.5} />
-                <h1 className="text-2xl font-semibold font-be-vietnam-pro">Scira Lookout</h1>
+                <h1 className="text-2xl font-semibold font-be-vietnam-pro">Hyper Lookout</h1>
               </div>
 
               {isMobile ? (

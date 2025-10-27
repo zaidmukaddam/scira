@@ -49,7 +49,7 @@ import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { HyperLogo } from '@/components/logos/hyper-logo';
 
 export default function AboutPage() {
   const router = useRouter();
@@ -115,7 +115,7 @@ export default function AboutPage() {
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <ShieldCheck className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  Scira is not connected to any cryptocurrency tokens or coins. We are purely an AI search engine.
+                  Hyper is not connected to any cryptocurrency tokens or coins. We are purely an AI search engine.
                 </span>
               </div>
               <button
@@ -153,7 +153,7 @@ export default function AboutPage() {
                 Terms of Service
               </h3>
               <p className="text-xs text-muted-foreground">
-                By using Scira, you agree to our Terms of Service which outline the rules for using our platform.
+                By using Hyper, you agree to our Terms of Service which outline the rules for using our platform.
               </p>
               <Link href="/terms" className="text-xs text-primary hover:underline inline-flex items-center">
                 Read full Terms of Service
@@ -204,7 +204,7 @@ export default function AboutPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex justify-items-end gap-1.5 group">
-              <SciraLogo className="size-7 transition-transform group-hover:scale-110" />
+              <HyperLogo className="size-7 transition-transform group-hover:scale-110" />
               <span className="text-2xl font-normal tracking-tighter font-be-vietnam-pro">Hyper</span>
             </Link>
 
@@ -241,7 +241,7 @@ export default function AboutPage() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-4">
               <Link
-                href="https://git.new/scira"
+                href="https://git.new/hyper"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 target="_blank"
               >
@@ -277,7 +277,7 @@ export default function AboutPage() {
         <div className="container max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-6">
             <div className="flex items-end justify-center gap-1 mb-8">
-              <SciraLogo className="size-12" />
+              <HyperLogo className="size-12" />
               <h1 className="text-4xl font-normal font-be-vietnam-pro tracking-tighter">Hyper</h1>
             </div>
 
@@ -314,7 +314,7 @@ export default function AboutPage() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="https://git.new/scira"
+              href="https://git.new/hyper"
               className="inline-flex h-11 items-center gap-2 px-6 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors"
               target="_blank"
             >
@@ -412,12 +412,12 @@ export default function AboutPage() {
 
           <div className="text-center">
             <a
-              href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
+              href="https://openalternative.co/hyper?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-hyper"
               target="_blank"
               className="inline-block"
             >
               <Image
-                src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
+                src="https://openalternative.co/hyper/badge.svg?theme=dark&width=200&height=50"
                 width={200}
                 height={50}
                 alt="Hyper badge"
@@ -559,7 +559,7 @@ export default function AboutPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/30">
               <span className="text-sm text-muted-foreground">Powered by the best</span>
               <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:text-primary/80">
-                <Link href="https://git.new/scira" target="_blank">
+                <Link href="https://git.new/hyper" target="_blank">
                   View source
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Link>
@@ -1050,7 +1050,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Scira Lookout</span>
+                  <span className="text-muted-foreground">Hyper Lookout</span>
                 </li>
               </ul>
 
@@ -1174,7 +1174,7 @@ export default function AboutPage() {
         <div className="container max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <SciraLogo className="size-8" />
+              <HyperLogo className="size-8" />
               <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Hyper. All rights reserved.</p>
             </div>
 
@@ -1190,14 +1190,14 @@ export default function AboutPage() {
               </Link>
               <div className="flex items-center gap-2">
                 <Link
-                  href="https://x.com/sciraai"
+                  href="https://x.com/hyperai"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
                 >
                   <XLogoIcon className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="https://git.new/scira"
+                  href="https://git.new/hyper"
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
                 >

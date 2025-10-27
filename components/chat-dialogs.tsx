@@ -140,7 +140,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
               </div>
               <DialogTitle className="flex items-center gap-3 text-white mb-2">
                 <span className="text-4xl font-medium flex items-center gap-2 font-be-vietnam-pro">
-                  scira
+                  hyper
                   <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-light text-xl !tracking-normal" />
                 </span>
               </DialogTitle>

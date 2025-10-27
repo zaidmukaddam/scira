@@ -2,19 +2,19 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Scira Lookout - Automated Search Monitoring',
+  title: 'Hyper Lookout - Automated Search Monitoring',
   description:
     'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
   keywords: 'automated search, monitoring, scheduled queries, AI lookouts, search automation, trend tracking',
   openGraph: {
-    title: 'Scira Lookout - Automated Search Monitoring',
+    title: 'Hyper Lookout - Automated Search Monitoring',
     description:
       'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Scira Lookout - Automated Search Monitoring',
+    title: 'Hyper Lookout - Automated Search Monitoring',
     description:
       'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
   },

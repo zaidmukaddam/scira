@@ -11,7 +11,7 @@ export function useCachedUserData() {
   const { user: freshUser, isLoading: isFreshLoading, error, refetch, isRefetching, ...otherUserData } = useUserData();
 
   // Cache user data in localStorage
-  const [cachedUser, setCachedUser] = useLocalStorage<ComprehensiveUserData | null>('scira-user-data', null);
+  const [cachedUser, setCachedUser] = useLocalStorage<ComprehensiveUserData | null>('hyper-user-data', null);
 
   // Update cache when fresh data is available
   useEffect(() => {

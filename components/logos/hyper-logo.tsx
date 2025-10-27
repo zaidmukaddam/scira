@@ -1,4 +1,4 @@
-export function SciraLogo({
+export function HyperLogo({
   className,
   width,
   height,

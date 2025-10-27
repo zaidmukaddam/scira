@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const id = (await params).id;
   const chat = await fetchChatWithBackoff(id);
   const user = await getUser();
-  // if not chat, return Scira Chat
+  // if not chat, return Hyper Chat
   if (!chat) {
     return { title: 'Hyper Chat' };
   }
@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       url: `https://hhyper.vercel.app/search/${id}`,
       description: 'A search in hhyper.vercel.app',
       siteName: 'hhyper.vercel.app',
-      creator: '@sciraai',
+      creator: '@hyperai',
       images: [
         {
           url: `https://hhyper.vercel.app/api/og/chat/${id}`,

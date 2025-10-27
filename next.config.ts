@@ -65,22 +65,22 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/ph',
-        destination: 'https://www.producthunt.com/posts/scira',
+        destination: 'https://www.producthunt.com/posts/hyper',
         permanent: true,
       },
       {
         source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/scira',
+        destination: 'https://www.raycast.com/zaidmukaddam/hyper',
         permanent: true,
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-30',
+        destination: 'https://peerlist.io/zaidmukaddam/project/hyper-ai-30',
         permanent: true,
       },
       {
         source: '/blog',
-        destination: 'https://blog.scira.ai',
+        destination: 'https://blog.hyper.ai',
         permanent: true,
       },
     ];

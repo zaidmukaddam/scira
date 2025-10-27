@@ -46,7 +46,7 @@ export default function Loading() {
               {/* Assistant message skeleton */}
               <div className="mb-6 pb-6 border-b border-neutral-200 dark:border-neutral-800">
                 <div className="w-full">
-                  {/* Scira logo header */}
+                  {/* Hyper logo header */}
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-6 w-6 bg-muted rounded animate-pulse" />
                     <div className="text-lg font-semibold font-be-vietnam-pro">
