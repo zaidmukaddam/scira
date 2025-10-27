@@ -41,6 +41,7 @@ import { after } from 'next/server';
 import { CustomInstructions } from '@/lib/db/schema';
 import { v7 as uuidv7 } from 'uuid';
 import { geolocation } from '@vercel/functions';
+import { createStreamResponse } from '@/lib/streaming-heartbeat';
 
 import {
   stockChartTool,
@@ -553,5 +554,9 @@ export async function POST(req: Request) {
   //     await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
   //   );
   // }
-  return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
+  
+  // Return streaming response with headers optimized for firewall/proxy compatibility
+  return createStreamResponse(
+    stream.pipeThrough(new JsonToSseTransformStream())
+  );
 }
