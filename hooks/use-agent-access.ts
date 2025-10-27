@@ -26,10 +26,11 @@ export function useAgentAccess(userId?: string) {
       return res.json();
     },
     enabled: !!targetUserId,
-    staleTime: 0,
+    staleTime: 5000,
     gcTime: 1000 * 60 * 10,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
-    refetchOnMount: 'stale',
+    refetchOnMount: true,
+    refetchInterval: 10000,
   });
 }
