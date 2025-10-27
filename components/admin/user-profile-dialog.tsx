@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download, MessageSquare, Settings } from 'lucide-react';
@@ -21,6 +21,7 @@ interface UserProfileDialogProps {
 }
 
 export function UserProfileDialog({ userId, open, onClose }: UserProfileDialogProps) {
+  const queryClient = useQueryClient();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -34,7 +35,7 @@ export function UserProfileDialog({ userId, open, onClose }: UserProfileDialogPr
   });
 
   const { data: agentAccess, refetch: refetchAgents } = useQuery({
-    queryKey: ['user-agents', userId],
+    queryKey: ['agent-access', userId],
     queryFn: async () => {
       const res = await fetch(`/api/admin/users/${userId}/agents`);
       if (!res.ok) throw new Error('Failed to fetch agents');
@@ -63,6 +64,7 @@ export function UserProfileDialog({ userId, open, onClose }: UserProfileDialogPr
       if (!res.ok) throw new Error('Failed to update agent access');
       toast.success('Accès agent mis à jour');
       refetchAgents();
+      queryClient.invalidateQueries({ queryKey: ['agent-access', userId] });
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -13,8 +13,9 @@ interface AgentAccessDialogProps {
 }
 
 export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogProps) {
+  const queryClient = useQueryClient();
   const { data: access, refetch } = useQuery({
-    queryKey: ['user-agents', userId],
+    queryKey: ['agent-access', userId],
     queryFn: async () => {
       const res = await fetch(`/api/admin/users/${userId}/agents`, {
         credentials: 'include',
@@ -25,7 +26,7 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
     },
     enabled: open,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
@@ -42,6 +43,7 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
       if (!res.ok) throw new Error('Failed to update agent access');
       toast.success('Accès agent mis à jour');
       refetch();
+      queryClient.invalidateQueries({ queryKey: ['agent-access', userId] });
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }

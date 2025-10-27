@@ -7,6 +7,7 @@ import { db, maindb } from '@/lib/db';
 import { user, users as credentials, event } from '@/lib/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { pusher } from '@/lib/pusher';
+import { encodeChannelUserId } from '@/lib/pusher-utils';
 import { randomUUID } from 'crypto';
 
 function logAdmin(step: string, data: Record<string, any>) {
@@ -104,7 +105,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       try {
         await pusher.trigger('private-admin-users', 'updated', { id, action: 'suspend' });
         await pusher.trigger('private-admin-events', 'new', evt);
-        await pusher.trigger(`private-user-${id}`, 'suspended', {
+        await pusher.trigger(`private-user-${encodeChannelUserId(id)}`, 'suspended', {
           message: suspensionMessage,
           timestamp: now.toISOString(),
         });
@@ -134,7 +135,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       try {
         await pusher.trigger('private-admin-users', 'updated', { id, action: 'reactivate' });
         await pusher.trigger('private-admin-events', 'new', evt);
-        await pusher.trigger(`private-user-${id}`, 'reactivated', {
+        await pusher.trigger(`private-user-${encodeChannelUserId(id)}`, 'reactivated', {
           timestamp: now.toISOString(),
         });
       } catch {}

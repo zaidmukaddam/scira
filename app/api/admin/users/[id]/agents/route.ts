@@ -7,6 +7,7 @@ import { getUserAgentAccess, updateUserAgentAccess } from '@/lib/db/queries';
 import { db } from '@/lib/db';
 import { event } from '@/lib/db/schema';
 import { pusher } from '@/lib/pusher';
+import { encodeChannelUserId } from '@/lib/pusher-utils';
 
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const hdrs = await headers();
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     try {
       await pusher.trigger('private-admin-users', 'updated', { userId });
-      await pusher.trigger(`private-user-${userId}`, 'agent-access-updated', { userId });
+      await pusher.trigger(`private-user-${encodeChannelUserId(userId)}`, 'agent-access-updated', { userId });
     } catch {}
 
     const evt = {

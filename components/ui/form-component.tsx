@@ -53,6 +53,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
 import { BorderTrail } from '@/components/core/border-trail';
 import { pusherClient } from '@/lib/pusher-client';
+import { encodeChannelUserId } from '@/lib/pusher-utils';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -1659,21 +1660,32 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
 
     // Listen for real-time agent access updates via Pusher
     useEffect(() => {
-      if (!session?.user?.id || !pusherClient) return;
+      if (!session?.user?.id) return;
       
-      const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
-      const handleUpdate = async () => {
-        await queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
-        refetchAgentAccess();
-      };
+      if (!pusherClient) {
+        console.warn('Pusher not available, relying on polling');
+        return;
+      }
       
-      channel.bind('agent-access-updated', handleUpdate);
-      
-      return () => {
-        channel.unbind('agent-access-updated', handleUpdate);
-        pusherClient.unsubscribe(`private-user-${session.user.id}`);
-      };
-    }, [session?.user?.id, queryClient, refetchAgentAccess]);
+      try {
+        const channelName = `private-user-${encodeChannelUserId(session.user.id)}`;
+        const channel = pusherClient.subscribe(channelName);
+        const handleUpdate = () => {
+          console.log('Agent access updated via Pusher');
+          queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+          queryClient.refetchQueries({ queryKey: ['agent-access', session.user.id] });
+        };
+        
+        channel.bind('agent-access-updated', handleUpdate);
+        
+        return () => {
+          channel.unbind('agent-access-updated', handleUpdate);
+          pusherClient.unsubscribe(channelName);
+        };
+      } catch (error) {
+        console.error('Pusher subscription error:', error);
+      }
+    }, [session?.user?.id, queryClient]);
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
