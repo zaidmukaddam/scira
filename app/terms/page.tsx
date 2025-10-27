@@ -230,8 +230,8 @@ export default function TermsPage() {
           <h2>14. Contact Us</h2>
           <p>If you have any questions about these Terms of Service, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@hyper.ai" className="flex items-center gap-1">
-              zaid@hyper.ai <ExternalLink className="h-4 w-4" />
+            <a href="mailto:zaid@hyper.vercel.app" className="flex items-center gap-1">
+              zaid@hyper.vercel.app <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 

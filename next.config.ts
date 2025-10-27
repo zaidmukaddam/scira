@@ -80,7 +80,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/blog',
-        destination: 'https://blog.hyper.ai',
+        destination: 'https://blog.hyper.vercel.app',
         permanent: true,
       },
     ];

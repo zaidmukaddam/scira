@@ -4,7 +4,7 @@
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
-🔗 **[Try Hyper at hyper.ai](https://hyper.ai)**
+🔗 **[Try Hyper at hyper.vercel.app](https://hyper.vercel.app)**
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/hyper)
 
@@ -152,7 +152,7 @@ Notes
    - Enter `Hyper` in the "Search engine" field.
 
 5. **Set the search engine URL**:
-   - Enter `https://hyper.ai?q=%s` in the "URL with %s in place of query" field.
+   - Enter `https://hyper.vercel.app?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
    - Enter `sh` in the "Shortcut" field.

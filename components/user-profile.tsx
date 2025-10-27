@@ -93,7 +93,7 @@ const NavigationMenu = memo(() => {
         )}
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://api.hyper.ai/'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://api.hyper.vercel.app/'} target="_blank" className="w-full flex items-center gap-2">
             <CodeIcon size={16} />
             <span>API</span>
           </a>
@@ -160,7 +160,7 @@ const NavigationMenu = memo(() => {
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://www.instagram.com/hyper.ai'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://www.instagram.com/hyper.vercel.app'} target="_blank" className="w-full flex items-center gap-2">
             <InstagramLogoIcon size={16} />
             <span>Instagram</span>
           </a>
