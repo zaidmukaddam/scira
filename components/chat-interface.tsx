@@ -22,9 +22,11 @@ import Messages from '@/components/messages';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import FormComponent from '@/components/ui/form-component';
+import { StreamingStatus } from '@/components/streaming-status';
 
 // Hook imports
 import { useAutoResume } from '@/hooks/use-auto-resume';
+import { useMessagePoller } from '@/hooks/use-message-poller';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
 import { useUser } from '@/contexts/user-context';
@@ -433,6 +435,20 @@ const ChatInterface = memo(
       setMessages,
     });
 
+    // Poll for message updates in the background when streaming
+    // This ensures messages are displayed even if the HTTP connection drops
+    const { isStreamingComplete } = useMessagePoller({
+      chatId: chatId,
+      enabled: status === 'streaming' || status === 'waiting',
+      onMessagesUpdate: (updatedMessages) => {
+        // Only update if we have new messages
+        if (updatedMessages.length > messages.length) {
+          setMessages(updatedMessages);
+        }
+      },
+      status,
+    });
+
     useEffect(() => {
       if (status) {
         console.log('[status]:', status);
@@ -644,6 +660,11 @@ const ChatInterface = memo(
 
     return (
       <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
+        <StreamingStatus 
+          isStreaming={status === 'streaming'} 
+          isPolling={isStreamingComplete === false && (status === 'streaming' || status === 'waiting')}
+          statusMessage={status === 'waiting' ? 'Preparing response...' : undefined}
+        />
         <Navbar
           isDialogOpen={chatState.anyDialogOpen}
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
