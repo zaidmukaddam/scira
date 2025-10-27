@@ -14,6 +14,12 @@ export const StreamingStatus: React.FC<StreamingStatusProps> = ({
   isPolling,
   statusMessage,
 }) => {
+  // Hidden by default - streaming and polling work silently in the background
+  // If you want to show the status badge, change the return statement below to show the UI
+  return null;
+
+  // Uncomment below to show the badge:
+  /*
   if (!isStreaming && !isPolling) return null;
 
   return (
@@ -37,4 +43,5 @@ export const StreamingStatus: React.FC<StreamingStatusProps> = ({
       </motion.div>
     </AnimatePresence>
   );
+  */
 };
