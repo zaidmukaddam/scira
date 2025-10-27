@@ -53,6 +53,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
 import { BorderTrail } from '@/components/core/border-trail';
 import { pusherClient } from '@/lib/pusher-client';
+import { encodeChannelUserId } from '@/lib/pusher-utils';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -1667,7 +1668,8 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       }
       
       try {
-        const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
+        const channelName = `private-user-${encodeChannelUserId(session.user.id)}`;
+        const channel = pusherClient.subscribe(channelName);
         const handleUpdate = () => {
           console.log('Agent access updated via Pusher');
           queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
@@ -1678,7 +1680,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         
         return () => {
           channel.unbind('agent-access-updated', handleUpdate);
-          pusherClient.unsubscribe(`private-user-${session.user.id}`);
+          pusherClient.unsubscribe(channelName);
         };
       } catch (error) {
         console.error('Pusher subscription error:', error);

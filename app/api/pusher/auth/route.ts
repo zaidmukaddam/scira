@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { pusher } from '@/lib/pusher';
 import { assertAdmin, auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { decodeChannelUserId } from '@/lib/pusher-utils';
 
 export async function POST(req: NextRequest) {
   const hdrs = await headers();
@@ -39,7 +40,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (channelName.startsWith('private-user-')) {
-    const userId = channelName.replace('private-user-', '');
+    const encodedUserId = channelName.replace('private-user-', '');
+    const userId = decodeChannelUserId(encodedUserId);
     if (userId !== currentUser.id) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
