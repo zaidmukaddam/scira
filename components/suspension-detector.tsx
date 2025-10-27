@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { pusherClient } from '@/lib/pusher-client';
+import { encodeChannelUserId } from '@/lib/pusher-utils';
 import { useLocalSession } from '@/hooks/use-local-session';
 import { SuspendedDialog } from '@/components/suspended-dialog';
 
@@ -27,7 +28,7 @@ export function SuspensionDetector() {
   useEffect(() => {
     if (!pusherClient || !user?.id || isLoading) return;
 
-    const channel = pusherClient.subscribe(`private-user-${user.id}`);
+    const channel = pusherClient.subscribe(`private-user-${encodeChannelUserId(user.id)}`);
 
     const handleSuspend = (payload: any) => {
       const incomingMessage = payload?.message;
@@ -47,7 +48,7 @@ export function SuspensionDetector() {
       try {
         channel.unbind("suspended", handleSuspend);
         channel.unbind("reactivated", handleReactivate);
-        pusherClient.unsubscribe(`private-user-${user.id}`);
+        pusherClient.unsubscribe(`private-user-${encodeChannelUserId(user.id)}`);
       } catch {}
     };
   }, [user?.id, isLoading]);
