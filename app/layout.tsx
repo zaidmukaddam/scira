@@ -15,7 +15,7 @@ import { ClientHeartbeat } from '@/components/ClientHeartbeat';
 import { SuspensionDetector } from '@/components/suspension-detector';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://hhyper.vercel.app'),
+  metadataBase: new URL('https://hyper.vercel.app'),
   title: {
     default: 'Hyper AI - Fastest AI research engine, Perplexity alternative',
     template: "%s | Hyper AI",
@@ -23,11 +23,11 @@ export const metadata: Metadata = {
   description:
     'Hyper is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
   openGraph: {
-    url: 'https://hhyper.vercel.app',
+    url: 'https://hyper.vercel.app',
     siteName: 'Hyper AI',
   },
   keywords: [
-    'hhyper.vercel.app',
+    'hyper.vercel.app',
     'perplexity alternative',
     'ai search engine',
     'search engine',

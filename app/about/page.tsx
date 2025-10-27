@@ -1140,7 +1140,7 @@ export default function AboutPage() {
           <div className="text-center mt-12 space-y-6">
             <p className="text-muted-foreground">
               Have more questions?{' '}
-              <a href="mailto:zaid@hhyper.vercel.app" className="text-primary hover:text-primary/80 transition-colors">
+              <a href="mailto:zaid@hyper.vercel.app" className="text-primary hover:text-primary/80 transition-colors">
                 Contact us
               </a>
             </p>

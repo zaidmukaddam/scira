@@ -59,15 +59,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
   return {
     title: title,
-    description: 'A search in hhyper.vercel.app',
+    description: 'A search in hyper.vercel.app',
     openGraph: {
       title: title,
-      url: `https://hhyper.vercel.app/search/${id}`,
-      description: 'A search in hhyper.vercel.app',
-      siteName: 'hhyper.vercel.app',
+      url: `https://hyper.vercel.app/search/${id}`,
+      description: 'A search in hyper.vercel.app',
+      siteName: 'hyper.vercel.app',
       images: [
         {
-          url: `https://hhyper.vercel.app/api/og/chat/${id}`,
+          url: `https://hyper.vercel.app/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
@@ -76,20 +76,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://hhyper.vercel.app/search/${id}`,
-      description: 'A search in hhyper.vercel.app',
-      siteName: 'hhyper.vercel.app',
+      url: `https://hyper.vercel.app/search/${id}`,
+      description: 'A search in hyper.vercel.app',
+      siteName: 'hyper.vercel.app',
       creator: '@hyperai',
       images: [
         {
-          url: `https://hhyper.vercel.app/api/og/chat/${id}`,
+          url: `https://hyper.vercel.app/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
       ],
     },
     alternates: {
-      canonical: `https://hhyper.vercel.app/search/${id}`,
+      canonical: `https://hyper.vercel.app/search/${id}`,
     },
   } as Metadata;
 }

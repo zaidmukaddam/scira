@@ -1086,7 +1086,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Impossible d’accéder au portail DodoPayments. Veuillez contacter le support à zaid@hhyper.vercel.app');
+        toast.error('Impossible d’accéder au portail DodoPayments. Veuillez contacter le support à zaid@hyper.vercel.app');
       } else {
         toast.error('Échec de l’ouverture de la gestion de l’abonnement');
       }

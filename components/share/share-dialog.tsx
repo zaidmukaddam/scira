@@ -39,7 +39,7 @@ export function ShareDialog({
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
 
   // Generate the share URL
-  const shareUrl = chatId ? `https://hhyper.vercel.app/search/${chatId}` : '';
+  const shareUrl = chatId ? `https://hyper.vercel.app/search/${chatId}` : '';
 
   // Reset copied state when dialog opens/closes
   useEffect(() => {
