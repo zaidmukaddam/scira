@@ -2,7 +2,7 @@
 
 ![Hyper](/app/opengraph-image.png)
 
-A minimalistic AI-powered search engine that helps you find information on the internet.
+Par Hyper — moteur de recherche et de gestion propulsé par l'intelligence artificielle, conçu pour les entreprises.
 
 🔗 **[Try Hyper at hyper.vercel.app](https://hyper.vercel.app)**
 

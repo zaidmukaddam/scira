@@ -17,11 +17,11 @@ import { SuspensionDetector } from '@/components/suspension-detector';
 export const metadata: Metadata = {
   metadataBase: new URL('https://hyper.vercel.app'),
   title: {
-    default: 'Hyper AI - Fastest AI research engine, Perplexity alternative',
-    template: "%s | Hyper AI",
+    default: 'Hyper - AI-Powered Search & Management Engine for Businesses',
+    template: "%s | Hyper",
   },
   description:
-    'Hyper is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
+    'Hyper - Moteur de recherche et de gestion propulsé par l\'intelligence artificielle, conçu pour les entreprises.',
   openGraph: {
     url: 'https://hyper.vercel.app',
     siteName: 'Hyper AI',
