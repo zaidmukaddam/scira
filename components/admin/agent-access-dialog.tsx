@@ -26,7 +26,7 @@ export function AgentAccessDialog({ userId, open, onClose }: AgentAccessDialogPr
     },
     enabled: open,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });

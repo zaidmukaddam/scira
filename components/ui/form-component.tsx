@@ -1662,9 +1662,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       if (!session?.user?.id || !pusherClient) return;
       
       const channel = pusherClient.subscribe(`private-user-${session.user.id}`);
-      const handleUpdate = async () => {
-        await queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
-        refetchAgentAccess();
+      const handleUpdate = () => {
+        queryClient.invalidateQueries({ queryKey: ['agent-access', session.user.id] });
+        queryClient.refetchQueries({ queryKey: ['agent-access', session.user.id] });
       };
       
       channel.bind('agent-access-updated', handleUpdate);
@@ -1673,7 +1673,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         channel.unbind('agent-access-updated', handleUpdate);
         pusherClient.unsubscribe(`private-user-${session.user.id}`);
       };
-    }, [session?.user?.id, queryClient, refetchAgentAccess]);
+    }, [session?.user?.id, queryClient]);
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
