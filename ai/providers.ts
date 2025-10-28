@@ -18,54 +18,54 @@ function getGoogleProvider() {
   return google(DEFAULT_GOOGLE_MODEL, { apiKey: apiKey || undefined });
 }
 
-// Single Google provider for all scira-* model ids expected by the UI.
+// Single Google provider for all hyper-* model ids expected by the UI.
 // We keep all original model ids/labels for UI parity, but route everything to Gemini Flash.
-export const scira = customProvider({
+export const hyper = customProvider({
   languageModels: {
-    'scira-default': getGoogleProvider(),
-    'scira-nano': getGoogleProvider(),
-    'scira-name': getGoogleProvider(),
-    'scira-grok-3': getGoogleProvider(),
-    'scira-grok-4': getGoogleProvider(),
-    'scira-grok-4-fast': getGoogleProvider(),
-    'scira-grok-4-fast-think': getGoogleProvider(),
-    'scira-code': getGoogleProvider(),
-    'scira-enhance': getGoogleProvider(),
-    'scira-qwen-4b': getGoogleProvider(),
-    'scira-qwen-4b-thinking': getGoogleProvider(),
-    'scira-gpt5': getGoogleProvider(),
-    'scira-gpt5-mini': getGoogleProvider(),
-    'scira-gpt5-nano': getGoogleProvider(),
-    'scira-o3': getGoogleProvider(),
-    'scira-qwen-32b': getGoogleProvider(),
-    'scira-gpt-oss-20': getGoogleProvider(),
-    'scira-gpt-oss-120': getGoogleProvider(),
-    'scira-deepseek-chat': getGoogleProvider(),
-    'scira-deepseek-chat-think': getGoogleProvider(),
-    'scira-deepseek-r1': getGoogleProvider(),
-    'scira-qwen-coder': getGoogleProvider(),
-    'scira-qwen-30': getGoogleProvider(),
-    'scira-qwen-30-think': getGoogleProvider(),
-    'scira-qwen-3-next': getGoogleProvider(),
-    'scira-qwen-3-next-think': getGoogleProvider(),
-    'scira-qwen-3-max': getGoogleProvider(),
-    'scira-qwen-3-max-preview': getGoogleProvider(),
-    'scira-qwen-235': getGoogleProvider(),
-    'scira-qwen-235-think': getGoogleProvider(),
-    'scira-glm-air': getGoogleProvider(),
-    'scira-glm': getGoogleProvider(),
-    'scira-glm-4.6': getGoogleProvider(),
-    'scira-kimi-k2-v2': getGoogleProvider(),
-    'scira-haiku': getGoogleProvider(),
-    'scira-mistral-medium': getGoogleProvider(),
-    'scira-magistral-small': getGoogleProvider(),
-    'scira-magistral-medium': getGoogleProvider(),
-    'scira-google-lite': getGoogleProvider(),
-    'scira-google': getGoogleProvider(),
-    'scira-google-think': getGoogleProvider(),
-    'scira-google-think-v2': getGoogleProvider(),
-    'scira-google-think-v3': getGoogleProvider(),
-    'scira-anthropic': getGoogleProvider(),
+    'hyper-default': getGoogleProvider(),
+    'hyper-nano': getGoogleProvider(),
+    'hyper-name': getGoogleProvider(),
+    'hyper-grok-3': getGoogleProvider(),
+    'hyper-grok-4': getGoogleProvider(),
+    'hyper-grok-4-fast': getGoogleProvider(),
+    'hyper-grok-4-fast-think': getGoogleProvider(),
+    'hyper-code': getGoogleProvider(),
+    'hyper-enhance': getGoogleProvider(),
+    'hyper-qwen-4b': getGoogleProvider(),
+    'hyper-qwen-4b-thinking': getGoogleProvider(),
+    'hyper-gpt5': getGoogleProvider(),
+    'hyper-gpt5-mini': getGoogleProvider(),
+    'hyper-gpt5-nano': getGoogleProvider(),
+    'hyper-o3': getGoogleProvider(),
+    'hyper-qwen-32b': getGoogleProvider(),
+    'hyper-gpt-oss-20': getGoogleProvider(),
+    'hyper-gpt-oss-120': getGoogleProvider(),
+    'hyper-deepseek-chat': getGoogleProvider(),
+    'hyper-deepseek-chat-think': getGoogleProvider(),
+    'hyper-deepseek-r1': getGoogleProvider(),
+    'hyper-qwen-coder': getGoogleProvider(),
+    'hyper-qwen-30': getGoogleProvider(),
+    'hyper-qwen-30-think': getGoogleProvider(),
+    'hyper-qwen-3-next': getGoogleProvider(),
+    'hyper-qwen-3-next-think': getGoogleProvider(),
+    'hyper-qwen-3-max': getGoogleProvider(),
+    'hyper-qwen-3-max-preview': getGoogleProvider(),
+    'hyper-qwen-235': getGoogleProvider(),
+    'hyper-qwen-235-think': getGoogleProvider(),
+    'hyper-glm-air': getGoogleProvider(),
+    'hyper-glm': getGoogleProvider(),
+    'hyper-glm-4.6': getGoogleProvider(),
+    'hyper-kimi-k2-v2': getGoogleProvider(),
+    'hyper-haiku': getGoogleProvider(),
+    'hyper-mistral-medium': getGoogleProvider(),
+    'hyper-magistral-small': getGoogleProvider(),
+    'hyper-magistral-medium': getGoogleProvider(),
+    'hyper-google-lite': getGoogleProvider(),
+    'hyper-google': getGoogleProvider(),
+    'hyper-google-think': getGoogleProvider(),
+    'hyper-google-think-v2': getGoogleProvider(),
+    'hyper-google-think-v3': getGoogleProvider(),
+    'hyper-anthropic': getGoogleProvider(),
   },
 });
 
@@ -99,7 +99,7 @@ interface Model {
 export const models: Model[] = [
   // Models (xAI)
   {
-    value: 'scira-grok-3',
+    value: 'hyper-grok-3',
     label: 'Grok 3',
     description: "Le LLM le plus récent et le plus intelligent de xAI",
     vision: false,
@@ -113,7 +113,7 @@ export const models: Model[] = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-grok-4',
+    value: 'hyper-grok-4',
     label: 'Grok 4',
     description: "Le LLM le plus intelligent de xAI",
     vision: true,
@@ -127,7 +127,7 @@ export const models: Model[] = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-default',
+    value: 'hyper-default',
     label: 'Grok 4 Fast',
     description: "LLM multimodèle le plus rapide de xAI",
     vision: true,
@@ -143,7 +143,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-grok-4-fast-think',
+    value: 'hyper-grok-4-fast-think',
     label: 'Grok 4 Fast Thinking',
     description: "LLM multimodèle de raisonnement le plus rapide de xAI",
     vision: true,
@@ -159,7 +159,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-32b',
+    value: 'hyper-qwen-32b',
     label: 'Qwen 3 32B',
     description: "LLM de raisonnement avancé d'Alibaba",
     vision: false,
@@ -180,7 +180,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-4b',
+    value: 'hyper-qwen-4b',
     label: 'Qwen 3 4B',
     description: "Petit LLM de base d'Alibaba",
     vision: false,
@@ -200,7 +200,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-4b-thinking',
+    value: 'hyper-qwen-4b-thinking',
     label: 'Qwen 3 4B Thinking',
     description: "Petit LLM de base d'Alibaba",
     vision: false,
@@ -220,7 +220,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-gpt-oss-20',
+    value: 'hyper-gpt-oss-20',
     label: 'GPT OSS 20B',
     description: "Petit LLM open source d'OpenAI",
     vision: false,
@@ -235,7 +235,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-gpt5-nano',
+    value: 'hyper-gpt5-nano',
     label: 'GPT 5 Nano',
     description: "Plus petit LLM phare d'OpenAI",
     vision: true,
@@ -250,7 +250,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-google-lite',
+    value: 'hyper-google-lite',
     label: 'Gemini 2.5 Flash Lite',
     description: "Petit LLM avancé de Google",
     vision: true,
@@ -265,7 +265,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-code',
+    value: 'hyper-code',
     label: 'Grok Code',
     description: "LLM de codage avancé de xAI",
     vision: false,
@@ -280,7 +280,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-mistral-medium',
+    value: 'hyper-mistral-medium',
     label: 'Mistral Medium',
     description: "LLM multimodal moyen de Mistral",
     vision: true,
@@ -295,7 +295,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-magistral-small',
+    value: 'hyper-magistral-small',
     label: 'Magistral Small',
     description: "Petit LLM de raisonnement de Mistral",
     vision: true,
@@ -310,7 +310,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-magistral-medium',
+    value: 'hyper-magistral-medium',
     label: 'Magistral Medium',
     description: "Mistral's medium reasoning LLM",
     vision: true,
@@ -325,7 +325,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-oss-120',
+    value: 'hyper-gpt-oss-120',
     label: 'GPT OSS 120B',
     description: "LLM open source avancé d'OpenAI",
     vision: false,
@@ -340,7 +340,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-gpt5-mini',
+    value: 'hyper-gpt5-mini',
     label: 'GPT 5 Mini',
     description: "Petit LLM phare d'OpenAI",
     vision: true,
@@ -356,7 +356,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5',
+    value: 'hyper-gpt5',
     label: 'GPT 5',
     description: "LLM phare d'OpenAI",
     vision: true,
@@ -372,7 +372,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-o3',
+    value: 'hyper-o3',
     label: 'o3',
     description: "LLM avancé d'OpenAI",
     vision: true,
@@ -388,7 +388,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-chat',
+    value: 'hyper-deepseek-chat',
     label: 'DeepSeek 3.2 Exp',
     description: "LLM de conversation avancé de DeepSeek",
     vision: false,
@@ -403,7 +403,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-chat-think',
+    value: 'hyper-deepseek-chat-think',
     label: 'DeepSeek 3.2 Exp Thinking',
     description: "LLM de conversation avancé avec raisonnement de DeepSeek",
     vision: false,
@@ -418,7 +418,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-r1',
+    value: 'hyper-deepseek-r1',
     label: 'DeepSeek R1',
     description: "LLM de raisonnement avancé de DeepSeek",
     vision: false,
@@ -433,7 +433,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-coder',
+    value: 'hyper-qwen-coder',
     label: 'Qwen 3 Coder 480B-A35B',
     description: "Alibaba's advanced coding LLM",
     vision: false,
@@ -448,7 +448,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-qwen-3-next',
+    value: 'hyper-qwen-3-next',
     label: 'Qwen 3 Next 80B A3B Instruct',
     description: "LLM d'instruction avancé de Qwen",
     vision: false,
@@ -469,7 +469,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-next-think',
+    value: 'hyper-qwen-3-next-think',
     label: 'Qwen 3 Next 80B A3B Thinking',
     description: "LLM de raisonnement avancé de Qwen",
     vision: false,
@@ -489,7 +489,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-max',
+    value: 'hyper-qwen-3-max',
     label: 'Qwen 3 Max',
     description: "LLM d'instruction avancé de Qwen",
     vision: false,
@@ -504,7 +504,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-3-max-preview',
+    value: 'hyper-qwen-3-max-preview',
     label: 'Qwen 3 Max Preview',
     description: "LLM d'instruction avancé de Qwen",
     vision: false,
@@ -519,7 +519,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-235',
+    value: 'hyper-qwen-235',
     label: 'Qwen 3 235B A22B',
     description: "LLM d'instruction avancé de Qwen",
     vision: false,
@@ -538,7 +538,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-235-think',
+    value: 'hyper-qwen-235-think',
     label: 'Qwen 3 235B A22B Thinking',
     description: "LLM de raisonnement avancé de Qwen",
     vision: false,
@@ -557,7 +557,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-kimi-k2-v2',
+    value: 'hyper-kimi-k2-v2',
     label: 'Kimi K2 Latest',
     description: "LLM de base avancé de MoonShot AI",
     vision: false,
@@ -575,7 +575,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-4.6',
+    value: 'hyper-glm-4.6',
     label: 'GLM 4.6',
     description: "LLM de raisonnement avancé de Zhipu AI",
     vision: false,
@@ -590,7 +590,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-glm-air',
+    value: 'hyper-glm-air',
     label: 'GLM 4.5 Air',
     description: "LLM de base efficace de Zhipu AI",
     vision: false,
@@ -604,7 +604,7 @@ export const models: Model[] = [
     maxOutputTokens: 130000,
   },
   {
-    value: 'scira-glm',
+    value: 'hyper-glm',
     label: 'GLM 4.5',
     description: "Ancien LLM avancé de Zhipu AI",
     vision: false,
@@ -618,7 +618,7 @@ export const models: Model[] = [
     maxOutputTokens: 13000,
   },
   {
-    value: 'scira-google',
+    value: 'hyper-google',
     label: 'Gemini 2.5 Flash',
     description: "Petit LLM avancé de Google",
     vision: true,
@@ -633,7 +633,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-think',
+    value: 'hyper-google-think',
     label: 'Hypermarché L’Hyper',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
@@ -648,7 +648,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-think-v2',
+    value: 'hyper-google-think-v2',
     label: 'Plateforme — Bientôt disponible',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
@@ -663,7 +663,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-think-v3',
+    value: 'hyper-google-think-v3',
     label: 'Direction — Bientôt disponible',
     description: "Petit LLM avancé de Google avec raisonnement",
     vision: true,
@@ -678,7 +678,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-anthropic',
+    value: 'hyper-anthropic',
     label: 'Claude 4.5 Sonnet',
     description: "Le LLM le plus avancé d'Anthropic",
     vision: true,

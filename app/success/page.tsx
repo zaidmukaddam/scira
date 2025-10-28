@@ -59,7 +59,7 @@ export default function SuccessPage() {
         </div>
 
         {/* Content */}
-        <h1 className="text-2xl font-light text-foreground mb-4 tracking-tight">Bienvenue sur Scira Pro</h1>
+        <h1 className="text-2xl font-light text-foreground mb-4 tracking-tight">Bienvenue sur Hyper Pro</h1>
         <p className="text-muted-foreground mb-8">Votre abonnement est actif. Lancez des recherches illimitées.</p>
 
         {/* Action */}

@@ -96,8 +96,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
-    const THINK_MODELS = ['scira-google-think','scira-google-think-v2','scira-google-think-v3'];
-    const COMING_SOON_MODELS = new Set(['scira-google-think-v2','scira-google-think-v3']);
+    const THINK_MODELS = ['hyper-google-think','hyper-google-think-v2','hyper-google-think-v3'];
+    const COMING_SOON_MODELS = new Set(['hyper-google-think-v2','hyper-google-think-v3']);
     const availableModels = useMemo(() => models.filter(m => THINK_MODELS.includes(m.value)), []);
 
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -424,7 +424,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     useEffect(() => {
       if (!THINK_MODELS.includes(selectedModel) || COMING_SOON_MODELS.has(selectedModel)) {
-        setSelectedModel('scira-google-think');
+        setSelectedModel('hyper-google-think');
       }
     }, []);
 
@@ -437,9 +437,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'hyper-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'hyper-default' - user lost pro access`);
+        setSelectedModel('hyper-default');
 
         // Show a toast notification to inform the user
         toast.info('Switched to default model - Pro subscription required for premium models');
@@ -1649,7 +1649,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const isExtreme = selectedGroup === 'extreme';
 
     // Get search provider from localStorage with reactive updates
-    const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
+    const [searchProvider] = useLocalStorage<SearchProvider>('hyper-search-provider', 'parallel');
 
     // Get dynamic search groups based on the selected search provider
     const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
@@ -1718,7 +1718,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       return [...preferred, ...rest] as SearchGroupId[];
     }, [visibleGroupIds]);
 
-    const [agentOrder] = useLocalStorage<SearchGroupId[]>('scira-agent-order', defaultAgentOrder);
+    const [agentOrder] = useLocalStorage<SearchGroupId[]>('hyper-agent-order', defaultAgentOrder);
 
     const orderedVisibleGroups = useMemo(() => {
       const orderIndex = new Map(agentOrder.map((id, idx) => [id, idx]));

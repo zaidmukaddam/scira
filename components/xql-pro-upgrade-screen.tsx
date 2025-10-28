@@ -16,7 +16,7 @@ export function XQLProUpgradeScreen({}: XQLProUpgradeScreenProps) {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8 text-3xl sm:text-5xl font-be-vietnam-pro pt-12 sm:pt-14">
-        <span className="text-foreground">Scira</span>
+        <span className="text-foreground">Hyper</span>
         <div className="flex items-center relative">
           <XLogoIcon className="size-8 sm:size-12 text-foreground -mr-1 sm:-mr-2" />
           <h1 className="text-foreground">QL</h1>

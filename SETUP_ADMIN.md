@@ -1,6 +1,6 @@
-# 🚀 Configuration Initiale du Dashboard Admin Scira
+# 🚀 Configuration Initiale du Dashboard Admin Hyper
 
-Ce guide vous accompagne dans la mise en place du dashboard administrateur de Scira, de la création de la base de données jusqu'à la connexion au dashboard.
+Ce guide vous accompagne dans la mise en place du dashboard administrateur de Hyper, de la création de la base de données jusqu'à la connexion au dashboard.
 
 ## 📋 Prérequis
 
@@ -19,7 +19,7 @@ Avant de commencer, assurez-vous d'avoir :
 
 ```bash
 git clone [votre-repo]
-cd scira
+cd hyper
 pnpm install
 ```
 
@@ -38,7 +38,7 @@ DATABASE_URL=postgresql://user:password@host/database
 # Admin personnalisé (OPTIONNEL - valeurs par défaut fournies)
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-ADMIN_EMAIL=admin@scira.local
+ADMIN_EMAIL=admin@hyper.local
 
 # Autres variables...
 ```
@@ -364,4 +364,4 @@ Une fois connecté, vous aurez accès à :
 
 **Bon développement ! 🚀**
 
-*Documentation créée pour Scira Admin Dashboard v1.0*
+*Documentation créée pour Hyper Admin Dashboard v1.0*

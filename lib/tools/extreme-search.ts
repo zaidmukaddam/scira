@@ -11,7 +11,7 @@ import { generateObject, generateText, stepCountIs, tool } from 'ai';
 import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
+import { hyper } from '@/ai/providers';
 import { SNAPSHOT_NAME } from '@/lib/constants';
 import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
@@ -207,7 +207,7 @@ async function extremeSearch(
 
   // plan out the research
   const { object: result } = await generateObject({
-    model: scira.languageModel('scira-grok-4-fast-think'),
+    model: hyper.languageModel('hyper-grok-4-fast-think'),
     schema: z.object({
       plan: z
         .array(
@@ -263,7 +263,7 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-grok-4-fast-think'),
+    model: hyper.languageModel('hyper-grok-4-fast-think'),
     stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.

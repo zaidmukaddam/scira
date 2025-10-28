@@ -49,7 +49,7 @@ import { Loader2, Search } from 'lucide-react';
 import { cn, getSearchGroups, SearchGroupId } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
-import { SciraLogo } from './logos/scira-logo';
+import { HyperLogo } from './logos/hyper-logo';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -300,7 +300,7 @@ function PreferencesSection({
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
-    'scira-search-provider',
+    'hyper-search-provider',
     'parallel',
   );
 
@@ -347,7 +347,7 @@ function PreferencesSection({
     return [...preferred, ...rest] as SearchGroupId[];
   }, [reorderVisibleIds]);
 
-  const [agentOrder, setAgentOrder] = useLocalStorage<SearchGroupId[]>('scira-agent-order', defaultAgentOrder);
+  const [agentOrder, setAgentOrder] = useLocalStorage<SearchGroupId[]>('hyper-agent-order', defaultAgentOrder);
 
   const normalizedAgentOrder = useMemo(() => {
     const filtered = agentOrder.filter((id) => reorderVisibleIds.includes(id));
@@ -1086,7 +1086,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Impossible d’accéder au portail DodoPayments. Veuillez contacter le support à zaid@hhyper.vercel.app');
+        toast.error('Impossible d’accéder au portail DodoPayments. Veuillez contacter le support à zaid@hyper.vercel.app');
       } else {
         toast.error('Échec de l’ouverture de la gestion de l’abonnement');
       }
@@ -2050,7 +2050,7 @@ export function SettingsDialog({
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium flex items-center gap-2">
-                <SciraLogo className="size-6" />
+                <HyperLogo className="size-6" />
                 Paramètres
               </DrawerTitle>
             </DrawerHeader>
@@ -2112,7 +2112,7 @@ export function SettingsDialog({
       <DialogContent className="!max-w-4xl !w-full max-h-[85vh] !p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 !m-0">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
-            <SciraLogo className="size-6" color="currentColor" />
+            <HyperLogo className="size-6" color="currentColor" />
             Paramètres
           </DialogTitle>
         </DialogHeader>

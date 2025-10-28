@@ -94,7 +94,7 @@ export default function Home() {
     const p = profiles.find((x) => x.id === id);
     try {
       if (p?.label) {
-        localStorage.setItem('scira:selected-profile', JSON.stringify({ label: p.label, t: Date.now() }));
+        localStorage.setItem('hyper:selected-profile', JSON.stringify({ label: p.label, t: Date.now() }));
       }
     } catch {}
     toast('Connexion…', {

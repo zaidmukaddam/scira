@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { HyperLogo } from '@/components/logos/hyper-logo';
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <SciraLogo className="size-8 opacity-90" />
+                  <HyperLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
@@ -172,8 +172,8 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@hhyper.vercel.app" className="flex items-center gap-1">
-              zaid@hhyper.vercel.app <ExternalLink className="h-4 w-4" />
+            <a href="mailto:zaid@hyper.vercel.app" className="flex items-center gap-1">
+              zaid@hyper.vercel.app <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <SciraLogo className="size-4 opacity-80" />
+                <HyperLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} Hyper AI by Zaid Mukaddam

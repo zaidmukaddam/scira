@@ -97,7 +97,7 @@ async function createUser(
 
 async function main() {
   console.log('╔══════════════════════════════════════════════════════╗');
-  console.log('║     🚀 Initialisation du Dashboard Admin Scira      ║');
+  console.log('║     🚀 Initialisation du Dashboard Admin Hyper      ║');
   console.log('╚══════════════════════════════════════════════════════╝');
 
   // 1. Vérifications préalables
@@ -130,7 +130,7 @@ async function main() {
   try {
     const customAdminUsername = process.env.ADMIN_USERNAME || 'admin';
     const customAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    const customAdminEmail = process.env.ADMIN_EMAIL || 'admin@scira.local';
+    const customAdminEmail = process.env.ADMIN_EMAIL || 'admin@hyper.local';
 
     const customAdmin = await createUser(
       customAdminUsername,
@@ -148,7 +148,7 @@ async function main() {
 
   // 4. Créer l'utilisateur de démonstration
   try {
-    const demo = await createUser('demo', 'demo123', 'demo@scira.local', 'user');
+    const demo = await createUser('demo', 'demo123', 'demo@hyper.local', 'user');
     results.push(demo);
     console.log(`✅ Utilisateur demo "${demo.username}" ${demo.status === 'created' ? 'créé' : 'mis à jour'}`);
   } catch (error) {

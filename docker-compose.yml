@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  scira.app:
+  hyper.vercel.app:
     build:
       context: .
       dockerfile: Dockerfile

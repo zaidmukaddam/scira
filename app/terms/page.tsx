@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { ExternalLink } from 'lucide-react';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { HyperLogo } from '@/components/logos/hyper-logo';
 
 const container = {
   hidden: { opacity: 0 },
@@ -41,7 +41,7 @@ export default function TermsPage() {
             <motion.div variants={item} className="text-center">
               <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
                 <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <SciraLogo className="size-8 opacity-90" />
+                  <HyperLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
@@ -58,22 +58,22 @@ export default function TermsPage() {
       <div className="py-16 px-4">
         <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
           <p className="text-lg">
-            Welcome to Scira AI. These Terms of Service govern your use of our website and services. By using Scira AI,
+            Welcome to Hyper AI. These Terms of Service govern your use of our website and services. By using Hyper AI,
             you agree to these terms in full. If you disagree with any part of these terms, please do not use our
             service.
           </p>
 
           <h2>1. Acceptance of Terms</h2>
           <p>
-            By accessing or using Scira AI, you acknowledge that you have read, understood, and agree to be bound by
+            By accessing or using Hyper AI, you acknowledge that you have read, understood, and agree to be bound by
             these Terms of Service. We reserve the right to modify these terms at any time, and such modifications shall
-            be effective immediately upon posting. Your continued use of Scira AI after any modifications indicates your
+            be effective immediately upon posting. Your continued use of Hyper AI after any modifications indicates your
             acceptance of the modified terms.
           </p>
 
           <h2>2. Description of Service</h2>
           <p>
-            Scira AI is a minimalistic AI-powered search engine that helps users find information on the internet. Our
+            Hyper AI is a minimalistic AI-powered search engine that helps users find information on the internet. Our
             service utilizes artificial intelligence to process search queries and provide relevant results and
             information.
           </p>
@@ -83,7 +83,7 @@ export default function TermsPage() {
           </p>
 
           <h2>3. User Conduct</h2>
-          <p>You agree not to use Scira AI to:</p>
+          <p>You agree not to use Hyper AI to:</p>
           <ul>
             <li>Engage in any activity that violates applicable laws or regulations</li>
             <li>Infringe upon the rights of others, including intellectual property rights</li>
@@ -95,7 +95,7 @@ export default function TermsPage() {
           </ul>
 
           <h2>4. Content and Results</h2>
-          <p>While we strive to provide accurate and reliable information, Scira AI:</p>
+          <p>While we strive to provide accurate and reliable information, Hyper AI:</p>
           <ul>
             <li>Does not guarantee the accuracy, completeness, or reliability of any results</li>
             <li>Is not responsible for content generated based on your search queries</li>
@@ -103,14 +103,14 @@ export default function TermsPage() {
           </ul>
           <p>
             You should exercise judgment and critical thinking when evaluating search results and generated content.
-            Scira AI should not be used as the sole source for making important decisions, especially in professional,
+            Hyper AI should not be used as the sole source for making important decisions, especially in professional,
             medical, legal, or financial contexts.
           </p>
 
           <h2>5. Intellectual Property</h2>
           <p>
-            All content, features, and functionality of Scira AI, including but not limited to text, graphics, logos,
-            icons, images, audio clips, and software, are the property of Scira AI or its licensors and are protected by
+            All content, features, and functionality of Hyper AI, including but not limited to text, graphics, logos,
+            icons, images, audio clips, and software, are the property of Hyper AI or its licensors and are protected by
             copyright, trademark, and other intellectual property laws.
           </p>
           <p>
@@ -119,7 +119,7 @@ export default function TermsPage() {
           </p>
 
           <h2>6. Third-Party Services</h2>
-          <p>Scira AI relies on third-party services to provide its functionality:</p>
+          <p>Hyper AI relies on third-party services to provide its functionality:</p>
           <ul>
             <li>Our service is hosted on Vercel&apos;s infrastructure</li>
             <li>We integrate with AI technology providers including OpenAI, Anthropic, xAI, and others</li>
@@ -128,14 +128,14 @@ export default function TermsPage() {
             <li>We are not responsible for the practices or policies of these third-party services</li>
           </ul>
           <p>
-            By using Scira AI, you acknowledge and agree that your data may be processed by these third-party services
+            By using Hyper AI, you acknowledge and agree that your data may be processed by these third-party services
             as described in our Privacy Policy. This includes payment data being processed by our payment providers
             according to their respective privacy policies and security standards.
           </p>
 
           <h2>7. Pricing and Billing</h2>
           <p>
-            Scira AI offers both free and paid subscription plans. For detailed pricing information, visit our{' '}
+            Hyper AI offers both free and paid subscription plans. For detailed pricing information, visit our{' '}
             <Link href="/pricing" className="underline">
               Pricing page
             </Link>
@@ -146,7 +146,7 @@ export default function TermsPage() {
               <strong>Free Plan:</strong> Includes limited daily searches with access to basic AI models
             </li>
             <li>
-              <strong>Scira Pro:</strong> $15/month subscription with unlimited searches and access to all AI models
+              <strong>Hyper Pro:</strong> $15/month subscription with unlimited searches and access to all AI models
             </li>
           </ul>
           <p>
@@ -161,7 +161,7 @@ export default function TermsPage() {
             </li>
           </ul>
           <p>
-            <strong>Important:</strong> Scira AI does not store any payment card details, bank information, or other
+            <strong>Important:</strong> Hyper AI does not store any payment card details, bank information, or other
             sensitive payment data. All payment information is processed directly by our payment providers according to
             their respective privacy policies and security standards.
           </p>
@@ -193,7 +193,7 @@ export default function TermsPage() {
 
           <h2>9. Privacy</h2>
           <p>
-            Your use of Scira AI is also governed by our{' '}
+            Your use of Hyper AI is also governed by our{' '}
             <Link href="/privacy-policy" className="underline">
               Privacy Policy
             </Link>
@@ -202,21 +202,21 @@ export default function TermsPage() {
 
           <h2>10. Limitation of Liability</h2>
           <p>
-            To the maximum extent permitted by law, Scira AI shall not be liable for any indirect, incidental, special,
+            To the maximum extent permitted by law, Hyper AI shall not be liable for any indirect, incidental, special,
             consequential, or punitive damages, including loss of profits, data, or goodwill, arising out of or in
             connection with your use of or inability to use the service.
           </p>
 
           <h2>11. Disclaimers</h2>
           <p>
-            Scira AI is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind,
+            Hyper AI is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind,
             either express or implied, including but not limited to warranties of merchantability, fitness for a
             particular purpose, or non-infringement.
           </p>
 
           <h2>12. Termination</h2>
           <p>
-            We reserve the right to suspend or terminate your access to Scira AI, with or without notice, for conduct
+            We reserve the right to suspend or terminate your access to Hyper AI, with or without notice, for conduct
             that we believe violates these Terms of Service or is harmful to other users, us, or third parties, or for
             any other reason at our discretion.
           </p>
@@ -224,20 +224,20 @@ export default function TermsPage() {
           <h2>13. Governing Law</h2>
           <p>
             These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which
-            Scira AI operates, without regard to its conflict of law provisions.
+            Hyper AI operates, without regard to its conflict of law provisions.
           </p>
 
           <h2>14. Contact Us</h2>
           <p>If you have any questions about these Terms of Service, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai" className="flex items-center gap-1">
-              zaid@scira.ai <ExternalLink className="h-4 w-4" />
+            <a href="mailto:zaid@hyper.vercel.app" className="flex items-center gap-1">
+              zaid@hyper.vercel.app <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 
           <div className="my-8 border-t pt-8">
             <p className="text-sm text-muted-foreground">
-              By using Scira AI, you agree to these Terms of Service and our{' '}
+              By using Hyper AI, you agree to these Terms of Service and our{' '}
               <Link href="/privacy-policy" className="underline">
                 Privacy Policy
               </Link>
@@ -254,10 +254,10 @@ export default function TermsPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <SciraLogo className="size-4 opacity-80" />
+                <HyperLogo className="size-4 opacity-80" />
               </div>
               <div className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
+                © {new Date().getFullYear()} Hyper AI by Zaid Mukaddam
               </div>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">

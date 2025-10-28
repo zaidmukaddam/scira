@@ -18,7 +18,7 @@ import {
 } from 'ai';
 import { createMemoryTools } from '@/lib/tools/supermemory';
 import {
-  scira,
+  hyper,
   requiresAuthentication,
   requiresProSubscription,
   shouldBypassRateLimits,
@@ -91,7 +91,7 @@ export function getStreamContext() {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
-        keyPrefix: 'scira-ai',
+        keyPrefix: 'hyper-ai',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
   const streamId = 'stream-' + uuidv7();
 
   const rawModel = typeof model === 'string' ? model.trim() : '';
-  const resolvedModel = getModelConfig(rawModel) ? rawModel : 'scira-default';
+  const resolvedModel = getModelConfig(rawModel) ? rawModel : 'hyper-default';
 
   console.log('🔍 Search API:', { model: resolvedModel, group, latitude, longitude });
 
@@ -316,7 +316,7 @@ export async function POST(req: Request) {
       const streamStartTime = Date.now();
 
       const result = streamText({
-        model: scira.languageModel(resolvedModel),
+        model: hyper.languageModel(resolvedModel),
         messages: convertToModelMessages(messages),
         ...getModelParameters(resolvedModel),
         stopWhen: stepCountIs(5),
@@ -335,7 +335,7 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           google: {
-            ...(resolvedModel === 'scira-google-think' || resolvedModel === 'scira-google-pro-think'
+            ...(resolvedModel === 'hyper-google-think' || resolvedModel === 'hyper-google-pro-think'
               ? {
                 thinkingConfig: {
                   thinkingBudget: 400,
@@ -432,7 +432,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-4-fast'),
+            model: hyper.languageModel('hyper-grok-4-fast'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,

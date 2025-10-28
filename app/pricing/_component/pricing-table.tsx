@@ -301,7 +301,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-medium">Scira Pro</h3>
+                <h3 className="text-xl font-medium">Hyper Pro</h3>
                 <Badge variant="secondary">Popular</Badge>
               </div>
 
@@ -396,7 +396,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 </li>
                 <li className="flex items-center">
                   <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                  Scira Lookout
+                  Hyper Lookout
                 </li>
               </ul>
 
@@ -521,7 +521,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </p>
           <p className="text-sm text-muted-foreground">
             Questions?{' '}
-            <a href="mailto:zaid@hhyper.vercel.app" className="text-foreground hover:underline">
+            <a href="mailto:zaid@hyper.vercel.app" className="text-foreground hover:underline">
               Get in touch
             </a>
           </p>
