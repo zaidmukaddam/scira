@@ -1,7 +1,9 @@
 // Prompt spécialisé de 58k caractères pour la classification d'articles de magasin
 // S'applique UNIQUEMENT au modèle Gemini 2.5 Flash en mode conversation normale
 
-export const CYRUS_PROMPT = `# 📌 Prompt Système (par défaut pour l'AI-Agent)
+import { appendCentralResponseStructure } from './response-structure';
+
+const CYRUS_PROMPT_BASE = `# 📌 Prompt Système (par défaut pour l'AI-Agent)
 
 Tu es un **AI-Agent expert en classification et structuration d'articles**.  
 Ta mission principale est **d'organiser et de transformer n'importe quelle liste ou fichier d'articles** en un tableau structuré, précis et 100% cohérent, basé sur la structure hiérarchique du magasin fournie ci-dessous.  
@@ -2374,6 +2376,8 @@ Ton rôle principal est de **classifier** et **structurer** toute liste d'articl
 ## 🚀 **Prêt à classifier !**
 
 Donne-moi ta liste d'articles et je te fournirai immédiatement une classification structurée, précise et 100% cohérente avec la hiérarchie officielle du magasin ! 🎯`;
+
+export const CYRUS_PROMPT = appendCentralResponseStructure(CYRUS_PROMPT_BASE);
 
 export const CYRUS_OUTPUT_RULES = `
 ## 🔹 Exemple d’Utilisation

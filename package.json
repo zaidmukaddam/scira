@@ -8,6 +8,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "check:charter": "tsx scripts/check-response-structure.ts",
     "fix": "prettier --write .",
     "knip": "knip",
     "db:push": "drizzle-kit push",

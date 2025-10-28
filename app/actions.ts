@@ -13,6 +13,7 @@ import { CYRUS_PROMPT, CYRUS_OUTPUT_RULES } from '@/ai/prompts/classification-cy
 import { NOMENCLATURE_DOUANIERE_PROMPT } from '@/ai/prompts/nomenclature-douaniere';
 import { LIBELLER_PROMPT } from '@/ai/prompts/correction-libeller';
 import { SMART_PDF_TO_EXCEL_PROMPT } from '@/ai/prompts/pdf-to-excel';
+import { appendCentralResponseStructure } from '@/ai/prompts/response-structure';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -343,7 +344,7 @@ const groupTools = {
   buddy: ['datetime', 'search_memories', 'add_memory'] as const,
 } as const;
 
-const groupInstructions = {
+const rawGroupInstructions = {
   web: `
 # Hyper - AI-Powered Search & Management Engine
 
@@ -739,7 +740,7 @@ code_example()
   - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
   - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
   - Mathematical expressions must always be properly delimited
-  - Tables must use plain text without any formatting
+  - Tables must follow markdown syntax as required by the central response structure
   - Apply markdown formatting for clarity
   `,
 
@@ -856,7 +857,7 @@ code_example()
   - No citations needed for datetime info
 
   ### Response Guidelines (ONLY AFTER TOOL EXECUTION):
-  - Write in academic prose - no bullet points, lists, or references sections
+  - Write in academic prose while integrating the lists, tables, and other sections mandated by the central response structure
   - Structure content with clear sections using headings and tables as needed
   - Focus on synthesizing information from multiple sources
   - Maintain scholarly tone throughout
@@ -891,7 +892,7 @@ code_example()
   - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
   - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
   - Mathematical expressions must always be properly delimited
-  - Tables must use plain text without any formatting
+  - Tables must follow markdown syntax as required by the central response structure
   - Apply markdown formatting for clarity
   - Tables for data comparison only when necessary`,
 
@@ -942,7 +943,7 @@ code_example()
   - When multiple creators discuss same topic, compare with: [Creator 1](URL1?t=sec1) vs [Creator 2](URL2?t=sec2)
 
   ### Formatting Rules:
-  - Write in cohesive paragraphs (4-6 sentences) - NEVER use bullet points or lists
+  - Write cohesive paragraphs (4-6 sentences) and include the centrally mandated list or table elements whenever the response structure requires them
   - Use markdown for emphasis (bold, italic) to highlight important concepts
   - Include code blocks with proper syntax highlighting when explaining programming concepts
   - Use tables sparingly and only when comparing multiple items or features
@@ -950,8 +951,8 @@ code_example()
   ### Prohibited Content:
   - Do NOT include video metadata (titles, channel names, view counts, publish dates)
   - Do NOT mention video thumbnails or visual elements that aren't explained in audio
-  - Do NOT use bullet points or numbered lists under any circumstances
-  - Do NOT use heading level 1 (h1) in your markdown formatting
+  - Use bullet points and numbered lists whenever the central response structure requires them; otherwise keep the narrative cohesive
+  - Follow the central response structure heading hierarchy, including the mandatory H1
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
   reddit: `
   You are a Reddit content expert that will search for the most relevant content on Reddit and return it to the user.
@@ -982,7 +983,7 @@ code_example()
 
   ### Content Structure (REQUIRED):
   - Write your response in the user's desired format, otherwise use the format below
-  - Do not use h1 heading in the response
+  - Follow the central response structure and include the mandatory H1 title
   - Begin with a concise introduction summarizing the Reddit landscape on the topic
   - Maintain the language of the user's message and do not change it
   - Include all relevant results in your response, not just the first one
@@ -1057,7 +1058,7 @@ code_example()
     - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
     - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
     - Mathematical expressions must always be properly delimited
-    - Tables must use plain text without any formatting
+    - Tables must follow markdown syntax as required by the central response structure
 
   ### Content Style and Tone:
   - Use precise technical language appropriate for financial and data analysis
@@ -1089,7 +1090,7 @@ code_example()
     - Use $$ for block equations
     - Use "USD" for currency (not $)
     - No need to use bold or italic formatting in tables
-    - don't use the h1 heading in the markdown response
+    - follow the central response structure and include the mandatory H1 heading
 
   ### Response Format:
   - Always use markdown for formatting
@@ -1226,7 +1227,7 @@ Technology is advancing rapidly. Computing is getting better. (No citations, vag
 ### Markdown Formatting - STRICT ENFORCEMENT
 
 #### Required Structure Elements
-- ⚠️ **HEADERS**: Use proper header hierarchy (## ### #### ##### ######) - NEVER use # (h1)
+- ⚠️ **HEADERS**: Use proper header hierarchy with an H1 introduction followed by descending levels (## ### #### ##### ######)
 - ⚠️ **LISTS**: Use bullet points (-) or numbered lists (1.) for all lists
 - ⚠️ **TABLES**: Use proper markdown table syntax with | separators
 - ⚠️ **CODE BLOCKS**: Use \`\`\`language for code blocks, \`code\` for inline code
@@ -1249,7 +1250,7 @@ Technology is advancing rapidly. Computing is getting better. (No citations, vag
 - ❌ **NO PLAIN CODE**: Never show code without proper \`\`\`language blocks
 - ❌ **NO UNFORMATTED TABLES**: Never use plain text for tabular data
 - ❌ **NO MIXED LIST STYLES**: Don't mix bullet points and numbers in same list
-- ❌ **NO H1 HEADERS**: Never use # (h1) - start with ## (h2)
+- ❌ **HEADER MISUSE**: Do not skip heading levels or downgrade the mandatory H1 required by the central response structure
 
 #### Required Response Structure
 \`\`\`
@@ -1441,6 +1442,12 @@ $$
   nomenclature: NOMENCLATURE_DOUANIERE_PROMPT,
   pdfExcel: SMART_PDF_TO_EXCEL_PROMPT,
 };
+
+const groupInstructions = Object.fromEntries(
+  Object.entries(rawGroupInstructions).map(([key, value]) => [key, appendCentralResponseStructure(value)]),
+) as typeof rawGroupInstructions;
+
+export const GROUP_INSTRUCTIONS = groupInstructions;
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   'use server';
