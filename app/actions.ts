@@ -1447,8 +1447,6 @@ const groupInstructions = Object.fromEntries(
   Object.entries(rawGroupInstructions).map(([key, value]) => [key, appendCentralResponseStructure(value)]),
 ) as typeof rawGroupInstructions;
 
-export const GROUP_INSTRUCTIONS = groupInstructions;
-
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   'use server';
 
