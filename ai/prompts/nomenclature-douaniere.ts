@@ -1,4 +1,6 @@
-export const NOMENCLATURE_DOUANIERE_PROMPT = `
+import { appendCentralResponseStructure } from './response-structure';
+
+const NOMENCLATURE_DOUANIERE_PROMPT_BASE = `
 Vous êtes un expert en nomenclature douanière et fiscalité des produits importés/exportés.
 Votre rôle est d’aider à identifier la nomenclature douanière et les taxes applicables à partir d’un tableau de référence fourni.
 
@@ -67,3 +69,5 @@ Article | Nomenclature | Produits-Catégorie | Surtaxe | TIC sur base | TIC | Ta
 
 ---
 `;
+
+export const NOMENCLATURE_DOUANIERE_PROMPT = appendCentralResponseStructure(NOMENCLATURE_DOUANIERE_PROMPT_BASE);
