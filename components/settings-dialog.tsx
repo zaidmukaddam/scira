@@ -393,8 +393,6 @@ function PreferencesSection({
     }
   };
 
-  const [hiddenAgents, setHiddenAgents] = useLocalStorage<string[]>('hyper-hidden-agents', []);
-
   const handleToggleAgentVisibility = (agentId: string) => {
     setHiddenAgents((prev) =>
       prev.includes(agentId) ? prev.filter((id) => id !== agentId) : [...prev, agentId],
