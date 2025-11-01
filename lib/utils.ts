@@ -57,8 +57,7 @@ export function getWebSearchDescription(provider: SearchProvider = 'parallel'): 
   return `Recherchez sur tout Internet avec ${providerName}`;
 }
 
-// Function to get search groups with dynamic descriptions
-export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
+function getBaseSearchGroups(searchProvider: SearchProvider = 'parallel') {
   return [
     {
       id: 'web' as const,
@@ -179,8 +178,14 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
   ] as const;
 }
 
+// Function to get search groups with dynamic descriptions, filtered by user preferences
+export function getSearchGroups(searchProvider: SearchProvider = 'parallel', hiddenAgents: string[] = []) {
+  const allGroups = getBaseSearchGroups(searchProvider);
+  return allGroups.filter(group => !hiddenAgents.includes(group.id));
+}
+
 // Keep the static searchGroups for backward compatibility
-export const searchGroups = getSearchGroups();
+export const searchGroups = getBaseSearchGroups();
 
 export type SearchGroup = (typeof searchGroups)[number];
 
