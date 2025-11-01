@@ -559,14 +559,21 @@ function PreferencesSection({
       {/* Agent Visibility Section */}
       <div className="space-y-3">
         <div className="space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm">Masquer les Agents</h4>
+                <p className="text-xs text-muted-foreground">Contrôlez les agents qui apparaissent dans le menu</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm">Masquer les Agents</h4>
-              <p className="text-xs text-muted-foreground">Contrôlez les agents qui apparaissent dans le menu</p>
-            </div>
+            {hiddenAgents.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setHiddenAgents([])}>
+                Réactiver tout
+              </Button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
