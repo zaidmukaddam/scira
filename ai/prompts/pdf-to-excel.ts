@@ -1,3 +1,5 @@
+import { appendCentralResponseStructure } from './response-structure';
+
 const SMART_PDF_TO_EXCEL_PROMPT_BASE = `
 # 📌 Prompt Système – Agent IA (Conversion PDF → Excel)
 
@@ -27,6 +29,6 @@ Tu es un **Agent IA expert en OCR, extraction et structuration de données issue
 | ...       | ...       | ... |
 `;
 
-export const SMART_PDF_TO_EXCEL_PROMPT = SMART_PDF_TO_EXCEL_PROMPT_BASE;
+export const SMART_PDF_TO_EXCEL_PROMPT = appendCentralResponseStructure(SMART_PDF_TO_EXCEL_PROMPT_BASE);
 
 export default SMART_PDF_TO_EXCEL_PROMPT;
