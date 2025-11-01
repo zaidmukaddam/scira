@@ -13,7 +13,6 @@ import { CYRUS_PROMPT, CYRUS_OUTPUT_RULES } from '@/ai/prompts/classification-cy
 import { NOMENCLATURE_DOUANIERE_PROMPT } from '@/ai/prompts/nomenclature-douaniere';
 import { LIBELLER_PROMPT } from '@/ai/prompts/correction-libeller';
 import { SMART_PDF_TO_EXCEL_PROMPT } from '@/ai/prompts/pdf-to-excel';
-import { appendCentralResponseStructure } from '@/ai/prompts/response-structure';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -1443,9 +1442,7 @@ $$
   pdfExcel: SMART_PDF_TO_EXCEL_PROMPT,
 };
 
-const groupInstructions = Object.fromEntries(
-  Object.entries(rawGroupInstructions).map(([key, value]) => [key, appendCentralResponseStructure(value)]),
-) as typeof rawGroupInstructions;
+const groupInstructions = rawGroupInstructions;
 
 export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
   'use server';
