@@ -366,7 +366,7 @@ const UserProfile = memo(
                         localStorage.clear();
                         toast.success('Signed out successfully');
                         toast.dismiss();
-                        window.location.href = '/new';
+                        window.location.href = '/sign-in';
                       },
                       onError: () => {
                         setSigningOut(false);
