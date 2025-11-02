@@ -16,11 +16,25 @@ export const signOut = async (options?: {
 }) => {
   options?.fetchOptions?.onRequest?.();
   try {
-    // Since there's no backend, we just perform the client-side actions.
-    // In a real app, we'd call a '/api/auth/signout' endpoint here.
-    if (typeof window !== 'undefined') {
-      options?.fetchOptions?.onSuccess?.();
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Unexpected status ${response.status}`);
     }
+
+    const body = await response.json().catch(() => null);
+    if (body && !body.success) {
+      throw new Error('Logout failed');
+    }
+
+    options?.fetchOptions?.onSuccess?.();
   } catch (error) {
     console.error('Sign out error:', error);
     options?.fetchOptions?.onError?.();
