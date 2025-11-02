@@ -338,7 +338,7 @@ const UserProfile = memo(
                 </div>
               </div>
 
-              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/settings')}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
                 <div className="w-full flex items-center gap-2">
                   <GearIcon size={16} />
                   <span>Settings</span>
@@ -366,7 +366,7 @@ const UserProfile = memo(
                         localStorage.clear();
                         toast.success('Signed out successfully');
                         toast.dismiss();
-                        window.location.href = '/new';
+                        window.location.href = '/sign-in';
                       },
                       onError: () => {
                         setSigningOut(false);

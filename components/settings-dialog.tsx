@@ -326,7 +326,8 @@ function PreferencesSection({
 
   // Agents reordering (drag-and-drop)
   const { data: session } = useLocalSession();
-  const dynamicGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+  const [hiddenAgents, setHiddenAgents] = useLocalStorage<string[]>('hyper-hidden-agents', []);
+  const dynamicGroups = useMemo(() => getSearchGroups(searchProvider, hiddenAgents), [searchProvider, hiddenAgents]);
   const reorderVisibleGroups = useMemo(
     () =>
       dynamicGroups.filter((group) => {
@@ -390,6 +391,12 @@ function PreferencesSection({
       setItems(previous);
       toast.error('Impossible d’enregistrer l’ordre');
     }
+  };
+
+  const handleToggleAgentVisibility = (agentId: string) => {
+    setHiddenAgents((prev) =>
+      prev.includes(agentId) ? prev.filter((id) => id !== agentId) : [...prev, agentId],
+    );
   };
 
   function SortableAgentCard({ id }: { id: SearchGroupId }) {
@@ -546,6 +553,54 @@ function PreferencesSection({
           </DndContext>
 
           <p className="text-xs text-muted-foreground">L’ordre sera sauvegardé automatiquement.</p>
+        </div>
+      </div>
+
+      {/* Agent Visibility Section */}
+      <div className="space-y-3">
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm">Masquer les Agents</h4>
+                <p className="text-xs text-muted-foreground">Contrôlez les agents qui apparaissent dans le menu</p>
+              </div>
+            </div>
+            {hiddenAgents.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setHiddenAgents([])}>
+                Réactiver tout
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {reorderVisibleGroups.map((group) => (
+              <div
+                key={group.id}
+                className="rounded-lg border bg-card p-3 sm:p-4 flex items-start gap-2.5 select-none"
+              >
+                <div className="flex items-center justify-center rounded-md bg-muted/50 p-1.5">
+                  <HugeiconsIcon icon={group.icon} size={20} color="currentColor" strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{group.name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{group.description}</div>
+                    </div>
+                    <Switch
+                      checked={!hiddenAgents.includes(group.id)}
+                      onCheckedChange={() => handleToggleAgentVisibility(group.id)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Les modifications sont sauvegardées automatiquement.</p>
         </div>
       </div>
 

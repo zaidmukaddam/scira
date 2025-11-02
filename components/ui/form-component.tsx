@@ -1651,8 +1651,11 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     // Get search provider from localStorage with reactive updates
     const [searchProvider] = useLocalStorage<SearchProvider>('hyper-search-provider', 'parallel');
 
+    // Get hidden agents from localStorage
+    const [hiddenAgents] = useLocalStorage<string[]>('hyper-hidden-agents', []);
+
     // Get dynamic search groups based on the selected search provider
-    const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+    const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider, hiddenAgents), [searchProvider, hiddenAgents]);
 
     // Get agent access from database
     const { data: agentAccess, refetch: refetchAgentAccess } = useAgentAccess();
