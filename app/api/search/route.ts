@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   const lightweightUser = await getLightweightUser();
 
   // Rate limit check for unauthenticated users
-  if (!lightweightUser) {
+  if (!lightweightUser && unauthenticatedRateLimit) {
     const identifier = getClientIdentifier(req);
     const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
 
@@ -148,14 +148,15 @@ export async function POST(req: Request) {
       return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
     }
   } else {
-    // Fast auth checks using lightweight user (no additional DB calls)
-    if (requiresProSubscription(model) && !lightweightUser.isProUser) {
+    // SELF-HOSTED: Skip pro check - all models available
+    if (false && requiresProSubscription(model) && !lightweightUser?.isProUser) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
   }
 
   // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
-  const isProUser = lightweightUser?.isProUser ?? false;
+  // SELF-HOSTED: Always treat as Pro user
+  const isProUser = true; // lightweightUser?.isProUser ?? false;
 
   // 1. Config (needed for streaming) - start immediately
   configPromise = getGroupConfig(group);

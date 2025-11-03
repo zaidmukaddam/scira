@@ -93,253 +93,59 @@ async function checkDodoPaymentsProStatus(userId: string): Promise<boolean> {
   }
 }
 
-// Combined function to check Pro status from both Polar and DodoPayments
+// SELF-HOSTED: Always return Pro status since using own APIs
 async function getComprehensiveProStatus(
   userId: string,
 ): Promise<{ isProUser: boolean; source: 'polar' | 'dodo' | 'none' }> {
-  try {
-    // Check Polar subscriptions first
-    const userSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId)).$withCache();
-    const activeSubscription = userSubscriptions.find((sub) => sub.status === 'active');
-
-    if (activeSubscription) {
-      console.log('🔥 Polar subscription found for user:', userId);
-      return { isProUser: true, source: 'polar' };
-    }
-
-    // If no Polar subscription, check DodoPayments
-    const hasDodoProStatus = await checkDodoPaymentsProStatus(userId);
-
-    if (hasDodoProStatus) {
-      console.log('🔥 DodoPayments subscription found for user:', userId);
-      return { isProUser: true, source: 'dodo' };
-    }
-
-    return { isProUser: false, source: 'none' };
-  } catch (error) {
-    console.error('Error getting comprehensive pro status:', error);
-    return { isProUser: false, source: 'none' };
-  }
+  // Always return Pro status for self-hosted instance
+  console.log('🚀 Self-hosted mode: User has unlimited Pro access');
+  return { isProUser: true, source: 'polar' }; // Return polar as source to avoid any special handling
 }
 
 export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResult> {
   'use server';
 
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      return { hasSubscription: false };
-    }
-
-    // Check cache first
-    const cacheKey = createSubscriptionKey(session.user.id);
-    const cached = subscriptionCache.get(cacheKey);
-    if (cached) {
-      // Update pro user status with comprehensive check
-      const proStatus = await getComprehensiveProStatus(session.user.id);
-      setProUserStatus(session.user.id, proStatus.isProUser);
-      return cached;
-    }
-
-    const userSubscriptions = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.userId, session.user.id))
-      .$withCache();
-
-    if (!userSubscriptions.length) {
-      // Even if no Polar subscriptions, check DodoPayments before returning
-      const proStatus = await getComprehensiveProStatus(session.user.id);
-      const result = { hasSubscription: false };
-      subscriptionCache.set(cacheKey, result);
-      // Cache comprehensive pro user status
-      setProUserStatus(session.user.id, proStatus.isProUser);
-      return result;
-    }
-
-    // Get the most recent active subscription
-    const activeSubscription = userSubscriptions
-      .filter((sub) => sub.status === 'active')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-    if (!activeSubscription) {
-      // Check for canceled or expired subscriptions
-      const latestSubscription = userSubscriptions.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )[0];
-
-      if (latestSubscription) {
-        const now = new Date();
-        const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestSubscription.status === 'canceled';
-
-        const result = {
-          hasSubscription: true,
-          subscription: {
-            id: latestSubscription.id,
-            productId: latestSubscription.productId,
-            status: latestSubscription.status,
-            amount: latestSubscription.amount,
-            currency: latestSubscription.currency,
-            recurringInterval: latestSubscription.recurringInterval,
-            currentPeriodStart: latestSubscription.currentPeriodStart,
-            currentPeriodEnd: latestSubscription.currentPeriodEnd,
-            cancelAtPeriodEnd: latestSubscription.cancelAtPeriodEnd,
-            canceledAt: latestSubscription.canceledAt,
-            organizationId: null,
-          },
-          error: isCanceled
-            ? 'Subscription has been canceled'
-            : isExpired
-              ? 'Subscription has expired'
-              : 'Subscription is not active',
-          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as
-            | 'CANCELED'
-            | 'EXPIRED'
-            | 'GENERAL',
-        };
-        subscriptionCache.set(cacheKey, result);
-        // Cache comprehensive pro user status (might have DodoPayments even if Polar is inactive)
-        const proStatus = await getComprehensiveProStatus(session.user.id);
-        setProUserStatus(session.user.id, proStatus.isProUser);
-        return result;
-      }
-
-      const fallbackResult = { hasSubscription: false };
-      subscriptionCache.set(cacheKey, fallbackResult);
-      // Cache comprehensive pro user status
-      const proStatus = await getComprehensiveProStatus(session.user.id);
-      setProUserStatus(session.user.id, proStatus.isProUser);
-      return fallbackResult;
-    }
-
-    const result = {
-      hasSubscription: true,
-      subscription: {
-        id: activeSubscription.id,
-        productId: activeSubscription.productId,
-        status: activeSubscription.status,
-        amount: activeSubscription.amount,
-        currency: activeSubscription.currency,
-        recurringInterval: activeSubscription.recurringInterval,
-        currentPeriodStart: activeSubscription.currentPeriodStart,
-        currentPeriodEnd: activeSubscription.currentPeriodEnd,
-        cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
-        canceledAt: activeSubscription.canceledAt,
-        organizationId: null,
-      },
-    };
-    subscriptionCache.set(cacheKey, result);
-    // Cache pro user status as true for active Polar subscription
-    setProUserStatus(session.user.id, true);
-    return result;
-  } catch (error) {
-    console.error('Error fetching subscription details:', error);
-    return {
-      hasSubscription: false,
-      error: 'Failed to load subscription details',
-      errorType: 'GENERAL',
-    };
-  }
+  // SELF-HOSTED: Always return active subscription
+  return {
+    hasSubscription: true,
+    subscription: {
+      id: 'self-hosted-unlimited',
+      productId: 'pro-unlimited',
+      status: 'active',
+      amount: 0,
+      currency: 'USD',
+      recurringInterval: 'lifetime',
+      currentPeriodStart: new Date('2024-01-01'),
+      currentPeriodEnd: new Date('2099-12-31'), // Far future date
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      organizationId: null,
+    },
+  };
 }
 
-// Simple helper to check if user has an active subscription or successful payment
+// SELF-HOSTED: Always return true for subscription check
 export async function isUserSubscribed(): Promise<boolean> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      return false;
-    }
-
-    // Use comprehensive check for both Polar and DodoPayments
-    const proStatus = await getComprehensiveProStatus(session.user.id);
-    return proStatus.isProUser;
-  } catch (error) {
-    console.error('Error checking user subscription status:', error);
-    return false;
-  }
+  // Always return true for self-hosted instance
+  return true;
 }
 
-// Fast pro user status check using cache
+// SELF-HOSTED: Always return true for pro status
 export async function isUserProCached(): Promise<boolean> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    return false;
-  }
-
-  // Try cache first
-  const cached = getProUserStatus(session.user.id);
-  if (cached !== null) {
-    return cached;
-  }
-
-  // Fallback to comprehensive check (both Polar and DodoPayments)
-  const proStatus = await getComprehensiveProStatus(session.user.id);
-  setProUserStatus(session.user.id, proStatus.isProUser);
-  return proStatus.isProUser;
+  // Always return true for self-hosted instance
+  return true;
 }
 
-// Helper to check if user has access to a specific product/tier
+// SELF-HOSTED: Always return true for product access
 export async function hasAccessToProduct(productId: string): Promise<boolean> {
-  const result = await getSubscriptionDetails();
-  return (
-    result.hasSubscription && result.subscription?.status === 'active' && result.subscription?.productId === productId
-  );
+  // Always return true for self-hosted instance
+  return true;
 }
 
-// Helper to get user's current subscription status
+// SELF-HOSTED: Always return active status
 export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled' | 'expired' | 'none'> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      return 'none';
-    }
-
-    // First check comprehensive Pro status (includes DodoPayments)
-    const proStatus = await getComprehensiveProStatus(session.user.id);
-
-    if (proStatus.isProUser) {
-      if (proStatus.source === 'dodo') {
-        return 'active'; // DodoPayments successful payment = active
-      }
-    }
-
-    // For Polar subscriptions, get detailed status
-    const result = await getSubscriptionDetails();
-
-    if (!result.hasSubscription) {
-      return proStatus.isProUser ? 'active' : 'none';
-    }
-
-    if (result.subscription?.status === 'active') {
-      return 'active';
-    }
-
-    if (result.errorType === 'CANCELED') {
-      return 'canceled';
-    }
-
-    if (result.errorType === 'EXPIRED') {
-      return 'expired';
-    }
-
-    return 'none';
-  } catch (error) {
-    console.error('Error getting user subscription status:', error);
-    return 'none';
-  }
+  // Always return active for self-hosted instance
+  return 'active';
 }
 
 // Helper to get DodoPayments expiration date
@@ -395,32 +201,12 @@ export async function getDodoPaymentsExpirationDate(): Promise<Date | null> {
   }
 }
 
-// Export the comprehensive pro status function for UI components that need to know the source
+// SELF-HOSTED: Always return Pro status
 export async function getProStatusWithSource(): Promise<{
   isProUser: boolean;
   source: 'polar' | 'dodo' | 'none';
   expiresAt?: Date;
 }> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      return { isProUser: false, source: 'none' };
-    }
-
-    const proStatus = await getComprehensiveProStatus(session.user.id);
-
-    // If Pro status comes from DodoPayments, include expiration date
-    if (proStatus.source === 'dodo' && proStatus.isProUser) {
-      const expiresAt = await getDodoPaymentsExpirationDate();
-      return { ...proStatus, expiresAt: expiresAt || undefined };
-    }
-
-    return proStatus;
-  } catch (error) {
-    console.error('Error getting pro status with source:', error);
-    return { isProUser: false, source: 'none' };
-  }
+  // Always return Pro status for self-hosted instance
+  return { isProUser: true, source: 'polar' };
 }

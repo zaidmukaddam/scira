@@ -43,15 +43,23 @@ function safeParseDate(value: string | Date | null | undefined): Date | null {
   return new Date(value);
 }
 
-const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN,
-  ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
-});
+// Polar client disabled if no access token is provided
+const hasPolarCredentials = process.env.POLAR_ACCESS_TOKEN && process.env.POLAR_ACCESS_TOKEN !== 'placeholder';
+const polarClient = hasPolarCredentials
+  ? new Polar({
+      accessToken: process.env.POLAR_ACCESS_TOKEN!,
+      ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
+    })
+  : null;
 
-export const dodoPayments = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  ...(process.env.NODE_ENV === 'production' ? { environment: 'live_mode' } : { environment: 'test_mode' }),
-});
+// DodoPayments client disabled if no API key is provided
+const hasDodoCredentials = process.env.DODO_PAYMENTS_API_KEY && process.env.DODO_PAYMENTS_API_KEY !== 'placeholder';
+export const dodoPayments = hasDodoCredentials
+  ? new DodoPayments({
+      bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
+      ...(process.env.NODE_ENV === 'production' ? { environment: 'live_mode' } : { environment: 'test_mode' }),
+    })
+  : null;
 
 export const auth = betterAuth({
   rateLimit: {
@@ -94,8 +102,8 @@ export const auth = betterAuth({
       clientSecret: serverEnv.TWITTER_CLIENT_SECRET,
     },
     microsoft: {
-      clientId: process.env.MICROSOFT_CLIENT_ID as string,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
+      clientId: serverEnv.MICROSOFT_CLIENT_ID,
+      clientSecret: serverEnv.MICROSOFT_CLIENT_SECRET,
       prompt: 'select_account', // Forces account selection
     },
   },
@@ -103,31 +111,27 @@ export const auth = betterAuth({
     autoNamespace: true,
   },
   plugins: [
-    dodopayments({
-      client: dodoPayments,
-      createCustomerOnSignUp: true,
-      use: [
-        dodocheckout({
-          products: [
-            {
-              productId:
-                process.env.NEXT_PUBLIC_PREMIUM_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_TIER environment variable is required');
-                })(),
-              slug:
-                process.env.NEXT_PUBLIC_PREMIUM_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_SLUG environment variable is required');
-                })(),
-            },
-          ],
-          successUrl: '/success',
-          authenticatedUsersOnly: true,
-        }),
-        dodoportal(),
-        dodowebhooks({
-          webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+    // Payment plugins temporarily disabled for development
+    // Uncomment and configure credentials to enable payment features
+    /* ...(hasDodoCredentials
+      ? [
+          dodopayments({
+            client: dodoPayments!,
+            createCustomerOnSignUp: true,
+            use: [
+              dodocheckout({
+                products: [
+                  {
+                    productId: process.env.NEXT_PUBLIC_PREMIUM_TIER || 'placeholder',
+                    slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG || 'placeholder',
+                  },
+                ],
+                successUrl: '/success',
+                authenticatedUsersOnly: true,
+              }),
+              dodoportal(),
+              dodowebhooks({
+                webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
           onPayload: async (payload) => {
             const webhookPayload = payload as any;
             console.log('🔔 Received Dodo Payments webhook:', webhookPayload.type);
@@ -244,7 +248,11 @@ export const auth = betterAuth({
         }),
       ],
     }),
-    polar({
+        ]
+      : []), */
+    /* ...(hasPolarCredentials
+      ? [
+          polar({
       client: polarClient,
       createCustomerOnSignUp: true,
       enableCustomerPortal: true,
@@ -253,7 +261,7 @@ export const auth = betterAuth({
 
         try {
           // Look for existing customer by email
-          const { result: existingCustomers } = await polarClient.customers.list({
+          const { result: existingCustomers } = await polarClient!.customers.list({
             email: newUser.email,
           });
 
@@ -285,16 +293,8 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId:
-                process.env.NEXT_PUBLIC_STARTER_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_TIER environment variable is required');
-                })(),
-              slug:
-                process.env.NEXT_PUBLIC_STARTER_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_SLUG environment variable is required');
-                })(),
+              productId: process.env.NEXT_PUBLIC_STARTER_TIER || 'placeholder',
+              slug: process.env.NEXT_PUBLIC_STARTER_SLUG || 'placeholder',
             },
           ],
           successUrl: `/success`,
@@ -303,11 +303,7 @@ export const auth = betterAuth({
         portal(),
         usage(),
         webhooks({
-          secret:
-            process.env.POLAR_WEBHOOK_SECRET ||
-            (() => {
-              throw new Error('POLAR_WEBHOOK_SECRET environment variable is required');
-            })(),
+          secret: process.env.POLAR_WEBHOOK_SECRET || 'placeholder',
           onPayload: async ({ data, type }) => {
             if (
               type === 'subscription.created' ||
@@ -430,8 +426,10 @@ export const auth = betterAuth({
         }),
       ],
     }),
+        ]
+      : []), */
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:8931', 'https://scira.ai', 'https://www.scira.ai'],
+  allowedOrigins: ['http://localhost:8931', 'https://scira.ai', 'https://www.scira.ai'],
 });

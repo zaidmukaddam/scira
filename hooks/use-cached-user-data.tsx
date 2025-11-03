@@ -28,15 +28,15 @@ export function useCachedUserData() {
   }, [freshUser, isFreshLoading, cachedUser, setCachedUser]);
 
   // Use cached data if available, otherwise use fresh data
-  const user = cachedUser || freshUser;
+  const user = freshUser ?? cachedUser;
 
   // Show loading only if we have no cached data and fresh data is loading
   const isLoading = !cachedUser && isFreshLoading;
 
-  // Recalculate derived properties based on current user data
-  const isProUser = Boolean(user?.isProUser);
-  const proSource = user?.proSource || 'none';
-  const subscriptionStatus = user?.subscriptionStatus || 'none';
+  // SELF-HOSTED: Always return Pro status
+  const isProUser = true; // Always Pro for self-hosted
+  const proSource = 'polar'; // Set as polar to avoid special handling
+  const subscriptionStatus = 'active'; // Always active
 
   // Helper function to check if user should have unlimited access for specific models
   const shouldBypassLimitsForModel = (selectedModel: string) => {
@@ -71,14 +71,14 @@ export function useCachedUserData() {
     paymentHistory: user?.paymentHistory || [],
 
     // Rate limiting helpers
-    shouldCheckLimits: Boolean(!isLoading && user && !user.isProUser),
+    shouldCheckLimits: false, // SELF-HOSTED: No rate limits
     shouldBypassLimitsForModel,
 
     // Subscription status checks
-    hasActiveSubscription: user?.subscriptionStatus === 'active',
-    isSubscriptionCanceled: user?.subscriptionStatus === 'canceled',
-    isSubscriptionExpired: user?.subscriptionStatus === 'expired',
-    hasNoSubscription: user?.subscriptionStatus === 'none',
+    hasActiveSubscription: true, // SELF-HOSTED: Always active
+    isSubscriptionCanceled: false,
+    isSubscriptionExpired: false,
+    hasNoSubscription: false,
 
     // Legacy compatibility helpers
     subscriptionData: user?.polarSubscription
@@ -91,7 +91,7 @@ export function useCachedUserData() {
     // Map dodoPayments to legacy dodoProStatus structure for settings dialog
     dodoProStatus: user?.dodoPayments
       ? {
-          isProUser: proSource === 'dodo' && isProUser,
+          isProUser: isProUser,
           hasPayments: user.dodoPayments.hasPayments,
           expiresAt: user.dodoPayments.expiresAt,
           mostRecentPayment: user.dodoPayments.mostRecentPayment,

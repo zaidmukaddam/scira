@@ -181,11 +181,13 @@ const InteractiveChart = React.memo(
             type: 'pie',
             radius: '75%',
             center: ['50%', '58%'],
-            data: chart.elements.map((e, index) => {
-              const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
-              return {
-                name: e.label,
-                value: e.angle,
+            data: chart.elements
+              .filter((e) => e && e.label !== undefined && e.angle !== undefined)
+              .map((e, index) => {
+                const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
+                return {
+                  name: e.label,
+                  value: e.angle,
                 itemStyle: {
                   color: colorSet[0],
                 },
@@ -246,10 +248,12 @@ const InteractiveChart = React.memo(
           return {
             name: e.label,
             type: chart.type,
-            data: e.points.map((p: [number | string, number]) => {
-              const x = chart.x_scale === 'datetime' ? new Date(p[0]).getTime() : p[0];
-              return [x, p[1]];
-            }),
+            data: e.points
+              .filter((p: [number | string, number]) => p && p[0] !== undefined && p[1] !== undefined)
+              .map((p: [number | string, number]) => {
+                const x = chart.x_scale === 'datetime' ? new Date(p[0]).getTime() : p[0];
+                return [x, p[1]];
+              }),
             smooth: 0.15,
             symbol: 'circle',
             symbolSize: 3,
@@ -364,7 +368,9 @@ const InteractiveChart = React.memo(
             name: group,
             type: 'bar',
             stack: 'total',
-            data: elements?.map((e) => [e.label, e.value]),
+            data: elements
+              ?.filter((e) => e && e.label !== undefined && e.value !== undefined)
+              .map((e) => [e.label, e.value]),
             itemStyle: {
               color: colorSet[0],
               borderRadius: [2, 2, 0, 0],

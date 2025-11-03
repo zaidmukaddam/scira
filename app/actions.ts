@@ -131,7 +131,11 @@ export async function suggestQuestions(history: any[]) {
 - Do not include instructions or meta-commentary in the questions`,
     messages: history,
     schema: z.object({
-      questions: z.array(z.string().max(150)).describe('The generated questions based on the message history.').min(3).max(3),
+      questions: z
+        .array(z.string().max(150))
+        .describe('The generated questions based on the message history.')
+        .min(3)
+        .max(3),
     }),
     experimental_repairText: async ({ text }) => {
       return jsonrepair(text);
@@ -259,7 +263,7 @@ const groupTools = {
     'trending_movies',
     'find_place_on_map',
     'trending_tv',
-    'datetime'
+    'datetime',
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
@@ -658,7 +662,7 @@ code_example()
   - For maxResults: Use array format like [15, 15, 20] - default to 15-20 per query unless user requests more
   - For xHandles parameter(Optional until provided): Extract X handles (usernames) from the query when explicitly mentioned (e.g., "search @elonmusk tweets" or "posts from @openai"). Remove the @ symbol when passing to the tool.
   - For date parameters(Optional until asked): Use appropriate date ranges - default to today unless user specifies otherwise don't use it if the user has not mentioned it.
-  
+
   **Multi-Query Examples:**
   - ✅ CORRECT: queries: ["AI developments 2025", "latest AI news", "AI breakthrough today"]
   - ✅ CORRECT: queries: ["Python tips", "Python best practices", "Python coding tricks"], maxResults: [20, 20, 15]
@@ -796,7 +800,7 @@ code_example()
   7. **Format**: All parameters must be in array format (queries, maxResults)
   8. For maxResults: Use array format like [20, 20, 20] - default to 20 per query for comprehensive coverage
   9. Focus on peer-reviewed papers and academic sources
-  
+
   **Multi-Query Examples:**
   - ✅ CORRECT: queries: ["machine learning transformers", "attention mechanisms neural networks", "transformer architecture research"]
   - ✅ CORRECT: queries: ["climate change impacts", "global warming effects", "climate science recent findings"], maxResults: [20, 20, 15]
@@ -927,7 +931,7 @@ code_example()
   - When searching Reddit, set maxResults array to at least [10, 10, 10] or higher for each query
   - Set timeRange array with appropriate values based on query (["week", "week", "month"], etc.)
   - ⚠️ Do not put the affirmation that you ran the tool or gathered the information in the response!
-  
+
   **Multi-Query Examples:**
   - ✅ CORRECT: queries: ["best AI tools 2025", "AI productivity tools Reddit", "latest AI software recommendations"]
   - ✅ CORRECT: queries: ["Python tips", "Python best practices", "Python coding advice"], timeRange: ["month", "month", "month"]
@@ -1253,7 +1257,7 @@ Synthesis of findings with citations [Source](URL)
 
 **Correct Examples:**
 - Inline: $E = mc^2$ for energy-mass equivalence
-- Block: 
+- Block:
 
 $$
 F = G \frac{m_1 m_2}{r^2}
@@ -1598,9 +1602,9 @@ export async function getSubDetails() {
 
   return userData.polarSubscription
     ? {
-      hasSubscription: true,
-      subscription: userData.polarSubscription,
-    }
+        hasSubscription: true,
+        subscription: userData.polarSubscription,
+      }
     : { hasSubscription: false };
 }
 
@@ -1775,7 +1779,7 @@ export async function getCustomInstructions(providedUser?: any) {
     }
 
     const instructions = await getCustomInstructionsByUserId({ userId: user.id });
-    return instructions;
+    return instructions ?? null;
   } catch (error) {
     console.error('Error getting custom instructions:', error);
     return null;

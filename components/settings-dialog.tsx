@@ -116,10 +116,10 @@ export function ProfileSection({ user, subscriptionData, isProUser, isProStatusL
           <AvatarFallback className={isMobile ? 'text-base' : 'text-lg'}>
             {user?.name
               ? user.name
-                .split(' ')
-                .map((n: string) => n[0])
-                .join('')
-                .toUpperCase()
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
               : 'U'}
           </AvatarFallback>
         </Avatar>
@@ -315,18 +315,19 @@ export function PreferencesSection({
   }, [globalModelOrder, allModelIds]);
 
   const enabled = isCustomInstructionsEnabled ?? true;
-  const setEnabled = setIsCustomInstructionsEnabled ?? (() => { });
+  const setEnabled = setIsCustomInstructionsEnabled ?? (() => {});
 
   const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
     setSearchProvider(newProvider);
     toast.success(
-      `Search provider changed to ${newProvider === 'exa'
-        ? 'Exa'
-        : newProvider === 'parallel'
-          ? 'Parallel AI'
-          : newProvider === 'tavily'
-            ? 'Tavily'
-            : 'Firecrawl'
+      `Search provider changed to ${
+        newProvider === 'exa'
+          ? 'Exa'
+          : newProvider === 'parallel'
+            ? 'Parallel AI'
+            : newProvider === 'tavily'
+              ? 'Tavily'
+              : 'Firecrawl'
       }`,
     );
   };
@@ -550,11 +551,7 @@ export function PreferencesSection({
                         <HugeiconsIcon icon={group.icon} size={16} color="currentColor" strokeWidth={2} />
                         <span className="text-sm font-medium truncate">{group.name}</span>
                       </div>
-                      {'requirePro' in group && group.requirePro && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          PRO
-                        </Badge>
-                      )}
+                      {/* Self-hosted: no PRO badge */}
                     </div>
                   );
                 }}
@@ -563,48 +560,42 @@ export function PreferencesSection({
             </div>
           </div>
 
-          {/* Reorder Models (Pro users only) - simplified single list */}
-          {user?.isProUser && (
-            <div className="space-y-3">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-primary/10">
-                    <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm">Reorder Models</h4>
-                    <p className="text-xs text-muted-foreground">Drag to set your preferred model order</p>
-                  </div>
+          {/* Reorder Models */}
+          <div className="space-y-3">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
                 </div>
-
-                {(() => {
-                  const visible = mergedModelOrder.filter((id) => models.some((m) => m.value === id));
-                  return (
-                    <ReorderList
-                      items={visible as string[]}
-                      renderItem={(id: string) => {
-                        const m = models.find((x) => x.value === id)!;
-                        return (
-                          <div className="flex flex-col p-3 rounded-md border bg-card">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm font-medium truncate">{m.label}</div>
-                              {m.pro && (
-                                <Badge variant="secondary" className="text-[10px]">
-                                  PRO
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground line-clamp-2">{m.description}</div>
-                          </div>
-                        );
-                      }}
-                      onReorder={(ids) => setGlobalModelOrder(ids as string[])}
-                    />
-                  );
-                })()}
+                <div>
+                  <h4 className="font-semibold text-sm">Reorder Models</h4>
+                  <p className="text-xs text-muted-foreground">Drag to set your preferred model order</p>
+                </div>
               </div>
+
+              {(() => {
+                const visible = mergedModelOrder.filter((id) => models.some((m) => m.value === id));
+                return (
+                  <ReorderList
+                    items={visible as string[]}
+                    renderItem={(id: string) => {
+                      const m = models.find((x) => x.value === id)!;
+                      return (
+                        <div className="flex flex-col p-3 rounded-md border bg-card">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-sm font-medium truncate">{m.label}</div>
+                            {/* Self-hosted: no PRO badge per model */}
+                          </div>
+                          <div className="text-xs text-muted-foreground line-clamp-2">{m.description}</div>
+                        </div>
+                      );
+                    }}
+                    onReorder={(ids) => setGlobalModelOrder(ids as string[])}
+                  />
+                );
+              })()}
             </div>
-          )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -833,51 +824,10 @@ export function UsageSection({ user }: any) {
         </div>
       </div>
 
-      {!isProUser && (
-        <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
-          <div className={cn('bg-muted/30 rounded-lg space-y-2 p-3')}>
-            {usageLoading ? (
-              <>
-                <div className="flex justify-between text-xs">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-                <Skeleton className="h-1.5 w-full" />
-              </>
-            ) : (
-              <>
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium">Daily Limit</span>
-                  <span className="text-muted-foreground">{usagePercentage.toFixed(0)}%</span>
-                </div>
-                <Progress value={usagePercentage} className="h-1.5 [&>div]:transition-none" />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>
-                    {searchCount?.count || 0} / {SEARCH_LIMITS.DAILY_SEARCH_LIMIT}
-                  </span>
-                  <span>{Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} left</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className={cn('bg-card rounded-lg border border-border', isMobile ? 'p-3' : 'p-4')}>
-            <div className={cn('flex items-center gap-2', isMobile ? 'mb-1.5' : 'mb-2')}>
-              <HugeiconsIcon icon={Crown02Icon} size={isMobile ? 14 : 16} color="currentColor" strokeWidth={1.5} />
-              <span className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Upgrade to Pro</span>
-            </div>
-            <p className={cn('text-muted-foreground mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
-              Get unlimited searches and premium features
-            </p>
-            <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-7 text-xs' : 'h-8')}>
-              <Link href="/pricing">Upgrade Now</Link>
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Self-hosted: no Pro gating or upgrade prompts */}
 
       {!usageLoading && (
-        <div className={cn('space-y-2', isMobile && !isProUser ? 'pb-4' : '')}>
+        <div className={cn('space-y-2')}>
           <h4 className={cn('font-semibold text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
             Activity (Past {monthsWindow} Months)
           </h4>
@@ -1288,55 +1238,13 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
                     Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. Renew
                     now to continue enjoying unlimited features.
                   </p>
-                  <Button
-                    asChild
-                    size="sm"
-                    className={cn(
-                      'mt-2 bg-yellow-600 hover:bg-yellow-700 text-white',
-                      isMobile ? 'h-7 text-xs' : 'h-8',
-                    )}
-                  >
-                    <Link href="/pricing">Renew Pro Access</Link>
-                  </Button>
+                  {/* Self-hosted: no renewal CTA */}
                 </div>
               </div>
             </div>
           )}
         </div>
-      ) : (
-        <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
-          <div className={cn('text-center border-2 border-dashed rounded-lg bg-muted/20', isMobile ? 'p-4' : 'p-6')}>
-            <HugeiconsIcon
-              icon={Crown02Icon}
-              size={isMobile ? 24 : 32}
-              color="currentColor"
-              strokeWidth={1.5}
-              className={cn('mx-auto text-muted-foreground mb-3')}
-            />
-            <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>No Active Subscription</h3>
-            <p className={cn('text-muted-foreground mb-4', isMobile ? 'text-[11px]' : 'text-xs')}>
-              Upgrade to Pro for unlimited access
-            </p>
-            <div className="space-y-2">
-              <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-8 text-xs' : 'h-9')}>
-                <Link href="/pricing">
-                  <HugeiconsIcon
-                    icon={Crown02Icon}
-                    size={isMobile ? 12 : 14}
-                    color="currentColor"
-                    strokeWidth={1.5}
-                    className={isMobile ? 'mr-1.5' : 'mr-2'}
-                  />
-                  Upgrade to Pro
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className={cn('w-full', isMobile ? 'h-7 text-xs' : 'h-8')}>
-                <Link href="/pricing">Compare Plans</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null}
 
       <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
         <h4 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Billing History</h4>
@@ -1605,8 +1513,10 @@ export function MemoriesSection() {
 }
 
 // Component for Connectors
+import { useUser } from '@/contexts/user-context';
+
 export function ConnectorsSection({ user }: { user: any }) {
-  const isProUser = user?.isProUser || false;
+  const { isProUser } = useUser();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);
   const [syncingProvider, setSyncingProvider] = useState<ConnectorProvider | null>(null);
@@ -1619,7 +1529,8 @@ export function ConnectorsSection({ user }: { user: any }) {
   } = useQuery({
     queryKey: ['connectors', user?.id],
     queryFn: listUserConnectorsAction,
-    enabled: !!user && isProUser,
+    // Self-hosted: connectors available for all authenticated users
+    enabled: !!user,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -1627,7 +1538,7 @@ export function ConnectorsSection({ user }: { user: any }) {
   const connectionStatusQueries = useQuery({
     queryKey: ['connectorsStatus', user?.id],
     queryFn: async () => {
-      if (!user?.id || !isProUser) return {};
+      if (!user?.id) return {};
 
       const statusPromises = Object.keys(CONNECTOR_CONFIGS).map(async (provider) => {
         try {
@@ -1648,7 +1559,7 @@ export function ConnectorsSection({ user }: { user: any }) {
         {} as Record<string, any>,
       );
     },
-    enabled: !!user?.id && isProUser,
+    enabled: !!user?.id,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -1720,46 +1631,16 @@ export function ConnectorsSection({ user }: { user: any }) {
         </p>
       </div>
 
-      {/* Beta Announcement Alert */}
+      {/* Beta Announcement Alert (self-hosted: no Pro gating) */}
       <Alert className="border-primary/20 bg-primary/5">
         <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 text-primary" />
-        <AlertTitle className="text-foreground">Connectors Available in Beta</AlertTitle>
+        <AlertTitle className="text-foreground">Connectors (Beta)</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          Connectors are now available for Pro users! Please note that this feature is in beta and there may be breaking
-          changes as we continue to improve the experience.
+          Connectors are available in beta. Expect changes as the experience improves.
         </AlertDescription>
       </Alert>
 
-      {!isProUser && (
-        <>
-          <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-primary/5">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <HugeiconsIcon
-                  icon={Crown02Icon}
-                  size={32}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-lg">Pro Feature</h4>
-                <p className="text-muted-foreground text-sm max-w-md">
-                  Connectors are available for Pro users only. Upgrade to connect your Google Drive, Notion, and
-                  OneDrive accounts.
-                </p>
-              </div>
-              <Button asChild className="mt-4">
-                <Link href="/pricing">
-                  <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} className="mr-2" />
-                  Upgrade to Pro
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Self-hosted: no Pro gate. Always show connectors UI below. */}
 
       {isProUser && (
         <div className="space-y-3">
@@ -2041,11 +1922,7 @@ export function SettingsDialog({
       label: 'Usage',
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Analytics01Icon} className={className} />,
     },
-    {
-      value: 'subscription',
-      label: 'Subscription',
-      icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Crown02Icon} className={className} />,
-    },
+    // Self-hosted: removed subscription tab
     {
       value: 'preferences',
       label: 'Preferences',
@@ -2078,9 +1955,7 @@ export function SettingsDialog({
         <UsageSection user={user} />
       </TabsContent>
 
-      <TabsContent value="subscription" className="mt-0">
-        <SubscriptionSection subscriptionData={subscriptionData} isProUser={isProUser} user={user} />
-      </TabsContent>
+      {/* Self-hosted: no subscription tab */}
 
       <TabsContent
         value="preferences"

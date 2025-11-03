@@ -7,7 +7,7 @@ export { WarningCard, TotalLimitWarning, DailyLimitWarning } from './warning-car
 export { ActionButtons } from './action-buttons';
 export { LookoutCard } from './lookout-card';
 export { LookoutDetailsSidebar } from './lookout-details-sidebar';
-export { ProUpgradeScreen } from './pro-upgrade-screen';
+// export { ProUpgradeScreen } from './pro-upgrade-screen';
 export { LookoutForm } from './lookout-form';
 export { TimezoneSelector } from './timezone-selector';
 export { TimePicker } from './time-picker';

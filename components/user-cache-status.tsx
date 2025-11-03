@@ -55,13 +55,7 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
               <span className="text-sm font-medium truncate max-w-[150px]">{user.email || 'N/A'}</span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Pro Status:</span>
-              <div className="flex items-center gap-1">
-                {isProUser && <Crown className="h-3 w-3 text-yellow-500" />}
-                <span className="text-sm font-medium">{isProUser ? 'Pro User' : 'Free User'}</span>
-              </div>
-            </div>
+            {/* Self-hosted: hide pro/free labels and crown icon */}
 
             {isProUser && (
               <>

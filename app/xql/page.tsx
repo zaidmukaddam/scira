@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { Tweet } from 'react-tweet';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
-import { XQLProUpgradeScreen } from '@/components/xql-pro-upgrade-screen';
 import { BorderTrail } from '@/components/core/border-trail';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { cn } from '@/lib/utils';
@@ -25,7 +24,7 @@ export default function XQLPage() {
   const [copiedResult, setCopiedResult] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { user, isProUser, isLoading: isProStatusLoading } = useUser();
+  const { user, isLoading: isProStatusLoading } = useUser();
   const router = useRouter();
 
   const { messages, sendMessage, status } = useChat<XQLMessage>({
@@ -76,10 +75,6 @@ export default function XQLPage() {
   }, [user, router, isProStatusLoading]);
 
   const lastMessage = messages[messages.length - 1];
-
-  if (!isProStatusLoading && !isProUser) {
-    return <XQLProUpgradeScreen />;
-  }
 
   return (
     <div

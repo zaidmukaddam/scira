@@ -26,16 +26,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
-import { checkImageModeration, enhancePrompt, getDiscountConfigAction, getUserCountryCode } from '@/app/actions';
-import { DiscountConfig } from '@/lib/discount';
-import { PRICING } from '@/lib/constants';
+import { checkImageModeration, enhancePrompt, getUserCountryCode } from '@/app/actions';
 import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   CpuIcon,
   GlobalSearchIcon,
   AtomicPowerIcon,
-  Crown02Icon,
   DocumentAttachmentIcon,
   ConnectIcon,
 } from '@hugeicons/core-free-icons';
@@ -51,17 +48,9 @@ import { useLocation } from '@/hooks/use-location';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
+import { useUser } from '@/contexts/user-context';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
-
-// Pro Badge Component
-const ProBadge = ({ className = '' }: { className?: string }) => (
-  <span
-    className={`font-baumans inline-flex items-center gap-1 rounded-lg shadow-sm !border-none !outline-0 ring-offset-1 !ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 !pb-2 sm:pt-1 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
-  >
-    <span>pro</span>
-  </span>
-);
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -89,11 +78,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     user,
     selectedGroup,
   }) => {
-    const isProUser = useMemo(
-      () =>
-        user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
-      [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
-    );
+    const { isProUser } = useUser();
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
@@ -108,12 +93,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const availableModels = useMemo(() => getFilteredModels(countryCode || undefined), [countryCode]);
 
-    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
-    const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
     const [open, setOpen] = useState(false);
-    const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
 
     const location = useLocation();
     const isMobile = useIsMobile();
@@ -239,97 +221,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [searchQuery, escapeHtml, escapeRegExp],
     );
 
-    // Fetch discount config when needed
-    const fetchDiscountConfig = useCallback(async () => {
-      if (discountConfig) return; // Already fetched
-
-      try {
-        const config = await getDiscountConfigAction();
-        setDiscountConfig(config);
-      } catch (error) {
-        console.error('Failed to fetch discount config:', error);
-      }
-    }, [discountConfig]);
-
-    // Calculate pricing with discounts
-    const calculatePricing = useCallback(() => {
-      const defaultUSDPrice = PRICING.PRO_MONTHLY;
-      const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
-
-      // Check if discount should be applied
-      const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
-      const shouldApplyDiscount = isDevMode
-        ? discountConfig?.code && discountConfig?.message
-        : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
-
-      if (!discountConfig || !shouldApplyDiscount) {
-        return {
-          usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-          inr: location.isIndia
-            ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-            : null,
-        };
-      }
-
-      // USD pricing: prefer explicit finalPrice over percentage
-      let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
-        originalPrice: defaultUSDPrice,
-        finalPrice: defaultUSDPrice,
-        hasDiscount: false,
-      };
-      if (typeof discountConfig.finalPrice === 'number') {
-        const original =
-          typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-        usdPricing = {
-          originalPrice: original,
-          finalPrice: discountConfig.finalPrice,
-          hasDiscount: true,
-        };
-      } else if (typeof discountConfig.percentage === 'number') {
-        const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-        const usdSavings = (base * discountConfig.percentage) / 100;
-        const usdFinalPrice = base - usdSavings;
-        usdPricing = {
-          originalPrice: base,
-          finalPrice: usdFinalPrice,
-          hasDiscount: true,
-        };
-      }
-
-      // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
-      let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-      if (location.isIndia) {
-        if (typeof discountConfig.inrPrice === 'number') {
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: discountConfig.inrPrice,
-            hasDiscount: true,
-          };
-        } else if (typeof discountConfig.percentage === 'number') {
-          const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
-          const inrFinalPrice = defaultINRPrice - inrSavings;
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: inrFinalPrice,
-            hasDiscount: true,
-          };
-        } else {
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: defaultINRPrice,
-            hasDiscount: false,
-          };
-        }
-      }
-
-      return {
-        usd: usdPricing,
-        inr: inrPricing,
-      };
-    }, [discountConfig, location.isIndia]);
-
-    const pricing = calculatePricing();
-
     const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
       return (
         typeof p === 'object' &&
@@ -367,7 +258,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const filteredModels = useMemo(() => {
       let filtered = availableModels;
-      
+
       // Filter by attachment types
       if (hasImageAttachments && hasPdfAttachments) {
         filtered = filtered.filter((model) => model.vision && model.pdf);
@@ -376,13 +267,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       } else if (hasPdfAttachments) {
         filtered = filtered.filter((model) => model.pdf);
       }
-      
+
       // Filter by extreme mode
       const isExtremeMode = selectedGroup === 'extreme';
       if (isExtremeMode) {
         filtered = filtered.filter((model) => supportsExtremeMode(model.value));
       }
-      
+
       return filtered;
     }, [availableModels, hasImageAttachments, hasPdfAttachments, selectedGroup]);
 
@@ -439,11 +330,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [modelOrderMap] = useLocalStorage<Record<string, string[]>>('scira-model-order', {});
 
     const orderedGroupEntries = useMemo(() => {
-      const baseOrder = modelCategoryOrder && modelCategoryOrder.length > 0
-        ? modelCategoryOrder
-        : isProUser
-          ? ['Pro', 'Experimental', 'Free']
-          : ['Free', 'Experimental', 'Pro'];
+      const baseOrder =
+        modelCategoryOrder && modelCategoryOrder.length > 0
+          ? modelCategoryOrder
+          : isProUser
+            ? ['Pro', 'Experimental', 'Free']
+            : ['Free', 'Experimental', 'Pro'];
       const categoriesPresent = Object.keys(groupedModels);
       const normalizedOrder = [
         ...baseOrder.filter((c) => categoriesPresent.includes(c)),
@@ -482,6 +374,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       return normalizedByCategory;
     }, [groupedModels, isProUser, modelCategoryOrder, modelOrderMap, globalModelOrder]);
 
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
     const currentModel = useMemo(
       () => availableModels.find((m) => m.value === selectedModel),
       [availableModels, selectedModel],
@@ -497,7 +395,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
       // If current model is restricted in user's region, switch to default
       if (isCurrentModelRestricted && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from restricted model '${selectedModel}' to 'scira-default' - model not available in region ${countryCode}`);
+        console.log(
+          `Auto-switching from restricted model '${selectedModel}' to 'scira-default' - model not available in region ${countryCode}`,
+        );
         setSelectedModel('scira-default');
         toast.info('Switched to default model - Selected model not available in your region');
         return;
@@ -510,7 +410,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         setSelectedModel('scira-default');
 
         // Show a toast notification to inform the user
-        toast.info('Switched to default model - Pro subscription required for premium models');
+        toast.info('Switched to default model because the selected model is currently unavailable.');
       }
     }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels, countryCode]);
 
@@ -520,7 +420,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         if (!model) return;
 
         const requiresAuth = requiresAuthentication(model.value) && !user;
-        const requiresPro = requiresProSubscription(model.value) && !isProUser;
 
         if (isSubscriptionLoading) {
           return;
@@ -532,13 +431,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           return;
         }
 
-        if (requiresPro && !isProUser) {
-          setSelectedProModel(model);
-          fetchDiscountConfig();
-          setShowUpgradeDialog(true);
-          return;
-        }
-
         console.log('Selected model:', model.value);
         setSelectedModel(model.value.trim());
 
@@ -546,7 +438,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect, fetchDiscountConfig],
+      [availableModels, user, isSubscriptionLoading, setSelectedModel, onModelSelect],
     );
 
     // Shared command content renderer (not a component) to preserve focus
@@ -596,21 +488,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           if (requiresAuth) {
                             setSelectedAuthModel(model);
                             setShowSignInDialog(true);
-                          } else if (requiresPro && !isProUser) {
-                            setSelectedProModel(model);
-                            fetchDiscountConfig();
-                            setShowUpgradeDialog(true);
                           }
                           setOpen(false);
                         }}
                       >
                         <div className="flex items-center gap-1 min-w-0 flex-1">
-                          <div
-                            className={cn(
-                              'font-medium truncate flex-1',
-                              isMobile ? 'text-sm' : 'text-[11px]',
-                            )}
-                          >
+                          <div className={cn('font-medium truncate flex-1', isMobile ? 'text-sm' : 'text-[11px]')}>
                             {!isMobile && searchQuery ? (
                               <span
                                 className="inline"
@@ -620,15 +503,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                               <span className="inline">{model.label}</span>
                             )}
                           </div>
-                          {requiresAuth ? (
-                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
-                          ) : (
-                            <HugeiconsIcon
-                              icon={Crown02Icon}
-                              size={isMobile ? 14 : 12}
-                              color="currentColor"
-                              strokeWidth={1.5}
-                              className="text-muted-foreground flex-shrink-0"
+                          {requiresAuth && (
+                            <LockIcon
+                              className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')}
                             />
                           )}
                           {model.vision && (
@@ -682,12 +559,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                       )}
                     >
                       <div className="flex items-center gap-1 min-w-0 flex-1">
-                        <div
-                          className={cn(
-                            'font-medium truncate',
-                            isMobile ? 'text-sm' : 'text-[11px]',
-                          )}
-                        >
+                        <div className={cn('font-medium truncate', isMobile ? 'text-sm' : 'text-[11px]')}>
                           {!isMobile && searchQuery ? (
                             <span
                               className="inline"
@@ -698,7 +570,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           )}
                         </div>
                         <Check
-                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                          className={cn(
+                            'h-4 w-4 flex-shrink-0',
+                            selectedModel === model.value ? 'opacity-100' : 'opacity-0',
+                          )}
                         />
                         <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                           {model.isNew && (
@@ -730,15 +605,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                                 <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
                               );
                             } else if (requiresPro) {
-                              return (
-                                <HugeiconsIcon
-                                  icon={Crown02Icon}
-                                  size={isMobile ? 14 : 12}
-                                  color="currentColor"
-                                  strokeWidth={1.5}
-                                  className="text-muted-foreground"
-                                />
-                              );
+                              return null;
                             }
                             return null;
                           })()}
@@ -782,61 +649,110 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="px-3 py-6 text-xs text-muted-foreground">No model found.</div>
             )
           ) : (
-            (isProUser
-              ? [
-                [
-                  'all',
-                  orderedGroupEntries.flatMap(([, ms]) => ms),
-                ] as const,
-              ]
-              : orderedGroupEntries
-            ).map(([category, categoryModels], categoryIndex) => (
-              <CommandGroup key={String(category)}>
-                {!isProUser && categoryIndex > 0 && <div className="my-1 border-t border-border" />}
-                {!isProUser && (
-                  <div
-                    className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
-                  >
-                    {String(category)} Models
-                  </div>
-                )}
-                {categoryModels.map((model) => {
-                  const requiresAuth = requiresAuthentication(model.value) && !user;
-                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                  const isLocked = requiresAuth || requiresPro;
+            (isProUser ? [['all', orderedGroupEntries.flatMap(([, ms]) => ms)] as const] : orderedGroupEntries).map(
+              ([category, categoryModels], categoryIndex) => (
+                <CommandGroup key={String(category)}>
+                  {!isProUser && categoryIndex > 0 && <div className="my-1 border-t border-border" />}
+                  {!isProUser && (
+                    <div
+                      className={cn(
+                        'font-medium text-muted-foreground px-2 py-1',
+                        isMobile ? 'text-xs' : 'text-[10px]',
+                      )}
+                    >
+                      {String(category)} Models
+                    </div>
+                  )}
+                  {categoryModels.map((model) => {
+                    const requiresAuth = requiresAuthentication(model.value) && !user;
 
-                  if (isLocked) {
-                    return (
-                      <div
-                        key={model.value}
-                        className={cn(
-                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
-                          'transition-all duration-200',
-                          'opacity-50 hover:opacity-70 hover:bg-accent',
-                        )}
-                        onClick={() => {
-                          if (isSubscriptionLoading) {
-                            return;
-                          }
+                    if (requiresAuth) {
+                      return (
+                        <div
+                          key={model.value}
+                          className={cn(
+                            'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
+                            'transition-all duration-200',
+                            'opacity-50 hover:opacity-70 hover:bg-accent',
+                          )}
+                          onClick={() => {
+                            if (isSubscriptionLoading) {
+                              return;
+                            }
 
-                          if (requiresAuth) {
                             setSelectedAuthModel(model);
                             setShowSignInDialog(true);
-                          } else if (requiresPro && !isProUser) {
-                            setSelectedProModel(model);
-                            fetchDiscountConfig();
-                            setShowUpgradeDialog(true);
-                          }
+                            setOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-1 min-w-0 flex-1">
+                            <div className={cn('font-medium truncate flex-1', isMobile ? 'text-sm' : 'text-[11px]')}>
+                              {!isMobile && searchQuery ? (
+                                <span
+                                  className="inline"
+                                  dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                                />
+                              ) : (
+                                <span className="inline">{model.label}</span>
+                              )}
+                            </div>
+                            {requiresAuth && (
+                              <LockIcon
+                                className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')}
+                              />
+                            )}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <CommandItem
+                        key={model.value}
+                        value={model.value}
+                        onSelect={(currentValue) => {
+                          handleModelChange(currentValue);
                           setOpen(false);
                         }}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                          'transition-all duration-200',
+                          'hover:bg-accent',
+                          'data-[selected=true]:bg-accent',
+                        )}
                       >
                         <div className="flex items-center gap-1 min-w-0 flex-1">
-                          <div
-                            className={cn(
-                              'font-medium truncate flex-1',
-                              isMobile ? 'text-sm' : 'text-[11px]',
-                            )}
-                          >
+                          <div className={cn('font-medium truncate', isMobile ? 'text-sm' : 'text-[11px]')}>
                             {!isMobile && searchQuery ? (
                               <span
                                 className="inline"
@@ -846,165 +762,84 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                               <span className="inline">{model.label}</span>
                             )}
                           </div>
-                          {requiresAuth ? (
-                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
-                          ) : (
-                            <HugeiconsIcon
-                              icon={Crown02Icon}
-                              size={isMobile ? 14 : 12}
-                              color="currentColor"
-                              strokeWidth={1.5}
-                              className="text-muted-foreground flex-shrink-0"
-                            />
-                          )}
-                          {model.vision && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.reasoning && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.pdf && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
+                          <Check
+                            className={cn(
+                              'h-4 w-4 flex-shrink-0',
+                              selectedModel === model.value ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                          <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                            {model.isNew && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {model.fast && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {(() => {
+                              const requiresAuth = requiresAuthentication(model.value) && !user;
+                              const requiresPro = requiresProSubscription(model.value) && !isProUser;
+
+                              if (requiresAuth) {
+                                return (
+                                  <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
+                                );
+                              } else if (requiresPro) {
+                                return null;
+                              }
+                              return null;
+                            })()}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  'inline-flex items-center justify-center rounded bg-secondary/50',
+                                  isMobile ? 'p-1' : 'p-0.5',
+                                )}
+                              >
+                                <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      </CommandItem>
                     );
-                  }
-
-                  return (
-                    <CommandItem
-                      key={model.value}
-                      value={model.value}
-                      onSelect={(currentValue) => {
-                        handleModelChange(currentValue);
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                        'transition-all duration-200',
-                        'hover:bg-accent',
-                        'data-[selected=true]:bg-accent',
-                      )}
-                    >
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                        <div
-                          className={cn(
-                            'font-medium truncate',
-                            isMobile ? 'text-sm' : 'text-[11px]',
-                          )}
-                        >
-                          {!isMobile && searchQuery ? (
-                            <span
-                              className="inline"
-                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
-                            />
-                          ) : (
-                            <span className="inline">{model.label}</span>
-                          )}
-                        </div>
-                        <Check
-                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
-                        />
-                        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-                          {model.isNew && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.fast && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {(() => {
-                            const requiresAuth = requiresAuthentication(model.value) && !user;
-                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
-
-                            if (requiresAuth) {
-                              return (
-                                <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
-                              );
-                            } else if (requiresPro) {
-                              return (
-                                <HugeiconsIcon
-                                  icon={Crown02Icon}
-                                  size={isMobile ? 14 : 12}
-                                  color="currentColor"
-                                  strokeWidth={1.5}
-                                  className="text-muted-foreground"
-                                />
-                              );
-                            }
-                            return null;
-                          })()}
-                          {model.vision && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.reasoning && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.pdf && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            ))
+                  })}
+                </CommandGroup>
+              ),
+            )
           )}
         </CommandList>
       </Command>
@@ -1033,7 +868,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         {...props}
       >
         <HugeiconsIcon icon={CpuIcon} size={24} color="currentColor" strokeWidth={2} />
-        <span className="text-xs font-medium sm:block hidden">{currentModel?.label}</span>
+        <span className="text-xs font-medium sm:block hidden">{isMounted ? currentModel?.label : ''}</span>
         <ChevronsUpDown className="h-4 w-4 opacity-50" />
       </Button>
     ));
@@ -1075,142 +910,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           </Popover>
         )}
 
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
-            <DialogHeader className="p-2">
-              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
-                </div>
-                <div className="relative z-10 flex flex-col gap-4">
-                  <DialogTitle className="flex items-start gap-3 text-white">
-                    <div className="flex flex-col gap-2 min-w-0 flex-1">
-                      {selectedProModel?.label ? (
-                        <>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-lg sm:text-xl font-bold truncate">{selectedProModel.label}</span>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <span className="text-white/80">requires</span>
-                              <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Scira</span>
-                          <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
-                        </div>
-                      )}
-                    </div>
-                  </DialogTitle>
-                  <DialogDescription className="text-white/90">
-                    {discountConfig &&
-                      (() => {
-                        const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-                        const shouldShowDiscount = isDevMode
-                          ? discountConfig.code && discountConfig.message && discountConfig.percentage
-                          : discountConfig.enabled &&
-                          discountConfig.code &&
-                          discountConfig.message &&
-                          discountConfig.percentage;
-
-                        if (shouldShowDiscount && discountConfig.showPrice && discountConfig.finalPrice) {
-                          return (
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
-                                {discountConfig.showPrice && discountConfig.finalPrice
-                                  ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
-                                  : discountConfig.percentage
-                                    ? `${discountConfig.percentage}% OFF`
-                                    : 'DISCOUNT'}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
-                    <div className="flex items-center gap-2">
-                      {pricing.usd.hasDiscount ? (
-                        <>
-                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                      )}
-                      <span className="text-sm text-white/80">/month</span>
-                    </div>
-                    <p className="text-sm text-white/80 text-left mt-2">
-                      {selectedProModel?.label
-                        ? 'Upgrade to access premium AI models and features'
-                        : 'Unlock advanced AI models, unlimited searches, and premium features'}
-                    </p>
-                  </DialogDescription>
-                  <Button
-                    onClick={() => {
-                      window.location.href = '/pricing';
-                    }}
-                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
-                  >
-                    Upgrade to Pro
-                  </Button>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="px-6 py-6 flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
-                  <p className="text-xs text-muted-foreground">
-                    Access to all AI models including Grok 4, Claude and GPT-5
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
-                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
-                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
-                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 w-full items-center mt-4">
-                <div className="flex-1 border-b border-foreground/10" />
-                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
-                <div className="flex-1 border-b border-foreground/10" />
-              </div>
-
-              <Button
-                variant="ghost"
-                onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground mt-2"
-                size="sm"
-              >
-                Not now
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
           <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
             <DialogHeader className="p-2">
@@ -1242,7 +941,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                       )}
                     </div>
                   </DialogTitle>
-                  <DialogDescription className="text-white/90">
+                  <DialogDescription className="text-white/90" asChild>
                     <p className="text-sm text-white/80 text-left">
                       {selectedAuthModel?.label
                         ? `${selectedAuthModel.label} requires an account to access`
@@ -1722,6 +1421,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const { data: session } = useSession();
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
     const isExtreme = selectedGroup === 'extreme';
 
     // Get search provider from localStorage with reactive updates
@@ -1760,9 +1465,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const orderedVisibleGroups = useMemo(() => {
       const order = mergedGroupOrder;
       const byId = new Map(visibleGroups.map((g) => [g.id, g] as const));
-      const ordered = order
-        .map((id) => byId.get(id))
-        .filter((g): g is NonNullable<typeof g> => Boolean(g));
+      const ordered = order.map((id) => byId.get(id)).filter((g): g is NonNullable<typeof g> => Boolean(g));
       const remaining = visibleGroups.filter((g) => !order.includes(g.id));
       return [...ordered, ...remaining];
     }, [visibleGroups, mergedGroupOrder]);
@@ -1836,7 +1539,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     // Handle opening the dropdown/drawer
     const handleOpenChange = useCallback(
       (newOpen: boolean) => {
-        if (newOpen && isExtreme) {
+        if (newOpen && isMounted && isExtreme) {
           // If trying to open in extreme mode, switch back to web mode instead
           const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
           if (webGroup) {
@@ -1846,21 +1549,21 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         }
         setOpen(newOpen);
       },
-      [isExtreme, onGroupSelect, dynamicSearchGroups],
+      [isExtreme, onGroupSelect, dynamicSearchGroups, isMounted],
     );
 
     // Handle group selector button click (mobile only)
     const handleGroupSelectorClick = useCallback(() => {
-      if (isExtreme) {
+      if (isMounted && isExtreme) {
         // Switch back to web mode when clicking groups in extreme mode
         const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
         if (webGroup) {
           onGroupSelect(webGroup);
         }
-      } else {
+      } else if (isMounted) {
         setOpen(true);
       }
-    }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
+    }, [isExtreme, onGroupSelect, dynamicSearchGroups, isMounted]);
 
     // Shared content component
     const GroupSelectionContent = () => (
@@ -1898,11 +1601,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-1">
                       <span className="font-medium truncate text-[11px] text-foreground">{group.name}</span>
-                      {'requirePro' in group && group.requirePro && !isProUser && (
-                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium bg-primary/10 text-primary border border-primary/20">
-                          PRO
-                        </span>
-                      )}
+                      {/* Self-hosted: no PRO tag in search modes */}
                     </div>
                     <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
                       {group.description}
@@ -1935,18 +1634,18 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                       onClick={handleGroupSelectorClick}
                       className={cn(
                         'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
-                        !isExtreme
+                        isMounted && !isExtreme
                           ? 'bg-accent text-foreground hover:bg-accent/80'
                           : 'text-muted-foreground hover:bg-accent',
                       )}
                     >
-                      {selectedGroupData && !isExtreme && (
+                      {selectedGroupData && isMounted && !isExtreme && (
                         <>
                           <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
-                      {isExtreme && (
+                      {isMounted && isExtreme && (
                         <>
                           <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
                         </>
@@ -1955,7 +1654,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   </DrawerTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[220px] p-2">
-                  {isExtreme ? (
+                  {isMounted && isExtreme ? (
                     <p className="text-xs">Switch back to search modes</p>
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
@@ -1970,33 +1669,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                         </div>
                         <div className="flex items-center gap-1">
                           <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
-                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-                              PRO
-                            </span>
-                          )}
+                          {/* Self-hosted: no PRO label */}
                         </div>
                       </div>
-                      <p className="text-[11px] leading-snug text-secondary">
-                        {selectedGroupData.description}
-                      </p>
-                      <p className="text-[10px] text-accent italic">
-                        Click to switch search mode
-                      </p>
-                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                        <div className="pt-1 border-t border-border/50">
-                          <a
-                            href="/pricing"
-                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
-                          >
-                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
-                              Unlock with Pro
-                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </a>
-                        </div>
-                      )}
+                      <p className="text-[11px] leading-snug text-secondary">{selectedGroupData.description}</p>
+                      <p className="text-[10px] text-accent italic">Click to switch search mode</p>
+                      {/* Self-hosted: no Pro upsell for groups */}
                     </div>
                   ) : (
                     <p className="text-xs">Choose search mode</p>
@@ -2024,11 +1702,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm text-foreground">{group.name}</span>
-                              {'requirePro' in group && group.requirePro && !isProUser && (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                  PRO
-                                </span>
-                              )}
+                              {/* Self-hosted: no PRO label */}
                             </div>
                             <div className="text-xs text-muted-foreground mt-0.5">{group.description}</div>
                           </div>
@@ -2057,7 +1731,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                       size="sm"
                       className={cn(
                         'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
-                        !isExtreme
+                        isMounted && !isExtreme
                           ? 'bg-accent text-foreground hover:bg-accent/80'
                           : 'text-muted-foreground hover:bg-accent',
                       )}
@@ -2077,7 +1751,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[220px] p-2">
-                  {isExtreme ? (
+                  {isMounted && isExtreme ? (
                     <p className="text-xs">Switch back to search modes</p>
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
@@ -2092,33 +1766,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                         </div>
                         <div className="flex items-center gap-1">
                           <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
-                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-                              PRO
-                            </span>
-                          )}
+                          {/* Self-hosted: no PRO label */}
                         </div>
                       </div>
-                      <p className="text-[11px] leading-snug text-secondary">
-                        {selectedGroupData.description}
-                      </p>
-                      <p className="text-[10px] text-accent italic">
-                        Click to switch search mode
-                      </p>
-                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                        <div className="pt-1 border-t border-border/50">
-                          <a
-                            href="/pricing"
-                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
-                          >
-                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
-                              Unlock with Pro
-                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </a>
-                        </div>
-                      )}
+                      <p className="text-[11px] leading-snug text-secondary">{selectedGroupData.description}</p>
+                      <p className="text-[10px] text-accent italic">Click to switch search mode</p>
+                      {/* Self-hosted: no upsell */}
                     </div>
                   ) : (
                     <p className="text-xs">Choose search mode</p>
@@ -2147,7 +1800,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 onClick={handleToggleExtreme}
                 className={cn(
                   'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
-                  isExtreme
+                  isMounted && isExtreme
                     ? 'bg-accent text-foreground hover:bg-accent/80'
                     : !session
                       ? 'text-muted-foreground/50 cursor-pointer'
@@ -2169,31 +1822,13 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                     />
                   </div>
                   <p className="font-semibold text-xs">
-                    {isExtreme
-                      ? 'Extreme Search Active'
-                      : session
-                        ? 'Extreme Search'
-                        : 'Sign in Required'
-                    }
+                    {isMounted && isExtreme ? 'Extreme Search Active' : session ? 'Extreme Search' : 'Sign in Required'}
                   </p>
                 </div>
                 <p className="text-[11px] leading-snug text-secondary">
                   Deep research with multiple sources and in-depth analysis with 3x sources
                 </p>
-                {!isProUser && (
-                  <div className="pt-1 border-t border-border/50">
-                    <a
-                      href="/pricing"
-                      className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
-                    >
-                      <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                      <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
-                        Get unlimited searches with Pro
-                        <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </span>
-                    </a>
-                  </div>
-                )}
+                {/* Self-hosted: no upsell */}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -2241,9 +1876,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isTypewriting, setIsTypewriting] = useState(false);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showSignInDialog, setShowSignInDialog] = useState(false);
-  const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
 
   // Combined state for animations to avoid restart issues
   const isEnhancementActive = isEnhancing || isTypewriting;
@@ -2253,10 +1886,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const location = useLocation();
   const isMobile = useIsMobile();
 
-  const isProUser = useMemo(
-    () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
-    [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
-  );
+  // Self-hosted: use context-based Pro status (always true)
+  const { isProUser } = useUser();
 
   const isProcessing = useMemo(() => status === 'submitted' || status === 'streaming', [status]);
 
@@ -2278,231 +1909,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     };
   }, [cleanupMediaRecorder]);
 
-  // Fetch discount config when needed
-  const fetchDiscountConfigForm = useCallback(async () => {
-    if (discountConfig) return; // Already fetched
-
-    try {
-      const config = await getDiscountConfigAction();
-      setDiscountConfig(config);
-    } catch (error) {
-      console.error('Failed to fetch discount config:', error);
-    }
-  }, [discountConfig]);
-
-  // Calculate pricing with discounts
-  const calculatePricing = useCallback(() => {
-    const defaultUSDPrice = PRICING.PRO_MONTHLY;
-    const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
-
-    console.log('calculatePricing called with:', {
-      discountConfig,
-      isIndia: location.isIndia,
-      nodeEnv: process.env.NODE_ENV,
-    });
-
-    // Check if discount should be applied
-    const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
-    const shouldApplyDiscount = isDevMode
-      ? discountConfig?.code && discountConfig?.message
-      : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
-
-    console.log('Discount check:', {
-      isDevMode,
-      shouldApplyDiscount,
-      enabled: discountConfig?.enabled,
-      code: discountConfig?.code,
-      message: discountConfig?.message,
-      percentage: discountConfig?.percentage,
-    });
-
-    if (!discountConfig || !shouldApplyDiscount) {
-      console.log('No discount applied - returning default pricing');
-      return {
-        usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-        inr: location.isIndia
-          ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-          : null,
-      };
-    }
-
-    // USD pricing: prefer explicit finalPrice over percentage
-    let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
-      originalPrice: defaultUSDPrice,
-      finalPrice: defaultUSDPrice,
-      hasDiscount: false,
-    };
-    if (typeof discountConfig.finalPrice === 'number') {
-      const original =
-        typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-      usdPricing = {
-        originalPrice: original,
-        finalPrice: discountConfig.finalPrice,
-        hasDiscount: true,
-      };
-    } else if (typeof discountConfig.percentage === 'number') {
-      const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-      const usdSavings = (base * discountConfig.percentage) / 100;
-      const usdFinalPrice = base - usdSavings;
-      usdPricing = {
-        originalPrice: base,
-        finalPrice: usdFinalPrice,
-        hasDiscount: true,
-      };
-    }
-
-    // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
-    let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-    if (location.isIndia) {
-      if (typeof discountConfig.inrPrice === 'number') {
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: discountConfig.inrPrice,
-          hasDiscount: true,
-        };
-      } else if (typeof discountConfig.percentage === 'number') {
-        const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
-        const inrFinalPrice = defaultINRPrice - inrSavings;
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: inrFinalPrice,
-          hasDiscount: true,
-        };
-      } else {
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: defaultINRPrice,
-          hasDiscount: false,
-        };
-      }
-    }
-
-    return {
-      usd: usdPricing,
-      inr: inrPricing,
-    };
-  }, [discountConfig, location.isIndia]);
-
-  const pricing = calculatePricing();
-
-  // Control audio lines animation
-  useEffect(() => {
-    if (audioLinesRef.current) {
-      if (isRecording) {
-        audioLinesRef.current.startAnimation();
-      } else {
-        audioLinesRef.current.stopAnimation();
-      }
-    }
-  }, [isRecording]);
-
-  // Control grip icon animation using combined state to avoid restarts
-  useEffect(() => {
-    if (gripIconRef.current) {
-      if (isEnhancementActive) {
-        gripIconRef.current.startAnimation();
-      } else {
-        gripIconRef.current.stopAnimation();
-      }
-    }
-  }, [isEnhancementActive]);
-
-  // Global typing detection to auto-focus form
-  useEffect(() => {
-    const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      // Don't interfere if user is already typing in an input, textarea, or contenteditable
-      const target = event.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.contentEditable === 'true' ||
-        target.closest('[contenteditable="true"]')
-      ) {
-        return;
-      }
-
-      // Don't interfere with keyboard shortcuts (Ctrl/Cmd + key)
-      if (event.ctrlKey || event.metaKey || event.altKey) {
-        return;
-      }
-
-      // Don't interfere with function keys, arrow keys, etc.
-      if (
-        event.key.length > 1 && // Multi-character keys like 'Enter', 'Escape', etc.
-        !['Backspace', 'Delete', 'Space'].includes(event.key)
-      ) {
-        return;
-      }
-
-      // Don't focus if form is already focused
-      if (inputRef.current && document.activeElement === inputRef.current) {
-        return;
-      }
-
-      // Don't focus if recording is active
-      if (isRecording) {
-        return;
-      }
-
-      // Focus the input and add the typed character
-      if (inputRef.current && event.key.length === 1) {
-        inputRef.current.focus();
-        // If it's a printable character, add it to the input
-        if (event.key !== ' ' || input.length > 0) {
-          // Allow space only if there's already content
-          setInput(input + event.key);
-          event.preventDefault();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleGlobalKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleGlobalKeyDown);
-    };
-  }, [isRecording, input, setInput, inputRef]);
-
-  // Typewriter effect for enhanced text
-  const typewriterText = useCallback(
-    (text: string, speed: number = 5) => {
-      if (!inputRef.current) return;
-
-      setIsTypewriting(true);
-      let currentIndex = 0;
-
-      const typeNextChar = () => {
-        if (currentIndex <= text.length && inputRef.current) {
-          const currentText = text.substring(0, currentIndex);
-          setInput(currentText);
-
-          // Auto-resize textarea during typing
-          if (inputRef.current) {
-            inputRef.current.style.height = 'auto';
-            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
-          }
-
-          currentIndex++;
-
-          if (currentIndex <= text.length) {
-            setTimeout(typeNextChar, speed);
-          } else {
-            setIsTypewriting(false);
-          }
-        }
-      };
-
-      typeNextChar();
-    },
-    [setInput, inputRef],
-  );
-
   const handleEnhance = useCallback(async () => {
-    if (!isProUser) {
-      fetchDiscountConfigForm();
-      setShowUpgradeDialog(true);
-      return;
-    }
     if (!input || input.trim().length === 0) {
       toast.error('Please enter a prompt to enhance');
       return;
@@ -2518,9 +1925,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
       const result = await enhancePrompt(input);
 
       if (result?.success && result.enhanced) {
-        // Clear input and start typewriter
-        setInput('');
-        typewriterText(result.enhanced);
+        // Set enhanced input
+        setInput(result.enhanced);
 
         toast.success('✨ Prompt enhanced successfully!', { id: 'enhance-prompt' });
         setIsEnhancing(false);
@@ -2535,17 +1941,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       toast.error('Failed to enhance prompt', { id: 'enhance-prompt' });
       setIsEnhancing(false);
     }
-  }, [
-    input,
-    isProcessing,
-    isProUser,
-    setInput,
-    inputRef,
-    typewriterText,
-    isEnhancing,
-    setShowUpgradeDialog,
-    fetchDiscountConfigForm,
-  ]);
+  }, [input, isProcessing, setInput, inputRef, isEnhancing]);
 
   const handleRecord = useCallback(async () => {
     if (isRecording && mediaRecorderRef.current) {
@@ -2688,7 +2084,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (group: SearchGroup) => {
       if (!isEnhancing && !isTypewriting) {
         setSelectedGroup(group.id);
-        
+
         // Auto-switch to extreme-enabled model when extreme mode is selected
         if (group.id === 'extreme' && !supportsExtremeMode(selectedModel)) {
           // Get all available models and filter for extreme support
@@ -2696,30 +2092,30 @@ const FormComponent: React.FC<FormComponentProps> = ({
           const extremeModels = allModels.filter((model) => {
             // Check if model supports extreme mode
             if (!supportsExtremeMode(model.value)) return false;
-            
+
             // Check authentication requirement
             if (requiresAuthentication(model.value) && !user) return false;
-            
+
             // Check pro requirement
             if (requiresProSubscription(model.value) && !isProUser) return false;
-            
+
             return true;
           });
-          
+
           if (extremeModels.length > 0) {
             // Prioritize: scira-default if available, otherwise first free model, then first available
             const defaultModel = extremeModels.find((m) => m.value === 'scira-default');
             const firstFreeModel = extremeModels.find((m) => !m.pro);
             const fallbackModel = extremeModels[0];
-            
+
             const targetModel = defaultModel || firstFreeModel || fallbackModel;
-            
+
             console.log(`Auto-switching to extreme-enabled model '${targetModel.value}' for extreme mode`);
             setSelectedModel(targetModel.value);
             toast.info(`Switched to ${targetModel.label} for extreme mode`);
           }
         }
-        
+
         inputRef.current?.focus();
       }
     },
@@ -3516,7 +2912,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -3529,7 +2925,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+                (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
             )}
             tabIndex={-1}
           />
@@ -3555,7 +2951,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       size: 0,
                     } as Attachment
                   }
-                  onRemove={() => { }}
+                  onRemove={() => {}}
                   isUploading={true}
                 />
               ))}
@@ -3943,102 +3339,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
           </div>
         </div>
 
-        {/* Pro Upgrade Dialog */}
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
-            <DialogHeader className="p-2">
-              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
-                </div>
-                <div className="relative z-10 flex flex-col gap-4">
-                  <DialogTitle className="flex items-center gap-3 text-white">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <span className="text-xl sm:text-2xl font-bold">Unlock</span>
-                      <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight mb-0.5" />
-                    </div>
-                  </DialogTitle>
-                  <DialogDescription className="text-white/90">
-                    <div className="flex items-center gap-2 mb-2">
-                      {pricing.usd.hasDiscount ? (
-                        <>
-                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                      )}
-                      <span className="text-sm text-white/80">/month</span>
-                    </div>
-                    <p className="text-sm text-white/80 text-left">
-                      Get enhanced capabilities including prompt enhancement and unlimited features
-                    </p>
-                  </DialogDescription>
-                  <Button
-                    onClick={() => {
-                      window.location.href = '/pricing';
-                    }}
-                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium mt-3"
-                  >
-                    {discountConfig?.buttonText || 'Upgrade to Pro'}
-                  </Button>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="px-6 py-6 flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
-                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
-                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
-                  <p className="text-xs text-muted-foreground">
-                    Access to all AI models including Grok 4, Claude and GPT-5
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
-                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 w-full items-center mt-4">
-                <div className="flex-1 border-b border-foreground/10" />
-                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
-                <div className="flex-1 border-b border-foreground/10" />
-              </div>
-
-              <Button
-                variant="ghost"
-                onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground mt-2"
-                size="sm"
-              >
-                Not now
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Sign In Dialog */}
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
           <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
@@ -4069,7 +3369,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       <span className="text-sm text-white/70 truncate">for Voice Input</span>
                     </div>
                   </DialogTitle>
-                  <DialogDescription className="text-white/90">
+                  <DialogDescription className="text-white/90" asChild>
                     <p className="text-sm text-white/80 text-left">
                       Voice input requires an account to access. Create an account to unlock this feature and more.
                     </p>

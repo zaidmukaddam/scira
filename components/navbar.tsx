@@ -95,7 +95,7 @@ const Navbar = memo(
                 variant="default"
                 size="sm"
                 className="rounded-md h-7 px-2 text-xs sm:hidden"
-                onClick={() => router.push('/pricing')}
+                onClick={() => router.push('/settings')}
               >
                 Upgrade
               </Button>
@@ -112,14 +112,7 @@ const Navbar = memo(
             >
               <div className="flex items-center bg-muted/50 rounded-lg border border-border">
                 <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="rounded-md mr-1.5 h-6"
-                  onClick={() => router.push('/pricing')}
-                >
-                  Upgrade
-                </Button>
+                {/* Self-hosted: no pricing route */}
               </div>
             </div>
           )}
@@ -165,37 +158,7 @@ const Navbar = memo(
               </>
             )}
 
-            {/* Subscription Status - show loading or Pro status only */}
-            {user && isSearchWithId && (
-              <>
-                {showProLoading ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-                        <div className="size-4 rounded-full bg-muted animate-pulse" />
-                        <div className="w-8 h-3 bg-muted rounded animate-pulse hidden sm:block" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={4}>
-                      Loading subscription status...
-                    </TooltipContent>
-                  </Tooltip>
-                ) : hasActiveSubscription ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="pointer-events-auto mr-1">
-                        <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                          <span>pro</span>
-                        </span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={4}>
-                      Pro Subscribed - Unlimited access
-                    </TooltipContent>
-                  </Tooltip>
-                ) : null}
-              </>
-            )}
+            {/* Self-hosted: no Pro status badge */}
 
             {/* Chat History Button */}
             {user && <ChatHistoryButton onClickAction={onHistoryClick} />}

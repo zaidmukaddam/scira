@@ -1,16 +1,6 @@
 'use client';
 
-import {
-  Brain,
-  Search,
-  ArrowUpRight,
-  Bot,
-  GraduationCap,
-  Eye,
-  Sparkles,
-  Filter,
-  X,
-} from 'lucide-react';
+import { Brain, Search, ArrowUpRight, Bot, Eye, Sparkles, Filter, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -31,7 +21,6 @@ import { models } from '@/ai/providers';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
-import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { SciraLogo } from '@/components/logos/scira-logo';
@@ -201,12 +190,6 @@ export default function AboutPage() {
                   className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
                   Search
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
-                >
-                  Pricing
                 </Link>
                 <Link
                   href="/terms"
@@ -941,127 +924,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      {/* Pricing Section */}
-      <section className="py-20 px-4">
-        <div className="container max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-medium mb-4 tracking-tight">Pricing</h2>
-            <p className="text-muted-foreground/80 max-w-lg mx-auto">Simple, transparent pricing for everyone</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Free Plan */}
-            <div className="bg-background/50 border border-border/50 rounded-xl p-8 hover:border-border/80 transition-colors flex flex-col">
-              <div className="mb-8">
-                <h3 className="text-xl font-medium mb-2">Free</h3>
-                <p className="text-muted-foreground/70 mb-4">Get started with essential features</p>
-                <div className="space-y-1">
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-light tracking-tight">$0</span>
-                    <span className="text-muted-foreground/70 ml-2">/month</span>
-                  </div>
-                  <div className="flex items-baseline">
-                    <span className="text-2xl font-medium text-muted-foreground/60">₹0</span>
-                    <span className="text-muted-foreground/60 ml-2 text-sm">/month</span>
-                  </div>
-                </div>
-              </div>
-
-              <ul className="space-y-3 flex-1 mb-8">
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Basic AI models</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Search history</span>
-                </li>
-              </ul>
-
-              <Button
-                variant="outline"
-                className="w-full border-border/60 hover:border-border"
-                onClick={() => router.push('/')}
-              >
-                Get Started
-              </Button>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="bg-background border border-primary/30 rounded-xl p-8 relative hover:border-primary/50 transition-colors flex flex-col">
-              <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
-
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-medium">Pro</h3>
-                  <span className="text-xs font-medium text-primary/80 bg-primary/10 px-2.5 py-1 rounded-full">
-                    Popular
-                  </span>
-                </div>
-                <p className="text-muted-foreground/70 mb-4">Everything you need for serious work</p>
-                <div className="space-y-1">
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-light tracking-tight">${PRICING.PRO_MONTHLY}</span>
-                    <span className="text-muted-foreground/70 ml-2">/month</span>
-                  </div>
-                  <div className="flex items-baseline">
-                    <span className="text-2xl font-medium text-muted-foreground/60">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    <span className="text-muted-foreground/60 ml-2 text-sm">1 month access</span>
-                  </div>
-                </div>
-              </div>
-
-              <ul className="space-y-3 flex-1 mb-8">
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Unlimited searches</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">All AI models</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">PDF analysis</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Priority support</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Scira Lookout</span>
-                </li>
-              </ul>
-
-              <Button className="w-full" onClick={() => router.push('/pricing')}>
-                Upgrade to Pro
-              </Button>
-            </div>
-          </div>
-
-          {/* Student Discount */}
-          <div className="max-w-2xl mx-auto bg-muted/20 border border-border/40 rounded-xl p-6 mt-8">
-            <div className="text-center">
-              <div className="w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <GraduationCap className="h-5 w-5 text-primary/70" />
-              </div>
-              <h3 className="font-medium mb-2">🎓 Student discount available</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Get Pro for just $5/month! Simply sign up with your university email address and the discount will be
-                applied automatically.
-              </p>
-              <Button onClick={() => router.push('/pricing')} variant="outline" size="sm" className="px-4 py-2">
-                Get Student Pricing
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
       {/* FAQ Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container max-w-4xl mx-auto">
@@ -1080,31 +942,6 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-2">
-              <ProAccordionTrigger>What&apos;s the difference between Free and Pro plans?</ProAccordionTrigger>
-              <ProAccordionContent>
-                The Free plan offers limited daily searches with basic AI models, while the Pro plan ($15/month)
-                provides unlimited searches, access to all AI models, PDF document analysis, and priority support.
-              </ProAccordionContent>
-            </ProAccordionItem>
-
-            <ProAccordionItem value="item-3">
-              <ProAccordionTrigger>Is there a student discount?</ProAccordionTrigger>
-              <ProAccordionContent>
-                Yes! Students with university email addresses (.edu, .ac.in, .ac.uk, etc.) automatically get Pro for
-                just $5/month - that&apos;s $120 in annual savings. No verification required, the discount is applied
-                automatically at checkout.
-              </ProAccordionContent>
-            </ProAccordionItem>
-
-            <ProAccordionItem value="item-4">
-              <ProAccordionTrigger>Can I cancel my subscription anytime?</ProAccordionTrigger>
-              <ProAccordionContent>
-                Yes, you can cancel your Pro subscription at any time. Your benefits will continue until the end of your
-                current billing period.
-              </ProAccordionContent>
-            </ProAccordionItem>
-
-            <ProAccordionItem value="item-5">
               <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
               <ProAccordionContent>
                 Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to provide
@@ -1112,7 +949,7 @@ export default function AboutPage() {
               </ProAccordionContent>
             </ProAccordionItem>
 
-            <ProAccordionItem value="item-6">
+            <ProAccordionItem value="item-3">
               <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
               <ProAccordionContent>
                 Scira combines RAG technology with search grounding to retrieve information from reliable sources and
@@ -1139,14 +976,6 @@ export default function AboutPage() {
                 <Button onClick={() => router.push('/')} size="sm" className="px-4 py-2 text-sm w-full sm:w-auto">
                   Start now
                   <Search className="ml-1 h-3 w-3" />
-                </Button>
-                <Button
-                  onClick={() => router.push('/pricing')}
-                  variant="outline"
-                  size="sm"
-                  className="px-4 py-2 text-sm w-full sm:w-auto"
-                >
-                  View pricing
                 </Button>
               </div>
             </div>

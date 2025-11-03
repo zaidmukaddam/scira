@@ -130,30 +130,34 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const normalizedArgs = useMemo<NormalizedXSearchArgs>(
     () => ({
       queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
-        (q): q is string => typeof q === 'string' && q.length > 0
+        (q): q is string => typeof q === 'string' && q.length > 0,
       ),
       maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 15]).filter(
-        (n): n is number => typeof n === 'number'
+        (n): n is number => typeof n === 'number',
       ),
     }),
-    [args]
+    [args],
   );
 
   if (!result) {
     return <XSearchLoadingState />;
   }
 
+  // Ensure searches exists and is an array
+  const searches = result.searches || [];
+
   // Aggregate all citations and sources from all searches
-  const allCitations = result.searches.flatMap((search) => search.citations);
-  const allSources = result.searches.flatMap((search) => search.sources);
+  const allCitations = searches.flatMap((search) => search.citations || []);
+  const allSources = searches.flatMap((search) => search.sources || []);
 
   // Extract tweet IDs from citations
   const tweetCitations = useMemo(() => {
-    return allCitations
+    const mapped = allCitations
       .filter((citation) => {
         // Handle both string URLs and objects with url property
         const url = typeof citation === 'string' ? citation : citation.url;
-        return url && url.includes('x.com');
+        const isTwitterUrl = url && (url.includes('x.com') || url.includes('twitter.com'));
+        return isTwitterUrl;
       })
       .map((citation) => {
         // Handle both string URLs and objects with url property
@@ -170,11 +174,25 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         return {
           url,
           title,
-          description: typeof citation === 'object' ? citation.description : '',
+          description: typeof citation === 'object' ? (citation.description ?? '') : '',
           tweet_id: match ? match[1] : null,
         };
       })
-      .filter((citation) => citation.tweet_id);
+      .filter((citation): citation is { url: string; title: string; description: string; tweet_id: string } =>
+        Boolean(citation.tweet_id),
+      );
+
+    const uniqueTweets = [] as typeof mapped;
+    const seen = new Set<string>();
+    for (const citation of mapped) {
+      if (seen.has(citation.tweet_id)) {
+        continue;
+      }
+      seen.add(citation.tweet_id);
+      uniqueTweets.push(citation);
+    }
+
+    return uniqueTweets;
   }, [allCitations, allSources]);
 
   const displayedTweets = useMemo(() => {
@@ -223,15 +241,15 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {result.searches.length > 1 && (
+            {searches.length > 1 && (
               <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted/50 text-muted-foreground">
-                {result.searches.length} queries
+                {searches.length} queries
               </span>
             )}
             <Icons.ChevronDown
               className={cn(
                 'h-3 w-3 text-muted-foreground/60 transition-transform duration-200 group-hover:text-muted-foreground',
-                isExpanded && 'rotate-180'
+                isExpanded && 'rotate-180',
               )}
             />
           </div>
@@ -241,9 +259,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         {isExpanded && (
           <div className="border-t border-border/40">
             {/* Query tags - more compact */}
-            {result.searches.length > 0 && (
+            {searches.length > 0 && (
               <div className="px-2.5 py-1.5 flex gap-1 overflow-x-auto no-scrollbar bg-transparent">
-                {result.searches.map((search, i) => (
+                {searches.map((search, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] shrink-0 bg-background border border-border/40 text-foreground/90"
@@ -284,15 +302,10 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                         <div className="p-2 rounded-full bg-muted/50 mb-2 group-hover:bg-muted transition-colors">
                           <Icons.Messages className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <p className="font-medium text-xs text-foreground">
-                          +{remainingTweets.length} more
-                        </p>
+                        <p className="font-medium text-xs text-foreground">+{remainingTweets.length} more</p>
                         <p className="text-[10px] text-muted-foreground/70 mt-0.5">View all posts</p>
                       </button>
-                      <SheetContent
-                        side="right"
-                        className="w-full sm:w-[480px] md:w-[550px] sm:max-w-[90vw] p-0"
-                      >
+                      <SheetContent side="right" className="w-full sm:w-[480px] md:w-[550px] sm:max-w-[90vw] p-0">
                         <div className="flex flex-col h-full bg-background">
                           <SheetHeader className="px-4 py-3 border-b border-border/40">
                             <SheetTitle className="flex items-center gap-2 text-sm">
@@ -348,7 +361,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                   {allCitations
                     .filter((citation) => {
                       const url = typeof citation === 'string' ? citation : citation.url;
-                      return url && !url.includes('x.com');
+                      return url && !url.includes('x.com') && !url.includes('twitter.com');
                     })
                     .slice(0, 3)
                     .map((citation, index) => {
@@ -363,9 +376,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                           className="flex items-center gap-1.5 py-1.5 px-2 rounded hover:bg-accent/20 transition-colors group"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-foreground/90 truncate leading-tight">
-                              {title}
-                            </p>
+                            <p className="text-[11px] text-foreground/90 truncate leading-tight">{title}</p>
                           </div>
                           <Icons.ExternalLink className="h-2.5 w-2.5 text-muted-foreground/50 group-hover:text-muted-foreground flex-shrink-0 transition-colors" />
                         </a>

@@ -11,9 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil, Trash2, CheckSquare, Square } from 'lucide-react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { SearchList02Icon } from '@hugeicons/core-free-icons';
+import { Trash, ArrowUpRight, History, Globe, Lock, Search, Calendar, Hash, Check, X, Pencil, Trash2, CheckSquare, Square, FileSearch } from 'lucide-react';
 import {
   isToday,
   isYesterday,
@@ -1374,22 +1372,13 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 // Navigation Button component for navbar
 export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClickAction}
-          className="size-6 !p-0 !m-0 rounded-full hover:bg-muted"
-          aria-label="Chat History"
-        >
-          <HugeiconsIcon icon={SearchList02Icon} className="size-6" />
-          <span className="sr-only">Chat History</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={4}>
-        Chat History
-      </TooltipContent>
-    </Tooltip>
+    <button
+      onClick={onClickAction}
+      className="inline-flex items-center justify-center size-6 rounded-full hover:bg-muted transition-colors"
+      aria-label="Chat History"
+      title="Chat History"
+    >
+      <FileSearch className="size-4" />
+    </button>
   );
 }

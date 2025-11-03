@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowLeft01Icon, Crown02Icon } from '@hugeicons/core-free-icons';
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
 
@@ -34,18 +34,7 @@ export function Navbar({ user, isProUser, isProStatusLoading, showProBadge = fal
       </div>
 
       <div className="flex items-center gap-2">
-        {isProStatusLoading ? (
-          <div className="rounded-md flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-            <div className="size-4 rounded-full bg-muted animate-pulse" />
-            <div className="w-8 h-3 bg-muted rounded animate-pulse" />
-          </div>
-        ) : showProBadge && isProUser ? (
-          <div className="pointer-events-auto">
-            <span className="font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 pb-2 sm:pt-1 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-              <span>pro</span>
-            </span>
-          </div>
-        ) : null}
+        {/* Self-hosted: no pro badge/loading */}
 
         <UserProfile
           user={user || null}

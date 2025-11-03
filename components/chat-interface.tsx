@@ -7,7 +7,6 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useSt
 // Third-party library imports
 import { useChat } from '@ai-sdk/react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
@@ -19,7 +18,10 @@ import { suggestQuestions, updateChatVisibility } from '@/app/actions';
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
 import Messages from '@/components/messages';
-import { Navbar } from '@/components/navbar';
+import dynamic from 'next/dynamic';
+const Navbar = dynamic(() => import('@/components/navbar').then(m => m.Navbar), {
+  ssr: false,
+});
 import { Button } from '@/components/ui/button';
 import FormComponent from '@/components/ui/form-component';
 
@@ -83,10 +85,6 @@ const ChatInterface = memo(
     );
 
     // Get persisted values for dialog states
-    const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
-      'scira-upgrade-prompt-shown',
-      false,
-    );
     const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] = useLocalStorage(
       'scira-signin-prompt-shown',
       false,
@@ -106,7 +104,6 @@ const ChatInterface = memo(
       chatReducer,
       createInitialState(
         initialVisibility,
-        persistedHasShownUpgradeDialog,
         persistedHasShownSignInPrompt,
         persistedHasShownLookoutAnnouncement,
       ),
@@ -283,27 +280,6 @@ const ChatInterface = memo(
         // Refresh usage data after message completion for authenticated users
         if (user) {
           refetchUsage();
-        }
-
-        // Check if this is the first message completion and user is not Pro
-        const isFirstMessage = messages.length <= 1;
-
-        console.log('Upgrade dialog check:', {
-          isFirstMessage,
-          isProUser: isUserPro,
-          hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
-          user: !!user,
-          messagesLength: messages.length,
-        });
-
-        // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-        if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
-          console.log('Showing upgrade dialog...');
-          setTimeout(() => {
-            dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
-            setPersitedHasShownUpgradeDialog(true);
-          }, 1000);
         }
 
         // Only generate suggested questions if authenticated user or private chat
@@ -488,13 +464,11 @@ const ChatInterface = memo(
         payload:
           chatState.commandDialogOpen ||
           chatState.showSignInPrompt ||
-          chatState.showUpgradeDialog ||
           chatState.showAnnouncementDialog,
       });
     }, [
       chatState.commandDialogOpen,
       chatState.showSignInPrompt,
-      chatState.showUpgradeDialog,
       chatState.showAnnouncementDialog,
     ]);
 
@@ -614,13 +588,6 @@ const ChatInterface = memo(
             dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: value });
             setPersitedHasShownSignInPrompt(value);
           }}
-          showUpgradeDialog={chatState.showUpgradeDialog}
-          setShowUpgradeDialog={(open) => dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: open })}
-          hasShownUpgradeDialog={chatState.hasShownUpgradeDialog}
-          setHasShownUpgradeDialog={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
-            setPersitedHasShownUpgradeDialog(value);
-          }}
           showLookoutAnnouncement={chatState.showAnnouncementDialog}
           setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
           hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
@@ -646,11 +613,7 @@ const ChatInterface = memo(
                   <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
                     scira
                   </h1>
-                  {isUserPro && (
-                    <h1 className="text-2xl font-baumans! leading-4 inline-block !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                      pro
-                    </h1>
-                  )}
+                  {/* Self-hosted: no pro badge */}
                 </div>
               </div>
             )}
@@ -662,7 +625,7 @@ const ChatInterface = memo(
                   {/* Header Section */}
                   <div className="text-center px-8 pt-8 pb-6">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/30 rounded-full mb-6">
-                      <HugeiconsIcon icon={Crown02Icon} size={28} className="text-muted-foreground" strokeWidth={1.5} />
+                      <span className="text-2xl font-semibold text-muted-foreground">!</span>
                     </div>
                     <h2 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">Daily limit reached</h2>
                   </div>
@@ -676,21 +639,13 @@ const ChatInterface = memo(
                         for today
                       </p>
                       <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                        Upgrade to Pro for unlimited searches, faster responses, and premium features
+                        Daily limits reset automatically every 24 hours. Please try again tomorrow or refresh to check
+                        for updates.
                       </p>
                     </div>
 
                     {/* Actions Section */}
                     <div className="space-y-3">
-                      <Button
-                        onClick={() => {
-                          window.location.href = '/pricing';
-                        }}
-                        className="w-full h-11 font-semibold text-base"
-                      >
-                        <HugeiconsIcon icon={Crown02Icon} size={18} className="mr-2.5" strokeWidth={1.5} />
-                        Upgrade to Pro
-                      </Button>
                       <Button
                         variant="ghost"
                         onClick={() => {
@@ -803,13 +758,6 @@ const ChatInterface = memo(
               <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <HugeiconsIcon
-                      icon={Crown02Icon}
-                      size={14}
-                      color="currentColor"
-                      strokeWidth={1.5}
-                      className="text-muted-foreground dark:text-muted-foreground"
-                    />
                     <span className="text-sm text-foreground dark:text-foreground">
                       Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
                     </span>
@@ -824,15 +772,6 @@ const ChatInterface = memo(
                       className="h-7 px-2 text-xs"
                     >
                       Refresh
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        window.location.href = '/pricing';
-                      }}
-                      className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
-                    >
-                      Upgrade
                     </Button>
                   </div>
                 </div>

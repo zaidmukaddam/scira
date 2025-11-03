@@ -155,7 +155,7 @@ interface Model {
   parameters?: ModelParameters;
 }
 
-export const models: Model[] = [
+const rawModels: Model[] = [
   // Models (xAI)
   {
     value: 'scira-grok-3-mini',
@@ -925,6 +925,12 @@ export const models: Model[] = [
   },
 ];
 
+export const models: Model[] = rawModels.map((model) => ({
+  ...model,
+  pro: false,
+  category: model.category === 'Pro' ? 'Advanced' : model.category,
+}));
+
 // Helper functions for model access checks
 export function getModelConfig(modelValue: string) {
   return models.find((model) => model.value === modelValue);
@@ -936,8 +942,7 @@ export function requiresAuthentication(modelValue: string): boolean {
 }
 
 export function requiresProSubscription(modelValue: string): boolean {
-  const model = getModelConfig(modelValue);
-  return model?.pro || false;
+  return false;
 }
 
 export function isFreeUnlimited(modelValue: string): boolean {

@@ -136,7 +136,7 @@ export default function TermsPage() {
           <h2>7. Pricing and Billing</h2>
           <p>
             Scira AI offers both free and paid subscription plans. For detailed pricing information, visit our{' '}
-            <Link href="/pricing" className="underline">
+            <Link href="/new" className="underline">
               Pricing page
             </Link>
             .

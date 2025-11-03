@@ -38,7 +38,10 @@ import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
-import { SettingsDialog } from './settings-dialog';
+import dynamic from 'next/dynamic';
+const SettingsDialog = dynamic(() => import('./settings-dialog').then(m => m.SettingsDialog), {
+  ssr: false,
+});
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
 import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 
@@ -72,9 +75,9 @@ const NavigationMenu = memo(() => {
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-md transition-colors cursor-pointer !size-6 !p-0 !m-0">
+            <button className="flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-md transition-colors cursor-pointer !size-6 !p-0 !m-0">
               <SettingsIcon ref={settingsIconRef} size={18} />
-            </div>
+            </button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={4}>
@@ -274,7 +277,6 @@ const UserProfile = memo(
                     variant="ghost"
                     size="sm"
                     className={cn('!p-0 !m-0', signingOut && 'animate-pulse', className)}
-                    asChild
                   >
                     <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700 !p-0 !m-0">
                       <AvatarImage

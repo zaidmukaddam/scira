@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
@@ -212,7 +212,13 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[360px] p-6 gap-0">{content}</DialogContent>
+      <DialogContent className="sm:max-w-[360px] p-6 gap-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Sign in to continue</DialogTitle>
+          <DialogDescription>Save conversations and sync across devices</DialogDescription>
+        </DialogHeader>
+        {content}
+      </DialogContent>
     </Dialog>
   );
 }

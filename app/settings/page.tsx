@@ -2,29 +2,17 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/contexts/user-context';
-import {
-  UsageSection,
-  PreferencesSection,
-  SubscriptionSection,
-  ConnectorsSection,
-  MemoriesSection,
-} from '@/components/settings-dialog';
+import { UsageSection, PreferencesSection, ConnectorsSection, MemoriesSection } from '@/components/settings-dialog';
 import { cn } from '@/lib/utils';
 import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  Analytics01Icon,
-  Settings02Icon,
-  Crown02Icon,
-  ConnectIcon,
-  Brain02Icon,
-} from '@hugeicons/core-free-icons';
+import { Analytics01Icon, Settings02Icon, ConnectIcon, Brain02Icon } from '@hugeicons/core-free-icons';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,23 +25,40 @@ import { ArrowLeftIcon } from '@phosphor-icons/react';
 
 function SettingsPageInner() {
   const router = useRouter();
-  const { user, isProUser, isLoading, subscriptionData } = useUser();
+  const { user, isLoading } = useUser();
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'usage';
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const tabs = useMemo(
+    () => [
+      { value: 'usage', label: 'Usage', icon: Analytics01Icon },
+      { value: 'preferences', label: 'Preferences', icon: Settings02Icon },
+      { value: 'connectors', label: 'Connectors', icon: ConnectIcon },
+      { value: 'memories', label: 'Memories', icon: Brain02Icon },
+    ],
+    [],
+  );
+  const requestedTab = searchParams.get('tab');
+  const initialTab = tabs.some((tab) => tab.value === requestedTab) ? (requestedTab as string) : tabs[0].value;
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
     'scira-custom-instructions-enabled',
     true,
   );
   const [blurPersonalInfo, setBlurPersonalInfo] = useLocalStorage<boolean>('scira-blur-personal-info', false);
 
-  const tabs = [
-    { value: 'usage', label: 'Usage', icon: Analytics01Icon },
-    { value: 'subscription', label: 'Subscription', icon: Crown02Icon },
-    { value: 'preferences', label: 'Preferences', icon: Settings02Icon },
-    { value: 'connectors', label: 'Connectors', icon: ConnectIcon },
-    { value: 'memories', label: 'Memories', icon: Brain02Icon },
-  ];
+  useEffect(() => {
+    if (!requestedTab) {
+      return;
+    }
+    if (tabs.some((tab) => tab.value === requestedTab)) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('tab');
+    const query = params.toString();
+
+    router.replace(`/settings${query ? `?${query}` : ''}`, { scroll: false });
+  }, [requestedTab, router, searchParams, tabs]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,11 +133,6 @@ function SettingsPageInner() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className={cn('font-semibold text-lg truncate', blurPersonalInfo && 'blur-sm')}>{user?.name || 'User'}</h3>
-                  {isProUser && (
-                    <span className="inline-block !font-baumans leading-4 !mb-1 !px-2.5 !pt-0 !pb-1 rounded-xl shadow-sm bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                      pro
-                    </span>
-                  )}
                 </div>
                 <p className={cn('text-xs text-muted-foreground truncate', blurPersonalInfo && 'blur-sm')}>{user?.email}</p>
               </div>
@@ -195,15 +195,7 @@ function SettingsPageInner() {
                 <div className="space-y-1 w-full">
                   <h3 className={cn('font-semibold text-base', blurPersonalInfo && 'blur-sm')}>{user?.name || 'User'}</h3>
                   <p className={cn('text-xs text-muted-foreground break-all', blurPersonalInfo && 'blur-sm')}>{user?.email}</p>
-                  {isLoading ? (
-                    <Skeleton className="h-5 w-16 mx-auto mt-2" />
-                  ) : (
-                    isProUser && (
-                      <span className="inline-block !font-baumans leading-4 !px-2 !pt-0.5 !pb-1.5 rounded-xl shadow-sm bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground mt-2">
-                        pro
-                      </span>
-                    )
-                  )}
+                  {isLoading && <Skeleton className="h-5 w-16 mx-auto mt-2" />}
                 </div>
                 <div className="w-full pt-3 flex items-center justify-between">
                   <Label htmlFor="blur-personal-desktop" className="text-xs text-muted-foreground">Blur personal info</Label>
@@ -242,16 +234,6 @@ function SettingsPageInner() {
                     <p className="text-sm text-muted-foreground">Track your daily and monthly usage</p>
                   </div>
                   <UsageSection user={user} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="subscription" className="m-0">
-                <div className="space-y-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">Subscription</h2>
-                    <p className="text-sm text-muted-foreground">Manage your subscription and billing</p>
-                  </div>
-                  <SubscriptionSection subscriptionData={subscriptionData} isProUser={isProUser} user={user} />
                 </div>
               </TabsContent>
 

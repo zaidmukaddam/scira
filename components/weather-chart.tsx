@@ -471,7 +471,10 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
             </div>
             <ChartContainer config={chartConfig} className="aspect-auto! h-[180px] sm:h-[200px]">
               <ResponsiveContainer width="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                <LineChart
+                  data={chartData.filter(d => d && d.minTemp !== undefined && d.maxTemp !== undefined)}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
                   <XAxis
                     dataKey="date"
@@ -510,7 +513,9 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
             {/* 5-day forecast details in columns */}
             <div className="mt-3 mb-2">
               <div className="flex justify-between overflow-x-auto no-scrollbar pb-2">
-                {chartData.map((day, index) => (
+                {chartData
+                  .filter((day) => day && day.minTemp !== undefined && day.maxTemp !== undefined)
+                  .map((day, index) => (
                   <div
                     key={index}
                     className="flex flex-col items-center min-w-[60px] sm:min-w-[70px] p-1.5 sm:p-2 mx-0.5"
@@ -589,11 +594,13 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart
-                    data={hourlyDataByDay[selectedDay].map((item) => ({
-                      ...item,
-                      time: formatTime(item.timestamp),
-                      precipitation: item.pop,
-                    }))}
+                    data={hourlyDataByDay[selectedDay]
+                      .filter((item) => item && item.temp !== undefined && item.pop !== undefined)
+                      .map((item) => ({
+                        ...item,
+                        time: formatTime(item.timestamp),
+                        precipitation: item.pop,
+                      }))}
                     margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
                   >
                     <defs>
@@ -647,7 +654,9 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
 
                 {/* Icons and conditions underneath the chart */}
                 <div className="flex justify-between overflow-x-auto py-2 mt-1 -mx-1 px-1">
-                  {hourlyDataByDay[selectedDay].map((item, i) => (
+                  {hourlyDataByDay[selectedDay]
+                    .filter((item) => item && item.timestamp !== undefined && item.temp !== undefined)
+                    .map((item, i) => (
                     <div key={i} className="flex flex-col items-center px-1 min-w-[40px]">
                       <div className="text-[10px] text-neutral-500 dark:text-neutral-400">
                         {formatTime(item.timestamp)}
@@ -691,7 +700,10 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                 {/* Daily forecast chart */}
                 <div className="h-[180px] sm:h-[200px] mb-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dailyForecast} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                    <AreaChart
+                      data={dailyForecast.filter((d: ProcessedDailyForecast) => d && d.minTemp !== undefined && d.maxTemp !== undefined && d.pop !== undefined)}
+                      margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                    >
                       <defs>
                         <linearGradient id="maxTempGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#ff9500" stopOpacity={0.3} />
@@ -828,7 +840,9 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                 {/* Daily forecast cards - scrollable */}
                 <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
                   <div className="space-y-2">
-                    {dailyForecast.map((day: ProcessedDailyForecast, index: number) => (
+                    {dailyForecast
+                      .filter((day: ProcessedDailyForecast) => day && day.minTemp !== undefined && day.maxTemp !== undefined)
+                      .map((day: ProcessedDailyForecast, index: number) => (
                       <div
                         key={day.timestamp}
                         className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
@@ -981,7 +995,7 @@ const WeatherChart: React.FC<WeatherChartProps> = React.memo(({ result }) => {
                         <div className="h-[180px] sm:h-[200px]">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart
-                              data={airPollutionForecast.slice(0, 24)}
+                              data={airPollutionForecast.slice(0, 24).filter((item: any) => item && item.main && item.main.aqi !== undefined)}
                               margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />

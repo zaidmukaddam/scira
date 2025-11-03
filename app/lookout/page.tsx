@@ -32,7 +32,6 @@ import { LoadingSkeletons } from './components/loading-skeleton';
 import { NoActiveLookoutsEmpty, NoArchivedLookoutsEmpty } from './components/empty-state';
 import { TotalLimitWarning, DailyLimitWarning } from './components/warning-card';
 import { LookoutCard } from './components/lookout-card';
-import { ProUpgradeScreen } from './components/pro-upgrade-screen';
 import { LookoutForm } from './components/lookout-form';
 import { useLookoutForm } from './hooks/use-lookout-form';
 import { getRandomExamples, LOOKOUT_LIMITS, timezoneOptions } from './constants';
@@ -240,11 +239,6 @@ export default function LookoutPage() {
         </div>
       </>
     );
-  }
-
-  // Show upgrade prompt for non-Pro users
-  if (!isProUser) {
-    return <ProUpgradeScreen user={user} isProUser={isProUser} isProStatusLoading={isProStatusLoading} />;
   }
 
   return (
