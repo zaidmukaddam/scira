@@ -2069,38 +2069,36 @@ const ExtremeSearchComponent = ({
 
     return (
       <div className="w-full border border-border rounded-lg overflow-hidden bg-card">
-        <button
-          onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
-          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
+        <div className="w-full px-4 py-2.5 flex items-center justify-between">
+          <button
+            onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <div className="p-1.5 rounded-md bg-muted">
               <Icons.Globe className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
             <h2 className="font-medium text-sm text-foreground">Sources</h2>
-          </div>
-          <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{sources.length} sources</span>
-            {sources.length > 0 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSourcesSheetOpen(true);
-                }}
-                className="flex items-center gap-1 text-xs text-foreground hover:text-foreground/80 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors"
-              >
-                View all
-                <Icons.ArrowUpRight className="w-3 h-3" />
-              </button>
-            )}
             <ChevronDown
               className={cn(
                 'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
                 sourcesAccordionOpen ? 'rotate-180' : '',
               )}
             />
-          </div>
-        </button>
+          </button>
+          {sources.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSourcesSheetOpen(true);
+              }}
+              className="flex items-center gap-1 text-xs text-foreground hover:text-foreground/80 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors"
+            >
+              View all
+              <Icons.ArrowUpRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
 
         {sourcesAccordionOpen && (
           <div className="border-t border-border">
