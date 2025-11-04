@@ -3,7 +3,7 @@
 import type { Transition } from 'motion/react';
 import { motion, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface SettingsIconHandle {
@@ -26,6 +26,12 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+      setIsClient(true);
+      controls.set('normal');
+    }, [controls]);
 
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
@@ -81,7 +87,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={14}
             y1="4"
             y2="4"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 21,
@@ -92,7 +98,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 10,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
           <motion.line
@@ -100,7 +106,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={3}
             y1="4"
             y2="4"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 10,
@@ -111,7 +117,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 3,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -120,7 +126,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={12}
             y1="12"
             y2="12"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 21,
@@ -131,7 +137,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 18,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -140,7 +146,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={3}
             y1="12"
             y2="12"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 8,
@@ -151,7 +157,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 3,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -160,7 +166,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={12}
             y1="20"
             y2="20"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 3,
@@ -171,7 +177,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 4,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -180,7 +186,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={21}
             y1="20"
             y2="20"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 16,
@@ -191,7 +197,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 21,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -200,7 +206,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={14}
             y1="2"
             y2="6"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 14,
@@ -211,7 +217,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 9,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -220,7 +226,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={8}
             y1="10"
             y2="14"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 8,
@@ -231,7 +237,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 14,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
 
@@ -240,7 +246,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             x2={16}
             y1="18"
             y2="22"
-            initial={false}
+            initial="normal"
             variants={{
               normal: {
                 x1: 16,
@@ -251,7 +257,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 8,
               },
             }}
-            animate={controls}
+            animate={isClient ? controls : 'normal'}
             transition={defaultTransition}
           />
         </svg>
