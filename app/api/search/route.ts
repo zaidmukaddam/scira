@@ -64,7 +64,7 @@ import {
   coinOhlcTool,
   datetimeTool,
   greetingTool,
-  // mcpSearchTool,
+  mcpSearchTool,
   redditSearchTool,
   extremeSearchTool,
   createConnectorsSearchTool,
@@ -513,6 +513,7 @@ export async function POST(req: Request) {
             extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),
             code_context: codeContextTool,
+            mcp_search: mcpSearchTool,
           };
 
           if (!user) {

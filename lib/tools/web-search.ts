@@ -628,7 +628,7 @@ const createSearchStrategy = (
 
 export function webSearchTool(
   dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
-  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'parallel',
+  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'tavily',
 ) {
   return tool({
     description: `This is the default tool of the app to be used to search the web for information with multiple queries, max results, search depth, topics, and quality.

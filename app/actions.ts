@@ -264,6 +264,7 @@ const groupTools = {
     'find_place_on_map',
     'trending_tv',
     'datetime',
+    'mcp_search',
   ] as const,
   academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,

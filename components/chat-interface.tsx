@@ -193,6 +193,9 @@ const ChatInterface = memo(
         }
         // Reset the flag so it can show again in future sessions if they log out
         setPersitedHasShownSignInPrompt(false);
+        if (chatState.showSignInPrompt) {
+          dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: false });
+        }
         return;
       }
 
@@ -217,7 +220,7 @@ const ChatInterface = memo(
           clearTimeout(signInTimerRef.current);
         }
       };
-    }, [user, chatState.hasShownSignInPrompt, setPersitedHasShownSignInPrompt]);
+    }, [user, chatState.hasShownSignInPrompt, chatState.showSignInPrompt, setPersitedHasShownSignInPrompt]);
 
     // Timer for lookout announcement - show after 30 seconds for authenticated users
     useEffect(() => {

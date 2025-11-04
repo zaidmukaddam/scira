@@ -19,7 +19,7 @@ import type {
   nearbyPlacesSearchTool,
   flightTrackerTool,
   datetimeTool,
-  // mcpSearchTool,
+  mcpSearchTool,
   extremeSearchTool,
   greetingTool,
   movieTvSearchTool,
@@ -136,7 +136,7 @@ type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 type codeContextTool = InferUITool<typeof codeContextTool>;
 
-// type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
+type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
 export type ChatTools = {
   stock_chart: stockChartTool;
@@ -168,7 +168,7 @@ export type ChatTools = {
   code_interpreter: codeInterpreterTool;
   track_flight: flightTrackerTool;
   datetime: datetimeTool;
-  // mcp_search: mcpSearchTool;
+  mcp_search: mcpSearchTool;
   extreme_search: extremeSearch;
   greeting: greetingTool;
 

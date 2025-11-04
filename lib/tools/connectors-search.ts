@@ -68,9 +68,9 @@ interface SearchErrorResponse {
 
 type SearchResponse = SearchSuccessResponse | SearchErrorResponse;
 
-const client = new Supermemory({
-    apiKey: process.env.SUPERMEMORY_API_KEY!
-});
+const SM_KEY = process.env.SUPERMEMORY_API_KEY;
+const SM_ENABLED = !!SM_KEY && SM_KEY !== 'placeholder';
+const client = SM_ENABLED ? new Supermemory({ apiKey: SM_KEY! }) : (null as unknown as Supermemory);
 
 export function createConnectorsSearchTool(userId: string, selectedConnectors?: ConnectorProvider[]) {
     // Create dynamic provider enum based on selected connectors
@@ -87,6 +87,13 @@ export function createConnectorsSearchTool(userId: string, selectedConnectors?: 
         execute: async ({ query, provider = 'all' }: { query: string; provider?: ConnectorProvider | 'all' }): Promise<SearchResponse> => {
             console.log('🔍 [ConnectorsSearch] Starting search with params:', { query, provider, userId });
             try {
+                if (!SM_ENABLED) {
+                    return {
+                        success: false,
+                        error: 'Connectors disabled',
+                        provider: provider === 'all' ? 'all' : provider,
+                    };
+                }
                 let allResults: SupermemoryDocument[] = [];
                 let totalCount = 0;
 

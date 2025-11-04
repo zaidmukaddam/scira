@@ -1597,7 +1597,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                  <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
+                  {isMounted && (
+                    <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
+                  )}
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-1">
                       <span className="font-medium truncate text-[11px] text-foreground">{group.name}</span>
@@ -1659,14 +1661,16 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
-                        <div className="p-0.5 rounded bg-primary">
-                          <HugeiconsIcon
-                            icon={selectedGroupData.icon}
-                            size={14}
-                            className="text-primary-foreground"
-                            strokeWidth={2}
-                          />
-                        </div>
+                        {isMounted && (
+                          <div className="p-0.5 rounded bg-primary">
+                            <HugeiconsIcon
+                              icon={selectedGroupData.icon}
+                              size={14}
+                              className="text-primary-foreground"
+                              strokeWidth={2}
+                            />
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
                           {/* Self-hosted: no PRO label */}
@@ -1698,7 +1702,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <HugeiconsIcon icon={group.icon} size={24} color="currentColor" strokeWidth={2} />
+                          {isMounted && (
+                            <HugeiconsIcon icon={group.icon} size={24} color="currentColor" strokeWidth={2} />
+                          )}
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm text-foreground">{group.name}</span>
@@ -1736,13 +1742,13 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           : 'text-muted-foreground hover:bg-accent',
                       )}
                     >
-                      {selectedGroupData && !isExtreme && (
+                      {selectedGroupData && isMounted && !isExtreme && (
                         <>
                           <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
-                      {isExtreme && (
+                      {isMounted && isExtreme && (
                         <>
                           <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
                         </>
@@ -1753,17 +1759,19 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 <TooltipContent side="bottom" className="max-w-[220px] p-2">
                   {isMounted && isExtreme ? (
                     <p className="text-xs">Switch back to search modes</p>
-                  ) : selectedGroupData ? (
+                  ) : isMounted && selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
-                        <div className="p-0.5 rounded bg-primary">
-                          <HugeiconsIcon
-                            icon={selectedGroupData.icon}
-                            size={14}
-                            className="text-primary-foreground"
-                            strokeWidth={2}
-                          />
-                        </div>
+                        {isMounted && (
+                          <div className="p-0.5 rounded bg-primary">
+                            <HugeiconsIcon
+                              icon={selectedGroupData.icon}
+                              size={14}
+                              className="text-primary-foreground"
+                              strokeWidth={2}
+                            />
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
                           {/* Self-hosted: no PRO label */}
@@ -1807,19 +1815,23 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                       : 'text-muted-foreground hover:bg-accent',
                 )}
               >
-                <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
+                {isMounted && (
+                  <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-[220px] p-2">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <div className="p-0.5 rounded bg-primary">
-                    <HugeiconsIcon
-                      icon={AtomicPowerIcon}
-                      size={14}
-                      className="text-primary-foreground"
-                      strokeWidth={2}
-                    />
+                    {isMounted && (
+                      <HugeiconsIcon
+                        icon={AtomicPowerIcon}
+                        size={14}
+                        className="text-primary-foreground"
+                        strokeWidth={2}
+                      />
+                    )}
                   </div>
                   <p className="font-semibold text-xs">
                     {isMounted && isExtreme ? 'Extreme Search Active' : session ? 'Extreme Search' : 'Sign in Required'}

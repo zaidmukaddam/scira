@@ -1,9 +1,15 @@
 import { JSX, SVGProps } from 'react';
 import Supermemory from 'supermemory';
 
+const SM_KEY = process.env.SUPERMEMORY_API_KEY;
+const SM_ENABLED = !!SM_KEY && SM_KEY !== 'placeholder';
+
 function getClient() {
+  if (!SM_ENABLED) {
+    throw new Error('Supermemory disabled');
+  }
   return new Supermemory({
-    apiKey: process.env.SUPERMEMORY_API_KEY!,
+    apiKey: SM_KEY!,
   });
 }
 
@@ -113,6 +119,10 @@ export async function createConnection(provider: ConnectorProvider, userId: stri
     throw new Error('OneDrive connector is coming soon');
   }
 
+  if (!SM_ENABLED) {
+    throw new Error('Connectors disabled');
+  }
+
   const client = getClient();
   const config = CONNECTOR_CONFIGS[provider];
   const baseUrl = getBaseUrl();
@@ -146,6 +156,7 @@ export async function createGoogleDriveConnection(userId: string) {
 export async function getConnection(provider: ConnectorProvider, userId: string) {
   console.log(`🔍 Getting connection for ${provider}, userId: ${userId}`);
   try {
+    if (!SM_ENABLED) return null;
     const client = getClient();
     const config = CONNECTOR_CONFIGS[provider];
     console.log(`🏷️ Searching with container tags: [${userId}, ${config.syncTag}]`);
@@ -176,6 +187,7 @@ export async function getConnection(provider: ConnectorProvider, userId: string)
 export async function listUserConnections(userId: string) {
   try {
     console.log('listing user connections', userId);
+    if (!SM_ENABLED) return [];
     const client = getClient();
 
     // Get all providers and their sync tags
@@ -223,6 +235,7 @@ export async function listUserConnections(userId: string) {
 export async function deleteConnection(connectionId: string) {
   console.log(`🗑️ Deleting connection with ID: ${connectionId}`);
   try {
+    if (!SM_ENABLED) return null;
     const client = getClient();
     const result = await client.connections.deleteByID(connectionId);
     console.log(`✅ Successfully deleted connection:`, result.id);
@@ -237,6 +250,7 @@ export async function deleteConnection(connectionId: string) {
 export async function manualSync(provider: ConnectorProvider, userId: string) {
   console.log(`🔄 Starting manual sync for ${provider}, userId: ${userId}`);
   try {
+    if (!SM_ENABLED) return null;
     const client = getClient();
     const config = CONNECTOR_CONFIGS[provider];
     console.log(`🏷️ Syncing with container tags: [${userId}, ${config.syncTag}]`);
@@ -258,6 +272,7 @@ export async function manualSync(provider: ConnectorProvider, userId: string) {
 export async function getSyncStatus(provider: ConnectorProvider, userId: string) {
   console.log(`📊 Getting sync status for ${provider}, userId: ${userId}`);
   try {
+    if (!SM_ENABLED) return null;
     const client = getClient();
     const config = CONNECTOR_CONFIGS[provider];
     console.log(`🏷️ Status check with container tags: [${userId}, ${config.syncTag}]`);

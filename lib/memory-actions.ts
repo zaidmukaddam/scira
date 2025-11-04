@@ -4,10 +4,13 @@ import { getUser } from '@/lib/auth-utils';
 import { serverEnv } from '@/env/server';
 import { Supermemory } from 'supermemory';
 
-// Initialize the memory client with API key
-const supermemoryClient = new Supermemory({
-  apiKey: serverEnv.SUPERMEMORY_API_KEY
-});
+const SM_KEY = serverEnv.SUPERMEMORY_API_KEY;
+const SM_ENABLED = !!SM_KEY && SM_KEY !== 'placeholder';
+
+// Initialize the memory client only if enabled
+const supermemoryClient = SM_ENABLED
+  ? new Supermemory({ apiKey: SM_KEY })
+  : null as unknown as Supermemory;
 
 // Define the types based on actual API responses
 export interface MemoryItem {
@@ -54,6 +57,9 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
   }
 
   try {
+    if (!SM_ENABLED) {
+      return { memories: [], total: 0 };
+    }
     const result = await supermemoryClient.search.memories({
       q: query,
       containerTag: user.id,
@@ -80,6 +86,9 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
   }
 
   try {
+    if (!SM_ENABLED) {
+      return { memories: [], total: 0 };
+    }
     const result = await supermemoryClient.memories.list({
       containerTags: [user.id],
       page: page,
@@ -108,6 +117,9 @@ export async function deleteMemory(memoryId: string) {
   }
 
   try {
+    if (!SM_ENABLED) {
+      throw new Error('Memory disabled');
+    }
     const data = await supermemoryClient.memories.delete(memoryId);
     return data;
   } catch (error) {

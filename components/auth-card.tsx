@@ -1,10 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { signIn } from '@/lib/auth-client';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FormEvent, useState } from 'react';
+import { authClient, signIn, signUp } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
@@ -112,6 +116,97 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
+  const isSignUp = mode === 'sign-up';
+  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>(isSignUp ? 'email' : 'social');
+  const [emailForm, setEmailForm] = useState({ name: '', email: '', password: '' });
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [magicEmail, setMagicEmail] = useState('');
+  const [magicLoading, setMagicLoading] = useState(false);
+
+  const getErrorMessage = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const errObj = error as { body?: { message?: string }; message?: string };
+      if (errObj.body?.message) return errObj.body.message;
+      if (typeof errObj.message === 'string') return errObj.message;
+    }
+    return 'Não foi possível concluir a solicitação. Tente novamente.';
+  };
+
+  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (emailLoading) return;
+
+    if (!emailForm.email.trim() || !emailForm.password) {
+      toast.error('Preencha e-mail e senha.');
+      return;
+    }
+
+    if (isSignUp && !emailForm.name.trim()) {
+      toast.error('Informe seu nome completo.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      if (isSignUp) {
+        await signUp.email({
+          name: emailForm.name.trim(),
+          email: emailForm.email.trim().toLowerCase(),
+          password: emailForm.password,
+          callbackURL: '/',
+        });
+        toast.success('Conta criada! Você já pode começar a usar o Scira.');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      } else {
+        await signIn.email({
+          email: emailForm.email.trim().toLowerCase(),
+          password: emailForm.password,
+          callbackURL: '/',
+        });
+        toast.success('Acesso liberado! Redirecionando...');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      }
+      setEmailForm({ name: '', email: '', password: '' });
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleMagicLinkSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (magicLoading) return;
+
+    if (!magicEmail.trim()) {
+      toast.error('Informe o e-mail para enviarmos o link.');
+      return;
+    }
+
+    setMagicLoading(true);
+    try {
+      await authClient.$fetch('/magic-link/sign-in/magic-link', {
+        method: 'POST',
+        body: {
+          email: magicEmail.trim().toLowerCase(),
+          callbackURL: '/',
+        },
+      });
+      toast.success('Enviamos um link de acesso. Verifique sua caixa de entrada.');
+      setMagicEmail('');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setMagicLoading(false);
+    }
+  };
+
+  const emailButtonLabel = isSignUp ? 'Criar conta com e-mail' : 'Entrar com e-mail';
+
   return (
     <div className="w-full max-w-[380px] mx-auto">
       <div className="space-y-6">
@@ -120,42 +215,143 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           <p className="text-sm text-muted-foreground/80">{description}</p>
         </div>
 
-        <div className="space-y-2">
-          <SignInButton
-            title="GitHub"
-            provider="github"
-            loading={githubLoading}
-            setLoading={setGithubLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Github className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Google"
-            provider="google"
-            loading={googleLoading}
-            setLoading={setGoogleLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Google className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="X"
-            provider="twitter"
-            loading={twitterLoading}
-            setLoading={setTwitterLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Twitter className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Microsoft"
-            provider="microsoft"
-            loading={microsoftLoading}
-            setLoading={setMicrosoftLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Microsoft className="w-4 h-4" />}
-          />
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'social' | 'email' | 'magic-link')}
+          className="space-y-4"
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="social">Social</TabsTrigger>
+            <TabsTrigger value="email">E-mail</TabsTrigger>
+            <TabsTrigger value="magic-link">Magic link</TabsTrigger>
+          </TabsList>
 
-        <div className="pt-6 space-y-4">
+          <TabsContent value="social">
+            <div className="space-y-2">
+              <SignInButton
+                title="GitHub"
+                provider="github"
+                loading={githubLoading}
+                setLoading={setGithubLoading}
+                callbackURL="/"
+                icon={<AuthIcons.Github className="w-4 h-4" />}
+              />
+              <SignInButton
+                title="Google"
+                provider="google"
+                loading={googleLoading}
+                setLoading={setGoogleLoading}
+                callbackURL="/"
+                icon={<AuthIcons.Google className="w-4 h-4" />}
+              />
+              <SignInButton
+                title="X"
+                provider="twitter"
+                loading={twitterLoading}
+                setLoading={setTwitterLoading}
+                callbackURL="/"
+                icon={<AuthIcons.Twitter className="w-4 h-4" />}
+              />
+              <SignInButton
+                title="Microsoft"
+                provider="microsoft"
+                loading={microsoftLoading}
+                setLoading={setMicrosoftLoading}
+                callbackURL="/"
+                icon={<AuthIcons.Microsoft className="w-4 h-4" />}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="email">
+            <form className="space-y-3" onSubmit={handleEmailSubmit}>
+              {isSignUp && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Nome completo</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={emailForm.name}
+                    onChange={(event) => setEmailForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="Como devemos te chamar?"
+                    autoComplete="name"
+                    required
+                  />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={emailForm.email}
+                  onChange={(event) => setEmailForm((prev) => ({ ...prev, email: event.target.value }))}
+                  placeholder="voce@exemplo.com"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  value={emailForm.password}
+                  onChange={(event) => setEmailForm((prev) => ({ ...prev, password: event.target.value }))}
+                  placeholder="Mínimo de 8 caracteres"
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  minLength={8}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={emailLoading}>
+                {emailLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Aguarde...
+                  </>
+                ) : (
+                  emailButtonLabel
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="magic-link">
+            <form className="space-y-3" onSubmit={handleMagicLinkSubmit}>
+              <div className="space-y-1.5">
+                <Label htmlFor="magic-email">E-mail</Label>
+                <Input
+                  id="magic-email"
+                  type="email"
+                  name="magic-email"
+                  value={magicEmail}
+                  onChange={(event) => setMagicEmail(event.target.value)}
+                  placeholder="voce@exemplo.com"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={magicLoading}>
+                {magicLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar link mágico'
+                )}
+              </Button>
+            </form>
+            <p className="mt-3 text-xs text-muted-foreground/80">
+              Enviaremos um link de acesso que expira em poucos minutos. Basta clicar para entrar sem senha.
+            </p>
+          </TabsContent>
+        </Tabs>
+
+        <div className="pt-4 space-y-4">
           <p className="text-[11px] text-center text-muted-foreground/60 leading-relaxed">
             By continuing, you agree to our{' '}
             <Link href="/terms" className="hover:text-muted-foreground underline-offset-2 underline">

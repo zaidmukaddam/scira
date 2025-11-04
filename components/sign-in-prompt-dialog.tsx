@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { signIn } from '@/lib/auth-client';
+import { authClient, signIn, signUp } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 interface SignInPromptDialogProps {
   open: boolean;
@@ -115,6 +119,253 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>('social');
+  const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [emailForm, setEmailForm] = useState({ name: '', email: '', password: '' });
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [magicEmail, setMagicEmail] = useState('');
+  const [magicLoading, setMagicLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab('social');
+      setAuthMode('sign-in');
+      setEmailForm({ name: '', email: '', password: '' });
+      setEmailLoading(false);
+      setMagicEmail('');
+      setMagicLoading(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (authMode === 'sign-up') {
+      setActiveTab('email');
+    }
+  }, [authMode]);
+
+  const getErrorMessage = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const errObj = error as { body?: { message?: string }; message?: string };
+      if (errObj.body?.message) return errObj.body.message;
+      if (typeof errObj.message === 'string') return errObj.message;
+    }
+    return 'Não foi possível concluir a solicitação. Tente novamente.';
+  };
+
+  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (emailLoading) return;
+
+    if (!emailForm.email.trim() || !emailForm.password) {
+      toast.error('Preencha e-mail e senha.');
+      return;
+    }
+
+    if (authMode === 'sign-up' && !emailForm.name.trim()) {
+      toast.error('Informe seu nome completo.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      if (authMode === 'sign-up') {
+        await signUp.email({
+          name: emailForm.name.trim(),
+          email: emailForm.email.trim().toLowerCase(),
+          password: emailForm.password,
+          callbackURL: '/',
+        });
+        toast.success('Conta criada! Você já pode começar a usar o Scira.');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      } else {
+        await signIn.email({
+          email: emailForm.email.trim().toLowerCase(),
+          password: emailForm.password,
+          callbackURL: '/',
+        });
+        toast.success('Acesso liberado! Redirecionando...');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      }
+
+      setEmailForm({ name: '', email: '', password: '' });
+      setAuthMode('sign-in');
+      setActiveTab('social');
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleMagicLinkSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (magicLoading) return;
+
+    if (!magicEmail.trim()) {
+      toast.error('Informe o e-mail para enviarmos o link.');
+      return;
+    }
+
+    setMagicLoading(true);
+    try {
+      await authClient.$fetch('/magic-link/sign-in/magic-link', {
+        method: 'POST',
+        body: {
+          email: magicEmail.trim().toLowerCase(),
+          callbackURL: '/',
+        },
+      });
+      toast.success('Enviamos um link de acesso. Verifique sua caixa de entrada.');
+      setMagicEmail('');
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setMagicLoading(false);
+    }
+  };
+
+  const emailButtonLabel = authMode === 'sign-up' ? 'Criar conta com e-mail' : 'Entrar com e-mail';
+
+  const renderAuthTabs = () => (
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as 'social' | 'email' | 'magic-link')}
+      className="space-y-4"
+    >
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="social">Social</TabsTrigger>
+        <TabsTrigger value="email">E-mail</TabsTrigger>
+        <TabsTrigger value="magic-link">Magic link</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="social">
+        <div className="space-y-2">
+          <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
+          <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
+          <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
+          <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="email">
+        <form className="space-y-3" onSubmit={handleEmailSubmit}>
+          {authMode === 'sign-up' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="dialog-name">Nome completo</Label>
+              <Input
+                id="dialog-name"
+                name="name"
+                value={emailForm.name}
+                onChange={(event) => setEmailForm((prev) => ({ ...prev, name: event.target.value }))}
+                placeholder="Como devemos te chamar?"
+                autoComplete="name"
+                required
+              />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="dialog-email">E-mail</Label>
+            <Input
+              id="dialog-email"
+              type="email"
+              name="email"
+              value={emailForm.email}
+              onChange={(event) => setEmailForm((prev) => ({ ...prev, email: event.target.value }))}
+              placeholder="voce@exemplo.com"
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="dialog-password">Senha</Label>
+            <Input
+              id="dialog-password"
+              type="password"
+              name="password"
+              value={emailForm.password}
+              onChange={(event) => setEmailForm((prev) => ({ ...prev, password: event.target.value }))}
+              placeholder="Mínimo de 8 caracteres"
+              autoComplete={authMode === 'sign-up' ? 'new-password' : 'current-password'}
+              minLength={8}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={emailLoading}>
+            {emailLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Aguarde...
+              </>
+            ) : (
+              emailButtonLabel
+            )}
+          </Button>
+        </form>
+        <p className="text-xs text-center text-muted-foreground">
+          {authMode === 'sign-in' ? (
+            <>
+              Ainda não tem conta?{' '}
+              <button
+                type="button"
+                className="text-foreground font-medium hover:underline underline-offset-4"
+                onClick={() => setAuthMode('sign-up')}
+              >
+                Criar conta
+              </button>
+            </>
+          ) : (
+            <>
+              Já possui conta?{' '}
+              <button
+                type="button"
+                className="text-foreground font-medium hover:underline underline-offset-4"
+                onClick={() => setAuthMode('sign-in')}
+              >
+                Entrar
+              </button>
+            </>
+          )}
+        </p>
+      </TabsContent>
+
+      <TabsContent value="magic-link">
+        <form className="space-y-3" onSubmit={handleMagicLinkSubmit}>
+          <div className="space-y-1.5">
+            <Label htmlFor="dialog-magic-email">E-mail</Label>
+            <Input
+              id="dialog-magic-email"
+              type="email"
+              name="magic-email"
+              value={magicEmail}
+              onChange={(event) => setMagicEmail(event.target.value)}
+              placeholder="voce@exemplo.com"
+              autoComplete="email"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={magicLoading}>
+            {magicLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              'Enviar link mágico'
+            )}
+          </Button>
+        </form>
+        <p className="text-xs text-muted-foreground/80">
+          Enviaremos um link de acesso que expira em poucos minutos. Basta clicar para entrar sem senha.
+        </p>
+      </TabsContent>
+    </Tabs>
+  );
 
   const content = (
     <>
@@ -125,22 +376,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
       </div>
 
       {/* Auth Options */}
-      <div className="space-y-2 mb-4">
-        <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
-        <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
-        <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
-        <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
-      </div>
-
-      {/* Divider */}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="px-2 bg-background text-muted-foreground">or</span>
-        </div>
-      </div>
+      <div className="mb-4">{renderAuthTabs()}</div>
 
       {/* Guest Option */}
       <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full h-10 font-normal text-sm">
@@ -171,22 +407,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
           </DrawerHeader>
           <div className="overflow-y-auto pt-4">
             {/* Auth Options */}
-            <div className="space-y-2 mb-4">
-              <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
-              <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
-              <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
-              <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
-            </div>
-
-            {/* Divider */}
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-background text-muted-foreground">or</span>
-              </div>
-            </div>
+            <div className="mb-4">{renderAuthTabs()}</div>
 
             {/* Guest Option */}
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full h-10 font-normal text-sm">

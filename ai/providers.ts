@@ -36,7 +36,7 @@ export const scira = customProvider({
   languageModels: {
     'scira-default': xai('grok-4-fast-non-reasoning'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': anannas.chat('meta-llama/llama-3.3-70b-instruct'),
+    'scira-name': xai('grok-4-fast-non-reasoning'),
     'scira-grok-3-mini': xai('grok-3-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),

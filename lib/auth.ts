@@ -31,10 +31,14 @@ import DodoPayments from 'dodopayments';
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from './performance-cache';
 import { clearUserDataCache } from './user-data-server';
+import { magicLink } from 'better-auth/plugins/magic-link';
+import { sendMagicLinkEmail, sendPasswordResetEmail, sendVerificationEmail } from './email';
 
 config({
   path: '.env.local',
 });
+
+const hasEmailDelivery = !!serverEnv.RESEND_API_KEY && serverEnv.RESEND_API_KEY !== 'placeholder';
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
@@ -70,6 +74,7 @@ export const auth = betterAuth({
     enabled: true,
     maxAge: 5 * 60,
   },
+  baseURL: process.env.NODE_ENV === 'production' ? 'https://scira-repo.vercel.app' : 'http://localhost:8931',
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
@@ -88,6 +93,33 @@ export const auth = betterAuth({
       lookout,
     },
   }),
+  emailVerification: {
+    sendOnSignUp: hasEmailDelivery,
+    autoSignInAfterVerification: true,
+    async sendVerificationEmail({ user, url, token }) {
+      if (!hasEmailDelivery) return;
+      await sendVerificationEmail({
+        to: user.email,
+        url,
+        token,
+        userName: user.name,
+      });
+    },
+  },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    async sendResetPassword({ user, url, token }) {
+      await sendPasswordResetEmail({
+        to: user.email,
+        url,
+        token,
+        userName: user.name,
+      });
+    },
+  },
   socialProviders: {
     github: {
       clientId: serverEnv.GITHUB_CLIENT_ID,
@@ -111,6 +143,15 @@ export const auth = betterAuth({
     autoNamespace: true,
   },
   plugins: [
+    magicLink({
+      sendMagicLink: async ({ email, url, token }) => {
+        await sendMagicLinkEmail({
+          to: email,
+          url,
+          token,
+        });
+      },
+    }),
     // Payment plugins temporarily disabled for development
     // Uncomment and configure credentials to enable payment features
     /* ...(hasDodoCredentials

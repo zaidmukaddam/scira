@@ -1,9 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx drizzle-kit push)",
-      "Bash(node -e \"\nrequire(''dotenv'').config({ path: ''.env.local'' });\nconst { neon } = require(''@neondatabase/serverless'');\nconst sql = neon(process.env.DATABASE_URL);\n\nsql\\`\n  SELECT table_name \n  FROM information_schema.tables \n  WHERE table_schema = ''public'' \n  ORDER BY table_name;\n\\`.then(result => {\n  if (result.length === 0) {\n    console.log(''❌ No tables found - Database is EMPTY!'');\n  } else {\n    console.log(''✅ Tables found:'');\n    result.forEach(row => {\n      console.log(''  -'', row.table_name);\n    });\n  }\n}).catch(err => {\n  console.log(''❌ Error:'', err.message);\n});\n\")",
-      "Bash(npx drizzle-kit generate --name init)"
+      "mcp__chrome-devtools__navigate_page_history",
+      "Bash(node check_accounts.cjs)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__close_page",
+      "Bash(node check_users.cjs)",
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npm run dev)",
+      "Bash(curl -I http://localhost:8931)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
     "ask": []
