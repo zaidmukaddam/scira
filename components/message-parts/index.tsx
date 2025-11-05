@@ -149,6 +149,9 @@ const PieChartViewer = lazy(() =>
 const TableViewer = lazy(() =>
   import('@/components/tool-invocation/table-viewer').then((module) => ({ default: module.TableViewer })),
 );
+const MermaidDiagram = lazy(() =>
+  import('@/components/tool-invocation/mermaid-diagram').then((module) => ({ default: module.MermaidDiagram })),
+);
 
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
@@ -1913,6 +1916,37 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       columns={((part as any).input?.columns as any[]) || []}
                       data={((part as any).input?.data as any[]) || []}
                     />
+                  </Suspense>
+                );
+            }
+            break;
+
+          case 'tool-create_mermaid_diagram':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing Mermaid diagram...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting Mermaid rendering...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Mermaid Diagram"
+                    errorText={String((part as any).errorText || 'Failed to render Mermaid diagram')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <MermaidDiagram chart={(part as any).input?.chart as string} />
                   </Suspense>
                 );
             }

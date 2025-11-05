@@ -74,6 +74,7 @@ import {
   createLineChartTool,
   createPieChartTool,
   createTableTool,
+  createMermaidDiagramTool,
   createConnectorsSearchTool,
   codeContextTool,
 } from '@/lib/tools';
@@ -407,6 +408,7 @@ export async function POST(req: Request) {
             create_line_chart: createLineChartTool,
             create_pie_chart: createPieChartTool,
             create_table: createTableTool,
+            create_mermaid_diagram: createMermaidDiagramTool,
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream),

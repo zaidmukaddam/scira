@@ -6,6 +6,7 @@ import { createBarChartTool } from '@/lib/tools/visualization/create-bar-chart';
 import { createLineChartTool } from '@/lib/tools/visualization/create-line-chart';
 import { createPieChartTool } from '@/lib/tools/visualization/create-pie-chart';
 import { createTableTool } from '@/lib/tools/visualization/create-table';
+import { createMermaidDiagramTool } from '@/lib/tools/visualization/create-mermaid-diagram';
 
 describe('Code execution tool schemas', () => {
   it('accepts valid JavaScript code payloads', () => {
@@ -101,5 +102,15 @@ describe('Visualization tool schemas', () => {
     };
 
     expect(() => createTableTool.inputSchema.parse(payload)).not.toThrow();
+  });
+
+  it('parses mermaid diagram definitions', () => {
+    const payload = {
+      chart: `flowchart TD\n  A[Start] --> B{Is it working?}\n  B -- Yes --> C[Celebrate]\n  B -- No --> D[Fix it] --> B`,
+      description: 'Simple flowchart',
+    };
+
+    expect(() => createMermaidDiagramTool.inputSchema.parse(payload)).not.toThrow();
+    expect(() => createMermaidDiagramTool.inputSchema.parse({ chart: '' })).toThrow();
   });
 });

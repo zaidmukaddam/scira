@@ -28,3 +28,4 @@ export { createBarChartTool } from './visualization/create-bar-chart';
 export { createLineChartTool } from './visualization/create-line-chart';
 export { createPieChartTool } from './visualization/create-pie-chart';
 export { createTableTool } from './visualization/create-table';
+export { createMermaidDiagramTool } from './visualization/create-mermaid-diagram';

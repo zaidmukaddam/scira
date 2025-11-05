@@ -35,6 +35,7 @@ import type {
   createLineChartTool,
   createPieChartTool,
   createTableTool,
+  createMermaidDiagramTool,
 } from '@/lib/tools';
 
 import type { InferUITool, UIMessage } from 'ai';
@@ -147,6 +148,7 @@ type createBarChartTool = InferUITool<typeof createBarChartTool>;
 type createLineChartTool = InferUITool<typeof createLineChartTool>;
 type createPieChartTool = InferUITool<typeof createPieChartTool>;
 type createTableTool = InferUITool<typeof createTableTool>;
+type createMermaidDiagramTool = InferUITool<typeof createMermaidDiagramTool>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -191,6 +193,7 @@ export type ChatTools = {
   create_line_chart: createLineChartTool;
   create_pie_chart: createPieChartTool;
   create_table: createTableTool;
+  create_mermaid_diagram: createMermaidDiagramTool;
 
   connectors_search: createConnectorsSearchTool;
   search_memories: createMemoryTools;
