@@ -132,6 +132,7 @@
     "supermemory": "^3.0.0-alpha.26",
     "tailwind-merge": "^3.3.1",
     "tailwind-scrollbar": "4.0.2",
+    "ts-safe": "^0.0.5",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
     "uuid": "^11.1.0",

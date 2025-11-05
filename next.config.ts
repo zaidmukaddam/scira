@@ -7,6 +7,18 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 jiti.import('./env/server.ts');
 jiti.import('./env/client.ts');
 
+const cspHeaderValue = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https: wss:",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  "frame-src 'self'",
+].join('; ');
+
 const nextConfig: NextConfig = {
   compiler: {
     // if NODE_ENV is production, remove console.log
@@ -46,6 +58,10 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           {
+            key: 'Content-Security-Policy',
+            value: cspHeaderValue,
+          },
+          {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
@@ -84,6 +100,17 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
     ];
+  },
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
   },
   images: {
     qualities: [75, 100],

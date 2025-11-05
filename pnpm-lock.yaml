@@ -347,6 +347,9 @@ importers:
       tailwind-scrollbar:
         specifier: 4.0.2
         version: 4.0.2(react@19.2.0)(tailwindcss@4.1.14)
+      ts-safe:
+        specifier: ^0.0.5
+        version: 0.0.5
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -5468,6 +5471,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-safe@0.0.5:
+    resolution: {integrity: sha512-Bai5dobPYWmDurdCm3G/YUhB1gKu8MPudtg6bwRrLNVuUJ7vyXTad6NOYmdksBY4m3YV5JmbDvkdJqiX6Q7CSQ==}
+    engines: {node: '>=14.0.0'}
 
   tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
@@ -11532,6 +11539,8 @@ snapshots:
   ts-api-utils@2.1.0(typescript@5.9.2):
     dependencies:
       typescript: 5.9.2
+
+  ts-safe@0.0.5: {}
 
   tsconfig-paths@3.15.0:
     dependencies:
