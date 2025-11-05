@@ -134,6 +134,24 @@ const CodeInterpreterView = lazy(() =>
 const NearbySearchSkeleton = lazy(() =>
   import('@/components/tool-invocation-list-view').then((module) => ({ default: module.NearbySearchSkeleton })),
 );
+const CodeExecutor = lazy(() =>
+  import('@/components/tool-invocation/code-executor').then((module) => ({ default: module.CodeExecutor })),
+);
+const BarChartViewer = lazy(() =>
+  import('@/components/tool-invocation/bar-chart-viewer').then((module) => ({ default: module.BarChartViewer })),
+);
+const LineChartViewer = lazy(() =>
+  import('@/components/tool-invocation/line-chart-viewer').then((module) => ({ default: module.LineChartViewer })),
+);
+const PieChartViewer = lazy(() =>
+  import('@/components/tool-invocation/pie-chart-viewer').then((module) => ({ default: module.PieChartViewer })),
+);
+const TableViewer = lazy(() =>
+  import('@/components/tool-invocation/table-viewer').then((module) => ({ default: module.TableViewer })),
+);
+const MermaidDiagram = lazy(() =>
+  import('@/components/tool-invocation/mermaid-diagram').then((module) => ({ default: module.MermaidDiagram })),
+);
 
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
@@ -1703,6 +1721,233 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       </div>
                     )}
                   </div>
+                );
+            }
+            break;
+
+          case 'tool-js_run':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing JavaScript execution...
+                  </div>
+                );
+              case 'input-available':
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <CodeExecutor part={part as any} type="javascript" />
+                  </Suspense>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="JavaScript Execution"
+                    errorText={String((part as any).errorText || 'JavaScript execution failed')}
+                  />
+                );
+            }
+            break;
+
+          case 'tool-python_run':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing Python execution...
+                  </div>
+                );
+              case 'input-available':
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <CodeExecutor part={part as any} type="python" />
+                  </Suspense>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Python Execution"
+                    errorText={String((part as any).errorText || 'Python execution failed')}
+                  />
+                );
+            }
+            break;
+
+          case 'tool-create_bar_chart':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing bar chart data...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting bar chart generation...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Bar Chart"
+                    errorText={String((part as any).errorText || 'Failed to generate bar chart')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <BarChartViewer
+                      title={((part as any).input?.title as string) || 'Bar Chart'}
+                      description={(part as any).input?.description as string | null | undefined}
+                      data={((part as any).input?.data as any[]) || []}
+                      yAxisLabel={(part as any).input?.yAxisLabel as string | null | undefined}
+                    />
+                  </Suspense>
+                );
+            }
+            break;
+
+          case 'tool-create_line_chart':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing line chart data...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting line chart generation...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Line Chart"
+                    errorText={String((part as any).errorText || 'Failed to generate line chart')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <LineChartViewer
+                      title={((part as any).input?.title as string) || 'Line Chart'}
+                      description={(part as any).input?.description as string | null | undefined}
+                      data={((part as any).input?.data as any[]) || []}
+                      yAxisLabel={(part as any).input?.yAxisLabel as string | null | undefined}
+                    />
+                  </Suspense>
+                );
+            }
+            break;
+
+          case 'tool-create_pie_chart':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing pie chart data...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting pie chart generation...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Pie Chart"
+                    errorText={String((part as any).errorText || 'Failed to generate pie chart')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <PieChartViewer
+                      title={((part as any).input?.title as string) || 'Pie Chart'}
+                      description={(part as any).input?.description as string | null | undefined}
+                      unit={(part as any).input?.unit as string | null | undefined}
+                      data={((part as any).input?.data as any[]) || []}
+                    />
+                  </Suspense>
+                );
+            }
+            break;
+
+          case 'tool-create_table':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing table data...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting table generation...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Table"
+                    errorText={String((part as any).errorText || 'Failed to generate table')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <TableViewer
+                      title={((part as any).input?.title as string) || 'Table'}
+                      description={(part as any).input?.description as string | null | undefined}
+                      columns={((part as any).input?.columns as any[]) || []}
+                      data={((part as any).input?.data as any[]) || []}
+                    />
+                  </Suspense>
+                );
+            }
+            break;
+
+          case 'tool-create_mermaid_diagram':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing Mermaid diagram...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-muted-foreground">
+                    Awaiting Mermaid rendering...
+                  </div>
+                );
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    toolName="Mermaid Diagram"
+                    errorText={String((part as any).errorText || 'Failed to render Mermaid diagram')}
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <MermaidDiagram chart={(part as any).input?.chart as string} />
+                  </Suspense>
                 );
             }
             break;

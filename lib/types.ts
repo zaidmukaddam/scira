@@ -29,6 +29,13 @@ import type {
   SearchMemoryTool,
   AddMemoryTool,
   codeContextTool,
+  jsRunTool,
+  pythonRunTool,
+  createBarChartTool,
+  createLineChartTool,
+  createPieChartTool,
+  createTableTool,
+  createMermaidDiagramTool,
 } from '@/lib/tools';
 
 import type { InferUITool, UIMessage } from 'ai';
@@ -135,6 +142,13 @@ type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectors
 type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 type codeContextTool = InferUITool<typeof codeContextTool>;
+type jsRunTool = InferUITool<typeof jsRunTool>;
+type pythonRunTool = InferUITool<typeof pythonRunTool>;
+type createBarChartTool = InferUITool<typeof createBarChartTool>;
+type createLineChartTool = InferUITool<typeof createLineChartTool>;
+type createPieChartTool = InferUITool<typeof createPieChartTool>;
+type createTableTool = InferUITool<typeof createTableTool>;
+type createMermaidDiagramTool = InferUITool<typeof createMermaidDiagramTool>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -166,11 +180,20 @@ export type ChatTools = {
   // Utility Tools
   text_translate: textTranslateTool;
   code_interpreter: codeInterpreterTool;
+  js_run: jsRunTool;
+  python_run: pythonRunTool;
   track_flight: flightTrackerTool;
   datetime: datetimeTool;
   // mcp_search: mcpSearchTool;
   extreme_search: extremeSearch;
   greeting: greetingTool;
+
+  // Visualization
+  create_bar_chart: createBarChartTool;
+  create_line_chart: createLineChartTool;
+  create_pie_chart: createPieChartTool;
+  create_table: createTableTool;
+  create_mermaid_diagram: createMermaidDiagramTool;
 
   connectors_search: createConnectorsSearchTool;
   search_memories: createMemoryTools;

@@ -314,6 +314,13 @@ const groupTools = {
     'web_search',
     'greeting',
     'code_interpreter',
+    'js_run',
+    'python_run',
+    'create_bar_chart',
+    'create_line_chart',
+    'create_pie_chart',
+    'create_table',
+    'create_mermaid_diagram',
     'get_weather_data',
     'retrieve',
     'text_translate',
@@ -325,13 +332,13 @@ const groupTools = {
     'trending_tv',
     'datetime'
   ] as const,
-  academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
+  academic: ['academic_search', 'code_interpreter', 'js_run', 'python_run', 'create_bar_chart', 'create_line_chart', 'create_pie_chart', 'create_table', 'create_mermaid_diagram', 'datetime'] as const,
   youtube: ['youtube_search', 'datetime'] as const,
   code: ['code_context'] as const,
   reddit: ['reddit_search', 'datetime'] as const,
   stocks: ['stock_chart', 'currency_converter', 'datetime'] as const,
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
-  chat: [] as const,
+  chat: ['js_run', 'python_run', 'create_bar_chart', 'create_line_chart', 'create_pie_chart', 'create_table', 'create_mermaid_diagram'] as const,
   cyrus: [] as const,
   libeller: [] as const,
   nomenclature: [] as const,
@@ -386,6 +393,13 @@ Mon rôle est de vous aider à gagner du temps et à simplifier vos tâches au q
  - ⚠️ **NO TEXT BEFORE TOOL (NON-GREETINGS)**: Do not output any assistant text before the first tool result for non-greeting inputs.
  - ⚠️ **NEVER CHOOSE NONE (NON-GREETINGS)**: Do not choose a no-tool response for non-greeting inputs; a tool call is REQUIRED.
  - ⚠️ **GENERIC ASK STILL REQUIRES TOOL**: For definitions, summaries, opinions, or general knowledge, still run \`web_search\` first.
+
+### Sandbox & Visualization Tools
+- 🧪 **JavaScript** : utilise l’outil "js_run" dès que l'utilisateur demande d'exécuter du JavaScript côté client.
+- 🐍 **Python** : privilégie "python_run" pour le code à exécuter dans Pyodide et veille à charger les imports nécessaires.
+- 📊 **Graphiques** : pour les demandes de visualisations, sélectionne "create_bar_chart", "create_line_chart" ou "create_pie_chart" selon le rendu attendu.
+- 📋 **Tableaux** : pour structurer des données tabulaires ou préparer un export CSV/Excel, appelle "create_table" avec les colonnes et lignes adaptées.
+- 🗺️ **Diagrammes Mermaid** : pour tout diagramme (flowchart, sequenceDiagram, gantt, etc.), utilise "create_mermaid_diagram" en fournissant la définition complète.
 
 ### Response Format Requirements
 - ⚠️ **MANDATORY**: Always respond with markdown format
