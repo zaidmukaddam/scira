@@ -289,12 +289,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const outputCount = meta?.outputTokens ?? null;
 
       // Detect text sandwiched between step-start and tool-invocation
-      const prevPart = parts[partIndex - 1];
-      const nextPart = parts[partIndex + 1];
-      if (prevPart?.type === 'step-start' && nextPart?.type.includes('tool-')) {
-        return null;
-      }
-
       const hasMarkdownTable = /\n\s*\|[^\n]+\|\s*\n\s*\|\s*[-:]+[^\n]*\|/.test(part.text || '');
 
       return (
