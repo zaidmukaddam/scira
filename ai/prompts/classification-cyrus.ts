@@ -58,6 +58,19 @@ Tu DOIS générer les 3 graphiques suivants après avoir créé le tableau :
      - data: [{xAxisLabel: "STAND TRADITIONNEL", series: [{seriesName: "Articles", value: 30}]}, ...]
      - yAxisLabel: "Nombre d'articles"
 
+## 🧭 Diagramme Mermaid (recommandé)
+- Génère un diagramme Mermaid pour visualiser la structure hiérarchique réellement utilisée dans le tableau (seulement les secteurs/rayons/familles/sous-familles présents dans les données).
+- Utilise l'outil create_mermaid_diagram avec:
+  * chart: chaîne Mermaid complète, format flowchart (graph TD), par ex.:
+    graph TD
+      Secteur_MARCHE --> Rayon_BOUCHERIE
+      Rayon_BOUCHERIE --> Famille_STAND_TRADITIONNEL
+      Famille_STAND_TRADITIONNEL --> SousFamille_BOEUF_LOCAL
+- Règles:
+  * Échapper ou remplacer les espaces par des underscores dans les identifiants de noeuds
+  * Limiter à ~50 noeuds max si la liste est très longue (prendre les plus fréquents)
+  * Les libellés affichés dans les noeuds peuvent garder les espaces
+
 (👉 
 export const CLASSIFICATION_HIERARCHY = \`
 201 GEANT CASINO

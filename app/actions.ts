@@ -339,7 +339,7 @@ const groupTools = {
   stocks: ['stock_chart', 'currency_converter', 'datetime'] as const,
   crypto: ['coin_data', 'coin_ohlc', 'coin_data_by_contract', 'datetime'] as const,
   chat: ['js_run', 'python_run', 'create_bar_chart', 'create_line_chart', 'create_pie_chart', 'create_table', 'create_mermaid_diagram'] as const,
-  cyrus: ['create_table', 'create_bar_chart', 'create_pie_chart'] as const,
+  cyrus: ['create_table', 'create_bar_chart', 'create_pie_chart', 'create_mermaid_diagram'] as const,
   libeller: ['create_table', 'create_bar_chart', 'create_pie_chart'] as const,
   nomenclature: ['create_table', 'create_bar_chart', 'create_pie_chart'] as const,
   pdfExcel: ['create_table', 'create_bar_chart', 'create_pie_chart', 'create_line_chart'] as const,
