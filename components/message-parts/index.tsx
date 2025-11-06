@@ -1795,14 +1795,30 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <BarChartViewer
-                      title={((part as any).input?.title as string) || 'Bar Chart'}
-                      description={(part as any).input?.description as string | null | undefined}
-                      data={((part as any).input?.data as any[]) || []}
-                      yAxisLabel={(part as any).input?.yAxisLabel as string | null | undefined}
-                    />
-                  </Suspense>
+                  {(() => {
+                    const input = (part as any).input ?? {};
+                    const title = typeof input.title === 'string' ? input.title.trim() : '';
+                    const data = Array.isArray(input.data) ? input.data : [];
+                    if (!title || data.length === 0) {
+                      return (
+                        <ToolErrorDisplay
+                          key={`${messageIndex}-${partIndex}-tool`}
+                          toolName="Bar Chart"
+                          errorText={!title ? 'Missing title for bar chart' : 'No data provided for bar chart'}
+                        />
+                      );
+                    }
+                    return (
+                      <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                        <BarChartViewer
+                          title={title}
+                          description={input.description as string | null | undefined}
+                          data={data as any[]}
+                          yAxisLabel={input.yAxisLabel as string | null | undefined}
+                        />
+                      </Suspense>
+                    );
+                  })()}
                 );
             }
             break;
@@ -1831,14 +1847,30 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <LineChartViewer
-                      title={((part as any).input?.title as string) || 'Line Chart'}
-                      description={(part as any).input?.description as string | null | undefined}
-                      data={((part as any).input?.data as any[]) || []}
-                      yAxisLabel={(part as any).input?.yAxisLabel as string | null | undefined}
-                    />
-                  </Suspense>
+                  {(() => {
+                    const input = (part as any).input ?? {};
+                    const title = typeof input.title === 'string' ? input.title.trim() : '';
+                    const data = Array.isArray(input.data) ? input.data : [];
+                    if (!title || data.length === 0) {
+                      return (
+                        <ToolErrorDisplay
+                          key={`${messageIndex}-${partIndex}-tool`}
+                          toolName="Line Chart"
+                          errorText={!title ? 'Missing title for line chart' : 'No data provided for line chart'}
+                        />
+                      );
+                    }
+                    return (
+                      <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                        <LineChartViewer
+                          title={title}
+                          description={input.description as string | null | undefined}
+                          data={data as any[]}
+                          yAxisLabel={input.yAxisLabel as string | null | undefined}
+                        />
+                      </Suspense>
+                    );
+                  })()}
                 );
             }
             break;
@@ -1867,14 +1899,30 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <PieChartViewer
-                      title={((part as any).input?.title as string) || 'Pie Chart'}
-                      description={(part as any).input?.description as string | null | undefined}
-                      unit={(part as any).input?.unit as string | null | undefined}
-                      data={((part as any).input?.data as any[]) || []}
-                    />
-                  </Suspense>
+                  {(() => {
+                    const input = (part as any).input ?? {};
+                    const title = typeof input.title === 'string' ? input.title.trim() : '';
+                    const data = Array.isArray(input.data) ? input.data : [];
+                    if (!title || data.length === 0) {
+                      return (
+                        <ToolErrorDisplay
+                          key={`${messageIndex}-${partIndex}-tool`}
+                          toolName="Pie Chart"
+                          errorText={!title ? 'Missing title for pie chart' : 'No data provided for pie chart'}
+                        />
+                      );
+                    }
+                    return (
+                      <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                        <PieChartViewer
+                          title={title}
+                          description={input.description as string | null | undefined}
+                          unit={input.unit as string | null | undefined}
+                          data={data as any[]}
+                        />
+                      </Suspense>
+                    );
+                  })()}
                 );
             }
             break;
@@ -1903,14 +1951,35 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
-                    <TableViewer
-                      title={((part as any).input?.title as string) || 'Table'}
-                      description={(part as any).input?.description as string | null | undefined}
-                      columns={((part as any).input?.columns as any[]) || []}
-                      data={((part as any).input?.data as any[]) || []}
-                    />
-                  </Suspense>
+                  {(() => {
+                    const input = (part as any).input ?? {};
+                    const title = typeof input.title === 'string' ? input.title.trim() : '';
+                    const columns = Array.isArray(input.columns) ? input.columns : [];
+                    const data = Array.isArray(input.data) ? input.data : [];
+                    if (!title || columns.length === 0 || data.length === 0) {
+                      let msg = 'Table input missing: ';
+                      if (!title) msg += 'title ';
+                      if (columns.length === 0) msg += 'columns ';
+                      if (data.length === 0) msg += 'data ';
+                      return (
+                        <ToolErrorDisplay
+                          key={`${messageIndex}-${partIndex}-tool`}
+                          toolName="Table"
+                          errorText={msg.trim()}
+                        />
+                      );
+                    }
+                    return (
+                      <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                        <TableViewer
+                          title={title}
+                          description={input.description as string | null | undefined}
+                          columns={columns as any[]}
+                          data={data as any[]}
+                        />
+                      </Suspense>
+                    );
+                  })()}
                 );
             }
             break;
