@@ -10,8 +10,8 @@ export const createTableTool = createTool({
     columns: z
       .array(
         z.object({
-          key: z.string().describe('Column key that matches the data object keys'),
-          label: z.string().describe('Display label for the column header'),
+          key: z.string().min(1).describe('Column key that matches the data object keys'),
+          label: z.string().min(1).describe('Display label for the column header'),
           type: z
             .enum(['string', 'number', 'date', 'boolean'])
             .nullable()
@@ -19,6 +19,7 @@ export const createTableTool = createTool({
             .describe('Data type for proper sorting and formatting'),
         }),
       )
+      .min(1)
       .describe('Column configuration array'),
     data: z
       .array(
@@ -29,6 +30,7 @@ export const createTableTool = createTool({
             'Array of row objects. Each object should have keys matching the column names.',
           ),
       )
+      .min(1)
       .describe(
         'Array of row objects. Each object should have keys matching the column names.',
       ),

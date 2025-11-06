@@ -7,17 +7,18 @@ export const createLineChartTool = createTool({
     data: z
       .array(
         z.object({
-          xAxisLabel: z.string(),
+          xAxisLabel: z.string().min(1),
           series: z.array(
             z.object({
-              seriesName: z.string(),
-              value: z.number(),
+              seriesName: z.string().min(1),
+              value: z.preprocess((v) => (typeof v === 'string' ? Number(v) : v), z.number()),
             }),
-          ),
+          ).min(1),
         }),
       )
+      .min(1)
       .describe('Chart data with x-axis labels and series values'),
-    title: z.string(),
+    title: z.string().min(1),
     description: z.string().nullable(),
     yAxisLabel: z.string().nullable().describe('Label for Y-axis'),
   }),
