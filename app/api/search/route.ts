@@ -363,16 +363,18 @@ export async function POST(req: Request) {
           // Always check if model supports reasoning
           const modelHasReasoning = hasReasoningSupport(resolvedModel);
 
-          if (steps.length > 0) {
-            const lastStep = steps[steps.length - 1];
+          const totalToolCalls = steps.reduce(
+            (count, step) => count + step.toolCalls.length,
+            0,
+          );
 
-            // If tools were called and results are available, disable further tool calls
-            if (lastStep.toolCalls.length > 0 && lastStep.toolResults.length > 0) {
-              return {
-                toolChoice: 'none',
-                activeTools: [],
-              };
-            }
+          const MAX_TOOL_CALLS_PER_RESPONSE = 10;
+
+          if (totalToolCalls >= MAX_TOOL_CALLS_PER_RESPONSE) {
+            return {
+              toolChoice: 'none',
+              activeTools: [],
+            };
           }
 
           return undefined;
