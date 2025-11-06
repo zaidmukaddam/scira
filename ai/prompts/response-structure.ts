@@ -41,7 +41,7 @@ export function getCentralResponseStructure(): string {
 
 ### ✅ Contrôle qualité interne
 - Vérifie que le titre H1 est fourni, que la langue et le ton sont corrects, et que le niveau de détail correspond à la nature de la requête (intégral vs adaptatif).
-
+;
 }
 
 export function appendCentralResponseStructure(prompt: string): string {
