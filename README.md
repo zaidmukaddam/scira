@@ -4,9 +4,16 @@
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+
+<br />
+
 🔗 **[Try Scira at scira.ai](https://scira.ai)**
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/scira)
+
 
 ## Powered By
 
