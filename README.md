@@ -1,12 +1,15 @@
 # Scira
 
-![Scira](/app/opengraph-image.png)
-
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
 <a href="https://vercel.com/oss">
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
 </a>
+
+<br />
+
+
+![Scira](/app/opengraph-image.png)
 
 <br />
 
