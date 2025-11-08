@@ -1341,6 +1341,9 @@ const MAX_FILES = 4;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_INPUT_CHARS = 50000;
 
+//session storage key for draft query
+const DRAFT_KEY = "scira-draftQuery";
+
 const fileToDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -2669,16 +2672,28 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }
   }, [isRecording, cleanupMediaRecorder, setInput, user, setShowSignInDialog]);
 
+  //Check for unfinished draft
+  useEffect(()=>{
+    const draftQuery = sessionStorage.getItem(DRAFT_KEY);
+
+    if(draftQuery){
+      const parsedQuery = JSON.parse(draftQuery);
+      if(parsedQuery.draftQuery){
+        setInput(parsedQuery.draftQuery);
+      }
+  }},[]);
+
   const handleInput = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       event.preventDefault();
       const newValue = event.target.value;
 
       if (newValue.length > MAX_INPUT_CHARS) {
-        setInput(newValue);
+        // setInput(newValue); -> we should not let user enter any new value if it exceeds the max_input_chars.
         toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
       } else {
         setInput(newValue);
+        sessionStorage.setItem(DRAFT_KEY,JSON.stringify({draftQuery: newValue}));
       }
     },
     [setInput],
@@ -3341,6 +3356,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         });
 
         setInput('');
+
+        // Clear persisted draft after successful submission
+        sessionStorage.removeItem(DRAFT_KEY);
+      
         setAttachments([]);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
