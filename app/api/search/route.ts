@@ -77,6 +77,7 @@ import {
   createMermaidDiagramTool,
   createConnectorsSearchTool,
   codeContextTool,
+  eanSearchTool,
 } from '@/lib/tools';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { markdownJoinerTransform } from '@/lib/parser';
@@ -414,6 +415,7 @@ export async function POST(req: Request) {
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream),
+            ean_search: eanSearchTool(dataStream),
             greeting: greetingTool(timezone),
             code_context: codeContextTool,
           };

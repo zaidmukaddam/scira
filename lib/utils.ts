@@ -39,7 +39,8 @@ export type SearchGroupId =
   | 'cyrus'
   | 'libeller'
   | 'nomenclature'
-  | 'pdfExcel';
+  | 'pdfExcel'
+  | 'eanexpert';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -173,6 +174,13 @@ function getBaseSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'PDF → Excel',
       description: 'Extraction de tableaux depuis des PDFs (Markdown) + export .xlsx',
       icon: File02Icon,
+      show: true,
+    },
+    {
+      id: 'eanexpert' as const,
+      name: 'EAN-Expert',
+      description: "Recherche d'articles par code-barres",
+      icon: GlobalSearchIcon,
       show: true,
     },
   ] as const;

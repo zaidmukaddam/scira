@@ -1019,7 +1019,8 @@ export async function initializeUserAgentAccess(userId: string) {
     const { generateId } = await import('ai');
     const allAgents = [
       'web', 'x', 'academic', 'youtube', 'reddit', 'stocks', 'chat', 'extreme', 
-      'memory', 'crypto', 'code', 'connectors', 'cyrus', 'libeller', 'nomenclature', 'pdfExcel'
+      'memory', 'crypto', 'code', 'connectors', 'cyrus', 'libeller', 'nomenclature', 'pdfExcel',
+      'eanexpert'
     ];
     const values = allAgents.map(agentId => ({
       id: generateId(),

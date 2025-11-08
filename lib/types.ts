@@ -36,6 +36,7 @@ import type {
   createPieChartTool,
   createTableTool,
   createMermaidDiagramTool,
+  eanSearchTool,
 } from '@/lib/tools';
 
 import type { InferUITool, UIMessage } from 'ai';
@@ -149,6 +150,7 @@ type createLineChartTool = InferUITool<typeof createLineChartTool>;
 type createPieChartTool = InferUITool<typeof createPieChartTool>;
 type createTableTool = InferUITool<typeof createTableTool>;
 type createMermaidDiagramTool = InferUITool<typeof createMermaidDiagramTool>;
+  type eanSearch = InferUITool<ReturnType<typeof eanSearchTool>>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -187,6 +189,7 @@ export type ChatTools = {
   // mcp_search: mcpSearchTool;
   extreme_search: extremeSearch;
   greeting: greetingTool;
+  ean_search: eanSearch;
 
   // Visualization
   create_bar_chart: createBarChartTool;
@@ -215,6 +218,24 @@ export type CustomUIDataTypes = {
     imagesCount: number;
   };
   extreme_search: DataExtremeSearchPart['data'];
+  'ean-search-loading': {
+    barcode: string;
+    status: 'searching';
+  };
+  'ean-search-complete': {
+    barcode: string;
+    results: Array<{
+      title: string;
+      url: string;
+      content: string;
+      price?: string;
+      images: string[];
+      supplier?: string;
+      ean: string;
+    }>;
+    images: string[];
+    totalResults: number;
+  };
 };
 
 export type ChatMessage = UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>;

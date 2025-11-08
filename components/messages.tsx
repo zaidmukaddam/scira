@@ -5,6 +5,7 @@ import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
 import { HyperLogoHeader } from '@/components/hyper-logo-header';
 import { CyrusLoadingState } from '@/components/cyrus-loading-state';
+import { EANLoadingState } from '@/components/ean-loading-state';
 import { NomenclatureLoadingState } from '@/components/nomenclature-loading-state';
 import { CorrectionLibellerLoadingState } from '@/components/correction-libeller-loading-state';
 import { PdfToExcelLoadingState } from '@/components/pdf-to-excel-loading-state';
@@ -294,6 +295,10 @@ const Messages: React.FC<MessagesProps> = ({
     return (status === 'submitted' || status === 'streaming') && selectedGroup === 'pdfExcel' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
+  const shouldShowEANLoader = useMemo(() => {
+    return status === 'streaming' && selectedGroup === 'eanexpert' && !hasActiveToolInvocations;
+  }, [status, selectedGroup, hasActiveToolInvocations]);
+
   // Compute index of the most recent assistant message; only that one should keep min-height
   const lastAssistantIndex = useMemo(() => {
     for (let i = memoizedMessages.length - 1; i >= 0; i -= 1) {
@@ -486,8 +491,17 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
 
-      {/* Default loading animation when not in Cyrus, Nomenclature, Libeller, or PdfExcel condition */}
-      {!shouldShowCyrusLoader && !shouldShowNomenclatureLoader && !shouldShowLibellerLoader && !shouldShowPdfExcelLoader && shouldShowLoading && (
+      {shouldShowEANLoader && (
+        <div
+          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+        >
+          <div className="w-full !m-0 !p-0">
+            <EANLoadingState />
+          </div>
+        </div>
+      )}
+
+      {!shouldShowCyrusLoader && !shouldShowNomenclatureLoader && !shouldShowLibellerLoader && !shouldShowPdfExcelLoader && !shouldShowEANLoader && shouldShowLoading && (
         <div
           className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
         >

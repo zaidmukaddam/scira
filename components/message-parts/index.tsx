@@ -65,6 +65,8 @@ import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
 import { markdownTablesToXlsx } from '@/lib/export-xlsx';
+import { EANSearchResults } from '@/components/ean-search-results';
+import { EANLoadingState } from '@/components/ean-loading-state';
 
 // Lazy load tool components
 const FlightTracker = lazy(() =>
@@ -774,6 +776,30 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
+          case 'tool-ean_search':
+            switch (part.state) {
+              case 'input-streaming': {
+                const barcode = (part as any).input?.barcode || (part as any).args?.barcode;
+                return <EANLoadingState key={`${messageIndex}-${partIndex}-tool`} barcode={barcode} />;
+              }
+              case 'input-available': {
+                const barcode = (part as any).input?.barcode || (part as any).args?.barcode;
+                return <EANLoadingState key={`${messageIndex}-${partIndex}-tool`} barcode={barcode} />;
+              }
+              case 'output-available': {
+                const { barcode, results, images, totalResults } = (part as any).output || {};
+                return (
+                  <EANSearchResults
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    barcode={barcode}
+                    results={results || []}
+                    images={images || []}
+                    totalResults={totalResults ?? (results?.length || 0)}
+                  />
+                );
+              }
+            }
+            break;
           case 'tool-stock_chart':
             switch (part.state) {
               case 'input-streaming':
