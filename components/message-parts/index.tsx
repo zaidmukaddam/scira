@@ -790,18 +790,18 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 const { barcode, results, images, totalResults, description } = (part as any).output || {};
                 return (
                   <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-4">
-                    {description && (
-                      <div className="prose prose-sm max-w-none p-4 bg-muted/50 rounded-lg border">
-                        <div className="whitespace-pre-line text-foreground">{description}</div>
-                      </div>
-                    )}
-
                     <EANSearchResults
                       barcode={barcode}
                       results={results || []}
                       images={images || []}
                       totalResults={totalResults ?? (results?.length || 0)}
                     />
+
+                    {description && (
+                      <div className="prose prose-sm max-w-none p-4 bg-muted/50 rounded-lg border">
+                        <div className="whitespace-pre-line text-foreground">{description}</div>
+                      </div>
+                    )}
                   </div>
                 );
               }
