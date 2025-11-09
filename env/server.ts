@@ -27,8 +27,8 @@ export const serverEnv = createEnv({
     UPSTASH_REDIS_REST_URL: z.string().optional().default('deprecated'),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional().default('deprecated'),
     ELEVENLABS_API_KEY: z.string().optional().default('deprecated'),
-    TAVILY_API_KEY: z.string().optional().default('deprecated'), // Garder pour compatibilité legacy
-    EXA_API_KEY: z.string().optional().default('deprecated'), // Garder pour compatibilité legacy
+    TAVILY_API_KEY: z.string().optional().default('deprecated'),
+    EXA_API_KEY: z.string().optional().default('deprecated'),
     SERPER_API_KEY: z.string().min(1, 'Serper API key is required for EAN search'),
     VALYU_API_KEY: z.string().optional().default('deprecated'),
     TMDB_API_KEY: z.string().optional().default('deprecated'),
