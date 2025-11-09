@@ -787,15 +787,22 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return <EANLoadingState key={`${messageIndex}-${partIndex}-tool`} barcode={barcode} />;
               }
               case 'output-available': {
-                const { barcode, results, images, totalResults } = (part as any).output || {};
+                const { barcode, results, images, totalResults, description } = (part as any).output || {};
                 return (
-                  <EANSearchResults
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    barcode={barcode}
-                    results={results || []}
-                    images={images || []}
-                    totalResults={totalResults ?? (results?.length || 0)}
-                  />
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-4">
+                    {description && (
+                      <div className="prose prose-sm max-w-none p-4 bg-muted/50 rounded-lg border">
+                        <div className="whitespace-pre-line text-foreground">{description}</div>
+                      </div>
+                    )}
+
+                    <EANSearchResults
+                      barcode={barcode}
+                      results={results || []}
+                      images={images || []}
+                      totalResults={totalResults ?? (results?.length || 0)}
+                    />
+                  </div>
                 );
               }
             }

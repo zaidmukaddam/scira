@@ -64,7 +64,6 @@
     "@tabler/icons-react": "^3.35.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.90.2",
-    "@tavily/core": "^0.5.12",
     "@upstash/qstash": "^2.8.3",
     "@upstash/redis": "^1.35.5",
     "@vercel/analytics": "^1.5.0",

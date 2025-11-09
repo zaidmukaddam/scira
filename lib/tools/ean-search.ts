@@ -1,13 +1,51 @@
-import Exa from 'exa-js';
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { UIMessageStreamWriter } from 'ai';
 import type { ChatMessage } from '../types';
 import { serverEnv } from '@/env/server';
-import { tavily } from '@tavily/core';
 
-const exa = new Exa(serverEnv.EXA_API_KEY as string);
-const tvly = tavily({ apiKey: serverEnv.TAVILY_API_KEY });
+const SERPER_API_KEY = serverEnv.SERPER_API_KEY;
+const SERPER_SEARCH_ENDPOINT = 'https://google.serper.dev/search';
+
+interface SerperSearchResult {
+  organic?: Array<{
+    title: string;
+    link: string;
+    snippet: string;
+    date?: string;
+  }>;
+  images?: string[];
+  knowledgeGraph?: {
+    title?: string;
+    description?: string;
+    descriptionSource?: string;
+    descriptionLink?: string;
+    attributes?: Record<string, string>;
+    imageUrl?: string;
+  };
+}
+
+async function searchSerper(query: string, num: number = 10): Promise<SerperSearchResult> {
+  const response = await fetch(SERPER_SEARCH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': SERPER_API_KEY as string,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      q: query,
+      num,
+      gl: 'fr',
+      hl: 'fr',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Serper API error: ${response.status}`);
+  }
+
+  return (await response.json()) as SerperSearchResult;
+}
 
 const allowedSources = [
   'https://www.barcodelookup.com/',
@@ -92,6 +130,7 @@ type ProductSearchResult = {
   ean: string;
   publishedDate?: string;
   favicon?: string;
+  description?: string;
 };
 
 export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | undefined) {
@@ -119,93 +158,87 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
       try {
         const searchQuery = `EAN ${barcode}`;
 
-        const [exaResults, tavilyDomainResults] = await Promise.allSettled([
-          exa
-            .searchAndContents(searchQuery, {
-              numResults: 20,
-              type: 'auto',
-              category: 'company',
-              include_domains: Array.from(allowedHostnames).map((host) => host.replace(/^www\./, '')),
-            } as any)
-            .then((res) => res.results || []),
-          Promise.allSettled(
-            normalizedDomains.map((domain) =>
-              tvly.search(`${searchQuery} site:${domain}`, {
-                maxResults: 4,
-                includeImages: true,
-                includeAnswer: false,
-              }),
-            ),
-          ),
-        ]);
+        const serperResults = await searchSerper(searchQuery, 20);
 
         const collectedResults: ProductSearchResult[] = [];
         const collectedImages: string[] = [];
 
-        const pushResult = (result: {
-          title?: string | null;
-          url: string;
-          content?: string | null;
-          favicon?: string | null;
-          publishedDate?: string | null;
-        }) => {
-          if (!result.url) return;
-          const hostname = getHostname(result.url);
-          if (!hostname) return;
-          const normalizedHost = hostname.replace(/^www\./, '');
-          if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
-            return;
-          }
+        if (serperResults.organic) {
+          for (const result of serperResults.organic) {
+            const url = result.link;
+            const hostname = url ? getHostname(url) : null;
+            if (!hostname) continue;
+            const normalizedHost = hostname.replace(/^www\./, '');
+            if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
+              continue;
+            }
 
-          const content = result.content || '';
-          const brand = deriveBrand(result.title || '', content, hostname);
+            const content = result.snippet || '';
+            const brand = deriveBrand(result.title || '', content, hostname);
 
-          collectedResults.push({
-            title: result.title || '',
-            url: result.url,
-            content,
-            favicon: result.favicon || undefined,
-            publishedDate: result.publishedDate || undefined,
-            images: [],
-            supplier: brand || undefined,
-            ean: barcode,
-          });
-        };
-
-        const pushImages = (images: unknown[]) => {
-          if (!images) return;
-          images
-            .map((img) => (typeof img === 'string' ? img : typeof img === 'object' && img && 'url' in img ? (img as any).url : null))
-            .filter((value): value is string => Boolean(value))
-            .forEach((img) => collectedImages.push(img));
-        };
-
-        if (exaResults.status === 'fulfilled') {
-          exaResults.value.forEach((r) => {
-            pushResult({
-              title: r.title,
-              url: r.url,
-              content: r.text || '',
-              favicon: r.favicon,
-              publishedDate: r.publishedDate,
+            collectedResults.push({
+              title: result.title || '',
+              url,
+              content,
+              images: [],
+              supplier: brand || undefined,
+              ean: barcode,
+              publishedDate: result.date || undefined,
             });
+          }
+        }
+
+        if (serperResults.images && Array.isArray(serperResults.images)) {
+          serperResults.images.forEach((img) => {
+            if (typeof img === 'string') {
+              collectedImages.push(img);
+            }
           });
         }
 
-        if (tavilyDomainResults.status === 'fulfilled') {
-          tavilyDomainResults.value.forEach((entry) => {
-            if (entry.status === 'fulfilled') {
-              const data = entry.value;
-              pushImages(data.images || []);
-              (data.results || []).forEach((r: any) => {
-                pushResult({
-                  title: r.title,
-                  url: r.url,
-                  content: r.content || '',
-                });
-              });
+        if (serperResults.knowledgeGraph?.imageUrl) {
+          collectedImages.unshift(serperResults.knowledgeGraph.imageUrl);
+        }
+
+        const domainSearches = normalizedDomains.slice(0, 5).map((domain) =>
+          searchSerper(`EAN ${barcode} site:${domain}`, 4).catch(() => null),
+        );
+
+        const domainResults = await Promise.all(domainSearches);
+
+        for (const domainResult of domainResults) {
+          if (!domainResult?.organic) continue;
+
+          for (const result of domainResult.organic) {
+            const url = result.link;
+            const hostname = url ? getHostname(url) : null;
+            if (!hostname) continue;
+            const normalizedHost = hostname.replace(/^www\./, '');
+            if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
+              continue;
             }
-          });
+
+            const content = result.snippet || '';
+            const brand = deriveBrand(result.title || '', content, hostname);
+
+            collectedResults.push({
+              title: result.title || '',
+              url,
+              content,
+              images: [],
+              supplier: brand || undefined,
+              ean: barcode,
+              publishedDate: result.date || undefined,
+            });
+          }
+
+          if (domainResult.images && Array.isArray(domainResult.images)) {
+            domainResult.images.forEach((img) => {
+              if (typeof img === 'string') {
+                collectedImages.push(img);
+              }
+            });
+          }
         }
 
         const seenUrls = new Set<string>();
@@ -230,11 +263,36 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
 
         finalResults.splice(8);
 
+        let fullDescription = '';
+
+        if (serperResults.knowledgeGraph) {
+          const kg = serperResults.knowledgeGraph;
+          if (kg.title) {
+            fullDescription += `${kg.title}\n\n`;
+          }
+          if (kg.description) {
+            fullDescription += `${kg.description}\n\n`;
+          }
+          if (kg.attributes) {
+            Object.entries(kg.attributes).forEach(([key, value]) => {
+              fullDescription += `${key}: ${value}\n`;
+            });
+            fullDescription += '\n';
+          }
+        }
+
+        finalResults.slice(0, 3).forEach((result) => {
+          if (result.content) {
+            fullDescription += `${result.content}\n\n`;
+          }
+        });
+
         return {
           barcode,
           results: finalResults,
           images: finalImages,
           totalResults: finalResults.length,
+          description: fullDescription.trim() || undefined,
           message: `Found ${finalResults.length} results for barcode ${barcode}`,
         };
       } catch (err) {
@@ -243,6 +301,7 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
           results: [],
           images: [],
           totalResults: 0,
+          description: undefined,
           message: 'Aucun résultat trouvé sur les sites autorisés.',
           error: (err as Error)?.message || 'Unknown error',
         } as const;
