@@ -9,6 +9,17 @@ import { UIMessagePart } from 'ai';
 import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { formatISO } from 'date-fns';
 
+// Get the base URL for the application (works in both dev and prod)
+function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://scira-repo.vercel.app';
+  }
+  return 'http://localhost:8931';
+}
+
 async function sleep(durationMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, durationMs));
 }
@@ -57,17 +68,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     }
     title = chat.title;
   }
+  const baseUrl = getBaseUrl();
+  const siteName = new URL(baseUrl).hostname;
+
   return {
     title: title,
     description: 'A search in scira.ai',
     openGraph: {
       title: title,
-      url: `https://scira.ai/search/${id}`,
+      url: `${baseUrl}/search/${id}`,
       description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      siteName: siteName,
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `${baseUrl}/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
@@ -76,20 +90,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://scira.ai/search/${id}`,
+      url: `${baseUrl}/search/${id}`,
       description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      siteName: siteName,
       creator: '@sciraai',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `${baseUrl}/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
       ],
     },
     alternates: {
-      canonical: `https://scira.ai/search/${id}`,
+      canonical: `${baseUrl}/search/${id}`,
     },
   } as Metadata;
 }

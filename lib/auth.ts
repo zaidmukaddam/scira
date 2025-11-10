@@ -74,7 +74,7 @@ export const auth = betterAuth({
     enabled: true,
     maxAge: 5 * 60,
   },
-  baseURL: process.env.NODE_ENV === 'production' ? 'https://scira-repo.vercel.app' : 'http://localhost:8931',
+  baseURL: process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === 'production' ? 'https://scira-repo.vercel.app' : 'http://localhost:8931'),
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
@@ -471,6 +471,6 @@ export const auth = betterAuth({
       : []), */
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:8931', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:8931', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:8931', 'https://scira-repo.vercel.app', 'https://scira.ai', 'https://www.scira.ai'],
+  allowedOrigins: ['http://localhost:8931', 'https://scira-repo.vercel.app', 'https://scira.ai', 'https://www.scira.ai'],
 });

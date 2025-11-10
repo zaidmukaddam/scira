@@ -105,10 +105,18 @@ export const CONNECTOR_CONFIGS: Record<ConnectorProvider, ConnectorConfig> = {
 };
 
 function getBaseUrl() {
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.NGROK_URL || 'http://localhost:3000';
+  // Use NEXT_PUBLIC_APP_URL if available (works for both dev and prod)
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
   }
-  return 'https://scira.ai';
+
+  // Fallback for development with ngrok support
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.NGROK_URL || 'http://localhost:8931';
+  }
+
+  // Production fallback
+  return 'https://scira-repo.vercel.app';
 }
 
 export async function createConnection(provider: ConnectorProvider, userId: string) {
