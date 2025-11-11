@@ -13,6 +13,7 @@ import {
   getChatsByUserId,
   deleteChatById,
   updateChatVisibilityById,
+  updateChatAllowContinuationById,
   getChatById,
   getMessageById,
   deleteMessagesByChatIdAfterTimestamp,
@@ -1534,6 +1535,55 @@ export async function updateChatVisibility(chatId: string, visibility: 'private'
     console.error('❌ Error in updateChatVisibility:', {
       chatId,
       visibility,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
+}
+
+// Add function to update chat allow continuation setting
+export async function updateChatAllowContinuation(chatId: string, allowContinuation: boolean) {
+  'use server';
+
+  console.log('🔄 updateChatAllowContinuation called with:', { chatId, allowContinuation });
+
+  if (!chatId) {
+    console.error('❌ updateChatAllowContinuation: No chatId provided');
+    throw new Error('Chat ID is required');
+  }
+
+  // Verify user is authenticated and owns the chat
+  const user = await getUser();
+  if (!user) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    // Get chat to verify ownership
+    const chat = await getChatById({ id: chatId });
+    if (!chat) {
+      throw new Error('Chat not found');
+    }
+
+    if (chat.userId !== user.id) {
+      throw new Error('Not authorized to modify this chat');
+    }
+
+    console.log('📡 Calling updateChatAllowContinuationById');
+    const result = await updateChatAllowContinuationById({ chatId, allowContinuation });
+    console.log('✅ updateChatAllowContinuationById successful, result:', result);
+
+    return {
+      success: true,
+      chatId,
+      allowContinuation,
+      rowCount: result?.rowCount || 0,
+    };
+  } catch (error) {
+    console.error('❌ Error in updateChatAllowContinuation:', {
+      chatId,
+      allowContinuation,
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
     });

@@ -284,6 +284,37 @@ export async function updateChatVisibilityById({
   }
 }
 
+export async function updateChatAllowContinuationById({
+  chatId,
+  allowContinuation,
+}: {
+  chatId: string;
+  allowContinuation: boolean;
+}) {
+  console.log('🔄 updateChatAllowContinuationById called with:', { chatId, allowContinuation });
+
+  try {
+    console.log('📡 Executing database update for allow continuation');
+    const result = await db.update(chat).set({ allowContinuation }).where(eq(chat.id, chatId));
+    console.log('✅ Database update successful, result:', result);
+
+    return {
+      success: true,
+      rowCount: result.rowCount || 0,
+      chatId,
+      allowContinuation,
+    };
+  } catch (error) {
+    console.error('❌ Database error in updateChatAllowContinuationById:', {
+      chatId,
+      allowContinuation,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw new ChatSDKError('bad_request:database', 'Failed to update chat allow continuation setting');
+  }
+}
+
 export async function updateChatTitleById({ chatId, title }: { chatId: string; title: string }) {
   try {
     const [updatedChat] = await db

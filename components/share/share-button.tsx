@@ -18,6 +18,8 @@ interface ShareButtonProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   disabled?: boolean;
+  allowContinuation?: boolean;
+  onAllowContinuationChange?: (value: boolean) => Promise<void>;
 }
 
 export function ShareButton({
@@ -30,6 +32,8 @@ export function ShareButton({
   size = 'md',
   className = '',
   disabled = false,
+  allowContinuation = true,
+  onAllowContinuationChange,
 }: ShareButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -148,6 +152,8 @@ export function ShareButton({
         onVisibilityChange={onVisibilityChange}
         isOwner={isOwner}
         user={user}
+        allowContinuation={allowContinuation}
+        onAllowContinuationChange={onAllowContinuationChange}
       />
     </>
   );

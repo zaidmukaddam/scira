@@ -35,6 +35,8 @@ interface NavbarProps {
   settingsOpen?: boolean;
   setSettingsOpen?: (open: boolean) => void;
   settingsInitialTab?: string;
+  allowContinuation?: boolean;
+  onAllowContinuationChange?: (value: boolean) => Promise<void>;
 }
 
 const Navbar = memo(
@@ -55,6 +57,8 @@ const Navbar = memo(
     settingsOpen,
     setSettingsOpen,
     settingsInitialTab,
+    allowContinuation = true,
+    onAllowContinuationChange,
   }: NavbarProps) => {
     const router = useRouter();
     const pathname = usePathname();
@@ -133,6 +137,8 @@ const Navbar = memo(
                     variant="navbar"
                     className="mr-1"
                     disabled={false}
+                    allowContinuation={allowContinuation}
+                    onAllowContinuationChange={onAllowContinuationChange}
                   />
                 ) : (
                   /* Non-owners (authenticated or not) just see indicator */

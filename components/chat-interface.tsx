@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility, updateChatAllowContinuation } from '@/app/actions';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
@@ -36,7 +36,7 @@ import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
-import { requiresProSubscription } from '@/ai/providers';
+import { DEFAULT_MODEL, LEGACY_DEFAULT_MODEL, requiresProSubscription } from '@/ai/providers';
 import { ConnectorProvider } from '@/lib/connectors';
 
 // State management imports
@@ -50,6 +50,7 @@ interface ChatInterfaceProps {
   initialMessages?: any[];
   initialVisibility?: 'public' | 'private';
   isOwner?: boolean;
+  initialAllowContinuation?: boolean;
 }
 
 const ChatInterface = memo(
@@ -58,13 +59,14 @@ const ChatInterface = memo(
     initialMessages,
     initialVisibility = 'private',
     isOwner = true,
+    initialAllowContinuation = true,
   }: ChatInterfaceProps): React.JSX.Element => {
     const router = useRouter();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
     const [input, setInput] = useState<string>('');
 
-    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
+    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', DEFAULT_MODEL);
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
     const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
@@ -94,6 +96,12 @@ const ChatInterface = memo(
       false,
     );
 
+    useEffect(() => {
+      if (selectedModel === LEGACY_DEFAULT_MODEL) {
+        setSelectedModel(DEFAULT_MODEL);
+      }
+    }, [selectedModel, setSelectedModel]);
+
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
       'scira-search-provider',
       'parallel',
@@ -106,6 +114,7 @@ const ChatInterface = memo(
         initialVisibility,
         persistedHasShownSignInPrompt,
         persistedHasShownLookoutAnnouncement,
+        initialAllowContinuation,
       ),
     );
 
@@ -174,9 +183,11 @@ const ChatInterface = memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== DEFAULT_MODEL) {
+        console.log(
+          `Auto-switching from pro model '${selectedModel}' to '${DEFAULT_MODEL}' - user lost pro access`,
+        );
+        setSelectedModel(DEFAULT_MODEL);
 
         // Show a toast notification to inform the user
         toast.info('Switched to default model - Pro subscription required for premium models');
@@ -559,6 +570,43 @@ const ChatInterface = memo(
       [chatId],
     );
 
+    // Handle allow continuation change
+    const handleAllowContinuationChange = useCallback(
+      async (allowContinuation: boolean) => {
+        console.log('🔄 handleAllowContinuationChange called with:', { chatId, allowContinuation });
+
+        if (!chatId) {
+          console.warn('⚠️ handleAllowContinuationChange: No chatId provided, returning early');
+          return;
+        }
+
+        try {
+          console.log('📡 Calling updateChatAllowContinuation with:', { chatId, allowContinuation });
+          const result = await updateChatAllowContinuation(chatId, allowContinuation);
+          console.log('✅ updateChatAllowContinuation response:', result);
+
+          // Check if the update was successful
+          if (result && result.success) {
+            dispatch({ type: 'SET_ALLOW_CONTINUATION', payload: allowContinuation });
+            console.log('🔄 Dispatched SET_ALLOW_CONTINUATION with:', allowContinuation);
+            console.log('✅ Allow continuation updated successfully');
+          } else {
+            console.error('❌ Update failed - unsuccessful result:', result);
+            throw new Error('Failed to update allow continuation setting');
+          }
+        } catch (error) {
+          console.error('❌ Error updating allow continuation:', {
+            chatId,
+            allowContinuation,
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          throw error;
+        }
+      },
+      [chatId],
+    );
+
     return (
       <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
         <Navbar
@@ -578,6 +626,8 @@ const ChatInterface = memo(
           settingsOpen={settingsOpen}
           setSettingsOpen={setSettingsOpen}
           settingsInitialTab={settingsInitialTab}
+          allowContinuation={chatState.allowContinuation}
+          onAllowContinuationChange={handleAllowContinuationChange}
         />
 
         {/* Chat Dialogs Component */}
@@ -694,7 +744,7 @@ const ChatInterface = memo(
           </div>
 
           {/* Single Form Component with dynamic positioning */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+          {((user && isOwner) || (!isOwner && chatState.allowContinuation) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
             !isLimitBlocked && (
               <div
                 className={cn(
@@ -743,7 +793,7 @@ const ChatInterface = memo(
             )}
 
           {/* Form backdrop overlay - hides content below form when in submitted mode */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+          {((user && isOwner) || (!isOwner && chatState.allowContinuation) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
             !isLimitBlocked &&
             (messages.length > 0 || chatState.hasSubmitted) && (
               <div

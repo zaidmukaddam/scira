@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface ShareDialogProps {
@@ -26,6 +27,8 @@ interface ShareDialogProps {
   onVisibilityChange: (visibility: 'public' | 'private') => Promise<void>;
   isOwner?: boolean;
   user?: any;
+  allowContinuation?: boolean;
+  onAllowContinuationChange?: (value: boolean) => Promise<void>;
 }
 
 export function ShareDialog({
@@ -36,9 +39,12 @@ export function ShareDialog({
   onVisibilityChange,
   isOwner = true,
   user,
+  allowContinuation = true,
+  onAllowContinuationChange,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+  const [isChangingSettings, setIsChangingSettings] = useState(false);
 
   // Use the current domain instead of hardcoding scira.ai
   const shareUrl = chatId
@@ -120,6 +126,19 @@ export function ShareDialog({
       });
     } catch (error) {
       await handleCopyLink();
+    }
+  };
+
+  const handleAllowContinuationChange = async (checked: boolean) => {
+    setIsChangingSettings(true);
+    try {
+      await onAllowContinuationChange?.(checked);
+      toast.success(checked ? 'Visitors can now continue chat' : 'Chat is now read-only for visitors');
+    } catch (error) {
+      console.error('Error updating continuation setting:', error);
+      toast.error('Failed to update setting');
+    } finally {
+      setIsChangingSettings(false);
     }
   };
 
@@ -238,6 +257,24 @@ export function ShareDialog({
                 >
                   <RedditLogoIcon size={17} weight="fill" />
                 </Button>
+              </div>
+
+              {/* Allow Continuation Toggle */}
+              <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-3.5 py-3">
+                <div className="flex-1">
+                  <label htmlFor="allow-continuation" className="text-sm font-medium text-foreground cursor-pointer">
+                    Allow visitors to continue chat
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Let others add messages to this conversation
+                  </p>
+                </div>
+                <Switch
+                  id="allow-continuation"
+                  checked={allowContinuation}
+                  onCheckedChange={handleAllowContinuationChange}
+                  disabled={isChangingSettings}
+                />
               </div>
 
               {/* Footer Actions */}

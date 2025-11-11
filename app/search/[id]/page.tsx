@@ -290,6 +290,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       initialMessages={initialMessages}
       initialVisibility={chat.visibility as 'public' | 'private'}
       isOwner={isOwner}
+      initialAllowContinuation={chat.allowContinuation}
     />
   );
 }

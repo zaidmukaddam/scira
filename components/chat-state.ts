@@ -13,6 +13,7 @@ export interface ChatState {
   suggestedQuestions: string[];
   attachments: Attachment[];
   selectedVisibilityType: 'public' | 'private';
+  allowContinuation: boolean;
 }
 
 interface Attachment {
@@ -35,6 +36,7 @@ export type ChatAction =
   | { type: 'SET_SUGGESTED_QUESTIONS'; payload: string[] }
   | { type: 'SET_ATTACHMENTS'; payload: Attachment[] }
   | { type: 'SET_VISIBILITY_TYPE'; payload: 'public' | 'private' }
+  | { type: 'SET_ALLOW_CONTINUATION'; payload: boolean }
   | { type: 'RESET_SUGGESTED_QUESTIONS' }
   | { type: 'RESET_UI_STATE' };
 
@@ -73,6 +75,9 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
     case 'SET_VISIBILITY_TYPE':
       return { ...state, selectedVisibilityType: action.payload };
 
+    case 'SET_ALLOW_CONTINUATION':
+      return { ...state, allowContinuation: action.payload };
+
     case 'RESET_SUGGESTED_QUESTIONS':
       return { ...state, suggestedQuestions: [] };
 
@@ -94,6 +99,7 @@ export const createInitialState = (
   initialVisibility: 'public' | 'private' = 'private',
   hasShownSignInPrompt: boolean = false,
   hasShownAnnouncementDialog: boolean = false,
+  initialAllowContinuation: boolean = true,
 ): ChatState => ({
   hasSubmitted: false,
   hasManuallyScrolled: false,
@@ -106,4 +112,5 @@ export const createInitialState = (
   suggestedQuestions: [],
   attachments: [],
   selectedVisibilityType: initialVisibility,
+  allowContinuation: initialAllowContinuation,
 });

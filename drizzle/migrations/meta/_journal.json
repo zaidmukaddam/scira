@@ -64,6 +64,13 @@
       "when": 1762105657525,
       "tag": "0008_init",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1762878105537,
+      "tag": "0009_strong_black_queen",
+      "breakpoints": true
     }
   ]
 }
