@@ -7,6 +7,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2025-11-11] - Share URL Fix & Allow Continuation Feature
+
+### Added
+- **Allow Continuation Feature** - Chat owners can now control if visitors can add messages to public shared pages
+  - `lib/db/schema.ts:71` - Added `allowContinuation` boolean column to chat table (default: true)
+  - `drizzle/migrations/0009_strong_black_queen.sql` - Migration to add the new column
+  - `lib/db/queries.ts:287-316` - New `updateChatAllowContinuationById()` function
+  - `app/actions.ts:1545-1592` - New `updateChatAllowContinuation()` server action with auth
+  - `components/chat-state.ts` - Added `allowContinuation` to state management
+  - `components/share/share-dialog.tsx:262-278` - Toggle UI in ShareDialog
+  - `components/share/share-button.tsx` - Props for allowContinuation handling
+  - `components/chat-interface.tsx:573-608` - Handler and conditional input rendering
+  - `components/navbar.tsx` - Props cascade for allowContinuation
+  - `app/search/[id]/page.tsx` - Pass initialAllowContinuation to ChatInterface
+  - When disabled: Visitors see messages but NO input field (read-only mode)
+  - When enabled (default): Visitors can continue the conversation
+
+### Fixed
+- **Share URL Generation Bug** - Fixed hardcoded upstream domain in shared pages
+  - `components/share/share-dialog.tsx:50` - Changed from hardcoded `https://scira.ai` to `window.location.origin`
+  - `app/layout.tsx` - Updated metadata configuration
+  - Configured `NEXT_PUBLIC_APP_URL` in Vercel environment variables
+  - Shared URLs now correctly point to user's Vercel deployment (scira-repo.vercel.app)
+
+### Fixed (Build & TypeScript)
+- **Model Constants Export** - Fixed Vercel build failure
+  - `ai/providers.ts` - Exported `DEFAULT_MODEL` and `LEGACY_DEFAULT_MODEL` constants
+  - `app/api/raycast/route.ts` - Updated to use exported constants
+  - `components/ui/form-component.tsx` - Updated to use exported constants
+  - `lib/tools/text-translate.ts` - Updated to use exported constants
+  - Fixed error: "Export DEFAULT_MODEL doesn't exist in target module"
+
+- **TypeScript Type Error** - Fixed type inference issue
+  - `components/chat-interface.tsx:69` - Added explicit `<string>` type to useLocalStorage
+  - Fixed error: "This comparison appears to be unintentional because the types have no overlap"
+
+- **Next.js Configuration** - Removed invalid experimental config
+  - `next.config.ts:23-26` - Removed invalid `experimental.turbo` configuration
+  - Fixed warning: "Unrecognized key(s) in object: 'turbo' at experimental"
+
+### Technical Details
+
+#### Feature Implementation Flow
+```
+User (Chat Owner) → ShareDialog Toggle
+  ↓
+Server Action (updateChatAllowContinuation)
+  ↓
+Database Update (allowContinuation column)
+  ↓
+State Management (chatState.allowContinuation)
+  ↓
+Conditional Rendering (ChatInterface)
+  ↓
+Visitor Experience (input visible/hidden)
+```
+
+#### Database Schema Change
+```sql
+ALTER TABLE "chat"
+ADD COLUMN "allow_continuation" boolean
+DEFAULT true NOT NULL;
+```
+
+#### Conditional Input Logic
+```typescript
+{((user && isOwner) ||
+  (!isOwner && chatState.allowContinuation) ||
+  !initialChatId ||
+  (!user && chatState.selectedVisibilityType === 'private')) &&
+  !isLimitBlocked && (
+    <FormComponent ... />
+  )}
+```
+
+This ensures:
+- Owners always see input
+- Non-owners only see input if allowContinuation is true
+- Private pages without auth show input (for sign-in prompts)
+
+#### Files Modified (17 total)
+- `ai/providers.ts` - Model constants export
+- `app/actions.ts` - Server action for allowContinuation
+- `app/api/raycast/route.ts` - Use exported model constants
+- `app/layout.tsx` - Metadata configuration
+- `app/search/[id]/page.tsx` - Pass allowContinuation prop
+- `components/chat-interface.tsx` - Handler & conditional rendering + type fix
+- `components/chat-state.ts` - State management
+- `components/navbar.tsx` - Props cascade
+- `components/share/share-button.tsx` - Props handling
+- `components/share/share-dialog.tsx` - Toggle UI + dynamic URL fix
+- `components/ui/form-component.tsx` - Use exported model constants
+- `lib/db/queries.ts` - Database query function
+- `lib/db/schema.ts` - Schema update
+- `lib/tools/text-translate.ts` - Use exported model constants
+- `next.config.ts` - Remove invalid config
+- `drizzle/migrations/0009_strong_black_queen.sql` - Migration file
+
+Total: ~150+ insertions across feature implementation and fixes
+
+#### Commits
+- `3d1ed8c` - Configure dynamic base URLs for different environments
+- `4f00de6` - feat: add allowContinuation toggle to control visitor chat input
+- `1119e5b` - fix: export DEFAULT_MODEL and LEGACY_DEFAULT_MODEL constants
+- `cac2f83` - fix: resolve TypeScript build errors
+
+#### Deployment Status
+✅ Successfully deployed to Vercel production
+✅ All builds passing
+✅ Feature ready for testing with authentication
+
+---
+
+## [Previous Changes]
+
 ### Added
 - MCP (Model Context Protocol) search functionality re-enabled
   - `lib/tools/mcp-search.ts` - Added back to exports
