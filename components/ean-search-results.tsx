@@ -91,9 +91,37 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const validImages = images.filter(Boolean);
-  if (validImages.length === 0) return null;
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[ProductImageGallery] Images received:', {
+      total: images?.length || 0,
+      valid: validImages.length,
+      images: validImages.slice(0, 3)
+    });
+  }, [images]);
+  
+  // Filter out images that failed to load
+  const loadableImages = validImages.filter((_, idx) => !imageErrors.has(idx));
+  
+  // Handle image load error
+  const handleImageError = (index: number) => {
+    console.log(`[ProductImageGallery] Image ${index} failed to load:`, validImages[index]);
+    setImageErrors(prev => new Set(prev).add(index));
+    // Move to next image if current image fails
+    if (index === currentIndex && loadableImages.length > 1) {
+      const nextIndex = currentIndex < loadableImages.length - 1 ? currentIndex + 1 : 0;
+      setCurrentIndex(nextIndex);
+    }
+  };
+  
+  if (loadableImages.length === 0) {
+    console.log('[ProductImageGallery] No valid images to display');
+    return null;
+  }
 
   const handleSwipe = (_event: any, info: PanInfo) => {
     const threshold = 50;
@@ -107,7 +135,7 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
   };
 
   const goToNext = () => {
-    if (currentIndex < validImages.length - 1) {
+    if (currentIndex < loadableImages.length - 1) {
       setDirection(1);
       setCurrentIndex(currentIndex + 1);
     }
@@ -132,7 +160,7 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.img
             key={currentIndex}
-            src={validImages[currentIndex]}
+            src={loadableImages[currentIndex]}
             alt={`${productName} - Image ${currentIndex + 1}`}
             className="w-full h-full object-contain"
             custom={direction}
@@ -148,6 +176,8 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={handleSwipe}
+            onError={() => handleImageError(currentIndex)}
+            loading="lazy"
           />
         </AnimatePresence>
 
@@ -161,7 +191,7 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
             <ChevronLeft className="w-5 h-5" />
           </Button>
         )}
-        {currentIndex < validImages.length - 1 && (
+        {currentIndex < loadableImages.length - 1 && (
           <Button
             variant="ghost"
             size="icon"
@@ -173,12 +203,12 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
         )}
 
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-          {currentIndex + 1} / {validImages.length}
+          {currentIndex + 1} / {loadableImages.length}
         </div>
       </div>
 
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {validImages.map((img, idx) => (
+        {loadableImages.map((img, idx) => (
           <button
             key={idx}
             onClick={() => {
@@ -192,7 +222,16 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
                 : "border-transparent hover:border-blue-300"
             )}
           >
-            <img src={img} alt="" className="w-full h-full object-cover" />
+            <img 
+              src={img} 
+              alt="" 
+              className="w-full h-full object-cover" 
+              loading="lazy"
+              onError={(e) => {
+                // Hide thumbnail if it fails to load
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
           </button>
         ))}
       </div>
@@ -202,6 +241,17 @@ const ProductImageGallery: React.FC<{ images: string[]; productName: string }> =
 
 export function EANSearchResults({ barcode, results, images, totalResults }: EANSearchResultsProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[EANSearchResults] Received props:', {
+      barcode,
+      resultsCount: results?.length || 0,
+      imagesCount: images?.length || 0,
+      totalResults,
+      images: images?.slice(0, 3) // Log first 3 images
+    });
+  }, [barcode, results, images, totalResults]);
   
   const displayResults = results.slice(0, 3);
   const remainingResults = results.slice(3);
@@ -227,11 +277,15 @@ export function EANSearchResults({ barcode, results, images, totalResults }: EAN
             </AccordionTrigger>
             
             <AccordionContent className="px-4 pb-4 space-y-4">
-              {images.length > 0 && (
+              {images && images.length > 0 ? (
                 <ProductImageGallery 
                   images={images} 
                   productName={results[0]?.title || 'Produit'} 
                 />
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
+                  📸 Aucune image disponible pour ce produit
+                </div>
               )}
 
               <div className="space-y-2">

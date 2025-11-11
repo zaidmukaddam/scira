@@ -29,6 +29,7 @@ export const serverEnv = createEnv({
     ELEVENLABS_API_KEY: z.string().optional().default('deprecated'),
     TAVILY_API_KEY: z.string().optional().default('deprecated'),
     EXA_API_KEY: z.string().optional().default('deprecated'),
+    SERPER_API_KEY: z.string().min(1, 'Serper API key is required for EAN search'),
     VALYU_API_KEY: z.string().optional().default('deprecated'),
     TMDB_API_KEY: z.string().optional().default('deprecated'),
     YT_ENDPOINT: z.string().optional().default('deprecated'),

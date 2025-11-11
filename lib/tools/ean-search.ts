@@ -1,13 +1,89 @@
-import Exa from 'exa-js';
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { UIMessageStreamWriter } from 'ai';
 import type { ChatMessage } from '../types';
 import { serverEnv } from '@/env/server';
-import { tavily } from '@tavily/core';
 
-const exa = new Exa(serverEnv.EXA_API_KEY as string);
-const tvly = tavily({ apiKey: serverEnv.TAVILY_API_KEY });
+const SERPER_API_KEY = serverEnv.SERPER_API_KEY;
+const SERPER_SEARCH_ENDPOINT = 'https://google.serper.dev/search';
+const SERPER_IMAGES_ENDPOINT = 'https://google.serper.dev/images';
+
+interface SerperSearchResult {
+  organic?: Array<{
+    title: string;
+    link: string;
+    snippet: string;
+    date?: string;
+  }>;
+  images?: Array<string | { imageUrl: string; link: string; source?: string }>;
+  knowledgeGraph?: {
+    title?: string;
+    description?: string;
+    descriptionSource?: string;
+    descriptionLink?: string;
+    attributes?: Record<string, string>;
+    imageUrl?: string;
+    images?: Array<string | { url: string; link: string }>;
+  };
+}
+
+async function searchSerper(query: string, num: number = 10): Promise<SerperSearchResult> {
+  const response = await fetch(SERPER_SEARCH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': SERPER_API_KEY as string,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      q: query,
+      num,
+      gl: 'fr',
+      hl: 'fr',
+      type: 'search', // Ensure we get all results including images
+      autocorrect: true,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Serper API error: ${response.status}`);
+  }
+
+  const result = (await response.json()) as SerperSearchResult;
+  console.log(`[Serper] Query: "${query}" - Found ${result.organic?.length || 0} results, ${result.images?.length || 0} images`);
+  
+  return result;
+}
+
+async function searchSerperImages(query: string, num: number = 20): Promise<{ images?: Array<{ imageUrl: string; link: string; title?: string }> }> {
+  try {
+    const response = await fetch(SERPER_IMAGES_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': SERPER_API_KEY as string,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: query,
+        num,
+        gl: 'fr',
+        hl: 'fr',
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Serper Images API error: ${response.status}`);
+      return { images: [] };
+    }
+
+    const result = await response.json();
+    console.log(`[Serper Images] Query: "${query}" - Found ${result.images?.length || 0} images`);
+    
+    return result;
+  } catch (error) {
+    console.warn('[Serper Images] Failed to fetch images:', error);
+    return { images: [] };
+  }
+}
 
 const allowedSources = [
   'https://www.barcodelookup.com/',
@@ -92,6 +168,7 @@ type ProductSearchResult = {
   ean: string;
   publishedDate?: string;
   favicon?: string;
+  description?: string;
 };
 
 export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | undefined) {
@@ -119,93 +196,136 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
       try {
         const searchQuery = `EAN ${barcode}`;
 
-        const [exaResults, tavilyDomainResults] = await Promise.allSettled([
-          exa
-            .searchAndContents(searchQuery, {
-              numResults: 20,
-              type: 'auto',
-              category: 'company',
-              include_domains: Array.from(allowedHostnames).map((host) => host.replace(/^www\./, '')),
-            } as any)
-            .then((res) => res.results || []),
-          Promise.allSettled(
-            normalizedDomains.map((domain) =>
-              tvly.search(`${searchQuery} site:${domain}`, {
-                maxResults: 4,
-                includeImages: true,
-                includeAnswer: false,
-              }),
-            ),
-          ),
+        // Run both text and image searches in parallel
+        const [serperResults, imageResults] = await Promise.all([
+          searchSerper(searchQuery, 20),
+          searchSerperImages(searchQuery),
         ]);
 
         const collectedResults: ProductSearchResult[] = [];
         const collectedImages: string[] = [];
 
-        const pushResult = (result: {
-          title?: string | null;
-          url: string;
-          content?: string | null;
-          favicon?: string | null;
-          publishedDate?: string | null;
-        }) => {
-          if (!result.url) return;
-          const hostname = getHostname(result.url);
-          if (!hostname) return;
-          const normalizedHost = hostname.replace(/^www\./, '');
-          if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
-            return;
-          }
-
-          const content = result.content || '';
-          const brand = deriveBrand(result.title || '', content, hostname);
-
-          collectedResults.push({
-            title: result.title || '',
-            url: result.url,
-            content,
-            favicon: result.favicon || undefined,
-            publishedDate: result.publishedDate || undefined,
-            images: [],
-            supplier: brand || undefined,
-            ean: barcode,
+        // Collect images from dedicated image search first (best quality)
+        if (imageResults.images && Array.isArray(imageResults.images)) {
+          imageResults.images.forEach((img) => {
+            if (img && typeof img === 'object' && 'imageUrl' in img) {
+              collectedImages.push(img.imageUrl);
+            } else if (typeof img === 'string') {
+              collectedImages.push(img);
+            }
           });
-        };
+          console.log(`[EAN Search] Collected ${imageResults.images.length} images from dedicated image search`);
+        }
 
-        const pushImages = (images: unknown[]) => {
-          if (!images) return;
-          images
-            .map((img) => (typeof img === 'string' ? img : typeof img === 'object' && img && 'url' in img ? (img as any).url : null))
-            .filter((value): value is string => Boolean(value))
-            .forEach((img) => collectedImages.push(img));
-        };
+        if (serperResults.organic) {
+          for (const result of serperResults.organic) {
+            const url = result.link;
+            const hostname = url ? getHostname(url) : null;
+            if (!hostname) continue;
+            const normalizedHost = hostname.replace(/^www\./, '');
+            if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
+              continue;
+            }
 
-        if (exaResults.status === 'fulfilled') {
-          exaResults.value.forEach((r) => {
-            pushResult({
-              title: r.title,
-              url: r.url,
-              content: r.text || '',
-              favicon: r.favicon,
-              publishedDate: r.publishedDate,
+            const content = result.snippet || '';
+            const brand = deriveBrand(result.title || '', content, hostname);
+
+            collectedResults.push({
+              title: result.title || '',
+              url,
+              content,
+              images: [],
+              supplier: brand || undefined,
+              ean: barcode,
+              publishedDate: result.date || undefined,
             });
+          }
+        }
+
+        // Collect images from Knowledge Graph first (higher quality)
+        if (serperResults.knowledgeGraph?.imageUrl) {
+          collectedImages.push(serperResults.knowledgeGraph.imageUrl);
+        }
+
+        // Collect images from Knowledge Graph array
+        if (serperResults.knowledgeGraph?.images && Array.isArray(serperResults.knowledgeGraph.images)) {
+          serperResults.knowledgeGraph.images.forEach((img) => {
+            if (typeof img === 'string') {
+              collectedImages.push(img);
+            } else if (img && typeof img === 'object' && 'url' in img) {
+              collectedImages.push(img.url);
+            }
           });
         }
 
-        if (tavilyDomainResults.status === 'fulfilled') {
-          tavilyDomainResults.value.forEach((entry) => {
-            if (entry.status === 'fulfilled') {
-              const data = entry.value;
-              pushImages(data.images || []);
-              (data.results || []).forEach((r: any) => {
-                pushResult({
-                  title: r.title,
-                  url: r.url,
-                  content: r.content || '',
-                });
-              });
+        // Collect images from main search results
+        if (serperResults.images && Array.isArray(serperResults.images)) {
+          serperResults.images.forEach((img) => {
+            if (typeof img === 'string') {
+              collectedImages.push(img);
+            } else if (img && typeof img === 'object' && 'imageUrl' in img) {
+              collectedImages.push(img.imageUrl);
             }
           });
+        }
+
+        const domainSearches = normalizedDomains.slice(0, 5).map((domain) =>
+          searchSerper(`EAN ${barcode} site:${domain}`, 4).catch(() => null),
+        );
+
+        const domainResults = await Promise.all(domainSearches);
+
+        for (const domainResult of domainResults) {
+          if (!domainResult?.organic) continue;
+
+          for (const result of domainResult.organic) {
+            const url = result.link;
+            const hostname = url ? getHostname(url) : null;
+            if (!hostname) continue;
+            const normalizedHost = hostname.replace(/^www\./, '');
+            if (!allowedHostnames.has(normalizedHost) && !allowedHostnames.has(hostname)) {
+              continue;
+            }
+
+            const content = result.snippet || '';
+            const brand = deriveBrand(result.title || '', content, hostname);
+
+            collectedResults.push({
+              title: result.title || '',
+              url,
+              content,
+              images: [],
+              supplier: brand || undefined,
+              ean: barcode,
+              publishedDate: result.date || undefined,
+            });
+          }
+
+          // Collect images from Knowledge Graph
+          if (domainResult.knowledgeGraph?.imageUrl) {
+            collectedImages.push(domainResult.knowledgeGraph.imageUrl);
+          }
+
+          if (domainResult.knowledgeGraph?.images && Array.isArray(domainResult.knowledgeGraph.images)) {
+            domainResult.knowledgeGraph.images.forEach((img) => {
+              if (typeof img === 'string') {
+                collectedImages.push(img);
+              } else if (img && typeof img === 'object' && 'url' in img) {
+                collectedImages.push(img.url);
+              }
+            });
+          }
+
+          // Collect images from search results
+          if (domainResult.images && Array.isArray(domainResult.images)) {
+            domainResult.images.forEach((img) => {
+              if (typeof img === 'string') {
+                collectedImages.push(img);
+              } else if (img && typeof img === 'object' && 'imageUrl' in img) {
+                collectedImages.push(img.imageUrl);
+              }
+            });
+          }
         }
 
         const seenUrls = new Set<string>();
@@ -216,7 +336,19 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
           finalResults.push(result);
         }
 
-        const finalImages = Array.from(new Set(collectedImages)).slice(0, 12);
+        // Deduplicate and filter valid images (must be proper URLs)
+        const finalImages = Array.from(new Set(collectedImages))
+          .filter(img => {
+            try {
+              new URL(img);
+              return true;
+            } catch {
+              return false;
+            }
+          })
+          .slice(0, 12);
+
+        console.log(`[EAN Search] Found ${collectedImages.length} images (${finalImages.length} after filtering) for barcode ${barcode}`);
 
         if (finalResults.length === 0) {
           return {
@@ -230,11 +362,36 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
 
         finalResults.splice(8);
 
+        let fullDescription = '';
+
+        if (serperResults.knowledgeGraph) {
+          const kg = serperResults.knowledgeGraph;
+          if (kg.title) {
+            fullDescription += `${kg.title}\n\n`;
+          }
+          if (kg.description) {
+            fullDescription += `${kg.description}\n\n`;
+          }
+          if (kg.attributes) {
+            Object.entries(kg.attributes).forEach(([key, value]) => {
+              fullDescription += `${key}: ${value}\n`;
+            });
+            fullDescription += '\n';
+          }
+        }
+
+        finalResults.slice(0, 3).forEach((result) => {
+          if (result.content) {
+            fullDescription += `${result.content}\n\n`;
+          }
+        });
+
         return {
           barcode,
           results: finalResults,
           images: finalImages,
           totalResults: finalResults.length,
+          description: fullDescription.trim() || undefined,
           message: `Found ${finalResults.length} results for barcode ${barcode}`,
         };
       } catch (err) {
@@ -243,6 +400,7 @@ export function eanSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | u
           results: [],
           images: [],
           totalResults: 0,
+          description: undefined,
           message: 'Aucun résultat trouvé sur les sites autorisés.',
           error: (err as Error)?.message || 'Unknown error',
         } as const;
