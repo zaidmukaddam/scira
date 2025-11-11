@@ -20,10 +20,6 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
     useCache: true,
-    turbo: {
-      // Force Turbopack to treat this directory as the workspace root
-      root: __dirname,
-    },
     optimizePackageImports: [
       '@phosphor-icons/react',
       'lucide-react',

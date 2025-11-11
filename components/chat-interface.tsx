@@ -66,7 +66,7 @@ const ChatInterface = memo(
     const [q] = useQueryState('q', parseAsString.withDefault(''));
     const [input, setInput] = useState<string>('');
 
-    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', DEFAULT_MODEL);
+    const [selectedModel, setSelectedModel] = useLocalStorage<string>('scira-selected-model', DEFAULT_MODEL);
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
     const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
