@@ -32,9 +32,12 @@ const anannas = createOpenAI({
   },
 });
 
+export const LEGACY_DEFAULT_MODEL = 'scira-default' as const;
+export const DEFAULT_MODEL = 'scira-grok-4-fast-think' as const;
+
 export const scira = customProvider({
   languageModels: {
-    'scira-default': xai('grok-4-fast-non-reasoning'),
+    [LEGACY_DEFAULT_MODEL]: xai('grok-4-fast-non-reasoning'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
     'scira-name': xai('grok-4-fast-non-reasoning'),
     'scira-grok-3-mini': xai('grok-3-mini'),
