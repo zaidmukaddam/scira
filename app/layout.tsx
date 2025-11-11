@@ -12,7 +12,7 @@ import { ClientAnalytics } from '@/components/client-analytics';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://scira.ai'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://scira.ai'),
   title: {
     default: 'Scira AI - Fastest AI research engine, Perplexity alternative',
     template: '%s | Scira AI',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description:
     'Scira is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
   openGraph: {
-    url: 'https://scira.ai',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://scira.ai',
     siteName: 'Scira AI',
   },
   keywords: [

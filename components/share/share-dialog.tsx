@@ -40,7 +40,10 @@ export function ShareDialog({
   const [copied, setCopied] = useState(false);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
 
-  const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+  // Use the current domain instead of hardcoding scira.ai
+  const shareUrl = chatId
+    ? `${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://scira.ai'}/search/${chatId}`
+    : '';
 
   useEffect(() => {
     if (!isOpen) {
