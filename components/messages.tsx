@@ -280,11 +280,11 @@ const Messages: React.FC<MessagesProps> = ({
 
   // Conditional Cyrus loader
   const shouldShowCyrusLoader = useMemo(() => {
-    return status === 'streaming' && selectedGroup === 'cyrus' && !hasActiveToolInvocations;
+    return (status === 'submitted' || status === 'streaming') && selectedGroup === 'cyrus' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   const shouldShowNomenclatureLoader = useMemo(() => {
-    return status === 'streaming' && selectedGroup === 'nomenclature' && !hasActiveToolInvocations;
+    return (status === 'submitted' || status === 'streaming') && selectedGroup === 'nomenclature' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   const shouldShowLibellerLoader = useMemo(() => {
@@ -296,7 +296,7 @@ const Messages: React.FC<MessagesProps> = ({
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   const shouldShowEANLoader = useMemo(() => {
-    return status === 'streaming' && selectedGroup === 'eanexpert' && !hasActiveToolInvocations;
+    return (status === 'submitted' || status === 'streaming') && selectedGroup === 'eanexpert' && !hasActiveToolInvocations;
   }, [status, selectedGroup, hasActiveToolInvocations]);
 
   // Compute index of the most recent assistant message; only that one should keep min-height
