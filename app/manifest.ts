@@ -10,6 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     categories: ['search', 'ai', 'productivity'],
     background_color: '#171717',
+    theme_color: '#111111',
     icons: [
       {
         src: '/icon-maskable.png',

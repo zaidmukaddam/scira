@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   },
   description:
     'Scira is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
+  applicationName: 'Scira AI',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Scira AI',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     url: process.env.NEXT_PUBLIC_APP_URL || 'https://scira.ai',
     siteName: 'Scira AI',
@@ -80,8 +89,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#F9F9F9' },
