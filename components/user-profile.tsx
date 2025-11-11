@@ -38,7 +38,6 @@ import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { User } from '@/lib/db/schema';
-import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
 import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 
@@ -198,9 +197,6 @@ const UserProfile = memo(
     isProStatusLoading,
     isCustomInstructionsEnabled,
     setIsCustomInstructionsEnabled,
-    settingsOpen,
-    setSettingsOpen,
-    settingsInitialTab,
   }: {
     className?: string;
     user?: User | null;
@@ -209,9 +205,6 @@ const UserProfile = memo(
     isProStatusLoading?: boolean;
     isCustomInstructionsEnabled?: boolean;
     setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
-    settingsOpen?: boolean;
-    setSettingsOpen?: (open: boolean) => void;
-    settingsInitialTab?: string;
   }) => {
     const [signingOut, setSigningOut] = useState(false);
     const [signingIn, setSigningIn] = useState(false);
@@ -338,7 +331,7 @@ const UserProfile = memo(
                 </div>
               </div>
 
-              <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen?.(true)}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/settings')}>
                 <div className="w-full flex items-center gap-2">
                   <GearIcon size={16} />
                   <span>Settings</span>
@@ -411,21 +404,6 @@ const UserProfile = memo(
               Sign in to save progress and sync across devices
             </TooltipContent>
           </Tooltip>
-        )}
-
-        {/* Settings Dialog */}
-        {settingsOpen !== undefined && setSettingsOpen && (
-          <SettingsDialog
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-            user={settingsUser}
-            subscriptionData={subscriptionData}
-            isProUser={isProUser}
-            isProStatusLoading={isProStatusLoading}
-            isCustomInstructionsEnabled={isCustomInstructionsEnabled}
-            setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-            initialTab={settingsInitialTab}
-          />
         )}
 
         <SignInPromptDialog
