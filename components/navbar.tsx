@@ -32,9 +32,6 @@ interface NavbarProps {
   isProStatusLoading?: boolean;
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
-  settingsOpen?: boolean;
-  setSettingsOpen?: (open: boolean) => void;
-  settingsInitialTab?: string;
 }
 
 const Navbar = memo(
@@ -52,9 +49,6 @@ const Navbar = memo(
     isProStatusLoading,
     isCustomInstructionsEnabled,
     setIsCustomInstructionsEnabled,
-    settingsOpen,
-    setSettingsOpen,
-    settingsInitialTab,
   }: NavbarProps) => {
     const router = useRouter();
     const pathname = usePathname();
@@ -221,9 +215,6 @@ const Navbar = memo(
               isProStatusLoading={isProStatusLoading}
               isCustomInstructionsEnabled={isCustomInstructionsEnabled}
               setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-              settingsOpen={settingsOpen}
-              setSettingsOpen={setSettingsOpen}
-              settingsInitialTab={settingsInitialTab}
             />
           </div>
         </div>

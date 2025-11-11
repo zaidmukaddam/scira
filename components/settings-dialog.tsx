@@ -289,7 +289,7 @@ function SearchProviderSelector({
 }
 
 // Component for Combined Preferences (Search + Custom Instructions)
-function PreferencesSection({
+export function PreferencesSection({
   user,
   isCustomInstructionsEnabled,
   setIsCustomInstructionsEnabled,
@@ -707,7 +707,7 @@ function PreferencesSection({
 }
 
 // Component for Usage Information
-function UsageSection({ user }: any) {
+export function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -1101,7 +1101,7 @@ function UsageSection({ user }: any) {
 }
 
 // Component for Subscription Information
-function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
+export function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [orders, setOrders] = useState<any>(null);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
@@ -1424,7 +1424,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
 }
 
 // Component for Memories
-function MemoriesSection() {
+export function MemoriesSection() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingMemoryIds, setDeletingMemoryIds] = useState<Set<string>>(new Set());
@@ -1595,7 +1595,7 @@ function MemoriesSection() {
 }
 
 // Component for Connectors
-function ConnectorsSection({ user }: { user: any }) {
+export function ConnectorsSection({ user }: { user: any }) {
   const isProUser = user?.isProUser || false;
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);

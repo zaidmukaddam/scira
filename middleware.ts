@@ -26,13 +26,6 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (pathname === '/settings' || pathname === '/#settings') {
-    if (!session) {
-      return NextResponse.redirect(new URL('/sign-in', request.url));
-    }
-    return NextResponse.redirect(new URL('/#settings', request.url));
-  }
-
   if (session && authRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/', request.url));
   }
