@@ -1505,7 +1505,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         // Switch back to web mode
         const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
         if (webGroup) {
-          onGroupSelect(webGroup);
+          onGroupSelect(webGroup as any);
         }
       } else {
         // Check if user is authenticated before allowing extreme mode
@@ -1518,7 +1518,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         // Switch to extreme mode
         const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
         if (extremeGroup) {
-          onGroupSelect(extremeGroup);
+          onGroupSelect(extremeGroup as any);
         }
       }
     }, [isExtreme, onGroupSelect, dynamicSearchGroups, session]);
