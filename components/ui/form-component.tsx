@@ -1554,7 +1554,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
             }
           }
 
-          onGroupSelect(selectedGroup);
+          onGroupSelect(selectedGroup as any);
           setOpen(false);
         }
       },
@@ -1568,7 +1568,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           // If trying to open in extreme mode, switch back to web mode instead
           const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
           if (webGroup) {
-            onGroupSelect(webGroup);
+            onGroupSelect(webGroup as any);
           }
           return;
         }
@@ -1583,7 +1583,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         // Switch back to web mode when clicking groups in extreme mode
         const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
         if (webGroup) {
-          onGroupSelect(webGroup);
+          onGroupSelect(webGroup as any);
         }
       } else if (isMounted) {
         setOpen(true);
