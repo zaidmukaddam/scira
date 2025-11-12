@@ -112,9 +112,8 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.alreadyHaveAccount': 'Already have an account?',
     'auth.signIn': 'Sign in',
     'auth.waiting': 'Please wait...',
-    'auth.signInToContinue': 'Sign in to continue',
     'auth.saveConversations': 'Save conversations and sync across devices',
-    
+
     // Settings Dialog
     'settings.dialog.title': 'Settings',
     
@@ -318,9 +317,8 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.alreadyHaveAccount': 'Já tem uma conta?',
     'auth.signIn': 'Entrar',
     'auth.waiting': 'Aguarde...',
-    'auth.signInToContinue': 'Entre para continuar',
     'auth.saveConversations': 'Salve conversas e sincronize entre dispositivos',
-    
+
     // Settings Dialog
     'settings.dialog.title': 'Configurações',
     
