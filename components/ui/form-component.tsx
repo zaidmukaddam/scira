@@ -3250,9 +3250,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                               ? 'Using AI to improve your prompt'
                               : isTypewriting
                                 ? 'Typing enhanced prompt'
-                                : isProUser
-                                  ? 'Enhance your prompt with AI'
-                                  : 'Enhance your prompt with AI (Pro feature)'}
+                                : 'Enhance your prompt with AI'}
                           </span>
                         </div>
                       </TooltipContent>
