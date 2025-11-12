@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { useLanguage } from '@/contexts/language-context';
 
 type VisibilityType = 'public' | 'private';
 
@@ -62,6 +63,7 @@ const Navbar = memo(
   }: NavbarProps) => {
     const router = useRouter();
     const pathname = usePathname();
+    const { t } = useLanguage();
     const isSearchWithId = useMemo(() => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)), [pathname]);
 
     // Use passed Pro status directly
@@ -89,7 +91,7 @@ const Navbar = memo(
                 className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
               >
                 <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">{t('navbar.new')}</span>
               </Button>
             </Link>
 
@@ -101,7 +103,7 @@ const Navbar = memo(
                 className="rounded-md h-7 px-2 text-xs sm:hidden"
                 onClick={() => router.push('/settings')}
               >
-                Upgrade
+                {t('navbar.upgrade')}
               </Button>
             )}
           </div>
@@ -115,7 +117,7 @@ const Navbar = memo(
               )}
             >
               <div className="flex items-center bg-muted/50 rounded-lg border border-border">
-                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
+                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">{t('navbar.freePlan')}</span>
                 {/* Self-hosted: no pricing route */}
               </div>
             </div>

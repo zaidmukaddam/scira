@@ -77,11 +77,6 @@ const nextConfig: NextConfig = {
         destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-30',
         permanent: true,
       },
-      {
-        source: '/blog',
-        destination: 'https://blog.scira.ai',
-        permanent: true,
-      },
     ];
   },
   images: {

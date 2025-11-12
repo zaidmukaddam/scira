@@ -9,6 +9,7 @@ import { authClient, signIn, signUp } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/language-context';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
@@ -115,9 +116,10 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
+  const { t } = useLanguage();
 
   const isSignUp = mode === 'sign-up';
-  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>(isSignUp ? 'email' : 'social');
+  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>('email');
   const [emailForm, setEmailForm] = useState({ name: '', email: '', password: '' });
   const [emailLoading, setEmailLoading] = useState(false);
   const [magicEmail, setMagicEmail] = useState('');
@@ -221,9 +223,9 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           className="space-y-4"
         >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="social">Social</TabsTrigger>
-            <TabsTrigger value="email">E-mail</TabsTrigger>
-            <TabsTrigger value="magic-link">Magic link</TabsTrigger>
+            <TabsTrigger value="social">{t('auth.social')}</TabsTrigger>
+            <TabsTrigger value="email">{t('auth.email')}</TabsTrigger>
+            <TabsTrigger value="magic-link">{t('auth.magicLink')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="social">
@@ -267,40 +269,40 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
             <form className="space-y-3" onSubmit={handleEmailSubmit}>
               {isSignUp && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="name">Nome completo</Label>
+                  <Label htmlFor="name">{t('auth.nameLabel')}</Label>
                   <Input
                     id="name"
                     name="name"
                     value={emailForm.name}
                     onChange={(event) => setEmailForm((prev) => ({ ...prev, name: event.target.value }))}
-                    placeholder="Como devemos te chamar?"
+                    placeholder={t('auth.namePlaceholder')}
                     autoComplete="name"
                     required
                   />
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('auth.emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
                   name="email"
                   value={emailForm.email}
                   onChange={(event) => setEmailForm((prev) => ({ ...prev, email: event.target.value }))}
-                  placeholder="voce@exemplo.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   autoComplete="email"
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t('auth.passwordLabel')}</Label>
                 <Input
                   id="password"
                   type="password"
                   name="password"
                   value={emailForm.password}
                   onChange={(event) => setEmailForm((prev) => ({ ...prev, password: event.target.value }))}
-                  placeholder="Mínimo de 8 caracteres"
+                  placeholder={t('auth.passwordPlaceholder')}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   minLength={8}
                   required
@@ -310,7 +312,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
                 {emailLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Aguarde...
+                    {t('auth.waiting')}
                   </>
                 ) : (
                   emailButtonLabel
@@ -352,16 +354,6 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
         </Tabs>
 
         <div className="pt-4 space-y-4">
-          <p className="text-[11px] text-center text-muted-foreground/60 leading-relaxed">
-            By continuing, you agree to our{' '}
-            <Link href="/terms" className="hover:text-muted-foreground underline-offset-2 underline">
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy-policy" className="hover:text-muted-foreground underline-offset-2 underline">
-              Privacy Policy
-            </Link>
-          </p>
 
           <p className="text-sm text-center text-muted-foreground">
             {mode === 'sign-in' ? (

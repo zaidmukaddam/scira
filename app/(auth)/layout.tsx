@@ -122,10 +122,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
           <div className="space-y-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <a href="https://git.new/scira" target="_blank" className="hover:text-foreground transition-colors">
-                Open Source
-              </a>
-              <span>•</span>
               <span>Live Search</span>
               <span>•</span>
               <span>1M+ Searches served</span>

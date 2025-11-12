@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useLanguage } from '@/contexts/language-context';
 import {
   getUserMessageCount,
   getSubDetails,
@@ -282,6 +283,7 @@ export function PreferencesSection({
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { language, setLanguage, t } = useLanguage();
   const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
     'scira-search-provider',
     'parallel',
@@ -408,8 +410,8 @@ export function PreferencesSection({
                   <RobotIcon className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Custom Instructions</h4>
-                  <p className="text-xs text-muted-foreground">Customize how the AI responds to you</p>
+                  <h4 className="font-semibold text-sm">{t('preferences.customInstructions')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('preferences.customInstructions.description')}</p>
                 </div>
               </div>
 
@@ -417,10 +419,10 @@ export function PreferencesSection({
                 <div className="flex items-start justify-between p-3 rounded-lg border bg-card">
                   <div className="flex-1 mr-3">
                     <Label htmlFor="enable-instructions" className="text-sm font-medium">
-                      Enable Custom Instructions
+                      {t('preferences.enableInstructions')}
                     </Label>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Toggle to enable or disable custom instructions
+                      {t('preferences.enableInstructions.description')}
                     </p>
                   </div>
                   <Switch id="enable-instructions" checked={enabled} onCheckedChange={setEnabled} />
@@ -429,10 +431,10 @@ export function PreferencesSection({
                 <div className={cn('space-y-3', !enabled && 'opacity-50')}>
                   <div>
                     <Label htmlFor="instructions" className="text-sm font-medium">
-                      Instructions
+                      {t('preferences.instructions')}
                     </Label>
                     <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-                      Guide how the AI responds to your questions
+                      {t('preferences.instructions.description')}
                     </p>
                     {customInstructionsLoading ? (
                       <Skeleton className="h-28 w-full" />
@@ -511,8 +513,8 @@ export function PreferencesSection({
                   <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Search Provider</h4>
-                  <p className="text-xs text-muted-foreground">Choose your preferred search engine</p>
+                  <h4 className="font-semibold text-sm">{t('preferences.searchProvider')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('preferences.searchProvider.description')}</p>
                 </div>
               </div>
 
@@ -521,6 +523,36 @@ export function PreferencesSection({
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Select your preferred search provider for web searches. Changes take effect immediately and will be
                   used for all future searches.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Language Section */}
+          <div className="space-y-3">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <HugeiconsIcon icon={GlobalSearchIcon} className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">{t('settings.language')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('settings.language.description')}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'pt')}>
+                  <SelectTrigger className="w-full">
+                    <span>{language === 'pt' ? t('settings.language.portuguese') : t('settings.language.english')}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">{t('settings.language.english')}</SelectItem>
+                    <SelectItem value="pt">{t('settings.language.portuguese')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('settings.language.note')}
                 </p>
               </div>
             </div>
@@ -536,8 +568,8 @@ export function PreferencesSection({
                   <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Reorder Search Modes</h4>
-                  <p className="text-xs text-muted-foreground">Drag to set your preferred order</p>
+                  <h4 className="font-semibold text-sm">{t('preferences.reorderModes')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('preferences.reorderModes.description')}</p>
                 </div>
               </div>
 
@@ -568,8 +600,8 @@ export function PreferencesSection({
                   <HugeiconsIcon icon={Settings02Icon} className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Reorder Models</h4>
-                  <p className="text-xs text-muted-foreground">Drag to set your preferred model order</p>
+                  <h4 className="font-semibold text-sm">{t('preferences.reorderModels')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('preferences.reorderModels.description')}</p>
                 </div>
               </div>
 
@@ -672,7 +704,7 @@ const ReorderList = memo(function ReorderList<T extends string>({
 // Component for Usage Information
 export function UsageSection({ user }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
-
+  const { t } = useLanguage();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isProUser = user?.isProUser;
   const monthsWindow = isMobile ? 6 : 12;
@@ -805,12 +837,12 @@ export function UsageSection({ user }: any) {
           ) : (
             <div className={cn('font-semibold', isMobile ? 'text-base' : 'text-lg')}>{searchCount?.count || 0}</div>
           )}
-          <p className="text-[10px] text-muted-foreground">Regular searches</p>
+          <p className="text-[10px] text-muted-foreground">{t('usage.regularSearches')}</p>
         </div>
 
         <div className={cn('bg-muted/50 rounded-lg space-y-1', isMobile ? 'p-3' : 'p-3')}>
           <div className="flex items-center justify-between">
-            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>Extreme</span>
+            <span className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>{t('usage.extreme')}</span>
             <LightningIcon className={isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           </div>
           {usageLoading ? (
@@ -820,7 +852,7 @@ export function UsageSection({ user }: any) {
               {extremeSearchCount?.count || 0}
             </div>
           )}
-          <p className="text-[10px] text-muted-foreground">This month</p>
+          <p className="text-[10px] text-muted-foreground">{t('usage.thisMonth')}</p>
         </div>
       </div>
 
@@ -1431,7 +1463,7 @@ export function MemoriesSection() {
         ) : displayedMemories.length === 0 ? (
           <div className="flex flex-col justify-center items-center h-32 border border-dashed rounded-lg bg-muted/20">
             <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No memories found</p>
+            <p className="text-sm text-muted-foreground">{t('memories.noMemories')}</p>
           </div>
         ) : (
           <>
@@ -1493,10 +1525,10 @@ export function MemoriesSection() {
                   {isFetchingNextPage ? (
                     <>
                       <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Loading...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    'Load More'
+                    t('memories.loadMore')
                   )}
                 </Button>
               </div>
@@ -1584,17 +1616,17 @@ export function ConnectorsSection({ user }: { user: any }) {
     try {
       const result = await manualSyncConnectorAction(provider);
       if (result.success) {
-        toast.success(`${CONNECTOR_CONFIGS[provider].name} sync started`);
+        toast.success(t('connectors.syncStarted', { name: CONNECTOR_CONFIGS[provider].name }));
         refetchConnectors();
         // Refetch connection status after a delay to show updated counts
         setTimeout(() => {
           connectionStatusQueries.refetch();
         }, 2000);
       } else {
-        toast.error(result.error || 'Failed to sync');
+        toast.error(result.error || t('connectors.syncError'));
       }
     } catch (error) {
-      toast.error('Failed to sync');
+      toast.error(t('connectors.syncError'));
     } finally {
       setSyncingProvider(null);
     }
@@ -1605,15 +1637,15 @@ export function ConnectorsSection({ user }: { user: any }) {
     try {
       const result = await deleteConnectorAction(connectionId);
       if (result.success) {
-        toast.success(`${providerName} disconnected`);
+        toast.success(t('connectors.disconnected', { name: providerName }));
         refetchConnectors();
         // Also refetch connection statuses immediately to update the UI
         connectionStatusQueries.refetch();
       } else {
-        toast.error(result.error || 'Failed to disconnect');
+        toast.error(result.error || t('connectors.disconnectError'));
       }
     } catch (error) {
-      toast.error('Failed to disconnect');
+      toast.error(t('connectors.disconnectError'));
     } finally {
       setDeletingConnectionId(null);
     }
@@ -1871,6 +1903,7 @@ export function SettingsDialog({
   setIsCustomInstructionsEnabled,
   initialTab = 'profile',
 }: SettingsDialogProps) {
+  const { t: tSettings } = useLanguage();
   const [currentTab, setCurrentTab] = useState(initialTab);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -1914,28 +1947,28 @@ export function SettingsDialog({
   const tabItems = [
     {
       value: 'profile',
-      label: 'Account',
+      label: tSettings('settings.account'),
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={UserAccountIcon} className={className} />,
     },
     {
       value: 'usage',
-      label: 'Usage',
+      label: tSettings('settings.usage'),
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Analytics01Icon} className={className} />,
     },
     // Self-hosted: removed subscription tab
     {
       value: 'preferences',
-      label: 'Preferences',
+      label: tSettings('settings.preferences'),
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Settings02Icon} className={className} />,
     },
     {
       value: 'connectors',
-      label: 'Connectors',
+      label: tSettings('settings.connectors'),
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={ConnectIcon} className={className} />,
     },
     {
       value: 'memories',
-      label: 'Memories',
+      label: tSettings('settings.memories'),
       icon: ({ className }: { className?: string }) => <HugeiconsIcon icon={Brain02Icon} className={className} />,
     },
   ];
@@ -2055,7 +2088,7 @@ export function SettingsDialog({
         <DialogHeader className="p-4 !m-0">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
             <SciraLogo className="size-6" color="currentColor" />
-            Settings
+            {tSettings('settings.title')}
           </DialogTitle>
         </DialogHeader>
 

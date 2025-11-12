@@ -420,14 +420,14 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
       >
         <div className="flex items-start gap-2">
           {user ? (
-            <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
+            <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start" suppressHydrationWarning>
               <AvatarImage src={user.image ?? ''} alt={user.name ?? ''} className="rounded-md !p-0 !m-0 size-7" />
               <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
                 {(user.name || user.email || '?').charAt(0)}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
+            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" suppressHydrationWarning />
           )}
           <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2 relative">
             <Textarea
@@ -640,7 +640,7 @@ export const Message: React.FC<MessageProps> = ({
                             className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
                           >
                             {user ? (
-                              <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
+                              <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start" suppressHydrationWarning>
                                 <AvatarImage
                                   src={user.image ?? ''}
                                   alt={user.name ?? ''}
@@ -655,6 +655,7 @@ export const Message: React.FC<MessageProps> = ({
                                 icon={UserCircleIcon}
                                 size={24}
                                 className="size-7 flex-shrink-0 self-start"
+                                suppressHydrationWarning
                               />
                             )}
                             <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
@@ -697,7 +698,7 @@ export const Message: React.FC<MessageProps> = ({
                         className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
                       >
                         {user ? (
-                          <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
+                          <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start" suppressHydrationWarning>
                             <AvatarImage
                               src={user.image ?? ''}
                               alt={user.name ?? ''}
@@ -708,7 +709,7 @@ export const Message: React.FC<MessageProps> = ({
                             </AvatarFallback>
                           </Avatar>
                         ) : (
-                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
+                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" suppressHydrationWarning />
                         )}
                         <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
                           <MarkdownRenderer

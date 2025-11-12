@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/language-context';
 
 interface SignInPromptDialogProps {
   open: boolean;
@@ -119,7 +120,8 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>('social');
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'social' | 'email' | 'magic-link'>('email');
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in');
   const [emailForm, setEmailForm] = useState({ name: '', email: '', password: '' });
   const [emailLoading, setEmailLoading] = useState(false);
@@ -128,7 +130,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
   useEffect(() => {
     if (!open) {
-      setActiveTab('social');
+      setActiveTab('email');
       setAuthMode('sign-in');
       setEmailForm({ name: '', email: '', password: '' });
       setEmailLoading(false);
@@ -257,40 +259,40 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         <form className="space-y-3" onSubmit={handleEmailSubmit}>
           {authMode === 'sign-up' && (
             <div className="space-y-1.5">
-              <Label htmlFor="dialog-name">Nome completo</Label>
+              <Label htmlFor="dialog-name">{t('auth.nameLabel')}</Label>
               <Input
                 id="dialog-name"
                 name="name"
                 value={emailForm.name}
                 onChange={(event) => setEmailForm((prev) => ({ ...prev, name: event.target.value }))}
-                placeholder="Como devemos te chamar?"
+                placeholder={t('auth.namePlaceholder')}
                 autoComplete="name"
                 required
               />
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="dialog-email">E-mail</Label>
+            <Label htmlFor="dialog-email">{t('auth.emailLabel')}</Label>
             <Input
               id="dialog-email"
               type="email"
               name="email"
               value={emailForm.email}
               onChange={(event) => setEmailForm((prev) => ({ ...prev, email: event.target.value }))}
-              placeholder="voce@exemplo.com"
+              placeholder={t('auth.emailPlaceholder')}
               autoComplete="email"
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="dialog-password">Senha</Label>
+            <Label htmlFor="dialog-password">{t('auth.passwordLabel')}</Label>
             <Input
               id="dialog-password"
               type="password"
               name="password"
               value={emailForm.password}
               onChange={(event) => setEmailForm((prev) => ({ ...prev, password: event.target.value }))}
-              placeholder="Mínimo de 8 caracteres"
+              placeholder={t('auth.passwordPlaceholder')}
               autoComplete={authMode === 'sign-up' ? 'new-password' : 'current-password'}
               minLength={8}
               required
@@ -300,7 +302,7 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
             {emailLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Aguarde...
+                {t('auth.waiting')}
               </>
             ) : (
               emailButtonLabel
@@ -310,24 +312,24 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         <p className="text-xs text-center text-muted-foreground">
           {authMode === 'sign-in' ? (
             <>
-              Ainda não tem conta?{' '}
+              {t('auth.newToScira')}{' '}
               <button
                 type="button"
                 className="text-foreground font-medium hover:underline underline-offset-4"
                 onClick={() => setAuthMode('sign-up')}
               >
-                Criar conta
+                {t('auth.createAccount')}
               </button>
             </>
           ) : (
             <>
-              Já possui conta?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
               <button
                 type="button"
                 className="text-foreground font-medium hover:underline underline-offset-4"
                 onClick={() => setAuthMode('sign-in')}
               >
-                Entrar
+                {t('auth.signIn')}
               </button>
             </>
           )}
@@ -337,14 +339,14 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
       <TabsContent value="magic-link">
         <form className="space-y-3" onSubmit={handleMagicLinkSubmit}>
           <div className="space-y-1.5">
-            <Label htmlFor="dialog-magic-email">E-mail</Label>
+            <Label htmlFor="dialog-magic-email">{t('auth.emailLabel')}</Label>
             <Input
               id="dialog-magic-email"
               type="email"
               name="magic-email"
               value={magicEmail}
               onChange={(event) => setMagicEmail(event.target.value)}
-              placeholder="voce@exemplo.com"
+              placeholder={t('auth.magicLinkPlaceholder')}
               autoComplete="email"
               required
             />
@@ -353,15 +355,15 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
             {magicLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enviando...
+                {t('common.loading')}
               </>
             ) : (
-              'Enviar link mágico'
+              t('auth.sendMagicLink')
             )}
           </Button>
         </form>
         <p className="text-xs text-muted-foreground/80">
-          Enviaremos um link de acesso que expira em poucos minutos. Basta clicar para entrar sem senha.
+          {t('auth.magicLinkDescription')}
         </p>
       </TabsContent>
     </Tabs>
@@ -371,8 +373,8 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
     <>
       {/* Compact Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-medium text-foreground mb-1">Sign in to continue</h2>
-        <p className="text-sm text-muted-foreground">Save conversations and sync across devices</p>
+        <h2 className="text-lg font-medium text-foreground mb-1">{t('auth.signInToContinue')}</h2>
+        <p className="text-sm text-muted-foreground">{t('auth.saveConversations')}</p>
       </div>
 
       {/* Auth Options */}
@@ -383,17 +385,6 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
         Continue without account
       </Button>
 
-      {/* Legal */}
-      <p className="text-xs text-muted-foreground text-center mt-4">
-        By continuing, you accept our{' '}
-        <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
-          Terms
-        </Link>
-        {' & '}
-        <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-foreground">
-          Privacy Policy
-        </Link>
-      </p>
     </>
   );
 
@@ -402,8 +393,8 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="max-h-[85vh] px-6 pb-6">
           <DrawerHeader className="px-0 pt-4 pb-0 font-be-vietnam-pro">
-            <DrawerTitle className="text-lg font-medium">Sign in to continue</DrawerTitle>
-            <p className="text-sm text-muted-foreground pt-1">Save conversations and sync across devices</p>
+            <DrawerTitle className="text-lg font-medium">{t('auth.signInToContinue')}</DrawerTitle>
+            <p className="text-sm text-muted-foreground pt-1">{t('auth.saveConversations')}</p>
           </DrawerHeader>
           <div className="overflow-y-auto pt-4">
             {/* Auth Options */}
@@ -411,20 +402,9 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
             {/* Guest Option */}
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full h-10 font-normal text-sm">
-              Continue without account
+              {t('auth.continueWithoutAccount')}
             </Button>
 
-            {/* Legal */}
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              By continuing, you accept our{' '}
-              <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
-                Terms
-              </Link>
-              {' & '}
-              <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-foreground">
-                Privacy Policy
-              </Link>
-            </p>
           </div>
         </DrawerContent>
       </Drawer>
@@ -435,8 +415,8 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[360px] p-6 gap-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Sign in to continue</DialogTitle>
-          <DialogDescription>Save conversations and sync across devices</DialogDescription>
+          <DialogTitle>{t('auth.signInToContinue')}</DialogTitle>
+          <DialogDescription>{t('auth.saveConversations')}</DialogDescription>
         </DialogHeader>
         {content}
       </DialogContent>

@@ -2457,20 +2457,26 @@ export async function testLookoutAction({ id }: { id: string }) {
     }
 
     // Make a POST request to the lookout API endpoint to trigger the run
-    const response = await fetch(
-      process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lookoutId: lookout.id,
-          prompt: lookout.prompt,
-          userId: user.id,
-        }),
+    const baseUrl =
+      process.env.NODE_ENV === 'development'
+        ? (process.env.NGROK_URL?.trim() ||
+            process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+            'http://localhost:3000')
+        : 'https://scira.ai';
+
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+    const response = await fetch(`${normalizedBaseUrl}/api/lookout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        lookoutId: lookout.id,
+        prompt: lookout.prompt,
+        userId: user.id,
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to trigger lookout test: ${response.statusText}`);

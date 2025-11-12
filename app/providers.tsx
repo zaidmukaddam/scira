@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { UserProvider } from '@/contexts/user-context';
 import { DataStreamProvider } from '@/components/data-stream-provider';
+import { LanguageProvider } from '@/contexts/language-context';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -25,13 +26,15 @@ const queryClient = new QueryClient({
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <DataStreamProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <TooltipProvider>{children}</TooltipProvider>
-          </ThemeProvider>
-        </DataStreamProvider>
-      </UserProvider>
+      <LanguageProvider>
+        <UserProvider>
+          <DataStreamProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              <TooltipProvider>{children}</TooltipProvider>
+            </ThemeProvider>
+          </DataStreamProvider>
+        </UserProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

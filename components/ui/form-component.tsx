@@ -53,6 +53,7 @@ import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/li
 import { useUser } from '@/contexts/user-context';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
+import { useLanguage } from '@/contexts/language-context';
 
 interface ModelSwitcherProps {
   selectedModel: string;
@@ -1421,6 +1422,7 @@ ConnectorSelector.displayName = 'ConnectorSelector';
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
   ({ selectedGroup, onGroupSelect, status, onOpenSettings, isProUser }) => {
     const { data: session } = useSession();
+    const { t } = useLanguage();
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
     const [isMounted, setIsMounted] = useState(false);
@@ -1435,7 +1437,28 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
 
     // Get dynamic search groups based on the selected search provider
-    const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+    const dynamicSearchGroups = useMemo(() => {
+      const groups = getSearchGroups(searchProvider);
+      // Translate group names and descriptions
+      return groups.map((group) => {
+        const nameKey = `searchMode.${group.id}`;
+        const descKey = `searchMode.${group.id}.description`;
+        const translatedName = t(nameKey);
+        let translatedDesc = t(descKey);
+        
+        // Handle web description with provider name
+        if (group.id === 'web') {
+          const providerName = searchProvider === 'parallel' ? 'Parallel AI' : searchProvider === 'exa' ? 'Exa' : searchProvider === 'tavily' ? 'Tavily' : 'Firecrawl';
+          translatedDesc = t(descKey, { provider: providerName });
+        }
+        
+        return {
+          ...group,
+          name: translatedName !== nameKey ? translatedName : group.name,
+          description: translatedDesc !== descKey ? translatedDesc : group.description,
+        };
+      });
+    }, [searchProvider, t]);
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
@@ -1659,7 +1682,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[220px] p-2">
                   {isMounted && isExtreme ? (
-                    <p className="text-xs">Switch back to search modes</p>
+                    <p className="text-xs">{t('searchMode.switchBack')}</p>
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
@@ -1674,12 +1697,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           </div>
                         )}
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
+                          <p className="font-semibold text-xs">{t('searchMode.active', { name: selectedGroupData.name })}</p>
                           {/* Self-hosted: no PRO label */}
                         </div>
                       </div>
                       <p className="text-[11px] leading-snug text-secondary">{selectedGroupData.description}</p>
-                      <p className="text-[10px] text-accent italic">Click to switch search mode</p>
+                      <p className="text-[10px] text-accent italic">{t('searchMode.clickToSwitch')}</p>
                       {/* Self-hosted: no Pro upsell for groups */}
                     </div>
                   ) : (
@@ -1775,12 +1798,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           </div>
                         )}
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
+                          <p className="font-semibold text-xs">{t('searchMode.active', { name: selectedGroupData.name })}</p>
                           {/* Self-hosted: no PRO label */}
                         </div>
                       </div>
                       <p className="text-[11px] leading-snug text-secondary">{selectedGroupData.description}</p>
-                      <p className="text-[10px] text-accent italic">Click to switch search mode</p>
+                      <p className="text-[10px] text-accent italic">{t('searchMode.clickToSwitch')}</p>
                       {/* Self-hosted: no upsell */}
                     </div>
                   ) : (
@@ -1836,11 +1859,11 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                     )}
                   </div>
                   <p className="font-semibold text-xs">
-                    {isMounted && isExtreme ? 'Extreme Search Active' : session ? 'Extreme Search' : 'Sign in Required'}
+                    {isMounted && isExtreme ? t('searchMode.extreme.active') : session ? t('searchMode.extreme.title') : t('searchMode.signInRequired')}
                   </p>
                 </div>
                 <p className="text-[11px] leading-snug text-secondary">
-                  Deep research with multiple sources and in-depth analysis with 3x sources
+                  {t('searchMode.extreme.description.tooltip')}
                 </p>
                 {/* Self-hosted: no upsell */}
               </div>
@@ -1883,6 +1906,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const isMounted = useRef(true);
   const isCompositionActive = useRef(false);
+  const { t } = useLanguage();
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -3017,13 +3046,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <Textarea
                   ref={inputRef}
                   placeholder={
-                    isEnhancing
-                      ? '✨ Enhancing your prompt...'
-                      : isTypewriting
-                        ? '✨ Writing enhanced prompt...'
-                        : hasInteracted
-                          ? 'Ask a new question...'
-                          : 'Ask a question...'
+                    isClient
+                      ? isEnhancing
+                        ? t('chat.input.enhancing')
+                        : isTypewriting
+                          ? t('chat.input.typewriting')
+                          : hasInteracted
+                            ? t('chat.input.placeholder.new')
+                            : t('chat.input.placeholder')
+                      : 'Ask a question...'
                   }
                   value={input}
                   onChange={handleInput}

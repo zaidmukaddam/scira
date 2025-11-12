@@ -1,13 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { BinocularsIcon, BookOpen01Icon } from '@hugeicons/core-free-icons';
+import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { ChatHistoryDialog } from '@/components/chat-history-dialog';
 import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CheckIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 interface LookoutAnnouncementDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface LookoutAnnouncementDialogProps {
 
 export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: LookoutAnnouncementDialogProps) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isMac, setIsMac] = React.useState(false);
 
   React.useEffect(() => {
@@ -29,10 +31,6 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         router.push('/lookout');
-        onOpenChange(false);
-      } else if ((e.metaKey || e.ctrlKey) && (e.key === 'b' || e.key === 'B')) {
-        e.preventDefault();
-        router.push('/blog');
         onOpenChange(false);
       }
     };
@@ -59,13 +57,13 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-3">
-                New Feature
+                {t('lookout.newFeature')}
               </div>
               <DialogTitle className="text-white text-xl sm:text-2xl font-bold tracking-tight">
-                Introducing Scira Lookout
+                {t('lookout.introducing')}
               </DialogTitle>
               <DialogDescription className="text-white/80 text-sm mt-1">
-                Automated search monitoring on your schedule
+                {t('lookout.description')}
               </DialogDescription>
             </div>
           </div>
@@ -74,21 +72,21 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
         <div className="px-6 py-6 space-y-6">
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Set up searches that track trends, monitor developments, and keep you informed without manual effort.
+              {t('lookout.setupDescription')}
             </p>
 
             <div className="space-y-3">
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-foreground">Schedule searches to run automatically</span>
+                <span className="text-sm text-foreground">{t('lookout.scheduleSearches')}</span>
               </div>
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-foreground">Receive notifications when results are ready</span>
+                <span className="text-sm text-foreground">{t('lookout.receiveNotifications')}</span>
               </div>
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-foreground">Access comprehensive search history</span>
+                <span className="text-sm text-foreground">{t('lookout.accessHistory')}</span>
               </div>
             </div>
           </div>
@@ -103,22 +101,8 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 className="w-full sm:flex-1 group"
               >
                 <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-                Explore Lookout
+                {t('lookout.explore')}
                 <span className="sm:ml-auto text-xs font-mono hidden sm:inline opacity-60">⌘ ⏎</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  router.push('/blog');
-                  onOpenChange(false);
-                }}
-                className="w-full sm:flex-1 group shadow-none"
-              >
-                <HugeiconsIcon icon={BookOpen01Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
-                Read Blog
-                <span className="sm:ml-auto font-mono text-xs hidden sm:inline opacity-60">
-                  {isMac ? '⌘' : 'Ctrl'} B
-                </span>
               </Button>
             </div>
 
@@ -130,7 +114,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 size="sm"
                 className="text-muted-foreground hover:text-foreground text-xs px-3"
               >
-                Maybe later
+                {t('lookout.maybeLater')}
               </Button>
               <div className="flex-1 border-b border-foreground/10" />
             </div>
