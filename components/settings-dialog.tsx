@@ -1549,6 +1549,7 @@ export function MemoriesSection() {
 import { useUser } from '@/contexts/user-context';
 
 export function ConnectorsSection({ user }: { user: any }) {
+  const { t } = useLanguage();
   const { isProUser } = useUser();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [connectingProvider, setConnectingProvider] = useState<ConnectorProvider | null>(null);
