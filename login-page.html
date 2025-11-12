@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Scira AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles matching the original design */
+        .tabs-trigger {
+            @apply inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm;
+        }
+
+        .tabs-list {
+            @apply inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground;
+        }
+
+        .tabs-content {
+            @apply mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Dark theme styles */
+        .dark {
+            color-scheme: dark;
+        }
+
+        .dark body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        /* CSS Variables for theming */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        .bg-background { background-color: hsl(var(--background)); }
+        .bg-card { background-color: hsl(var(--card)); }
+        .bg-muted { background-color: hsl(var(--muted)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .text-card-foreground { color: hsl(var(--card-foreground)); }
+        .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .text-primary { color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        .border-border { border-color: hsl(var(--border)); }
+        .border-input { border-color: hsl(var(--input)); }
+        .ring-ring { --tw-ring-color: hsl(var(--ring)); }
+        .shadow-xs { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-background">
+    <div class="w-full max-w-[380px] mx-auto px-4">
+        <div class="space-y-6">
+            <!-- Header -->
+            <div class="text-center space-y-3">
+                <h1 class="text-2xl font-medium text-foreground">Welcome back</h1>
+                <p class="text-sm text-muted-foreground/80">Sign in to continue to Scira AI</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs-list w-full grid grid-cols-3">
+                <button
+                    type="button"
+                    class="tabs-trigger data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    data-tab="social"
+                    onclick="switchTab('social')"
+                    id="tab-social"
+                >
+                    Social
+                </button>
+                <button
+                    type="button"
+                    class="tabs-trigger data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    data-tab="email"
+                    onclick="switchTab('email')"
+                    id="tab-email"
+                >
+                    Email
+                </button>
+                <button
+                    type="button"
+                    class="tabs-trigger data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    data-tab="magic-link"
+                    onclick="switchTab('magic-link')"
+                    id="tab-magic-link"
+                >
+                    Magic Link
+                </button>
+            </div>
+
+            <!-- Social Tab Content -->
+            <div class="tabs-content" id="content-social">
+                <div class="space-y-2">
+                    <!-- GitHub Button -->
+                    <button
+                        type="button"
+                        class="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+                        onclick="handleSocialSignIn('github')"
+                    >
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg viewBox="0 0 438.549 438.549" class="w-4 h-4" fill="currentColor">
+                                <path d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z"/>
+                            </svg>
+                        </div>
+                        <span class="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with GitHub</span>
+                    </button>
+
+                    <!-- Google Button -->
+                    <button
+                        type="button"
+                        class="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+                        onclick="handleSocialSignIn('google')"
+                    >
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg viewBox="0 0 256 262" preserveAspectRatio="xMidYMid" class="w-4 h-4">
+                                <path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027" fill="#4285F4"/>
+                                <path d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1" fill="#34A853"/>
+                                <path d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782" fill="#FBBC05"/>
+                                <path d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251" fill="#EB4335"/>
+                            </svg>
+                        </div>
+                        <span class="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with Google</span>
+                    </button>
+
+                    <!-- X (Twitter) Button -->
+                    <button
+                        type="button"
+                        class="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+                        onclick="handleSocialSignIn('twitter')"
+                    >
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with X</span>
+                    </button>
+
+                    <!-- Microsoft Button -->
+                    <button
+                        type="button"
+                        class="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+                        onclick="handleSocialSignIn('microsoft')"
+                    >
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg viewBox="0 0 256 256" preserveAspectRatio="xMidYMid" class="w-4 h-4">
+                                <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z"/>
+                                <path fill="#80CC28" d="M256 121.666H134.335V0H256z"/>
+                                <path fill="#00ADEF" d="M121.663 256.002H0V134.336h121.663z"/>
+                                <path fill="#FBBC09" d="M256 256.002H134.335V134.336H256z"/>
+                            </svg>
+                        </div>
+                        <span class="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with Microsoft</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Email Tab Content -->
+            <div class="tabs-content hidden" id="content-email">
+                <form class="space-y-3" onsubmit="handleEmailSubmit(event)">
+                    <div class="space-y-1.5">
+                        <label for="email" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            placeholder="voce@exemplo.com"
+                            autocomplete="email"
+                            required
+                            class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                        />
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Senha</label>
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                            minlength="8"
+                            required
+                            class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                        />
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 w-full" id="email-submit-btn">
+                        <span id="email-submit-text">Entrar com e-mail</span>
+                        <svg class="hidden h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="email-submit-spinner">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Magic Link Tab Content -->
+            <div class="tabs-content hidden" id="content-magic-link">
+                <form class="space-y-3" onsubmit="handleMagicLinkSubmit(event)">
+                    <div class="space-y-1.5">
+                        <label for="magic-email" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">E-mail</label>
+                        <input
+                            id="magic-email"
+                            type="email"
+                            name="magic-email"
+                            placeholder="voce@exemplo.com"
+                            autocomplete="email"
+                            required
+                            class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                        />
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 w-full" id="magic-submit-btn">
+                        <span id="magic-submit-text">Enviar link mágico</span>
+                        <svg class="hidden h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="magic-submit-spinner">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+                <p class="mt-3 text-xs text-muted-foreground/80">
+                    Enviaremos um link de acesso que expira em poucos minutos. Basta clicar para entrar sem senha.
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-4 space-y-4">
+                <p class="text-sm text-center text-muted-foreground">
+                    New to Scira?
+                    <a href="/sign-up" class="text-foreground font-medium hover:underline underline-offset-4">Create account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('.tabs-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Remove active state from all tabs
+            document.querySelectorAll('[data-tab]').forEach(tab => {
+                tab.removeAttribute('data-state');
+            });
+
+            // Show selected content
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+
+            // Set active state on selected tab
+            document.getElementById(`tab-${tabName}`).setAttribute('data-state', 'active');
+        }
+
+        // Initialize email tab as active
+        switchTab('email');
+
+        // Form submission handlers
+        async function handleEmailSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('email-submit-btn');
+            const submitText = document.getElementById('email-submit-text');
+            const submitSpinner = document.getElementById('email-submit-spinner');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Aguarde...';
+            submitSpinner.classList.remove('hidden');
+
+            try {
+                // Simulate API call - replace with actual implementation
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Simulate successful login
+                alert('Login realizado com sucesso! Redirecionando...');
+                // window.location.href = '/';
+            } catch (error) {
+                alert('Erro ao fazer login. Verifique suas credenciais.');
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Entrar com e-mail';
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+        async function handleMagicLinkSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('magic-submit-btn');
+            const submitText = document.getElementById('magic-submit-text');
+            const submitSpinner = document.getElementById('magic-submit-spinner');
+
+            const email = document.getElementById('magic-email').value;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Enviando...';
+            submitSpinner.classList.remove('hidden');
+
+            try {
+                // Simulate API call - replace with actual implementation
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Simulate successful magic link send
+                alert('Enviamos um link de acesso. Verifique sua caixa de entrada.');
+
+                // Clear form
+                document.getElementById('magic-email').value = '';
+            } catch (error) {
+                alert('Erro ao enviar link mágico. Tente novamente.');
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Enviar link mágico';
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+        function handleSocialSignIn(provider) {
+            // Simulate social sign-in - replace with actual OAuth implementation
+            alert(`Redirecionando para login com ${provider}...`);
+            // window.location.href = `/auth/${provider}`;
+        }
+
+        // Dark mode toggle (optional)
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            document.body.classList.toggle('dark');
+        }
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        }
+    </script>
+</body>
+</html>
