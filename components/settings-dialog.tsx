@@ -1375,6 +1375,7 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
 
 // Component for Memories
 export function MemoriesSection() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingMemoryIds, setDeletingMemoryIds] = useState<Set<string>>(new Set());
