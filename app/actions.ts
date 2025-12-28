@@ -210,8 +210,8 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   console.log('Prompt: ', prompt);
   const { text: title } = await generateText({
     model: scira.languageModel('scira-name'),
-    temperature: 0,
-    maxOutputTokens: 15,
+    temperature: 1,
+    maxOutputTokens: 10,
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
     - you will generate a short 3-4 words title based on the first message a user begins a conversation with
@@ -220,6 +220,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - do not use quotes or colons
     - no markdown formatting allowed
     - keep plain text only
+    - not more than 4 words in the title
     - do not use any other text other than the title`,
     prompt,
     providerOptions: {
